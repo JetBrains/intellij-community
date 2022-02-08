@@ -81,23 +81,24 @@ open class CodeVisionHost(val project: Project) {
 
       rearrangeProviders()
 
-      project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable()).subscribe(DynamicPluginListener.TOPIC,
-                                                                                              object : DynamicPluginListener {
-                                                                                                private fun recollectAndRearrangeProviders() {
-                                                                                                  providers = CodeVisionProviderFactory.createAllProviders(
-                                                                                                    project)
-                                                                                                  rearrangeProviders()
-                                                                                                }
+      project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
+        .subscribe(DynamicPluginListener.TOPIC,
+                   object : DynamicPluginListener {
+                     private fun recollectAndRearrangeProviders() {
+                       providers = CodeVisionProviderFactory.createAllProviders(
+                         project)
+                       rearrangeProviders()
+                     }
 
-                                                                                                override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-                                                                                                  recollectAndRearrangeProviders()
-                                                                                                }
+                     override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                       recollectAndRearrangeProviders()
+                     }
 
-                                                                                                override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
-                                                                                                                            isUpdate: Boolean) {
-                                                                                                  recollectAndRearrangeProviders()
-                                                                                                }
-                                                                                              })
+                     override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
+                                                 isUpdate: Boolean) {
+                       recollectAndRearrangeProviders()
+                     }
+                   })
     }
   }
 
