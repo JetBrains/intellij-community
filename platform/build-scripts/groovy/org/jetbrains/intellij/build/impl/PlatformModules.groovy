@@ -96,6 +96,7 @@ final class PlatformModules {
     "intellij.platform.projectModel.impl",
     "intellij.platform.macro",
     "intellij.platform.execution.impl",
+    "intellij.platform.wsl.impl",
     "intellij.platform.externalSystem.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
