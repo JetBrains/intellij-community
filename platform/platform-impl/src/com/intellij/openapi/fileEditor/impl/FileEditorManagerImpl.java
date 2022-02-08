@@ -1731,7 +1731,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       assertDispatchThread();
 
       VirtualFile file = event.getFile();
-      VirtualFile[] openFiles = getOpenFiles();
+      VirtualFile[] openFiles = getOpenFilesWithRemotes();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         if (VfsUtilCore.isAncestor(file, openFiles[i], false)) {
           closeFile(openFiles[i],true, true);
