@@ -40,16 +40,18 @@ class KotlinConfigurationCheckerService(val project: Project) {
             override fun run(indicator: ProgressIndicator) {
                 val kotlinLanguageVersionConfigured = runReadAction { project.isKotlinLanguageVersionConfigured() }
 
-                // pick up modules with kotlin faces those use custom (non project) settings
-                val modulesWithKotlinFacets by lazy {
-                    runReadAction {
+                val ktModules = if (kotlinLanguageVersionConfigured) {
+                    // pick up modules with kotlin faces those use custom (non project) settings
+                    val modulesWithKotlinFacets = runReadAction {
                         project.allModules()
                     }.filter {
-                        KotlinFacet.get(it)?.configuration?.settings?.useProjectSettings == false
-                    }.takeUnless(List<Module>::isEmpty)
-                }
+                        val facetSettings = KotlinFacet.get(it)?.configuration?.settings ?: return@filter false
+                        // module uses custom (not a project-wide) kotlin facet settings and LV or ApiVersion is missed
+                        !facetSettings.useProjectSettings && (facetSettings.languageLevel == null || facetSettings.apiLevel == null)
+                    }
 
-                val ktModules = if (kotlinLanguageVersionConfigured && modulesWithKotlinFacets != null) {
+                    if (modulesWithKotlinFacets.isEmpty()) return
+
                     getModulesWithKotlinFiles(project, modulesWithKotlinFacets)
                 } else {
                     getModulesWithKotlinFiles(project)

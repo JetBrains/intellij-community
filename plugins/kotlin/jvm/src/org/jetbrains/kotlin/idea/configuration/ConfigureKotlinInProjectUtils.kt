@@ -128,20 +128,12 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
-    val globalSearchScope = if (modulesWithKotlinFacets.isNullOrEmpty()) {
-        GlobalSearchScope.projectScope(project)
-    } else {
-        modulesWithKotlinFacets.fold(null as GlobalSearchScope?) { acc, module ->
-            val scope = GlobalSearchScope.moduleScope(module)
-            acc?.uniteWith(scope) ?: scope
-        } ?: error("modulesWithKotlinFacets is not empty, at least one module search scope has to be created")
-    }
-
     val disposable = KotlinPluginDisposable.getInstance(project)
 
+    val projectScope = project.projectScope()
     // nothing to configure if there is no Kotlin files in entire project
     val anyKotlinFileInProject = disposable.nonBlockingReadAction {
-        FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, project.projectScope())
+        FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
         return emptyList()
@@ -152,7 +144,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
             val kotlinFiles = disposable.nonBlockingReadAction {
-                FileTypeIndex.getFiles(KotlinFileType.INSTANCE, globalSearchScope)
+                FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
             }
 
             kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
