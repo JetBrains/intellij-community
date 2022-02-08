@@ -36,7 +36,7 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
   }
 
   override fun getTestFrameworks(): List<StarterTestRunner> {
-    return listOf(JUNIT_TEST_RUNNER, TESTNG_TEST_RUNNER)
+    return listOf(JUNIT_TEST_RUNNER)
   }
 
   override fun getStarterPack(): StarterPack {
