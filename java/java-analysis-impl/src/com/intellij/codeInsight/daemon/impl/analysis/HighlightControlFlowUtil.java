@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -12,6 +12,7 @@ import com.intellij.lang.jvm.actions.ChangeModifierRequest;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -762,9 +763,9 @@ public final class HighlightControlFlowUtil {
       effectivelyFinal = !VariableAccessUtils.variableIsAssigned(variable, ((PsiParameter)variable).getDeclarationScope());
     }
     else {
+      PsiElement codeBlock = PsiUtil.getVariableCodeBlock(variable, context);
       ControlFlow controlFlow;
       try {
-        PsiElement codeBlock = PsiUtil.getVariableCodeBlock(variable, context);
         if (codeBlock == null) return true;
         controlFlow = getControlFlow(codeBlock);
       }
@@ -783,13 +784,17 @@ public final class HighlightControlFlowUtil {
         }
         effectivelyFinal = !VariableAccessUtils.variableIsAssigned(variable, scope);
         if (effectivelyFinal) {
-          return ReferencesSearch.search(variable).allMatch(ref -> {
-            PsiElement element = ref.getElement();
-            if (element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
-              return !ControlFlowUtil.isVariableAssignedInLoop((PsiReferenceExpression)element, variable);
+          Ref<Boolean> stopped = new Ref<>(false);
+          codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitReferenceExpression(PsiReferenceExpression expression) {
+              if (PsiUtil.isAccessedForWriting(expression) && ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) {
+                stopWalking();
+                stopped.set(true);
+              }
             }
-            return true;
           });
+          return !stopped.get();
         }
       }
     }
