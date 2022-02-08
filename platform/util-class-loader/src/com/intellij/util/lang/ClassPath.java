@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -36,8 +37,9 @@ public final class ClassPath {
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
   // DCEVM support
-  private static final boolean isNewClassLoadingEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.new.classloading.enabled",
-                                                                                                  "false"));
+  private static final boolean isNewClassLoadingEnabled =
+    Boolean.parseBoolean(System.getProperty("idea.classpath.new.classloading.enabled", "false")) &&
+    ManagementFactory.getRuntimeMXBean().getInputArguments().contains("-XX:+AllowEnhancedClassRedefinition");
 
   private static final Collection<Map.Entry<String, Path>> loadedClasses;
 
@@ -85,6 +87,8 @@ public final class ClassPath {
     Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException;
   }
 
+  // used via reflection in ClassLoaderConfigurator
+  @SuppressWarnings("unused")
   public @Nullable Function<Path, ResourceFile> getResourceFileFactory() {
     return resourceFileFactory;
   }
@@ -107,10 +111,6 @@ public final class ClassPath {
         this.files.add(files.get(i));
       }
     }
-  }
-
-  public interface ResourceFileFactory {
-    ResourceFile create(Path file) throws IOException;
   }
 
   public synchronized void reset(@NotNull List<Path> paths) {
