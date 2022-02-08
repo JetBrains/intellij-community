@@ -63,7 +63,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
   @ConfigField("runcfg.pytest.config.parameters")
   var parameters: String = ""
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
     PyPyTestExecutionEnvironment(this, environment)
 
   override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> =
