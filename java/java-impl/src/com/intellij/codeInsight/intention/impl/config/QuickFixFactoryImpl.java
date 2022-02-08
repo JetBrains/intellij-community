@@ -1145,4 +1145,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createSetVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type) {
     return new SetVariableTypeFix(variable, type);
   }
+
+  @Override
+  public @NotNull IntentionAction createReceiverParameterNameFix(@NotNull PsiReceiverParameter parameter, @NotNull String newName) {
+    return new ReceiverParameterNameFix(parameter, newName);
+  }
 }
