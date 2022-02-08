@@ -54,7 +54,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   private var subscribedForDoubleShift = false
   private var firstOpened = false
   private var clearPosition = false
-  private var shouldShow = true
   var seManager: SearchEverywhereManager? = null
 
   override fun update(event: AnActionEvent) {
@@ -69,7 +68,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         seManager = null
       }
     }
-    event.presentation.isEnabledAndVisible = shouldShow
     event.presentation.text = if (!showHotkey()) {
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
@@ -98,15 +96,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       init {
         setHorizontalTextAlignment(SwingConstants.LEFT)
         cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
-        this.addAncestorListener(object : AncestorListenerAdapter() {
-          override fun ancestorAdded(event: AncestorEvent?) {
-            rootPane?.addComponentListener(object : ComponentAdapter() {
-              override fun componentResized(e: ComponentEvent?) {
-                shouldShow = true
-              }
-            })
-          }
-        })
       }
 
       override fun addNotify() {
@@ -174,31 +163,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
 
       override fun paint(g: Graphics?) {
-        if (!checkIfEnoughSpace()) return
         if (preferredSize.width < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width) return
         foreground = DISABLED_TEXT_COLOR
         background = searchFieldBackground()
         super.paint(g)
-      }
-
-      private fun checkIfEnoughSpace(): Boolean {
-        if (parent == null) return false
-        if (parent.bounds.width < parent.preferredSize.width) {
-          if (shouldShow) {
-            shouldShow = false
-            updateToolTipText()
-            cursor = Cursor.getPredefinedCursor(DEFAULT_CURSOR)
-          }
-          return false
-        }
-        else {
-          if (!shouldShow) {
-            shouldShow = true
-            updateToolTipText()
-            cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
-          }
-        }
-        return true
       }
 
       override fun iconTextSpace(): Int {

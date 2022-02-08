@@ -68,7 +68,10 @@ class NewToolbarBorderLayout : BorderLayout() {
         if (target.height > 0 && d.height > 0) {
           hdiff = (target.height - d.height) / 2
         }
-        c!!.setBounds(left, top + hdiff, min(d.width, right), bottom - top)
+        if(right < d.width) {
+          left -= d.width - right
+        }
+        c!!.setBounds(left, top + hdiff, d.width, bottom - top)
         left += d.width + hgap
       }
     }
