@@ -108,9 +108,18 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     PythonScriptExecution testScriptExecution = PythonScripts.prepareHelperScriptExecution(getRunner(), helpersAwareRequest);
     addBeforeParameters(testScriptExecution);
-    addTestSpecsAsParameters(testScriptExecution, getTestSpecs());
+    addTestSpecsAsParameters(testScriptExecution, getTestSpecs(targetEnvironmentRequest));
     addAfterParameters(targetEnvironmentRequest, testScriptExecution);
     return testScriptExecution;
+  }
+
+  @Override
+  protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest request) {
+    Function<TargetEnvironment, String> workingDir = super.getPythonExecutionWorkingDir(request);
+    if (workingDir != null) {
+      return workingDir;
+    }
+    return TargetEnvironmentFunctions.getTargetEnvironmentValueForLocalPath(request, myConfiguration.getWorkingDirectorySafe());
   }
 
   protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
@@ -204,9 +213,12 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
 
   /**
    * Adds test specs (like method, class, script, etc) to list of runner parameters.
+   * <p>
+   * Works together with {@link #getTestSpecs(TargetEnvironmentRequest)}.
    */
-  protected void addTestSpecsAsParameters(@NotNull PythonScriptExecution testScriptExecution, @NotNull final List<String> testSpecs) {
-    // By default we simply add them as arguments
+  protected void addTestSpecsAsParameters(@NotNull PythonScriptExecution testScriptExecution,
+                                          @NotNull List<Function<TargetEnvironment, String>> testSpecs) {
+    // By default, we simply add them as arguments
     testSpecs.forEach(parameter -> testScriptExecution.addParameter(parameter));
   }
 
@@ -232,6 +244,18 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
 
   protected abstract HelperPackage getRunner();
 
+  /**
+   * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
+   */
   @NotNull
   protected abstract List<String> getTestSpecs();
+
+  /**
+   * Returns the list of specifications for tests to be executed.
+   * <p>
+   * Works together with {@link #addTestSpecsAsParameters(PythonScriptExecution, List)}.
+   */
+  protected @NotNull List<Function<TargetEnvironment, String>> getTestSpecs(@NotNull TargetEnvironmentRequest request) {
+    return List.of();
+  }
 }
