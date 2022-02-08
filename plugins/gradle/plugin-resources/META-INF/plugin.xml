@@ -108,7 +108,6 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleImportHintService"
                     configurationSchemaKey="importHint.gradle" />

@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
@@ -67,7 +68,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Denis Zhdanov, Vladislav Soroka
  */
-public class ExternalSystemNotificationManager implements Disposable {
+@Service(Service.Level.PROJECT)
+public final class ExternalSystemNotificationManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalSystemNotificationManager.class);
 
   private static final @NotNull Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
