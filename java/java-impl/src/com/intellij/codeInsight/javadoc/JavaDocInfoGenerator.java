@@ -870,7 +870,7 @@ public class JavaDocInfoGenerator {
       return new Pair<>(tag, new InheritDocProvider<>() {
         @Override
         public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-          return isRendered() ? null : findInHierarchy(psiClass, locator);
+          return findInHierarchy(psiClass, locator);
         }
 
         @Override
@@ -2105,7 +2105,7 @@ public class JavaDocInfoGenerator {
       return new ParamInfo(paramName, presentableName, localTag, new InheritDocProvider<>() {
         @Override
         public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-          return isRendered() ? null : findInheritDocTag(method, tagLocator);
+          return findInheritDocTag(method, tagLocator);
         }
 
         @Override
@@ -2141,7 +2141,7 @@ public class JavaDocInfoGenerator {
     Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = tag == null ? null : new Pair<>(tag, new InheritDocProvider<>() {
       @Override
       public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-        return isRendered() ? null : findInheritDocTag(method, new ReturnTagLocator());
+        return findInheritDocTag(method, new ReturnTagLocator());
       }
 
       @Override
