@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -32,7 +31,6 @@ final class ExternalSystemStartupActivity implements StartupActivity.DumbAware {
           ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, manager.getSystemId()).createDirectoriesForEmptyContentRoots());
         });
       }
-      ExternalToolWindowManager.handle(project);
       ProjectRenameAware.beAware(project);
     }, project.getDisposed());
   }

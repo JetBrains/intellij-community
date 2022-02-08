@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.project.DumbAware;
@@ -30,18 +28,17 @@ public abstract class AbstractExternalSystemToolWindowFactory implements ToolWin
     externalSystemId = id;
   }
 
+  protected abstract @NotNull AbstractExternalSystemSettings<?, ?, ?> getSettings(@NotNull Project project);
+
   @Override
-  public boolean isApplicable(@NotNull Project project) {
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-    AbstractExternalSystemSettings<?, ?, ?> settings = manager == null ? null : manager.getSettingsProvider().fun(project);
-    return settings != null && !settings.getLinkedProjectsSettings().isEmpty();
+  public boolean shouldBeAvailable(@NotNull Project project) {
+    return !getSettings(project).getLinkedProjectsSettings().isEmpty();
   }
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     toolWindow.setTitle(externalSystemId.getReadableName());
     ContentManager contentManager = toolWindow.getContentManager();
-
     contentManager.addContent(new ContentImpl(createInitializingLabel(), "", false));
 
     ExternalProjectsManager.getInstance(project).runWhenInitialized(() -> {

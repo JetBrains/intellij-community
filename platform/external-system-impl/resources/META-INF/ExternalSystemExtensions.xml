@@ -125,6 +125,8 @@
     <notificationGroup id="Content root duplicates" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.duplicate.content.roots"/>
     <notificationGroup id="Unindexed maven repositories gradle detection" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.unindexed.repositories"/>
     <notificationGroup id="Gradle Wrapper Update" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.gradle.wrapper.update"/>
+
+    <externalSystemSettingsListener implementation="com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider$Listener"

@@ -2,10 +2,19 @@
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.externalSystem.service.task.ui.AbstractExternalSystemToolWindowFactory;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 final class GradleToolWindowFactory extends AbstractExternalSystemToolWindowFactory {
   GradleToolWindowFactory() {
     super(GradleConstants.SYSTEM_ID);
+  }
+
+  @Override
+  protected @NotNull AbstractExternalSystemSettings<?, ?, ?> getSettings(@NotNull Project project) {
+    return GradleSettings.getInstance(project);
   }
 }
