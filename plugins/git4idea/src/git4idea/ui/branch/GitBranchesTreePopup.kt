@@ -24,7 +24,6 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
-import git4idea.GitIcons
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
@@ -41,7 +40,6 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
 import java.util.function.Supplier
 import javax.swing.*
-import javax.swing.tree.DefaultTreeCellRenderer
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
@@ -160,6 +158,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     if (preSelectedPath == null) return
     TreeUtil.promiseMakeVisible(tree, preSelectedPath).onSuccess {
       tree.selectionPath = preSelectedPath
+      TreeUtil.scrollToVisible(tree, preSelectedPath, true)
     }
   }
 
