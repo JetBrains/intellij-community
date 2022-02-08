@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.DocumentUtil
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
@@ -62,8 +61,7 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   override val key: SettingsKey<NoSettings>
     get() = settingsKey
 
-  override val previewText: String
-    get() = TableModificationUtils.buildEmptyTable(3, 3)
+  override val previewText: String? = null
 
   override fun createConfigurable(settings: NoSettings): ImmediateConfigurable {
     return object: ImmediateConfigurable {
