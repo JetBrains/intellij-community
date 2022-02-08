@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.calls.KtApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSignature
@@ -148,6 +149,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 else -> return@analyse
             }
             val candidatesWithMapping = collectCallCandidates(callElement)
+            val hasMultipleApplicableBestCandidates = candidatesWithMapping.count { it.isApplicableBestCandidate } > 1
 
             for ((index, objectToView) in context.objectsToView.withIndex()) {
                 val candidateInfo = objectToView as? CandidateInfo ?: continue
@@ -156,7 +158,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
                     return
                 }
-                val (candidateSignature, argumentMapping, isSuccessful) = candidatesWithMapping[index]
+                val (candidateSignature, argumentMapping, isApplicableBestCandidate) = candidatesWithMapping[index]
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
                 val isArraySetCall = candidateSignature.symbol.callableIdIfNonLocal?.let {
@@ -207,9 +209,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     setValueParameter
                 )
 
-                // `isSuccessful` is `true` when it is the best/final candidate selected and is applicable. If there is only one candidate
-                // available, we want to consider it selected (i.e., to be highlighted green) regardless of its applicability.
-                val isSuccessfulyResolvedToSingleCandidate = isSuccessful || candidatesWithMapping.size == 1
+                // We want to highlight the candidate green if it is the only best/final candidate selected and is applicable.
+                // However, if there is only one candidate available, we want to highlight it green regardless of its applicability.
+                val shouldHighlightGreen = (isApplicableBestCandidate && !hasMultipleApplicableBestCandidates)
+                        || candidatesWithMapping.size == 1
 
                 candidateInfo.callInfo = CallInfo(
                     callElement,
@@ -218,7 +221,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     argumentToParameterIndex,
                     valueParameters.size,
                     parameterIndexToText,
-                    isSuccessfulyResolvedToSingleCandidate,
+                    shouldHighlightGreen,
                     hasTypeMismatchBeforeCurrent,
                     highlightParameterIndex,
                     isDeprecated = candidateSignature.symbol.deprecationStatus != null,
@@ -499,7 +502,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 }
             }
 
-            val backgroundColor = if (isSuccessfulyResolvedToSingleCandidate) GREEN_BACKGROUND else context.defaultParameterColor
+            val backgroundColor = if (shouldHighlightGreen) GREEN_BACKGROUND else context.defaultParameterColor
 
             // Disabled when there are too many arguments.
             val allParametersUsed = usedParameterIndices.size == valueParameterCount
@@ -532,7 +535,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val argumentToParameterIndex: LinkedHashMap<KtExpression, Int>,
         val valueParameterCount: Int,
         val parameterIndexToText: Map<Int, String>,
-        val isSuccessfulyResolvedToSingleCandidate: Boolean,
+        val shouldHighlightGreen: Boolean,
         val hasTypeMismatchBeforeCurrent: Boolean,
         val highlightParameterIndex: Int?,
         val isDeprecated: Boolean,
