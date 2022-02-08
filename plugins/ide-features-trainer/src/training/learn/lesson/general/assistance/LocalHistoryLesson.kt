@@ -160,6 +160,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       invokeMenuTaskId = taskId
       text(LessonsBundle.message("local.history.imagine.restore", strong(ActionsBundle.message("action.\$Undo.text"))))
       text(LessonsBundle.message("local.history.invoke.context.menu", strong(localHistoryActionText)))
+      triggerByUiComponentAndHighlight(highlightInside = false) { ui: EditorComponentImpl -> ui.editor == editor }
       triggerByUiComponentAndHighlight { ui: ActionMenu ->
         ui.text.isToStringContains(localHistoryActionText)
       }
