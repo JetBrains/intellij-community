@@ -39,7 +39,7 @@ public class OpenEventLogFileAction extends DumbAwareAction {
     }
 
     final EventLogFile logFile = StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).getActiveLogFile();
-    final VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile.getFile()) : null;
+    final VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(logFile.getFile()) : null;
     if (logVFile == null) {
       showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.there.is.no.active.event.log"));
       return;
