@@ -72,11 +72,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
     else {
-      val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).shortcuts
-      val shortcut = if (shortcuts.isEmpty()) {
-        ActionsBundle.message("action.SearchEverywhereToolbarHotKey.hotkey")
-      }
-      else KeymapUtil.getShortcutsText(shortcuts)
+      val shortcut = ActionsBundle.message("action.SearchEverywhereToolbarHotKey.hotkey")
       ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text", shortcut)
     }
     event.presentation.icon = AllIcons.Actions.Search
@@ -119,7 +115,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
           HelpTooltip.dispose(this)
           if (presentation.isEnabledAndVisible) {
             HelpTooltip()
-              .setTitle(myPresentation.text)
+              .setTitle(ActionsBundle.message("action.SearchEverywhereToolbar.text"))
               .setShortcut(shortcutText)
               .setDescription(IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName))
               .installOn(this)
@@ -223,9 +219,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
     if (action is SearchEverywhereAction && showHotkey()) {
       if (event.inputEvent is KeyEvent) {
-        if ((event.inputEvent as KeyEvent).keyCode == KeyEvent.VK_SHIFT) {
-          PropertiesComponent.getInstance().setValue(SHOW_HOT_KEY_TIP, false, true)
-        }
+        PropertiesComponent.getInstance().setValue(SHOW_HOT_KEY_TIP, false, true)
       }
     }
     if (action is SearchEverywhereNewToolbarAction && event.place == ActionPlaces.MAIN_TOOLBAR) {
