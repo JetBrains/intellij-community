@@ -8,6 +8,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassOwner;
@@ -17,7 +18,6 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class PackageScope extends GlobalSearchScope {
@@ -49,7 +49,9 @@ public class PackageScope extends GlobalSearchScope {
                               ? packageIndex.getDirsByPackageName(myPackageQualifiedName, packageScope)
                               : packageIndex.getDirsByPackageName(myPackageQualifiedName, true);
 
-    myDirs = new HashSet<>(dirs.findAll());
+    myDirs = VfsUtilCore.createCompactVirtualFileSet();
+    dirs.forEach(myDirs::add);
+
     myIncludeLibraries = includeLibraries;
 
     myPartOfPackagePrefix = JavaPsiFacade.getInstance(project).isPartOfPackagePrefix(myPackageQualifiedName);
