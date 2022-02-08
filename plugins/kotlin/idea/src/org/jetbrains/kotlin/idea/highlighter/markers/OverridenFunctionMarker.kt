@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
@@ -45,20 +44,12 @@ internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement,
             ProgressManager.checkCanceled()
             val possiblyFakeLightMethods = overridingMember.toPossiblyFakeLightMethods()
             possiblyFakeLightMethods.find { !it.isMethodWithDeclarationInOtherClass() }?.let {
-                val declaration = mappingToJava[superMember]
-                if (declaration != null) {
-                    mappingToJava.remove(superMember)
+                mappingToJava.remove(superMember)?.let { declaration ->
                     // Light methods points to same methods
                     // and no reason to keep searching those methods
                     // those originals are found
                     if (mappingToJava.remove(it) == null) {
-                        val iterator = mappingToJava.keys.iterator()
-                        while (iterator.hasNext()) {
-                            val next = iterator.next().safeAs<KtLightMethod>() ?: continue
-                            if (mappingToJava[next] == superMember) {
-                                iterator.remove()
-                            }
-                        }
+                        mappingToJava.values.removeIf(superMember::equals)
                     }
                     overridden.add(declaration)
                 }
