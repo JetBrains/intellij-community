@@ -67,7 +67,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
             val dependencyMapper = KotlinDependencyMapper()
             val importingContext = MultiplatformModelImportingContextImpl(project, detachableCompilerArgumentsCacheMapper)
 
-            importingContext.initializeSourceSets(buildSourceSets(importingContext, dependencyResolver, dependencyMapper) ?: return null)
+            val sourceSets = buildSourceSets(importingContext, dependencyResolver, dependencyMapper) ?: return null
+            importingContext.initializeSourceSets(sourceSets)
 
             val targets = buildTargets(importingContext, projectTargets, dependencyResolver, dependencyMapper)
             importingContext.initializeTargets(targets)
@@ -673,6 +674,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
                 }
             }
 
+            if (project.skipBuildingMetadataDependenciesForSourceSet(gradleSourceSet)) return@apply
+
             val transformationBuilder = MetadataDependencyTransformationBuilder(gradleSourceSet)
             this += buildDependencies(
                 gradleSourceSet, dependencyResolver, "getApiMetadataConfigurationName", "COMPILE", project, transformationBuilder
@@ -698,6 +701,45 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
         return buildDependencies(
             gradleSourceSet, dependencyResolver, "getIntransitiveMetadataConfigurationName", "COMPILE", project, transformationBuilder
         ).toList()
+    }
+
+    /**
+     * Building Metadata Dependencies for android-specific source-sets might fail
+     * due to debug & release variants available for the same gradle resolution request.
+     * Luckily, there is no need of building Metadata Dependencies for such case.
+     *
+     * @see KTIJ-20097
+     */
+    private fun Project.skipBuildingMetadataDependenciesForSourceSet(gradleSourceSet: Named): Boolean {
+        val isHMPPEnabled = getProperty(IS_HMPP_ENABLED)
+        if (!isHMPPEnabled) return false
+
+        val sourceSetPlatforms = mutableSetOf<KotlinPlatform>()
+        val targets = getTargets().orEmpty()
+
+        for (target in targets) {
+            val platform = target
+                .get("getPlatformType")
+                ?.get("getName")
+                ?.let { it as? String }
+                ?.let { KotlinPlatform.byId(it) }
+                ?: continue
+
+            for (compilation in target.compilations.orEmpty()) {
+                val allSourceSets = compilation
+                    .get("getAllKotlinSourceSets")
+                    ?.let { it as? Collection<*> }
+                    ?.filterIsInstance<Named>()
+                    ?.toSet()
+                    ?: emptySet()
+
+                if (gradleSourceSet in allSourceSets) {
+                    sourceSetPlatforms.add(platform)
+                }
+            }
+        }
+
+        return sourceSetPlatforms.singleOrNull() == KotlinPlatform.ANDROID
     }
 
     private fun buildAndroidSourceSetDependencies(
@@ -970,4 +1012,3 @@ private fun Project.getChildProjectByPath(path: String): Project? {
     }
     return project
 }
-
