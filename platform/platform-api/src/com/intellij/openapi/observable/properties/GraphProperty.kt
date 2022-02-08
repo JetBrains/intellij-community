@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.observable.properties
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,6 +14,34 @@ import org.jetbrains.annotations.ApiStatus
  */
 @Suppress("DEPRECATION")
 interface GraphProperty<T> : ObservableClearableProperty<T> {
+
+  /**
+   * @see PropertyGraph.dependsOn
+   */
+  @JvmDefault
+  fun dependsOn(parent: ObservableProperty<*>, update: () -> T) {
+    logger<GraphProperty<*>>().error("Please, implement this method directly.")
+  }
+
+  /**
+   * @see PropertyGraph.afterPropagation
+   */
+  fun afterPropagation(listener: () -> Unit)
+
+  @JvmDefault
+  @Deprecated("Use set instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  override fun reset() {}
+
+  @JvmDefault
+  @Deprecated("Use afterChange instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  override fun afterReset(listener: () -> Unit) {}
+
+  @JvmDefault
+  @Deprecated("Use afterChange instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {}
 
   @JvmDefault
   @Deprecated("Use dependsOn with update", ReplaceWith("this.dependsOn(parent) { this.reset(); this.get() }"))
@@ -27,17 +56,4 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
   fun dependsOn(parent: ObservableClearableProperty<*>, update: () -> T) {
     dependsOn(parent, update)
   }
-
-  /**
-   * @see PropertyGraph.dependsOn
-   */
-  @JvmDefault
-  fun dependsOn(parent: ObservableProperty<*>, update: () -> T) {
-    logger<GraphProperty<*>>().error("Please, implement this method directly.")
-  }
-
-  /**
-   * @see PropertyGraph.afterPropagation
-   */
-  fun afterPropagation(listener: () -> Unit)
 }

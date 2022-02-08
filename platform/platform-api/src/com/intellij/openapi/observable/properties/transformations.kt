@@ -41,20 +41,13 @@ private class GraphPropertyView<S, T>(
   private val instance: GraphProperty<S>,
   map: (S) -> T,
   private val comap: (T) -> S
-) : GraphProperty<T>, ObservableClearablePropertyView<S, T>(instance, map, comap) {
+) : GraphProperty<T>, ObservableMutablePropertyView<S, T>(instance, map, comap) {
   override fun dependsOn(parent: ObservableProperty<*>, update: () -> T) =
     instance.dependsOn(parent) { comap(update()) }
 
   override fun afterPropagation(listener: () -> Unit) =
     instance.afterPropagation(listener)
-}
 
-@Suppress("DEPRECATION")
-private open class ObservableClearablePropertyView<S, T>(
-  private val instance: ObservableClearableProperty<S>,
-  map: (S) -> T,
-  comap: (T) -> S
-) : ObservableClearableProperty<T>, ObservableMutablePropertyView<S, T>(instance, map, comap) {
   override fun reset() =
     instance.reset()
 
