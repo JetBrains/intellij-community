@@ -530,8 +530,22 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
 
-  public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
-                                                                          @NotNull PsiType enclosingClassType);
+  /**
+   * Creates a fix that changes the type of the receiver parameter
+   *
+   * @param parameter receiver parameter to change type for
+   * @param type      new type of the receiver parameter
+   *                  <p>
+   *                  In an instance method the type of the receiver parameter must be
+   *                  the class or interface in which the method is declared.
+   *                  <p>
+   *                  In an inner class's constructor the type of the receiver parameter
+   *                  must be the class or interface which is the immediately enclosing
+   *                  type declaration of the inner class.
+   * @return a new fix
+   */
+  public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter parameter,
+                                                                          @NotNull PsiType type);
 
   public abstract @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass);
 

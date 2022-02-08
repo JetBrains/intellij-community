@@ -1050,9 +1050,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
-                                                                 @NotNull PsiType enclosingClassType) {
-    return new ReceiverParameterTypeFix(receiverParameter, enclosingClassType);
+  public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter parameter, @NotNull PsiType newType) {
+    return new ReceiverParameterTypeFix(parameter, newType);
   }
 
   private final static class ReceiverParameterTypeFix extends SetVariableTypeFix {
