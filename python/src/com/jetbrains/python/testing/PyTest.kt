@@ -20,7 +20,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
-import org.jetbrains.annotations.NotNull
 
 /**
  * Pytest runner
@@ -46,8 +45,8 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
     envs[PYTEST_RUN_CONFIG] = "True"
   }
 
-  override fun customizePythonExecutionEnvironmentVars(targetEnvironmentRequest: @NotNull TargetEnvironmentRequest,
-                                                       envs: @NotNull MutableMap<String, TargetEnvironmentFunction<String>>,
+  override fun customizePythonExecutionEnvironmentVars(targetEnvironmentRequest: TargetEnvironmentRequest,
+                                                       envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                                                        passParentEnvs: Boolean) {
     super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
     envs[PYTEST_RUN_CONFIG] = constant("True")
