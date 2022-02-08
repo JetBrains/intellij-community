@@ -822,11 +822,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       scopesPanel.setOpaque(false);
       myScopeSelectionToolbar.getComponent().setOpaque(false);
       myScopeDetailsPanel.setOpaque(false);
-      for (Component component : UIUtil.uiTraverser(myScopeDetailsPanel).traverse()) {
-        if (component instanceof JComponent) {
-          ((JComponent)component).setOpaque(false);
-        }
-      }
+      UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
       myUsagePreviewTitle.setBorder(JBUI.Borders.empty(12, 8, 5, 0));
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
