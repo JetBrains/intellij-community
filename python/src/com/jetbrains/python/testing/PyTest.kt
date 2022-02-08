@@ -78,7 +78,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     if (AdvancedSettings.getBoolean("python.pytest.show_summary")) add("--jb-show-summary")
   }.joinToString(" ")
 
-  override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> =
+  override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: List<Pair<Location<*>, AbstractTestProxy>>): List<String> =
     // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
     target.generateArgumentsLine(this) +
     listOf(rawArgumentsSeparator, "--last-failed") +
