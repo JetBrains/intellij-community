@@ -22,11 +22,11 @@ data class TextFragment(val startOffset: Int, val endOffset: Int, val text: Stri
 
 internal object SuggestingUtils {
   var forceShowSuggestions: Boolean
-    get() = Registry.`is`("feature.suggester.force.show.suggestions")
+    get() = Registry.`is`("feature.suggester.force.show.suggestions", false)
     set(value) = Registry.get("feature.suggester.force.show.suggestions").setValue(value)
 
   val isActionsProcessingEnabled: Boolean
-    get() = Registry.`is`("feature.suggester.enabled")
+    get() = Registry.`is`("feature.suggester.enabled", false)
 
   fun handleAction(project: Project, action: Action) {
     if (isActionsProcessingEnabled) {
