@@ -240,7 +240,7 @@ abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(confi
 
   override fun getTestLocator(): SMTestLocator = PyTestsLocator
 
-  override fun getTestSpecs(): MutableList<String> = java.util.ArrayList(configuration.getTestSpec())
+  override fun getTestSpecs(): List<String> = configuration.getTestSpec()
 
   override fun generateCommandLine(): GeneralCommandLine {
     val line = super.generateCommandLine()
