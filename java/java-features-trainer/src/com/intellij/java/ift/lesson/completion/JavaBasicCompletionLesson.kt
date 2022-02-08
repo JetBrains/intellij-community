@@ -74,7 +74,7 @@ open class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle
   protected fun LessonContext.invokeCompletionTasks(itemToChoose: String, resultingMethodCall: String) {
     task("CodeCompletion") {
       text(JavaLessonsBundle.message("java.basic.completion.activate", action(it)))
-      triggerByListItemAndHighlight(false, false) { item -> item.isToStringContains(itemToChoose) }
+      triggerUI().listItem { item -> item.isToStringContains(itemToChoose) }
       restoreIfModifiedOrMoved()
       test {
         invokeCompletion()

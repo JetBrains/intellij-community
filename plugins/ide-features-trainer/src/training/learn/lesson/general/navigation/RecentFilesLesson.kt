@@ -78,7 +78,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("rfd") {
       text(LessonsBundle.message("recent.files.search.typing", code(it)))
-      triggerByUiComponentAndHighlight(false, false) { ui: ExtendableTextField ->
+      triggerUI().component { ui: ExtendableTextField ->
         ui.javaClass.name.contains("SpeedSearchBase\$SearchField")
       }
       stateCheck { checkRecentFilesSearch(it) }
@@ -113,7 +113,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     task {
       text(LessonsBundle.message("recent.files.delete", strong(countOfFilesToDelete.toString()),
                                  LessonUtil.rawKeyStroke(KeyEvent.VK_DELETE)))
-      triggerByUiComponentAndHighlight(false, false) l@{ list: JBListWithOpenInRightSplit<*> ->
+      triggerUI().component l@{ list: JBListWithOpenInRightSplit<*> ->
         if (list != focusOwner) return@l false
         if (initialRecentFilesCount == -1) {
           initialRecentFilesCount = list.itemsCount
@@ -138,7 +138,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     task("RecentLocations") {
       text(LessonsBundle.message("recent.files.show.recent.locations", action(it)))
       val recentLocationsText = IdeBundle.message("recent.locations.popup.title")
-      triggerByUiComponentAndHighlight(false, false) { ui: SimpleColoredComponent ->
+      triggerUI().component { ui: SimpleColoredComponent ->
         ui.getCharSequence(true).contains(recentLocationsText)
       }
       test { actions(it) }
@@ -147,7 +147,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     task(stringForRecentFilesSearch) {
       text(LessonsBundle.message("recent.files.locations.search.typing", code(it)))
       stateCheck { checkRecentLocationsSearch(it) }
-      triggerByUiComponentAndHighlight(false, false) { _: SearchTextField -> true } // needed in next task to restore if search field closed
+      triggerUI().component { _: SearchTextField -> true } // needed in next task to restore if search field closed
       restoreByUi()
       test {
         ideFrame {
@@ -159,7 +159,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task {
       text(LessonsBundle.message("recent.files.locations.search.jump", LessonUtil.rawEnter()))
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(transitionFileName)
       }
       stateCheck { virtualFile.name.contains(transitionFileName) }
@@ -215,7 +215,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
   private fun TaskContext.triggerOnRecentFilesShown() {
     val recentFilesText = IdeBundle.message("title.popup.recent.files")
-    triggerByUiComponentAndHighlight(false, false) { ui: JLabel ->
+    triggerUI().component { ui: JLabel ->
       ui.text.isToStringContains(recentFilesText)
     }
   }

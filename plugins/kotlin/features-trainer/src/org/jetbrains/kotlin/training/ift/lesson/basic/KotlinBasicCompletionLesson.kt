@@ -26,7 +26,7 @@ class KotlinBasicCompletionLesson : JavaBasicCompletionLesson() {
 
         task {
             text(LessonsBundle.message("basic.completion.start.typing", code("list")))
-            triggerByListItemAndHighlight l@{ item -> isListOfCompletionItem(item) }
+            triggerAndBorderHighlight().listItem { item -> isListOfCompletionItem(item) }
             restoreIfTypedIncorrectly(sample, "listOf")
             test { type("li") }
         }

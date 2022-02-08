@@ -30,7 +30,7 @@ abstract class SurroundAndUnwrapLesson
           editor.caretModel.currentCaret.selectionEnd != previous.sample.selection?.second
         }
         text(LessonsBundle.message("surround.and.unwrap.invoke.surround", action(it)))
-        triggerByListItemAndHighlight { item ->
+        triggerAndBorderHighlight().listItem { item ->
           surroundItems.all { need -> wordIsPresent(item.toNullableString(), need) }
         }
         test { actions(it) }
@@ -61,7 +61,7 @@ abstract class SurroundAndUnwrapLesson
           editor.caretModel.currentCaret.logicalPosition.line != previous.position.line
         }
         text(LessonsBundle.message("surround.and.unwrap.invoke.unwrap", action(it)))
-        triggerByListItemAndHighlight { item -> item.toNullableString() == unwrapTryText }
+        triggerAndBorderHighlight().listItem { item -> item.toNullableString() == unwrapTryText }
         test { actions(it) }
       }
       task {

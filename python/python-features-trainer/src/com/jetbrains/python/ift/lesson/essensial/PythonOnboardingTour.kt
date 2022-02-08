@@ -349,7 +349,7 @@ class PythonOnboardingTour :
 
   private fun LessonContext.waitIndexingTasks() {
     task {
-      triggerByUiComponentAndHighlight(highlightInside = false) { progress: NonOpaquePanel ->
+      triggerAndBorderHighlight().component { progress: NonOpaquePanel ->
         progress.javaClass.name.contains("InlineProgressPanel")
       }
     }
@@ -368,7 +368,7 @@ class PythonOnboardingTour :
 
   private fun LessonContext.runTasks() {
     task {
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: EditorComponentImpl ->
+      triggerAndBorderHighlight().component { ui: EditorComponentImpl ->
         ui.text.contains("find_average")
       }
     }
@@ -377,7 +377,7 @@ class PythonOnboardingTour :
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.context.menu"))
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionMenuItem ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: ActionMenuItem ->
         ui.text.isToStringContains(runItem)
       }
       restoreIfModified(sample)
@@ -394,7 +394,7 @@ class PythonOnboardingTour :
 
     task {
       val stopAction = getActionById("Stop")
-      triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
+      triggerAndFullHighlight { usePulsation = true }.componentPart { ui: ActionToolbarImpl ->
         ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
           val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
           val stop = ui.components.find { it is ActionButton && it.action == stopAction }
@@ -423,7 +423,7 @@ class PythonOnboardingTour :
 
   private fun LessonContext.openLearnToolwindow() {
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { stripe: StripeButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { stripe: StripeButton ->
         stripe.windowInfo.id == "Learn"
       }
     }
@@ -473,7 +473,7 @@ class PythonOnboardingTour :
       LessonUtil.hideStandardToolwindows(project)
     }
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { stripe: StripeButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { stripe: StripeButton ->
         stripe.windowInfo.id == "Project"
       }
     }
@@ -485,7 +485,7 @@ class PythonOnboardingTour :
                                        action("ActivateProjectToolWindow")))
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.view"),
            LearningBalloonConfig(Balloon.Position.atRight, width = 0))
-      triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
+      triggerAndBorderHighlight().treeItem { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 1 && path.getPathComponent(0).isToStringContains("PyCharmLearningProject")
         if (result) {
           if (!collapsed) {
@@ -505,7 +505,7 @@ class PythonOnboardingTour :
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.directory"),
            LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 0))
-      triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
+      triggerAndBorderHighlight().treeItem { _: JTree, path: TreePath ->
         isDemoFilePath(path)
       }
       restoreByUi()
@@ -541,7 +541,7 @@ class PythonOnboardingTour :
         code("values"),
         code("()"),
         action("CodeCompletion")))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
+      triggerAndBorderHighlight().listItem { // no highlighting
         it.isToStringContains("values")
       }
       proposeRestoreForInvalidText("values")
@@ -581,7 +581,7 @@ class PythonOnboardingTour :
     task("ShowIntentionActions") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.1"))
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.2", action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(reformatMessage)
       }
       restoreIfModifiedOrMoved()
@@ -604,7 +604,7 @@ class PythonOnboardingTour :
     task("ShowIntentionActions") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code",
                                        code("find_average"), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(returnTypeMessage(project))
       }
       restoreIfModifiedOrMoved()
@@ -648,7 +648,7 @@ class PythonOnboardingTour :
                                        strong(toggleCase), code("AVERAGE")))
       text(PythonLessonsBundle.message("python.onboarding.invoke.search.everywhere.2",
                                        LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ExtendableTextField ->
+      triggerAndBorderHighlight().component { ui: ExtendableTextField ->
         UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
       }
       restoreIfModifiedOrMoved()
@@ -667,7 +667,7 @@ class PythonOnboardingTour :
       }
       text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description",
                                        strong("AVERAGE"), strong(PythonLessonsBundle.message("toggle.case.part"))))
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         val value = (item as? GotoActionModel.MatchedValue)?.value
         (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction
       }
@@ -696,7 +696,7 @@ class PythonOnboardingTour :
     }
 
     task {
-      triggerByUiComponentAndHighlight(highlightInside = false) { info: TextPanel.WithIconAndArrows ->
+      triggerAndBorderHighlight().component { info: TextPanel.WithIconAndArrows ->
         info.toolTipText.isToStringContains(PyBundle.message("current.interpreter", ""))
       }
     }

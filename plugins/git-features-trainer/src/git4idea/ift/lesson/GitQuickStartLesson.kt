@@ -84,7 +84,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       findActionTaskId = taskId
       text(GitLessonsBundle.message("git.quick.start.find.action", strong(StringUtil.removeEllipsisSuffix(cloneActionText)),
                                     LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ExtendableTextField ->
+      triggerAndBorderHighlight().component { ui: ExtendableTextField ->
         UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
       }
       test { actions(it) }
@@ -97,7 +97,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
         }
       }
       text(GitLessonsBundle.message("git.quick.start.type.clone", code(StringUtil.removeEllipsisSuffix(cloneActionText))))
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.toNullableString()?.contains(cloneActionText) == true
       }
       triggerStart(it)
@@ -116,7 +116,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      triggerByPartOfComponent(false, false) { ui: TextFieldWithBrowseButton ->
+      triggerUI().componentPart { ui: TextFieldWithBrowseButton ->
         val rect = ui.visibleRect
         Rectangle(rect.x, rect.y, 59, rect.height)
       }
@@ -132,7 +132,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      triggerByPartOfComponent(false) { ui: VcsCloneDialogExtensionList ->
+      triggerUI().componentPart { ui: VcsCloneDialogExtensionList ->
         val size = ui.model.size
         val rect = ui.getCellBounds(size - 1, size - 1)
         Rectangle(rect.x, rect.y, 96, rect.height)
@@ -146,7 +146,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     val cancelButtonText = CommonBundle.getCancelButtonText()
     task {
-      triggerByUiComponentAndHighlight { ui: JButton ->
+      triggerAndFullHighlight().component { ui: JButton ->
         ui.text?.contains(cancelButtonText) == true
       }
     }
@@ -168,7 +168,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == "main" }
+      triggerAndFullHighlight { usePulsation = true }.component { ui: TextPanel.WithIconAndArrows -> ui.text == "main" }
     }
 
     lateinit var showBranchesTaskId: TaskContext.TaskId
@@ -176,7 +176,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       showBranchesTaskId = taskId
       text(GitLessonsBundle.message("git.quick.start.open.branches", action(it)))
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 0))
-      triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
+      triggerUI().component { ui: EngravedLabel ->
         val repository = GitRepositoryManager.getInstance(project).repositories.first()
         val branchesInRepoText = DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitBundle.message("git4idea.vcs.name"),
                                                     DvcsUtil.getShortRepositoryName(repository))
@@ -187,7 +187,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     val newBranchActionText = DvcsBundle.message("new.branch.action.text")
     task {
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.toString().contains(newBranchActionText)
       }
     }
@@ -203,7 +203,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     val createButtonText = GitBundle.message("new.branch.dialog.operation.create.name")
     task {
-      triggerByUiComponentAndHighlight { ui: JButton ->
+      triggerAndFullHighlight().component { ui: JButton ->
         ui.text?.contains(createButtonText) == true
       }
     }
@@ -236,7 +236,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
         line = editor.document.getLineNumber(startOffset)
       }
       text(GitLessonsBundle.message("git.quick.start.modify.file", code("green")))
-      triggerByPartOfComponent l@{ ui: EditorComponentImpl ->
+      triggerAndBorderHighlight().componentPart l@{ ui: EditorComponentImpl ->
         if (ui.editor != editor) return@l null
         val endOffset = ui.editor.caretModel.offset
         if (endOffset < startOffset || ui.editor.document.getLineNumber(endOffset) != line) return@l null
@@ -279,7 +279,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
+      triggerAndBorderHighlight().treeItem { _: JTree, path: TreePath ->
         path.getPathComponent(path.pathCount - 1).toString().contains(fileToChange)
       }
     }
@@ -292,7 +292,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       before { LearningUiHighlightingManager.clearHighlights() }
       val commitButtonText = GitBundle.message("commit.action.name").dropMnemonic()
       text(GitLessonsBundle.message("git.quick.start.perform.commit", strong(commitButtonText)))
-      triggerByUiComponentAndHighlight(highlightInside = false) { _: CommitMessage -> true }
+      triggerAndBorderHighlight().component { _: CommitMessage -> true }
       triggerOnNotification { it.displayId == COMMIT_FINISHED }
       showWarningIfCommitWindowClosed()
       test {
@@ -306,7 +306,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     val pushButtonText = DvcsBundle.message("action.push").dropMnemonic()
     task {
       openPushDialogText(GitLessonsBundle.message("git.quick.start.open.push.dialog"))
-      triggerByUiComponentAndHighlight { ui: JBOptionButton ->
+      triggerAndFullHighlight().component { ui: JBOptionButton ->
         ui.text?.contains(pushButtonText) == true
       }
       test { actions("Vcs.Push") }

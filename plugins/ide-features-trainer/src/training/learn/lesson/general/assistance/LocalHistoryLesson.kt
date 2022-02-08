@@ -160,8 +160,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       invokeMenuTaskId = taskId
       text(LessonsBundle.message("local.history.imagine.restore", strong(ActionsBundle.message("action.\$Undo.text"))))
       text(LessonsBundle.message("local.history.invoke.context.menu", strong(localHistoryActionText)))
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: EditorComponentImpl -> ui.editor == editor }
-      triggerByUiComponentAndHighlight { ui: ActionMenu ->
+      triggerAndBorderHighlight().component { ui: EditorComponentImpl -> ui.editor == editor }
+      triggerAndFullHighlight().component { ui: ActionMenu ->
         ui.text.isToStringContains(localHistoryActionText)
       }
       test {
@@ -172,7 +172,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     task("LocalHistory.ShowHistory") {
       val showHistoryActionText = ActionsBundle.actionText(it).dropMnemonic()
       text(LessonsBundle.message("local.history.show.history", strong(localHistoryActionText), strong(showHistoryActionText)))
-      triggerByUiComponentAndHighlight(clearPreviousHighlights = false) { ui: ActionMenuItem ->
+      triggerAndFullHighlight { clearPreviousHighlights = false }.component { ui: ActionMenuItem ->
         ui.text == showHistoryActionText
       }
       trigger(it)
@@ -187,7 +187,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
     var revisionsTable: JBTable? = null
     task {
-      triggerByPartOfComponent { ui: JBTable ->
+      triggerAndBorderHighlight().componentPart { ui: JBTable ->
         if (checkInsideLocalHistoryFrame(ui)) {
           revisionsTable = ui
           ui.getCellRect(revisionInd, 0, false)
@@ -202,7 +202,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       text(LessonsBundle.message("local.history.select.revision", strong(localHistoryActionText), strong(localHistoryActionText)))
       val step = CompletableFuture<Boolean>()
       addStep(step)
-      triggerByUiComponentAndHighlight(false, false, clearPreviousHighlights = false) l@{ ui: JBLoadingPanel ->
+      triggerUI { clearPreviousHighlights = false }.component l@{ ui: JBLoadingPanel ->
         if (!checkInsideLocalHistoryFrame(ui)) return@l false
         ui.addListener(object : JBLoadingPanelListener {
           override fun onLoadingStart() {
@@ -230,7 +230,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     }
 
     task {
-      triggerByPartOfComponent { ui: EditorGutterComponentEx -> findDiffGutterRect(ui) }
+      triggerAndBorderHighlight().componentPart { ui: EditorGutterComponentEx -> findDiffGutterRect(ui) }
     }
 
     task {

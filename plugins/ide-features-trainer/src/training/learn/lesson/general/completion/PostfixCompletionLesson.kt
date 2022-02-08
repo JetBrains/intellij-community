@@ -27,7 +27,7 @@ abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBu
 
     task {
       text(LessonsBundle.message("postfix.completion.intro") + " " + getTypeTaskText())
-      triggerByListItemAndHighlight {
+      triggerAndBorderHighlight().listItem {
         it.isToStringContains(completionItem)
       }
       proposeRestore {
