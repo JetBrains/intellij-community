@@ -106,7 +106,7 @@
     </orderEntry>
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.rd.community" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-jsr223" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-json" level="project" />
