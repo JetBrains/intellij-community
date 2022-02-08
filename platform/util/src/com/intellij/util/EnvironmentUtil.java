@@ -346,10 +346,12 @@ public final class EnvironmentUtil {
       }
 
       final String output = stdoutGobbler.getText().trim();
-      final String stderr = stderrGobbler.getText();
+      final String stderr = stderrGobbler.getText().trim();
       if (exitCode != 0 || output.isEmpty()) {
-        EnvironmentReaderException ex = new EnvironmentReaderException("command " + command + "\n\texit code: " + exitCode + "\n\tOS: " + SystemInfoRt.OS_NAME,
-                                                                       output, stderr.trim());
+        EnvironmentReaderException ex = new EnvironmentReaderException("command " + command +
+                                                                       "\n\texit code: " + exitCode +
+                                                                       "\n\tOS: " + SystemInfoRt.OS_NAME,
+                                                                       output, stderr);
         LOG.error(ex);
         throw ex;
       }
