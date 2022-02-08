@@ -18,7 +18,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
+internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override val name = GradleConstants.SYSTEM_ID.readableName
 
   override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
