@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.timeline.comment
 
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.InlineIconButton
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -114,14 +115,18 @@ class SubmittableTextFieldComponent(val submittableTextField: SubmittableTextFie
   ): InlineIconButton? {
     val iconConfig = actionConfig.iconConfig ?: return null
 
-    return InlineIconButton(
+    val button = InlineIconButton(
       CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered,
-      tooltip = iconConfig.name,
-      shortcut = actionConfig.shortcut
+      tooltip = iconConfig.name
     ).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       actionListener = ActionListener { submit() }
     }
+
+    config.submitConfig.shortcut.addAndInvokeListener {
+      button.shortcut = it
+    }
+    return button
   }
 
   private fun createCancelButton(actionConfig: CancelActionConfig?): InlineIconButton? {
@@ -141,9 +146,14 @@ class SubmittableTextFieldComponent(val submittableTextField: SubmittableTextFie
   }
 
   private fun installSubmitAction(submitConfig: SubmitActionConfig) {
-    object : DumbAwareAction() {
+    val submitAction = object : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) = submit()
-    }.registerCustomShortcutSet(submitConfig.shortcut, submittableTextField)
+    }
+
+    submitConfig.shortcut.addAndInvokeListener {
+      submitAction.unregisterCustomShortcutSet(submittableTextField)
+      submitAction.registerCustomShortcutSet(it, submittableTextField)
+    }
   }
 
   private fun installCancelAction(cancelConfig: CancelActionConfig?) {
@@ -190,7 +200,7 @@ class SubmittableTextFieldComponent(val submittableTextField: SubmittableTextFie
 
   data class SubmitActionConfig(
     val iconConfig: ActionButtonConfig?,
-    val shortcut: ShortcutSet = defaultSubmitShortcut
+    val shortcut: SingleValueModel<ShortcutSet> = SingleValueModel(defaultSubmitShortcut)
   )
 
   data class CancelActionConfig(
