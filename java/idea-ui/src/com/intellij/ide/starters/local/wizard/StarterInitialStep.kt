@@ -128,7 +128,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
         }
       }
 
-      if (starterSettings.testFrameworks.isNotEmpty()) {
+      if (starterSettings.testFrameworks.size > 1) {
         row(JavaStartersBundle.message("title.project.test.framework.label")) {
           segmentedButton(starterSettings.testFrameworks, StarterTestRunner::title)
             .bind(testFrameworkProperty)
