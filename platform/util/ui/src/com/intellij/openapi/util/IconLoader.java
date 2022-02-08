@@ -83,6 +83,25 @@ public final class IconLoader {
   private IconLoader() {}
 
   @ApiStatus.Internal
+  public static @Nullable Icon loadCustomVersion(@NotNull CachedImageIcon icon, int width, int height) {
+    ImageDataLoader resolver = icon.resolver;
+    URL url = resolver == null ? null : resolver.getURL();
+    String path = url == null ? null : url.toString();
+    if (path != null && path.endsWith(".svg")) {
+      String modified = path.substring(0, path.length() - 4) + "@" + width + "x" + height + ".svg";
+      try {
+        Icon foundIcon = findIcon(new URL(modified));
+        if (foundIcon instanceof CachedImageIcon && foundIcon.getIconWidth() == width && foundIcon.getIconHeight() == height) {
+          return foundIcon;
+        }
+      }
+      catch (MalformedURLException ignore) {
+      }
+    }
+    return null;
+  }
+
+  @ApiStatus.Internal
   public static Icon loadCustomVersionOrScale(@NotNull ScalableIcon icon, float size) {
     if (icon.getIconWidth() == size) {
       return icon;
@@ -93,20 +112,8 @@ public final class IconLoader {
       cachedIcon = ((RetrievableIcon)icon).retrieveIcon();
     }
     if (cachedIcon instanceof CachedImageIcon) {
-      String suffix = "@" + (int)size + "x" + (int)size + ".svg";
-      ImageDataLoader resolver = ((CachedImageIcon)cachedIcon).resolver;
-      URL url = resolver == null ? null : resolver.getURL();
-      if (url != null) {
-        try {
-          URL newUrl = new URL(url.toString().replace(".svg", suffix));
-          Icon newIcon = findIcon(newUrl);
-          if (newIcon instanceof CachedImageIcon && newIcon.getIconWidth() == size) {
-            return newIcon;
-          }
-        }
-        catch (MalformedURLException ignore) {
-        }
-      }
+      Icon version = loadCustomVersion((CachedImageIcon)cachedIcon, (int)size, (int)size);
+      if (version != null) return version;
     }
 
     return icon.scale(size / icon.getIconWidth());

@@ -20,7 +20,7 @@ abstract class HoledIcon(private val icon: Icon) : RetrievableIcon, ScalableIcon
   override fun retrieveIcon() = icon
 
   override fun getScale() = (icon as? ScalableIcon)?.scale ?: 1f
-  override fun scale(factor: Float) = copyWith((icon as? ScalableIcon)?.scale(factor) ?: IconUtil.scale(icon, null, factor))
+  override fun scale(factor: Float) = copyWith(IconUtil.scaleOrLoadCustomVersion(icon, factor))
 
   override fun getIconWidth() = icon.iconWidth
   override fun getIconHeight() = icon.iconHeight

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
@@ -653,6 +653,25 @@ public final class IconUtil {
     int actual = size.applyAsInt(icon);
     int expected = size.applyAsInt(defaultIcon);
     return expected == actual ? icon : scale(icon, ancestor, (float)expected / actual);
+  }
+
+  /**
+   * @param icon  the icon to scale
+   * @param scale the scale factor
+   * @return the scaled icon
+   */
+  @ApiStatus.Internal
+  public static @NotNull Icon scaleOrLoadCustomVersion(@NotNull Icon icon, float scale) {
+    if (icon instanceof IconLoader.CachedImageIcon) {
+      int oldWidth = icon.getIconWidth();
+      int oldHeight = icon.getIconHeight();
+      int newWidth = Math.round(scale * oldWidth);
+      int newHeight = Math.round(scale * oldHeight);
+      if (oldWidth == newWidth && oldHeight == newHeight) return icon;
+      Icon version = IconLoader.loadCustomVersion((IconLoader.CachedImageIcon)icon, newWidth, newHeight);
+      if (version != null) return version;
+    }
+    return scale(icon, null, scale);
   }
 
   /**
