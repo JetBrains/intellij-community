@@ -3,21 +3,25 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
+import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnippetDocTag, PsiLanguageInjectionHost {
   public PsiSnippetDocTagImpl() {
@@ -79,6 +83,123 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
     return true;
   }
 
+  @Contract(pure = true)
+  public @NotNull List<TextRange> getContentRanges() {
+    final PsiSnippetDocTagValue valueElement = getValueElement();
+    if (valueElement == null) return Collections.emptyList();
+
+    final PsiSnippetDocTagBody body = valueElement.getBody();
+    if (body == null) return Collections.emptyList();
+
+    final ASTNode colon = getColonElement(body);
+    if (colon == null) return Collections.emptyList();
+
+    final int startOffset = colon.getTextRange().getEndOffset();
+
+    final TextRange snippetBodyRange = body.getTextRange();
+
+    final TextRange range = TextRange.create(startOffset, snippetBodyRange.getEndOffset());
+    final TextRange snippetBodyTextRangeRelativeToSnippetTag = range.shiftLeft(getStartOffset());
+
+    final String[] lines = snippetBodyTextRangeRelativeToSnippetTag.substring(getText()).split("\n");
+    if (lines.length == 0) return Collections.singletonList(snippetBodyTextRangeRelativeToSnippetTag);
+
+    return getRanges(snippetBodyTextRangeRelativeToSnippetTag, lines);
+  }
+
+  @Contract(pure = true)
+  private static @NotNull List<TextRange> getRanges(@NotNull TextRange snippetBodyTextRangeRelativeToSnippet, String@NotNull [] lines) {
+    final int firstLine = getFirstNonEmptyLine(lines);
+    final int lastLine = getLastNonEmptyLine(lines);
+
+    int indent = getIndent(lines, firstLine, lastLine);
+    if (indent == Integer.MAX_VALUE) indent = 0;
+
+    int startOffset = getStartOffsetOfFirstNonEmptyLine(snippetBodyTextRangeRelativeToSnippet, lines, firstLine);
+
+    final List<TextRange> ranges = new ArrayList<>();
+    for (int i = firstLine; i < Math.min(lastLine, lines.length); i++) {
+      final String line = lines[i];
+      final int size = line.length() + 1;
+      ranges.add(TextRange.create(size - indent).shiftRight(startOffset + indent));
+      startOffset += size;
+    }
+
+    final int endOffset = snippetBodyTextRangeRelativeToSnippet.getEndOffset();
+    final int lastLineStartOffset = Math.min(endOffset, startOffset + indent);
+    final int lastLineEndOffset = startOffset + lines[lastLine].length();
+    ranges.add(TextRange.create(lastLineStartOffset, Math.min(endOffset, lastLineEndOffset)));
+    return ranges;
+  }
+
+  @Contract(pure = true)
+  @Range(from = 0, to = Integer.MAX_VALUE)
+  private static int getStartOffsetOfFirstNonEmptyLine(@NotNull TextRange snippetBodyTextRangeRelativeToSnippet, String@NotNull [] lines, int firstLine) {
+    int start = snippetBodyTextRangeRelativeToSnippet.getStartOffset();
+    for (int i = 0; i < Math.min(firstLine, lines.length); i++) {
+      start += lines[i].length() + 1;
+    }
+    return start;
+  }
+
+  @Contract(pure = true)
+  @Range(from = 0, to = Integer.MAX_VALUE)
+  private static int getIndent(String@NotNull [] lines, int firstLine, int lastLine) {
+    int minIndent = Integer.MAX_VALUE;
+    for (int i = firstLine; i <= lastLine && i < lines.length; i++) {
+      String line = lines[i];
+      final int indentLength;
+      if (isEmptyOrSpacesWithLeadingAsterisksOnly(line)) {
+        indentLength = line.length();
+      }
+      else {
+        indentLength = calculateIndent(line);
+      }
+      if (minIndent > indentLength) minIndent = indentLength;
+    }
+    return minIndent;
+  }
+
+  @Contract(pure = true)
+  @Range(from = 0, to = Integer.MAX_VALUE)
+  private static int getLastNonEmptyLine(String@NotNull[] lines) {
+    int lastLine = lines.length - 1;
+    while (lastLine > 0 && isEmptyOrSpacesWithLeadingAsterisksOnly(lines[lastLine])) {
+      lastLine --;
+    }
+    return lastLine;
+  }
+
+  @Contract(pure = true)
+  @Range(from = 0, to = Integer.MAX_VALUE)
+  private static int getFirstNonEmptyLine(String@NotNull[] lines) {
+    int firstLine = 0;
+    while (firstLine < lines.length && isEmptyOrSpacesWithLeadingAsterisksOnly(lines[firstLine])) {
+      firstLine ++;
+    }
+    return firstLine;
+  }
+
+  @Contract(pure = true)
+  private static boolean isEmptyOrSpacesWithLeadingAsterisksOnly(@NotNull String lines) {
+    if (lines.isEmpty()) return true;
+    return lines.matches("^\\s*\\**\\s*$");
+  }
+
+  @Contract(pure = true)
+  @Range(from = 0, to = Integer.MAX_VALUE)
+  private static int calculateIndent(@NotNull String content) {
+    if (content.isEmpty()) return 0;
+    final String noIndent = content.replaceAll("^\\s*\\*\\s*", "");
+    return content.length() - noIndent.length();
+  }
+
+  @Contract(pure = true)
+  private static @Nullable ASTNode getColonElement(@NotNull PsiSnippetDocTagBody snippetBodyBody) {
+    final ASTNode[] colonElements = snippetBodyBody.getNode().getChildren(TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_COLON));
+    return colonElements.length == 1 ? colonElements[0] : null;
+  }
+
   @Override
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
     return new SnippetDocTagManipulator().handleContentChange(this, text);
@@ -87,44 +208,41 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   @Override
   public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new LiteralTextEscaper<PsiSnippetDocTagImpl>(this) {
-      private int[] outSourceOffsets;
+
+      private int[] myOffsets;
+
       @Override
       public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-        String subText = rangeInsideHost.substring(myHost.getText());
-        outSourceOffsets = new int[subText.length() + 1];
+        final List<TextRange> ranges = myHost.getContentRanges();
 
-        final int outOffset = outChars.length();
-        int off = 0;
-        int len = subText.length();
+        final String content = rangeInsideHost.substring(myHost.getText());
 
-        boolean lookingForLeadingAsterisk = true;
-        while (off < len) {
-          final char aChar = subText.charAt(off++);
-          if (aChar != '*' && !Character.isWhitespace(aChar)) {
-            lookingForLeadingAsterisk = false;
+        myOffsets = new int[content.length() + 1];
+        Arrays.fill(myOffsets, -1);
+
+        int i = 0;
+        boolean decoded = false;
+        for (TextRange range : ranges) {
+          if (!rangeInsideHost.contains(range)) continue;
+
+          for (int j = 0; j < range.getLength(); j++) {
+            myOffsets[i ++] = range.getStartOffset() + j;
           }
-          else if (lookingForLeadingAsterisk && aChar == '*') {
-            while (off < len && subText.charAt(off) == '*') {
-              off++;
-            }
-            lookingForLeadingAsterisk = false;
-            continue;
-          }
-          else if (aChar == '\n') {
-            lookingForLeadingAsterisk = true;
-          }
-          outChars.append(aChar);
-          outSourceOffsets[outChars.length() - outOffset] = off;
+
+          decoded = true;
+          outChars.append(range.substring(myHost.getText()));
         }
+        myOffsets[i] = rangeInsideHost.getEndOffset();
 
-        return true;
+        return decoded;
       }
 
       @Override
       public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
-        int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
-        if (result == -1) return -1;
-        return rangeInsideHost.getStartOffset() + Math.min(result, rangeInsideHost.getLength());
+        if (offsetInDecoded >= myOffsets.length) {
+          return -1;
+        }
+        return myOffsets[offsetInDecoded];
       }
 
       @Override
@@ -133,4 +251,5 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
       }
     };
   }
+
 }

@@ -105,7 +105,7 @@ public class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapter {
 
     final JavaCodeStyleSettings settings = CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
 
-    return settings.JD_LEADING_ASTERISKS_ARE_ENABLED ? whitespacesPrefix + "*" : whitespacesPrefix;
+    return settings.JD_LEADING_ASTERISKS_ARE_ENABLED ? whitespacesPrefix + "* " : whitespacesPrefix;
   }
 
 }
