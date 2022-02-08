@@ -7,11 +7,15 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
 import com.intellij.refactoring.extractMethod.ExtractMethodSettings;
 import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
 import com.intellij.refactoring.util.AbstractVariableData;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.refactoring.inline.PyInlineFunctionProcessor;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.ApiStatus;
@@ -68,6 +72,11 @@ public class PyRefactoringUiService {
         return null;
       }
     };
+  }
+
+  public void showPyInlineFunctionDialog(@NotNull Project project,
+                                         @NotNull Editor editor,
+                                         @NotNull PyFunction function, @Nullable PsiReference reference) {
   }
 
   public static PyRefactoringUiService getInstance() {

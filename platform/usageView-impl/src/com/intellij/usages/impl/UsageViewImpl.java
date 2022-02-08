@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -41,8 +41,10 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.actions.MergeSameLineUsagesAction;
+import com.intellij.usages.impl.rules.UsageFilteringRules;
 import com.intellij.usages.rules.*;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -83,7 +85,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
-import static com.intellij.usages.impl.rules.UsageFilteringRules.usageFilteringRules;
 
 public class UsageViewImpl implements UsageViewEx {
   private static final GroupNode.NodeComparator COMPARATOR = new GroupNode.NodeComparator();
@@ -780,7 +781,7 @@ public class UsageViewImpl implements UsageViewEx {
   protected UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
-    for (UsageFilteringRule rule : usageFilteringRules(project)) {
+    for (UsageFilteringRule rule : UsageFilteringRules.usageFilteringRules(project)) {
       if (myFilteringRulesState.isActive(rule.getRuleId())) {
         list.add(rule);
       }
@@ -1216,14 +1217,9 @@ public class UsageViewImpl implements UsageViewEx {
     return myProject;
   }
 
-  @Nullable
-  public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
-    return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
-  }
-
   static KeyboardShortcut getShowUsagesWithSettingsShortcut(UsageTarget @NotNull [] targets) {
     ConfigurableUsageTarget configurableTarget = getConfigurableTarget(targets);
-    return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
+    return configurableTarget == null ? UsageViewUtil.getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
 
   @Override
@@ -1235,7 +1231,7 @@ public class UsageViewImpl implements UsageViewEx {
     private ShowSettings() {
       super(UsageViewBundle.message("action.text.usage.view.settings"), null, AllIcons.General.GearPlain);
       ConfigurableUsageTarget target = getConfigurableTarget(myTargets);
-      KeyboardShortcut shortcut = target == null ? getShowUsagesWithSettingsShortcut() : target.getShortcut();
+      KeyboardShortcut shortcut = target == null ? UsageViewUtil.getShowUsagesWithSettingsShortcut() : target.getShortcut();
       if (shortcut != null) {
         registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
       }

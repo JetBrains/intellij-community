@@ -355,9 +355,6 @@
     <projectService serviceInterface="com.intellij.ide.util.gotoByName.ChooseByNameFactory"
                     serviceImplementation="com.intellij.ide.util.gotoByName.ChooseByNameFactoryImpl"/>
 
-    <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
-                    serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
-
     <projectService serviceImplementation="com.intellij.codeEditor.printing.ExportToHTMLSettings"/>
 
     <projectService serviceImplementation="com.intellij.diagnostic.logging.LogConsolePreferences"/>
@@ -1049,7 +1046,6 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.rename.RenameUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.rename.RenameInplacePopupUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.move.MoveUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.actions.RefactoringUsageCollector"/>

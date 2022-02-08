@@ -16,6 +16,11 @@
     <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider" dynamic="true"/>
     <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
     <extensionPoint name="renamerFactory" dynamic="true" interface="com.intellij.refactoring.rename.RenamerFactory"/>
+    <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper" dynamic="true"/>
+    <extensionPoint name="inlineActionHandler" interface="com.intellij.lang.refactoring.InlineActionHandler" dynamic="true"/>
+    <extensionPoint name="refactoring.inlineHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.refactoring.InlineHandler"/>
+    </extensionPoint>
 
     <extensionPoint name="rename.inplace.resolveSnapshotProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.rename.ResolveSnapshotProvider"/>
@@ -24,5 +29,12 @@
     <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator" dynamic="true"/>
 
     <extensionPoint name="refactoring.elementListenerProvider" interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider" area="IDEA_PROJECT" dynamic="true"/>
+
+    <extensionPoint name="findInProjectSearchEngine" interface="com.intellij.find.FindInProjectSearchEngine" dynamic="true"/>
+
+    <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider" dynamic="true"/>
+    <extensionPoint name="virtualFileQualifiedNameProvider" interface="com.intellij.ide.actions.VirtualFileQualifiedNameProvider" dynamic="true"/>
+
+    <extensionPoint name="testSourcesFilter" interface="com.intellij.openapi.roots.TestSourcesFilter" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

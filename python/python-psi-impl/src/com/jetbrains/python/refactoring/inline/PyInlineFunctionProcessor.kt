@@ -17,7 +17,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.PyDunderAllReference
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -39,12 +39,12 @@ class PyInlineFunctionProcessor(project: Project,
                                 private val myEditor: Editor,
                                 private val myFunction: PyFunction,
                                 private val myReference: PsiReference?,
-                                private val myInlineThis: Boolean,
+                                private val myInlineThisOnly: Boolean,
                                 removeDeclaration: Boolean) : BaseRefactoringProcessor(project) {
 
   private val myFunctionClass = myFunction.containingClass
   private val myGenerator = PyElementGenerator.getInstance(myProject)
-  private var myRemoveDeclaration = !myInlineThis && removeDeclaration
+  private var myRemoveDeclaration = !myInlineThisOnly && removeDeclaration
 
   override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
     if (refUsages.isNull) return false
@@ -79,11 +79,12 @@ class PyInlineFunctionProcessor(project: Project,
     return showConflicts(conflicts, filtered.toTypedArray())
   }
 
-  private fun handleUsageError(element: PsiElement, @PropertyKey(resourceBundle = PyBundle.BUNDLE) error: String, conflicts: MultiMap<PsiElement, String>): Boolean {
-    val errorText = PyBundle.message(error, myFunction.name)
-    if (myInlineThis) {
+  private fun handleUsageError(element: PsiElement, @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) error: String, conflicts: MultiMap<PsiElement, String>): Boolean {
+    val errorText = PyPsiBundle.message(error, myFunction.name)
+    if (myInlineThisOnly) {
       // shortcut for inlining single reference: show error hint instead of modal dialog
-      CommonRefactoringUtil.showErrorHint(myProject, myEditor, errorText, PyBundle.message("refactoring.inline.function.title"), PyInlineFunctionHandler.REFACTORING_ID)
+      CommonRefactoringUtil.showErrorHint(myProject, myEditor, errorText, PyPsiBundle.message("refactoring.inline.function.title"),
+                                          PyInlineFunctionHandler.REFACTORING_ID)
       prepareSuccessful()
       return false
     }
@@ -93,7 +94,7 @@ class PyInlineFunctionProcessor(project: Project,
   }
 
   override fun findUsages(): Array<UsageInfo> {
-    if (myInlineThis) {
+    if (myInlineThisOnly) {
       val element = myReference!!.element as PyReferenceExpression
       val localImport = PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
       return if (localImport != null) arrayOf(UsageInfo(element), UsageInfo(localImport)) else arrayOf(UsageInfo(element))
@@ -376,13 +377,13 @@ class PyInlineFunctionProcessor(project: Project,
     return myGenerator.createFromText(level, PyAssignmentStatement::class.java, "$uniqueName = $uniqueName")
   }
 
-  override fun getCommandName() = PyBundle.message("refactoring.inline.function.command.name", myFunction.name)
+  override fun getCommandName() = PyPsiBundle.message("refactoring.inline.function.command.name", myFunction.name)
   override fun getRefactoringId() = PyInlineFunctionHandler.REFACTORING_ID
 
   override fun createUsageViewDescriptor(usages: Array<out UsageInfo>) = object : UsageViewDescriptor {
     override fun getElements(): Array<PsiElement> = arrayOf(myFunction)
-    override fun getProcessedElementsHeader(): String = PyBundle.message("refactoring.inline.function.function.to.inline")
-    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int): String = PyBundle.message("refactoring.inline.function.invocations.to.be.inlined", filesCount)
+    override fun getProcessedElementsHeader(): String = PyPsiBundle.message("refactoring.inline.function.function.to.inline")
+    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int): String = PyPsiBundle.message("refactoring.inline.function.invocations.to.be.inlined", filesCount)
     override fun getCommentReferencesText(usagesCount: Int, filesCount: Int): String = ""
   }
 }

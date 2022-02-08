@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -157,7 +158,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
         throw new ConflictsInTestsException(conflictDescriptions.values());
       }
       if (myPrepareSuccessfulSwingThreadCallback != null) {
-        ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
+        ConflictsDialogBase dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
         if (!dialog.showAndGet()) {
           if (dialog.isShowConflicts()) prepareSuccessful();
           return false;

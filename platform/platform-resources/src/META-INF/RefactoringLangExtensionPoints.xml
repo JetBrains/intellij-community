@@ -15,10 +15,6 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPushDown.PushDownDelegate"/>
     </extensionPoint>
     <extensionPoint name="refactoring.moveDirectoryWithClassesHelper" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper" dynamic="true"/>
-    <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper" dynamic="true"/>
-    <extensionPoint name="refactoring.inlineHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.refactoring.InlineHandler"/>
-    </extensionPoint>
     <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate" dynamic="true"/>
     <extensionPoint name="refactoring.extractIncludeHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.RefactoringActionHandler"/>
@@ -31,8 +27,6 @@
                     interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
 
     <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider" dynamic="true"/>
-
-    <extensionPoint name="inlineActionHandler" interface="com.intellij.lang.refactoring.InlineActionHandler" dynamic="true"/>
 
     <extensionPoint name="changeSignatureDetector" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.inplace.LanguageChangeSignatureDetector"/>

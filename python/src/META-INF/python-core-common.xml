@@ -188,8 +188,6 @@
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.PyRefactoringProvider"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="Python"
                                                             implementationClass="com.jetbrains.python.refactoring.classes.PyMembersRefactoringSupport"/>
-    <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineLocalHandler"/>
-    <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineFunctionHandler"/>
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <typeDeclarationProvider implementation="com.jetbrains.python.codeInsight.PyTypeDeclarationProvider"/>
     <lang.smartEnterProcessor language="Python"

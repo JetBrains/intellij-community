@@ -21,8 +21,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.inheritanceToDelegation.usageInfo.*;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -191,7 +191,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
       analyzeConflicts(usagesIn, conflicts);
       if (!conflicts.isEmpty()) {
-        ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
+        ConflictsDialogBase conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
         if (!conflictsDialog.showAndGet()) {
           if (conflictsDialog.isShowConflicts()) prepareSuccessful();
           return false;

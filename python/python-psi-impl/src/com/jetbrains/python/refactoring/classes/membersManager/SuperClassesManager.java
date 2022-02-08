@@ -6,7 +6,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
-import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -91,7 +90,7 @@ final class SuperClassesManager extends MembersManager<PyClass> {
   @NotNull
   @Override
   public PyMemberInfo<PyClass> apply(@NotNull final PyClass input) {
-    final String name = RefactoringBundle.message("member.info.extends.0", PyClassCellRenderer.getClassText(input));
+    final String name = RefactoringBundle.message("member.info.extends.0", input.getName());
     //TODO: Check for "overrides"
     return new PyMemberInfo<>(input, false, name, false, this, false);
   }

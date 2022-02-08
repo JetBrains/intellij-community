@@ -2,7 +2,7 @@
 package com.jetbrains.python.refactoring.inline
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.application.ApplicationManager
@@ -14,8 +14,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.psi.*
@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import com.jetbrains.python.refactoring.PyRefactoringUiService
 import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
@@ -46,29 +47,33 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     if (project == null || editor == null || element !is PyFunction) return
     val functionScope = ControlFlowCache.getScope(element)
     val error = when {
-      element.isAsync -> PyBundle.message("refactoring.inline.function.async")
-      element.isGenerator -> PyBundle.message("refactoring.inline.function.generator")
-      PyUtil.isInitOrNewMethod(element) -> PyBundle.message("refactoring.inline.function.constructor")
-      PyBuiltinCache.getInstance(element).isBuiltin(element) -> PyBundle.message("refactoring.inline.function.builtin")
-      isSpecialMethod(element) -> PyBundle.message("refactoring.inline.function.special.method")
-      isUnderSkeletonDir(element) -> PyBundle.message("refactoring.inline.function.skeleton.only")
-      hasDecorators(element) -> PyBundle.message("refactoring.inline.function.decorator")
-      hasReferencesToSelf(element) -> PyBundle.message("refactoring.inline.function.self.referrent")
-      hasStarArgs(element) -> PyBundle.message("refactoring.inline.function.star")
-      overridesMethod(element, project) -> PyBundle.message("refactoring.inline.function.overrides.method")
-      isOverridden(element) -> PyBundle.message("refactoring.inline.function.is.overridden")
-      functionScope.hasGlobals() -> PyBundle.message("refactoring.inline.function.global")
-      functionScope.hasNonLocals() -> PyBundle.message("refactoring.inline.function.nonlocal")
-      hasNestedFunction(element) -> PyBundle.message("refactoring.inline.function.nested")
-      hasNonExhaustiveIfs(element) -> PyBundle.message("refactoring.inline.function.interrupts.flow")
+      element.isAsync -> PyPsiBundle.message("refactoring.inline.function.async")
+      element.isGenerator -> PyPsiBundle.message("refactoring.inline.function.generator")
+      PyUtil.isInitOrNewMethod(element) -> PyPsiBundle.message("refactoring.inline.function.constructor")
+      PyBuiltinCache.getInstance(element).isBuiltin(element) -> PyPsiBundle.message("refactoring.inline.function.builtin")
+      isSpecialMethod(element) -> PyPsiBundle.message("refactoring.inline.function.special.method")
+      isUnderSkeletonDir(element) -> PyPsiBundle.message("refactoring.inline.function.skeleton.only")
+      hasDecorators(element) -> PyPsiBundle.message("refactoring.inline.function.decorator")
+      hasReferencesToSelf(element) -> PyPsiBundle.message("refactoring.inline.function.self.referrent")
+      hasStarArgs(element) -> PyPsiBundle.message("refactoring.inline.function.star")
+      overridesMethod(element, project) -> PyPsiBundle.message("refactoring.inline.function.overrides.method")
+      isOverridden(element) -> PyPsiBundle.message("refactoring.inline.function.is.overridden")
+      functionScope.hasGlobals() -> PyPsiBundle.message("refactoring.inline.function.global")
+      functionScope.hasNonLocals() -> PyPsiBundle.message("refactoring.inline.function.nonlocal")
+      hasNestedFunction(element) -> PyPsiBundle.message("refactoring.inline.function.nested")
+      hasNonExhaustiveIfs(element) -> PyPsiBundle.message("refactoring.inline.function.interrupts.flow")
       else -> null
     }
     if (error != null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, error, PyBundle.message("refactoring.inline.function.title"), REFACTORING_ID)
+      CommonRefactoringUtil.showErrorHint(project, editor, error, PyPsiBundle.message("refactoring.inline.function.title"), REFACTORING_ID)
       return
     }
     if (!ApplicationManager.getApplication().isUnitTestMode){
-      PyInlineFunctionDialog(project, editor, element, findReference(editor)).show()
+      PyRefactoringUiService.getInstance().showPyInlineFunctionDialog(project, editor, element, findReference(editor))
+    } else {
+      val processor = PyInlineFunctionProcessor(project, editor, element, findReference(editor), false, true)
+      processor.setPreviewUsages(false)
+      processor.run()
     }
   }
 
@@ -161,7 +166,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     @JvmStatic
     @VisibleForTesting
     fun findReference(editor: Editor): PsiReference? {
-      val reference = TargetElementUtil.findReference(editor)
+      val reference = TargetElementUtilBase.findReferenceWithoutExpectedCaret(editor)
       return if (reference !is PyImportReference) reference else null
     }
   }

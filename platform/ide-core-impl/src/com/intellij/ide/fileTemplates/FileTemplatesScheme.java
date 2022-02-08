@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public abstract class FileTemplatesScheme implements Scheme {
-  public final static FileTemplatesScheme DEFAULT = new FileTemplatesScheme(IdeBundle.message("default.scheme")) {
+  public final static FileTemplatesScheme DEFAULT = new FileTemplatesScheme(IdeCoreBundle.message("default.scheme")) {
     @NotNull
     @Override
     public String getTemplatesDir() {

@@ -121,6 +121,7 @@ final class PlatformModules {
     "intellij.platform.feedback",
     "intellij.platform.warmup",
     "intellij.platform.buildScripts.downloader",
+    "intellij.platform.usageView.impl",
     )
 
   private static final String UTIL_JAR = "util.jar"

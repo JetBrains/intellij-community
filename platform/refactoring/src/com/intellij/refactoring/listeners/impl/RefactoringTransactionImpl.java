@@ -1,6 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.refactoring.listeners.impl.impl;
+package com.intellij.refactoring.listeners.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -11,7 +11,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
-import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

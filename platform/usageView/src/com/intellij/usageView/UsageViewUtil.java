@@ -3,6 +3,8 @@
 package com.intellij.usageView;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -18,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usages.Usage;
@@ -27,6 +28,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -169,12 +171,17 @@ public final class UsageViewUtil {
     if (hasNonCodeUsages(usages) || inGeneratedCode) {
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
       if (statusBar != null) {
-        statusBar.setInfo(RefactoringBundle.message(inGeneratedCode
+        statusBar.setInfo(UsageViewBundle.message(inGeneratedCode
                                                     ? "occurrences.found.in.comments.strings.non.java.files.and.generated.code"
                                                     : "occurrences.found.in.comments.strings.and.non.java.files"));
       }
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
+    return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
   }
 }

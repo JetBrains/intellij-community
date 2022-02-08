@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -29,16 +28,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -51,7 +47,6 @@ import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -59,8 +54,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
-import com.intellij.usages.impl.UsageViewImpl;
-import com.intellij.usages.impl.UsageViewStatisticsCollector;
+import com.intellij.usages.impl.UsageViewEx;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -221,7 +215,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     if (!refErrorLanguage.isNull()) {
-      Messages.showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
+      MessagesService.getInstance().showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
       return;
     }
     if (!indexNotReadyException.isNull() || DumbService.isDumb(myProject)) {
@@ -229,7 +223,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (!refProcessCanceled.isNull()) {
-      Messages.showErrorDialog(myProject, RefactoringBundle.message("refactoring.index.corruption.notifiction"), RefactoringBundle.message("error.title"));
+      MessagesService.getInstance().showErrorDialog(myProject, RefactoringBundle.message("refactoring.index.corruption.notifiction"), RefactoringBundle.message("error.title"));
       return;
     }
 
@@ -246,7 +240,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     if (!isPreview) {
       isPreview = !ensureElementsWritable(usages, descriptor) || UsageViewUtil.hasReadOnlyUsages(usages);
       if (isPreview) {
-        StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("readonly.occurences.found"));
+        RefactoringUiService.getInstance().setStatusBarInfo(myProject, RefactoringBundle.message("readonly.occurences.found"));
       }
     }
     if (isPreview) {
@@ -424,7 +418,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
     }
 
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    ConflictsDialogBase conflictsDialog = RefactoringUiService.getInstance().createConflictsDialog(project, conflicts, null, true, true);
     return conflictsDialog.showAndGet();
   }
 
@@ -451,7 +445,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       customizeUsagesView(viewDescriptor, myUsageView);
     } else {
       myUsageView.removeUsagesBulk(myUsageView.getUsages());
-      ((UsageViewImpl)myUsageView).appendUsagesInBulk(Arrays.asList(usages));
+      ((UsageViewEx)myUsageView).appendUsagesInBulk(Arrays.asList(usages));
     }
     Set<UnloadedModuleDescription> unloadedModules = computeUnloadedModulesFromUseScope(viewDescriptor);
     if (!unloadedModules.isEmpty()) {
@@ -551,11 +545,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     int count = writableUsageInfos.length;
     if (count > 0) {
-      StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.refactoring.result", count));
+      RefactoringUiService.getInstance().setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.refactoring.result", count));
     }
     else {
       if (!isPreviewUsages(writableUsageInfos)) {
-        StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.noUsages"));
+        RefactoringUiService.getInstance().setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.noUsages"));
       }
     }
   }
@@ -594,19 +588,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       computable, getCommandName(), true, myProject);
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && isPreviewUsages()) {
-      displayPreview(patch);
+      RefactoringUiService.getInstance().displayPreview(myProject, patch);
     }
     WriteAction.run(() -> patch.applyBranchChanges());
-  }
-
-  private void displayPreview(ModelPatch patch) throws ProcessCanceledException {
-    JComponent preview = VcsFacade.getInstance().createPatchPreviewComponent(myProject, patch);
-    if (preview != null) {
-      DialogBuilder builder = new DialogBuilder(myProject).title(RefactoringBundle.message("usageView.tabText")).centerPanel(preview);
-      if (builder.show() != DialogWrapper.OK_EXIT_CODE) {
-        throw new ProcessCanceledException();
-      }
-    }
   }
 
   protected boolean isToBeChanged(@NotNull UsageInfo usageInfo) {
@@ -714,7 +698,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
           .conflictsDetected(refactoringId, conflictUsages);
       }
-      final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usages);
+      final ConflictsDialogBase conflictsDialog = prepareConflictsDialog(conflicts, usages);
       if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
@@ -726,8 +710,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   @NotNull
-  protected ConflictsDialog prepareConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
-    final ConflictsDialog conflictsDialog = createConflictsDialog(conflicts, usages);
+  protected ConflictsDialogBase prepareConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
+    final ConflictsDialogBase conflictsDialog = createConflictsDialog(conflicts, usages);
     conflictsDialog.setCommandName(getCommandName());
     return conflictsDialog;
   }
@@ -749,8 +733,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   @NotNull
-  protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
-    return new ConflictsDialog(myProject, conflicts, usages == null ? null : () -> execute(usages), false, true);
+  protected ConflictsDialogBase createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
+    return RefactoringUiService.getInstance().createConflictsDialog(myProject, conflicts, usages == null ? null : () -> execute(usages), false, true);
   }
 
   @NotNull

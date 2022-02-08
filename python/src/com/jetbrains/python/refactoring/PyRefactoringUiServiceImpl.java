@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
@@ -15,9 +16,12 @@ import com.intellij.refactoring.extractMethod.ExtractMethodSettings;
 import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.refactoring.inline.PyInlineFunctionDialog;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import com.jetbrains.python.refactoring.introduce.PyIntroduceHandlerUi;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -86,5 +90,13 @@ public class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
     else {
       return dialog;
     }
+  }
+
+  @Override
+  public void showPyInlineFunctionDialog(@NotNull Project project,
+                                         @NotNull Editor editor,
+                                         @NotNull PyFunction function,
+                                         @Nullable PsiReference reference) {
+    new PyInlineFunctionDialog(project, editor, function, reference).show();
   }
 }

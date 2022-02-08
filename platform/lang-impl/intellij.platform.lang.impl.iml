@@ -16,6 +16,7 @@
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.usageView" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.usageView.impl" exported="" />
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />

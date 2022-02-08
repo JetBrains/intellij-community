@@ -52,8 +52,9 @@ public class IdeUiService {
 
   }
 
+  @NotNull
   public DataContext createUiDataContext(Component component) {
-    return null;
+    return DataContext.EMPTY_CONTEXT;
   }
 
   public Component getComponentFromRecentMouseEvent() {

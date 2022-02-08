@@ -16,8 +16,8 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -88,7 +88,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       MultiMap<PsiElement, String> conflicts = getConflictDescriptions(usagesIn);
       if (conflicts.size() > 0) {
-        ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
+        ConflictsDialogBase conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
         if (!conflictsDialog.showAndGet()) {
           if (conflictsDialog.isShowConflicts()) prepareSuccessful();
           return false;

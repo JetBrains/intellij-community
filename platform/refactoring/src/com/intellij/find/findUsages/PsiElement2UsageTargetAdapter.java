@@ -1,14 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.findUsages;
 
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
-import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
@@ -20,28 +17,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.RefactoringUiService;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
 
 public class PsiElement2UsageTargetAdapter
   implements PsiElementUsageTarget, DataProvider, PsiElementNavigationItem, ItemPresentation, ConfigurableUsageTarget {
@@ -71,6 +67,7 @@ public class PsiElement2UsageTargetAdapter
   /**
    * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, FindUsagesOptions, boolean)} to avoid
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
+   *
    * @param element
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
@@ -82,6 +79,7 @@ public class PsiElement2UsageTargetAdapter
   /**
    * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
+   *
    * @param element
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
@@ -136,7 +134,7 @@ public class PsiElement2UsageTargetAdapter
   public void findUsages() {
     PsiElement element = getElement();
     if (element != null) {
-      ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager().startFindUsages(element, myOptions);
+      RefactoringUiService.getInstance().startFindUsages(element, myOptions);
     }
   }
 
@@ -155,23 +153,7 @@ public class PsiElement2UsageTargetAdapter
   public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {
     PsiElement target = getElement();
 
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-    }
-
-    Project project = target.getProject();
-    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    final FindUsagesHandlerBase handler = findUsagesManager.getFindUsagesHandler(target, true);
-
-    // in case of injected file, use host file to highlight all occurrences of the target in each injected file
-    PsiFile context = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-    SearchScope searchScope = new LocalSearchScope(context);
-    Collection<PsiReference> refs = handler == null
-                                    ? ReferencesSearch.search(target, searchScope, false).findAll()
-                                    : handler.findReferencesToHighlight(target, searchScope);
-
-    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<>(refs), project, target,
-                                                   editor, context, clearHighlights).run();
+    RefactoringUiService.getInstance().highlightUsageReferences(file, target, editor, clearHighlights);
   }
 
   @Override
@@ -239,7 +221,7 @@ public class PsiElement2UsageTargetAdapter
 
   @Override
   public KeyboardShortcut getShortcut() {
-    return UsageViewImpl.getShowUsagesWithSettingsShortcut();
+    return UsageViewUtil.getShowUsagesWithSettingsShortcut();
   }
 
   @Override
@@ -259,8 +241,7 @@ public class PsiElement2UsageTargetAdapter
   public void showSettings() {
     PsiElement element = getElement();
     if (element != null) {
-      FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myPointer.getProject())).getFindUsagesManager();
-      findUsagesManager.findUsages(element, null, null, true, null);
+      RefactoringUiService.getInstance().findUsages(myPointer.getProject(), element, null, null, true, null);
     }
   }
 

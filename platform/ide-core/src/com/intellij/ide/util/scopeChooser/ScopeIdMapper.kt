@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.openapi.application.ApplicationManager
@@ -53,8 +53,8 @@ abstract class ScopeIdMapper {
 
     @JvmStatic
     val standardNames = setOf(ALL_PLACES_SCOPE_ID, PROJECT_AND_LIBRARIES_SCOPE_ID, PROJECT_FILES_SCOPE_ID, PROJECT_PRODUCTION_FILES_SCOPE_ID,
-      PROJECT_TEST_FILES_SCOPE_ID, SCRATCHES_AND_CONSOLES_SCOPE_ID, RECENTLY_VIEWED_FILES_SCOPE_ID, RECENTLY_CHANGED_FILES_SCOPE_ID,
-      RECENTLY_CHANGED_FILES_SCOPE_ID, OPEN_FILES_SCOPE_ID, CURRENT_FILE_SCOPE_ID)
+                              PROJECT_TEST_FILES_SCOPE_ID, SCRATCHES_AND_CONSOLES_SCOPE_ID, RECENTLY_VIEWED_FILES_SCOPE_ID, RECENTLY_CHANGED_FILES_SCOPE_ID,
+                              RECENTLY_CHANGED_FILES_SCOPE_ID, OPEN_FILES_SCOPE_ID, CURRENT_FILE_SCOPE_ID)
   }
 
   @Nls

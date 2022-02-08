@@ -660,7 +660,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static InplaceButton createSettingsButton(@NotNull Project project,
                                                     @NotNull Runnable cancelAction,
                                                     @NotNull Runnable showDialogAndFindUsagesRunnable) {
-    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+    KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     String tooltip = shortcut == null
                      ? FindBundle.message("show.usages.settings.tooltip")
                      : FindBundle.message("show.usages.settings.tooltip.shortcut", KeymapUtil.getShortcutText(shortcut));
@@ -723,7 +723,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Disposable contentDisposable = Disposer.newDisposable();
     AtomicReference<AbstractPopup> popupRef = new AtomicReference<>();
 
-    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+    KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     if (shortcut != null) {
       new DumbAwareAction() {
         @Override
@@ -1364,7 +1364,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
         protected @Nullable String getShortcutText() {
-          KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+          KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
           return shortcut != null ? KeymapUtil.getShortcutText(shortcut) : null;
         }
       };

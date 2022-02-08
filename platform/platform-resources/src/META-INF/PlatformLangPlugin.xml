@@ -31,6 +31,7 @@
   </xi:include>
 
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
+  <xi:include href="/META-INF/Refactoring.xml"/>
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
