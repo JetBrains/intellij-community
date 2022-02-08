@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
@@ -49,6 +50,8 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   companion object {
     const val SHOW_HOT_KEY_TIP = "com.intellij.ide.navigationToolbar.experimental.showSearchEverywhereHotKeyTip"
   }
+
+  private val logger = logger<SearchEverywhereNewToolbarAction>()
 
   private val margin = JBUI.scale(4)
   private var subscribedForDoubleShift = false
@@ -217,9 +220,16 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   }
 
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    if (action is SearchEverywhereAction && showHotkey()) {
-      if (event.inputEvent is KeyEvent) {
-        PropertiesComponent.getInstance().setValue(SHOW_HOT_KEY_TIP, false, true)
+    if (action is SearchEverywhereAction) {
+      logger.trace("SearchEverywhereAction was called (afterAction works)")
+
+      if (showHotkey()) {
+        logger.trace("SearchEverywhereAction hot key flag is on")
+
+        if (event.inputEvent is KeyEvent) {
+          logger.trace("SearchEverywhereAction key event happened, switching the flag off")
+          PropertiesComponent.getInstance().setValue(SHOW_HOT_KEY_TIP, false, true)
+        }
       }
     }
     if (action is SearchEverywhereNewToolbarAction && event.place == ActionPlaces.MAIN_TOOLBAR) {
