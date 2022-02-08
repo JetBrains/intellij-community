@@ -191,7 +191,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     for (ProviderData map : myCachedData) {
       Object answer = map.get(dataId);
       if (answer != null) {
-        return answer;
+        return answer == ourExplicitNull ? null : answer;
       }
     }
     return null;
@@ -251,8 +251,8 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
           key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS) {
         continue;
       }
-      Object data = hideEditor && (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR) ? ourExplicitNull :
-                    dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key));
+      Object data = hideEditor && (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR || key == InjectedDataKeys.EDITOR) ?
+                    ourExplicitNull : dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key));
       if (data == null) continue;
       cachedData.put(key.getName(), data);
     }
