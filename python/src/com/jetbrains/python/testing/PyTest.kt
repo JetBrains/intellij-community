@@ -3,6 +3,7 @@ package com.jetbrains.python.testing
 
 import com.intellij.execution.Executor
 import com.intellij.execution.Location
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
@@ -79,12 +80,25 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     if (AdvancedSettings.getBoolean("python.pytest.show_summary")) add("--jb-show-summary")
   }.joinToString(" ")
 
+  /**
+   * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
+   */
   override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: List<Pair<Location<*>, AbstractTestProxy>>): List<String> =
     // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
     target.generateArgumentsLine(this) +
     listOf(rawArgumentsSeparator, "--last-failed") +
     ParametersListUtil.parse(additionalArguments)
       .filter(String::isNotEmpty)
+
+  override fun getTestSpecsForRerun(request: TargetEnvironmentRequest,
+                                    scope: GlobalSearchScope,
+                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<TargetEnvironmentFunction<String>> =
+    // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
+    target.generateArgumentsLine(request, this) +
+    listOf(rawArgumentsSeparator, "--last-failed").map(::constant) +
+    ParametersListUtil.parse(additionalArguments)
+      .filter(String::isNotEmpty)
+      .map(::constant)
 
   override val pythonTargetAdditionalParams: String
     get() =
