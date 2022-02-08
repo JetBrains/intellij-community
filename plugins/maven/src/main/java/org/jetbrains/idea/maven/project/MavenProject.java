@@ -80,38 +80,26 @@ public class MavenProject {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
     if (file == null) return null;
 
-    ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-    ObjectInputStream os = new ObjectInputStream(bs);
-    try {
-      try {
-        MavenProject result = new MavenProject(file);
-        result.myState = (State)os.readObject();
-        return result;
-      }
-      catch (ClassNotFoundException e) {
-        throw new IOException(e);
-      }
+    try (ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+         ObjectInputStream os = new ObjectInputStream(bs)) {
+      MavenProject result = new MavenProject(file);
+      result.myState = (State)os.readObject();
+      return result;
     }
-    finally {
-      os.close();
-      bs.close();
+    catch (ClassNotFoundException e) {
+      throw new IOException(e);
     }
   }
 
   public void write(@NotNull DataOutputStream out) throws IOException {
     out.writeUTF(getPath());
 
-    BufferExposingByteArrayOutputStream bs = new BufferExposingByteArrayOutputStream();
-    ObjectOutputStream os = new ObjectOutputStream(bs);
-    try {
+    try (BufferExposingByteArrayOutputStream bs = new BufferExposingByteArrayOutputStream();
+         ObjectOutputStream os = new ObjectOutputStream(bs)) {
       os.writeObject(myState);
 
       out.writeInt(bs.size());
       out.write(bs.getInternalBuffer(), 0, bs.size());
-    }
-    finally {
-      os.close();
-      bs.close();
     }
   }
 

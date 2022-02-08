@@ -13,7 +13,9 @@ import com.intellij.util.ArrayUtilRt;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * @author Gregory.Shrago
@@ -213,25 +215,14 @@ public class MergingFileManager implements FileManager {
 
   private static String[] loadFile(File f1) {
     if (!f1.exists()) return ArrayUtilRt.EMPTY_STRING_ARRAY;
-    ArrayList<String> list = new ArrayList<>();
-    BufferedReader in = null;
-    try {
-      in = new BufferedReader(new FileReader(f1));
-      String str;
-      while ((str = in.readLine()) != null) {
-        list.add(str);
-      }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    } finally {
-      if (in != null) {
-        try {
-          in.close();
-        } catch (IOException e) {
-        }
-      }
+    try (BufferedReader in = new BufferedReader(new FileReader(f1))) {
+      List<String> list = in.lines().collect(Collectors.toList());
+      return ArrayUtilRt.toStringArray(list);
     }
-    return ArrayUtilRt.toStringArray(list);
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
 }

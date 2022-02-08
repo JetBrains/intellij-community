@@ -1297,12 +1297,8 @@ public class MavenUtil {
   }
 
   public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
-    InputStream inputStream = xmlFile.getInputStream();
-    try {
+    try (InputStream inputStream = xmlFile.getInputStream()) {
       return crcWithoutSpaces(inputStream);
-    }
-    finally {
-      inputStream.close();
     }
   }
 

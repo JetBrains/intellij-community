@@ -148,11 +148,8 @@ public final class ResourceUtil {
   }
 
   public static @NotNull String loadText(@NotNull InputStream in) throws IOException {
-    try {
+    try (in) {
       return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-    }
-    finally {
-      in.close();
     }
   }
 }

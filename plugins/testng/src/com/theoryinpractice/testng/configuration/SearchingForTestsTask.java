@@ -231,12 +231,8 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         final String fileId =
           FileUtil.sanitizeFileName(myProject.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml");
         final File suiteFile = new File(PathManager.getSystemPath(), fileId);
-        FileWriter fileWriter = new FileWriter(suiteFile, StandardCharsets.UTF_8);
-        try {
+        try (FileWriter fileWriter = new FileWriter(suiteFile, StandardCharsets.UTF_8)) {
           fileWriter.write(suite.toXml());
-        }
-        finally {
-          fileWriter.close();
         }
         String path = suiteFile.getAbsolutePath() + "\n";
         FileUtil.writeToFile(myTempFile, path.getBytes(StandardCharsets.UTF_8), true);

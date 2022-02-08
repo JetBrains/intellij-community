@@ -39,14 +39,8 @@ public class MavenIndexUtils {
 
   public static IndexPropertyHolder readIndexProperty(File dir) throws MavenIndexException {
     Properties props = new Properties();
-    try {
-      FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE));
-      try {
-        props.load(s);
-      }
-      finally {
-        s.close();
-      }
+    try (FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE))) {
+      props.load(s);
     }
     catch (IOException e) {
       throw new MavenIndexException("Cannot read " + INDEX_INFO_FILE + " file", e);
@@ -91,14 +85,8 @@ public class MavenIndexUtils {
     if (index.getDataDirName() != null) props.setProperty(DATA_DIR_NAME_KEY, index.getDataDirName());
     if (index.getFailureMessage() != null) props.setProperty(FAILURE_MESSAGE_KEY, index.getFailureMessage());
 
-    try {
-      FileOutputStream s = new FileOutputStream(new File(index.getDir(), INDEX_INFO_FILE));
-      try {
-        props.store(s, null);
-      }
-      finally {
-        s.close();
-      }
+    try (FileOutputStream s = new FileOutputStream(new File(index.getDir(), INDEX_INFO_FILE))) {
+      props.store(s, null);
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);

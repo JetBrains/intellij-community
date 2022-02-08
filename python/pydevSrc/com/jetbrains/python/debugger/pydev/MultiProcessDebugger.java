@@ -120,14 +120,10 @@ public class MultiProcessDebugger implements ProcessDebugger {
   private static void sendDebuggerPort(@NotNull Socket socket, @NotNull ServerSocket serverSocket, @NotNull IPyDebugProcess processHandler)
     throws IOException {
     int port = processHandler.handleDebugPort(serverSocket.getLocalPort());
-    PrintWriter writer = new PrintWriter(socket.getOutputStream());
-    try {
+    try (socket;
+         PrintWriter writer = new PrintWriter(socket.getOutputStream())) {
       writer.println(99 + "\t" + -1 + "\t" + port);
       writer.flush();
-    }
-    finally {
-      socket.close();
-      writer.close();
     }
   }
 
@@ -140,7 +136,6 @@ public class MultiProcessDebugger implements ProcessDebugger {
   private static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
-      //noinspection IOResourceOpenedButNotSafelyClosed,SocketOpenedButNotSafelyClosed
       serverSocket = new ServerSocket(0);
     }
     catch (IOException e) {
