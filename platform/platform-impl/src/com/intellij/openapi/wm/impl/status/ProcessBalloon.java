@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.Disposable;
@@ -10,8 +10,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyInlineProgressIndicator;
+import com.intellij.toolWindow.ToolWindowPane;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.Gray;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -29,7 +29,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class ProcessBalloon {
+final class ProcessBalloon {
   private final List<MyInlineProgressIndicator> myIndicators = new ArrayList<>();
   private final int myMaxVisible;
   private int myVisible;
@@ -183,7 +183,7 @@ class ProcessBalloon {
   }
 
   private static boolean isBottomSideToolWindowsVisible(@NotNull JRootPane parent) {
-    ToolWindowsPane pane = UIUtil.findComponentOfType(parent, ToolWindowsPane.class);
+    ToolWindowPane pane = UIUtil.findComponentOfType(parent, ToolWindowPane.class);
     return pane != null && pane.isBottomSideToolWindowsVisible();
   }
 }

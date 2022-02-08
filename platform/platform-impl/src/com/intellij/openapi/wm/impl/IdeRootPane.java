@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.toolWindow.ToolWindowButtonManager;
+import com.intellij.toolWindow.ToolWindowPane;
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager;
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager;
 import com.intellij.ui.*;
@@ -65,7 +66,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
   private IdeRootPaneNorthExtension myStatusBarCentralWidget;
 
-  private ToolWindowsPane toolWindowPane;
+  private ToolWindowPane toolWindowPane;
   private JBPanel<?> myContentPane;
 
   private final boolean myGlassPaneInitialized;
@@ -155,11 +156,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull Component createCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-    toolWindowPane = new ToolWindowsPane(frame, parentDisposable, toolWindowButtonManager);
+    toolWindowPane = new ToolWindowPane(frame, parentDisposable, toolWindowButtonManager);
     return toolWindowPane;
   }
 
-  public @NotNull ToolWindowsPane getToolWindowPane() {
+  public @NotNull ToolWindowPane getToolWindowPane() {
     return toolWindowPane;
   }
 
@@ -294,12 +295,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return null;
   }
 
-  private static void disposeIfNeeded(JComponent comp) {
-    if (!(comp instanceof Disposable)) {
+  private static void disposeIfNeeded(@NotNull JComponent component) {
+    if (!(component instanceof Disposable)) {
       return;
     }
 
-    Disposable d = (Disposable)comp;
+    Disposable d = (Disposable)component;
     if (!Disposer.isDisposed(d)) {
       Disposer.dispose(d);
     }

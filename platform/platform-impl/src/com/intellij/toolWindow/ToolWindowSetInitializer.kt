@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.openapi.wm.impl.ToolWindowsPane
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
@@ -137,7 +136,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     }
   }
 
-  fun initUi(toolWindowPane: ToolWindowsPane) {
+  fun initUi(toolWindowPane: ToolWindowPane) {
     initFuture
       .thenAcceptAsync(
         { ref ->
@@ -172,7 +171,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
   // must be executed in EDT
   private fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl,
                                          tasks: List<RegisterToolWindowTask>,
-                                         toolWindowPane: ToolWindowsPane) {
+                                         toolWindowPane: ToolWindowPane) {
     @Suppress("TestOnlyProblems")
     manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
 

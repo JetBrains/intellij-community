@@ -6,7 +6,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.openapi.wm.impl.SquareStripeButton
+import com.intellij.openapi.wm.impl.SquareStripeButtonLook
+import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
@@ -33,7 +36,7 @@ import javax.swing.SwingUtilities
 
 private fun Dimension.isNotEmpty(): Boolean = width > 0 && height > 0
 
-internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowsPane) : MouseDragHelper<ToolWindowsPane>(parent, pane) {
+internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowPane) : MouseDragHelper<ToolWindowPane>(parent, pane) {
   private var toolWindowRef: WeakReference<ToolWindowImpl?>? = null
   private var initialAnchor: ToolWindowAnchor? = null
   private var initialButton: Component? = null
@@ -157,7 +160,7 @@ internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowsPan
       val decorator = InternalDecoratorImpl.findNearestDecorator(clickedComponent)
       if (decorator != null &&
           (decorator.toolWindow.anchor != BOTTOM ||
-           decorator.locationOnScreen.y < startScreenPoint.screenPoint.y - ToolWindowsPane.headerResizeArea))
+           decorator.locationOnScreen.y < startScreenPoint.screenPoint.y - ToolWindowPane.headerResizeArea))
         return decorator.toolWindow
     }
 

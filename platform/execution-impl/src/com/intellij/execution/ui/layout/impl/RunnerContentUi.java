@@ -24,18 +24,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.UIBundle;
+import com.intellij.toolWindow.ToolWindowPane;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.TwoSideComponent;
@@ -50,6 +47,7 @@ import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -80,8 +78,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Stream;
-
-import static com.intellij.ui.tabs.JBTabsEx.NAVIGATION_ACTIONS_KEY;
 
 public final class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener,
                                               QuickActionProvider, DockContainer.Dialog, Activatable {
@@ -240,9 +236,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   void setContentToolbarBefore(boolean value) {
     myContentToolbarBefore = value;
-    for (GridImpl each : getGrids()) {
-      each.setToolbarBefore(value);
-    }
+    getGrids().forEach(grid -> grid.setToolbarBefore(value));
 
     myContextActions.clear();
     updateTabsUI(false);
@@ -421,9 +415,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     myTabs.setPopupGroup(getCellPopupGroup(TAB_POPUP_PLACE), TAB_POPUP_PLACE, true);
 
-    for (GridImpl each : getGrids()) {
-      each.rebuildTabPopup();
-    }
+    getGrids().forEach(GridImpl::rebuildTabPopup);
   }
 
   @Override
@@ -1141,12 +1133,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     List<Content> contents = grid.getContents();
     String title = contents.size() > 1 ? t.getDisplayName() : null;
     if (title == null) {
-      final String name = myLayoutSettings.getDefaultDisplayName(t.getDefaultIndex());
+      String name = myLayoutSettings.getDefaultDisplayName(t.getDefaultIndex());
       if (name != null && contents.size() > 1 && !usedNames.contains(name)) {
         title = name;
       }
       else {
-        title = StringUtil.join(contents, Content::getTabName, " | ");
+        title = Strings.join(contents, Content::getTabName, " | ");
       }
     }
     usedNames.add(title);
@@ -1268,8 +1260,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return null;
   }
 
-  private @NotNull List<GridImpl> getGrids() {
-    return ContainerUtil.map(myTabs.getTabs(), RunnerContentUi::getGridFor);
+  private @NotNull Stream<GridImpl> getGrids() {
+    return myTabs.getTabs().stream().map(RunnerContentUi::getGridFor);
   }
 
   @Override
@@ -1656,8 +1648,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     @Override
     public void addNotify() {
       super.addNotify();
-      if (null !=
-          ComponentUtil.findParentByCondition(this, component -> UIUtil.isClientPropertyTrue(component, ToolWindowsPane.TEMPORARY_ADDED))) {
+      if (ComponentUtil.findParentByCondition(this, it -> ClientProperty.isTrue(it, ToolWindowPane.TEMPORARY_ADDED)) != null) {
         return;
       }
 
@@ -1680,11 +1671,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     @Override
     public void removeNotify() {
       super.removeNotify();
-      if (!ScreenUtil.isStandardAddRemoveNotify(this)) {
+      if (!ScreenUtil.isStandardAddRemoveNotify(this) || Disposer.isDisposed(RunnerContentUi.this)) {
         return;
       }
-
-      if (Disposer.isDisposed(RunnerContentUi.this)) return;
 
       if (myWasEverAdded) {
         saveUiState();
@@ -1702,9 +1691,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     });
   }
 
-  public void attract(final Content content, boolean afterInitialized) {
-    processAttraction(content.getUserData(ViewImpl.ID), null, new LayoutAttractionPolicy.Bounce(),
-                      afterInitialized, true);
+  public void attract(Content content, boolean afterInitialized) {
+    processAttraction(content.getUserData(ViewImpl.ID), null, new LayoutAttractionPolicy.Bounce(), afterInitialized, true);
   }
 
   void attractByCondition(@NotNull String condition, boolean afterInitialized) {
@@ -2021,7 +2009,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myContentUi.toggleContentPopup(e.getData(NAVIGATION_ACTIONS_KEY));
+      myContentUi.toggleContentPopup(e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY));
     }
   }
 

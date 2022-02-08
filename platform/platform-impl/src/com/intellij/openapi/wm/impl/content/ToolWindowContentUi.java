@@ -21,9 +21,9 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
-import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
+import com.intellij.toolWindow.ToolWindowPane;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
@@ -353,7 +353,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         Component component = c;
         Component parent = component.getParent();
         while(parent != null) {
-
           if (parent instanceof ThreeComponentsSplitter && ((ThreeComponentsSplitter)parent).getOrientation()) {
             if (component != ((ThreeComponentsSplitter)parent).getFirstComponent()) {
               return parent;
@@ -364,7 +363,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
               && ((Splitter)parent).getFirstComponent() != null) {
             return parent;
           }
-          if (parent instanceof ToolWindowsPane) {
+          if (parent instanceof ToolWindowPane) {
             return parent;
           }
           component = parent;
@@ -387,7 +386,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           myInitialHeight.set(splitter.getSecondComponent().getHeight());
           return;
         }
-        if (component instanceof ToolWindowsPane) {
+        if (component instanceof ToolWindowPane) {
           myIsLastComponent.set(ui.window.getAnchor() == ToolWindowAnchor.BOTTOM || ui.window.getAnchor() == ToolWindowAnchor.RIGHT);
           myInitialHeight.set(ui.window.getAnchor().isHorizontal() ? ui.window.getDecorator().getHeight() : ui.window.getDecorator().getWidth());
           return;
@@ -461,7 +460,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         }
         if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM ||
             SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() >
-            ToolWindowsPane.Companion.getHeaderResizeArea$intellij_platform_ide_impl()) {
+            ToolWindowPane.Companion.getHeaderResizeArea$intellij_platform_ide_impl()) {
           return true;
         }
         //it's drag, not resize!
@@ -497,7 +496,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           Splitter splitter = (Splitter)component;
           splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
         }
-        if (component instanceof ToolWindowsPane) {
+        if (component instanceof ToolWindowPane) {
           if (ui.window.getType() == ToolWindowType.SLIDING) {
             ui.window.getDecorator().updateBounds(e);
           } else {
@@ -536,7 +535,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     group.add(new TabbedContentAction.CloseAllButThisAction(content));
     group.addSeparator();
     Component component = window.getComponent();
-    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false) && ClientProperty.isTrue(component, ALLOW_DND_FOR_TABS)) {
+    if (ClientProperty.isTrue(component, ALLOW_DND_FOR_TABS) && Registry.is("ide.allow.split.and.reorder.in.tool.window", false)) {
       group.add(splitRightTabAction);
       group.add(splitDownTabAction);
       group.add(unsplitTabAction);
