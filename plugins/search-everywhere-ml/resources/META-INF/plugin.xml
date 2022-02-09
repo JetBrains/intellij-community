@@ -45,6 +45,9 @@
     <registryKey defaultValue=""
                  description="Path to the local file-ranking model."
                  key="search.everywhere.ml.files.model.path"/>
+
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereFileStatistician"/>
   </extensions>
 
   <extensionPoints>
