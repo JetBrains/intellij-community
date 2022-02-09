@@ -56,10 +56,9 @@ class ConvertToNonIndexedFunctionCallFix(
             val functionLiteral = parameterList.parent as? KtFunctionLiteral ?: return null
             val call = functionLiteral.parentCallExpression() ?: return null
             val functionName = call.calleeExpression?.text ?: return null
-            val (nonIndexedFunctionFqName, nonIndexedFunctionName) = nonIndexedFunctions[functionName] ?: return null
-            val context = functionLiteral.analyze(BodyResolveMode.PARTIAL)
-            if (call.getResolvedCall(context)?.isCalling(nonIndexedFunctionFqName) != true) return null
+            val (_, nonIndexedFunctionName) = nonIndexedFunctions[functionName] ?: return null
 
+            val context = functionLiteral.analyze(BodyResolveMode.PARTIAL)
             val labeledReturnExpressions =
                 functionLiteral.collectLabeledReturnExpressions(functionName, context).map { it.createSmartPointer() }
             return ConvertToNonIndexedFunctionCallFix(functionLiteral, nonIndexedFunctionName, labeledReturnExpressions)
