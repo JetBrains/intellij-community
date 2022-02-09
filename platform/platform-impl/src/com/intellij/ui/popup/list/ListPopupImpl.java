@@ -755,21 +755,22 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   protected void onSpeedSearchPatternChanged() {
+    Object before = myList.getSelectedValue();
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
       if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {
-        selectBestMatch();
+        selectBestMatch(before);
       }
     }
   }
 
-  private void selectBestMatch() {
+  private void selectBestMatch(Object before) {
     int fullMatchIndex = myListModel.getClosestMatchIndex();
     if (fullMatchIndex != -1 && isSelectableAt(fullMatchIndex)) {
       myList.setSelectedIndex(fullMatchIndex);
     }
 
-    if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
+    if (!myListModel.isVisible(before)) {
       selectFirstSelectableItem();
     }
   }
