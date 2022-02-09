@@ -1,29 +1,90 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 
 public class NewFolderAction extends FileChooserAction implements LightEditCompatible {
   public NewFolderAction() { }
 
   public NewFolderAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
+  }
+
+  @Override
+  protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    var directory = panel.currentDirectory();
+    var visible = directory != null;
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && !directory.getFileSystem().isReadOnly());
+  }
+
+  @Override
+  protected void actionPerformed(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    var directory = panel.currentDirectory();
+    if (directory == null || directory.getFileSystem().isReadOnly()) return;
+
+    var title = UIBundle.message("file.chooser.new.dir.title");
+    var prompt = UIBundle.message("file.chooser.new.dir.prompt");
+    var initial = "newDirectory";
+    var selection = new TextRange(0, initial.length());
+    var validator = new FileNameInputValidator(directory.getFileSystem());
+
+    while (true) {
+      var input = MessagesService.getInstance().showInputDialog(null, panel.getComponent(), prompt, title, null, initial, validator, selection, null);
+      if (input == null) break;
+      var name = input.trim();
+      initial = name;
+      selection = null;
+
+      try {
+        var progress = UIBundle.message("file.chooser.creating.progress", name);
+        ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
+          @Override
+          protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
+            indicator.setIndeterminate(true);
+            var newDirectory = directory.resolve(name);
+            if (Files.exists(newDirectory)) throw new FileAlreadyExistsException(newDirectory.toString());
+            NioFiles.createDirectories(newDirectory);
+            return newDirectory;
+          }
+        });
+        panel.reload();
+        break;
+      }
+      catch (IOException | InvalidPathException ex) {
+        Messages.showErrorDialog(panel.getComponent(), IoErrorText.message(ex), CommonBundle.getErrorTitle());
+      }
+    }
   }
 
   @Override
@@ -34,10 +95,6 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
 
   @Override
   protected void actionPerformed(@NotNull FileSystemTree fileSystemTree, @NotNull AnActionEvent e) {
-    createNewFolder(fileSystemTree);
-  }
-
-  private static void createNewFolder(FileSystemTree fileSystemTree) {
     VirtualFile parent = fileSystemTree.getNewFileParent();
     if (parent == null || !parent.isDirectory()) return;
 

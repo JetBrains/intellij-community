@@ -293,6 +293,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   @Override
+  public @Nullable Path currentDirectory() {
+    return myCurrentDirectory;
+  }
+
+  @Override
   public @NotNull List<Path> selectedPaths() {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myList
            ? myList.getSelectedValuesList().stream()

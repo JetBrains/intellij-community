@@ -31,5 +31,6 @@ public interface FileChooserPanel {
   boolean showHiddenFiles();
   void showHiddenFiles(boolean show);
 
+  @Nullable Path currentDirectory();
   @NotNull List<Path> selectedPaths();
 }
