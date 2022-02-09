@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.tooling.util
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.initialization.IncludedBuild
+import org.gradle.api.internal.GradleInternal
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
@@ -133,14 +134,19 @@ class SourceSetCachedFinder {
         if (is51OrBetter) {
           projects += build.withState { it.rootProject.allprojects  }
         } else {
-          projects += build.configuredBuild.rootProject.allprojects
+          projects += getProjectsWithReflection(build)
         }
       }
     }
     return projects
   }
 
-  // TODO: remove reflection when bundled Gradle TAPI is newer than 7.2
+  private static Set<Project> getProjectsWithReflection(DefaultIncludedBuild build) {
+    def method = build.class.getMethod("getConfiguredBuild")
+    GradleInternal gradleInternal = (GradleInternal)method.invoke(build)
+    return gradleInternal.rootProject.allprojects
+  }
+
   private static Object maybeUnwrapIncludedBuildInternal(IncludedBuild includedBuild) {
     def wrapee = includedBuild
     Class includedBuildInternalClass = null
