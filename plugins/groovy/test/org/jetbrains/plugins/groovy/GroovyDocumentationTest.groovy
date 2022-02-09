@@ -161,6 +161,22 @@ new Gr<caret>oovyDocTest<Integer>()""", """\
 """
   }
 
+  void 'test render multiline inline code tag'() {
+    doTest """
+/**
+ * {@code
+ * aaa
+ * bbb
+ * ccc
+ * }
+ */
+def foo() {}
+fo<caret>o()
+""", "<div class='definition'><pre><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#000000;\">Object</span></code></a>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n" +
+     "   <code style='font-size:100%;'><span style=\"\"><span style=\"\">aaa</span><span style=\"\">&#32;bbb</span><span style=\"\">&#32;ccc</span></span></code>\n" +
+     " </div><table class='sections'></table><div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://_\"><code><span style=\"color:#000000;\">_</span></code></a></div>"
+  }
+
   private void doTest(String text, @Language("HTML") String doc) {
     myFixture.configureByText '_.groovy', text
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
