@@ -132,6 +132,11 @@ class RunToolbarSlotManager(val project: Project) {
           }
         }
 
+        if(slotsData.isEmpty()) {
+          mainSlotData = SlotDate(UUID.randomUUID().toString())
+          slotsData[mainSlotData.id] = mainSlotData
+        }
+
         if (RunToolbarProcess.logNeeded) LOG.info("SM restoreRunConfigurations: ${configurations.values} RunToolbar")
 
         val con = project.messageBus.connect(disp)
