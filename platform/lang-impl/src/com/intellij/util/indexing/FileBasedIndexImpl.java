@@ -502,7 +502,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         state.registerIndex(name,
                             index,
-                            composeInputFilter(inputFilter, file -> !GlobalIndexFilter.isExcludedFromIndexViaFilters(file, name)),
+                            composeInputFilter(inputFilter, (file, project) -> !GlobalIndexFilter.isExcludedFromIndexViaFilters(file, name, project)),
                             version + GlobalIndexFilter.getFiltersVersion(name),
                             addedTypes);
         break;

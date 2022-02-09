@@ -47,8 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
@@ -758,15 +758,16 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @NotNull
-  public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull Predicate<? super VirtualFile> condition) {
-    return filter instanceof ProjectSpecificInputFilter
-           ? new ProjectSpecificInputFilter() {
+  public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull BiPredicate<? super VirtualFile, ? super Project> condition) {
+    return new ProjectSpecificInputFilter() {
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {
-        return ((ProjectSpecificInputFilter)filter).acceptInput(file) && condition.test(file.getFile());
+        boolean doesMainFilterAccept = filter instanceof ProjectSpecificInputFilter
+                                       ? ((ProjectSpecificInputFilter)filter).acceptInput(file)
+                                       : filter.acceptInput(file.getFile());
+        return doesMainFilterAccept && condition.test(file.getFile(), file.getProject());
       }
-    }
-           : file -> filter.acceptInput(file) && condition.test(file);
+    };
   }
 
   @ApiStatus.Internal
