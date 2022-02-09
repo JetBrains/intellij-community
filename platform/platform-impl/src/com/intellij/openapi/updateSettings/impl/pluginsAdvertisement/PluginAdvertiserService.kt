@@ -153,12 +153,12 @@ open class PluginAdvertiserService {
           IdeBundle.message("plugins.advertiser.action.enable.plugins")
 
         NotificationAction.createSimpleExpiring(title) {
-          FUSEventSource.NOTIFICATION.logEnablePlugins(
-            disabledDescriptors.map { it.pluginId.idString },
-            project,
-          )
-
           ApplicationManager.getApplication().invokeLater {
+            FUSEventSource.NOTIFICATION.logEnablePlugins(
+              disabledDescriptors.map { it.pluginId.idString },
+              project,
+            )
+
             PluginBooleanOptionDescriptor.togglePluginState(disabledDescriptors, true)
           }
         }
