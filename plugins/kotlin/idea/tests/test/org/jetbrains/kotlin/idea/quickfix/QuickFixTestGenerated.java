@@ -3499,6 +3499,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public void testNotIndex() throws Exception {
                 runTest("testData/quickfix/convertToNonIndexedFunctionCall/notIndex.kt");
             }
+
+            @TestMetadata("typeArguments.kt")
+            public void testTypeArguments() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/typeArguments.kt");
+            }
         }
     }
 

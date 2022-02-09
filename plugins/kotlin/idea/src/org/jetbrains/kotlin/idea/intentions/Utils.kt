@@ -404,6 +404,7 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
         appendFixedText(".")
     }
     appendNonFormattedText(newFunctionName)
+    call.typeArgumentList?.let { appendNonFormattedText(it.text) }
     call.valueArgumentList?.let { appendNonFormattedText(it.text) }
     call.lambdaArguments.firstOrNull()?.let { appendNonFormattedText(it.text) }
 }
