@@ -20,10 +20,10 @@ val editorLensContextKey = Key<EditorCodeVisionContext>("EditorCodeLensContext")
 val codeVisionEntryOnHighlighterKey = Key.create<CodeVisionEntry>("CodeLensEntryOnHighlighter")
 val codeVisionEntryMouseEventKey = Key.create<MouseEvent>("CodeVisionEntryMouseEventKey")
 
-val Editor.lensContext: EditorCodeVisionContext
+val Editor.lensContext: EditorCodeVisionContext?
   get() = getOrCreateCodeVisionContext(this)
 val Editor.lensContextOrThrow: EditorCodeVisionContext
-  get() = lensContext
+  get() = lensContext ?: error("No EditorCodeVisionContext were provided")
 val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
   get() = getUserData(codeVisionEntryOnHighlighterKey) ?: error("No CodeLensEntry for highlighter $this")
 
@@ -137,7 +137,7 @@ open class EditorCodeVisionContext(
 }
 
 
-private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext {
+private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext? {
   val context = editor.getUserData(editorLensContextKey)
   if (context != null) return context
 

@@ -11,14 +11,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 
 class CodeVisionPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-  private val registry = Registry.get("editor.codeVision.new")
+  private val registry = lazy { Registry.get("editor.codeVision.new") }
 
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-    if (registry.asBoolean().not()) return null
+    if (registry.value.asBoolean().not()) return null
 
     return CodeVisionPass(file, editor)
   }
