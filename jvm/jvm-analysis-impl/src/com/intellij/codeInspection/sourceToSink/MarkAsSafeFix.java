@@ -12,7 +12,6 @@ import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.lang.jvm.actions.*;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -81,8 +80,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
       PsiModifierListOwner first = ContainerUtil.findInstance(toAnnotate, PsiModifierListOwner.class);
       if (first == null) return;
       ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
-      if (!annotationsManager.hasConfiguredAnnotationRoot(first)) return;
-      place = WriteAction.compute(() -> annotationsManager.chooseAnnotationsPlace(first));
+      place = annotationsManager.chooseAnnotationsPlace(first);
     }
     if (place != AnnotationPlace.EXTERNAL && place != AnnotationPlace.IN_CODE) return;
     boolean annotateExternally = place == AnnotationPlace.EXTERNAL;
