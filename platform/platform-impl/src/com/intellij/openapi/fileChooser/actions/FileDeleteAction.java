@@ -35,7 +35,7 @@ public class FileDeleteAction extends FileChooserAction {
     if (paths.isEmpty()) return;
 
     var project = e.getProject();
-    var ok = MessageDialogBuilder.yesNo(UIBundle.message("delete.dialog.title"), UIBundle.message("file.chooser.delete.confirm"))
+    var ok = MessageDialogBuilder.yesNo(UIBundle.message("file.chooser.delete.title"), UIBundle.message("file.chooser.delete.confirm"))
       .yesText(ApplicationBundle.message("button.delete")).noText(CommonBundle.getCancelButtonText())
       .icon(UIUtil.getWarningIcon())
       .ask(project);
@@ -58,7 +58,7 @@ public class FileDeleteAction extends FileChooserAction {
         }
         catch (IOException e) {
           ApplicationManager.getApplication().invokeLater(
-            () -> Messages.showMessageDialog(project, IoErrorText.message(e), CommonBundle.getErrorTitle(), Messages.getErrorIcon()));
+            () -> Messages.showErrorDialog(panel.getComponent(), IoErrorText.message(e), CommonBundle.getErrorTitle()));
         }
       }
     }.queue();
