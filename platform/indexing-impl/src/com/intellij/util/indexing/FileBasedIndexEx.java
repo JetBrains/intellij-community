@@ -20,6 +20,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -229,18 +230,27 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                            @NotNull K dataKey,
                                                            @NotNull GlobalSearchScope filter) {
-    if (filter.getProject() instanceof LightEditCompatible) return Collections.emptyList();
+    return ContainerUtil.newHashSet(getContainingFilesIterator(indexId, dataKey, filter));
+  }
+
+  @Override
+  public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter) {
+    if (filter.getProject() instanceof LightEditCompatible) return Collections.emptyIterator();
     VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
     if (restrictToFile != null) {
       return !processValuesInOneFile(indexId, dataKey, restrictToFile, filter, (f, v) -> false) ?
-             Collections.singleton(restrictToFile) : Collections.emptyList();
+             Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
     }
-    Set<VirtualFile> files = new HashSet<>();
-    processValuesInScope(indexId, dataKey, false, filter, null, (file, value) -> {
-      files.add(file);
-      return true;
+    IntSet fileIds = processExceptions(indexId, null, filter, index -> {
+      IntSet fileIdsInner = new IntOpenHashSet();
+      index.getData(dataKey).forEach((id, value) -> {
+        fileIdsInner.add(id);
+        return true;
+      });
+      return fileIdsInner;
     });
-    return files;
+
+    return createLazyFileIterator(fileIds, filter);
   }
 
 
@@ -776,5 +786,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
     return (restrictedTo == null || Comparing.equal(file, restrictedTo)) &&
            (filter == null || restrictedTo != null || filter.accept(file));
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public static Iterator<VirtualFile> createLazyFileIterator(@Nullable IntSet result, @NotNull GlobalSearchScope scope) {
+    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
+    return fileSet.stream().filter(scope::contains).iterator();
   }
 }

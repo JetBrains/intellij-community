@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
@@ -328,8 +327,7 @@ public abstract class StubIndexEx extends StubIndex {
                                                                          @NotNull Project project,
                                                                          @NotNull GlobalSearchScope scope) {
     IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
-    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
-    return fileSet.stream().filter(scope::contains).iterator();
+    return FileBasedIndexEx.createLazyFileIterator(result, scope);
   }
 
   @Override

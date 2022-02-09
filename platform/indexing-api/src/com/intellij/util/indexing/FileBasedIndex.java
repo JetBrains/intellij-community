@@ -22,10 +22,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @see FileBasedIndexExtension
@@ -94,6 +91,15 @@ public abstract class FileBasedIndex {
   public abstract <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                                     @NotNull K dataKey,
                                                                     @NotNull GlobalSearchScope filter);
+
+  /**
+   * @return lazily reified iterator of VirtualFile's.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
+                                                                          @NotNull K dataKey,
+                                                                          @NotNull GlobalSearchScope filter);
 
   /**
    * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
