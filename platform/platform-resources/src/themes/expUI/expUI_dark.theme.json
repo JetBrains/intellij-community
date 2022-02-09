@@ -184,7 +184,16 @@
       "underTabsBorderColor":"Grey3"
     },
 
-    "Editor.searchFieldInsets": "7,10,7,8",
+    "Editor": {
+      "SearchField" : {
+        "borderInsets" : "7,10,7,8",
+        "background": "Grey1"
+      },
+
+      "Toolbar" : {
+        "borderColor" : "Grey3"
+      }
+    },
 
     "Label.errorForeground": "Red6",
 

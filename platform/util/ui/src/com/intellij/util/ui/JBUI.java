@@ -590,6 +590,10 @@ public final class JBUI {
       }
     }
 
+    public interface Editor {
+      Color BORDER_COLOR = JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border());
+    }
+
     public interface DragAndDrop {
       Color BORDER_COLOR = JBColor.namedColor("DragAndDrop.borderColor", 0x2675BF, 0x2F65CA);
       Color ROW_BACKGROUND = JBColor.namedColor("DragAndDrop.rowBackground", 0x2675BF26, 0x2F65CA33);

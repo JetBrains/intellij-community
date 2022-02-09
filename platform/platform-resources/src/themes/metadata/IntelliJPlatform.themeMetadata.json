@@ -244,8 +244,16 @@
       "key": "Editor.shortcutForeground"
     },
     {
-      "key": "Editor.searchFieldInsets",
+      "key": "Editor.SearchField.borderInsets",
       "description": "Additional insets around editor search/replace fields in Experimental UI"
+    },
+    {
+      "key": "Editor.SearchField.background",
+      "description": "Editor inplace search/replace fields background color"
+    },
+    {
+      "key": "Editor.Toolbar.borderColor",
+      "description": "Editor header component border"
     },
     {
       "key": "EditorTabs.background",

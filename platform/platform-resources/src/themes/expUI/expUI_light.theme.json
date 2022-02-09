@@ -179,7 +179,18 @@
       "hoverInactiveBackground": "Grey13"
     },
 
-    "Editor.searchFieldInsets": "7,10,7,8",
+    "Editor": {
+      "SearchField" : {
+        "borderInsets" : "7,10,7,8",
+        "textBackground": "Grey13"
+      },
+
+      "Toolbar" : {
+        "borderColor" : "Grey11"
+      }
+    },
+
+    "EditorToolbar.borderColor" : "#393B40",
 
     "FileColor": {
       "Yellow": "Yellow11",

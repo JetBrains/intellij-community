@@ -171,7 +171,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     leftPanel.add(mySearchFieldWrapper, constraints);
     constraints.gridy++;
     leftPanel.add(myReplaceFieldWrapper, constraints);
-    leftPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 0, 1));
+    leftPanel.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1));
 
     searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(null));
     replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(null));
@@ -216,7 +216,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       JPanel modePanel = JBUI.Panels.simplePanel().addToTop(modeLabel);
       modePanel.setOpaque(true);
       modePanel.setBackground(EDITOR_BACKGROUND);
-      modePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBColor.border(), 0, 0, 0, 1), JBUI.Borders.empty(11, 8)));
+      modePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1),
+                                                JBUI.Borders.empty(11, 8)));
       add(modePanel, BorderLayout.WEST);
 
       modeLabel.addMouseListener(new MouseAdapter() {
