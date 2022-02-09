@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Image
+import java.util.function.Consumer
 
 @VisibleForTesting
 data class DocumentationResultData internal constructor(
@@ -40,5 +41,9 @@ data class DocumentationResultData internal constructor(
   override fun updates(updates: Flow<DocumentationContent>): Data {
     @Suppress("UNCHECKED_CAST")
     return copy(updates = updates as Flow<DocumentationContentData>)
+  }
+
+  override fun updates(updates: Consumer<in Consumer<in DocumentationContent>>): Data {
+    return updates(updates.asFlow())
   }
 }

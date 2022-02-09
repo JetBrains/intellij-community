@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 import java.awt.Image
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 @Experimental
@@ -46,6 +47,22 @@ sealed interface DocumentationResult {
      * Scrolling position is preserved in the browser when the update is applied, i.e. [anchor] does not have any effect on updates.
      */
     fun updates(updates: Flow<DocumentationContent>): Data
+
+    /**
+     * Same as asynchronous overload, but blocking.
+     * To support cancellation [com.intellij.openapi.progress.ProgressManager.checkCanceled] must be called regularly inside [updates].
+     *
+     * Example usage:
+     * ```
+     * DocumentationResult.documentation(...).updates(updateConsumer -> {
+     *   // do blocking stuff with ProgressManager.checkCanceled()
+     *   updateConsumer.consume(DocumentationContent.content(updatedHtml1);
+     *   // do more blocking stuff with ProgressManager.checkCanceled()
+     *   updateConsumer.consume(DocumentationContent.content(updatedHtml2, updatedImages2);
+     * });
+     * ```
+     */
+    fun updates(updates: Consumer<in Consumer<in DocumentationContent>>): Data
   }
 
   companion object {
