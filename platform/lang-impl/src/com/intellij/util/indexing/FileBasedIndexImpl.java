@@ -350,11 +350,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void setUpHealthCheck() {
-    myHealthCheckFuture = AppExecutorUtil
-      .getAppScheduledExecutorService()
-      .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
-        myIndexableFilesFilterHolder.runHealthCheck();
-      }), 5, 5, TimeUnit.MINUTES);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myHealthCheckFuture = AppExecutorUtil
+        .getAppScheduledExecutorService()
+        .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
+          myIndexableFilesFilterHolder.runHealthCheck();
+        }), 5, 5, TimeUnit.MINUTES);
+    }
   }
 
   static class MyShutDownTask implements Runnable {
