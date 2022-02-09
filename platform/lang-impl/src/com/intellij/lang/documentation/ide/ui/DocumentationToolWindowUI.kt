@@ -4,15 +4,19 @@ package com.intellij.lang.documentation.ide.ui
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.coroutines.EmptyCoroutineContext
 
 internal class DocumentationToolWindowUI(
   project: Project,
@@ -45,6 +49,8 @@ internal class DocumentationToolWindowUI(
       return autoUpdate != null
     }
 
+  private val cs = CoroutineScope(EmptyCoroutineContext)
+
   // Disposable tree:
   // content
   // > this
@@ -59,13 +65,14 @@ internal class DocumentationToolWindowUI(
     Disposer.register(content, this)
     Disposer.register(this, ui)
 
-    reusable = updateContentTab(browser, content, asterisk = true).also {
+    reusable = cs.updateContentTab(browser, content, asterisk = true).also {
       Disposer.register(this, it)
     }
     Disposer.register(this, DocumentationSearchHandler(this))
   }
 
   override fun dispose() {
+    cs.cancel("DocumentationToolWindowUI disposal")
     content.putUserData(TW_UI_KEY, null)
   }
 
@@ -93,7 +100,7 @@ internal class DocumentationToolWindowUI(
   fun keep() {
     Disposer.dispose(checkNotNull(reusable))
     reusable = null
-    Disposer.register(this, updateContentTab(browser, content, asterisk = false))
+    Disposer.register(this, cs.updateContentTab(browser, content, asterisk = false))
     autoUpdate?.let {
       Disposer.dispose(it)
       autoUpdate = null
@@ -107,10 +114,13 @@ internal val Content.isReusable: Boolean get() = toolWindowUI.isReusable
 
 private val TW_UI_KEY: Key<DocumentationToolWindowUI> = Key.create("documentation.tw.ui")
 
-private fun updateContentTab(browser: DocumentationBrowser, content: Content, asterisk: Boolean): Disposable {
-  return browser.addStateListener { request, _ ->
-    val presentation = request.presentation
-    content.icon = presentation.icon
-    content.displayName = if (asterisk) "* ${presentation.presentableText}" else presentation.presentableText
+private fun CoroutineScope.updateContentTab(browser: DocumentationBrowser, content: Content, asterisk: Boolean): Disposable {
+  val updateJob = launch(Dispatchers.EDT + CoroutineName("DocumentationToolWindowUI content update")) {
+    browser.pageFlow.collectLatest { page ->
+      val presentation = page.request.presentation
+      content.icon = presentation.icon
+      content.displayName = if (asterisk) "* ${presentation.presentableText}" else presentation.presentableText
+    }
   }
+  return Disposable(updateJob::cancel)
 }

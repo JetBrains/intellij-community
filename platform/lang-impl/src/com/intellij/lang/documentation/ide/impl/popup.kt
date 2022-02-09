@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.waitForContent
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
@@ -37,10 +38,13 @@ internal fun createDocumentationPopup(
   return popup
 }
 
-internal fun CoroutineScope.showPopupLater(popup: AbstractPopup, browseJob: Job, popupContext: PopupContext) {
+internal fun CoroutineScope.showPopupLater(popup: AbstractPopup, browser: DocumentationBrowser, popupContext: PopupContext) {
   EDT.assertIsEdt()
   val showJob = launch(ModalityState.current().asContextElement()) {
-    browseJob.tryJoin() // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
+    // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
+    withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
+      browser.waitForContent()
+    }
     withContext(Dispatchers.EDT) {
       check(!popup.isDisposed) // popup disposal should've cancelled this coroutine
       check(popup.canShow()) // sanity check
@@ -48,15 +52,6 @@ internal fun CoroutineScope.showPopupLater(popup: AbstractPopup, browseJob: Job,
     }
   }
   Disposer.register(popup, showJob::cancel)
-}
-
-/**
- * Suspends until the job is done, or timeout is exceeded.
- */
-private suspend fun Job.tryJoin() {
-  withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
-    this@tryJoin.join()
-  }
 }
 
 internal fun resizePopup(popup: AbstractPopup) {

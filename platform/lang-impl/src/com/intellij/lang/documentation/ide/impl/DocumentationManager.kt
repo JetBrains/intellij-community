@@ -144,11 +144,11 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (getPopup() != null) {
       return
     }
-    val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
+    val browser = DocumentationBrowser.createBrowser(project, request)
     val popup = createDocumentationPopup(project, browser, popupContext)
     setPopup(popup)
 
-    showPopupLater(popup, browseJob, popupContext)
+    showPopupLater(popup, browser, popupContext)
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
