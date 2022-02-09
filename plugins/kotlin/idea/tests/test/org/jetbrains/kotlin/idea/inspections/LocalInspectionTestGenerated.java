@@ -2162,9 +2162,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByFirst3.kt");
                 }
 
+                @TestMetadata("notApplicableSortedByFirstOrNull.kt")
+                public void testNotApplicableSortedByFirstOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByFirstOrNull.kt");
+                }
+
                 @TestMetadata("notApplicableSortedByLast.kt")
                 public void testNotApplicableSortedByLast() throws Exception {
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByLast.kt");
+                }
+
+                @TestMetadata("notApplicableSortedByLastOrNull.kt")
+                public void testNotApplicableSortedByLastOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByLastOrNull.kt");
                 }
 
                 @TestMetadata("onMapImplementationClass.kt")
