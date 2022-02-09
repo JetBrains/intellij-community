@@ -94,6 +94,15 @@ public abstract class FileEditorManager {
   public abstract boolean isFileOpen(@NotNull VirtualFile file);
 
   /**
+   * @return {@code true} if {@code file} is opened, {@code false} otherwise
+   * Unlike {@link #isFileOpen(VirtualFile)} includes files which were opened by all guests during a collaborative development session.
+   */
+  @ApiStatus.Experimental
+  public boolean isFileOpenWithRemotes(@NotNull VirtualFile file) {
+    return isFileOpen(file);
+  }
+
+  /**
    * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
    */
   public abstract VirtualFile @NotNull [] getOpenFiles();
@@ -263,5 +272,5 @@ public abstract class FileEditorManager {
    *
    * @param file the file to refresh.
    */
-  public void updateFilePresentation(@NotNull VirtualFile file) {}
+  public void updateFilePresentation(@NotNull VirtualFile file) { }
 }

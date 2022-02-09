@@ -132,7 +132,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     if (isPreviewVisible) openPreview(focus) else closePreview()
   }
 
-  protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
+  protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpenWithRemotes(previewFile)
 
   fun closePreview() {
     FileEditorManager.getInstance(project).closeFile(previewFile)
