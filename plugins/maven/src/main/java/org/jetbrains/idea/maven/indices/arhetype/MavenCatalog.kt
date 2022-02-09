@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.indices.arhetype
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenWslUtil
@@ -34,18 +35,14 @@ sealed interface MavenCatalog {
         }
 
       override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.default.local.name")
-      override val location: String get() = asLocal().location
-
-      fun asLocal() = Local(name, file.toPath())
+      override val location: String get() = file.systemIndependentPath
     }
 
     object MavenCentral : System {
       val url = URL("https://repo.maven.apache.org/maven2")
 
       override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.central.name")
-      override val location: String = asRemote().location
-
-      fun asRemote() = Remote(name, url)
+      override val location: String = url.toExternalForm()
     }
   }
 

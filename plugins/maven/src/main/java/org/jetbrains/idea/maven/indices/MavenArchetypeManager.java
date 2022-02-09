@@ -17,6 +17,7 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -47,16 +48,16 @@ public class MavenArchetypeManager {
       return getInnerArchetypes();
     }
     if (catalog instanceof MavenCatalog.System.DefaultLocal) {
-      return getArchetypes(((MavenCatalog.System.DefaultLocal)catalog).asLocal());
+      return getLocalArchetypes();
     }
     if (catalog instanceof MavenCatalog.System.MavenCentral) {
-      return getArchetypes(((MavenCatalog.System.MavenCentral)catalog).asRemote());
+      return getRemoteArchetypes(((MavenCatalog.System.MavenCentral)catalog).getUrl());
     }
     if (catalog instanceof MavenCatalog.Local) {
       return getInnerArchetypes(((MavenCatalog.Local)catalog).getPath());
     }
     if (catalog instanceof MavenCatalog.Remote) {
-      return getRemoteArchetypes(((MavenCatalog.Remote)catalog).getUrl().toExternalForm());
+      return getRemoteArchetypes(((MavenCatalog.Remote)catalog).getUrl());
     }
     return Collections.emptyList();
   }
@@ -95,6 +96,10 @@ public class MavenArchetypeManager {
 
   public Collection<MavenArchetype> getInnerArchetypes(Path path) {
     return getEmbedderWrapper().getInnerArchetypes(path);
+  }
+
+  public Collection<MavenArchetype> getRemoteArchetypes(URL url) {
+    return getRemoteArchetypes(url.toExternalForm());
   }
 
   public Collection<MavenArchetype> getRemoteArchetypes(String url) {
