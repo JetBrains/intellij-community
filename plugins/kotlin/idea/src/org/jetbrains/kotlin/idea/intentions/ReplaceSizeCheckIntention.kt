@@ -13,21 +13,40 @@ abstract class ReplaceSizeCheckIntention(textGetter: () -> String) : SelfTargeti
     KtBinaryExpression::class.java, textGetter
 ) {
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
-        val target = getTargetExpression(element)
-        val newExpression = if (target is KtDotQualifiedExpression) {
-            "${target.receiverExpression.text}.${getGenerateMethodSymbol()}"
-        } else {
-            getGenerateMethodSymbol()
-        }
-        element.replaced(KtPsiFactory(element).createExpression(newExpression))
+        val target = getTargetExpression(element) ?: return
+        val replacement = getReplacement(target)
+        element.replaced(replacement.newExpression())
     }
 
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
         val targetExpression = getTargetExpression(element) ?: return false
-        return targetExpression.isSizeOrLength() || targetExpression.isCountCall { it.valueArguments.isEmpty() }
+
+        val isSizeOrLength = targetExpression.isSizeOrLength()
+        val isCountCall = targetExpression.isTargetCountCall()
+        if (!isSizeOrLength && !isCountCall) return false
+
+        val replacement = getReplacement(targetExpression, isCountCall)
+        replacement.intentionTextGetter?.let { setTextGetter(it) }
+
+        return true
     }
 
-    abstract fun getTargetExpression(element: KtBinaryExpression): KtExpression?
+    protected abstract fun getTargetExpression(element: KtBinaryExpression): KtExpression?
 
-    abstract fun getGenerateMethodSymbol(): String
+    protected abstract fun getReplacement(expression: KtExpression, isCountCall: Boolean = expression.isTargetCountCall()): Replacement
+
+    protected class Replacement(
+        private val targetExpression: KtExpression,
+        private val newFunctionCall: String,
+        private val negate: Boolean = false,
+        val intentionTextGetter: (() -> String)? = null
+    ) {
+        fun newExpression(): KtExpression {
+            val excl = if (negate) "!" else ""
+            val receiver = if (targetExpression is KtDotQualifiedExpression) "${targetExpression.receiverExpression.text}." else ""
+            return KtPsiFactory(targetExpression).createExpression("$excl$receiver$newFunctionCall")
+        }
+    }
+
+    private fun KtExpression.isTargetCountCall() = isCountCall { it.valueArguments.isEmpty() }
 }
