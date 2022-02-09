@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -60,6 +60,8 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
    * "record R(int param) {}"
    */
   public boolean SPACE_BEFORE_RECORD_PARENTHESES = false;
+
+  public boolean ENABLE_GROOVYDOC_FORMATTING = true;
 
   //imports
   public boolean USE_FQ_CLASS_NAMES = false;
@@ -160,6 +162,10 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   @Override
   public void setLayoutStaticImportsSeparately(boolean value) {
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
+  }
+
+  public boolean isGroovyDocFormattingAllowed() {
+    return ENABLE_GROOVYDOC_FORMATTING;
   }
 
   @SuppressWarnings("deprecation")

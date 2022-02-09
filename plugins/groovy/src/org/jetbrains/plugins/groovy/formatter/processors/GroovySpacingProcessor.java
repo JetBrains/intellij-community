@@ -382,7 +382,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
     else if (isLeftOrRight(TokenSets.TYPE_DEFINITIONS)) {
       if (myType1 == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
-        createLF(true);
+        if (isGroovyDocFormattingAllowed()) createLF(true);
       }
       else {
         myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AROUND_CLASS + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
@@ -568,7 +568,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
     if (TokenSets.METHOD_DEFS.contains(myType1) || isSemiAfter(TokenSets.METHOD_DEFS) || TokenSets.METHOD_DEFS.contains((myType2))) {
       if (myType1 == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
-        createLF(true);
+        if (isGroovyDocFormattingAllowed()) createLF(true);
       }
       else {
         final int minBlankLines = isInterface ? mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE : mySettings.BLANK_LINES_AROUND_METHOD;
@@ -579,7 +579,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
     if (TokenSets.TYPE_DEFINITIONS.contains(myType1) || isSemiAfter(TokenSets.TYPE_DEFINITIONS) || TokenSets.TYPE_DEFINITIONS.contains((myType2)) ) {
       if (myType1 == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
-        createLF(true);
+        if (isGroovyDocFormattingAllowed()) createLF(true);
       }
       else {
         final int minBlankLines = mySettings.BLANK_LINES_AROUND_CLASS;
@@ -724,6 +724,9 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
+  private boolean isGroovyDocFormattingAllowed() {
+    return myGroovySettings.ENABLE_GROOVYDOC_FORMATTING;
+  }
 
   @Override
   public void visitAnnotationMethod(@NotNull GrAnnotationMethod annotationMethod) {
@@ -746,11 +749,19 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private void visitDocMember() {
-    createSpaceProperty(false, false, 0);
+    if (isGroovyDocFormattingAllowed()) {
+      createSpaceProperty(false, false, 0);
+    } else {
+      createLazySpace();
+    }
   }
 
   @Override
   public void visitDocMethodParameterList(@NotNull GrDocMethodParams params) {
+    if (!isGroovyDocFormattingAllowed()) {
+      createLazySpace();
+      return;
+    }
     if (myType1 == GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN || myType2 == GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN || myType2 ==
                                                                                                                           GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA) {
       createSpaceProperty(false, false, 0);
@@ -762,6 +773,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitDocMethodParameter(@NotNull GrDocMethodParameter parameter) {
+    if (!isGroovyDocFormattingAllowed()) {
+      createLazySpace();
+      return;
+    }
     if (myChild1.getTreePrev() == null) {
       createSpaceInCode(true);
     }
@@ -945,6 +960,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitDocComment(@NotNull GrDocComment comment) {
+    if (!isGroovyDocFormattingAllowed()) {
+      createLazySpace();
+      return;
+    }
     if (myType1 == GroovyDocElementTypes.GDOC_TAG &&
         myType2 == GroovyDocElementTypes.GDOC_TAG &&
         mySettings.getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED) {
@@ -967,6 +986,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitDocTag(@NotNull GrDocTag docTag) {
+    if (!isGroovyDocFormattingAllowed()) {
+      createLazySpace();
+      return;
+    }
     if ((myType1 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START && myChild1 == docTag.getFirstChild()) ||
         (myType2 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END && myChild2 == docTag.getLastChild())) {
       createSpaceProperty(false, false, 0);

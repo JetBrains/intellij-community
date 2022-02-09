@@ -76,7 +76,7 @@ public abstract class GroovySpacingProcessorBasic {
       return createDependentSpacingForClosure(settings, groovySettings, (GrClosableBlock)left.getParent(), false);
     }
 
-    if (leftType == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
+    if (groovySettings.isGroovyDocFormattingAllowed() && leftType == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
       return COMMON_SPACING_WITH_NL;
     }
 
@@ -138,6 +138,9 @@ public abstract class GroovySpacingProcessorBasic {
     }
 
     if (GroovyDocTokenTypes.mGDOC_ASTERISKS == leftType && GroovyDocTokenTypes.mGDOC_COMMENT_DATA == rightType) {
+      if (!groovySettings.isGroovyDocFormattingAllowed()) {
+        return LAZY_SPACING;
+      }
       String text = rightNode.getText();
       if (!text.isEmpty() && !StringUtil.startsWithChar(text, ' ')) {
         return COMMON_SPACING;
@@ -159,12 +162,18 @@ public abstract class GroovySpacingProcessorBasic {
     Spacing rightSpacing = getGroovyDocBraceSpacing(right);
     Spacing actualSpacing = rightSpacing == null ? getGroovyDocBraceSpacing(left) : rightSpacing;
     if (actualSpacing != null) {
+      if (!groovySettings.isGroovyDocFormattingAllowed()) {
+        return LAZY_SPACING;
+      }
       return actualSpacing;
     }
 
     if ((leftType == GroovyDocElementTypes.GDOC_INLINED_TAG && rightType == GroovyDocTokenTypes.mGDOC_COMMENT_DATA)
       || (leftType == GroovyDocTokenTypes.mGDOC_COMMENT_DATA && rightType == GroovyDocElementTypes.GDOC_INLINED_TAG))
     {
+      if (!groovySettings.isGroovyDocFormattingAllowed()) {
+        return LAZY_SPACING;
+      }
       // Keep formatting between groovy doc text and groovy doc reference tag as is.
       return NO_SPACING;
     }
