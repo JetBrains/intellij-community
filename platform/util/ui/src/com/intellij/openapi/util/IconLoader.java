@@ -61,7 +61,7 @@ public final class IconLoader {
 
   private static volatile boolean STRICT_GLOBAL;
 
-  static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<>() {
+  private static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<>() {
     @Override
     protected Boolean initialValue() {
       return false;
@@ -340,6 +340,11 @@ public final class IconLoader {
     return findIcon(key + ".png", aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, true);
   }
 
+  @ApiStatus.Internal
+  public static @Nullable Icon findLafIcon(@NotNull String path, @NotNull ClassLoader classLoader, boolean strict) {
+    return findIcon(path, null, classLoader, strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, true);
+  }
+
   /**
    * Might return null if icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
@@ -378,7 +383,7 @@ public final class IconLoader {
   @SuppressWarnings("DuplicatedCode")
   @ApiStatus.Internal
   public static @Nullable Icon findIcon(@NotNull String originalPath,
-                                        @Nullable Class<?> clazz,
+                                        @Nullable Class<?> aClass,
                                         @NotNull ClassLoader classLoader,
                                         @Nullable HandleNotFound handleNotFound,
                                         boolean deferUrlResolve) {
@@ -401,7 +406,11 @@ public final class IconLoader {
           ClassLoader classLoader1 = k.getSecond();
           ImageDataLoader resolver;
           if (deferUrlResolve) {
-            resolver = new ImageDataByUrlLoader(path, clazz, classLoader1, handleNotFound, /* useCacheOnLoad = */ true);
+            HandleNotFound effectiveHandleNotFound = handleNotFound;
+            if (effectiveHandleNotFound == null) {
+              effectiveHandleNotFound = STRICT_LOCAL.get() ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE;
+            }
+            resolver = new ImageDataByUrlLoader(path, aClass, classLoader1, effectiveHandleNotFound, /* useCacheOnLoad = */ true);
           }
           else {
             URL url = doResolve(path, classLoader1, null, HandleNotFound.IGNORE);
@@ -1048,6 +1057,7 @@ public final class IconLoader {
     }
   }
 
+  @ApiStatus.Internal
   enum HandleNotFound {
     THROW_EXCEPTION {
       @Override
