@@ -76,10 +76,13 @@ class ShelfProvider(private val project: Project) : SavedPatchesProvider<Shelved
 
   inner class ShelfObject(override val data: ShelvedChangeList) : SavedPatchesProvider.PatchObject<ShelvedChangeList> {
     override fun loadChanges(): CompletableFuture<SavedPatchesProvider.LoadingResult>? {
+      val cachedChangeObjects = data.getChangeObjects()
+      if (cachedChangeObjects != null) {
+        return CompletableFuture.completedFuture(SavedPatchesProvider.LoadingResult.Changes(cachedChangeObjects))
+      }
       return CompletableFuture.supplyAsync {
         data.loadChangesIfNeededOrThrow(project)
-        data.changes!!.map { MyShelvedWrapper(it, null, data) }
-          .union(data.binaryFiles.map { MyShelvedWrapper(null, it, data) })
+        data.getChangeObjects()!!
       }.thenApply<SavedPatchesProvider.LoadingResult> { shelvedChanges ->
         SavedPatchesProvider.LoadingResult.Changes(shelvedChanges)
       }.exceptionally { throwable ->
@@ -88,6 +91,12 @@ class ShelfProvider(private val project: Project) : SavedPatchesProvider<Shelved
           else -> SavedPatchesProvider.LoadingResult.Error(VcsException(throwable))
         }
       }
+    }
+
+    private fun ShelvedChangeList.getChangeObjects(): Set<SavedPatchesProvider.ChangeObject>? {
+      val cachedChanges = changes ?: return null
+      return cachedChanges.map { MyShelvedWrapper(it, null, this) }
+        .union(binaryFiles.map { MyShelvedWrapper(null, it, this) })
     }
 
     override fun getDiffPreviewTitle(changeName: String?): String {
