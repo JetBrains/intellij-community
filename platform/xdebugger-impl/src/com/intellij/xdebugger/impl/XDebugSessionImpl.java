@@ -717,9 +717,9 @@ public final class XDebugSessionImpl implements XDebugSession {
         BreakpointsUsageCollector.reportBreakpointVerified(breakpoint, delay);
       }
     }
-    XBreakpointManagerImpl debuggerManager = myDebuggerManager.getBreakpointManager(); 
-    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
-    debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this);
+    XBreakpointManagerImpl debuggerManager = myDebuggerManager.getBreakpointManager();
+    XDebugSessionImpl sessionImpl = this;
+    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint, () -> debuggerManager.fireBreakpointPresentationUpdated(breakpoint, sessionImpl));
   }
 
   @Override
