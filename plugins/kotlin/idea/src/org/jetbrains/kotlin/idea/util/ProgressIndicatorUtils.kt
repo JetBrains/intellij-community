@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -11,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -29,6 +33,25 @@ object ProgressIndicatorUtils {
     ): T = com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress(project, progressTitle, object : Computable<T> {
         override fun compute(): T = computable()
     })
+
+    @JvmStatic
+    fun <T> underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(
+        project: Project,
+        @Nls progressTitle: String,
+        computable: () -> T
+    ): T = if (CommandProcessor.getInstance().currentCommandName != null) {
+        var result: T? = null
+        ApplicationManager.getApplication().cast<ApplicationEx>().runWriteActionWithNonCancellableProgressInDispatchThread(
+            progressTitle,
+            project,
+            null
+        ) {
+            result = computable()
+        }
+        result!!
+    } else {
+        underModalProgress(project, progressTitle, computable)
+    }
 
     fun <T> runUnderDisposeAwareIndicator(
         parent: Disposable,

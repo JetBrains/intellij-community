@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.facet.toApiVersion
 import org.jetbrains.kotlin.idea.framework.ui.CreateLibraryDialogWithModules
 import org.jetbrains.kotlin.idea.quickfix.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
+import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -70,7 +71,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
     @JvmSuppressWildcards
     override fun configure(project: Project, excludeModules: Collection<Module>) {
         var nonConfiguredModules = if (!isUnitTestMode()) {
-            underModalProgress(project, KotlinJvmBundle.message("lookup.modules.configurations.progress.text")) {
+            underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(project, KotlinJvmBundle.message("lookup.modules.configurations.progress.text")) {
                 getCanBeConfiguredModules(project, this)
             }
         } else {
