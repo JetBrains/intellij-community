@@ -5,11 +5,11 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
@@ -24,7 +24,7 @@ import java.io.IOException;
 public class FileDeleteAction extends FileChooserAction {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    boolean visible = !isDisabled(e);
+    var visible = !isDisabled(e);
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && !panel.selectedPaths().isEmpty());
   }
@@ -41,11 +41,11 @@ public class FileDeleteAction extends FileChooserAction {
       .ask(project);
     if (!ok) return;
 
-    new Task.Modal(project, panel.getComponent(), IdeBundle.message("progress.deleting"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        try {
+    try {
+      var progress = IdeBundle.message("progress.deleting");
+      ProgressManager.getInstance().run(new Task.WithResult<Void, IOException>(e.getProject(), panel.getComponent(), progress, true) {
+        @Override
+        protected Void compute(@NotNull ProgressIndicator indicator) throws IOException {
           for (var path : paths) {
             if (indicator.isCanceled()) break;
             indicator.setText(path.toString());
@@ -54,14 +54,14 @@ public class FileDeleteAction extends FileChooserAction {
               indicator.setText2(path.relativize(p).toString());
             });
           }
-          ApplicationManager.getApplication().invokeLater(() -> panel.reload());
+          return null;
         }
-        catch (IOException e) {
-          ApplicationManager.getApplication().invokeLater(
-            () -> Messages.showErrorDialog(panel.getComponent(), IoErrorText.message(e), CommonBundle.getErrorTitle()));
-        }
-      }
-    }.queue();
+      });
+      panel.reload();
+    }
+    catch (IOException ex) {
+      Messages.showErrorDialog(panel.getComponent(), IoErrorText.message(ex), CommonBundle.getErrorTitle());
+    }
   }
 
   private static boolean isDisabled(AnActionEvent e) {
