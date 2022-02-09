@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch.predicates
 
@@ -14,7 +14,6 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
@@ -56,7 +55,7 @@ class KotlinExprTypePredicate(
             }
             node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
             node is KtSimpleNameStringTemplateEntry -> node.expression?.resolveType()
-            else -> throw IllegalStateException(KotlinBundle.message("error.type.filter.node"))
+            else -> null
         } ?: return false
 
         val project = node.project
