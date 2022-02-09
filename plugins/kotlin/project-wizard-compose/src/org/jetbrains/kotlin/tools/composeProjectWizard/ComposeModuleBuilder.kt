@@ -70,6 +70,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
 
     override fun getAssets(starter: Starter): List<GeneratorAsset> {
         val ftManager = FileTemplateManager.getInstance(ProjectManager.getInstance().defaultProject)
+        val standardAssetsProvider = StandardAssetsProvider()
 
         val configType = starterContext.getUserData(COMPOSE_CONFIG_TYPE_KEY)
         val platform = starterContext.getUserData(COMPOSE_PLATFORM_KEY)
@@ -79,7 +80,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
 
         assets.add(
             GeneratorTemplateFile(
-                "gradle/wrapper/gradle-wrapper.properties",
+                standardAssetsProvider.gradleWrapperPropertiesLocation,
                 ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_GRADLE_WRAPPER_PROPERTIES)
             )
         )
@@ -95,8 +96,9 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
                 ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_SETTINGS_GRADLE)
             )
         )
-        assets.addAll(StandardAssetsProvider().getGradlewAssets())
-        assets.addAll(StandardAssetsProvider().getGradleIgnoreAssets())
+
+        assets.addAll(standardAssetsProvider.getGradlewAssets())
+        assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
 
         if (configType == ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM) {
             if (platform == ComposePWInitialStep.ComposePlatform.DESKTOP) {

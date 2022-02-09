@@ -117,19 +117,24 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
 
   override fun getAssets(starter: Starter): List<GeneratorAsset> {
     val ftManager = FileTemplateManager.getInstance(ProjectManager.getInstance().defaultProject)
+    val standardAssetsProvider = StandardAssetsProvider()
 
     val assets = mutableListOf<GeneratorAsset>()
     if (starterContext.projectType == GRADLE_PROJECT) {
       assets.add(GeneratorTemplateFile("build.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_BUILD_GRADLE)))
       assets.add(GeneratorTemplateFile("settings.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_SETTINGS_GRADLE)))
-      assets.add(GeneratorTemplateFile("gradle/wrapper/gradle-wrapper.properties",
+      assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
                                        ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_GRADLEW_PROPERTIES)))
-      assets.addAll(StandardAssetsProvider().getGradlewAssets())
-      assets.addAll(StandardAssetsProvider().getGradleIgnoreAssets())
+      assets.addAll(standardAssetsProvider.getGradlewAssets())
+      assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
     }
     else if (starterContext.projectType == MAVEN_PROJECT) {
       assets.add(GeneratorTemplateFile("pom.xml", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_POM_XML)))
-      assets.addAll(StandardAssetsProvider().getMavenIgnoreAssets())
+
+      assets.add(GeneratorTemplateFile(standardAssetsProvider.mavenWrapperPropertiesLocation,
+                                       ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_MVNW_PROPERTIES)))
+      assets.addAll(standardAssetsProvider.getMvnwAssets())
+      assets.addAll(standardAssetsProvider.getMavenIgnoreAssets())
     }
 
     val packagePath = getPackagePath(starterContext.group, starterContext.artifact)

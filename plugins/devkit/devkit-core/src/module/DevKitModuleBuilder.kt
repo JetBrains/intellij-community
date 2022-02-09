@@ -87,14 +87,16 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
 
   override fun getAssets(starter: Starter): List<GeneratorAsset> {
     val ftManager = FileTemplateManager.getInstance(ProjectManager.getInstance().defaultProject)
+    val standardAssetsProvider = StandardAssetsProvider()
 
     val assets = mutableListOf<GeneratorAsset>()
     assets.add(GeneratorTemplateFile("build.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.BUILD_GRADLE_KTS)))
     assets.add(GeneratorTemplateFile("settings.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.SETTINGS_GRADLE_KTS)))
-    assets.add(GeneratorTemplateFile("gradle/wrapper/gradle-wrapper.properties",
+    assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
                                      ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
-    assets.addAll(StandardAssetsProvider().getGradlewAssets())
-    assets.addAll(StandardAssetsProvider().getGradleIgnoreAssets())
+
+    assets.addAll(standardAssetsProvider.getGradlewAssets())
+    assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
 
     val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
     if (starterContext.language == JAVA_STARTER_LANGUAGE) {
