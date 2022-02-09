@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash
 
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.google.common.util.concurrent.MoreExecutors
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -21,7 +20,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 
 class GitStashCache(val project: Project) : Disposable {
-  private val executor = MoreExecutors.listeningDecorator(AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Stash Loader", 1))
+  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Stash Loader", 1)
 
   private val cache = Caffeine.newBuilder()
     .maximumSize(100)
