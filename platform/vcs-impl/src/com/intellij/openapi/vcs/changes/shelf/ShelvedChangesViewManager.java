@@ -43,10 +43,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.*;
@@ -335,7 +332,8 @@ public class ShelvedChangesViewManager implements Disposable {
     private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider(myProject, this);
 
     private ShelfTree(@NotNull Project project) {
-      super(project, false, false, true);
+      super(project, false, false, false);
+      new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, true);
       setKeepTreeState(true);
       setDoubleClickHandler(e -> showShelvedChangesDiff());
       setEnterKeyHandler(e -> showShelvedChangesDiff());
