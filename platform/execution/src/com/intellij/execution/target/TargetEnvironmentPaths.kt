@@ -74,7 +74,13 @@ private fun String.normalizeFileSeparatorCharacter(fileSeparator: Char): String 
   if (fileSeparator == '\\') replace('/', fileSeparator) else this
 
 private fun String.removeRepetitiveFileSeparators(fileSeparator: Char): String =
-  replace("$fileSeparator$fileSeparator", fileSeparator.toString())
+  if (fileSeparator == '\\' && startsWith("\\\\")) {
+    // keep leading double back slashes for Windows UNC paths (f.e. for WSL paths that starts with "\\wsl$" prefix)
+    "\\" + replace("$fileSeparator$fileSeparator", fileSeparator.toString())
+  }
+  else {
+    replace("$fileSeparator$fileSeparator", fileSeparator.toString())
+  }
 
 private fun String.normalizeRelativePath(fileSeparator: Char): String =
   when {
