@@ -18,8 +18,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
