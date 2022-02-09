@@ -1004,6 +1004,26 @@ public static void main(String[] args) {
 """)
   }
 
+  void testGroovydoc2() {
+    checkFormatting("""\
+class Scratch {
+  /**
+   * {foo}
+   */
+  public static void main(String[] args) {
+
+  }
+}""", """\
+class Scratch {
+  /**
+   * {foo}
+   */
+  public static void main(String[] args) {
+
+  }
+}""")
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES

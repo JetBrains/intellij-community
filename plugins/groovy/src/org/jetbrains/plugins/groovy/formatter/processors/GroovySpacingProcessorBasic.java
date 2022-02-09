@@ -10,6 +10,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
@@ -19,7 +20,7 @@ import org.jetbrains.plugins.groovy.formatter.blocks.MethodCallWithoutQualifierB
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -155,8 +156,10 @@ public abstract class GroovySpacingProcessorBasic {
       return getStatementSpacing(context);
     }
 
-    if (GrDocCommentUtil.isActualTagStartOrEnd(right) || GrDocCommentUtil.isActualTagStartOrEnd(left)) {
-      return NO_SPACING;
+    Spacing rightSpacing = getGroovyDocBraceSpacing(right);
+    Spacing actualSpacing = rightSpacing == null ? getGroovyDocBraceSpacing(left) : rightSpacing;
+    if (actualSpacing != null) {
+      return actualSpacing;
     }
 
     if ((leftType == GroovyDocElementTypes.GDOC_INLINED_TAG && rightType == GroovyDocTokenTypes.mGDOC_COMMENT_DATA)
@@ -181,6 +184,19 @@ public abstract class GroovySpacingProcessorBasic {
     }
 
     return COMMON_SPACING;
+  }
+
+  public static @Nullable Spacing getGroovyDocBraceSpacing(@NotNull PsiElement grDocInlineTagBrace) {
+    IElementType type = grDocInlineTagBrace.getNode().getElementType();
+    if (type != GroovyDocTokenTypes.mGDOC_INLINE_TAG_START && type != GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
+      return null;
+    }
+    PsiElement parent = grDocInlineTagBrace.getParent();
+    if (parent instanceof GrDocInlinedTag && (parent.getFirstChild() == grDocInlineTagBrace || parent.getLastChild() == grDocInlineTagBrace)) {
+      return NO_SPACING;
+    } else {
+      return LAZY_SPACING;
+    }
   }
 
   @NotNull

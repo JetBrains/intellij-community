@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -96,12 +95,4 @@ public abstract class GrDocCommentUtil {
     }
   }
 
-  public static boolean isActualTagStartOrEnd(@NotNull PsiElement grDocInlineTagBrace) {
-    PsiElement parent = grDocInlineTagBrace.getParent();
-    if (parent instanceof GrDocInlinedTag && (parent.getFirstChild() == grDocInlineTagBrace || parent.getLastChild() == grDocInlineTagBrace)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
 }
