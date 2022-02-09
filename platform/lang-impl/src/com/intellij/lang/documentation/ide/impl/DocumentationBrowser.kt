@@ -22,7 +22,6 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
-import com.intellij.util.containers.Stack
 import com.intellij.util.lateinitVal
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -40,14 +39,11 @@ internal class DocumentationBrowser private constructor(
   private lateinit var state: BrowserState
 
   private val stateListeners = ArrayList<BrowserStateListener>(2)
-  private val backStack = Stack<HistorySnapshot>()
-  private val forwardStack = Stack<HistorySnapshot>()
 
   override fun dispose() {
     cs.cancel()
     stateListeners.clear()
-    backStack.clear()
-    forwardStack.clear()
+    myHistory.clear()
   }
 
   var ui: DocumentationUI by lateinitVal()
@@ -79,8 +75,7 @@ internal class DocumentationBrowser private constructor(
   fun resetBrowser(request: DocumentationRequest) {
     cs.coroutineContext.cancelChildren()
     cs.launch(Dispatchers.EDT) {
-      backStack.clear()
-      forwardStack.clear()
+      myHistory.clear()
       browseDocumentation(request)
     }
   }
@@ -127,8 +122,7 @@ internal class DocumentationBrowser private constructor(
         }
       }
       is InternalLinkResult.Request -> {
-        backStack.push(historySnapshot())
-        forwardStack.clear()
+        myHistory.nextPage()
         browseDocumentation(internalResult.request)
       }
       is InternalLinkResult.Updater -> {
@@ -153,6 +147,10 @@ internal class DocumentationBrowser private constructor(
     @Suppress("EXPERIMENTAL_API_USAGE")
     return result.getCompleted()?.links?.externalUrl
   }
+
+  val history: DocumentationHistory get() = myHistory
+
+  private val myHistory = DocumentationBrowserHistory(::historySnapshot, ::restore)
 
   private class HistorySnapshot(
     val state: BrowserState,
@@ -193,27 +191,6 @@ internal class DocumentationBrowser private constructor(
       // 4. Invoke the Forward action.
       //    Here we reload that cancelled request again
       browseDocumentation(state.request)
-    }
-  }
-
-  val history: DocumentationHistory = object : DocumentationHistory {
-
-    override fun canBackward(): Boolean {
-      return !backStack.isEmpty()
-    }
-
-    override fun backward() {
-      forwardStack.push(historySnapshot())
-      restore(backStack.pop())
-    }
-
-    override fun canForward(): Boolean {
-      return !forwardStack.isEmpty()
-    }
-
-    override fun forward() {
-      backStack.push(historySnapshot())
-      restore(forwardStack.pop())
     }
   }
 
