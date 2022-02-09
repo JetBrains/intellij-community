@@ -62,6 +62,9 @@ public final class SnippetDocTagManipulator extends AbstractElementManipulator<P
   @Override
   public @NotNull TextRange getRangeInElement(@NotNull PsiSnippetDocTagImpl element) {
     final List<TextRange> ranges = element.getContentRanges();
-    return TextRange.create(ranges.get(0).getStartOffset(), ContainerUtil.getLastItem(ranges).getEndOffset());
+    if (ranges.isEmpty()) return TextRange.EMPTY_RANGE;
+    final int startOffset = ranges.get(0).getStartOffset();
+    final int endOffset = ContainerUtil.getLastItem(ranges).getEndOffset();
+    return TextRange.create(startOffset, endOffset);
   }
 }

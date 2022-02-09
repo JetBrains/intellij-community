@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -75,12 +74,6 @@ public class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapter {
     if (!(editor instanceof EditorWindow)) {
       return null;
     }
-
-    final CaretModel caretModel = editor.getCaretModel();
-    int caretOffset = caretModel.getOffset();
-
-    final PsiElement current = file.findElementAt(caretOffset);
-    if (current == null) return null;
 
     final SmartPsiElementPointer<?> data = file.getUserData(FileContextUtil.INJECTED_IN_ELEMENT);
     if (data == null) return null;
