@@ -81,7 +81,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
             settingsCopy.state.copyFrom(settings.state)
             settingsCopy.state.isCheckNeeded = true
             settingsCopy.state.isPluginsCheckNeeded = true
-            settingsCopy.selectedChannelStatus = selectedChannel(channelModel.selected)
+            if (channelSelectionLockedMessage == null) {
+              settingsCopy.selectedChannelStatus = selectedChannel(channelModel.selected)
+            }
             UpdateChecker.updateAndShowResult(project, settingsCopy)
             updateLastCheckedLabel(settings.lastTimeChecked)
           }
