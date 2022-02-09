@@ -16619,6 +16619,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/primitiveArray.kt");
         }
 
+        @TestMetadata("rangeCount.kt")
+        public void testRangeCount() throws Exception {
+            runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/rangeCount.kt");
+        }
+
         @TestMetadata("set.kt")
         public void testSet() throws Exception {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/set.kt");
@@ -16705,6 +16710,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("lteq.kt")
         public void testLteq() throws Exception {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/lteq.kt");
+        }
+
+        @TestMetadata("rangeCount.kt")
+        public void testRangeCount() throws Exception {
+            runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/rangeCount.kt");
         }
 
         @TestMetadata("set.kt")
