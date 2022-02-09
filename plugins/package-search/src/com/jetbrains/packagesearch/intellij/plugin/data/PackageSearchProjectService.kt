@@ -1,9 +1,10 @@
+@file:Suppress("DEPRECATION")
+
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
@@ -12,10 +13,8 @@ import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperations
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
@@ -44,7 +43,6 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -65,6 +63,7 @@ import kotlinx.coroutines.job
 import kotlinx.serialization.json.Json
 import java.util.concurrent.Executors
 import kotlin.time.Duration
+import kotlin.time.seconds
 
 @Service(Service.Level.PROJECT)
 internal class PackageSearchProjectService(private val project: Project) : CoroutineScope by project.lifecycleScope {
@@ -107,7 +106,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         if (isProjectTrusted) project.nativeModulesChangesFlow else flowOf(emptyList())
     }
         .replayOnSignals(
-            retryFromErrorChannel.receiveAsFlow().throttle(Duration.seconds(10), true),
+            retryFromErrorChannel.receiveAsFlow().throttle(10.seconds),
             project.moduleChangesSignalFlow,
             restartChannel.receiveAsFlow()
         )
@@ -155,7 +154,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         buildFileChangesFlow.filter { it.isNotEmpty() },
         operationExecutedChannel.consumeAsFlow()
     )
-        .batchAtIntervals(Duration.seconds(1))
+        .batchAtIntervals(1.seconds)
         .map { it.flatMap { it }.distinct() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesChangesFlow",
@@ -242,14 +241,24 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         .flowOn(installedDependenciesExecutor)
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
-    val packageUpgradesStateFlow = installedPackagesStateFlow
-        .mapLatestTimedWithLoading("packageUpgradesStateFlow", packageUpgradesLoadingFlow) {
-            coroutineScope {
-                val stableUpdates = async { computePackageUpgrades(it, true, packageVersionNormalizer) }
-                val allUpdates = async { computePackageUpgrades(it, false, packageVersionNormalizer) }
-                PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
+    val packageUpgradesStateFlow = combine(
+        installedPackagesStateFlow,
+        moduleModelsStateFlow,
+        knownRepositoriesFlow
+    ) { installedPackages, moduleModels, repos ->
+        availableUpgradesLoadingFlow.whileLoading {
+            val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
+            val nativeModulesMap = moduleModels.associateBy { it.projectModule }
+
+            val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
+                computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
             }
-        }
+
+            val stableUpdates = async { getUpgrades(true) }
+            val allUpdates = async { getUpgrades(false) }
+            PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
+        }.value
+    }
         .catchAndLog(
             context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
             message = "Error while evaluating packages upgrade candidates",
@@ -257,34 +266,6 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             retryChannel = retryFromErrorChannel
         )
         .stateIn(this, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
-
-    internal data class AvailableUpdatesMap(val stable: Map<Module, List<OperationData>>, val all: Map<Module, List<OperationData>>) {
-        data class OperationData(
-            val packageUpgradeInfo: PackagesToUpgrade.PackageUpgradeInfo,
-            val packageOperations: PackageOperations,
-            val precomputedPrimaryOperations: List<PackageSearchOperation<*>>
-        )
-
-        fun getUpgradeMap(onlyStable: Boolean) = if (onlyStable) stable else all
-    }
-
-    val availableUpdatesStateFlow = combine(
-        packageUpgradesStateFlow,
-        moduleModelsStateFlow,
-        allInstalledKnownRepositoriesFlow
-    ) { (stable, all), moduleModels, repos ->
-        val (result, time) = availableUpgradesLoadingFlow.whileLoading {
-            coroutineScope {
-                val stableUpgrades =
-                    async { generateOperationData(moduleModels, stable, repos, true, project) }
-                val allUpgrades =
-                    async { generateOperationData(moduleModels, all, repos, false, project) }
-                AvailableUpdatesMap(stableUpgrades.await(), allUpgrades.await())
-            }
-        }
-        logTrace("availableUpdatesStateFlow") { "Took ${time} to process upgrades operations." }
-        result
-    }.stateIn(this, SharingStarted.Eagerly, AvailableUpdatesMap(emptyMap(), emptyMap()))
 
     init {
         // allows rerunning PKGS inspections on already opened files
@@ -296,7 +277,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         var controller: BackgroundLoadingBarController? = null
 
         if (PluginEnvironment.isNonModalLoadingEnabled) {
-            isLoadingFlow.throttle(Duration.seconds(1), true)
+            isLoadingFlow.throttle(1.seconds)
                 .onEach { controller?.clear() }
                 .filter { it }
                 .onEach {

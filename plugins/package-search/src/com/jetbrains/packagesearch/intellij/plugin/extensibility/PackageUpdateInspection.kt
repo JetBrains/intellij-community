@@ -93,31 +93,32 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
 
-        project.packageSearchProjectService.availableUpdatesStateFlow.value
-            .getUpgradeMap(onlyStable)[fileModule]
-            ?.filter { isNotExcluded(it.packageUpgradeInfo.packageModel.identifier) }
-            ?.filter { it.packageOperations.canUpgradePackage }
-            ?.forEach { (packageUpdateInfo, _, precomputedOperations) ->
+        project.packageSearchProjectService.packageUpgradesStateFlow.value
+            .getPackagesToUpgrade(onlyStable).upgradesByModule[fileModule]
+            ?.filter { isNotExcluded(it.packageModel.identifier) }
+            ?.filter { it.computeUpgradeOperationsForSingleModule.isNotEmpty() }
+            ?.forEach { (packageModel, usageInfo,
+                targetVersion, precomputedOperations) ->
 
-                val currentVersion = packageUpdateInfo.usageInfo.version
-                val scope = packageUpdateInfo.usageInfo.scope
-                val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
+                val currentVersion = usageInfo.version
+                val scope = usageInfo.scope
+                val unifiedDependency = packageModel.toUnifiedDependency(currentVersion, scope)
                 val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: return@forEach
 
                 problemsHolder.registerProblem(
                     versionElement,
                     PackageSearchBundle.message(
                         "packagesearch.inspection.upgrade.description",
-                        packageUpdateInfo.packageModel.identifier.rawValue,
-                        packageUpdateInfo.targetVersion.originalVersion.displayName
+                        packageModel.identifier.rawValue,
+                        targetVersion.originalVersion.displayName
                     ),
                     LocalQuickFixOnPsiElement(
                         element = versionElement,
                         familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.family"),
                         text = PackageSearchBundle.message(
                             "packagesearch.quickfix.upgrade.action",
-                            packageUpdateInfo.packageModel.identifier.rawValue,
-                            packageUpdateInfo.targetVersion.originalVersion.displayName
+                            packageModel.identifier.rawValue,
+                            targetVersion.originalVersion.displayName
                         ),
                         isHighPriority = true
                     ) {
@@ -128,11 +129,11 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                         familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.exclude.family"),
                         text = PackageSearchBundle.message(
                             "packagesearch.quickfix.upgrade.exclude.action",
-                            packageUpdateInfo.packageModel.identifier.rawValue
+                            packageModel.identifier.rawValue
                         ),
                         isHighPriority = false
                     ) {
-                        excludeList.add(packageUpdateInfo.packageModel.identifier.rawValue)
+                        excludeList.add(packageModel.identifier.rawValue)
                         ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
                     }
                 )
