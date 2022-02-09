@@ -280,7 +280,7 @@
     <keyboard-shortcut first-keystroke="control shift A"/>
   </action>
   <action id="SETextAction">
-    <keyboard-shortcut first-keystroke="control shift alt F"/>
+    <keyboard-shortcut first-keystroke="control shift alt E"/>
   </action>
   <action id="RunInspection">
     <keyboard-shortcut first-keystroke="control shift alt I"/>
