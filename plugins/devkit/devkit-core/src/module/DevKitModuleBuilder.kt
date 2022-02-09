@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.gradle.GradleResourcesProvider
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
@@ -93,7 +93,8 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
     assets.add(GeneratorTemplateFile("settings.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.SETTINGS_GRADLE_KTS)))
     assets.add(GeneratorTemplateFile("gradle/wrapper/gradle-wrapper.properties",
                                      ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
-    assets.addAll(GradleResourcesProvider().getGradlewResources())
+    assets.addAll(StandardAssetsProvider().getGradlewAssets())
+    assets.addAll(StandardAssetsProvider().getGradleIgnoreAssets())
 
     val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
     if (starterContext.language == JAVA_STARTER_LANGUAGE) {

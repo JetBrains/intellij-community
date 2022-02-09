@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.tools.composeProjectWizard
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.gradle.GradleResourcesProvider
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
@@ -95,9 +95,8 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
                 ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_SETTINGS_GRADLE)
             )
         )
-        assets.addAll(GradleResourcesProvider().getGradlewResources())
-
-
+        assets.addAll(StandardAssetsProvider().getGradlewAssets())
+        assets.addAll(StandardAssetsProvider().getGradleIgnoreAssets())
 
         if (configType == ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM) {
             if (platform == ComposePWInitialStep.ComposePlatform.DESKTOP) {

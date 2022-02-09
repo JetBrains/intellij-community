@@ -4,7 +4,7 @@ package org.jetbrains.plugins.javaFX.wizard
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.gradle.GradleResourcesProvider
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.shared.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -124,10 +124,12 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
       assets.add(GeneratorTemplateFile("settings.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_SETTINGS_GRADLE)))
       assets.add(GeneratorTemplateFile("gradle/wrapper/gradle-wrapper.properties",
                                        ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_GRADLEW_PROPERTIES)))
-      assets.addAll(GradleResourcesProvider().getGradlewResources())
+      assets.addAll(StandardAssetsProvider().getGradlewAssets())
+      assets.addAll(StandardAssetsProvider().getGradleIgnoreAssets())
     }
     else if (starterContext.projectType == MAVEN_PROJECT) {
       assets.add(GeneratorTemplateFile("pom.xml", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_POM_XML)))
+      assets.addAll(StandardAssetsProvider().getMavenIgnoreAssets())
     }
 
     val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
