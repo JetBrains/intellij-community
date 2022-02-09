@@ -1,18 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
 import com.intellij.codeWithMe.ClientId
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
@@ -64,27 +61,4 @@ private suspend fun Job.tryJoin() {
 
 internal fun resizePopup(popup: AbstractPopup) {
   popup.size = popup.component.preferredSize
-}
-
-fun storeSize(project: Project, popup: AbstractPopup, parent: Disposable) {
-  val resizeState = PopupResizeState(project, popup)
-  popup.addResizeListener(resizeState, parent)
-  val storedSize = DimensionService.getInstance().getSize(NEW_JAVADOC_LOCATION_AND_SIZE, project)
-  if (storedSize != null) {
-    resizeState.manuallyResized = true
-    popup.size = storedSize
-  }
-}
-
-private class PopupResizeState(
-  private val project: Project,
-  private val popup: AbstractPopup,
-) : Runnable {
-
-  var manuallyResized = false
-
-  override fun run() {
-    manuallyResized = true
-    DimensionService.getInstance().setSize(NEW_JAVADOC_LOCATION_AND_SIZE, popup.contentSize, project)
-  }
 }
