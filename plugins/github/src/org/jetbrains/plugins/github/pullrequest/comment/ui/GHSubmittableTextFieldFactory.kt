@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.*
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.Companion.getEditorTextFieldVerticalOffset
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldModel
-import com.intellij.collaboration.ui.codereview.timeline.comment.createSubmittableTextFieldComponent
+import com.intellij.collaboration.ui.codereview.timeline.comment.*
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.ActionButtonConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.CancelActionConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.SubmitActionConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.getEditorTextFieldVerticalOffset
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
@@ -28,12 +28,9 @@ class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel
   fun create(
     @NlsContexts.Tooltip actionName: String = GithubBundle.message("action.comment.text"),
     onCancel: (() -> Unit)? = null
-  ): SubmittableTextFieldComponent {
-    val submittableTextFieldConfig = Config(
-      submitConfig = SubmitActionConfig(ActionButtonConfig(actionName)),
-      cancelConfig = onCancel?.let { CancelActionConfig(ActionButtonConfig(Messages.getCancelButton()), action = it) }
-    )
-    return createSubmittableTextFieldComponent(actionName, model, submittableTextFieldConfig)
+  ): JComponent {
+    val submittableTextField = SubmittableTextField.create(model, actionName)
+    return SubmittableTextFieldComponent.create(model, submittableTextField, createSubmittableTextFieldConfig(actionName, onCancel))
   }
 
   fun create(
@@ -50,11 +47,26 @@ class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    val commentComponent = create(actionName, onCancel)
-    return commentComponent.withAvatar(authorLabel)
+    val submittableTextField = SubmittableTextField.create(model, actionName)
+    val submittableTextFieldComponent = SubmittableTextFieldComponent.create(
+      model, submittableTextField, createSubmittableTextFieldConfig(actionName, onCancel)
+    )
+    return wrapWithAvatar(submittableTextFieldComponent, submittableTextField, authorLabel)
   }
 
-  fun SubmittableTextFieldComponent.withAvatar(
+  private fun createSubmittableTextFieldConfig(
+    @NlsContexts.Tooltip actionName: String,
+    onCancel: (() -> Unit)? = null
+  ): SubmittableTextFieldComponent.Config {
+    return SubmittableTextFieldComponent.Config(
+      submitConfig = SubmitActionConfig(ActionButtonConfig(actionName)),
+      cancelConfig = onCancel?.let { CancelActionConfig(ActionButtonConfig(Messages.getCancelButton()), action = it) }
+    )
+  }
+
+  private fun wrapWithAvatar(
+    component: JComponent,
+    commentComponent: JComponent,
     authorLabel: JLabel
   ): JComponent {
     return JPanel(null).apply {
@@ -64,10 +76,10 @@ class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel
                            .fillX())
       isFocusCycleRoot = true
       isFocusTraversalPolicyProvider = true
-      focusTraversalPolicy = ListFocusTraversalPolicy(listOf(this@withAvatar.submittableTextField, authorLabel))
+      focusTraversalPolicy = ListFocusTraversalPolicy(listOf(commentComponent, authorLabel))
 
       add(authorLabel, CC().alignY("top").gapRight("${JBUI.scale(6)}"))
-      add(this@withAvatar, CC().grow().pushX())
+      add(component, CC().grow().pushX())
     }
   }
 }

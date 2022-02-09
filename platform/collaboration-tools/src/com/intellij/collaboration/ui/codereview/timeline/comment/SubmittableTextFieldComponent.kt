@@ -3,6 +3,10 @@ package com.intellij.collaboration.ui.codereview.timeline.comment
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.CancelActionConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.ScrollOnChangePolicy
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.SubmitActionConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.getEditorTextFieldVerticalOffset
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -22,7 +26,6 @@ import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.*
@@ -35,164 +38,43 @@ import javax.swing.border.EmptyBorder
 private val defaultSubmitShortcut = CommonShortcuts.CTRL_ENTER
 private val defaultCancelShortcut = CommonShortcuts.ESCAPE
 
-fun createSubmittableTextFieldComponent(
-  @Nls placeHolder: String,
-  model: SubmittableTextFieldModel,
-  config: SubmittableTextFieldComponent.Config
-): SubmittableTextFieldComponent {
-  val textField = SubmittableTextField.create(model, placeHolder)
-  return SubmittableTextFieldComponent(model, textField, config)
-}
+object SubmittableTextFieldComponent {
+  fun create(
+    model: SubmittableTextFieldModel,
+    submittableTextField: SubmittableTextField,
+    config: Config
+  ): JComponent {
+    submittableTextField.installSubmitAction(model, config.submitConfig)
+    submittableTextField.installCancelAction(config.cancelConfig)
 
-class SubmittableTextFieldComponent(
-  private val model: SubmittableTextFieldModel,
-  val submittableTextField: SubmittableTextField,
-  private val config: Config
-) : JPanel(null) {
-  init {
+    val contentComponent = JPanel(null).apply {
+      isOpaque = false
+      layout = MigLayout(
+        LC()
+          .gridGap("0", "0")
+          .insets("0", "0", "0", "0")
+          .fillX()
+      )
+      border = JBUI.Borders.empty()
+    }
+
     val busyLabel = JLabel(AnimatedIcon.Default())
-    val submitButton = createSubmitButton(config.submitConfig)
-    installSubmitAction(config.submitConfig)
-    updateUiOnModelChanges(busyLabel, submitButton)
+    val submitButton = createSubmitButton(model, config.submitConfig)
 
     val cancelButton = createCancelButton(config.cancelConfig)
-    installCancelAction(config.cancelConfig)
 
-    installScrollIfChangedController()
+    updateUiOnModelChanges(contentComponent, model, submittableTextField, busyLabel, submitButton)
 
-    isOpaque = false
-    layout = MigLayout(
-      LC()
-        .gridGap("0", "0")
-        .insets("0", "0", "0", "0")
-        .fillX()
-    )
-    border = JBUI.Borders.empty()
+    installScrollIfChangedController(contentComponent, model, config.scrollOnChange)
 
     val textFieldWithOverlay = createTextFieldWithOverlay(submittableTextField, submitButton, busyLabel)
-    add(textFieldWithOverlay, CC().grow().pushX())
-    cancelButton?.let { add(it, CC().alignY("top")) }
+    contentComponent.add(textFieldWithOverlay, CC().grow().pushX())
+    cancelButton?.let { contentComponent.add(it, CC().alignY("top")) }
+
+    return contentComponent
   }
 
-  private fun installScrollIfChangedController() {
-    val policy = config.scrollOnChange
-    if (policy == ScrollOnChangePolicy.DontScroll) {
-      return
-    }
-    fun scroll() {
-      when (policy) {
-        ScrollOnChangePolicy.DontScroll -> {
-        }
-        is ScrollOnChangePolicy.ScrollToComponent -> {
-          val componentToScroll = policy.component
-          scrollRectToVisible(Rectangle(0, 0, componentToScroll.width, componentToScroll.height))
-        }
-        ScrollOnChangePolicy.ScrollToField -> {
-          scrollRectToVisible(Rectangle(0, 0, width, height))
-        }
-      }
-    }
-
-    model.document.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        scroll()
-      }
-    })
-
-    // previous listener doesn't work properly when text field's size is changed because
-    // component is not resized at this moment, so we need to handle resizing too
-    // it also produces such behavior: resize of the ancestor will scroll to the field
-    addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        if (UIUtil.isFocusAncestor(this@SubmittableTextFieldComponent)) {
-          scroll()
-        }
-      }
-    })
-  }
-
-  @Suppress("DialogTitleCapitalization")
-  private fun createSubmitButton(
-    actionConfig: SubmitActionConfig
-  ): InlineIconButton? {
-    val iconConfig = actionConfig.iconConfig ?: return null
-
-    val button = InlineIconButton(
-      CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered,
-      tooltip = iconConfig.name
-    ).apply {
-      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-      actionListener = ActionListener { submit() }
-    }
-
-    config.submitConfig.shortcut.addAndInvokeListener {
-      button.shortcut = it
-    }
-    return button
-  }
-
-  private fun createCancelButton(actionConfig: CancelActionConfig?): InlineIconButton? {
-    if (actionConfig == null) {
-      return null
-    }
-    val iconConfig = actionConfig.iconConfig ?: return null
-    return InlineIconButton(
-      AllIcons.Actions.Close, AllIcons.Actions.CloseHovered,
-      tooltip = iconConfig.name,
-      shortcut = actionConfig.shortcut
-    ).apply {
-      border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset(), 0)
-      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-      actionListener = ActionListener { actionConfig.action() }
-    }
-  }
-
-  private fun installSubmitAction(submitConfig: SubmitActionConfig) {
-    val submitAction = object : DumbAwareAction() {
-      override fun actionPerformed(e: AnActionEvent) = submit()
-    }
-
-    submitConfig.shortcut.addAndInvokeListener {
-      submitAction.unregisterCustomShortcutSet(submittableTextField)
-      submitAction.registerCustomShortcutSet(it, submittableTextField)
-    }
-  }
-
-  private fun installCancelAction(cancelConfig: CancelActionConfig?) {
-    if (cancelConfig == null) {
-      return
-    }
-    object : DumbAwareAction() {
-      override fun actionPerformed(e: AnActionEvent) {
-        cancelConfig.action()
-      }
-    }.registerCustomShortcutSet(cancelConfig.shortcut, submittableTextField)
-  }
-
-  private fun updateUiOnModelChanges(busyLabel: JComponent, submitButton: InlineIconButton?) {
-    fun update() {
-      busyLabel.isVisible = model.isBusy
-      submitButton?.isEnabled = isSubmitAllowed()
-    }
-
-    submittableTextField.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        update()
-        this@SubmittableTextFieldComponent.revalidate()
-      }
-    })
-
-    model.addStateListener(::update)
-    update()
-  }
-
-  private fun isSubmitAllowed(): Boolean = !model.isBusy && submittableTextField.text.isNotBlank()
-
-  private fun submit() {
-    if (isSubmitAllowed()) {
-      model.submit()
-    }
-  }
+  fun getEditorTextFieldVerticalOffset() = if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 6 else 4
 
   data class Config(
     val scrollOnChange: ScrollOnChangePolicy = ScrollOnChangePolicy.ScrollToField,
@@ -212,15 +94,144 @@ class SubmittableTextFieldComponent(
   )
 
   sealed class ScrollOnChangePolicy {
-    object DontScroll: ScrollOnChangePolicy()
-    object ScrollToField: ScrollOnChangePolicy()
-    class ScrollToComponent(val component: JComponent): ScrollOnChangePolicy()
+    object DontScroll : ScrollOnChangePolicy()
+    object ScrollToField : ScrollOnChangePolicy()
+    class ScrollToComponent(val component: JComponent) : ScrollOnChangePolicy()
   }
 
   data class ActionButtonConfig(val name: @NlsContexts.Tooltip String)
+}
 
-  companion object {
-    fun getEditorTextFieldVerticalOffset() = if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 6 else 4
+private fun installScrollIfChangedController(
+  parent: JComponent,
+  model: SubmittableTextFieldModel,
+  policy: ScrollOnChangePolicy,
+) {
+  if (policy == ScrollOnChangePolicy.DontScroll) {
+    return
+  }
+  fun scroll() {
+    when (policy) {
+      ScrollOnChangePolicy.DontScroll -> {
+      }
+      is ScrollOnChangePolicy.ScrollToComponent -> {
+        val componentToScroll = policy.component
+        parent.scrollRectToVisible(Rectangle(0, 0, componentToScroll.width, componentToScroll.height))
+      }
+      ScrollOnChangePolicy.ScrollToField -> {
+        parent.scrollRectToVisible(Rectangle(0, 0, parent.width, parent.height))
+      }
+    }
+  }
+
+  model.document.addDocumentListener(object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      scroll()
+    }
+  })
+
+  // previous listener doesn't work properly when text field's size is changed because
+  // component is not resized at this moment, so we need to handle resizing too
+  // it also produces such behavior: resize of the ancestor will scroll to the field
+  parent.addComponentListener(object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent?) {
+      if (UIUtil.isFocusAncestor(parent)) {
+        scroll()
+      }
+    }
+  })
+}
+
+@Suppress("DialogTitleCapitalization")
+private fun createSubmitButton(
+  model: SubmittableTextFieldModel,
+  actionConfig: SubmitActionConfig
+): InlineIconButton? {
+  val iconConfig = actionConfig.iconConfig ?: return null
+
+  val button = InlineIconButton(
+    CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered,
+    tooltip = iconConfig.name
+  ).apply {
+    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    actionListener = ActionListener { model.submitWithCheck() }
+  }
+
+  actionConfig.shortcut.addAndInvokeListener {
+    button.shortcut = it
+  }
+  return button
+}
+
+private fun createCancelButton(actionConfig: CancelActionConfig?): InlineIconButton? {
+  if (actionConfig == null) {
+    return null
+  }
+  val iconConfig = actionConfig.iconConfig ?: return null
+  return InlineIconButton(
+    AllIcons.Actions.Close, AllIcons.Actions.CloseHovered,
+    tooltip = iconConfig.name,
+    shortcut = actionConfig.shortcut
+  ).apply {
+    border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset(), 0)
+    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    actionListener = ActionListener { actionConfig.action() }
+  }
+}
+
+private fun SubmittableTextField.installSubmitAction(
+  model: SubmittableTextFieldModel,
+  submitConfig: SubmitActionConfig
+) {
+  val submitAction = object : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) = model.submitWithCheck()
+  }
+
+  submitConfig.shortcut.addAndInvokeListener {
+    submitAction.unregisterCustomShortcutSet(this)
+    submitAction.registerCustomShortcutSet(it, this)
+  }
+}
+
+private fun SubmittableTextField.installCancelAction(cancelConfig: CancelActionConfig?) {
+  if (cancelConfig == null) {
+    return
+  }
+  object : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+      cancelConfig.action()
+    }
+  }.registerCustomShortcutSet(cancelConfig.shortcut, this)
+}
+
+private fun updateUiOnModelChanges(
+  parent: JComponent,
+  model: SubmittableTextFieldModel,
+  submittableTextField: SubmittableTextField,
+  busyLabel: JComponent,
+  submitButton: InlineIconButton?
+) {
+  fun update() {
+    busyLabel.isVisible = model.isBusy
+    submitButton?.isEnabled = model.isSubmitAllowed()
+  }
+
+  submittableTextField.addDocumentListener(object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      update()
+      parent.revalidate()
+    }
+  })
+
+  model.addStateListener(::update)
+  update()
+}
+
+private fun SubmittableTextFieldModel.isSubmitAllowed(): Boolean = !isBusy && content.text.isNotBlank()
+
+private fun SubmittableTextFieldModel.submitWithCheck() {
+  if (isSubmitAllowed()) {
+    submit()
   }
 }
 
