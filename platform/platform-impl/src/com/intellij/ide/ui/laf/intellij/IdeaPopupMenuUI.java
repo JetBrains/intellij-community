@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBValue;
@@ -39,6 +40,10 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
       return true;
     }
     return false;
+  }
+
+  public static boolean isRoundSelectionEnabled(Component c) {
+    return isPartOfPopupMenu(c) && Registry.is("popup.menu.roundSelection.enabled", true) && ExperimentalUI.isNewUI();
   }
 
   public static boolean isPartOfPopupMenu(Component c) {
