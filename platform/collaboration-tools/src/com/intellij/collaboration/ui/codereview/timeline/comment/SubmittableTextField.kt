@@ -1,18 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline.comment
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComponentValidator
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
+import java.util.function.Supplier
 
 class SubmittableTextField private constructor(
-  val submittableModel: SubmittableTextFieldModel
-) : EditorTextField(submittableModel.document, submittableModel.project, FileTypes.PLAIN_TEXT) {
+  project: Project?,
+  document: Document
+) : EditorTextField(document, project, FileTypes.PLAIN_TEXT) {
 
   //always paint pretty border
   override fun updateBorder(editor: EditorEx) = setupBorder(editor)
@@ -39,8 +49,9 @@ class SubmittableTextField private constructor(
   companion object {
     fun create(
       model: SubmittableTextFieldModel,
-      @Nls placeHolder: String
-    ): SubmittableTextField = SubmittableTextField(model).apply {
+      @Nls placeHolder: String,
+      withValidation: Boolean = true
+    ): SubmittableTextField = SubmittableTextField(model.project, model.document).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       isOneLineMode = false
       setPlaceholder(placeHolder)
@@ -50,6 +61,36 @@ class SubmittableTextField private constructor(
         it.settings.isUseSoftWraps = true
       }
       selectAll()
+      if (withValidation) {
+        UiNotifyConnector(this, ValidatorActivatable(model, this), false)
+      }
     }
+  }
+}
+
+private class ValidatorActivatable(
+  private val model: SubmittableTextFieldModel,
+  private val textField: EditorTextField
+) : Activatable {
+  private var validatorDisposable: Disposable? = null
+  private var validator: ComponentValidator? = null
+
+  init {
+    model.addStateListener {
+      validator?.revalidate()
+    }
+  }
+
+  override fun showNotify() {
+    validatorDisposable = Disposer.newDisposable("ETF validator")
+    validator = ComponentValidator(validatorDisposable!!).withValidator(Supplier {
+      model.error?.let { ValidationInfo(it.message.orEmpty(), textField) }
+    }).installOn(textField)
+  }
+
+  override fun hideNotify() {
+    validatorDisposable?.let { Disposer.dispose(it) }
+    validatorDisposable = null
+    validator = null
   }
 }

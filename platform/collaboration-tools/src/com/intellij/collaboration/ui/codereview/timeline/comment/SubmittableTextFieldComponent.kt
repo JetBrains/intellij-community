@@ -40,13 +40,15 @@ fun createSubmittableTextFieldComponent(
   model: SubmittableTextFieldModel,
   config: SubmittableTextFieldComponent.Config
 ): SubmittableTextFieldComponent {
-  val textField = SubmittableTextField.create(model, placeHolder).withValidation()
-  return SubmittableTextFieldComponent(textField, config)
+  val textField = SubmittableTextField.create(model, placeHolder)
+  return SubmittableTextFieldComponent(model, textField, config)
 }
 
-class SubmittableTextFieldComponent(val submittableTextField: SubmittableTextField, val config: Config) : JPanel(null) {
-  private val model = submittableTextField.submittableModel
-
+class SubmittableTextFieldComponent(
+  private val model: SubmittableTextFieldModel,
+  val submittableTextField: SubmittableTextField,
+  private val config: Config
+) : JPanel(null) {
   init {
     val busyLabel = JLabel(AnimatedIcon.Default())
     val submitButton = createSubmitButton(config.submitConfig)
