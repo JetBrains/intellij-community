@@ -36,6 +36,7 @@ import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
+import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = logger<CombinedDiffRequestProcessor>()
 
@@ -58,6 +59,8 @@ open class CombinedDiffRequestProcessor(project: Project?,
   protected val request get() = activeRequest as? CombinedDiffRequest
 
   private val blockCount get() = viewer?.diffBlocks?.size ?: requestProducer.getFilesSize()
+
+  private val pendingUpdatesCount = AtomicInteger()
 
   @Suppress("LeakingThis")
   private val contentLoadingQueue =
@@ -198,28 +201,35 @@ open class CombinedDiffRequestProcessor(project: Project?,
       val combinedViewer = viewer ?: return
       val blocksWithoutContent = blocks.filter { combinedViewer.diffViewers[it.id] is CombinedLazyDiffViewer }
       if (blocksWithoutContent.isNotEmpty()) {
-        contentLoadingQueue.queue(LoadBlockContentRequest(blocksWithoutContent, blockToSelect))
+        contentLoadingQueue.queue(LoadBlockContentRequest(blocksWithoutContent.map(CombinedDiffBlock<*>::id), blockToSelect))
       }
     }
   }
 
-  private inner class LoadBlockContentRequest(private val blocks: Collection<CombinedDiffBlock<*>>,
+  private inner class LoadBlockContentRequest(private val blockIds: Collection<CombinedBlockId>,
                                               private val blockToSelect: CombinedDiffBlock<*>?) :
-    Update(ComparableObject.Impl(*blocks.map(CombinedDiffBlock<*>::id).toTypedArray())) {
+    Update(ComparableObject.Impl(*blockIds.toTypedArray()), pendingUpdatesCount.incrementAndGet()) {
 
     override fun run() {
-      loadVisibleContent(blocks, blockToSelect)
+      loadVisibleContent(blockIds, blockToSelect)
+      pendingUpdatesCount.decrementAndGet()
+    }
+
+    override fun canEat(update: Update?): Boolean = update is LoadBlockContentRequest && priority >= update.priority
+
+    override fun setRejected() {
+      super.setRejected()
+      pendingUpdatesCount.decrementAndGet()
     }
   }
 
-  private fun loadVisibleContent(visibleBlocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedDiffBlock<*>?) {
+  private fun loadVisibleContent(visibleBlockIds: Collection<CombinedBlockId>, blockToSelect: CombinedDiffBlock<*>?) {
     val combinedViewer = viewer ?: return
 
     runInEdt { showProgressBar(true) }
 
     val indicator = EmptyProgressIndicator()
-    for (block in visibleBlocks) {
-      val blockId = block.id
+    for (blockId in visibleBlockIds) {
       val lazyDiffViewer = combinedViewer.diffViewers[blockId] as? CombinedLazyDiffViewer ?: continue
       val childDiffRequest =
         runBlockingCancellable(indicator) { runUnderIndicator { loadRequest(lazyDiffViewer.requestProducer, indicator) } }
@@ -228,8 +238,10 @@ open class CombinedDiffRequestProcessor(project: Project?,
 
       runInEdt {
         CombinedDiffViewerBuilder.buildBlockContent(combinedViewer, context, childDiffRequest, blockId)?.let { newContent ->
-          combinedViewer.updateBlockContent(block, newContent)
-          childDiffRequest.onAssigned(true)
+          combinedViewer.diffBlocks[blockId]?.let { block ->
+            combinedViewer.updateBlockContent(block, newContent)
+            childDiffRequest.onAssigned(true)
+          }
         }
       }
     }

@@ -34,9 +34,12 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.NonNls
 import java.awt.Rectangle
 import java.awt.event.FocusAdapter
@@ -83,6 +86,10 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
     CombinedEditorSettingsAction(TextDiffViewerUtil.getTextSettings(context), ::foldingModels, ::editors)
 
   private var blockToSelect: CombinedDiffBlock<*>? = null
+
+  private val visibleBlocksUpdateQueue =
+    MergingUpdateQueue("CombinedDiffViewer.visibleBlocksUpdateQueue", 500, true, null, this, null, Alarm.ThreadToUse.SWING_THREAD)
+      .also { Disposer.register(this, it) }
 
   internal fun updateBlockContent(block: CombinedDiffBlock<*>, newContent: CombinedDiffBlockContent) {
     val newViewer = newContent.viewer
@@ -180,7 +187,10 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
   private inner class ViewportChangeListener: ChangeListener {
 
     override fun stateChanged(e: ChangeEvent) {
-      notifyVisibleBlocksChanged(false)
+      visibleBlocksUpdateQueue.queue(object : Update(e) {
+        override fun run() = notifyVisibleBlocksChanged(false)
+        override fun canEat(update: Update?): Boolean = true
+      })
     }
   }
 
