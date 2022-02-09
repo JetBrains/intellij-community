@@ -7,7 +7,7 @@ import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
 
 private class MacDirProvider : DirProvider() {
-  override fun dir(): String = "/icons/" + if (UIUtil.isGraphite()) "graphite/" else "blue/"
+  override fun dir() = "/icons/" + if (UIUtil.isGraphite()) "graphite/" else "blue/"
 }
 
 object MacIconLookup {

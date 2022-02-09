@@ -18,7 +18,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.maximize;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
+public final class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   private static final Icon DEFAULT_ICON = EmptyIcon.create(MacIconLookup.getIcon("spinnerRight"));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
