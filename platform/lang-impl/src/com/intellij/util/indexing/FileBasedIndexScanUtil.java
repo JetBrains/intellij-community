@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -36,8 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BooleanSupplier;
-
-import static com.intellij.util.indexing.FileBasedIndex.getFileId;
+import java.util.function.Function;
 
 public final class FileBasedIndexScanUtil {
 
@@ -47,28 +47,6 @@ public final class FileBasedIndexScanUtil {
     NoAccessDuringPsiEvents.checkCallContext(indexId);
     ProgressManager.checkCanceled();
     ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
-  }
-
-  private static class InThisThreadProcessor {
-    final Thread thread = Thread.currentThread();
-    final ConcurrentLinkedQueue<BooleanSupplier> queue = new ConcurrentLinkedQueue<>();
-
-    boolean process(@NotNull BooleanSupplier r) {
-      if (Thread.currentThread() != thread) {
-        queue.add(r);
-        return true;
-      }
-      if (!processQueue()) return false;
-      return r.getAsBoolean();
-    }
-
-    boolean processQueue() {
-      BooleanSupplier polled;
-      while ((polled = queue.poll()) != null) {
-        if (!polled.getAsBoolean()) return false;
-      }
-      return true;
-    }
   }
 
   static <K> @Nullable Boolean processAllKeys(@NotNull ID<K, ?> indexId,
@@ -81,35 +59,24 @@ public final class FileBasedIndexScanUtil {
       return FSRecords.processAllNames((Processor<String>)processor);
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
-      ensureUpToDate(indexId);
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
-      if (!FilesScanExecutor.processFilesInScope(scope, true, file -> {
-        if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
+      return processFilesInScope(indexId, scope, true, idFilter, file -> {
         //noinspection unchecked
         K fileType = (K)file.getFileType();
-        return threadProcessor.process(()-> processor.process(fileType));
-      })) return false;
-      return threadProcessor.processQueue();
+        return threadProcessor.process(() -> processor.process(fileType));
+      }) && threadProcessor.processQueue();
     }
     else if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
              indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      ensureUpToDate(indexId);
       Project project = scope.getProject();
-      FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      FileBasedIndexExtension<K, ?> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
-      FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
-      DataIndexer<K, ?, FileContent> indexer = indexExtension.getIndexer();
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
-      if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
-        if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
-        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
-        Document document = fileDocumentManager.getCachedDocument(file);
-        CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
-        Map<K, ?> map = indexer.map(FileContentImpl.createByText(file, s, project));
+      Function<VirtualFile, ? extends Map<K, ?>> indexer = getIndexer(indexId, project, false);
+      return processFilesInScope(indexId, scope, false, idFilter, file -> {
+        Map<K, ?> map = indexer.apply(file);
+        if (map == null) return true;
         Collection<K> keys = map.keySet();
         return threadProcessor.process(() -> ContainerUtil.process(keys, processor));
-      })) return false;
-      return threadProcessor.processQueue();
+      }) && threadProcessor.processQueue();
     }
     return null;
   }
@@ -139,11 +106,9 @@ public final class FileBasedIndexScanUtil {
       return true;
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
-      ensureUpToDate(indexId);
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       Ref<Boolean> stoppedByVal = ensureValueProcessedOnce ? Ref.create(false) : null;
-      if (!FilesScanExecutor.processFilesInScope(scope, true, file -> {
-        if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
+      if (!processFilesInScope(indexId, scope, true, idFilter, file -> {
         if (!Objects.equals(dataKey, file.getFileType())) return true;
         if (!threadProcessor.process(() -> processor.process(file, null))) return false;
         if (ensureValueProcessedOnce) {
@@ -156,98 +121,76 @@ public final class FileBasedIndexScanUtil {
     }
     else if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
              indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      ensureUpToDate(indexId);
       Project project = scope.getProject();
-      FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
-      FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
-      DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       ConcurrentHashMap<V, Boolean> visitedValues = ensureValueProcessedOnce ? new ConcurrentHashMap<>() : null;
-      if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
-        if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
-        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
-        Document document = fileDocumentManager.getCachedDocument(file);
-        CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
-        Map<K, V> map = indexer.map(FileContentImpl.createByText(file, s, project));
-        V value = map.get(dataKey);
+      Function<VirtualFile, ? extends Map<K, V>> indexer = getIndexer(indexId, project, false);
+      return processFilesInScope(indexId, scope, false, idFilter, file -> {
+        Map<K, V> map = indexer.apply(file);
+        V value = map == null ? null : map.get(dataKey);
         if (value == null) return true;
         if (ensureValueProcessedOnce && visitedValues.put(value, true) != null) return true;
         return threadProcessor.process(() -> processor.process(file, value));
-      })) return false;
-      return threadProcessor.processQueue();
+      }) && threadProcessor.processQueue();
     }
     return null;
   }
 
   private static <K, V> @Nullable FileBasedIndexExtension<K, V> findIndexExtension(@NotNull ID<K, V> id) {
     for (FileBasedIndexExtension<?, ?> extension : FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList()) {
-      if (extension.getName() == id) return (FileBasedIndexExtension<K, V>)extension;
+      if (extension.getName() == id) {
+        //noinspection unchecked
+        return (FileBasedIndexExtension<K, V>)extension;
+      }
     }
     return null;
   }
 
-  public static <K, V> Boolean processValuesInOneFile(@NotNull ID<K, V> indexId,
-                                                      @NotNull K dataKey,
-                                                      @NotNull VirtualFile file,
-                                                      @NotNull GlobalSearchScope scope,
-                                                      @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
+  public static <K, V> @Nullable Boolean processValuesInOneFile(@NotNull ID<K, V> indexId,
+                                                                @NotNull K dataKey,
+                                                                @NotNull VirtualFile file,
+                                                                @NotNull GlobalSearchScope scope,
+                                                                @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
     if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
         indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      Project project = scope.getProject();
-      FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
-      FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
-      DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
-      if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
-      FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      Document document = fileDocumentManager.getCachedDocument(file);
-      CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
-      Map<K, V> map = indexer.map(FileContentImpl.createByText(file, s, project));
-      V value = map.get(dataKey);
+      Map<K, V> map = getIndexer(indexId, scope.getProject(), false).apply(file);
+      V value = map == null ? null : map.get(dataKey);
       if (value == null) return true;
       return processor.process(file, value);
     }
     return null;
   }
 
-  public static <K, V> Boolean processFilesContainingAllKeys(@NotNull ID<K, V> indexId,
-                                                             @NotNull Collection<? extends K> dataKeys,
-                                                             @NotNull GlobalSearchScope scope,
-                                                             @Nullable Condition<? super V> valueChecker,
-                                                             @NotNull Processor<? super VirtualFile> processor) {
+  public static <K, V> @Nullable Boolean processFilesContainingAllKeys(@NotNull ID<K, V> indexId,
+                                                                       @NotNull Collection<? extends K> dataKeys,
+                                                                       @NotNull GlobalSearchScope scope,
+                                                                       @Nullable Condition<? super V> valueChecker,
+                                                                       @NotNull Processor<? super VirtualFile> processor) {
     if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
         indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      ensureUpToDate(indexId);
       Project project = scope.getProject();
-      FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
-      FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
-      DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
-      if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
-        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
-        Document document = fileDocumentManager.getCachedDocument(file);
-        CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
-        Map<K, V> map = indexer.map(FileContentImpl.createByText(file, s, project));
+      Function<VirtualFile, ? extends Map<K, V>> indexer = getIndexer(indexId, project, false);
+      return processFilesInScope(indexId, scope, false, null, file -> {
+        Map<K, V> map = indexer.apply(file);
+        if (map == null) return true;
         for (K key : dataKeys) {
           V value = map.get(key);
           if (value == null) return true;
           if (valueChecker != null && !valueChecker.value(value)) return true;
         }
         return threadProcessor.process(() -> processor.process(file));
-      })) {
-        return false;
-      }
-      return threadProcessor.processQueue();
+      }) && threadProcessor.processQueue();
     }
     return null;
   }
 
-  public static Boolean processFilesContainingAllKeys(@NotNull Collection<? extends FileBasedIndex.AllKeysQuery<?, ?>> queries,
-                                                      @NotNull GlobalSearchScope scope,
-                                                      @NotNull Processor<? super VirtualFile> processor) {
+  public static @Nullable Boolean processFilesContainingAllKeys(@NotNull Collection<? extends FileBasedIndex.AllKeysQuery<?, ?>> queries,
+                                                                @NotNull GlobalSearchScope scope,
+                                                                @NotNull Processor<? super VirtualFile> processor) {
     FileBasedIndex.AllKeysQuery<?, ?> query = ContainerUtil.getFirstItem(queries);
     if (query != null && query.getIndexId() == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
+      //noinspection unchecked
       FileBasedIndex.AllKeysQuery<IdIndexEntry, Integer> q = (FileBasedIndex.AllKeysQuery<IdIndexEntry, Integer>)query;
       return processFilesContainingAllKeys(IdIndex.NAME, q.getDataKeys(), scope, q.getValueChecker(), processor);
     }
@@ -281,5 +224,68 @@ public final class FileBasedIndexScanUtil {
       return true;
     }
     return null;
+  }
+
+  private static boolean processFilesInScope(@NotNull ID<?, ?> indexId,
+                                             @NotNull GlobalSearchScope scope,
+                                             boolean includingBinary,
+                                             @Nullable IdFilter idFilter,
+                                             @NotNull Processor<? super VirtualFile> processor) {
+    ensureUpToDate(indexId);
+    return FilesScanExecutor.processFilesInScope(includingBinary, scope, idFilter, processor);
+  }
+
+
+  private static @NotNull <K, V> Function<VirtualFile, ? extends Map<K, V>> getIndexer(@NotNull ID<K, V> indexId,
+                                                                                       @Nullable Project project,
+                                                                                       boolean binary) {
+    FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
+    FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
+    DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
+    return file -> {
+      if (FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) {
+        FileContent content = getFileContent(file, project, binary);
+        return content == null ? null : indexer.map(content);
+      }
+      return null;
+    };
+  }
+
+  private static @Nullable FileContent getFileContent(@NotNull VirtualFile file, @Nullable Project project, boolean withBinary) {
+    if (withBinary && file.getFileType().isBinary()) {
+      try {
+        return FileContentImpl.createByFile(file, project);
+      }
+      catch (IOException e) {
+        return null;
+      }
+    }
+    else {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+      CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
+      return FileContentImpl.createByText(file, s, project);
+    }
+  }
+
+  private static class InThisThreadProcessor {
+    final Thread thread = Thread.currentThread();
+    final ConcurrentLinkedQueue<BooleanSupplier> queue = new ConcurrentLinkedQueue<>();
+
+    boolean process(@NotNull BooleanSupplier r) {
+      if (Thread.currentThread() != thread) {
+        queue.add(r);
+        return true;
+      }
+      if (!processQueue()) return false;
+      return r.getAsBoolean();
+    }
+
+    boolean processQueue() {
+      BooleanSupplier polled;
+      while ((polled = queue.poll()) != null) {
+        if (!polled.getAsBoolean()) return false;
+      }
+      return true;
+    }
   }
 }
