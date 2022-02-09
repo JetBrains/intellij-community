@@ -1,9 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilesScanExecutor;
 import com.intellij.openapi.util.Condition;
@@ -19,6 +22,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -37,7 +41,11 @@ import static com.intellij.util.indexing.FileBasedIndex.getFileId;
 
 public final class FileBasedIndexScanUtil {
 
-  private static void ensureIdFilterUpToDate() {
+  private static void ensureUpToDate(@NotNull ID<?, ?> indexId) {
+    SlowOperations.assertSlowOperationsAreAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    NoAccessDuringPsiEvents.checkCallContext(indexId);
+    ProgressManager.checkCanceled();
     ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
   }
 
@@ -68,12 +76,12 @@ public final class FileBasedIndexScanUtil {
                                               @NotNull GlobalSearchScope scope,
                                               @Nullable IdFilter idFilter) {
     if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
-      ensureIdFilterUpToDate();
+      ensureUpToDate(indexId);
       //noinspection unchecked
       return FSRecords.processAllNames((Processor<String>)processor);
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
-      ensureIdFilterUpToDate();
+      ensureUpToDate(indexId);
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       if (!FilesScanExecutor.processFilesInScope(scope, true, file -> {
         if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
@@ -85,7 +93,7 @@ public final class FileBasedIndexScanUtil {
     }
     else if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
              indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      ensureIdFilterUpToDate();
+      ensureUpToDate(indexId);
       Project project = scope.getProject();
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       FileBasedIndexExtension<K, ?> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
@@ -113,7 +121,7 @@ public final class FileBasedIndexScanUtil {
                                                        @Nullable IdFilter idFilter,
                                                        @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
     if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
-      ensureIdFilterUpToDate();
+      ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
         if (idFilter != null && !idFilter.containsFileId(id)) return true;
@@ -131,7 +139,7 @@ public final class FileBasedIndexScanUtil {
       return true;
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
-      ensureIdFilterUpToDate();
+      ensureUpToDate(indexId);
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       Ref<Boolean> stoppedByVal = ensureValueProcessedOnce ? Ref.create(false) : null;
       if (!FilesScanExecutor.processFilesInScope(scope, true, file -> {
@@ -148,7 +156,7 @@ public final class FileBasedIndexScanUtil {
     }
     else if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
              indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      ensureIdFilterUpToDate();
+      ensureUpToDate(indexId);
       Project project = scope.getProject();
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
@@ -209,7 +217,7 @@ public final class FileBasedIndexScanUtil {
                                                              @NotNull Processor<? super VirtualFile> processor) {
     if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
         indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      ensureIdFilterUpToDate();
+      ensureUpToDate(indexId);
       Project project = scope.getProject();
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
@@ -253,7 +261,7 @@ public final class FileBasedIndexScanUtil {
                                                             @Nullable Condition<? super V> valueChecker,
                                                             @NotNull Processor<? super VirtualFile> processor) {
     if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
-      ensureIdFilterUpToDate();
+      ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked
       FSRecords.processFilesWithNames((Set<String>)keys, id -> {
