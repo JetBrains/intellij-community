@@ -37,10 +37,10 @@ abstract class ContentLayout {
 
   public abstract int getMinimumWidth();
 
-  public void contentAdded(ContentManagerEvent event) {
+  public void contentAdded(@NotNull ContentManagerEvent event) {
   }
 
-  public void contentRemoved(ContentManagerEvent event) {
+  public void contentRemoved(@NotNull ContentManagerEvent event) {
   }
 
   protected void updateIdLabel(BaseLabel label) {
