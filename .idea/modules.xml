@@ -987,9 +987,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/old/kotlin.j2k.old.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/old/kotlin.j2k.old.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/old/tests/kotlin.j2k.old.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/old/tests/kotlin.j2k.old.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/services/kotlin.j2k.services.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/services/kotlin.j2k.services.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/jps-common/kotlin.jps-common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/jps-common/kotlin.jps-common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/jps-plugin/kotlin.jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/jps-plugin/kotlin.jps-plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/jps-plugin/tests/kotlin.jps-plugin.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/jps-plugin/tests/kotlin.jps-plugin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/junit/kotlin.junit.iml" filepath="$PROJECT_DIR$/plugins/kotlin/junit/kotlin.junit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm/kotlin.jvm.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm/kotlin.jvm.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/core/kotlin.jvm-debugger.core.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/core/kotlin.jvm-debugger.core.iml" />

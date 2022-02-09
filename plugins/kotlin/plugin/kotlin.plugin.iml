@@ -48,7 +48,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.old" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.j2k.services" scope="PROVIDED" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-common" level="project" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.junit" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="PROVIDED" />

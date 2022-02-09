@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" />
     <orderEntry type="module" module-name="kotlin.fir.analysis-api-providers-ide-impl" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
@@ -36,7 +35,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refIndex.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="TEST" />

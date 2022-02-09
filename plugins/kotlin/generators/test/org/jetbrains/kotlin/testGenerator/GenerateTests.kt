@@ -156,9 +156,6 @@ import org.jetbrains.kotlin.idea.structureView.AbstractKotlinFileStructureTest
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiFileHighlightingTest
 import org.jetbrains.kotlin.idea.stubs.AbstractResolveByStubTest
 import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
-import org.jetbrains.kotlin.jps.build.*
-import org.jetbrains.kotlin.jps.incremental.AbstractJsProtoComparisonTest
-import org.jetbrains.kotlin.jps.incremental.AbstractJvmProtoComparisonTest
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.inference.common.AbstractCommonConstraintCollectorTest
 import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenceTest
@@ -1440,69 +1437,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractNewJavaToKotlinConverterMultiFileTest> {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
-        }
-    }
-
-    testGroup("jps/jps-plugin/tests") {
-        testClass<AbstractIncrementalJvmJpsTest> {
-            model("incremental/multiModule/common", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/multiModule/jvm", pattern = DIRECTORY)
-            model("incremental/multiModule/multiplatform/custom", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/pureKotlin", pattern = DIRECTORY, isRecursive = false, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/withJava", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/inlineFunCallSite", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/classHierarchyAffected", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-        }
-
-        //actualizeMppJpsIncTestCaseDirs(testDataAbsoluteRoot, "incremental/multiModule/multiplatform/withGeneratedContent")
-
-        testClass<AbstractIncrementalJsJpsTest> {
-            model("incremental/multiModule/common", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractMultiplatformJpsTestWithGeneratedContent> {
-            model("incremental/multiModule/multiplatform/withGeneratedContent", isRecursive = true, pattern = DIRECTORY, testClassName = "MultiplatformMultiModule")
-        }
-
-        testClass<AbstractJvmLookupTrackerTest> {
-            model("incremental/lookupTracker/jvm", pattern = DIRECTORY, isRecursive = false)
-        }
-        testClass<AbstractJsLookupTrackerTest> {
-            model("incremental/lookupTracker/js", pattern = DIRECTORY, isRecursive = false)
-        }
-        testClass<AbstractJsKlibLookupTrackerTest> { // todo: investigate why lookups are different from non-klib js
-            model("incremental/lookupTracker/jsKlib", pattern = DIRECTORY, isRecursive = false)
-        }
-
-        testClass<AbstractIncrementalLazyCachesTest> {
-            model("incremental/lazyKotlinCaches", pattern = DIRECTORY)
-            model("incremental/changeIncrementalOption", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractIncrementalCacheVersionChangedTest> {
-            model("incremental/cacheVersionChanged", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractDataContainerVersionChangedTest> {
-            model("incremental/cacheVersionChanged", pattern = DIRECTORY)
-        }
-
-        fun MutableTSuite.commonProtoComparisonTests() {
-            model("comparison/classSignatureChange", pattern = DIRECTORY)
-            model("comparison/classPrivateOnlyChange", pattern = DIRECTORY)
-            model("comparison/classMembersOnlyChanged", pattern = DIRECTORY)
-            model("comparison/packageMembers", pattern = DIRECTORY)
-            model("comparison/unchanged", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractJvmProtoComparisonTest> {
-            commonProtoComparisonTests()
-            model("comparison/jvmOnly", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractJsProtoComparisonTest> {
-            commonProtoComparisonTests()
-            model("comparison/jsOnly", pattern = DIRECTORY)
         }
     }
 
