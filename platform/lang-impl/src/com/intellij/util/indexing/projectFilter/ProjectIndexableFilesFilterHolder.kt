@@ -104,25 +104,30 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun runHealthCheck() {
-    for ((project, filter) in myProjectFilters) {
-      val errors = ReadAction
-        .nonBlocking(Callable { runHealthCheck(project, filter) })
-        .inSmartMode(project)
-        .executeSynchronously()
+    try {
+      for ((project, filter) in myProjectFilters) {
+        val errors = ReadAction
+          .nonBlocking(Callable { runHealthCheck(project, filter) })
+          .inSmartMode(project)
+          .executeSynchronously()
 
-      if (errors.isNotEmpty()) {
-        for (error in errors) {
-          error.fix(filter)
+        if (errors.isNotEmpty()) {
+          for (error in errors) {
+            error.fix(filter)
+          }
+
+          val message = StringUtil.first(errors.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
+                                         300,
+                                         true)
+          FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
         }
-
-        val message = StringUtil.first(errors.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
-                                       300,
-                                       true)
-        FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
+        else {
+          FileBasedIndexImpl.LOG.info("Health check heartbeat")
+        }
       }
-      else {
-        FileBasedIndexImpl.LOG.info("Health check heartbeat")
-      }
+    }
+    catch (e: Exception) {
+      FileBasedIndexImpl.LOG.error(e)
     }
   }
 
@@ -148,5 +153,6 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     fun fix(filter: IncrementalProjectIndexableFilesFilter) {
       filter.ensureFileIdPresent((virtualFile as VirtualFileWithId).id) { true }
     }
+
   }
 }
