@@ -29,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
 import org.gradle.api.logging.LogLevel;
-import org.gradle.internal.logging.LoggingConfigurationBuildOptions;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -60,7 +59,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
@@ -432,12 +431,14 @@ public class GradleExecutionHelper {
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     if (forTestLauncher) {
       operation.addProgressListener(gradleProgressListener,
+                                    OperationType.FILE_DOWNLOAD,
                                     OperationType.TASK,
                                     OperationType.TEST,
                                     OperationType.TEST_OUTPUT);
     } else {
       operation.addProgressListener(gradleProgressListener,
-                                    OperationType.TASK);
+                                    OperationType.TASK,
+                                    OperationType.FILE_DOWNLOAD);
     }
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
