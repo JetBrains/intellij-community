@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch.predicates
 
@@ -15,9 +15,9 @@ import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.structuralsearch.resolveKotlinType
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class KotlinExprTypePredicate(
     private val search: String,
@@ -54,9 +55,11 @@ class KotlinExprTypePredicate(
                 if (e is ControlFlowException) throw e
                 null
             }
+
             node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
             node is KtSimpleNameStringTemplateEntry -> node.expression?.resolveType()
-            else -> throw IllegalStateException(KotlinBundle.message("error.type.filter.node"))
+            else -> throw KotlinExceptionWithAttachments(KotlinBundle.message("error.type.filter.node"))
+                .withAttachment("node_class.txt", node::class)
         } ?: return false
 
         val project = node.project
