@@ -37,6 +37,7 @@ internal class DocumentationPage(val request: DocumentationRequest) {
     }
     val uiState = data.anchor?.let(UIState::ScrollToAnchor) ?: UIState.Reset
     myContentFlow.value = DocumentationPageContent.Content(data.content, data.links, uiState)
+    update(data.updates, data.links)
   }
 
   suspend fun updatePage(contentUpdater: ContentUpdater) {
