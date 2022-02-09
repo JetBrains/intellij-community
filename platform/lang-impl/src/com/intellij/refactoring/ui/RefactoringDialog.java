@@ -177,8 +177,12 @@ public abstract class RefactoringDialog extends DialogWrapper {
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
   }
-  
+
   protected void validateButtonsAsync() {
+    validateButtonsAsync(ModalityState.stateForComponent(getContentPanel()));
+  }
+
+  protected void validateButtonsAsync(@NotNull ModalityState modalityState) {
     setErrorText(null);
     ReadAction.nonBlocking(() -> {
         try {
@@ -188,7 +192,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
         catch (ConfigurationException e) {
           return e;
         }
-      }).finishOnUiThread(ModalityState.stateForComponent(getContentPanel()), e -> {
+      }).finishOnUiThread(modalityState, e -> {
         if (e != null) {
           setErrorText(e.getMessage());
         }
