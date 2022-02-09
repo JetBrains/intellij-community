@@ -80,8 +80,7 @@ public final class EnvironmentVariablesData {
     return "envs=" + myEnvs + ", passParentEnvs=" + myPassParentEnvs + ", environmentFile=" + myEnvironmentFile;
   }
 
-  @NotNull
-  public static EnvironmentVariablesData readExternal(@NotNull Element element) {
+  public static @NotNull EnvironmentVariablesData readExternal(@NotNull Element element) {
     Element envsElement = element.getChild(ENVS);
     if (envsElement == null) {
       return DEFAULT;
@@ -100,6 +99,12 @@ public final class EnvironmentVariablesData {
       }
     }
     return create(envs, passParentEnvs);
+  }
+
+  public void writeExternalNoDefault(@NotNull Element parent) {
+    if (!DEFAULT.equals(this)) {
+      writeExternal(parent);
+    }
   }
 
   public void writeExternal(@NotNull Element parent) {
