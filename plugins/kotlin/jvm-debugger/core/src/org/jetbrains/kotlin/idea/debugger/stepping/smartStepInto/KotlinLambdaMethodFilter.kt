@@ -8,25 +8,30 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.codegen.coroutines.isResumeImplMethodNameFromAnyLanguageSettings
 import org.jetbrains.kotlin.idea.core.util.isMultiLine
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedLambdaName
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getMethodNameWithoutMangling
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 
-class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) : BreakpointStepMethodFilter {
-    private val lambdaPtr = target.getLambda().createSmartPointer()
-    private val callingExpressionLines: Range<Int>? = target.callingExpressionLines
+class KotlinLambdaMethodFilter(
+    lambda: KtFunction,
+    private val callingExpressionLines: Range<Int>?,
+    private val lambdaInfo: KotlinLambdaInfo
+) : BreakpointStepMethodFilter {
+    private val lambdaPtr = lambda.createSmartPointer()
     private val firstStatementPosition: SourcePosition?
     private val lastStatementLine: Int
 
     init {
-        val (firstPosition, lastPosition) = findFirstAndLastStatementPositions(target.getLambda())
+        val (firstPosition, lastPosition) = findFirstAndLastStatementPositions(lambda)
         firstStatementPosition = firstPosition
         lastStatementLine = lastPosition?.line ?: -1
     }
@@ -36,8 +41,8 @@ class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) 
     override fun getLastStatementLine() = lastStatementLine
 
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
-        val lambda = runReadAction { lambdaPtr.element } ?: return true
-        if (target.isInline) {
+        val lambda = lambdaPtr.getElementInReadAction() ?: return true
+        if (lambdaInfo.isInline) {
             return isInsideInlineArgument(lambda, location, process)
         }
 
@@ -46,7 +51,8 @@ class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) 
             return false
         }
 
-        return isTargetLambdaName(method.name()) &&
+        val methodName = method.name() ?: return false
+        return isTargetLambdaName(methodName) &&
                location.matchesExpression(process, lambda.bodyExpression)
     }
 
@@ -57,14 +63,19 @@ class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) 
     }
 
     override fun getCallingExpressionLines() =
-        if (target.isInline) Range(0, Int.MAX_VALUE) else callingExpressionLines
+        if (lambdaInfo.isInline) Range(0, Int.MAX_VALUE) else callingExpressionLines
 
-    private fun isTargetLambdaName(name: String?) =
-        when {
-            name == null -> false
-            target.isSuspend -> isResumeImplMethodNameFromAnyLanguageSettings(name)
-            else -> name == target.methodName || name.isGeneratedLambdaName()
-        }
+    fun isTargetLambdaName(name: String): Boolean {
+        val actualName =
+            if (lambdaInfo.isNameMangledInBytecode)
+                name.getMethodNameWithoutMangling()
+            else
+                name
+
+        if (lambdaInfo.isSuspend)
+            return actualName == INVOKE_SUSPEND_METHOD_NAME
+        return actualName == lambdaInfo.methodName || actualName.isGeneratedIrBackendLambdaMethodName()
+    }
 }
 
 fun findFirstAndLastStatementPositions(declaration: KtDeclarationWithBody): Pair<SourcePosition?, SourcePosition?> {

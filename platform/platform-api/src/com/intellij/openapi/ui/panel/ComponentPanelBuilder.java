@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,10 +14,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -320,10 +316,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   public static Font getCommentFont(Font font) {
-    if (SystemInfo.isMac) {
-      return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
-    }
-    return font;
+    return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
   }
 
   private static void setCommentText(@NotNull JLabel component,
@@ -363,10 +356,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     @Override
     public void setUI(LabelUI ui) {
       super.setUI(ui);
-
-      if (SystemInfo.isMac) {
-        setFont(getCommentFont(getFont()));
-      }
+      setFont(getCommentFont(getFont()));
     }
   }
 
@@ -468,7 +458,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
       gc.gridx += myLabelOnTop ? 0 : 1;
       gc.weightx = 1.0;
-      gc.insets = JBUI.emptyInsets();
+      gc.insets = JBInsets.emptyInsets();
       gc.fill = myResizeY ? GridBagConstraints.BOTH : myResizeX ? GridBagConstraints.HORIZONTAL: GridBagConstraints.NONE;
       gc.weighty = myResizeY ? 1.0 : 0.0;
 
@@ -564,7 +554,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         gc.gridy++;
         gc.weightx = 0.0;
         gc.anchor = GridBagConstraints.NORTHWEST;
-        gc.insets = JBUI.emptyInsets();
+        gc.insets = JBInsets.emptyInsets();
 
         comment.setBorder(getCommentBorder());
         panel.add(comment, gc);

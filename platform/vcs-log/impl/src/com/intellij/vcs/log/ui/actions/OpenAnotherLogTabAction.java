@@ -28,6 +28,7 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogTabLocation;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -92,11 +93,11 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
       filters = VcsLogFilterObject.collection();
     }
 
-    VcsLogManager.LogWindowKind kind = VcsLogManager.LogWindowKind.TOOL_WINDOW;
+    VcsLogTabLocation location = VcsLogTabLocation.TOOL_WINDOW;
     if (e.getData(PlatformDataKeys.TOOL_WINDOW) == null && Registry.is("vcs.log.open.editor.tab")) {
-      kind = VcsLogManager.LogWindowKind.EDITOR;
+      location = VcsLogTabLocation.EDITOR;
     }
 
-    VcsProjectLog.getInstance(project).openLogTab(filters, kind);
+    VcsProjectLog.getInstance(project).openLogTab(filters, location);
   }
 }

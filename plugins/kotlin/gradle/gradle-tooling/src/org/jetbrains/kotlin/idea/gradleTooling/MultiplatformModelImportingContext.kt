@@ -4,8 +4,17 @@ package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
+import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
+import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
-internal interface MultiplatformModelImportingContext: KotlinSourceSetContainer {
+interface HasDependencyResolver {
+    val dependencyResolver: DependencyResolver
+    val dependencyMapper: KotlinDependencyMapper
+}
+
+interface MultiplatformModelImportingContext : KotlinSourceSetContainer, HasDependencyResolver {
     val project: Project
     val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
 
@@ -71,12 +80,15 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
 
 internal class MultiplatformModelImportingContextImpl(
     override val project: Project,
-    override val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
+    override val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper,
+    modelBuilderContext: ModelBuilderContext
 ) : MultiplatformModelImportingContext {
     /** see [initializeSourceSets] */
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
 
+    override val dependencyResolver = DependencyResolverImpl(project, false, true, SourceSetCachedFinder(modelBuilderContext))
+    override val dependencyMapper = KotlinDependencyMapper()
 
     /** see [initializeCompilations] */
     override lateinit var compilations: Collection<KotlinCompilation>

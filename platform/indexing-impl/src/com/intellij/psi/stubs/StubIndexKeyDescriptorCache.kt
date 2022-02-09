@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs
 
 import com.intellij.util.containers.HashingStrategy
+import com.intellij.util.indexing.impl.IndexStorageUtil
 import com.intellij.util.io.KeyDescriptor
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -27,7 +28,7 @@ object StubIndexKeyDescriptorCache {
   private fun <K> getOrCache(indexKey: StubIndexKey<K, *>): Pair<HashingStrategy<*>, KeyDescriptor<*>> {
     return cache.computeIfAbsent(indexKey) {
       val descriptor = indexKey.findExtension().keyDescriptor
-      return@computeIfAbsent Pair(StubKeyHashingStrategy(descriptor), descriptor)
+      return@computeIfAbsent Pair(IndexStorageUtil.adaptKeyDescriptorToStrategy(descriptor), descriptor)
     }
   }
 
@@ -39,10 +40,4 @@ object StubIndexKeyDescriptorCache {
     }
     return indexExtension as StubIndexExtension<K, *>
   }
-}
-
-private class StubKeyHashingStrategy<K>(private val descriptor: KeyDescriptor<K>): HashingStrategy<K> {
-  override fun equals(o1: K, o2: K) = o1 == o2 || (o1 != null && o2 != null && descriptor.isEqual(o1, o2))
-
-  override fun hashCode(o: K) = if (o == null) 0 else descriptor.getHashCode(o)
 }

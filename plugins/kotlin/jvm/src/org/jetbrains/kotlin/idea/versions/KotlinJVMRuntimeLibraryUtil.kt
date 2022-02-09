@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
@@ -31,7 +32,7 @@ fun updateLibraries(project: Project, upToMavenVersion: String, libraries: Colle
             val prop = lib.properties as? RepositoryLibraryProperties ?: return@mapNotNull null
             lib to prop
         }
-        .filter { (_, prop) -> prop.groupId == LibraryJarDescriptor.KOTLIN_MAVEN_GROUP_ID }
+        .filter { (_, prop) -> prop.groupId == KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID }
         .forEach { (lib, prop) ->
             val modifiableModel = lib.modifiableModel
             try {

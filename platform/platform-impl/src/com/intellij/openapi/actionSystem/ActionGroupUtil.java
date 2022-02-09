@@ -39,4 +39,19 @@ public final class ActionGroupUtil {
       .filter(o -> !(o instanceof Separator) && updater.presentation(o).isVisible());
   }
 
+  @ApiStatus.Experimental
+  public static @NotNull ActionGroup forceRecursiveUpdateInBackground(@NotNull ActionGroup actionGroup) {
+    class MyGroup extends ActionGroup implements UpdateInBackground.Recursive {
+      @Override
+      public boolean isPopup() {
+        return false;
+      }
+
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        return new AnAction[] { actionGroup };
+      }
+    }
+    return new MyGroup();
+  }
 }

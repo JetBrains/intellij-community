@@ -30,16 +30,6 @@ final class BuildUtils {
     addToClassLoaderClassPath(path, ant, BuildUtils.class.classLoader)
   }
 
-  @CompileDynamic
-  static void addToSystemClasspath(File file) {
-    def classLoader = ClassLoader.getSystemClassLoader()
-    if (!(classLoader instanceof URLClassLoader)) {
-      throw new BuildException("Cannot add to system classpath: unsupported class loader $classLoader (${classLoader.getClass()})")
-    }
-
-    classLoader.addURL(file.toURI().toURL())
-  }
-
   static void addToJpsClassPath(String path, AntBuilder ant) {
     //we need to add path to classloader of BuilderService to ensure that classes from that path will be returned by JpsServiceManager.getExtensions
     addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
@@ -61,7 +51,9 @@ final class BuildUtils {
         classLoader.addURL(FileUtil.fileToUri(new File(path)).toURL())
       }
       else {
-        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method")
+        throw new BuildException(
+          "Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method\n" +
+          "most likely you need to add -Djava.system.class.loader=org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader to run configuration\n\n")
       }
       ant.project.log("'$path' added to classpath", Project.MSG_INFO)
     }
@@ -166,5 +158,9 @@ final class BuildUtils {
     catch (NoSuchFileException ignore) {
       return null
     }
+  }
+
+  static boolean isUnderJpsBootstrap() {
+    return System.getenv("JPS_BOOTSTRAP_COMMUNITY_HOME") != null
   }
 }

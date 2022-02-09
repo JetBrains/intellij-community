@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
 import org.jetbrains.annotations.NonNls;
@@ -97,7 +97,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control H",          "ChangesView.ShelveSilently", "MethodHierarchy"},
     { "shift control M",          "EditorMatchBrace", "RInsertPipeAction"},
     { "shift control T",          "GotoTest", "ServiceView.ShowServices"},
-    { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
+    { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase", "Markdown.Styling.CreateLink"},
     { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
     { "shift control alt P",      "IntroduceFunctionalParameter", "ReformatWithPrettierAction" },
     { "shift control alt ENTER",  "Console.Jpa.GenerateDDL", "Console.TableResult.SubmitAndCommit", "Console.Transaction.Commit", "NotebookRunAllAction", "org.jetbrains.r.actions.RDebugAction"},
@@ -107,7 +107,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt button1",              "EditorCreateRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
     { "button2",                  "EditorPasteFromX11", "GotoDeclaration", "EditorCreateRectangularSelectionOnMouseDrag"},
     { "ESCAPE",                   "CloseGotItTooltip", "EditorEscape", "FocusEditor", "Terminal.SwitchFocusToEditor"},
-    { "SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter"},
+    { "SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter", "CollapsiblePanel-toggle"},
     { "ctrl L",                   "FindNext", "Terminal.ClearBuffer"},
     { "control alt button1",      "GotoImplementation", "UiInspector"},
     {"alt shift RIGHT",           "Diff.NextChange", "NextEditorTab"},
@@ -342,7 +342,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindUsages"},
     { "shift meta K",             "Vcs.Push", "FindPrevious"},
     { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
-    { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
+    { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog", "Markdown.Styling.CreateLink"},
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "meta K",                   "FindNext", "Terminal.ClearBuffer"},
     { "shift ctrl DOWN",          "EditorUnSelectWord", "ShowContent"},

@@ -5,7 +5,6 @@ import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.comparison.ComparisonManagerImpl
-import com.intellij.diff.comparison.ComparisonUtil
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeys
@@ -22,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
+import com.intellij.openapi.vcs.ex.isValidRanges
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -121,7 +121,7 @@ open class GHPRDiffRequestChainProducer(
       val lineOffsets1 = LineOffsetsUtil.create(text1)
       val lineOffsets2 = LineOffsetsUtil.create(text2)
 
-      if (!ComparisonUtil.isValidRanges(text1, text2, lineOffsets1, lineOffsets2, diffRanges)) {
+      if (!isValidRanges(text1, text2, lineOffsets1, lineOffsets2, diffRanges)) {
         error("Invalid diff line ranges for change $change")
       }
       val iterable = DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount, lineOffsets2.lineCount)

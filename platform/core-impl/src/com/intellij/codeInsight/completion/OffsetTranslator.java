@@ -13,7 +13,8 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -23,24 +24,24 @@ public class OffsetTranslator implements Disposable {
 
   private final PsiFile myOriginalFile;
   private final Document myCopyDocument;
-  private final LinkedList<DocumentEvent> myTranslation = new LinkedList<>();
+  private final List<DocumentEvent> myTranslation = new ArrayList<>();
 
   public OffsetTranslator(Document originalDocument, PsiFile originalFile, Document copyDocument, int start, int end, String replacement) {
     myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
-    myTranslation.addFirst(new DocumentEventImpl(copyDocument, start, originalDocument.getImmutableCharSequence().subSequence(start, end),
-                                                 replacement, 0, false, start, end-start, start));
+    myTranslation.add(new DocumentEventImpl(copyDocument, start, originalDocument.getImmutableCharSequence().subSequence(start, end),
+                                            replacement, 0, false, start, end-start, start));
     Disposer.register(originalFile.getProject(), this);
 
-    final LinkedList<DocumentEvent> sinceCommit = new LinkedList<>();
+    List<DocumentEvent> sinceCommit = new ArrayList<>();
     originalDocument.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         if (isUpToDate()) {
           DocumentEventImpl inverse =
             new DocumentEventImpl(originalDocument, e.getOffset(), e.getNewFragment(), e.getOldFragment(), 0, false, e.getOffset(), e.getNewFragment().length(), e.getOffset());
-          sinceCommit.addLast(inverse);
+          sinceCommit.add(inverse);
         }
       }
     }, this);

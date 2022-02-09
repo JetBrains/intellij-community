@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -40,6 +40,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   @Override
   public void addReferencesTo(@NotNull final UElement decl, @NotNull final RefJavaElement ref, final UElement @Nullable ... findIn) {
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
+    final RefManagerImpl refManager = refFrom.getRefManager();
     if (findIn == null) {
       return;
     }
@@ -56,7 +57,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        public boolean visitAnnotation(@NotNull UAnnotation node) {
                          PsiClass javaClass = node.resolve();
                          if (javaClass != null) {
-                           final RefElement refClass = refFrom.getRefManager().getReference(javaClass.getOriginalElement());
+                           final RefElement refClass = refManager.getReference(javaClass.getOriginalElement());
                            if (refClass != null) refClass.waitForInitialized();
                            refFrom.addReference(refClass, javaClass.getOriginalElement(), decl, false, true, null);
                          }
@@ -81,7 +82,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                }
                                UClass target = UastContextKt.toUElement(classType.resolve(), UClass.class);
                                if (target != null) {
-                                 final RefElement refElement = refFrom.getRefManager().getReference(target.getSourcePsi());
+                                 final RefElement refElement = refManager.getReference(target.getSourcePsi());
                                  if (refElement != null) refElement.waitForInitialized();
                                  refFrom.addReference(refElement, target.getSourcePsi(), decl, false, true, null);
                                }
@@ -104,7 +105,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          visitReferenceExpression(node);
                          if (target instanceof PsiClass) {
                            final PsiClass aClass = (PsiClass)target;
-                           final RefElement refElement = refFrom.getRefManager().getReference(aClass);
+                           final RefElement refElement = refManager.getReference(aClass);
                            refFrom.addReference(refElement, aClass, decl, false, true, null);
                          }
                          return false;
@@ -117,10 +118,11 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            for (PsiReference reference : sourcePsi.getReferences()) {
                              PsiElement resolve = reference.resolve();
                              if (resolve instanceof PsiMember) {
-                               final RefElement refResolved = refFrom.getRefManager().getReference(resolve);
+                               final RefElement refResolved = refManager.getReference(resolve);
+                               if (refResolved != null) refResolved.waitForInitialized();
                                refFrom.addReference(refResolved, resolve, decl, false, true, null);
                                if (refResolved instanceof RefMethodImpl) {
-                                 updateRefMethod(resolve, (RefMethodImpl)refResolved, node, decl, refFrom);
+                                 updateRefMethod(resolve, (RefMethodImpl)refResolved, node, decl);
                                }
                              }
                            }
@@ -181,7 +183,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              if (reference != null) {
                                PsiElement constructorClass = reference.resolve();
                                if (constructorClass instanceof PsiClass) {
-                                 processClassReference((PsiClass)constructorClass, refFrom, decl, true, node);
+                                 processClassReference((PsiClass)constructorClass, true, node);
                                }
                              }
                            }
@@ -217,8 +219,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                          RefElement refResolved;
                          if (psiResolved instanceof LightRecordCanonicalConstructor) {
-                           refResolved = refFrom.getRefManager().getReference(psiResolved.getNavigationElement());
+                           refResolved = refManager.getReference(psiResolved.getNavigationElement());
                            if (refResolved instanceof RefClass) {
+                             refResolved.waitForInitialized();
                              List<RefMethod> constructors = ((RefClass)refResolved).getConstructors();
                              if (!constructors.isEmpty()) {
                                refResolved = constructors.get(0);
@@ -230,7 +233,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              psiResolved = psiResolved.getNavigationElement();
                            }
 
-                           refResolved = refFrom.getRefManager().getReference(psiResolved);
+                           refResolved = refManager.getReference(psiResolved);
                          }
                          boolean writing = isAccessedForWriting(node);
                          boolean reading = isAccessedForReading(node);
@@ -239,33 +242,49 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          refFrom.addReference(refResolved, psiResolved, decl, writing, reading, node);
 
                          if (refResolved instanceof RefMethodImpl) {
-                           updateRefMethod(psiResolved, (RefMethodImpl)refResolved, node, decl, refFrom);
+                           updateRefMethod(psiResolved, (RefMethodImpl)refResolved, node, decl);
                          }
 
                          if (psiResolved instanceof PsiMember) {
                            //TODO support kotlin
                            addClassReferenceForStaticImport(node, (PsiMember)psiResolved, refFrom, decl);
                          }
-                       }
-
-                       @Override
-                       public boolean visitLambdaExpression(@NotNull ULambdaExpression lambda) {
-                         processFunctionalExpression(lambda, lambda.getFunctionalInterfaceType());
-                         return true;
-                       }
-
-                       @Override
-                       public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression methodRef) {
-                         RefElement refMethod = refFrom.getRefManager().getReference(methodRef.getSourcePsi());
-                         if (refFrom == refMethod) {
-                           visitReferenceExpression(methodRef);
-                           return false;
-                         }
                          else {
-                           processFunctionalExpression(methodRef, getFunctionalInterfaceType(methodRef));
-                           return true;
+                           // todo currently if psiResolved is KtParameter, it doesn't convert to UParameter, that seems wrong
+                           UParameter uParam = UastContextKt.toUElement(psiResolved, UParameter.class);
+                           if (uParam != null) {
+                             addReferenceToLambdaParameter(uParam, psiResolved, decl, refFrom);
+                           }
                          }
                        }
+
+                       @Override
+                       public boolean visitLambdaExpression(@NotNull ULambdaExpression node) {
+                         processFunctionalExpression(node, node.getFunctionalInterfaceType());
+                         return false;
+                       }
+
+                       @Override
+                       public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
+                         visitReferenceExpression(node);
+                         // todo doesn't work for kotlin
+                         PsiType interfaceType = getFunctionalInterfaceType(node);
+                         processFunctionalExpression(node, interfaceType);
+                         markParametersReferenced(node, interfaceType);
+                         return false;
+                       }
+
+                        private void markParametersReferenced(@NotNull UCallableReferenceExpression node, @Nullable PsiType type) {
+                          PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(type);
+                          if (method == null) return;
+                          for (PsiParameter param : method.getParameterList().getParameters()) {
+                            RefElement paramRef = refManager.getReference(param);
+                            if (paramRef != null) {
+                              paramRef.waitForInitialized();
+                              refFrom.addReference(paramRef, param, decl, false, true, node);
+                            }
+                          }
+                        }
 
                        private void processFunctionalExpression(@NotNull UExpression expression, @Nullable PsiType type) {
                          PsiElement aClass = PsiUtil.resolveClassInType(type);
@@ -273,20 +292,23 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            aClass = ((PsiClass)aClass).getSourceElement();
                          }
                          if (aClass != null) {
-                           final RefElement refWhat = refFrom.getRefManager().getReference(aClass);
+                           final RefElement refWhat = refManager.getReference(aClass);
                            if (refWhat != null) refWhat.waitForInitialized();
                            refFrom.addReference(refWhat, aClass, decl, false, true, null);
+                           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
+                           if (interfaceMethod != null) {
+                             RefElement interfaceMethodRef = refManager.getReference(interfaceMethod);
+                             if (interfaceMethodRef != null) interfaceMethodRef.waitForInitialized();
+                             refFrom.addReference(interfaceMethodRef, interfaceMethod, decl, false, true, null);
+                             refManager.fireNodeMarkedReferenced(interfaceMethod, expression.getSourcePsi());
+                           }
                          }
-                         PsiElement functionalExpr = expression.getSourcePsi();
-                         RefElement refFunctionalExpr = refFrom.getRefManager().getReference(functionalExpr);
-                         if (refFunctionalExpr != null) refFunctionalExpr.waitForInitialized();
-                         refFrom.addReference(refFunctionalExpr, functionalExpr, decl, false, true, expression);
                        }
 
                        @Nullable
                        private RefMethod processNewLikeConstruct(final PsiMethod javaConstructor, final List<UExpression> argumentList) {
                          if (javaConstructor == null) return null;
-                         RefMethodImpl refConstructor = (RefMethodImpl)refFrom.getRefManager().getReference(javaConstructor.getOriginalElement());
+                         RefMethodImpl refConstructor = (RefMethodImpl)refManager.getReference(javaConstructor.getOriginalElement());
                          refFrom.addReference(refConstructor, javaConstructor, decl, false, true, null);
 
                          for (UExpression arg : argumentList) {
@@ -306,7 +328,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            type.accept(this);
                          }
                          PsiElement sourcePsi = uClass.getSourcePsi();
-                         RefElement refWhat = refFrom.getRefManager().getReference(sourcePsi);
+                         RefElement refWhat = refManager.getReference(sourcePsi);
                          if (refWhat != null) refWhat.waitForInitialized();
                          refFrom.addReference(refWhat, sourcePsi, decl, false, true, null);
                          return true;
@@ -322,7 +344,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          else if (refFrom instanceof RefFunctionalExpression) {
                            if (decl instanceof ULambdaExpression) {
                              PsiMethod lambdaMethod = LambdaUtil.getFunctionalInterfaceMethod(((ULambdaExpression)decl).getFunctionalInterfaceType());
-                             refMethod = ObjectUtils.tryCast(refFrom.getRefManager().getReference(lambdaMethod), RefMethodImpl.class);
+                             refMethod = ObjectUtils.tryCast(refManager.getReference(lambdaMethod), RefMethodImpl.class);
                            }
                          }
                          if (refMethod != null) {
@@ -336,19 +358,15 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        public boolean visitClassLiteralExpression(@NotNull UClassLiteralExpression node) {
                          final PsiType type = node.getType();
                          if (type instanceof PsiClassType) {
-                           processClassReference(((PsiClassType)type).resolve(), refFrom, decl, false, node);
+                           processClassReference(((PsiClassType)type).resolve(), false, node);
                          }
                          return false;
                        }
 
-                       private void processClassReference(PsiClass psiClass,
-                                                          RefJavaElementImpl refFrom,
-                                                          UElement from,
-                                                          boolean defaultConstructorOnly,
-                                                          UExpression node) {
+                       private void processClassReference(PsiClass psiClass, boolean defaultConstructorOnly, UExpression node) {
                          if (psiClass != null) {
                            RefClassImpl refClass =
-                             ObjectUtils.tryCast(refFrom.getRefManager().getReference(psiClass.getNavigationElement()), RefClassImpl.class);
+                             ObjectUtils.tryCast(refManager.getReference(psiClass.getNavigationElement()), RefClassImpl.class);
 
                            if (refClass != null) {
                              boolean hasConstructorsMarked = false;
@@ -385,13 +403,34 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              }
 
                              if (!hasConstructorsMarked) {
-                               refFrom.addReference(refClass, psiClass, from, false, true, node);
+                               refFrom.addReference(refClass, psiClass, decl, false, true, node);
                              }
                            }
                          }
                        }
                      }
       );
+    }
+  }
+
+  private static void addReferenceToLambdaParameter(@NotNull UParameter uParam, @NotNull PsiElement param, @NotNull UElement decl,
+                                                    @NotNull RefJavaElementImpl refFrom) {
+    ULambdaExpression lambda = UastUtils.getParentOfType(uParam, ULambdaExpression.class);
+    if (lambda == null) return;
+    int paramIndex = -1;
+    List<UParameter> lambdaParams = lambda.getParameters();
+    for (int i = 0; i < lambdaParams.size(); i++) {
+      if (lambdaParams.get(i).equals(uParam)) {
+        paramIndex = i;
+        break;
+      }
+    }
+    if (paramIndex == -1) return;
+    RefElement method = refFrom.getRefManager().getReference(LambdaUtil.getFunctionalInterfaceMethod(lambda.getFunctionalInterfaceType()));
+    if (method instanceof RefMethod) {
+      method.waitForInitialized();
+      RefParameter[] methodParams = ((RefMethod)method).getParameters();
+      refFrom.addReference(methodParams[paramIndex], param, decl, false, true, null);
     }
   }
 
@@ -434,17 +473,17 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   private void updateRefMethod(PsiElement psiResolved,
                                RefMethodImpl refMethod,
                                UExpression refExpression,
-                               final UElement uFrom,
-                               final RefElement refFrom) {
+                               final UElement uFrom) {
     UMethod uMethod = Objects.requireNonNull(UastContextKt.toUElement(psiResolved, UMethod.class));
     refMethod.waitForInitialized();
     if (refExpression instanceof UCallableReferenceExpression) {
       PsiType returnType = uMethod.getReturnType();
-      if (!uMethod.isConstructor() &&
-          !PsiType.VOID
-            .equals(LambdaUtil.getFunctionalInterfaceReturnType(getFunctionalInterfaceType((UCallableReferenceExpression)refExpression)))) {
-        refMethod.setReturnValueUsed(true);
-        addTypeReference(uFrom, returnType, refFrom.getRefManager());
+      if (!uMethod.isConstructor()) {
+        final PsiType type = getFunctionalInterfaceType((UCallableReferenceExpression)refExpression);
+        if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(type))) {
+          refMethod.setReturnValueUsed(true);
+          addTypeReference(uFrom, returnType, refMethod.getRefManager());
+        }
       }
       refMethod.setParametersAreUnknown();
       return;
@@ -453,7 +492,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       PsiType returnType = uMethod.getReturnType();
       if (!uMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
         refMethod.setReturnValueUsed(true);
-        addTypeReference(uFrom, returnType, refFrom.getRefManager());
+        addTypeReference(uFrom, returnType, refMethod.getRefManager());
       }
       return;
     }
@@ -473,7 +512,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
           refMethod.setReturnValueUsed(true);
         }
 
-        addTypeReference(uFrom, returnType, refFrom.getRefManager());
+        addTypeReference(uFrom, returnType, refMethod.getRefManager());
       }
 
       List<UExpression> argumentList = call.getValueArguments();

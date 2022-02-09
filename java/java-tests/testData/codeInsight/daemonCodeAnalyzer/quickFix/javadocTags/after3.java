@@ -1,5 +1,5 @@
 // "Add tag @param for parameter 'a'" "true"
-class a {
+public class a {
 
 /**
  * @param a

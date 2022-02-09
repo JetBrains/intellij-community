@@ -357,7 +357,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
   }
 
-  private static String getPluginInfo(@Nullable PluginId id) {
+  private static @NotNull String getPluginInfo(@Nullable PluginId id) {
     IdeaPluginDescriptor plugin = id == null ? null : PluginManagerCore.getPlugin(id);
     if (plugin == null) {
       return "";
@@ -623,7 +623,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                       module.getPluginId()));
       }
 
-      Presentation presentation = new Presentation();
+      Presentation presentation = Presentation.newTemplatePresentation();
       presentation.setText(text);
       if (bundle == null) {
         presentation.setDescription(descriptionValue);
@@ -843,13 +843,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           case ADD_TO_GROUP_ELEMENT_NAME:
             processAddToGroupNode(group, child, module, isSecondary(child));
             break;
-          case REFERENCE_ELEMENT_NAME: {
+          case REFERENCE_ELEMENT_NAME:
             AnAction action = processReferenceElement(child, module);
             if (action != null) {
               addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
             }
             break;
-          }
           case OVERRIDE_TEXT_ELEMENT_NAME:
             processOverrideTextNode(group, id, child, module, bundle);
             break;
@@ -1249,8 +1248,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
       if (actionToId.containsKey(action)) {
         IdeaPluginDescriptorImpl module = pluginId == null ? null : PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId);
-        String message = "ID \"" + actionToId.get(action) + "\" is already taken by action \"" + action + "\". " +
-                         "ID \"" + actionId + "\" cannot be registered for the same action";
+        String message = "ID '" + actionToId.get(action) + "' is already taken by action '" + action + "' (" + action.getClass()+"). " +
+                         "ID '" + actionId + "' cannot be registered for the same action";
         if (module == null) {
           LOG.error(new PluginException(message + " " + pluginId, null, pluginId));
         }
@@ -1283,9 +1282,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   private @Nullable AnAction addToMap(@NotNull String actionId, @NotNull AnAction action, @Nullable ProjectType projectType) {
-    AnAction chameleonAction = idToAction.computeIfPresent(actionId, (__, old) -> {
-      return old instanceof ChameleonAction ? old : new ChameleonAction(old, projectType);
-    });
+    AnAction chameleonAction = idToAction.computeIfPresent(actionId, (__, old) -> old instanceof ChameleonAction ? old : new ChameleonAction(old, projectType));
     if (chameleonAction == null) {
       AnAction result = projectType == null ? action : new ChameleonAction(action, projectType);
       idToAction.put(actionId, result);
@@ -1304,8 +1301,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       .map(ActionManagerImpl::getPluginInfo)
       .collect(Collectors.joining(","));
 
-    String message = ("ID \"" + actionId + "\" is already taken by action \"" + idToAction.get(actionId) + "\"" + oldPluginInfo +
-                      ". Action \"" + action + "\"" + " cannot use the same ID") + " " + pluginId;
+    AnAction oldAction = idToAction.get(actionId);
+    String message = "ID '" + actionId + "' is already taken by action '" + oldAction + "' ("+oldAction.getClass()+") " + oldPluginInfo + ". " +
+                     "Action '" + action + "' (" + action.getClass() + ") cannot use the same ID " + pluginId;
     if (pluginId == null) {
       LOG.error(message);
     }
@@ -1361,7 +1359,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                 continue;
               }
               for (AnAction stub : parentOfGroupAction.getChildActionsOrStubs()) {
-                if (stub instanceof ActionGroupStub && ((ActionGroupStub)stub).getId() == groupId) {
+                if (stub instanceof ActionGroupStub && groupId.equals(((ActionGroupStub)stub).getId())) {
                   ((ActionGroupStub)stub).remove(actionToRemove, actionId);
                 }
               }
@@ -1427,16 +1425,6 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         listener.actionPopupMenuReleased((ActionPopupMenu)menu);
       }
     }
-  }
-
-  public boolean isToolWindowContextMenuVisible() {
-    for (Object popup : myPopups) {
-      if (popup instanceof ActionPopupMenuImpl &&
-          ((ActionPopupMenuImpl)popup).isToolWindowContextMenu()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override

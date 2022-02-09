@@ -1,20 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.ExternalEntityMapping
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 object IndexableEntityProviderMethods {
@@ -69,13 +72,24 @@ object IndexableEntityProviderMethods {
     }
   }
 
-  fun createIterators(library: LibraryBridge): Collection<IndexableFilesIterator> = createIterators(library, library.libraryId)
-
-  fun createIterators(library: Library, libraryId: LibraryId): Collection<IndexableFilesIterator> {
-    return listOf(LibraryBridgeIndexableFilesIteratorImpl(library, libraryId))
-  }
-
   fun createIterators(sdk: Sdk): Collection<IndexableFilesIterator> {
     return listOf(SdkIndexableFilesIteratorImpl(sdk))
+  }
+
+  private fun getLibIteratorsByName(libraryTable: LibraryTable, name: String): List<IndexableFilesIterator>? =
+    libraryTable.getLibraryByName(name)?.run { LibraryIndexableFilesIteratorImpl.createIteratorList(this) }
+
+  fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> = runReadAction {
+    val registrar = LibraryTablesRegistrar.getInstance()
+    getLibIteratorsByName(registrar.libraryTable, name)?.also { return@runReadAction it }
+    for (customLibraryTable in registrar.customLibraryTables) {
+      getLibIteratorsByName(customLibraryTable, name)?.also { return@runReadAction it }
+    }
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    return@runReadAction storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let {
+      storage.libraryMap.getDataByEntity(it)
+    }?.run {
+      LibraryIndexableFilesIteratorImpl.createIteratorList(this)
+    } ?: emptyList()
   }
 }

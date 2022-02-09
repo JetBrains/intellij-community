@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
@@ -18,8 +18,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.touchbar.Touchbar;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -36,6 +37,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
@@ -78,7 +80,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
-    myHelpButton = isNewWizard() ? createHelpButton(JBUI.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
+    myHelpButton = isNewWizard() ? createHelpButton(JBInsets.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);
@@ -117,7 +119,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     int inset = isNewWizard() ? 15 : 0;
     panel.setBorder(isNewWizard()
-                      ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
+                    ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
                     : BorderFactory.createEmptyBorder(8, inset, 0, inset));
 
     JPanel buttonPanel = new JPanel();
@@ -170,7 +172,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
       add(hGroup, vGroup, buttons, myNextButton, myCancelButton);
       if (helpAvailable) {
-        add(hGroup, vGroup, buttons, myHelpButton);
+        if (isNewWizard()) {
+          JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+          if (ApplicationInfo.contextHelpAvailable()) {
+            leftPanel.add(myHelpButton);
+            panel.add(leftPanel, BorderLayout.WEST);
+          }
+        } else {
+          add(hGroup, vGroup, buttons, myHelpButton);
+        }
       }
 
       layout.setHorizontalGroup(hGroup);
@@ -485,22 +495,25 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    JComponent component = mySteps.get(getCurrentStep()).getPreferredFocusedComponent();
-    requestFocusTo(component != null ? component : myNextButton);
-  }
-
-  private static void requestFocusTo(final JComponent component) {
-    UiNotifyConnector.doWhenFirstShown(component, () -> {
-      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-      focusManager.requestFocus(component, false);
+    UiNotifyConnector.doWhenFirstShown(myCurrentStepComponent, () -> {
+      requestFocusTo(getPreferredFocusedComponent());
     });
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    JComponent component = getCurrentStepObject().getPreferredFocusedComponent();
-    return component == null ? super.getPreferredFocusedComponent() : component;
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    var step = getCurrentStepObject();
+    var component = ObjectUtils.doIfNotNull(step, it -> it.getPreferredFocusedComponent());
+    return ObjectUtils.chooseNotNull(component, myNextButton);
+  }
+
+  private static void requestFocusTo(@Nullable JComponent component) {
+    if (component != null) {
+      UiNotifyConnector.doWhenFirstShown(component, () -> {
+        var focusManager = IdeFocusManager.findInstanceByComponent(component);
+        focusManager.requestFocus(component, false);
+      });
+    }
   }
 
   protected boolean canGoNext() {

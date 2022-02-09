@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,6 +96,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
   @NotNull
   @Override
   public synchronized List<RefParameter> getParameters() {
+    LOG.assertTrue(isInitialized());
     return ObjectUtils.notNull(myParameters, Collections.emptyList());
   }
 
@@ -107,6 +108,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
 
   @Override
   public synchronized boolean hasEmptyBody() {
+    LOG.assertTrue(isInitialized());
     return hasEmptyBody;
   }
 

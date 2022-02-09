@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -14,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
 import git4idea.config.GitExecutable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +42,8 @@ public class GitLineHandler extends GitTextHandler {
    * Remote url which require authentication
    */
   @NotNull private Collection<String> myUrls = Collections.emptyList();
-  @NotNull private GitAuthenticationMode myIgnoreAuthenticationRequest = GitAuthenticationMode.FULL;
-  @Nullable private GitAuthenticationGate myAuthenticationGate;
+  @NotNull private AuthenticationMode myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
+  @Nullable private AuthenticationGate myAuthenticationGate;
 
   public GitLineHandler(@Nullable Project project,
                         @NotNull File directory,
@@ -87,20 +90,37 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   @NotNull
-  public GitAuthenticationMode getIgnoreAuthenticationMode() {
+  public AuthenticationMode getIgnoreAuthenticationMode() {
     return myIgnoreAuthenticationRequest;
   }
 
-  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
+  public void setIgnoreAuthenticationMode(@NotNull AuthenticationMode authenticationMode) {
     myIgnoreAuthenticationRequest = authenticationMode;
   }
 
+  /** @deprecated Please use overload {@link #setIgnoreAuthenticationMode(AuthenticationMode)}*/
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
+    switch (authenticationMode) {
+      case NONE:
+        myIgnoreAuthenticationRequest = AuthenticationMode.NONE;
+        break;
+      case SILENT:
+        myIgnoreAuthenticationRequest = AuthenticationMode.SILENT;
+        break;
+      case FULL:
+        myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
+        break;
+    }
+  }
+
   @Nullable
-  public GitAuthenticationGate getAuthenticationGate() {
+  public AuthenticationGate getAuthenticationGate() {
     return myAuthenticationGate;
   }
 
-  public void setAuthenticationGate(@NotNull GitAuthenticationGate authenticationGate) {
+  public void setAuthenticationGate(@NotNull AuthenticationGate authenticationGate) {
     myAuthenticationGate = authenticationGate;
   }
 

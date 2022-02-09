@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
+import com.intellij.diff.editor.DiffEditorEscapeAction
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -59,7 +60,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     }
   }
 
-  private fun installSelectionHandler(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
+  fun installSelectionHandler(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
     installSelectionChangedHandler(tree) {
       if (isOpenEditorDiffPreviewWithSingleClick) {
         if (!openPreview(false)) closePreview() // auto-close editor tab if nothing to preview
@@ -138,7 +139,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     updatePreviewProcessor?.clear()
   }
 
-  fun openPreview(focusEditor: Boolean): Boolean {
+  open fun openPreview(focusEditor: Boolean): Boolean {
     updatePreviewProcessor?.refresh(false)
     if (!hasContent()) return false
 
@@ -168,7 +169,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   }
 }
 
-internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable) : DumbAwareAction() {
+internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable) : DumbAwareAction(), DiffEditorEscapeAction {
   override fun actionPerformed(e: AnActionEvent) = escapeHandler.run()
 }
 

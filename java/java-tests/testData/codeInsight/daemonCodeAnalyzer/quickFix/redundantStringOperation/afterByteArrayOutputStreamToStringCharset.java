@@ -1,4 +1,4 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Redundant 'String' operation' problems in file" "true"
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;

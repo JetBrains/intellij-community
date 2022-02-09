@@ -1,18 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.Collection;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
-/**
- * @author: db
- */
-class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
-
-  private final TIntObjectHashMap<Collection<V>> myMap = new TIntObjectHashMap<>();
+final class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
+  @SuppressWarnings("SSBasedInspection")
+  private final Int2ObjectOpenHashMap<Collection<V>> myMap = new Int2ObjectOpenHashMap<>();
   private final Supplier<? extends Collection<V>> myCollectionFactory;
 
   IntObjectTransientMultiMaplet(Supplier<? extends Collection<V>> collectionFactory) {
@@ -31,13 +28,7 @@ class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
   @Override
   public void putAll(IntObjectMultiMaplet<V> m) {
-    m.forEachEntry(new TIntObjectProcedure<Collection<V>>() {
-      @Override
-      public boolean execute(int key, Collection<V> value) {
-        put(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((vs, value) -> put(value, vs));
   }
 
   @Override
@@ -105,18 +96,12 @@ class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
   @Override
   public void replaceAll(IntObjectMultiMaplet<V> m) {
-    m.forEachEntry(new TIntObjectProcedure<Collection<V>>() {
-      @Override
-      public boolean execute(int key, Collection<V> value) {
-        replace(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((vs, value) -> replace(value, vs));
   }
 
   @Override
-  public void forEachEntry(TIntObjectProcedure<Collection<V>> procedure) {
-    myMap.forEachEntry(procedure);
+  void forEachEntry(ObjIntConsumer<? super Collection<V>> procedure) {
+    myMap.int2ObjectEntrySet().fastForEach(entry -> procedure.accept(entry.getValue(), entry.getIntKey()));
   }
 
   @Override

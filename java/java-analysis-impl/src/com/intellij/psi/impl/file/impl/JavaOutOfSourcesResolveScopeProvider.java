@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -26,15 +26,15 @@ public final class JavaOutOfSourcesResolveScopeProvider extends ResolveScopeProv
   @Override
   public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     // For java only! For other languages resolve may be implemented with different rules, requiring larger scope.
-    final FileType type = file.getFileType();
+    FileType type = file.getFileType();
     if (type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() == JavaLanguage.INSTANCE) {
       ProjectFileIndex index = project.isDefault() ? null : ProjectRootManager.getInstance(project).getFileIndex();
       if (index == null) {
         return GlobalSearchScope.fileScope(project, file);
       }
       if (index.isInContent(file) && !index.isInSource(file)) {
-        final PsiFile psi = PsiManager.getInstance(project).findFile(file);
-        if (!HighlightClassUtil.isJavaHashBangScript(psi)) {
+        PsiFile psi = PsiManager.getInstance(project).findFile(file);
+        if (psi == null || !JavaHighlightUtil.isJavaHashBangScript(psi)) {
           return GlobalSearchScope.fileScope(project, file);
         }
       }

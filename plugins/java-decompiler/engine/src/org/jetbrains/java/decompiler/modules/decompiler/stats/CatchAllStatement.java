@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
@@ -32,7 +33,7 @@ public final class CatchAllStatement extends Statement {
   // *****************************************************************************
 
   private CatchAllStatement() {
-    type = Statement.TYPE_CATCHALL;
+    super(StatementType.CATCH_ALL);
   }
 
   private CatchAllStatement(Statement head, Statement handler) {
@@ -45,10 +46,10 @@ public final class CatchAllStatement extends Statement {
     this.handler = handler;
     stats.addWithKey(handler, handler.id);
 
-    List<StatEdge> lstSuccs = head.getSuccessorEdges(STATEDGE_DIRECT_ALL);
+    List<StatEdge> lstSuccs = head.getSuccessorEdges(EdgeType.DIRECT_ALL);
     if (!lstSuccs.isEmpty()) {
       StatEdge edge = lstSuccs.get(0);
-      if (edge.getType() == StatEdge.TYPE_REGULAR) {
+      if (edge.getType() == EdgeType.REGULAR) {
         post = edge.getDestination();
       }
     }
@@ -64,7 +65,7 @@ public final class CatchAllStatement extends Statement {
   // *****************************************************************************
 
   public static Statement isHead(Statement head) {
-    if (head.getLastBasicType() != Statement.LASTBASICTYPE_GENERAL) {
+    if (head.getLastBasicType() != StatementType.GENERAL) {
       return null;
     }
 
@@ -73,12 +74,12 @@ public final class CatchAllStatement extends Statement {
       return null;
     }
 
-    for (StatEdge edge : head.getSuccessorEdges(StatEdge.TYPE_EXCEPTION)) {
+    for (StatEdge edge : head.getSuccessorEdges(EdgeType.EXCEPTION)) {
       Statement exc = edge.getDestination();
 
-      if (edge.getExceptions() == null && exc.getLastBasicType() == LASTBASICTYPE_GENERAL && setHandlers.contains(exc)) {
-        List<StatEdge> lstSuccs = exc.getSuccessorEdges(STATEDGE_DIRECT_ALL);
-        if (lstSuccs.isEmpty() || lstSuccs.get(0).getType() != StatEdge.TYPE_REGULAR) {
+      if (edge.getExceptions() == null && exc.getLastBasicType() == StatementType.GENERAL && setHandlers.contains(exc)) {
+        List<StatEdge> lstSuccs = exc.getSuccessorEdges(EdgeType.DIRECT_ALL);
+        if (lstSuccs.isEmpty() || lstSuccs.get(0).getType() != EdgeType.REGULAR) {
 
           if (head.isMonitorEnter() || exc.isMonitorEnter()) {
             return null;
@@ -104,12 +105,12 @@ public final class CatchAllStatement extends Statement {
 
     boolean labeled = isLabeled();
     if (labeled) {
-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      buf.appendIndent(indent).append("label").append(Integer.toString(id)).append(":").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 
-    List<StatEdge> lstSuccs = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
-    if (first.type == TYPE_TRYCATCH && first.varDefinitions.isEmpty() && isFinally &&
+    List<StatEdge> lstSuccs = first.getSuccessorEdges(EdgeType.DIRECT_ALL);
+    if (first.type == StatementType.TRY_CATCH && first.varDefinitions.isEmpty() && isFinally &&
         !labeled && !first.isLabeled() && (lstSuccs.isEmpty() || !lstSuccs.get(0).explicit)) {
       TextBuffer content = ExprProcessor.jmpWrapper(first, indent, true, tracer);
       content.setLength(content.length() - new_line_separator.length());

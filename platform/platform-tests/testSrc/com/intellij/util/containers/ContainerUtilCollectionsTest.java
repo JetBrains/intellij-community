@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -101,7 +101,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testRemoveFromSoftEntrySet() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap();
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentSoftMap();
     map.put(this, this);
     Set<Map.Entry<Object, Object>> entries = map.entrySet();
     assertEquals(1, entries.size());
@@ -135,7 +135,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
-    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentSoftMap());
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentSoftMap());
   }
   @Test(timeout = TIMEOUT)
   public void testConcurrentWKWVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
@@ -162,7 +162,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapTossed() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap();
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentSoftMap();
     checkKeyTossedEventually(map);
   }
 
@@ -322,7 +322,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testConcurrentSoftMapMustNotAcceptNullKeyOrValue() {
-    Map<String, String> map = ContainerUtil.createConcurrentSoftMap();
+    Map<String, String> map = CollectionFactory.createConcurrentSoftMap();
 
     assertNullKeysMustThrow(map);
     assertNullValuesMustThrow(map);

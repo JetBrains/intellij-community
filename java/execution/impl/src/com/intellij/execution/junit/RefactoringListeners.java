@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaExecutionUtil;
@@ -46,6 +46,9 @@ public final class RefactoringListeners {
       if (aClass == null) return null;
       return getListener((PsiPackage)element, new ClassPackageAccessor(accessor));
     }
+
+    if (element instanceof PsiFile) return null;
+
     UClass uClass = UastContextKt.toUElement(element, UClass.class);
     if (uClass != null) {
       PsiClass aClass = accessor.getPsiElement();

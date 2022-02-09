@@ -192,7 +192,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else {
       if (RegExpTT.QUANTIFIERS.contains(builder.getTokenType())) {
-        builder.error(RegExpBundle.message("error.dangling.metacharacter"));
+        builder.error(RegExpBundle.message("error.dangling.metacharacter", builder.getTokenText()));
       }
     }
   }
@@ -600,11 +600,22 @@ public class RegExpParser implements PsiParser, LightPsiParser {
 
   private static void patternExpected(PsiBuilder builder) {
     final IElementType token = builder.getTokenType();
-    if (token == RegExpTT.GROUP_END) {
-      builder.error(RegExpBundle.message("parse.error.unmatched.closing.parenthesis"));
+    if (token == RegExpTT.GROUP_END || token == RegExpTT.RBRACE || token == RegExpTT.CLASS_END) {
+      builder.error(RegExpBundle.message("parse.error.unmatched.closing.bracket", builder.getTokenText()));
     }
-    else if (RegExpTT.QUANTIFIERS.contains(token) || token == RegExpTT.RBRACE || token == RegExpTT.CLASS_END) {
-      builder.error(RegExpBundle.message("error.dangling.metacharacter"));
+    else if (token == RegExpTT.LBRACE) {
+      builder.error(RegExpBundle.message("error.dangling.opening.bracket"));
+      // try to recover
+      builder.advanceLexer();
+      while (builder.getTokenType() == RegExpTT.NUMBER || builder.getTokenType() == RegExpTT.COMMA) {
+        builder.advanceLexer();
+      }
+      if (builder.getTokenType() == RegExpTT.RBRACE) {
+        builder.advanceLexer();
+      }
+    }
+    else if (RegExpTT.QUANTIFIERS.contains(token)) {
+      builder.error(RegExpBundle.message("error.dangling.metacharacter", builder.getTokenText()));
     }
     else {
       builder.error(RegExpBundle.message("parse.error.pattern.expected"));

@@ -135,7 +135,8 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   @Nullable
   @Override
   public ShortcutSet getShortcut() {
-    return myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+    ShortcutSet shortcut = myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
   }
 
   @NotNull
@@ -256,7 +257,9 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     @Nullable
     @Override
     public ShortcutSet getShortcut() {
-      return myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+      return myAction instanceof ShortcutProvider
+             ? ((ShortcutProvider)myAction).getShortcut()
+             : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
     }
 
     @Override

@@ -6,10 +6,7 @@ import com.intellij.openapi.editor.colors.FontPreferences.DEFAULT_FONT_SIZE
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeCellRenderer
-import com.intellij.ui.CellRendererPanel
-import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.LayeredIcon
-import com.intellij.ui.TextIcon
+import com.intellij.ui.*
 import com.intellij.ui.paint.PaintUtil.RoundingMode
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil
@@ -84,7 +81,7 @@ internal class CodeReviewProgressRenderer(
 
     val backgroundIcon = if (!isRead) CommentUnread else CommentUnresolved
     // use only two colors to be consistent with unread/read many icons
-    val textIconColor = if (UIUtil.isUnderDarcula()) Color(0x3C3F41) else Color.white
+    val textIconColor = JBColor(Color.white, Color(0x3C3F41))
     val discussionsCountIcon = createDiscussionsCountIcon(discussionsCount, textIconColor)
 
     return combine(backgroundIcon, discussionsCountIcon)

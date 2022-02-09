@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.ide.lightEdit.LightEdit
@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
@@ -51,7 +52,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
               val library = orderEntry.library
               if (library != null && seenLibraries.add(library)) {
                 @Suppress("DEPRECATION")
-                providers.add(LibraryIndexableFilesIteratorImpl(library))
+                providers.addIfNotNull(LibraryIndexableFilesIteratorImpl.createIterator(library))
               }
             }
             is JdkOrderEntry -> {

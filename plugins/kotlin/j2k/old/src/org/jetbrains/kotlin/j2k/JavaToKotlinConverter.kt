@@ -360,7 +360,7 @@ class ProgressPortionReporter(
     indicator: ProgressIndicator,
     private val start: Double,
     private val portion: Double
-) : DelegatingProgressIndicator(indicator) {
+) : J2KDelegatingProgressIndicator(indicator) {
 
     init {
         fraction = 0.0
@@ -390,7 +390,7 @@ class ProgressPortionReporter(
 }
 
 // Copied from com.intellij.ide.util.DelegatingProgressIndicator
-open class DelegatingProgressIndicator(indicator: ProgressIndicator) : WrappedProgressIndicator, StandardProgressIndicator {
+open class J2KDelegatingProgressIndicator(indicator: ProgressIndicator) : WrappedProgressIndicator, StandardProgressIndicator {
     protected val delegate: ProgressIndicator = indicator
 
     override fun start() = delegate.start()

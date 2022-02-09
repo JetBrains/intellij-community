@@ -4,13 +4,4 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 
 public final class StandardProgressIndicatorBase extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
-  @Override
-  public void cancel() {
-    super.cancel();
-  }
-
-  @Override
-  public boolean isCanceled() {
-    return super.isCanceled();
-  }
 }

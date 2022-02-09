@@ -47,18 +47,6 @@ public final class PropertiesElementFactory {
     return dummyFile.getProperties().get(0);
   }
 
-  /**
-   * @deprecated use {@link #createProperty(Project, String, String, Character)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static IProperty createProperty(@NotNull Project project,
-                                         @NonNls @NotNull String name,
-                                         @NonNls @NotNull String value) {
-    return createProperty(project, name, value, null);
-  }
-
   @NotNull
   public static String getPropertyText(@NonNls @NotNull String name,
                                        @NonNls @NotNull String value,

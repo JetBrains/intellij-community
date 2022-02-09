@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl.impl
 
 import com.intellij.ide.IdeBundle
@@ -42,6 +42,12 @@ internal object LessonExecutorUtil {
     return fakeTaskContext.messages
   }
 
+  fun getTaskCallInfo(): String? {
+    return Exception().stackTrace.first { element ->
+      element.toString().let { it.startsWith("training.learn.lesson") || !it.startsWith("training.") }
+    }?.toString()
+  }
+
   fun showBalloonMessage(text: String,
                          ui: JComponent,
                          balloonConfig: LearningBalloonConfig,
@@ -78,8 +84,8 @@ internal object LessonExecutorUtil {
     val balloonPanel = JPanel()
     balloonPanel.isOpaque = false
     balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
-    balloonPanel.border = UISettings.instance.balloonAdditionalBorder
-    val insets = UISettings.instance.balloonAdditionalBorder.borderInsets
+    balloonPanel.border = UISettings.getInstance().balloonAdditionalBorder
+    val insets = UISettings.getInstance().balloonAdditionalBorder.borderInsets
 
     var height = preferredSize.height + insets.top + insets.bottom
     val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + insets.left + insets.right + 6))
@@ -89,11 +95,11 @@ internal object LessonExecutorUtil {
     val gotItButton = if (gotItCallBack != null) JButton().also {
       balloonPanel.add(it)
       it.alignmentX = Component.LEFT_ALIGNMENT
-      it.border = EmptyBorder(JBUI.scale(10), UISettings.instance.balloonIndent, JBUI.scale(2), 0)
+      it.border = EmptyBorder(JBUI.scale(10), UISettings.getInstance().balloonIndent, JBUI.scale(2), 0)
       it.background = Color(0, true)
       it.putClientProperty("gotItButton", true)
-      it.putClientProperty("JButton.backgroundColor", UISettings.instance.tooltipButtonBackgroundColor)
-      it.foreground = UISettings.instance.tooltipButtonForegroundColor
+      it.putClientProperty("JButton.backgroundColor", UISettings.getInstance().tooltipButtonBackgroundColor)
+      it.foreground = UISettings.getInstance().tooltipButtonForegroundColor
       it.action = object : AbstractAction(IdeBundle.message("got.it.button.name")) {
         override fun actionPerformed(e: ActionEvent?) {
           gotItCallBack()
@@ -113,8 +119,8 @@ internal object LessonExecutorUtil {
       .setHideOnAction(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
-      .setFillColor(UISettings.instance.tooltipBackgroundColor)
-      .setBorderColor(UISettings.instance.tooltipBorderColor)
+      .setFillColor(UISettings.getInstance().tooltipBackgroundColor)
+      .setBorderColor(UISettings.getInstance().tooltipBorderColor)
       .setHideOnCloseClick(false)
       .setDisposable(actionsRecorder)
       .createBalloon()
@@ -210,23 +216,16 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
-                                                                  highlightBorder: Boolean,
-                                                                  highlightInside: Boolean,
-                                                                  usePulsation: Boolean,
-                                                                  clearPreviousHighlights: Boolean,
-                                                                  selector: ((candidates: Collection<T>) -> T?)?,
-                                                                  rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
+  override fun <T : Component> triggerByPartOfComponentImpl(componentClass: Class<T>,
+                                                            options: LearningUiHighlightingManager.HighlightingOptions,
+                                                            selector: ((candidates: Collection<T>) -> T?)?,
+                                                            rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     hasDetection = true
   }
 
   @Suppress("OverridingDeprecatedMember")
   override fun <ComponentType : Component> triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
-                                                                                highlightBorder: Boolean,
-                                                                                highlightInside: Boolean,
-                                                                                usePulsation: Boolean,
-                                                                                clearPreviousHighlights: Boolean,
-                                                                                selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+                                                                                options: LearningUiHighlightingManager.HighlightingOptions,                                                                                selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                                                                 finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
     hasDetection = true
   }

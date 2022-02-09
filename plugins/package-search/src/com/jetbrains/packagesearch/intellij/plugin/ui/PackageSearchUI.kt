@@ -3,14 +3,20 @@ package com.jetbrains.packagesearch.intellij.plugin.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.BrowsableLinkLabel
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScalableUnits
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import org.jetbrains.annotations.Nls
 import java.awt.CardLayout
 import java.awt.Color
@@ -29,71 +35,86 @@ import javax.swing.JLabel
 import javax.swing.JMenuItem
 import javax.swing.JPanel
 import javax.swing.JScrollPane
+import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.Scrollable
 
-internal object PackageSearchUI {
+object PackageSearchUI {
 
     private val MAIN_BG_COLOR: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
     internal val GRAY_COLOR: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
 
     internal val HeaderBackgroundColor = MAIN_BG_COLOR
-    internal val SectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", JBColor(0xF7F7F7, 0x3C3F41))
+    internal val SectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
     internal val UsualBackgroundColor = MAIN_BG_COLOR
-    internal val ListRowHighlightBackground = JBColor(0xF2F5F9, 0x4C5052)
-    internal val InfoBannerBackground = JBColor(0xE6EEF7, 0x1C3956)
+    internal val ListRowHighlightBackground = JBColor.namedColor("PackageSearch.SearchResult.background", 0xF2F5F9, 0x4C5052)
+    internal val InfoBannerBackground = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND) }
+        ?: JBColor(0xE6EEF7, 0x1C3956)
 
-    internal const val MediumHeaderHeight = 30
-    internal const val SmallHeaderHeight = 24
+    internal val MediumHeaderHeight = JBValue.Float(30f)
+    internal val SmallHeaderHeight = JBValue.Float(24f)
 
     @Suppress("MagicNumber") // Thanks, Swing
     internal fun headerPanel(init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
         init {
             border = JBEmptyBorder(2, 0, 2, 12)
+            init()
         }
 
         override fun getBackground() = HeaderBackgroundColor
-    }.apply(init)
+    }
 
     internal fun cardPanel(cards: List<JPanel> = emptyList(), backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = CardLayout()
                 cards.forEach { add(it) }
+                init()
             }
 
             override fun getBackground() = backgroundColor
-        }.apply(init)
+        }
 
     internal fun borderPanel(backgroundColor: Color = UsualBackgroundColor, init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
+
+        init {
+            init()
+        }
+
         override fun getBackground() = backgroundColor
-    }.apply(init)
+    }
 
     internal fun boxPanel(axis: Int = BoxLayout.Y_AXIS, backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = BoxLayout(this, axis)
+                init()
             }
 
             override fun getBackground() = backgroundColor
-        }.apply(init)
+        }
 
     internal fun flowPanel(backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) = object : JPanel() {
         init {
             layout = FlowLayout(FlowLayout.LEFT)
+            init()
         }
 
         override fun getBackground() = backgroundColor
-    }.apply(init)
+    }
 
-    internal fun checkBox(@Nls title: String, init: JCheckBox.() -> Unit = {}) = object : JCheckBox(title) {
+    fun checkBox(@Nls title: String, init: JCheckBox.() -> Unit = {}) = object : JCheckBox(title) {
 
         init {
             init()
         }
 
         override fun getBackground() = UsualBackgroundColor
+    }
+
+    fun textField(init: JTextField.() -> Unit): JTextField = JTextField().apply {
+        init()
     }
 
     internal fun menuItem(@Nls title: String, icon: Icon?, handler: () -> Unit): JMenuItem {
@@ -103,19 +124,20 @@ internal object PackageSearchUI {
         return JMenuItem(title).apply { addActionListener { handler() } }
     }
 
-    internal fun createLabel(init: JLabel.() -> Unit = {}) = JLabel().apply {
-        font = UIUtil.getLabelFont()
+    fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
+        font = StartupUiUtil.getLabelFont()
+        if (text != null) this.text = text
         init()
     }
 
     internal fun createLabelWithLink(init: BrowsableLinkLabel.() -> Unit = {}) = BrowsableLinkLabel().apply {
-        font = UIUtil.getLabelFont()
+        font = StartupUiUtil.getLabelFont()
         init()
     }
 
     internal fun getTextColorPrimary(isSelected: Boolean = false): Color = when {
-        isSelected -> JBColor { UIUtil.getListSelectionForeground(true) }
-        else -> JBColor { UIUtil.getListForeground() }
+        isSelected -> JBColor.lazy { UIUtil.getListSelectionForeground(true) }
+        else -> JBColor.lazy { UIUtil.getListForeground() }
     }
 
     internal fun getTextColorSecondary(isSelected: Boolean = false): Color = when {
@@ -123,13 +145,15 @@ internal object PackageSearchUI {
         else -> GRAY_COLOR
     }
 
-    internal fun setHeight(component: JComponent, height: Int, keepWidth: Boolean = false, scale: Boolean = true) {
-        val scaledHeight = if (scale) JBUI.scale(height) else height
+    internal fun setHeight(component: JComponent, @ScalableUnits height: Int, keepWidth: Boolean = false) {
+        setHeightPreScaled(component, height.scaled(), keepWidth)
+    }
 
+    internal fun setHeightPreScaled(component: JComponent, @ScaledPixels height: Int, keepWidth: Boolean = false) {
         component.apply {
-            preferredSize = Dimension(if (keepWidth) preferredSize.width else 0, scaledHeight)
-            minimumSize = Dimension(if (keepWidth) minimumSize.width else 0, scaledHeight)
-            maximumSize = Dimension(if (keepWidth) maximumSize.width else Int.MAX_VALUE, scaledHeight)
+            preferredSize = Dimension(if (keepWidth) preferredSize.width else 0, height)
+            minimumSize = Dimension(if (keepWidth) minimumSize.width else 0, height)
+            maximumSize = Dimension(if (keepWidth) maximumSize.width else Int.MAX_VALUE, height)
         }
     }
 

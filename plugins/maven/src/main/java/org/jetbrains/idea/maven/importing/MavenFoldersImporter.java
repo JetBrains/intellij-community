@@ -17,16 +17,21 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
+import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.tree.MavenModuleType;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -102,6 +107,37 @@ public class MavenFoldersImporter {
     configExcludedFolders();
   }
 
+  public void configMainAndTestAggregator() {
+    myModel.clearSourceFolders();
+    myModel.useModuleOutput(null, null);
+    configExcludedAggregatorFolders();
+  }
+
+  public void configMainAndTest(MavenModuleType type) {
+    if (!myImportingSettings.isKeepSourceFolders()) {
+      myModel.clearSourceFolders();
+    }
+    boolean isTest = type == MavenModuleType.TEST;
+    Map<String, JpsModuleSourceRootType<?>> sourceFolders = isTest
+                                                            ? getTestSourceFolders(myMavenProject)
+                                                            : getMainSourceFolders(myMavenProject);
+
+    java.nio.file.Path contentRootPath = java.nio.file.Path.of(myMavenProject.getDirectory(), "src", isTest ? "test" : "main");
+    String defaultContentRoot = contentRootPath.toString();
+    boolean containDefaultContentRoot = false;
+    for (String path : sourceFolders.keySet()) {
+      if (!containDefaultContentRoot) {
+        containDefaultContentRoot = path.contains(defaultContentRoot);
+      }
+    }
+    sourceFolders.forEach((p, t) -> myModel.addSourceFolder(p, t));
+
+    configOutputFolders(isTest);
+    configGeneratedFolders(isTest);
+
+    generateNewContentRoots(containDefaultContentRoot ? contentRootPath : null);
+  }
+
   private void configSourceFolders() {
     Map<String, JpsModuleSourceRootType<?>> sourceFolders = getSourceFolders(myMavenProject);
 
@@ -121,32 +157,58 @@ public class MavenFoldersImporter {
   @NotNull
   public static Map<String, JpsModuleSourceRootType<?>> getSourceFolders(MavenProject mavenProject) {
     final MultiMap<JpsModuleSourceRootType<?>, String> roots = MultiMap.createLinked();
+    addMainSourcePath(mavenProject, roots);
+    addTestSourcePath(mavenProject, roots);
+    return getPathMap(mavenProject, roots);
+  }
 
+  @NotNull
+  public static Map<String, JpsModuleSourceRootType<?>> getMainSourceFolders(MavenProject mavenProject) {
+    final MultiMap<JpsModuleSourceRootType<?>, String> roots = MultiMap.createLinked();
+    addMainSourcePath(mavenProject, roots);
+    return getPathMap(mavenProject, roots);
+  }
+
+  @NotNull
+  public static Map<String, JpsModuleSourceRootType<?>> getTestSourceFolders(MavenProject mavenProject) {
+    final MultiMap<JpsModuleSourceRootType<?>, String> roots = MultiMap.createLinked();
+    addTestSourcePath(mavenProject, roots);
+    return getPathMap(mavenProject, roots);
+  }
+
+  private static void addMainSourcePath(MavenProject mavenProject, MultiMap<JpsModuleSourceRootType<?>, String> roots) {
     roots.putValues(JavaSourceRootType.SOURCE, mavenProject.getSources());
-    roots.putValues(JavaSourceRootType.TEST_SOURCE, mavenProject.getTestSources());
 
     for (MavenImporter each : MavenImporter.getSuitableImporters(mavenProject)) {
       each.collectSourceRoots(mavenProject, (s, type) -> roots.putValue(type, s));
     }
-
     for (MavenResource each : mavenProject.getResources()) {
       roots.putValue(JavaResourceRootType.RESOURCE, each.getDirectory());
     }
+
+    addBuilderHelperPaths(mavenProject, "add-source", roots.getModifiable(JavaSourceRootType.SOURCE));
+    addBuilderHelperResourcesPaths(mavenProject, "add-resource", roots.getModifiable(JavaResourceRootType.RESOURCE));
+  }
+
+  private static void addTestSourcePath(MavenProject mavenProject, MultiMap<JpsModuleSourceRootType<?>, String> roots) {
+    roots.putValues(JavaSourceRootType.TEST_SOURCE, mavenProject.getTestSources());
     for (MavenResource each : mavenProject.getTestResources()) {
       roots.putValue(JavaResourceRootType.TEST_RESOURCE, each.getDirectory());
     }
 
-    addBuilderHelperPaths(mavenProject, "add-source", roots.getModifiable(JavaSourceRootType.SOURCE));
     addBuilderHelperPaths(mavenProject, "add-test-source", roots.getModifiable(JavaSourceRootType.TEST_SOURCE));
-
-    addBuilderHelperResourcesPaths(mavenProject, "add-resource", roots.getModifiable(JavaResourceRootType.RESOURCE));
     addBuilderHelperResourcesPaths(mavenProject, "add-test-resource", roots.getModifiable(JavaResourceRootType.TEST_RESOURCE));
+  }
 
+  @NotNull
+  private static Map<String, JpsModuleSourceRootType<?>> getPathMap(@NotNull MavenProject mavenProject,
+                                                                    @NotNull MultiMap<JpsModuleSourceRootType<?>, String> roots) {
     Map<String, JpsModuleSourceRootType<?>> addedPaths = new LinkedHashMap<>();
     for (JpsModuleSourceRootType<?> type : roots.keySet()) {
       for (String path : roots.get(type)) {
         if (path != null) {
-          String canonicalPath = MavenUtil.toPath(mavenProject, path).getPath();
+          Path nioPath = MavenUtil.toPath(mavenProject, path);
+          String canonicalPath = nioPath.getPath();
           if (!alreadyAdded(canonicalPath, addedPaths)) {
             addedPaths.put(canonicalPath, type);
           }
@@ -195,18 +257,6 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void addSourceFolderIfNotOverlap(String path, JpsModuleSourceRootType<?> type, List<String> addedPaths) {
-    String canonicalPath = myModel.toPath(path).getPath();
-    for (String existing : addedPaths) {
-      if (VfsUtilCore.isEqualOrAncestor(existing, canonicalPath)
-          || VfsUtilCore.isEqualOrAncestor(canonicalPath, existing)) {
-        return;
-      }
-    }
-    addedPaths.add(canonicalPath);
-    myModel.addSourceFolder(canonicalPath, type);
-  }
-
   private void configOutputFolders() {
     if (myImportingSettings.isUseMavenOutput()) {
       myModel.useModuleOutput(myMavenProject.getOutputDirectory(),
@@ -223,6 +273,31 @@ public class MavenFoldersImporter {
     String testOutputDirPath = myModel.toPath(myMavenProject.getTestOutputDirectory()).getPath();
     if ((!VfsUtilCore.isEqualOrAncestor(buildDirPath, testOutputDirPath))) {
       myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
+    }
+  }
+
+  private void configOutputFolders(boolean test) {
+    if (myImportingSettings.isUseMavenOutput()) {
+      if (test) {
+        myModel.useModuleOutput(StringUtils.EMPTY, myMavenProject.getTestOutputDirectory());
+      }
+      else {
+        myModel.useModuleOutput(myMavenProject.getOutputDirectory(), StringUtils.EMPTY);
+      }
+    }
+
+    String buildDirPath = myModel.toPath(myMavenProject.getBuildDirectory()).getPath();
+    String outputDirPath = myModel.toPath(myMavenProject.getOutputDirectory()).getPath();
+
+    if (test) {
+      String testOutputDirPath = myModel.toPath(myMavenProject.getTestOutputDirectory()).getPath();
+      if ((!VfsUtilCore.isEqualOrAncestor(buildDirPath, testOutputDirPath))) {
+        myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
+      }
+    } else {
+      if ((!VfsUtilCore.isEqualOrAncestor(buildDirPath, outputDirPath))) {
+        myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
+      }
     }
   }
 
@@ -255,6 +330,38 @@ public class MavenFoldersImporter {
     }
   }
 
+  private void configGeneratedFolders(boolean test) {
+    File targetDir = new File(myMavenProject.getBuildDirectory());
+
+    String generatedDir = test ? myMavenProject.getGeneratedSourcesDirectory(true) : myMavenProject.getGeneratedSourcesDirectory(false);
+
+    myModel.unregisterAll(targetDir.getPath(), false, false);
+
+    if (myImportingSettings.getGeneratedSourcesFolder() != MavenImportingSettings.GeneratedSourcesFolder.IGNORE) {
+      if (test) {
+        myModel.addGeneratedJavaSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), JavaSourceRootType.TEST_SOURCE);
+      }
+      else {
+        myModel.addGeneratedJavaSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), JavaSourceRootType.SOURCE);
+      }
+    }
+
+    File[] targetChildren = targetDir.listFiles();
+
+    if (targetChildren != null) {
+      for (File f : targetChildren) {
+        if (!f.isDirectory()) continue;
+
+        if (!test && FileUtil.pathsEqual(generatedDir, f.getPath())) {
+          configGeneratedSourceFolder(f, JavaSourceRootType.SOURCE);
+        }
+        else if (test && FileUtil.pathsEqual(generatedDir, f.getPath())) {
+          configGeneratedSourceFolder(f, JavaSourceRootType.TEST_SOURCE);
+        }
+      }
+    }
+  }
+
   private void generateNewContentRoots(boolean orphansOnly) {
     Map<String, SourceFolder> sourceFoldersMap = new TreeMap<>(FileUtil::comparePaths);
     for (String sourceRootUrl : myModel.getSourceRootUrls(true)) {
@@ -280,11 +387,47 @@ public class MavenFoldersImporter {
 
     Set<String> topLevelSourceFolderUrls = new HashSet<>();
     for (String sourceRoot : sourceFoldersMap.keySet()) {
-      if (topLevelSourceFolderUrls.stream().noneMatch(root -> FileUtil.isAncestor(root, sourceRoot, false))) {
+      if (!ContainerUtil.exists(topLevelSourceFolderUrls, root -> FileUtil.isAncestor(root, sourceRoot, false))) {
         topLevelSourceFolderUrls.add(sourceRoot);
       }
     }
 
+    setContentRootData(topLevelSourceFolderUrls, rootModel, sourceFoldersMap);
+  }
+
+  private void generateNewContentRoots(@Nullable java.nio.file.Path defaultContentRootPath) {
+    Map<String, SourceFolder> sourceFoldersMap = new TreeMap<>(FileUtil::comparePaths);
+    for (String sourceRootUrl : myModel.getSourceRootUrls(true)) {
+      String sourceRootPath = FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(sourceRootUrl));
+      SourceFolder sourceFolder = myModel.getSourceFolder(new File(sourceRootPath));
+      if (sourceFolder != null) {
+        sourceFoldersMap.put(sourceRootUrl, sourceFolder);
+      }
+    }
+
+    ModifiableRootModel rootModel = myModel.getRootModel();
+
+    for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+      rootModel.removeContentEntry(contentEntry);
+    }
+
+    Set<String> topLevelSourceFolderUrls = new HashSet<>();
+    if (defaultContentRootPath != null) {
+      String defaultContentRootUrl = MavenUtil.toPath(myMavenProject, defaultContentRootPath.toString()).toUrl().getUrl();
+      topLevelSourceFolderUrls.add(defaultContentRootUrl);
+    }
+    for (String sourceRoot : sourceFoldersMap.keySet()) {
+      if (!ContainerUtil.exists(topLevelSourceFolderUrls, root -> FileUtil.isAncestor(root, sourceRoot, false))) {
+        topLevelSourceFolderUrls.add(sourceRoot);
+      }
+    }
+
+    setContentRootData(topLevelSourceFolderUrls, rootModel, sourceFoldersMap);
+  }
+
+  private static void setContentRootData(Set<String> topLevelSourceFolderUrls,
+                                         ModifiableRootModel rootModel,
+                                         Map<String, SourceFolder> sourceFoldersMap) {
     for (String sourceFolderUrl : topLevelSourceFolderUrls) {
       if (isAlreadyContentRoot(sourceFolderUrl, rootModel.getProject())) continue;
 
@@ -353,6 +496,23 @@ public class MavenFoldersImporter {
 
     if (myImportingSettings.isExcludeTargetFolder()) {
         myModel.addExcludedFolder(targetDir.getPath());
+    }
+  }
+
+  private void configExcludedAggregatorFolders() {
+    File targetDir = new File(myMavenProject.getBuildDirectory());
+
+    List<String> facetExcludes = new NotNullList<>();
+    for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
+      each.collectExcludedFolders(myMavenProject, facetExcludes);
+    }
+    for (String eachFolder : facetExcludes) {
+      myModel.unregisterAll(eachFolder, true, true);
+      myModel.addExcludedFolder(eachFolder);
+    }
+
+    if (myImportingSettings.isExcludeTargetFolder()) {
+      myModel.addExcludedFolder(targetDir.getPath());
     }
   }
 

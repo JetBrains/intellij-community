@@ -4,9 +4,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +39,7 @@ public final class ExitHelper {
 
         cleanUpUnreachableBlocks(st);
 
-        if (st.type == Statement.TYPE_SEQUENCE && st.getStats().size() > 1) {
+        if (st.type == StatementType.SEQUENCE && st.getStats().size() > 1) {
 
           Statement last = st.getStats().getLast();
           Statement secondlast = st.getStats().get(st.getStats().size() - 2);
@@ -43,7 +47,7 @@ public final class ExitHelper {
           if (last.getExprents() == null || !last.getExprents().isEmpty()) {
             if (!secondlast.hasBasicSuccEdge()) {
 
-              Set<Statement> set = last.getNeighboursSet(Statement.STATEDGE_DIRECT_ALL, Statement.DIRECTION_BACKWARD);
+              Set<Statement> set = last.getNeighboursSet(EdgeType.DIRECT_ALL, EdgeDirection.BACKWARD);
               set.remove(secondlast);
 
               if (set.isEmpty()) {
@@ -80,7 +84,7 @@ public final class ExitHelper {
         }
       }
 
-      if (stat.type == Statement.TYPE_IF) {
+      if (stat.type == StatementType.IF) {
         IfStatement ifst = (IfStatement)stat;
         if (ifst.getIfstat() == null) {
           StatEdge ifedge = ifst.getIfEdge();
@@ -91,7 +95,7 @@ public final class ExitHelper {
             bstat.setExprents(DecHelper.copyExprentList(dest.getExprents()));
 
             ifst.getFirst().removeSuccessor(ifedge);
-            StatEdge newedge = new StatEdge(StatEdge.TYPE_REGULAR, ifst.getFirst(), bstat);
+            StatEdge newedge = new StatEdge(EdgeType.REGULAR, ifst.getFirst(), bstat);
             ifst.getFirst().addSuccessor(newedge);
             ifst.setIfEdge(newedge);
             ifst.setIfstat(bstat);
@@ -99,7 +103,7 @@ public final class ExitHelper {
             bstat.setParent(ifst);
 
             StatEdge oldexitedge = dest.getAllSuccessorEdges().get(0);
-            StatEdge newexitedge = new StatEdge(StatEdge.TYPE_BREAK, bstat, oldexitedge.getDestination());
+            StatEdge newexitedge = new StatEdge(EdgeType.BREAK, bstat, oldexitedge.getDestination());
             bstat.addSuccessor(newexitedge);
             oldexitedge.closure.addLabeledEdge(newexitedge);
             ret = 1;
@@ -110,11 +114,11 @@ public final class ExitHelper {
 
 
     if (stat.getAllSuccessorEdges().size() == 1 &&
-        stat.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_BREAK &&
+        stat.getAllSuccessorEdges().get(0).getType() == EdgeType.BREAK &&
         stat.getLabelEdges().isEmpty()) {
       Statement parent = stat.getParent();
-      if (stat != parent.getFirst() || (parent.type != Statement.TYPE_IF &&
-                                        parent.type != Statement.TYPE_SWITCH)) {
+      if (stat != parent.getFirst() || (parent.type != StatementType.IF &&
+                                        parent.type != StatementType.SWITCH)) {
 
         StatEdge destedge = stat.getAllSuccessorEdges().get(0);
         dest = isExitEdge(destedge);
@@ -126,7 +130,7 @@ public final class ExitHelper {
           bstat.setExprents(DecHelper.copyExprentList(dest.getExprents()));
 
           StatEdge oldexitedge = dest.getAllSuccessorEdges().get(0);
-          StatEdge newexitedge = new StatEdge(StatEdge.TYPE_BREAK, bstat, oldexitedge.getDestination());
+          StatEdge newexitedge = new StatEdge(EdgeType.BREAK, bstat, oldexitedge.getDestination());
           bstat.addSuccessor(newexitedge);
           oldexitedge.closure.addLabeledEdge(newexitedge);
 
@@ -137,21 +141,21 @@ public final class ExitHelper {
           // LabelHelper.lowContinueLabels not applicable because of forward continue edges
           // LabelHelper.lowContinueLabels(block, new HashSet<StatEdge>());
           // do it by hand
-          for (StatEdge prededge : block.getPredecessorEdges(StatEdge.TYPE_CONTINUE)) {
+          for (StatEdge prededge : block.getPredecessorEdges(EdgeType.CONTINUE)) {
             block.removePredecessor(prededge);
-            prededge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, prededge, stat);
+            prededge.getSource().changeEdgeNode(EdgeDirection.FORWARD, prededge, stat);
             stat.addPredecessor(prededge);
             stat.addLabeledEdge(prededge);
           }
 
-          stat.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, stat, bstat));
+          stat.addSuccessor(new StatEdge(EdgeType.REGULAR, stat, bstat));
 
           for (StatEdge edge : dest.getAllPredecessorEdges()) {
             if (!edge.explicit && stat.containsStatementStrict(edge.getSource()) &&
                 MergeHelper.isDirectPath(edge.getSource().getParent(), bstat)) {
 
               dest.removePredecessor(edge);
-              edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, bstat);
+              edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, bstat);
               bstat.addPredecessor(edge);
 
               if (!stat.containsStatementStrict(edge.closure)) {
@@ -171,7 +175,7 @@ public final class ExitHelper {
   private static Statement isExitEdge(StatEdge edge) {
     Statement dest = edge.getDestination();
 
-    if (edge.getType() == StatEdge.TYPE_BREAK && dest.type == Statement.TYPE_BASICBLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
+    if (edge.getType() == EdgeType.BREAK && dest.type == StatementType.BASIC_BLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
       List<Exprent> data = dest.getExprents();
 
       if (data != null && data.size() == 1) {
@@ -189,12 +193,12 @@ public final class ExitHelper {
 
     for (StatEdge ed : stat.getAllPredecessorEdges()) {
       if (ed != edge) {
-        if (ed.getType() == StatEdge.TYPE_REGULAR) {
+        if (ed.getType() == EdgeType.REGULAR) {
           Statement source = ed.getSource();
 
-          if (source.type == Statement.TYPE_BASICBLOCK || (source.type == Statement.TYPE_IF &&
+          if (source.type == StatementType.BASIC_BLOCK || (source.type == StatementType.IF &&
                                                            ((IfStatement)source).iftype == IfStatement.IFTYPE_IF) ||
-              (source.type == Statement.TYPE_DO && ((DoStatement)source).getLooptype() != DoStatement.LOOP_DO)) {
+              (source.type == StatementType.DO && ((DoStatement)source).getLoopType() != LoopType.DO)) {
             return false;
           }
         }

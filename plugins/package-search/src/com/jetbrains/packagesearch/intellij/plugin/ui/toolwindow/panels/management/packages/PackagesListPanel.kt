@@ -41,7 +41,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -113,7 +112,7 @@ internal class PackagesListPanel(
 
     private val searchFieldFocus = Channel<Unit>()
 
-    private val packagesTable = PackagesTable(operationExecutor, ::onSearchResultStateChanged)
+    private val packagesTable = PackagesTable(project, operationExecutor, ::onSearchResultStateChanged)
 
     private val onlyStableMutableStateFlow = MutableStateFlow(true)
     private val selectedPackageMutableStateFlow = packagesTable.selectedPackageStateFlow
@@ -152,23 +151,25 @@ internal class PackagesListPanel(
     private val onlyStableCheckBox = PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"))
         .apply {
             isOpaque = false
-            border = scaledEmptyBorder(left = 6)
+            border = emptyBorder(left = 6)
             isSelected = true
         }
 
     private val onlyMultiplatformCheckBox =
-        PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyMpp"))
-            .apply {
-                isOpaque = false
-                border = scaledEmptyBorder(left = 6)
-                isSelected = false
-            }
+        PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyMpp")) {
+            isOpaque = false
+            border = emptyBorder(left = 6)
+            isSelected = false
+        }
 
-    private val mainToolbar = ActionManager.getInstance().createActionToolbar("Packages.Manage", createActionGroup(), true).apply {
-        targetComponent = toolbar
-        component.background = PackageSearchUI.HeaderBackgroundColor
-        component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.paneBackground())
-    }
+    private val mainToolbar = ActionManager.getInstance()
+        .createActionToolbar("Packages.Manage", createActionGroup(), true)
+        .apply {
+            targetComponent = toolbar
+            component.background = PackageSearchUI.HeaderBackgroundColor
+            val paneBackground = JBUI.CurrentTheme.CustomFrameDecorations.paneBackground()
+            component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, paneBackground)
+        }
 
     private fun createActionGroup() = DefaultActionGroup().apply {
         add(ComponentActionWrapper { onlyStableCheckBox })
@@ -176,7 +177,7 @@ internal class PackagesListPanel(
     }
 
     private val searchPanel = PackageSearchUI.headerPanel {
-        PackageSearchUI.setHeight(this, PackageSearchUI.MediumHeaderHeight)
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.MediumHeaderHeight.get())
 
         border = BorderFactory.createEmptyBorder()
 
@@ -343,6 +344,7 @@ internal class PackagesListPanel(
                 )
 
                 val headerData = project.lifecycleScope.computeHeaderData(
+                    project = project,
                     totalItemsCount = tableItems.size,
                     packageUpdateInfos = filteredPackageUpgrades,
                     hasSearchResults = apiSearchResults?.packages?.isNotEmpty() ?: false,
@@ -479,7 +481,7 @@ internal class PackagesListPanel(
         with(searchTextField) {
             textEditor.putClientProperty("JTextField.Search.Gap", 6.scaled())
             textEditor.putClientProperty("JTextField.Search.GapEmptyText", (-1).scaled())
-            textEditor.border = scaledEmptyBorder(left = 6)
+            textEditor.border = emptyBorder(left = 6)
             textEditor.isOpaque = true
             textEditor.background = PackageSearchUI.HeaderBackgroundColor
         }
@@ -520,6 +522,7 @@ internal fun JCheckBox.addSelectionChangedListener(action: (Boolean) -> Unit) =
     addItemListener { e -> action(e.stateChange == ItemEvent.SELECTED) }
 
 private fun CoroutineScope.computeHeaderData(
+    project: Project,
     totalItemsCount: Int,
     packageUpdateInfos: List<PackagesToUpgrade.PackageUpgradeInfo>,
     hasSearchResults: Boolean,
@@ -545,6 +548,7 @@ private fun CoroutineScope.computeHeaderData(
             packageUpdateInfos.parallelFlatMap { packageUpdateInfo ->
                 cache.getOrPut(packageUpdateInfo) {
                     val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+                        project = project,
                         packageModel = packageUpdateInfo.packageModel,
                         selectedVersion = packageUpdateInfo.targetVersion.originalVersion
                     )

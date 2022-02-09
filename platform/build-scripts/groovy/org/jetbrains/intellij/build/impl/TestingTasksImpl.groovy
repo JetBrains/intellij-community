@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
@@ -33,7 +34,6 @@ import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -363,9 +363,15 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
     }
     else {
-      context.messages.info("Starting ${(testGroups == null ? "all tests" : "test from groups '${testGroups}'")} from classpath of module '$mainModule'")
+      context.messages.info("Starting ${(testGroups == null ? "all tests" : "tests from groups '${testGroups}'")} from classpath of module '$mainModule'")
     }
-    context.messages.info("Runtime: ${runtimeExecutablePath()}")
+    String numberOfBuckets = allSystemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]
+    if (numberOfBuckets != null) {
+      context.messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of $numberOfBuckets will be executed")
+    }
+    String runtime = runtimeExecutablePath()
+    context.messages.info("Runtime: $runtime")
+    BuildHelper.runProcess(context, List.of(runtime, "-version"))
     context.messages.info("Runtime options: $allJvmArgs")
     context.messages.info("System properties: $allSystemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
@@ -384,23 +390,47 @@ class TestingTasksImpl extends TestingTasks {
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private String runtimeExecutablePath() {
-    String path = options.customJrePath
-    if (path == null) {
-      Path runtime = Paths
-        .get(CompilationContextImpl.jbrTargetDir(context.paths.projectHome, context.options))
-        .resolve(context.options.bundledRuntimeVersion.toString())
-      if (SystemInfoRt.isMac) {
-        runtime = runtime.resolve("Contents/Home")
-      }
-      if (Files.exists(runtime.resolve("bin/java"))) {
-        path = runtime.toString()
+  private Path runtimeExecutablePath() {
+    String binJava = "bin/java"
+    String binJavaExe = "bin/java.exe"
+    String contentsHome = "Contents/Home"
+
+    Path runtimeDir
+    if (options.customRuntimePath != null) {
+      runtimeDir = Path.of(options.customRuntimePath)
+      if (!Files.isDirectory(runtimeDir)) {
+        throw new IllegalStateException("Custom Jre path from system property '" + TestingOptions.TEST_JRE_PROPERTY + "' is missing: " + runtimeDir)
       }
     }
-    if (path == null) {
-      path = System.getProperty("java.home")
+    else {
+      runtimeDir = context.bundledRuntime.getHomeForCurrentOsAndArch()
     }
-    return "$path/bin/java"
+
+    if (SystemInfoRt.isWindows) {
+      Path path = runtimeDir.resolve(binJavaExe)
+      if (!Files.exists(path)) {
+        throw new IllegalStateException("java.exe is missing: " + path)
+      }
+      return path
+    }
+
+    if (SystemInfoRt.isMac) {
+      if (Files.exists(runtimeDir.resolve(binJava))) {
+        return runtimeDir.resolve(binJava)
+      }
+
+      if (Files.exists(runtimeDir.resolve(contentsHome).resolve(binJava))) {
+        return runtimeDir.resolve(contentsHome).resolve(binJava)
+      }
+
+      throw new IllegalStateException("java executable is missing under " + runtimeDir)
+    }
+
+    if (!Files.exists(runtimeDir.resolve(binJava))) {
+      throw new IllegalStateException("java executable is missing: " + runtimeDir.resolve(binJava))
+    }
+
+    return runtimeDir.resolve(binJava)
   }
 
   private void notifySnapshotBuilt(List<String> jvmArgs) {
@@ -507,7 +537,7 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     if (context.options.bundledRuntimeVersion >= 17) {
-      jvmArgs.addAll(OpenedPackages.INSTANCE)
+      jvmArgs.addAll(OpenedPackages.getCommandLineArguments(context))
     }
 
     if (suspendDebugProcess) {
@@ -548,13 +578,20 @@ class TestingTasksImpl extends TestingTasks {
               }
 
               try {
+                def noTests = true 
                 UrlClassLoader loader = UrlClassLoader.build().files(files).get()
                 Class<?> aClazz = Class.forName(qName, false, loader)
                 Class<?> testAnnotation = Class.forName(Test.class.getName(), false, loader)
                 for (Method m : aClazz.getDeclaredMethods()) {
                   if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
-                    runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
+                    def exitCode =
+                      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
+                    noTests &= exitCode == NO_TESTS_ERROR
                   }
+                }
+                
+                if (noTests) {
+                   context.messages.error("No tests were found in the configuration")
                 }
               }
               catch (Throwable e) {
@@ -569,16 +606,22 @@ class TestingTasksImpl extends TestingTasks {
     }
     else {
       context.messages.info("Run junit 5 tests")
-      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, null, null)
+      def exitCode5 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, null, null)
       context.messages.info("Finish junit 5 task")
 
       context.messages.info("Run junit 3 tests")
-      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
+      def exitCode3 =
+        runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
       context.messages.info("Finish junit 3 task")
+      
+      if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR) {
+        context.messages.error("No tests were found in the configuration")
+      }
     }
   }
   
-  private void runJUnit5Engine(Map<String, String> systemProperties,
+  private static final int NO_TESTS_ERROR = 42
+  private int runJUnit5Engine(Map<String, String> systemProperties,
                                List<String> jvmArgs,
                                Map<String, String> envVariables,
                                List<String> bootstrapClasspath,
@@ -638,9 +681,10 @@ class TestingTasksImpl extends TestingTasks {
     
     errorReader.join(360_000)
     outputReader.join(360_000)
-    if (exitCode != 0) {
+    if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
       context.messages.error("Tests failed with exit code $exitCode")
     }
+     return exitCode
   }
 
   private Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
@@ -787,7 +831,8 @@ class TestingTasksImpl extends TestingTasks {
   void setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupBundledMaven')
+      BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+      BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
     }
   }
 

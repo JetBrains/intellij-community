@@ -79,8 +79,8 @@ class Credentials:
     def iter(self, domain) -> Generator[tuple[str, str], None, None]: ...
 
 class KeyCerts(Credentials):
-    def add(self, key, cert, domain, password) -> None: ...  # type: ignore
-    def iter(self, domain) -> Generator[tuple[str, str, str], None, None]: ...  # type: ignore
+    def add(self, key, cert, domain, password) -> None: ...  # type: ignore[override]
+    def iter(self, domain) -> Generator[tuple[str, str, str], None, None]: ...  # type: ignore[override]
 
 class AllHosts: ...
 

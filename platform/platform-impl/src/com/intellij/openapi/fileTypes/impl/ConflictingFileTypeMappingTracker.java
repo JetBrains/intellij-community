@@ -150,8 +150,8 @@ class ConflictingFileTypeMappingTracker {
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      Notification notification = new Notification(
-        NotificationGroup.getGroupTitle("File type conflict"),
+      NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("File type conflict");
+      Notification notification = group.createNotification(
         notificationText,
         result.explanation,
         NotificationType.INFORMATION);

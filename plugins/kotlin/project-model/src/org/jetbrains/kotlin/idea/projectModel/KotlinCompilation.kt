@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.projectModel
 
-interface KotlinCompilation : KotlinModule {
+interface KotlinCompilation : KotlinComponent {
 
     @Deprecated("Use allSourceSets or declaredSourceSets instead", ReplaceWith("declaredSourceSets"))
     val sourceSets: Collection<KotlinSourceSet>

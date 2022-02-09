@@ -77,10 +77,6 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
     printToConsole(getCurrentStateMessage() + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
-  @Override
-  protected void afterConnect() {
-  }
-
   public void waitForNextConnection() {
     if (isConnected()) {
       disconnect();

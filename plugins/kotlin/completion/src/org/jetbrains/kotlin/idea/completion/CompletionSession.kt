@@ -15,12 +15,14 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
 import org.jetbrains.kotlin.idea.caches.project.OriginCapability
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
@@ -163,7 +166,7 @@ abstract class CompletionSession(
 
     private fun isVisibleDescriptor(descriptor: DeclarationDescriptor, completeNonAccessible: Boolean): Boolean {
         if (!configuration.javaClassesNotToBeUsed && descriptor is ClassDescriptor) {
-            if (descriptor.importableFqName?.let(::isJavaClassNotToBeUsedInKotlin) == true) return false
+            if (descriptor.importableFqName?.isJavaClassNotToBeUsedInKotlin() == true) return false
         }
 
         if (descriptor is TypeParameterDescriptor && !isTypeParameterVisible(descriptor)) return false
@@ -246,7 +249,9 @@ abstract class CompletionSession(
 
     protected abstract val expectedInfos: Collection<ExpectedInfo>
 
-    protected val importableFqNameClassifier = ImportableFqNameClassifier(file)
+    protected val importableFqNameClassifier = ImportableFqNameClassifier(file) {
+        ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
+    }
 
     @Suppress("InvalidBundleOrProperty") //workaround to avoid false-positive: KTIJ-19892
     protected open fun createSorter(): CompletionSorter {
@@ -330,7 +335,7 @@ abstract class CompletionSession(
     }
 
     protected fun getRuntimeReceiverTypeReferenceVariants(lookupElementFactory: LookupElementFactory): Pair<ReferenceVariants, LookupElementFactory>? {
-        val evaluator = file.getCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) ?: return null
+        val evaluator = file.getCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) ?: return null
         val referenceVariants = referenceVariantsCollector?.allCollected ?: return null
 
         val explicitReceiver = callTypeAndReceiver.receiver as? KtExpression ?: return null

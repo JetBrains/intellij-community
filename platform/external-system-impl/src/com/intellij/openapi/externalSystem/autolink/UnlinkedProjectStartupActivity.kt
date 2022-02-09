@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.application.ModalityState
@@ -25,10 +25,12 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfigured
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCompletableFuture
 import java.util.concurrent.CompletableFuture
 
+@VisibleForTesting
 class UnlinkedProjectStartupActivity : StartupActivity.Background {
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("UnlinkedProjectTracker.backgroundExecutor", 1)
 
@@ -38,8 +40,8 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     showNotificationWhenNonEmptyProjectUnlinked(project)
     showNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
     showNotificationWhenNewBuildFileCreated(project, externalProjectPath)
-    if (!project.isNewExternalProject()) {
-      if (project.isEnabledAutoLink() && !project.isNewPlatformProject() && project.isOpenedWithEmptyModel()) {
+    if (!isNewExternalProject(project)) {
+      if (isEnabledAutoLink(project) && !isNewPlatformProject(project) && isOpenedWithEmptyModel(project)) {
         linkProjectIfUnlinkedProjectsFound(project, externalProjectPath)
       }
       else {
@@ -48,25 +50,25 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     }
   }
 
-  private fun Project.isEnabledAutoLink(): Boolean {
-    return ExternalSystemUnlinkedProjectSettings.getInstance(this).isEnabledAutoLink
-           && !Registry.`is`("external.system.auto.import.disabled")
+  private fun isEnabledAutoLink(project: Project): Boolean {
+    return ExternalSystemUnlinkedProjectSettings.getInstance(project).isEnabledAutoLink &&
+           !Registry.`is`("external.system.auto.import.disabled")
   }
 
-  private fun Project.isNewExternalProject(): Boolean {
-    return ExternalSystemUtil.isNewProject(this)
+  private fun isNewExternalProject(project: Project): Boolean {
+    return ExternalSystemUtil.isNewProject(project)
   }
 
-  private fun Project.isNewPlatformProject(): Boolean {
-    return isNewProject()
+  private fun isNewPlatformProject(project: Project): Boolean {
+    return project.isNewProject()
   }
 
-  private fun Project.isOpenedWithEmptyModel(): Boolean {
-    return isConfiguredByPlatformProcessor() || isEmptyModel()
+  private fun isOpenedWithEmptyModel(project: Project): Boolean {
+    return project.isConfiguredByPlatformProcessor() || isEmptyModel(project)
   }
 
-  private fun Project.isEmptyModel(): Boolean {
-    val moduleManager = ModuleManager.getInstance(this)
+  private fun isEmptyModel(project: Project): Boolean {
+    val moduleManager = ModuleManager.getInstance(project)
     return moduleManager.modules.isEmpty()
   }
 
@@ -240,7 +242,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     return externalProjectDir.children.filter { isBuildFile(project, it) }
   }
 
-  inner class NewBuildFilesListener(
+  private inner class NewBuildFilesListener(
     private val project: Project,
     private val externalProjectPath: String
   ) : AsyncFileChangeListenerBase() {

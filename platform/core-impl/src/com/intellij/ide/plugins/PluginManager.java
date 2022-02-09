@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Service
 public final class PluginManager {
@@ -35,24 +37,6 @@ public final class PluginManager {
   }
 
   private PluginManager() {}
-
-  /**
-   * @deprecated Use {@link DisabledPluginsState#addDisablePluginListener} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void addDisablePluginListener(@NotNull Runnable listener) {
-    DisabledPluginsState.addDisablePluginListener(listener);
-  }
-
-  /**
-   * @deprecated Use {@link DisabledPluginsState#removeDisablePluginListener} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void removeDisablePluginListener(@NotNull Runnable listener) {
-    DisabledPluginsState.removeDisablePluginListener(listener);
-  }
 
   /**
    * @return file with list of once installed plugins if it exists, null otherwise
@@ -228,5 +212,15 @@ public final class PluginManager {
 
     Matcher matcher = EXPLICIT_BIG_NUMBER_PATTERN.matcher(build);
     return matcher.matches() ? (matcher.group(1) + ".*") : build;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins(boolean showImplementationDetails) {
+    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+    return PluginManagerCore.getPluginSet()
+      .allPlugins
+      .stream()
+      .filter(descriptor -> !applicationInfo.isEssentialPlugin(descriptor.getPluginId()))
+      .filter(descriptor -> showImplementationDetails || !descriptor.isImplementationDetail());
   }
 }

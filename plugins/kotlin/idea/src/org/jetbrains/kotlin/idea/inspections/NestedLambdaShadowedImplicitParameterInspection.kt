@@ -13,11 +13,12 @@ import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.ReplaceItWithExplicitFunctionLiteralParamIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
     companion object {
@@ -34,7 +35,7 @@ class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection
             if (lambda.valueParameters.isNotEmpty()) return
             if (lambda.getStrictParentOfType<KtLambdaExpression>() == null) return
 
-            val context = lambda.analyze()
+            val context = lambda.safeAnalyzeNonSourceRootCode()
             val implicitParameter = lambda.getImplicitParameter(context) ?: return
             if (lambda.getParentImplicitParameterLambda(context) == null) return
 

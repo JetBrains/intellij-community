@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -49,7 +48,6 @@ public class ScratchFileType extends LanguageFileType {
     return "";
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     return PlainTextFileType.INSTANCE.getIcon();

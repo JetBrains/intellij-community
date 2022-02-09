@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback
 
-import com.intellij.ide.util.PropertiesComponent
+import com.intellij.feedback.state.DontShowAgainFeedbackService
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import java.time.Duration
@@ -16,22 +17,28 @@ object FeedbackTypeResolver {
     private set
 
   fun checkActivity(project: Project?) {
-    if (Duration.between(LocalDateTime.now(), lastActivityTime).toMinutes() >= MIN_INACTIVE_TIME) {
+    if (Duration.between(lastActivityTime, LocalDateTime.now()).toMinutes() >= MIN_INACTIVE_TIME) {
       showFeedbackNotification(project)
     }
     lastActivityTime = LocalDateTime.now()
   }
 
-  //TODO: Make it persistence for minor versions
-  private const val isFeedbackNotificationEnabledPropertyName = "isProjectCreationNotificationEnabled"
-  var isFeedbackNotificationEnabled
-    get() = PropertiesComponent.getInstance().getBoolean(isFeedbackNotificationEnabledPropertyName, true)
+  var isFeedbackNotificationDisabled: Boolean
+    get() = DontShowAgainFeedbackService.getInstance().state.dontShowAgainIdeVersions
+      .contains(ApplicationInfoEx.getInstanceEx().shortVersion)
     set(value) {
-      PropertiesComponent.getInstance().setValue(isFeedbackNotificationEnabledPropertyName, value)
+      if (value) {
+        DontShowAgainFeedbackService.getInstance().state.dontShowAgainIdeVersions
+          .add(ApplicationInfoEx.getInstanceEx().shortVersion)
+      }
+      else {
+        DontShowAgainFeedbackService.getInstance().state.dontShowAgainIdeVersions
+          .remove(ApplicationInfoEx.getInstanceEx().shortVersion)
+      }
     }
 
   private fun showFeedbackNotification(project: Project?) {
-    if (!Registry.`is`("platform.feedback", false) || !isFeedbackNotificationEnabled) {
+    if (isFeedbackNotificationDisabled || !Registry.`is`("platform.feedback", true)) {
       return
     }
     val suitableFeedbackTypes = FeedbackTypes.values().filter { it.isSuitable() }

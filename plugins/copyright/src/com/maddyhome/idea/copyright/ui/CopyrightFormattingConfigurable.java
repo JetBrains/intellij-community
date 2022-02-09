@@ -52,7 +52,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
 
   private TemplateCommentPanel getOrCreateMainPanel() {
     if (myPanel == null) {
-      myPanel = new TemplateCommentPanel(null, null, null, myProject);
+      myPanel = new TemplateCommentPanel(null, null, myProject);
     }
     return myPanel;
   }

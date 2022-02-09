@@ -133,7 +133,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
       return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
     }
     Object data = calcData(dataId, component);
-    if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
+    if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId) || InjectedDataKeys.EDITOR.is(dataId)) {
       return validateEditor((Editor)data, component);
     }
     return data;

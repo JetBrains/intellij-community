@@ -15,12 +15,12 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.FilteredQuery
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.findUsages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isConstructorUsage
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.processCompanionObjectInternalReferences
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinFindClassUsagesDialog
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -29,10 +29,8 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchPar
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.effectiveDeclarations
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.*
 
 class KotlinFindClassUsagesHandler(
@@ -80,11 +78,11 @@ class KotlinFindClassUsagesHandler(
             }
 
             if (kotlinOptions.isUsages && classOrObject is KtObjectDeclaration && classOrObject.isCompanion() && classOrObject in options.searchScope) {
-                if (!processCompanionObjectInternalReferences(classOrObject)) return false
+                if (!processCompanionObjectInternalReferences(classOrObject, referenceProcessor)) return false
             }
 
             if (kotlinOptions.searchConstructorUsages) {
-                classOrObject.providedToLightClass()?.constructors?.filterIsInstance<KtLightMethod>()?.forEach { constructor ->
+                classOrObject.toLightClass()?.constructors?.filterIsInstance<KtLightMethod>()?.forEach { constructor ->
                     val scope = constructor.useScope.intersectWith(options.searchScope)
                     var query = MethodReferencesSearch.search(constructor, scope, true)
                     if (kotlinOptions.isSkipImportStatements) {
@@ -146,16 +144,6 @@ class KotlinFindClassUsagesHandler(
             addTask { usagesQuery.forEach(referenceProcessor) }
         }
 
-        private fun processCompanionObjectInternalReferences(companionObject: KtObjectDeclaration): Boolean {
-            val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
-            return !klass.anyDescendantOfType(fun(element: KtElement): Boolean {
-                if (element == companionObject) return false // skip companion object itself
-                return if (element.isCallReceiverRefersToCompanionObject(companionObject)) {
-                    element.references.any { !referenceProcessor.process(it) }
-                } else false
-            })
-        }
-
         private fun processMemberReferencesLater(classOrObject: KtClassOrObject) {
             for (declaration in classOrObject.effectiveDeclarations()) {
                 if ((declaration is KtNamedFunction && kotlinOptions.isMethodsUsages) ||
@@ -170,7 +158,7 @@ class KotlinFindClassUsagesHandler(
     override fun getStringsToSearch(element: PsiElement): Collection<String> {
         val psiClass = when (element) {
             is PsiClass -> element
-            is KtClassOrObject -> getElement().providedToLightClass()
+            is KtClassOrObject -> getElement().toLightClass()
             else -> null
         } ?: return Collections.emptyList()
 

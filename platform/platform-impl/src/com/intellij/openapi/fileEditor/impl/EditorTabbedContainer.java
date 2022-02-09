@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.DataManager;
@@ -12,6 +12,8 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -49,7 +51,7 @@ import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -274,19 +276,24 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
                         @Nullable @NlsContexts.Tooltip String tooltip,
                         int indexToInsert,
                         @NotNull Disposable parentDisposable) {
-    TabInfo tab = myTabs.findInfo(file);
-    if (tab != null) {
+    TabInfo existing = myTabs.findInfo(file);
+    if (existing != null) {
       return;
     }
 
-    tab = new TabInfo(component)
-      .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file)))
+    TabInfo tab = new TabInfo(component)
+      .setText(file.getPresentableName())
       .setTabColor(ExperimentalUI.isNewEditorTabs() ? null : EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file))
       .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)
       .setObject(file)
       .setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
+    ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file))
+      .expireWith(parentDisposable)
+      .coalesceBy(this)
+      .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> tab.setText(title))
+      .submit(AppExecutorUtil.getAppExecutorService());
 
     CloseTab closeTab = new CloseTab(component, file, myProject, myWindow, parentDisposable);
     DataContext dataContext = DataManager.getInstance().getDataContext(component);
@@ -495,8 +502,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     VirtualFile file = (VirtualFile)tabInfo.getObject();
     Presentation presentation = new Presentation(tabInfo.getText());
     presentation.setIcon(tabInfo.getIcon());
-    EditorWithProviderComposite windowFileComposite = myWindow.findFileComposite(file);
-    FileEditor[] editors = windowFileComposite != null ? windowFileComposite.getEditors() : FileEditor.EMPTY_ARRAY;
+    EditorComposite composite = myWindow.getComposite(file);
+    FileEditor[] editors = composite != null ? composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY) : FileEditor.EMPTY_ARRAY;
     final DockableEditor dockableEditor = createDockableEditor(myProject, img, file, presentation, myWindow, DockManagerImpl.isNorthPanelAvailable(editors));
   }
 
@@ -528,8 +535,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(myFile, true));
       }
       presentation.setIcon(info.getIcon());
-      EditorWithProviderComposite windowFileComposite = myWindow.findFileComposite(myFile);
-      FileEditor[] editors = windowFileComposite != null ? windowFileComposite.getEditors() : FileEditor.EMPTY_ARRAY;
+      EditorComposite composite = myWindow.getComposite(myFile);
+      FileEditor[] editors = composite != null ? composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY) : FileEditor.EMPTY_ARRAY;
       boolean isNorthPanelAvailable = DockManagerImpl.isNorthPanelAvailable(editors);
       mySession = getDockManager()
         .createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow, isNorthPanelAvailable));

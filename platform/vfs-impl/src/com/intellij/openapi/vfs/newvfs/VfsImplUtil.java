@@ -187,10 +187,15 @@ public final class VfsImplUtil {
   private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap(); // guarded by ourLock
   private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock; values too
 
+  @ApiStatus.Internal
+  public static @NotNull String getLocalPath(@NotNull ArchiveFileSystem vfs, @NotNull String entryPath) {
+    return vfs.extractLocalPath(entryPath);
+  }
+
   public static @NotNull <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                                  @NotNull VirtualFile entryFile,
                                                                  @NotNull Function<? super String, ? extends T> producer) {
-    String localPath = vfs.extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
+    String localPath = getLocalPath(vfs, VfsUtilCore.getRootFile(entryFile).getPath());
     checkSubscription();
 
     T handler;
@@ -393,7 +398,7 @@ public final class VfsImplUtil {
     VirtualFile local = null;
     if (entryFileSystem instanceof ArchiveFileSystem) {
       local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
-      path = local == null ? ((ArchiveFileSystem)entryFileSystem).extractLocalPath(path) : local.getPath();
+      path = local == null ? getLocalPath((ArchiveFileSystem)entryFileSystem, path) : local.getPath();
     }
     String[] jarPaths;
     synchronized (ourLock) {

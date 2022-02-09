@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenTestCase;
+import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;

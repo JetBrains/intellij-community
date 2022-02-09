@@ -1,19 +1,6 @@
 <idea-plugin>
   <!--suppress PluginXmlDynamicPlugin -->
-  <application-components>
-    <component>
-      <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
-      <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-    </component>
-  </application-components>
-
-  <!--suppress PluginXmlDynamicPlugin -->
   <project-components>
-    <component>
-      <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
-      <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
       <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge</implementation-class>
@@ -39,7 +26,7 @@
     <component>
       <interface-class>com.intellij.problems.WolfTheProblemSolver</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl</implementation-class>
-      <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
+      <headless-implementation-class>com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver</headless-implementation-class>
     </component>
 
     <component>
@@ -56,34 +43,40 @@
   <extensionPoints>
     <!-- only bundled plugin can define extension -->
     <!--suppress PluginXmlDynamicPlugin -->
-    <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.openapi.wm.impl.RegisterToolWindowTaskProvider"/>
+    <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
+                        serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+
+    <projectService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
+                    serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
-                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl" preload="true" order="first"/>
+                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.TestWindowManager" preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider"
+                        serviceImplementation="com.intellij.toolWindow.IntellijPlatformDefaultToolWindowLayoutProvider"/>
+
     <applicationService serviceInterface="com.intellij.openapi.wm.IdeFocusManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.FocusManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>
-
-    <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.DataManager"
                         serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState"
-                        client="all"/>
-    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState"
-                    client="all"/>
+    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
+    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
 
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider"
@@ -94,7 +87,7 @@
 
     <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
-                    headlessImplementation="com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
+                    headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler" preload="await"/>
 
@@ -112,13 +105,22 @@
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonListeners" preload="await"/>
     <projectService serviceImplementation="com.intellij.codeInsight.navigation.CtrlMouseHandler" preload="await"/>
-    <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener"
-                    preload="await"/>
-    <startupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"/>
 
     <projectService serviceImplementation="com.intellij.facet.impl.pointers.FacetPointersManagerImpl"
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
     <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
+
+    <applicationService
+      serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
+      serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl"/>
+
+    <postStartupActivity implementation="com.intellij.formatting.visualLayer.VisualFormattingLayerStartup" />
+
+    <!-- as last - to preload after all others preloaded services -->
+    <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
+
+    <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -134,6 +136,9 @@
   </module-components>
 
   <applicationListeners>
+    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
+
     <listener class="com.intellij.openapi.editor.impl.VisibleEditorsTracker$MyCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
     <listener class="com.intellij.util.gist.GistManagerImpl$MyBulkFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
@@ -158,6 +163,11 @@
     <listener class="com.intellij.notification.impl.NotificationsConfigurationImpl$MyNotificationListener"
               topic="com.intellij.notification.Notifications"/>
 
+    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
+              topic="com.intellij.ide.ui.LafManagerListener"/>
+    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
+              topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.internal.statistic.EventLogApplicationLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"
@@ -180,8 +190,14 @@
               topic="com.intellij.psi.util.PsiModificationTracker$Listener"/>
     <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$ReparseListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+
+    <listener class="com.intellij.ide.IdeTooltipManager$MyRegistryListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
   </applicationListeners>
   <projectListeners>
+    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
+
     <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
@@ -205,5 +221,8 @@
 
     <listener class="com.intellij.facet.impl.pointers.FacetPointerModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
     <listener class="com.intellij.facet.impl.pointers.FacetPointersFacetManagerListener" topic="com.intellij.facet.FacetManagerListener"/>
+
+    <listener class="com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener"
+              topic="com.intellij.openapi.project.ModuleListener"/>
   </projectListeners>
 </idea-plugin>

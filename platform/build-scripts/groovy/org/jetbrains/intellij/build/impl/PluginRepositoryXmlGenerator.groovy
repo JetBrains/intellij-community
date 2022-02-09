@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.XmlDomReader
 import com.intellij.util.XmlElement
@@ -64,6 +65,9 @@ final class PluginRepositoryXmlGenerator {
           depends.append("<depends>").append(it.content).append("</depends>")
         }
       }
+      xml.getChild("dependencies")?.getChildren("plugin")?.each {
+        depends.append("<depends>").append(it.getAttributeValue("id")).append("</depends>")
+      }
 
 
       String name = xml.getChild("name")?.content
@@ -76,7 +80,7 @@ final class PluginRepositoryXmlGenerator {
         untilBuild: versionNode?.attributes?.get("until-build") ?: buildNumber,
         version: xml.getChild("version")?.content,
         description: xml.getChild("description")?.content,
-        relativeFilePath: targetDirectory.relativize(pluginZip),
+        relativeFilePath: FileUtil.toSystemIndependentName(targetDirectory.relativize(pluginZip).toString()),
         size: Files.size(pluginZip),
         depends: depends.toString()
       )

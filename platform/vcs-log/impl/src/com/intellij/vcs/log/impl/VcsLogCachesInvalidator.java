@@ -59,7 +59,7 @@ public class VcsLogCachesInvalidator extends CachesInvalidator {
 
   @Override
   public @Nullable Boolean optionalCheckboxDefaultValue() {
-    return Boolean.TRUE;
+    return Boolean.FALSE;
   }
 
   @NotNull

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.cherrypick;
 
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,11 +27,12 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.CHERRY_PICK_ERROR;
 
+@Service(Service.Level.PROJECT)
 public final class VcsCherryPickManager {
   private static final Logger LOG = Logger.getInstance(VcsCherryPickManager.class);
-  @NotNull private final Project myProject;
-  @NotNull private final Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
-  @NotNull private final BackgroundTaskQueue myTaskQueue;
+  private final @NotNull Project myProject;
+  private final @NotNull Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
+  private final @NotNull BackgroundTaskQueue myTaskQueue;
 
   public VcsCherryPickManager(@NotNull Project project) {
     myProject = project;
@@ -50,23 +52,21 @@ public final class VcsCherryPickManager {
     return false;
   }
 
-  @Nullable
-  private VcsCherryPicker getCherryPickerForCommit(@NotNull VcsFullCommitDetails commitDetails) {
+  private @Nullable VcsCherryPicker getCherryPickerForCommit(@NotNull VcsFullCommitDetails commitDetails) {
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(commitDetails.getRoot());
     if (vcs == null) return null;
     VcsKey key = vcs.getKeyInstanceMethod();
     return getCherryPickerFor(key);
   }
 
-  @Nullable
-  public VcsCherryPicker getCherryPickerFor(@NotNull final VcsKey key) {
+  public @Nullable VcsCherryPicker getCherryPickerFor(final @NotNull VcsKey key) {
     return ContainerUtil.find(VcsCherryPicker.EXTENSION_POINT_NAME.getExtensions(myProject),
                               picker -> picker.getSupportedVcs().equals(key));
   }
 
-  private class CherryPickingTask extends Task.Backgroundable {
-    @NotNull private final List<? extends VcsFullCommitDetails> myAllDetailsInReverseOrder;
-    @NotNull private final ChangeListManagerEx myChangeListManager;
+  private final class CherryPickingTask extends Task.Backgroundable {
+    private final @NotNull List<? extends VcsFullCommitDetails> myAllDetailsInReverseOrder;
+    private final @NotNull ChangeListManagerEx myChangeListManager;
 
     CherryPickingTask(@NotNull List<? extends VcsFullCommitDetails> detailsInReverseOrder) {
       super(VcsCherryPickManager.this.myProject, DvcsBundle.message("cherry.picking.process"));
@@ -75,8 +75,7 @@ public final class VcsCherryPickManager {
       myChangeListManager.blockModalNotifications();
     }
 
-    @Nullable
-    private VcsCherryPicker getCherryPickerOrReportError(@NotNull VcsFullCommitDetails details) {
+    private @Nullable VcsCherryPicker getCherryPickerOrReportError(@NotNull VcsFullCommitDetails details) {
       CommitId commitId = new CommitId(details.getId(), details.getRoot());
       if (myIdsInProgress.contains(commitId)) {
         showError(DvcsBundle.message("cherry.pick.process.is.already.started.for.commit.from.root",
@@ -131,12 +130,10 @@ public final class VcsCherryPickManager {
       }
     }
 
-    @NotNull
-    public MultiMap<VcsCherryPicker, VcsFullCommitDetails> createArrayMultiMap() {
+    public @NotNull MultiMap<VcsCherryPicker, VcsFullCommitDetails> createArrayMultiMap() {
       return new MultiMap<>() {
-        @NotNull
         @Override
-        protected Collection<VcsFullCommitDetails> createCollection() {
+        protected @NotNull Collection<VcsFullCommitDetails> createCollection() {
           return new ArrayList<>();
         }
       };

@@ -183,7 +183,10 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
       e.project?.let {
         e.runToolbarData()?.clear()
         e.setConfiguration(configuration)
-        RunToolbarSlotManager.getInstance(it).saveSlotsConfiguration()
+        e.id()?.let {id ->
+          RunToolbarSlotManager.getInstance(it).configurationChanged(id, configuration)
+        }
+
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
                            configuration,
                            project,

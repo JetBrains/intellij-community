@@ -17,7 +17,7 @@ kotlin {
     }
 
     when {
-        HostManager.hostIsMac -> mingwX64("unsupported")
+        HostManager.hostIsMac -> linuxMips32("unsupported")
         HostManager.hostIsLinux -> macosX64("unsupported")
         HostManager.hostIsMingw -> macosX64("unsupported")
         else -> throw UnsupportedOperationException("Test is not supported on host ${HostManager.host}")

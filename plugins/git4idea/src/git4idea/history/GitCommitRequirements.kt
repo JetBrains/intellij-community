@@ -1,6 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
+import com.intellij.openapi.project.Project
+import git4idea.config.GitVersionSpecialty
+
+/**
+ * Allows controlling how changes are reported when reading [git4idea.GitCommit] instances from `git log`.
+ *
+ * @see git4idea.GitCommit
+ * @see GitDetailsCollector
+ * @see GitLogUtil.readFullDetailsForHashes
+ */
 data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
                                  val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GitConfig,
                                  val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
@@ -20,13 +30,19 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     return result
   }
 
-  fun commandParameters(): List<String> {
+  fun commandParameters(project: Project): List<String> {
     val result = mutableListOf<String>()
     if (diffRenameLimit != DiffRenameLimit.NoRenames) {
       result.add("-M")
     }
     when (diffInMergeCommits) {
-      DiffInMergeCommits.DIFF_TO_PARENTS -> result.add("-m")
+      DiffInMergeCommits.DIFF_TO_PARENTS -> {
+        if (GitVersionSpecialty.DIFF_MERGES_M_USES_DEFAULT_SETTING.existsIn(project)) {
+          result.add("--diff-merges=separate")
+        } else {
+          result.add("-m")
+        }
+      }
       DiffInMergeCommits.COMBINED_DIFF -> result.add("-c")
       DiffInMergeCommits.NO_DIFF -> {
       }
@@ -38,6 +54,11 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     return "diff.renameLimit=$limit"
   }
 
+  /**
+   * Regulates how renames are detected
+   *
+   * @see <a href="https://git-scm.com/docs/git-config#Documentation/git-config.txt-diffrenameLimit">diff.renameLimit</a>
+   */
   sealed class DiffRenameLimit {
     /**
      * Use zero value
@@ -60,6 +81,11 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     object NoRenames : DiffRenameLimit()
   }
 
+  /**
+   * Regulates how changes are reported for merge commits
+   *
+   * @see <a href="https://git-scm.com/docs/git-log#_diff_formatting">Diff Formatting</a>
+   */
   enum class DiffInMergeCommits {
     /**
      * Do not report changes for merge commits
@@ -72,7 +98,7 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     COMBINED_DIFF,
 
     /**
-     * Report changes to all of the parents (same as `git log -m`)
+     * Report changes to each parent (same as `git log --diff-merges=separate` or `git log -m` in older git versions)
      */
     DIFF_TO_PARENTS
   }

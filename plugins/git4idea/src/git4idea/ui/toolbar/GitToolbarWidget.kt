@@ -1,19 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
-import com.intellij.util.messages.MessageBusConnection
 import git4idea.GitUtil
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
@@ -27,68 +24,38 @@ import java.util.concurrent.Executor
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
-import javax.swing.UIManager
 
 internal data class Changes(val incoming: Boolean, val outgoing: Boolean)
 
-class GitToolbarWidgetFactory : MainToolbarWidgetFactory, Disposable {
-
-  override fun createWidget(): JComponent {
+internal class GitToolbarWidgetFactory : MainToolbarProjectWidgetFactory, Disposable {
+  override fun createWidget(project: Project): JComponent {
     val widget = GitToolbarWidget()
-    UIManager.getColor("MainToolbar.dropdown.foreground")?.let { widget.foreground = it }
-    UIManager.getColor("MainToolbar.dropdown.background")?.let { widget.background = it }
-    UIManager.getColor("MainToolbar.dropdown.hoverBackground")?.let { widget.hoverBackground = it }
-    GitWidgetUpdater(getCurrentProject(), widget).subscribe()
+    GitWidgetUpdater(project, widget).subscribe()
     return widget
   }
 
   override fun dispose() {}
 
   override fun getPosition(): Position = Position.Left
-
-  private fun getCurrentProject(): Project? = ProjectManager.getInstance().openProjects.firstOrNull()
 }
 
-private class GitWidgetUpdater(project: Project?, val widget: GitToolbarWidget) : GitRepositoryChangeListener, GitIncomingOutgoingListener, ProjectManagerListener {
-
+private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidget) : GitRepositoryChangeListener, GitIncomingOutgoingListener, ProjectManagerListener {
   private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
 
   private var repository: GitRepository? = null
-  private var currentProject: Project? = null
 
   private val INCOMING_CHANGES_ICON = AllIcons.Actions.CheckOut
   private val OUTGOING_CHANGES_ICON = AllIcons.Vcs.Push
 
-  @Volatile
-  private var projectConnection: MessageBusConnection? = null
-
   init {
-    currentProject = project
-    repository = project?.let { guessCurrentRepo(it) }
+    repository = guessCurrentRepo(project)
     updateWidget()
   }
 
   fun subscribe() {
-    val appConnection = ApplicationManager.getApplication().messageBus.connect(widget)
-    appConnection.subscribe(ProjectManager.TOPIC, this)
-    currentProject?.let { projectSubscribe(it) }
-  }
-
-  private fun projectSubscribe(p: Project) {
-    projectConnection?.disconnect()
-    val connection = p.messageBus.connect(widget)
+    val connection = project.messageBus.connect(widget)
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, this)
     connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, this)
-    projectConnection = connection
-  }
-
-  override fun projectOpened(project: Project) {
-    swingExecutor.execute {
-      currentProject = project
-      repository = guessCurrentRepo(project)
-      updateWidget()
-    }
-    projectSubscribe(project)
   }
 
   override fun incomingOutgoingInfoChanged() {
@@ -103,7 +70,7 @@ private class GitWidgetUpdater(project: Project?, val widget: GitToolbarWidget) 
   }
 
   private fun updateWidget() {
-    widget.project = currentProject
+    widget.project = project
     widget.repository = repository
     widget.text = repository?.currentBranchName?.let { cutText(it) } ?: GitBundle.message("git.toolbar.widget.no.repo")
     widget.toolTipText = repository?.currentBranchName?.let { GitBundle.message("git.toolbar.widget.tooltip", it) }
@@ -113,7 +80,7 @@ private class GitWidgetUpdater(project: Project?, val widget: GitToolbarWidget) 
   private fun updateIcons() {
     val icons = repository?.currentBranchName?.let { branch ->
       val res = mutableListOf<Icon>()
-      val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(currentProject!!)
+      val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
       if (incomingOutgoingManager.hasIncomingFor(repository, branch)) res.add(INCOMING_CHANGES_ICON)
       if (incomingOutgoingManager.hasOutgoingFor(repository, branch)) res.add(OUTGOING_CHANGES_ICON)
       res
@@ -135,8 +102,8 @@ private const val SHORTENED_END_PART = 8
 private fun cutText(value: String?): String? {
   if (value == null || value.length <= MAX_TEXT_LENGTH) return value
 
-  val beginRange = IntRange(0, SHORTENED_BEGIN_PART)
-  val endRange = IntRange(value.length - SHORTENED_END_PART, value.length)
+  val beginRange = IntRange(0, SHORTENED_BEGIN_PART - 1)
+  val endRange = IntRange(value.length - SHORTENED_END_PART, value.length - 1)
   return value.substring(beginRange) + "..." + value.substring(endRange)
 }
 

@@ -2,6 +2,7 @@ _collections_abc.AsyncGenerator.ag_await
 _collections_abc.AsyncGenerator.ag_code
 _collections_abc.AsyncGenerator.ag_frame
 _collections_abc.AsyncGenerator.ag_running
+_dummy_threading
 asyncio.compat  # Removed in 3.7
 asyncio.Future.__init__  # Usually initialized from c object
 asyncio.Future._callbacks  # Usually initialized from c object
@@ -20,10 +21,6 @@ collections.AsyncGenerator.ag_frame
 collections.AsyncGenerator.ag_running
 collections.Callable
 collections.UserString.maketrans
-collections.abc.AsyncGenerator.ag_await
-collections.abc.AsyncGenerator.ag_code
-collections.abc.AsyncGenerator.ag_frame
-collections.abc.AsyncGenerator.ag_running
 contextvars.Context.__init__  # Default C __init__ signature is wrong
 contextvars.ContextVar.get
 dataclasses.field
@@ -32,14 +29,16 @@ fractions.Fraction.__new__  # overload is too complicated for stubtest to resolv
 hmac.HMAC.__init__
 http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
 importlib.metadata  # Added in 3.8
+importlib.metadata._meta  # Added in 3.10
 ipaddress._BaseNetwork.__init__
 json.loads
 multiprocessing.shared_memory
-os.utime
+(os|posix).utime
 pyexpat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
 queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
 random.Random.randrange  # missing undocumented arg _int
 random.randrange  # missing undocumented arg _int
+re.Pattern.scanner  # Undocumented and not useful. #6405
 sched.Event.__doc__  # __slots__ is overridden
 ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
 ssl.RAND_egd  # Depends on openssl compilation
@@ -52,6 +51,8 @@ typing.NamedTuple._replace
 typing._SpecialForm.__init__
 typing._SpecialForm.__new__
 typing.runtime_checkable
+typing.Text.maketrans
+unittest._log  # New in Python 3.9
 unittest.async_case  # Added in Python 3.8
 uuid.UUID.int
 uuid.UUID.is_safe
@@ -65,6 +66,14 @@ tkinter.EventType.__new__
 
 builtins.memoryview.__iter__  # C type that implements __getitem__
 builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
+sqlite3.dbapi2.Binary.__iter__  # C type that implements __getitem__
+sqlite3.dbapi2.Binary.cast  # inspect.signature is incorrect about shape being kw-only
+sqlite3.Binary.__iter__  # C type that implements __getitem__
+sqlite3.Binary.cast  # inspect.signature is incorrect about shape being kw-only
+
+sqlite3.OptimizedUnicode.maketrans
+sqlite3.dbapi2.OptimizedUnicode.maketrans
+
 collections.Coroutine.cr_await
 collections.Coroutine.cr_code
 collections.Coroutine.cr_frame
@@ -75,3 +84,75 @@ collections.Generator.gi_running
 collections.Generator.gi_yieldfrom
 collections.Mapping.get  # Adding None to the Union messed up mypy
 collections.Sequence.index  # Supporting None in end is not mandatory
+
+# Exists at runtime, but missing from stubs
+_dummy_thread.RLock
+_imp.source_hash
+asyncio.BufferedProtocol.eof_received
+asyncio.protocols.BufferedProtocol.eof_received
+contextvars.ContextVar.__class_getitem__
+datetime.datetime_CAPI
+distutils.command.bdist_wininst
+distutils.command.bdist_wininst.bdist_wininst
+distutils.dist.DistributionMetadata.set_classifiers
+distutils.dist.DistributionMetadata.set_keywords
+distutils.dist.DistributionMetadata.set_platforms
+distutils.sysconfig.expand_makefile_vars
+distutils.sysconfig.get_python_version
+distutils.cygwinccompiler.RE_VERSION
+distutils.dist.command_re
+distutils.fancy_getopt.longopt_re
+distutils.fancy_getopt.neg_alias_re
+dummy_threading.Barrier
+dummy_threading.BoundedSemaphore
+dummy_threading.BrokenBarrierError
+dummy_threading.Condition
+dummy_threading.Event
+dummy_threading.Lock
+dummy_threading.RLock
+dummy_threading.Semaphore
+dummy_threading.TIMEOUT_MAX
+dummy_threading.Thread
+dummy_threading.ThreadError
+dummy_threading.Timer
+dummy_threading.active_count
+dummy_threading.current_thread
+dummy_threading.enumerate
+dummy_threading.get_ident
+dummy_threading.local
+dummy_threading.main_thread
+dummy_threading.setprofile
+dummy_threading.settrace
+dummy_threading.stack_size
+html.parser.HTMLParser.unescape
+platform.popen
+plistlib.Data.asBase64
+plistlib.Data.fromBase64
+ssl.OP_ENABLE_MIDDLEBOX_COMPAT
+ssl.Options.OP_ENABLE_MIDDLEBOX_COMPAT
+ssl.SSLObject.verify_client_post_handshake
+ssl.SSLSocket.verify_client_post_handshake
+stringprep.unicodedata  # re-exported from unicodedata
+sys.callstats
+sys.get_coroutine_wrapper
+sys.set_coroutine_wrapper
+tempfile.SpooledTemporaryFile.softspace
+tkinter.commondialog.[A-Z_]+
+tkinter.commondialog.TclVersion
+tkinter.commondialog.TkVersion
+tkinter.commondialog.wantobjects
+tkinter.dialog.[A-Z_]+
+tkinter.dialog.TclVersion
+tkinter.dialog.TkVersion
+tkinter.dialog.wantobjects
+tkinter.dnd.Icon
+tkinter.dnd.Tester
+tkinter.dnd.test
+tkinter.filedialog.[A-Z_]+
+tkinter.filedialog.TclVersion
+tkinter.filedialog.TkVersion
+tkinter.filedialog.wantobjects
+tkinter.simpledialog.wantobjects
+tkinter.tix.wantobjects
+types.CoroutineType.cr_origin
+typing._SpecialForm.__call__

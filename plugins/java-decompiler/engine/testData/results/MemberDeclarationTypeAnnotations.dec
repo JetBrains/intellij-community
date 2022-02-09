@@ -1,0 +1,58 @@
+package typeAnnotations;
+
+import java.io.IOException;
+import java.io.Serializable;
+
+public class MemberDeclarationTypeAnnotations<@A P extends @B Number & @F Serializable> {
+   @L String s1 = "";
+   @B int f1 = 0;
+
+   @K
+   public @L @A MemberDeclarationTypeAnnotations() {
+   }// 14
+
+   @K
+   public <@A T extends @B Number & @F Serializable> @L @C Number foo(@D T @E [] a) {
+      return 0;// 18
+   }
+
+   @K
+   public <T> @C Number bar(@D T @E [] a) throws @A IOException, @B IllegalStateException {
+      return 0;// 23
+   }
+
+   public void fooBar(@L @A String param1, @K @L @B String param2) {
+   }// 26
+}
+
+class 'typeAnnotations/MemberDeclarationTypeAnnotations' {
+   method '<init> ()V' {
+      f      11
+   }
+
+   method 'foo ([Ljava/lang/Number;)Ljava/lang/Number;' {
+      0      15
+      1      15
+      4      15
+   }
+
+   method 'bar ([Ljava/lang/Object;)Ljava/lang/Number;' {
+      0      20
+      1      20
+      4      20
+   }
+
+   method 'fooBar (Ljava/lang/String;Ljava/lang/String;)V' {
+      0      24
+   }
+}
+
+Lines mapping:
+14 <-> 12
+18 <-> 16
+23 <-> 21
+26 <-> 25
+Not mapped:
+8
+10
+13

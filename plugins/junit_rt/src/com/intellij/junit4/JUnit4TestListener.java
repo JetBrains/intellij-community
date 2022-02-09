@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.junit4;
 
@@ -269,6 +255,19 @@ public class JUnit4TestListener extends RunListener {
       return;
     }
 
+    Throwable ex = failure != null ? failure.getException() : null;
+    if (ex != null && isMultipleFailuresError(ex.getClass())) {
+      try {
+        Object failures = Class.forName("org.opentest4j.MultipleFailuresError").getDeclaredMethod("getFailures").invoke(ex);
+        //noinspection unchecked
+        for (Throwable throwable : (List<Throwable>)failures) {
+          testFailure(new Failure(description, throwable), description, messageName, methodName);
+        }
+        return;
+      }
+      catch (Throwable ignore) { }
+    }
+
     final Map<String, String> attrs = new LinkedHashMap<String, String>();
     attrs.put("name", methodName);
     final long duration = currentTime() - myCurrentTestStart;
@@ -278,7 +277,6 @@ public class JUnit4TestListener extends RunListener {
     try {
       if (failure != null) {
         final String trace = getTrace(failure);
-        final Throwable ex = failure.getException();
         final ComparisonFailureData notification = ExpectedPatterns.createExceptionNotification(ex);
         ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, ex);
       }
@@ -292,6 +290,15 @@ public class JUnit4TestListener extends RunListener {
     finally {
       myPrintStream.println(MapSerializerUtil.asString(messageName, attrs));
     }
+  }
+
+  private static boolean isMultipleFailuresError(Class<?> aClass) {
+    if (aClass.getName().equals("org.opentest4j.MultipleFailuresError")) {
+      return true;
+    }
+
+    Class<?> superclass = aClass.getSuperclass();
+    return superclass != null && isMultipleFailuresError(superclass);
   }
 
   protected String getTrace(Failure failure) {

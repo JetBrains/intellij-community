@@ -20,7 +20,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase;
 import org.jetbrains.idea.maven.importing.MavenModuleImporter;
 import org.junit.Test;

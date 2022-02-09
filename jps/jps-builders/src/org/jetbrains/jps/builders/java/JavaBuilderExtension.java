@@ -54,7 +54,7 @@ public abstract class JavaBuilderExtension {
    * The implementation should expect asynchronous execution.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @Nullable
   public Callbacks.ConstantAffectionResolver getConstantSearch(CompileContext context) {
     return null;

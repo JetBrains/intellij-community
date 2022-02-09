@@ -173,7 +173,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
       }
     }
 
-    final PyProjectSynchronizer synchronizer = PyProjectSynchronizerProvider.getSynchronizer(sdk);
+    final PyProjectSynchronizer synchronizer = sdk != null ? PyProjectSynchronizerProvider.getSynchronizer(sdk) : null;
 
     if (synchronizer != null) {
       // Before project creation we need to configure sync

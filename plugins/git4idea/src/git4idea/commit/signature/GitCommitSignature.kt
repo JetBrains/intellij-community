@@ -9,5 +9,15 @@ internal sealed class GitCommitSignature : VcsCommitExternalStatus {
 
   class Verified(val user: @NlsSafe String, val fingerprint: @NlsSafe String) : GitCommitSignature()
 
-  object NotVerified : GitCommitSignature()
+  class NotVerified(val reason: VerificationFailureReason) : GitCommitSignature()
+
+  object Bad : GitCommitSignature()
+
+  enum class VerificationFailureReason {
+    UNKNOWN,
+    EXPIRED,
+    EXPIRED_KEY,
+    REVOKED_KEY,
+    CANNOT_VERIFY
+  }
 }

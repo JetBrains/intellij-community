@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -18,205 +18,193 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/multiModuleLineMarker")
-public abstract class MultiModuleLineMarkerTestGenerated extends AbstractMultiModuleLineMarkerTest {
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/multiModuleLineMarker")
-    public static class TestBucket1 extends AbstractMultiModuleLineMarkerTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("actualConstructorWithProperties")
-        public void testActualConstructorWithProperties() throws Exception {
-            runTest("testData/multiModuleLineMarker/actualConstructorWithProperties/");
-        }
-
-        @TestMetadata("actualDerived")
-        public void testActualDerived() throws Exception {
-            runTest("testData/multiModuleLineMarker/actualDerived/");
-        }
-
-        @TestMetadata("actualEnumEntries")
-        public void testActualEnumEntries() throws Exception {
-            runTest("testData/multiModuleLineMarker/actualEnumEntries/");
-        }
-
-        @TestMetadata("actualEnumEntriesInOneLine")
-        public void testActualEnumEntriesInOneLine() throws Exception {
-            runTest("testData/multiModuleLineMarker/actualEnumEntriesInOneLine/");
-        }
-
-        @TestMetadata("actualWithOverload")
-        public void testActualWithOverload() throws Exception {
-            runTest("testData/multiModuleLineMarker/actualWithOverload/");
-        }
-
-        @TestMetadata("expectConstructorWithProperties")
-        public void testExpectConstructorWithProperties() throws Exception {
-            runTest("testData/multiModuleLineMarker/expectConstructorWithProperties/");
-        }
-
-        @TestMetadata("expectEnumEntries")
-        public void testExpectEnumEntries() throws Exception {
-            runTest("testData/multiModuleLineMarker/expectEnumEntries/");
-        }
-
-        @TestMetadata("expectEnumEntriesInOneLine")
-        public void testExpectEnumEntriesInOneLine() throws Exception {
-            runTest("testData/multiModuleLineMarker/expectEnumEntriesInOneLine/");
-        }
-
-        @TestMetadata("expectEnumWithEnumEntriesInOneLine")
-        public void testExpectEnumWithEnumEntriesInOneLine() throws Exception {
-            runTest("testData/multiModuleLineMarker/expectEnumWithEnumEntriesInOneLine/");
-        }
-
-        @TestMetadata("expectWithActualInSameModule")
-        public void testExpectWithActualInSameModule() throws Exception {
-            runTest("testData/multiModuleLineMarker/expectWithActualInSameModule/");
-        }
-
-        @TestMetadata("expectWithOverload")
-        public void testExpectWithOverload() throws Exception {
-            runTest("testData/multiModuleLineMarker/expectWithOverload/");
-        }
-
-        @TestMetadata("fromActualAnnotation")
-        public void testFromActualAnnotation() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromActualAnnotation/");
-        }
-
-        @TestMetadata("fromActualAnnotationWithParametersInOneLine")
-        public void testFromActualAnnotationWithParametersInOneLine() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromActualAnnotationWithParametersInOneLine/");
-        }
-
-        @TestMetadata("fromActualCompanion")
-        public void testFromActualCompanion() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromActualCompanion/");
-        }
-
-        @TestMetadata("fromActualPrimaryConstructor")
-        public void testFromActualPrimaryConstructor() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromActualPrimaryConstructor/");
-        }
-
-        @TestMetadata("fromActualSealedClass")
-        public void testFromActualSealedClass() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromActualSealedClass/");
-        }
-
-        @TestMetadata("fromActualSecondaryConstructor")
-        public void testFromActualSecondaryConstructor() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromActualSecondaryConstructor/");
-        }
-
-        @TestMetadata("fromActualTypeAlias")
-        public void testFromActualTypeAlias() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromActualTypeAlias/");
-        }
-
-        @TestMetadata("fromClassToAlias")
-        public void testFromClassToAlias() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromClassToAlias/");
-        }
-
-        @TestMetadata("fromClassToJavaAliasInTest")
-        public void testFromClassToJavaAliasInTest() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromClassToJavaAliasInTest/");
-        }
+public class MultiModuleLineMarkerTestGenerated extends AbstractMultiModuleLineMarkerTest {
+    private void runTest(String testDataFilePath) throws Exception {
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/multiModuleLineMarker")
-    public static class TestBucket2 extends AbstractMultiModuleLineMarkerTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+    @TestMetadata("actualConstructorWithProperties")
+    public void testActualConstructorWithProperties() throws Exception {
+        runTest("testData/multiModuleLineMarker/actualConstructorWithProperties/");
+    }
 
-        @TestMetadata("fromCommonToJvmHeader")
-        public void testFromCommonToJvmHeader() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromCommonToJvmHeader/");
-        }
+    @TestMetadata("actualDerived")
+    public void testActualDerived() throws Exception {
+        runTest("testData/multiModuleLineMarker/actualDerived/");
+    }
 
-        @TestMetadata("fromCommonToJvmImpl")
-        public void testFromCommonToJvmImpl() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromCommonToJvmImpl/");
-        }
+    @TestMetadata("actualEnumEntries")
+    public void testActualEnumEntries() throws Exception {
+        runTest("testData/multiModuleLineMarker/actualEnumEntries/");
+    }
 
-        @TestMetadata("fromExpectCompanion")
-        public void testFromExpectCompanion() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromExpectCompanion/");
-        }
+    @TestMetadata("actualEnumEntriesInOneLine")
+    public void testActualEnumEntriesInOneLine() throws Exception {
+        runTest("testData/multiModuleLineMarker/actualEnumEntriesInOneLine/");
+    }
 
-        @TestMetadata("fromExpectedAnnotation")
-        public void testFromExpectedAnnotation() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromExpectedAnnotation/");
-        }
+    @TestMetadata("actualWithOverload")
+    public void testActualWithOverload() throws Exception {
+        runTest("testData/multiModuleLineMarker/actualWithOverload/");
+    }
 
-        @TestMetadata("fromExpectedPrimaryConstructor")
-        public void testFromExpectedPrimaryConstructor() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromExpectedPrimaryConstructor/");
-        }
+    @TestMetadata("expectConstructorWithProperties")
+    public void testExpectConstructorWithProperties() throws Exception {
+        runTest("testData/multiModuleLineMarker/expectConstructorWithProperties/");
+    }
 
-        @TestMetadata("fromExpectedSealedClass")
-        public void testFromExpectedSealedClass() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromExpectedSealedClass/");
-        }
+    @TestMetadata("expectEnumEntries")
+    public void testExpectEnumEntries() throws Exception {
+        runTest("testData/multiModuleLineMarker/expectEnumEntries/");
+    }
 
-        @TestMetadata("fromExpectedSecondaryConstructor")
-        public void testFromExpectedSecondaryConstructor() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromExpectedSecondaryConstructor/");
-        }
+    @TestMetadata("expectEnumEntriesInOneLine")
+    public void testExpectEnumEntriesInOneLine() throws Exception {
+        runTest("testData/multiModuleLineMarker/expectEnumEntriesInOneLine/");
+    }
 
-        @TestMetadata("fromExpectedTypeAlias")
-        public void testFromExpectedTypeAlias() throws Exception {
-            runTest("testData/multiModuleLineMarker/fromExpectedTypeAlias/");
-        }
+    @TestMetadata("expectEnumWithEnumEntriesInOneLine")
+    public void testExpectEnumWithEnumEntriesInOneLine() throws Exception {
+        runTest("testData/multiModuleLineMarker/expectEnumWithEnumEntriesInOneLine/");
+    }
 
-        @TestMetadata("hierarchyWithExpectClassCommonSide")
-        public void testHierarchyWithExpectClassCommonSide() throws Exception {
-            runTest("testData/multiModuleLineMarker/hierarchyWithExpectClassCommonSide/");
-        }
+    @TestMetadata("expectWithActualInSameModule")
+    public void testExpectWithActualInSameModule() throws Exception {
+        runTest("testData/multiModuleLineMarker/expectWithActualInSameModule/");
+    }
 
-        @TestMetadata("hierarchyWithExpectClassCommonSideNonJavaIds")
-        public void testHierarchyWithExpectClassCommonSideNonJavaIds() throws Exception {
-            runTest("testData/multiModuleLineMarker/hierarchyWithExpectClassCommonSideNonJavaIds/");
-        }
+    @TestMetadata("expectWithOverload")
+    public void testExpectWithOverload() throws Exception {
+        runTest("testData/multiModuleLineMarker/expectWithOverload/");
+    }
 
-        @TestMetadata("hierarchyWithExpectClassPlatformSide")
-        public void testHierarchyWithExpectClassPlatformSide() throws Exception {
-            runTest("testData/multiModuleLineMarker/hierarchyWithExpectClassPlatformSide/");
-        }
+    @TestMetadata("fromActualAnnotation")
+    public void testFromActualAnnotation() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromActualAnnotation/");
+    }
 
-        @TestMetadata("kotlinTestAnnotations")
-        public void testKotlinTestAnnotations() throws Exception {
-            runTest("testData/multiModuleLineMarker/kotlinTestAnnotations/");
-        }
+    @TestMetadata("fromActualAnnotationWithParametersInOneLine")
+    public void testFromActualAnnotationWithParametersInOneLine() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromActualAnnotationWithParametersInOneLine/");
+    }
 
-        @TestMetadata("suspendImplInPlatformModules")
-        public void testSuspendImplInPlatformModules() throws Exception {
-            runTest("testData/multiModuleLineMarker/suspendImplInPlatformModules/");
-        }
+    @TestMetadata("fromActualCompanion")
+    public void testFromActualCompanion() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromActualCompanion/");
+    }
 
-        @TestMetadata("topLevelFunWithKotlinTest")
-        public void testTopLevelFunWithKotlinTest() throws Exception {
-            runTest("testData/multiModuleLineMarker/topLevelFunWithKotlinTest/");
-        }
+    @TestMetadata("fromActualPrimaryConstructor")
+    public void testFromActualPrimaryConstructor() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromActualPrimaryConstructor/");
+    }
 
-        @TestMetadata("transitive")
-        public void testTransitive() throws Exception {
-            runTest("testData/multiModuleLineMarker/transitive/");
-        }
+    @TestMetadata("fromActualSealedClass")
+    public void testFromActualSealedClass() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromActualSealedClass/");
+    }
 
-        @TestMetadata("transitiveCommon")
-        public void testTransitiveCommon() throws Exception {
-            runTest("testData/multiModuleLineMarker/transitiveCommon/");
-        }
+    @TestMetadata("fromActualSecondaryConstructor")
+    public void testFromActualSecondaryConstructor() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromActualSecondaryConstructor/");
+    }
 
-        @TestMetadata("withOverloads")
-        public void testWithOverloads() throws Exception {
-            runTest("testData/multiModuleLineMarker/withOverloads/");
-        }
+    @TestMetadata("fromActualTypeAlias")
+    public void testFromActualTypeAlias() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromActualTypeAlias/");
+    }
+
+    @TestMetadata("fromClassToAlias")
+    public void testFromClassToAlias() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromClassToAlias/");
+    }
+
+    @TestMetadata("fromClassToJavaAliasInTest")
+    public void testFromClassToJavaAliasInTest() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromClassToJavaAliasInTest/");
+    }
+
+    @TestMetadata("fromCommonToJvmHeader")
+    public void testFromCommonToJvmHeader() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromCommonToJvmHeader/");
+    }
+
+    @TestMetadata("fromCommonToJvmImpl")
+    public void testFromCommonToJvmImpl() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromCommonToJvmImpl/");
+    }
+
+    @TestMetadata("fromExpectCompanion")
+    public void testFromExpectCompanion() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromExpectCompanion/");
+    }
+
+    @TestMetadata("fromExpectedAnnotation")
+    public void testFromExpectedAnnotation() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromExpectedAnnotation/");
+    }
+
+    @TestMetadata("fromExpectedPrimaryConstructor")
+    public void testFromExpectedPrimaryConstructor() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromExpectedPrimaryConstructor/");
+    }
+
+    @TestMetadata("fromExpectedSealedClass")
+    public void testFromExpectedSealedClass() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromExpectedSealedClass/");
+    }
+
+    @TestMetadata("fromExpectedSecondaryConstructor")
+    public void testFromExpectedSecondaryConstructor() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromExpectedSecondaryConstructor/");
+    }
+
+    @TestMetadata("fromExpectedTypeAlias")
+    public void testFromExpectedTypeAlias() throws Exception {
+        runTest("testData/multiModuleLineMarker/fromExpectedTypeAlias/");
+    }
+
+    @TestMetadata("hierarchyWithExpectClassCommonSide")
+    public void testHierarchyWithExpectClassCommonSide() throws Exception {
+        runTest("testData/multiModuleLineMarker/hierarchyWithExpectClassCommonSide/");
+    }
+
+    @TestMetadata("hierarchyWithExpectClassCommonSideNonJavaIds")
+    public void testHierarchyWithExpectClassCommonSideNonJavaIds() throws Exception {
+        runTest("testData/multiModuleLineMarker/hierarchyWithExpectClassCommonSideNonJavaIds/");
+    }
+
+    @TestMetadata("hierarchyWithExpectClassPlatformSide")
+    public void testHierarchyWithExpectClassPlatformSide() throws Exception {
+        runTest("testData/multiModuleLineMarker/hierarchyWithExpectClassPlatformSide/");
+    }
+
+    @TestMetadata("kotlinTestAnnotations")
+    public void testKotlinTestAnnotations() throws Exception {
+        runTest("testData/multiModuleLineMarker/kotlinTestAnnotations/");
+    }
+
+    @TestMetadata("suspendImplInPlatformModules")
+    public void testSuspendImplInPlatformModules() throws Exception {
+        runTest("testData/multiModuleLineMarker/suspendImplInPlatformModules/");
+    }
+
+    @TestMetadata("topLevelFunWithKotlinTest")
+    public void testTopLevelFunWithKotlinTest() throws Exception {
+        runTest("testData/multiModuleLineMarker/topLevelFunWithKotlinTest/");
+    }
+
+    @TestMetadata("transitive")
+    public void testTransitive() throws Exception {
+        runTest("testData/multiModuleLineMarker/transitive/");
+    }
+
+    @TestMetadata("transitiveCommon")
+    public void testTransitiveCommon() throws Exception {
+        runTest("testData/multiModuleLineMarker/transitiveCommon/");
+    }
+
+    @TestMetadata("withOverloads")
+    public void testWithOverloads() throws Exception {
+        runTest("testData/multiModuleLineMarker/withOverloads/");
     }
 }

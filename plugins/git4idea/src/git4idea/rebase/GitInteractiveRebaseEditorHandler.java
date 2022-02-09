@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import git4idea.DialogManager;
-import git4idea.GitVcs;
 import git4idea.commands.GitImplBase;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitLogUtil;
@@ -179,7 +178,6 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   private List<GitRebaseEntryWithDetails> loadDetailsForEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
     List<? extends VcsCommitMetadata> details = GitLogUtil.collectMetadata(
       myProject,
-      GitVcs.getInstance(myProject),
       myRoot,
       ContainerUtil.map(entries, entry -> entry.getCommit())
     );

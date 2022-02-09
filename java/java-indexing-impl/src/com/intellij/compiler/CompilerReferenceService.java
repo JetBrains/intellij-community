@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -18,21 +17,18 @@ import org.jetbrains.annotations.Nullable;
  * modified after compilation.
  */
 public interface CompilerReferenceService {
-  RegistryValue IS_ENABLED_KEY = Registry.get("compiler.ref.index");
-
   static CompilerReferenceService getInstance(@NotNull Project project) {
     return project.getService(CompilerReferenceService.class);
   }
 
   static @Nullable CompilerReferenceService getInstanceIfEnabled(@NotNull Project project) {
-    return isEnabled() ? project.getService(CompilerReferenceService.class) : null;
+    return Registry.is("compiler.ref.index") ? project.getService(CompilerReferenceService.class) : null;
   }
 
   /**
    * @return a scope where given element has no references in code. This scope might be not a strict scope where element is not occurred.
    */
-  @Nullable
-  GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element);
+  @Nullable GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element);
 
   @Nullable
   GlobalSearchScope getScopeWithImplicitToStringCodeReferences(@NotNull PsiElement aClass);
@@ -63,8 +59,4 @@ public interface CompilerReferenceService {
   Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element, boolean isConstructorCompletion);
 
   boolean isActive();
-
-  static boolean isEnabled() {
-    return IS_ENABLED_KEY.asBoolean();
-  }
 }

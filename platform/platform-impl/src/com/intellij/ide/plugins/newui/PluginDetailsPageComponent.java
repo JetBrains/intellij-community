@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -242,14 +242,14 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       @Override
       public void updateUI() {
         super.updateUI();
-        setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD, 18));
+        setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD, 18));
       }
     };
 
     UIUtil.convertToLabel(editorPane);
     editorPane.setCaret(EmptyCaret.INSTANCE);
 
-    editorPane.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD, 18));
+    editorPane.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD, 18));
 
     @NlsSafe String text = "<html><span>Foo</span></html>";
     editorPane.setText(text);
@@ -419,7 +419,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private static void setFont(@NotNull JComponent component) {
-    component.setFont(UIUtil.getLabelFont());
+    component.setFont(StartupUiUtil.getLabelFont());
     PluginManagerConfigurable.setTinyFont(component);
   }
 
@@ -450,7 +450,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     sheet.addRule("strong { font-weight: bold; }");
     sheet.addRule("p { margin-bottom: 6px; }");
 
-    Font font = UIUtil.getLabelFont();
+    Font font = StartupUiUtil.getLabelFont();
 
     if (font != null) {
       int size = font.getSize();

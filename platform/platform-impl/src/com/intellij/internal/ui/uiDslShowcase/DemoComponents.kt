@@ -4,8 +4,6 @@ package com.intellij.internal.ui.uiDslShowcase
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
@@ -55,8 +53,7 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }
 
     row("segmentedButton:") {
-      val property = PropertyGraph().graphProperty { "" }
-      segmentedButton(listOf("Button 1", "Button 2", "Button Last"), property) { s -> s }
+      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { it }
     }
 
     row("label:") {

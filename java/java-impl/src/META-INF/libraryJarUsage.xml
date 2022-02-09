@@ -1,6 +1,22 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.internal.statistic.libraryUsage.libraryUsageImportProcessor"
+                    interface="com.intellij.internal.statistic.libraryUsage.LibraryUsageImportProcessor"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryJar.FUSLibraryJarUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryUsage.LibraryUsageCollector"/>
+    <backgroundPostStartupActivity implementation="com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsStartupActivity"/>
+    <internal.statistic.libraryUsage.libraryUsageImportProcessor
+      implementation="com.intellij.internal.statistic.libraryUsage.JavaLibraryUsageImportProcessor"/>
   </extensions>
-</idea-plugin>
 
+  <actions>
+    <action internal="true" id="LibraryUsageStatistics" class="com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsAction"/>
+    <action internal="true"
+            id="DumpLibraryUsageStatistics"
+            class="com.intellij.internal.statistic.libraryUsage.DumpLibraryUsageStatisticsAction"/>
+  </actions>
+</idea-plugin>

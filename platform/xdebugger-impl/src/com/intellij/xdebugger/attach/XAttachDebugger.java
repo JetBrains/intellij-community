@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -32,11 +32,12 @@ public interface XAttachDebugger {
   /**
    * Attaches this debugger to the specified process. The debugger is guaranteed to be
    * returned by {@link XAttachDebuggerProvider#getAvailableDebuggers} for the specified process.
-   * @param hostInfo host (environment) on which process is being run
-   * @param info process to attach to
+   *
+   * @param attachHost  host (environment) on which process is being run
+   * @param processInfo process to attach to
    * @throws ExecutionException if an error occurs during attach
    */
   void attachDebugSession(@NotNull Project project,
-                          @NotNull XAttachHost hostInfo,
-                          @NotNull ProcessInfo info) throws ExecutionException;
+                          @NotNull XAttachHost attachHost,
+                          @NotNull ProcessInfo processInfo) throws ExecutionException;
 }

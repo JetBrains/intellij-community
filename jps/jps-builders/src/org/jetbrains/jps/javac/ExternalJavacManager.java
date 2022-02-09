@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
@@ -323,8 +323,6 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     // this will disable standard extensions to ensure javac is loaded from the right tools.jar
     appendParam(cmdLine, "-Djava.ext.dirs=");
-
-    appendParam(cmdLine, "-Dlog4j.defaultInitOverride=true");
 
     for (String option : vmOptions) {
       appendParam(cmdLine, option);

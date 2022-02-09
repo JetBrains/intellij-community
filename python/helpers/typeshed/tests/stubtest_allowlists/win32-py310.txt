@@ -1,3 +1,15 @@
+_stat.IO_REPARSE_TAG_[A-Z_]+
+_winapi.[A-Z_]+_PRIORITY_CLASS
+_winapi.CREATE_[A-Z_]+
+_winapi.DETACHED_PROCESS
+_winapi.FILE_MAP_[A-Z_]+
+_winapi.FILE_TYPE_[A-Z]+
+_winapi.INVALID_HANDLE_VALUE
+_winapi.MEM_[A-Z_]+
+_winapi.PAGE_[A-Z_]+
+_winapi.SEC_[A-Z_]+
+_winapi.SYNCHRONIZE
+
 _msi.CreateRecord
 _msi.FCICreate
 _msi.OpenDatabase
@@ -5,3 +17,16 @@ sqlite3.Connection.enable_load_extension
 sqlite3.Connection.load_extension
 sqlite3.dbapi2.Connection.enable_load_extension
 sqlite3.dbapi2.Connection.load_extension
+
+# Exists at runtime, but missing from stubs
+_winapi.CreateFileMapping
+_winapi.MapViewOfFile
+_winapi.OpenFileMapping
+_winapi.VirtualQuerySize
+asyncio.IocpProactor.recvfrom
+asyncio.IocpProactor.sendto
+asyncio.windows_events.IocpProactor.recvfrom
+asyncio.windows_events.IocpProactor.sendto
+msvcrt.GetErrorMode
+socket.MsgFlag.MSG_ERRQUEUE
+subprocess.STARTUPINFO.copy

@@ -109,7 +109,6 @@ public abstract class ProjectManager {
    *
    * @param project the project to reload.
    */
-  @SuppressWarnings("unused")
   public abstract void reloadProject(@NotNull Project project);
 
   /**

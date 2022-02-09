@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
@@ -281,6 +281,17 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 24, 0, 0));
+    }
+  },
+
+  /**
+   * Options "-m" and "--diff-merges=m" changed their meaning. When one of these options is provided, instead of showing diff for each parent commit,
+   * the value of the "log.diffMerges" configuration parameter ("separate" by default) is used to determine how to show diff.
+   */
+  DIFF_MERGES_M_USES_DEFAULT_SETTING {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 32, 0, 0));
     }
   };
 

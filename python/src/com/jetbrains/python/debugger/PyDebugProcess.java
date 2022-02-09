@@ -37,6 +37,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -251,7 +252,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
-    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, getConnectTimeout());
+    boolean useDispatcher = Registry.get("python.debugger.use.dispatcher").asBoolean();
+    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, getConnectTimeout(), useDispatcher);
     debugger.addOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
       @Override
       public void threadsClosed(Set<String> threadIds) {
@@ -772,7 +774,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public boolean isFrameCached(@NotNull XStackFrame contextFrame) {
     synchronized (myFrameCacheObject) {
-      final PyStackFrame frame = (PyStackFrame) contextFrame;
+      final PyStackFrame frame = (PyStackFrame)contextFrame;
       return myStackFrameCache.containsKey(frame.getThreadFrameId());
     }
   }
@@ -780,7 +782,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   @Nullable
   public XValueChildrenList loadFrame(@Nullable final XStackFrame contextFrame) throws PyDebuggerException {
-    final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame) contextFrame;
+    final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame)contextFrame;
     synchronized (myFrameCacheObject) {
       //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
       if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
@@ -827,7 +829,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       PyThreadInfo threadInfo = pyExecutionStack.getThreadInfo();
       List<PyStackFrameInfo> threadFrames = threadInfo.getFrames();
       boolean isTestSetUpFail = false;
-      if (threadFrames != null && (threadFrames.size() == 1 || threadFrames.size() > 1 && PyUnitTestsDebuggingService.isErrorInTestSetUpOrTearDown(threadFrames))) {
+      if (threadFrames != null &&
+          (threadFrames.size() == 1 || threadFrames.size() > 1 && PyUnitTestsDebuggingService.isErrorInTestSetUpOrTearDown(threadFrames))) {
         isTestSetUpFail = true;
       }
       getProject().getService(PyUnitTestsDebuggingService.class).showFailedTestInlay(
@@ -840,7 +843,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     PyDebugValueExecutionService.getInstance(getProject()).submitTask(this, () -> {
       try {
         if (isConnected()) {
-          final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame) contextFrame;
+          final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame)contextFrame;
           XSuspendContext context = getSession().getSuspendContext();
           String threadId = threadIdBeforeResumeOrStep(context);
           for (PyThreadInfo suspendedThread : mySuspendedThreads) {
@@ -1108,7 +1111,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             if (!shouldSuspend) resume(suspendContext);
           }
           else {
-              ((XDebugSessionImpl)getSession()).positionReached(suspendContext, isFailedTestStop(threadInfo));
+            ((XDebugSessionImpl)getSession()).positionReached(suspendContext, isFailedTestStop(threadInfo));
           }
         }
       }
@@ -1162,10 +1165,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void processTerminated(@NotNull ProcessEvent event) {
     myDebugger.close();
-  }
-
-  @Override
-  public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
   }
 
   @Override
@@ -1378,8 +1377,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private static @Nullable PyDebugValue getExceptionDataFromFrame(@NotNull XValueChildrenList values) {
     for (int i = 0; i < values.size(); i++) {
-      if (values.getName(i).equals("__exception__"))
+      if (values.getName(i).equals("__exception__")) {
         return (PyDebugValue)values.getValue(i);
+      }
     }
     return null;
   }

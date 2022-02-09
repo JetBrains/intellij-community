@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 
 class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
     override fun canProcessElement(element: PsiElement) =
-        element is PsiMethod && element !is KtLightMethod && JvmAbi.isGetterName(element.name)
+        super.canProcessElement(element) && element !is KtLightMethod && element is PsiMethod && JvmAbi.isGetterName(element.name)
 
     override fun findReferences(
         element: PsiElement,

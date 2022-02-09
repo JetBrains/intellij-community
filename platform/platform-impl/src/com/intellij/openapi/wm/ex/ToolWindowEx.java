@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
@@ -23,8 +22,6 @@ public interface ToolWindowEx extends ToolWindow {
    */
   @NotNull ToolWindowType getInternalType();
 
-  @NotNull Project getProject();
-
   void stretchWidth(int value);
 
   void stretchHeight(int value);
@@ -34,8 +31,6 @@ public interface ToolWindowEx extends ToolWindow {
   }
 
   @NotNull InternalDecorator getDecorator();
-
-  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
 
   /**
    * @deprecated Use {@link #setTitleActions(List)}
@@ -64,7 +59,7 @@ public interface ToolWindowEx extends ToolWindow {
 
   final class ToolWindowDecoration {
     private final ActionGroup myActionGroup;
-    private Icon myIcon;
+    private final Icon myIcon;
 
     public ToolWindowDecoration(Icon icon, ActionGroup actionGroup) {
       myActionGroup = actionGroup;

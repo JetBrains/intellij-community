@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -169,7 +169,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return;
       if (skipEntryPoints(refElement)) return;
 
-      Element element = refEntity.getRefManager().export(refEntity, -1);
+      Element element = refEntity.getRefManager().export(refEntity);
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());

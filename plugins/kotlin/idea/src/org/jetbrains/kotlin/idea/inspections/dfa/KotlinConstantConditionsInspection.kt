@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isConstant
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -410,9 +411,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         }
                     }
                     is KotlinForVisitedAnchor -> {
-                        if (cv == ConstantValue.FALSE) {
+                        val loopRange = anchor.forExpression.loopRange!!
+                        if (cv == ConstantValue.FALSE && !shouldSuppressForCondition(loopRange)) {
                             val message = KotlinBundle.message("inspection.message.for.never.visited")
-                            holder.registerProblem(anchor.forExpression.loopRange!!, message)
+                            holder.registerProblem(loopRange, message)
                         }
                     }
                 }
@@ -438,6 +440,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
         }
+    }
+
+    private fun shouldSuppressForCondition(loopRange: KtExpression): Boolean {
+        if (loopRange is KtBinaryExpression) {
+            val left = loopRange.left
+            val right = loopRange.right
+            // Reported separately by EmptyRangeInspection
+            return left != null && right != null && left.isConstant() && right.isConstant()
+        }
+        return false
     }
 
     private fun shouldReportAsValue(expr: KtExpression) =
@@ -469,12 +481,14 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         ) {
             return true
         }
+
+        val rootElement = anchor.containingFile
         val suppressionCache = KotlinCacheService.getInstance(anchor.project).getSuppressionCache()
-        return suppressionCache.isSuppressed(anchor, "CAST_NEVER_SUCCEEDS", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "SENSELESS_COMPARISON", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "SENSELESS_NULL_IN_WHEN", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "USELESS_IS_CHECK", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "DUPLICATE_LABEL_IN_WHEN", Severity.WARNING)
+        return suppressionCache.isSuppressed(anchor, rootElement, "CAST_NEVER_SUCCEEDS", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, rootElement, "SENSELESS_COMPARISON", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, rootElement, "SENSELESS_NULL_IN_WHEN", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, rootElement, "USELESS_IS_CHECK", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, rootElement, "DUPLICATE_LABEL_IN_WHEN", Severity.WARNING)
     }
 
     private fun shouldSuppressWhenCondition(

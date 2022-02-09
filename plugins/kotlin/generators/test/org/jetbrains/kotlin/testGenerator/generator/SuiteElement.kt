@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.generator
 
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
+import org.jetbrains.kotlin.testGenerator.generator.methods.SetUpMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.junit.runner.RunWith
@@ -60,14 +62,14 @@ class SuiteElement private constructor(
                     }
                 }
 
-                val match = model.pattern.matchEntire(file.name) ?: continue
-                assert(match.groupValues.size >= 2) { "Invalid pattern, test method name group should be defined" }
-                val methodNameBase = getTestMethodNameBase(match.groupValues[1])
+                val match = model.matcher(file.name) ?: continue
+                val methodNameBase = getTestMethodNameBase(match.methodName)
                 val path = file.toRelativeStringSystemIndependent(group.moduleRoot)
                 methods += TestCaseMethod(
                     methodNameBase,
                     if (file.isDirectory) "$path/" else path,
-                    file.toRelativeStringSystemIndependent(rootFile)
+                    file.toRelativeStringSystemIndependent(rootFile),
+                    group.isCompilerTestData
                 )
             }
 
@@ -98,6 +100,20 @@ class SuiteElement private constructor(
                 }
             }
 
+            if (methods.isNotEmpty() && group.isCompilerTestData) {
+                methods += SetUpMethod(
+                    listOf(
+                        "${AdditionalKotlinArtifacts::compilerTestData.name}(\"${
+                            File(
+                                group.testDataRoot,
+                                model.path
+                            ).toRelativeStringSystemIndependent(group.moduleRoot)
+                                .substringAfter(AdditionalKotlinArtifacts.compilerTestDataDir.name + "/")
+                        }\");"
+                    )
+                )
+            }
+
             val suiteElement = SuiteElement(group, suite, model, className, isNested, methods, nestedSuites)
             return if (model.bucketSize != null) {
                 suiteElement.chunked(model.bucketSize)
@@ -124,6 +140,7 @@ class SuiteElement private constructor(
         private fun SuiteElement.chunked(bucketSize: Int): SuiteElement {
             val size = methods.size - 1
             val newNestedClasses = if (size > bucketSize) {
+
                 methods.asSequence()
                     .filter { it.methodName != "runTest" }
                     .chunked(bucketSize)
@@ -132,7 +149,7 @@ class SuiteElement private constructor(
                             group,
                             suite,
                             model,
-                            "TestBucket${index + 1}",
+                            "TestBucket${"%03d".format(index + 1)}",
                         )
                     }
                     .toList()

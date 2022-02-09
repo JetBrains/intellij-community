@@ -15,11 +15,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +62,7 @@ public final class CreateClassToBindFix extends QuickFix{
           if(packageName.length() > 0){
             final PackageWrapper packageWrapper = new PackageWrapper(PsiManager.getInstance(project), packageName);
             try {
-              psiDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);
+              psiDirectory = CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);
             }
             catch (final IncorrectOperationException e) {
               ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(

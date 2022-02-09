@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
@@ -41,8 +40,7 @@ import java.util.*;
 import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLanguageFragmentKey;
 
 public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
-  InjectedGeneralHighlightingPass(@NotNull Project project,
-                                  @NotNull PsiFile file,
+  InjectedGeneralHighlightingPass(@NotNull PsiFile file,
                                   @NotNull Document document,
                                   int startOffset,
                                   int endOffset,
@@ -50,7 +48,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
                                   @NotNull ProperTextRange priorityRange,
                                   @Nullable Editor editor,
                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    super(project, file, document, startOffset, endOffset, updateAll, priorityRange, editor, highlightInfoProcessor);
+    super(file, document, startOffset, endOffset, updateAll, priorityRange, editor, highlightInfoProcessor);
   }
 
   @Override

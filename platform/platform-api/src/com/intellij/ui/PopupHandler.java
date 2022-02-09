@@ -94,6 +94,13 @@ public abstract class PopupHandler extends MouseAdapter {
     return installPopupMenu(component, __ -> group, place, null, null);
   }
 
+  public static @NotNull PopupHandler installPopupMenu(@NotNull JComponent component,
+                                                       @NotNull ActionGroup group,
+                                                       @NotNull String place,
+                                                       @Nullable PopupMenuListener menuListener) {
+    return installPopupMenu(component, __ -> group, place, null, menuListener);
+  }
+
   /** @deprecated use {@link #installPopupMenu(JComponent, ActionGroup, String)} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")

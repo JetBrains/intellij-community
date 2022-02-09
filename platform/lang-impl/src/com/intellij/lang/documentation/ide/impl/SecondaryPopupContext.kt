@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.EmptyDocumentationTarget
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupPositionManager.Position
@@ -16,6 +15,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.awt.Component
+import java.awt.Dimension
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 
@@ -30,16 +31,9 @@ internal abstract class SecondaryPopupContext : PopupContext {
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     val resized = popupUI.useStoredSize()
-    if (!resized.get()) {
-      // a popup might be shown before its content was loaded (with "Fetching..." message)
-      // => no update events were generated => ensure popup size is set
-      resizePopup(popup)
-    }
     popupUI.updatePopup {
-      if (!resized.get()) {
-        resizePopup(popup)
-      }
-      // don't reposition the popup, it sticks to the reference component
+      val newSize = if (resized.get()) popup.size else popup.component.preferredSize
+      repositionPopup(popup, referenceComponent, newSize)
     }
     popupUI.updateFromRequests(requestFlow())
   }
@@ -48,7 +42,7 @@ internal abstract class SecondaryPopupContext : PopupContext {
 
   override fun showPopup(popup: AbstractPopup) {
     val component = referenceComponent
-    repositionPopup(popup, component) // also shows the popup
+    showPopup(popup, component)
     installPositionAdjuster(popup, component) // move popup when reference component changes its width
     // this is needed so that unfocused popup could still become focused
     popup.popupWindow.focusableWindowState = true
@@ -68,10 +62,10 @@ private fun CoroutineScope.updateFromRequests(requests: Flow<DocumentationReques
   }
 }
 
-private fun installPositionAdjuster(popup: JBPopup, anchor: Component) {
+private fun installPositionAdjuster(popup: AbstractPopup, anchor: Component) {
   val listener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent) {
-      repositionPopup(popup, anchor)
+      repositionPopup(popup, anchor, popup.size)
     }
   }
   anchor.addComponentListener(listener)
@@ -80,6 +74,16 @@ private fun installPositionAdjuster(popup: JBPopup, anchor: Component) {
   }
 }
 
-private fun repositionPopup(popup: JBPopup, anchor: Component) {
-  PositionAdjuster(anchor).adjust(popup, popup.size, Position.RIGHT, Position.LEFT)
+private fun showPopup(popup: AbstractPopup, anchor: Component) {
+  val bounds = popupBounds(anchor, popup.size)
+  popup.size = bounds.size
+  popup.showInScreenCoordinates(anchor, bounds.location)
+}
+
+private fun repositionPopup(popup: AbstractPopup, anchor: Component, size: Dimension) {
+  popup.setBounds(popupBounds(anchor, size))
+}
+
+private fun popupBounds(anchor: Component, size: Dimension): Rectangle {
+  return PositionAdjuster(anchor).adjustBounds(size, arrayOf(Position.RIGHT, Position.LEFT))
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -17,11 +18,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public final class ProjectViewToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
@@ -30,35 +31,44 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
   }
 
   @Override
-  public void init(@NotNull ToolWindow window) {
-    window.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl(), ProjectViewToolWindowFactory.class));
-    window.setStripeTitle(IdeUICustomization.getInstance().getProjectViewTitle());
-    if (window instanceof ToolWindowEx && Registry.is("ide.open.project.view.on.startup")) {
-      Project project = ((ToolWindowEx)window).getProject();
-      if (Boolean.TRUE.equals(project.getUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START)) &&
-          !ProjectUtil.isNotificationSilentMode(project)) {
-        RunOnceUtil.runOnceForProject(project, "OpenProjectViewOnStart", () -> {
-          ToolWindowManager manager = ToolWindowManager.getInstance(project);
-          manager.invokeLater(() -> {
-            if (null == manager.getActiveToolWindowId()) {
-              window.activate(() -> {
-                Module[] modules = ModuleManager.getInstance(project).getModules();
-                if (modules.length == 1 && GeneralModuleType.TYPE_ID.equals(modules[0].getModuleTypeName()))
-                {
-                  return;
-                }
-                AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
-                JTree tree = pane == null ? null : pane.getTree();
-                if (tree != null) TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
-              });
-            }
-          });
-        });
-      }
+  public @NotNull Icon getIcon() {
+    String path = ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl();
+    if (path.equals("/toolwindows/toolWindowProject.svg") || path.equals("toolwindows/toolWindowProject.svg")) {
+      return AllIcons.Toolwindows.ToolWindowProject;
+    }
+    else {
+      return Objects.requireNonNull(IconLoader.findIcon(path, null, ProjectViewToolWindowFactory.class.getClassLoader(), null, false));
     }
   }
 
-  private void showTooltipForEmptyProject(Project project) {
-//    new GotItTooltip("", "", null).withShortcut()
+  @Override
+  public void init(@NotNull ToolWindow window) {
+    if (!(window instanceof ToolWindowEx) || !Registry.is("ide.open.project.view.on.startup", true)) {
+      return;
+    }
+
+    Project project = window.getProject();
+    if (Boolean.TRUE.equals(project.getUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START)) &&
+        !ProjectUtil.isNotificationSilentMode(project)) {
+      RunOnceUtil.runOnceForProject(project, "OpenProjectViewOnStart", () -> {
+        ToolWindowManager manager = ToolWindowManager.getInstance(project);
+        manager.invokeLater(() -> {
+          if (manager.getActiveToolWindowId() == null) {
+            window.activate(() -> {
+              Module[] modules = ModuleManager.getInstance(project).getModules();
+              if (modules.length == 1 && GeneralModuleType.TYPE_ID.equals(modules[0].getModuleTypeName()))
+              {
+                return;
+              }
+              AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
+              JTree tree = pane == null ? null : pane.getTree();
+              if (tree != null) {
+                TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
+              }
+            });
+          }
+        });
+      });
+    }
   }
 }

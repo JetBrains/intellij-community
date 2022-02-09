@@ -17,10 +17,11 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION
 
 private val sections = arrayListOf("buildscript", "plugins", "initscript", "pluginManagement")
 
-fun isGradleKotlinScript(virtualFile: VirtualFile) = virtualFile.name.endsWith(".gradle.kts")
+fun isGradleKotlinScript(virtualFile: VirtualFile) = virtualFile.name.endsWith(".$KOTLIN_DSL_SCRIPT_EXTENSION")
 
 fun getGradleScriptInputsStamp(
     project: Project,

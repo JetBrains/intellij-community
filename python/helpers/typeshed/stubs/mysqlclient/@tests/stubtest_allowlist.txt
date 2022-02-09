@@ -1,8 +1,1 @@
 MySQLdb.Connection
-MySQLdb.connections
-MySQLdb.constants.CLIENT
-MySQLdb.constants.CR
-MySQLdb.constants.ER
-MySQLdb.constants.FLAG
-MySQLdb.converters
-MySQLdb.cursors

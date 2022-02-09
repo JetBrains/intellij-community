@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -11,7 +11,7 @@ import java.util.function.BiConsumer;
 @ApiStatus.Internal
 public enum LoadingState {
   BOOTSTRAP("bootstrap"),
-  LAF_INITIALIZED("LaF is initialized"),
+  BASE_LAF_INITIALIZED("LaF is initialized"),
   COMPONENTS_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENTS_LOADED("app component loaded"),

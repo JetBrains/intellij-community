@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaLogger;
@@ -664,19 +665,19 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
+  /**
+   * @deprecated do not use. instead, start write action where necessary for the shortest time possible
+   */
+  @Deprecated
   protected boolean isRunInWriteAction() {
+    PluginException.reportDeprecatedUsage("this method", "do not use. instead, start write action where necessary for the shortest time possible");
     return false;
   }
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     boolean runInCommand = annotatedWith(WrapInCommand.class);
-    boolean runInWriteAction = isRunInWriteAction();
-
-    if (runInCommand && runInWriteAction) {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
-    }
-    else if (runInCommand) {
+    if (runInCommand) {
       Ref<Throwable> e = new Ref<>();
       CommandProcessor.getInstance().executeCommand(getProject(), () -> {
         try {
@@ -689,9 +690,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       if (!e.isNull()) {
         throw e.get();
       }
-    }
-    else if (runInWriteAction) {
-      WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
     }
     else {
       super.runTestRunnable(testRunnable);

@@ -1091,6 +1091,14 @@
         <constraint name="T2" within="" contains="" />
         <constraint name="T3" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" description="javax.swing.FocusManager is obsolete, using it can cause default application's focus traversal policy to be changed. javax.swing.KeyboardFocusManager should be used instead." suppressId="jsFocusManager" problemDescriptor="Obsolete class, use KeyboardFocusManager instead" text="$Clz$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" text="$Clz$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Parameter2" regexp="0" within="" contains="" />
@@ -1868,6 +1876,7 @@
     <inspection_tool class="StrutsValidatorFormInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="StrutsValidatorInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="SuperTearDownInFinally" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SuspiciousLiteralUnderscore" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="SwitchStatementWithConfusingDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SystemOutErr" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
@@ -1896,7 +1905,6 @@
     <inspection_tool class="TrivialIf" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TrivialIfJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TrivialStringConcatenation" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="TryFinallyCanBeTryWithResources" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TryWithIdenticalCatches" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TypeParameterExtendsFinalClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UNCHECKED_WARNING" enabled="true" level="WARNING" enabled_by_default="true">

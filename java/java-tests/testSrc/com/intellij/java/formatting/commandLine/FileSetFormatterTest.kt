@@ -2,6 +2,8 @@
 package com.intellij.java.formatting.commandLine
 
 import com.intellij.formatting.commandLine.FileSetFormatter
+import com.intellij.formatting.commandLine.readSettings
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import junit.framework.ComparisonFailure
 import java.io.File
 import java.nio.charset.Charset
@@ -10,19 +12,30 @@ import kotlin.text.Charsets.UTF_8
 
 class FileSetFormatterTest : FileSetCodeStyleProcessorTestBase() {
 
-  fun testFormat() {
-    FileSetFormatter(codeStyleSettings!!, messageOutput!!, true).use {
+  private fun simpleTest(settings: CodeStyleSettings? = null) {
+    FileSetFormatter(messageOutput!!, true, primaryCodeStyle = settings, defaultCodeStyle = codeStyleSettings).use {
       it.addFileMask(Regex(".*\\.java"))
-      val sourceDir = createSourceDir("baseTest/original")
+      val sourceDir = createSourceDir("${getTestName(true)}/original")
       it.addEntry(sourceDir.canonicalPath)
       it.processFiles()
-      compareDirs(File(BASE_PATH).resolve("baseTest/expected"), sourceDir)
+      compareDirs(File(BASE_PATH).resolve("${getTestName(true)}/expected"), sourceDir)
     }
   }
 
+  fun testBaseTest() = simpleTest()
+  fun testProject() = simpleTest()
+  fun testTwoProjects() = simpleTest()
+  fun testUnwrappedProject() = simpleTest()
+  fun testUnwrappedProjectWithInner() = simpleTest()
+  fun testMixture() = simpleTest()
+
+  fun testEnforceFour() {
+    val settingsFile = File(BASE_PATH).resolve(getTestName(true)).resolve("code-style.xml")
+    simpleTest(readSettings(settingsFile))
+  }
 
   private fun testCustomEncoding(charset: Charset) {
-    FileSetFormatter(codeStyleSettings!!, messageOutput!!, true, charset).use {
+    FileSetFormatter(messageOutput!!, true, charset, codeStyleSettings).use {
       val sourceDir = createSourceDir("encoding/original")
       it.addEntry(sourceDir.canonicalPath)
       it.processFiles()

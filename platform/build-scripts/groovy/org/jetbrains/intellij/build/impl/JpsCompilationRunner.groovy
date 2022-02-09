@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import org.apache.tools.ant.BuildException
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.jps.api.CmdlineRemoteProto
@@ -55,6 +53,10 @@ final class JpsCompilationRunner {
   }
 
   static {
+    // Unset 'groovy.target.bytecode' which was possibly set by outside context
+    // to get target bytecode version from corresponding java compiler settings
+    System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE)
+
     setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
     def availableProcessors = Runtime.getRuntime().availableProcessors().toString()
     setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, availableProcessors)
@@ -64,7 +66,6 @@ final class JpsCompilationRunner {
     setSystemPropertyIfUndefined(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
   }
 
-  private static boolean ourToolsJarAdded
   private final CompilationContext context
   private final JpsCompilationData compilationData
 
@@ -172,9 +173,6 @@ final class JpsCompilationRunner {
                         Collection<String> artifactNames,
                         boolean includeTests,
                         boolean resolveProjectDependencies) {
-    if (JavaVersion.current().feature < 9 && (!modulesSet.isEmpty() || allModules)) {
-      addToolsJarToSystemClasspath(context.paths.jdkHome, context.messages)
-    }
     final AntMessageHandler messageHandler = new AntMessageHandler()
     AntLoggerFactory.ourMessageHandler = messageHandler
     if (context.options.compilationLogEnabled) {
@@ -255,23 +253,6 @@ final class JpsCompilationRunner {
       context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart)))
       compilationData.statisticsReported = true
     }
-  }
-
-  /**
-   * Add tools.jar to the system classloader's classpath. {@link javax.tools.ToolProvider} will load javac implementation classes by its own URLClassLoader,
-   * which uses the system classloader as its parent, so we need to ensure that tools.jar will be accessible from the system classloader,
-   * otherwise the loaded classes will be incompatible with the classes loaded by {@link org.jetbrains.jps.javac.ast.JavacReferenceCollectorListener}.
-   */
-  private static void addToolsJarToSystemClasspath(String jdkHome, BuildMessages messages) {
-    if (ourToolsJarAdded) {
-      return
-    }
-    File toolsJar = new File(jdkHome, "lib/tools.jar")
-    if (!toolsJar.exists()) {
-      messages.error("Failed to add tools.jar to classpath: $toolsJar doesn't exist")
-    }
-    BuildUtils.addToSystemClasspath(toolsJar)
-    ourToolsJarAdded = true
   }
 
   private final class AntMessageHandler implements MessageHandler {

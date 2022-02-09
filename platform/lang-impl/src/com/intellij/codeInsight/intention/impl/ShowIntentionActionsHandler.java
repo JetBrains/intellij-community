@@ -55,25 +55,25 @@ import org.jetbrains.annotations.Nullable;
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     invoke(project, editor, file, false);
   }
 
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file, boolean showFeedbackOnEmptyMenu) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, boolean showFeedbackOnEmptyMenu) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
 
-    final LookupEx lookup = LookupManager.getActiveLookup(editor);
+    LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup != null) {
       lookup.showElementActions(null);
       return;
     }
 
     if (!LightEdit.owns(project)) {
-      final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
       letAutoImportComplete(editor, file, codeAnalyzer);
     }
 
@@ -147,7 +147,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       action = IntentionActionDelegate.unwrap(action);
 
       if (action instanceof SuppressIntentionActionFromFix) {
-        final ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
+        ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
         if (editor instanceof EditorWindow && shouldBeAppliedToInjectionHost == ThreeState.YES) {
           return false;
         }
@@ -215,18 +215,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
-                                              @Nullable final Editor hostEditor,
-                                              @NotNull final IntentionAction action,
+                                              @Nullable Editor hostEditor,
+                                              @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName) {
-    final Project project = hostFile.getProject();
-    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, project);
-  }
-
-  static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
-                                       @Nullable final Editor hostEditor,
-                                       @NotNull final IntentionAction action,
-                                       @NotNull @NlsContexts.Command String commandName,
-                                       @NotNull final Project project) {
+    Project project = hostFile.getProject();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 

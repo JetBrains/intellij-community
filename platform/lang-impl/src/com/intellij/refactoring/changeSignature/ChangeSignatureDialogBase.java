@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
@@ -33,6 +33,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
@@ -210,7 +211,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 0, 1,
                                                     GridBagConstraints.WEST,
                                                     GridBagConstraints.HORIZONTAL,
-                                                    JBUI.emptyInsets(),
+                                                    JBInsets.emptyInsets(),
                                                     0, 0);
 
     myNamePanel = new JPanel(new BorderLayout(0, 2));

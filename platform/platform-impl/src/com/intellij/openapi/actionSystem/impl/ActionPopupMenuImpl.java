@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.diagnostic.IdeHeartbeatEventReporter;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -19,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
@@ -50,7 +50,6 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   private MessageBusConnection myConnection;
 
   private IdeFrame myFrame;
-  private boolean myIsToolWindowContextMenu;
 
   ActionPopupMenuImpl(@NotNull String place, @NotNull ActionGroup group,
                       @NotNull ActionManagerImpl actionManager,
@@ -81,18 +80,9 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     return myMenu.myGroup;
   }
 
-  void setDataContextProvider(@NotNull Supplier<? extends DataContext> dataContextProvider) {
-    myDataContextProvider = dataContextProvider;
-  }
-
   @Override
   public void setTargetComponent(@NotNull JComponent component) {
     myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
-    myIsToolWindowContextMenu = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, component) != null;
-  }
-
-  boolean isToolWindowContextMenu() {
-    return myIsToolWindowContextMenu;
   }
 
   private class MyMenu extends JBPopupMenu implements PlaceProvider {
@@ -160,9 +150,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     @Override
     public void addNotify() {
       super.addNotify();
+      long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
+      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(time, myPlace);
       //noinspection RedundantSuppression
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
-        long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
         //noinspection HardCodedStringLiteral
         new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms", NotificationType.INFORMATION).notify(null);
       }
@@ -176,12 +167,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      Utils.performWithRetries(() -> {
-        TimeoutUtil.run(
-          () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
-                               myPresentationFactory, myContext, myPlace, false, false, point),
-          1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
-      }, () -> false);
+      TimeoutUtil.run(
+        () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
+                             myPresentationFactory, myContext, myPlace, false, false, point, null),
+        1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
     }
 
     private void disposeMenu() {

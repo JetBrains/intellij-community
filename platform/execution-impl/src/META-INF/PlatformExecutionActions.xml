@@ -1,5 +1,6 @@
 <idea-plugin>
   <actions>
+    <action class="com.intellij.execution.wsl.target.WslSyncAction" internal="true"/>
     <action id="TerminalIncreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
             use-shortcut-of="EditorIncreaseFontSize"/>
     <action id="TerminalDecreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$DecreaseEditorFontSize"
@@ -52,9 +53,10 @@
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
                     serviceImplementation="com.intellij.ide.ui.experimental.toolbar.BaseRunWidgetAvailabilityManager"/>
-    <toolbarWidget implementation="com.intellij.execution.ui.RunToolbarWidgetFactory"/>
+    <projectToolbarWidget implementation="com.intellij.execution.ui.RunToolbarWidgetFactory"/>
     <projectService serviceImplementation="com.intellij.execution.ui.RunConfigurationStartHistory"/>
     <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunToolbarWidgetCustomizableActionGroupProvider"/>
+    <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
   </extensions>
   <project-components>
     <component>

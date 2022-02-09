@@ -94,7 +94,7 @@ public class MavenProjectResolver {
 
       MavenUtil.restartConfigHighlightning(project, mavenProjects);
     }
-    myTree.fireAllProjectsResolved();
+    if (myTree != null) myTree.resolutionCompleted();
   }
 
 
@@ -133,11 +133,11 @@ public class MavenProjectResolver {
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(project)
       .resolveProject(generalSettings, embedder, files, explicitProfiles, myTree.getProjectLocator());
 
-    Set<MavenArtifact> unresolvedArtifacts = MavenUtil.getUnresolvedArtifacts(results);
-    if (!unresolvedArtifacts.isEmpty()) {
-      MavenUtil.notifySyncForUnresolved(project, unresolvedArtifacts);
+    MavenResolveResultProcessor.ResolveProblem problem = MavenResolveResultProcessor.getProblem(results);
+    if (!problem.isEmpty()) {
+      MavenResolveResultProcessor.notifySyncForProblem(project, problem);
     }
-    context.putUserData(UNRESOLVED_ARTIFACTS, unresolvedArtifacts);
+    context.putUserData(UNRESOLVED_ARTIFACTS, problem.unresolvedArtifacts);
 
     for (MavenProjectReaderResult result : results) {
       MavenProject mavenProjectCandidate = null;

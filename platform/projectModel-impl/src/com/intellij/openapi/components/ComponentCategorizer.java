@@ -11,11 +11,16 @@ public final class ComponentCategorizer {
   }
 
   public static @NotNull SettingsCategory getCategory(@NotNull PersistentStateComponent<?> component) {
-    PluginDescriptor plugin = getPlugin(component);
+    return getCategory(component.getClass());
+  }
+
+  @SuppressWarnings("rawtypes")
+  public static @NotNull SettingsCategory getCategory(@NotNull Class<? extends PersistentStateComponent> componentClass) {
+    PluginDescriptor plugin = PluginManager.getPluginByClass(componentClass);
     if (plugin != null) {
-      getPluginCategory(component.getClass(), plugin);
+      getPluginCategory(componentClass, plugin);
     }
-    return getFromAnnotationOrDefault(component.getClass(), SettingsCategory.OTHER);
+    return getFromAnnotationOrDefault(componentClass, SettingsCategory.OTHER);
   }
 
   @SuppressWarnings("rawtypes")

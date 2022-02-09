@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -37,6 +37,7 @@ import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugSession;
@@ -387,6 +388,28 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       loaded += chunkSize;
     }
     return res;
+  }
+
+  private static CompletableFuture<NodeRenderer> getFirstApplicableRenderer(List<CompletableFuture<Boolean>> futures,
+                                                                            int index,
+                                                                            List<NodeRenderer> renderers) {
+    if (index >= futures.size()) {
+      return CompletableFuture.completedFuture(null);
+    }
+    return futures.get(index).thenCompose(res -> {
+      if (res) {
+        return CompletableFuture.completedFuture(renderers.get(index));
+      }
+      else {
+        return getFirstApplicableRenderer(futures, index + 1, renderers);
+      }
+    });
+  }
+
+  @NotNull
+  public static CompletableFuture<NodeRenderer> getFirstApplicableRenderer(List<NodeRenderer> renderers, Type type) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    return getFirstApplicableRenderer(ContainerUtil.map(renderers, r -> r.isApplicableAsync(type)), 0, renderers);
   }
 
   @NotNull

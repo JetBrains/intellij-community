@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
  *
  * @see org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.ConvertArgumentToSet
  */
-class ConvertToSetInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
+class ConvertToSetInspectionTest15 : KotlinLightCodeInsightFixtureTestCase() {
 
     fun `test regular minus`() = runTests(
         receiverTypes = listOf("Iterable<Int>", "Set<Int>", "Sequence<Int>"),

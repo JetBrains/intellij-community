@@ -13,7 +13,4 @@ interface StartPagePromoter {
   }
 
   fun getPromotionForInitialState(): JPanel?
-
-  @Deprecated("This API is not using anymore")
-  fun needToHideSingleProject(path: String): Boolean = false
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
-  private static final Set<String> KNOWN_EXCEPTIONS = ContainerUtil.immutableSet(
+  private static final Set<String> KNOWN_EXCEPTIONS = Set.of(
     "java.util.stream.Stream<T> generate(java.util.function.Supplier<T>)" // replaced with Supplier<? extends T> in JDK11
   );
 

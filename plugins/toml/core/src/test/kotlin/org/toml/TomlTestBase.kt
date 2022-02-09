@@ -11,11 +11,11 @@ import org.intellij.lang.annotations.Language
 abstract class TomlTestBase : BasePlatformTestCase() {
     open val dataPath: String = ""
 
-    override fun getTestDataPath(): String = "${TestCase.testResourcesPath}/$dataPath"
+    override fun getTestDataPath(): String = getTomlTestsResourcesPath().resolve(dataPath).toString()
 
     @Suppress("TestFunctionName")
     protected fun InlineFile(@Language("TOML") text: String, name: String = "example.toml") {
-        myFixture.configureByText(name, text)
+        myFixture.configureByText(name, text.trimIndent())
     }
 
     protected fun checkByText(

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.util.indexing.diagnostic.*
@@ -24,10 +24,13 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     numberOfFilesForIndexing = numberOfFilesForIndexing,
     numberOfSkippedFiles = numberOfSkippedFiles,
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
+    filesFullyIndexedByInfrastructureExtensions = listOfFilesFullyIndexedByInfrastructureExtension,
+    statusTime = JsonDuration(statusTime),
     scanningTime = JsonDuration(scanningTime),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
     timeUpdatingContentLessIndexes = JsonDuration(timeUpdatingContentLessIndexes),
     timeIndexingWithoutContent = JsonDuration(timeIndexingWithoutContent),
+    roots = providerRoots,
     scannedFiles = jsonScannedFiles
   )
 }
@@ -40,7 +43,7 @@ fun ScanningStatistics.ScannedFile.toJson(): JsonScanningStatistics.JsonScannedF
   )
 
 @Suppress("DuplicatedCode")
-fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
+fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio: Double): JsonFileProviderIndexStatistics {
   val jsonIndexedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
     indexedFiles.map { it.toJson() }
   }
@@ -52,13 +55,17 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     providerName = fileSetName,
     totalNumberOfIndexedFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
-    totalIndexingTime = JsonDuration(indexingVisibleTime),
-    contentLoadingTime = JsonDuration(contentLoadingVisibleTime),
+    filesFullyIndexedByExtensions = listOfFilesFullyIndexedByExtensions,
+    totalIndexingVisibleTime = convertAllThreadsTimeToVisibleDuration(indexingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
+    contentLoadingVisibleTime = convertAllThreadsTimeToVisibleDuration(contentLoadingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     slowIndexedFiles = slowIndexedFiles.biggestElements.map { it.toJson() },
     indexedFiles = jsonIndexedFiles
   )
 }
+
+private fun convertAllThreadsTimeToVisibleDuration(allThreadsTime: TimeNano, visibleTimeToAllThreadsTimeRatio: Double) =
+  JsonDuration((allThreadsTime * visibleTimeToAllThreadsTimeRatio).toLong())
 
 fun SlowIndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
   fileName = fileName,
@@ -67,7 +74,7 @@ fun SlowIndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonSlowIndexedFi
   contentLoadingTime = JsonDuration(contentLoadingTime)
 )
 
-fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
+fun IndexingFileSetStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
   path = portableFilePath,
   wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
 )
@@ -78,7 +85,8 @@ fun IndexingTimes.toJson() =
     wasFullIndexing = wasFullIndexing,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
-    contentLoadingTime = JsonDuration(contentLoadingDuration.toNanos()),
+    contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
+    creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),
     scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
     pushPropertiesTime = JsonDuration(pushPropertiesDuration.toNanos()),
     indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
@@ -91,8 +99,8 @@ fun IndexingTimes.toJson() =
 private fun calculatePercentages(part: Long, total: Long): JsonPercentages = JsonPercentages(part, total)
 
 fun ProjectIndexingHistoryImpl.toJson(): JsonProjectIndexingHistory {
-  (times as ProjectIndexingHistoryImpl.IndexingTimesImpl).contentLoadingDuration =
-    Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingTime.nano })
+  (times as ProjectIndexingHistoryImpl.IndexingTimesImpl).contentLoadingVisibleDuration =
+    Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingVisibleTime.nano })
   return JsonProjectIndexingHistory(
     projectName = project.name,
     times = times.toJson(),
@@ -100,15 +108,16 @@ fun ProjectIndexingHistoryImpl.toJson(): JsonProjectIndexingHistory {
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
     scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
-    fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingTime.nano }
+    fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingVisibleTime.nano },
+    visibleTimeToAllThreadTimeRatio = visibleTimeToAllThreadsTimeRatio
   )
 }
 
 private fun ProjectIndexingHistoryImpl.getFileCount() = JsonProjectIndexingFileCount(
   numberOfFileProviders = scanningStatistics.size,
-  numberOfScannedFiles = scanningStatistics.sumBy { it.numberOfScannedFiles },
+  numberOfScannedFiles = scanningStatistics.sumOf { it.numberOfScannedFiles },
   numberOfFilesIndexedByInfrastructureExtensionsDuringScan = scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions },
-  numberOfFilesScheduledForIndexingAfterScan = scanningStatistics.sumBy { it.numberOfFilesForIndexing },
+  numberOfFilesScheduledForIndexingAfterScan = scanningStatistics.sumOf { it.numberOfFilesForIndexing },
   numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = providerStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions },
   numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
 )

@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -39,9 +38,19 @@ interface BuildCommandLineBuilder {
 
   GeneralCommandLine buildCommandLine() throws ExecutionException;
 
+  /**
+   * Uses `nice` command to run process with a lower priority.
+   *
+   * Does not work on Windows since start /low does not pass exit code on Windows, see ExecUtil#setupLowPriorityExecution documentation
+   *
+   * @param priority Unix process priority (-20 <= priority <= 19), see https://en.wikipedia.org/wiki/Nice_(Unix)
+   */
+  void setUnixProcessPriority(int priority);
+
   default void setupAdditionalVMOptions() {
   }
 
-  default void copyPathToTarget(Iterable<File> pathFiles) {
+  default @NotNull Path copyPathToTargetIfRequired(@NotNull Path path) {
+    return path;
   }
 }

@@ -45,8 +45,6 @@
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex"/>
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomElementClassIndex"/>
 
-    <applicationService serviceImplementation="com.intellij.util.xml.impl.DomApplicationComponent"/>
-
     <applicationService serviceInterface="com.intellij.util.xml.DomService"
                         serviceImplementation="com.intellij.util.xml.impl.DomServiceImpl"/>
 

@@ -28,18 +28,11 @@ public final class NanoXmlUtil {
   }
 
   public static void parse(@NotNull InputStream is, @NotNull IXMLBuilder builder) {
-    try {
+    try (is) {
       parse(new MyXMLReader(is), builder);
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      try {
-        is.close();
-      }
-      catch (IOException ignore) {
-      }
     }
   }
 
@@ -48,18 +41,11 @@ public final class NanoXmlUtil {
   }
 
   public static void parse(@NotNull Reader reader, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
-    try {
+    try (reader) {
       parse(new MyXMLReader(reader), builder, validator);
     }
     catch (Exception e) {
       LOG.error(e);
-    }
-    finally {
-      try {
-        reader.close();
-      }
-      catch (IOException ignore) {
-      }
     }
   }
 

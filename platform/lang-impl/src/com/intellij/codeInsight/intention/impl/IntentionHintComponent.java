@@ -29,7 +29,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -48,7 +47,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -83,6 +81,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   static class IntentionPopup implements Popup, Disposable.Parent {
     private final CachedIntentions myCachedIntentions;
+    @NotNull
     private final Editor myEditor;
     private final PsiFile myFile;
     private final Project myProject;
@@ -519,6 +518,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           }
         }
       }
+
+      registerIntentionShortcuts(that);
       registerShowPreviewAction(that);
     }
 
@@ -601,6 +602,35 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     ApplicationManager.getApplication().assertIsDispatchThread();
     that.myPreviewPopupUpdateProcessor.setup(that.myPopup, index);
     that.myPreviewPopupUpdateProcessor.updatePopup(action);
+  }
+
+  /** Add all intention shortcuts to also be available as actions in the popover */
+  private static void registerIntentionShortcuts(@NotNull IntentionPopup that) {
+    for (Object object : that.myPopup.getListStep().getValues()) {
+      if (object instanceof IntentionActionDelegate) {
+        registerIntentionShortcut(that, ((IntentionActionDelegate)object).getDelegate());
+      }
+    }
+  }
+
+  private static void registerIntentionShortcut(@NotNull IntentionPopup that, @NotNull IntentionAction intention) {
+    var shortcuts = IntentionShortcutManager.getInstance().getShortcutSet(intention);
+    if (shortcuts == null) return;
+
+    for (var shortcut : shortcuts.getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut) {
+        KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+        ((WizardPopup)that.myPopup).registerAction(IntentionShortcutUtils.getWrappedActionId(intention),
+                                                   keyboardShortcut.getFirstKeyStroke(),
+                                                   new AbstractAction() {
+                                                     @Override
+                                                     public void actionPerformed(ActionEvent e) {
+                                                       that.close();
+                                                       IntentionShortcutUtils.invokeAsAction(intention, that.myEditor, that.myFile);
+                                                     }
+                                                   });
+      }
+    }
   }
 
   private static void registerShowPreviewAction(@NotNull IntentionHintComponent.IntentionPopup that) {

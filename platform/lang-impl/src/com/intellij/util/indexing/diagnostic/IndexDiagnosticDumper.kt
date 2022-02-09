@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -59,6 +59,24 @@ class IndexDiagnosticDumper : Disposable {
     val shouldDumpPathsOfIndexedFiles: Boolean
       get() =
         SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+
+    @JvmStatic
+    val shouldDumpProviderRootPaths: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.provider.root.paths", false)
+
+    /**
+     * Some processes may be done in multiple threads, like content loading,
+     * see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.doIndexFiles]
+     * Such processes have InAllThreads time and visible time, see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.indexFiles],
+     * [ProjectIndexingHistoryImpl.visibleTimeToAllThreadsTimeRatio], [IndexingFileSetStatistics]
+     *
+     * This property allows to provide more details on those times and ratio in html
+     */
+    @JvmStatic
+    val shouldProvideVisibleAndAllThreadsTimeInfo: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.provide.visible.and.all.threads.time.info", false)
 
     @JvmStatic
     @TestOnly

@@ -21,6 +21,14 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
   final override var customTool: Any? = null
     private set
 
+  /**
+   * The configuration that is used during creating or editing this custom tool. It might differ from [TargetWizardModel.subject] field
+   * because the subject and the configuration entities it depends upon might not yet be saved at this point in IDE they might be unsafe to
+   * use.
+   */
+  protected open val editingTargetConfiguration: TargetEnvironmentConfiguration
+    get() = model.subject
+
   final override fun getPreferredFocusedComponent(): JComponent? = customToolPanel?.preferredFocusedComponent
 
   final override fun getNextStepId(): Any? = null
@@ -38,7 +46,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
     model.save()
 
     // TODO [targets] get rid of `!!` in `model.languageConfigForIntrospection!!`
-    customToolPanel = TargetCustomToolPanel(model.project, model.subject.getTargetType(), model::subject,
+    customToolPanel = TargetCustomToolPanel(model.project, model.subject.getTargetType(), ::editingTargetConfiguration,
                                             model.languageConfigForIntrospection!!)
       .also {
         mainPanel.addToCenter(it.component)

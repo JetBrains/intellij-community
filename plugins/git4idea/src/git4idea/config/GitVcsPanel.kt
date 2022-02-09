@@ -200,9 +200,9 @@ internal class GitVcsPanel(private val project: Project) :
 
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
-        checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get())
-        }
+        checkBox(cdSyncBranches(project))
+          .gap(RightGap.SMALL)
+        contextHelp(DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get()))
       }
     }
     branchUpdateInfoRow()
@@ -225,7 +225,7 @@ internal class GitVcsPanel(private val project: Project) :
         override fun shouldIndicateHovering(): Boolean = false
         override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
         override fun createUnfocusedBorder(): Border {
-          return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, 1)
+          return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, BORDER_SIZE, true)
         }
       }.initUi()
 

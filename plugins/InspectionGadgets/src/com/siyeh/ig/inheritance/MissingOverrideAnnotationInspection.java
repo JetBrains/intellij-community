@@ -1,8 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -10,36 +13,42 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.JavaOverridingMethodUtil;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool{
-  private static final String OVERRIDE_SHORT_NAME = StringUtil.getShortName(CommonClassNames.JAVA_LANG_OVERRIDE);
-
+public class MissingOverrideAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool{
   @SuppressWarnings("PublicField")
   public boolean ignoreObjectMethods = true;
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAnonymousClassMethods;
+
+  public boolean warnInSuper = true;
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "warnInSuper");
+    writeBooleanOption(node, "warnInSuper", true);
+  }
 
   @Override
   @NotNull
@@ -47,46 +56,20 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
     return "override";
   }
 
-  /**
-   * @deprecated
-   * Use {@link AnnotateMethodFix}. To be removed in 2021.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new InspectionGadgetsFix() {
-      private final AnnotateMethodFix myFix = new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE);
-
-      @Override
-      protected void doFix(Project project, ProblemDescriptor descriptor) {
-        myFix.applyFix(project, descriptor);
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return myFix.getFamilyName();
-      }
-    };
+    final PsiMethod method = (PsiMethod)infos[0];
+    final boolean annotateMethod = (boolean)infos[1];
+    final boolean annotateHierarchy = (boolean)infos[2];
+    return new DelegatingFix(createAnnotateFix(method, annotateMethod, annotateHierarchy));
   }
 
-  /**
-   * @deprecated To be removed in 2021.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected String buildErrorString(Object... infos) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * @deprecated  To be removed in 2021.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected BaseInspectionVisitor buildVisitor() {
-    throw new UnsupportedOperationException();
+  @Override
+  protected @NotNull String buildErrorString(Object... infos) {
+    final boolean annotateMethod = (boolean)infos[1];
+    return InspectionGadgetsBundle.message(annotateMethod
+                                           ? "missing.override.annotation.problem.descriptor"
+                                           : "missing.override.annotation.in.overriding.problem.descriptor");
   }
 
   @Override
@@ -94,48 +77,43 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.equals.hashcode.and.tostring"), "ignoreObjectMethods");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.in.anonymous.classes"), "ignoreAnonymousClassMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("missing.override.warn.on.super.option"), "warnInSuper");
     return panel;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
-    return new JavaElementVisitor() {
+  public boolean shouldInspect(@NotNull PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MissingOverrideAnnotationVisitor();
+  }
+
+  private class MissingOverrideAnnotationVisitor extends BaseInspectionVisitor {
+
       @Override
       public void visitMethod(@NotNull PsiMethod method) {
-        if (method.getNameIdentifier() == null) {
+        if (method.getNameIdentifier() == null || method.isConstructor()) {
           return;
         }
-        if (method.isConstructor()) {
-          return;
-        }
-        if (method.hasModifierProperty(PsiModifier.PRIVATE) ||
-            method.hasModifierProperty(PsiModifier.STATIC)) {
+        if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) {
           return;
         }
         final PsiClass methodClass = method.getContainingClass();
         if (methodClass == null) {
           return;
         }
-        if (ignoreObjectMethods && (MethodUtils.isHashCode(method) ||
-                                    MethodUtils.isEquals(method) ||
-                                    MethodUtils.isToString(method))) {
+        if (ignoreObjectMethods &&
+            (MethodUtils.isHashCode(method) || MethodUtils.isEquals(method) || MethodUtils.isToString(method))) {
           return;
         }
 
-        InspectionResult result = new InspectionResult();
-        checkMissingOverride(method, result);
-        if (isOnTheFly) {
-          checkMissingOverrideInOverriders(method, result);
-        }
-
-        if (result.requireAnnotation || result.hierarchyAnnotated == ThreeState.NO) {
-          holder.registerProblem(method.getNameIdentifier(),
-                                 InspectionGadgetsBundle.message(result.requireAnnotation
-                                                                 ? "missing.override.annotation.problem.descriptor"
-                                                                 : "missing.override.annotation.in.overriding.problem.descriptor"),
-                                 createAnnotateFix(method, result.requireAnnotation, result.hierarchyAnnotated));
+        final boolean annotateMethod = isMissingOverride(method);
+        final boolean annotateHierarchy = warnInSuper && isOnTheFly() && isMissingOverrideInOverriders(method);
+        if (annotateMethod || annotateHierarchy) {
+          registerMethodError(method, method, annotateMethod, annotateHierarchy);
         }
       }
 
@@ -143,52 +121,55 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
       // 1) method name is not frequently used
       // 2) most of overridden methods already have @Override annotation
       // 3) only one annotation with short name 'Override' exists: it's 'java.lang.Override'
-      private void checkMissingOverrideInOverriders(@NotNull PsiMethod method,
-                                                    @NotNull InspectionResult result) {
-        if (!PsiUtil.canBeOverridden(method)) return;
+      private boolean isMissingOverrideInOverriders(@NotNull PsiMethod method) {
+        if (!PsiUtil.canBeOverridden(method)) return false;
 
         Project project = method.getProject();
-        LanguageLevel minimal = Objects.requireNonNull(method.getContainingClass()).isInterface() ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
+        final boolean isInterface = Objects.requireNonNull(method.getContainingClass()).isInterface();
+        LanguageLevel minimal = isInterface ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
 
         GlobalSearchScope scope = getLanguageLevelScope(minimal, project);
-        if (scope == null) return;
+        if (scope == null) return false;
         int paramCount = method.getParameterList().getParametersCount();
         Predicate<PsiMethod> preFilter = m -> m.getParameterList().getParametersCount() == paramCount &&
-                                              !JavaOverridingMethodUtil.containsAnnotationWithName(m, OVERRIDE_SHORT_NAME);
+                                              !JavaOverridingMethodUtil.containsAnnotationWithName(m, "Override");
         Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, scope, preFilter);
-        if (overridingMethods == null) return;
-        result.hierarchyAnnotated = ThreeState.fromBoolean(overridingMethods.findAny().isEmpty());
+        return overridingMethods != null && overridingMethods.findAny().isPresent();
       }
 
-      private void checkMissingOverride(@NotNull PsiMethod method,
-                                          @NotNull InspectionResult result) {
+      private boolean isMissingOverride(@NotNull PsiMethod method) {
         PsiClass methodClass = method.getContainingClass();
         if (ignoreAnonymousClassMethods && methodClass instanceof PsiAnonymousClass) {
-          return;
+          return false;
         }
         if (hasOverrideAnnotation(method)) {
-          return;
+          return false;
         }
         LanguageLevel level = PsiUtil.getLanguageLevel(method);
         if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
-          result.requireAnnotation = true;
-          return;
+          return true;
         }
         final boolean useJdk6Rules = level.isAtLeast(LanguageLevel.JDK_1_6);
         if (useJdk6Rules) {
           if (!isJdk6Override(method, methodClass)) {
-            return;
+            return false;
           }
         }
         else if (!isJdk5Override(method, methodClass)) {
-          return;
+          return false;
         }
-        result.requireAnnotation = true;
+        return true;
       }
 
-      private boolean hasOverrideAnnotation(PsiModifierListOwner element) {
-        final PsiModifierList modifierList = element.getModifierList();
-        return modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+      private boolean hasOverrideAnnotation(PsiModifierListOwner modifierListOwner) {
+        final PsiModifierList modifierList = modifierListOwner.getModifierList();
+        if (modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)) {
+          return true;
+        }
+        final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(modifierListOwner.getProject());
+        final List<PsiAnnotation> annotations =
+          annotationsManager.findExternalAnnotations(modifierListOwner, CommonClassNames.JAVA_LANG_OVERRIDE);
+        return !annotations.isEmpty();
       }
 
       private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
@@ -236,20 +217,17 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
         return !InheritanceUtil.isInheritorOrSelf(methodClass, superClass, true) ||
                LanguageLevelUtil.getLastIncompatibleLanguageLevel(superMethod, PsiUtil.getLanguageLevel(method)) != null;
       }
-    };
   }
 
   @NotNull
-  private static LocalQuickFix createAnnotateFix(@NotNull PsiMethod method,
-                                                 final boolean requireAnnotation,
-                                                 final ThreeState hierarchyAnnotated) {
-    if (hierarchyAnnotated != ThreeState.NO) {
+  private static LocalQuickFix createAnnotateFix(@NotNull PsiMethod method, boolean annotateMethod, boolean annotateHierarchy) {
+    if (!annotateHierarchy) {
       return new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_OVERRIDE, method);
     }
     return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE) {
       @Override
       protected boolean annotateSelf() {
-        return requireAnnotation;
+        return annotateMethod;
       }
 
       @Override
@@ -257,11 +235,6 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
         return true;
       }
     };
-  }
-
-  private static class InspectionResult {
-    private boolean requireAnnotation;
-    private ThreeState hierarchyAnnotated = ThreeState.UNSURE;
   }
 
   @Nullable

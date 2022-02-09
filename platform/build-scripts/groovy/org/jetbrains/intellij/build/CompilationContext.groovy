@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.intellij.build.impl.BundledRuntime
+import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -13,12 +15,13 @@ import java.nio.file.Path
 @CompileStatic
 interface CompilationContext {
   AntBuilder getAnt()
-  GradleRunner getGradle()
   BuildOptions getOptions()
   BuildMessages getMessages()
   BuildPaths getPaths()
   JpsProject getProject()
   JpsModel getProjectModel()
+  DependenciesProperties getDependenciesProperties()
+  BundledRuntime getBundledRuntime()
 
   JpsCompilationData getCompilationData()
 

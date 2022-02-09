@@ -302,7 +302,7 @@ public final class PluginManagerMain {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
-    UpdateChecker.getNotificationGroup()
+    UpdateChecker.getNotificationGroupForPluginUpdateResults()
       .createNotification(title, NotificationType.INFORMATION)
       .setDisplayId("plugins.updated.suggest.restart")
       .addAction(new NotificationAction(action) {

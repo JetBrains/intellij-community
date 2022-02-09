@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
@@ -22,8 +22,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.custom.options.CustomContentLayoutOptions
@@ -125,17 +125,27 @@ class XDebugSessionTab3(
   }
 
   override fun initToolbars(session: XDebugSessionImpl) {
-    (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
+    val isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical")
+    (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(isVerticalToolbar)
 
     val toolbar = DefaultActionGroup()
 
     mySingleContentSupplier = object: RunTabSupplier(toolbar) {
+      override fun getToolbarActions(): ActionGroup? {
+        return if (isVerticalToolbar) ActionGroup.EMPTY_GROUP else super.getToolbarActions()
+      }
       override fun getMainToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
       override fun getContentToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
     }
 
     toolbarGroup = toolbar
     updateToolbars()
+
+    if (isVerticalToolbar) {
+      myUi.options.setLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
+    } else {
+      myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
+    }
   }
 
   fun updateToolbars() {
@@ -199,8 +209,6 @@ class XDebugSessionTab3(
     // Constrains are required as a workaround that puts these actions into the end anyway
     more.add(gear, Constraints(Anchor.BEFORE, ""))
     toolbar.add(more, Constraints(Anchor.BEFORE, ""))
-
-    myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
   }
 
   override fun initFocusingVariablesFromFramesView() {

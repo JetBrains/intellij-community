@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -7,9 +7,9 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +40,8 @@ import java.util.function.Supplier;
 @Service
 public final class SystemShortcuts {
   private static final Logger LOG = Logger.getInstance(SystemShortcuts.class);
-  private static final @NotNull String ourNotificationGroupId = "System shortcuts conflicts";
+  private static final @NotNull NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("System shortcuts conflicts");
   private static final @NotNull String ourUnknownSysAction = "Unknown action";
-
-  private static boolean ourIsNotificationRegistered = false;
 
   private @NotNull final Map<KeyStroke, AWTKeyStroke> myKeyStroke2SysShortcut = new HashMap<>();
   private @NotNull final Map<KeyStroke, String> myKeyStrokeCustomDescription = new HashMap<>();
@@ -252,14 +249,6 @@ public final class SystemShortcuts {
                         @NotNull KeyStroke sysKS,
                         @Nullable String macOsShortcutAction,
                         @NotNull KeyboardShortcut conflicted) {
-    if (!ourIsNotificationRegistered) {
-      ourIsNotificationRegistered = true;
-      NotificationsConfiguration.getNotificationsConfiguration().register(
-        ourNotificationGroupId,
-        NotificationDisplayType.STICKY_BALLOON,
-        true);
-    }
-
     updateKeymapConflicts(keymap);
     final int unmutedConflicts = getUnmutedConflictsCount();
     final boolean hasOtherConflicts = unmutedConflicts > 1;
@@ -276,7 +265,7 @@ public final class SystemShortcuts {
     }
 
     final Notification notification =
-      new Notification(ourNotificationGroupId, IdeBundle.message("notification.title.shortcuts.conflicts"), message, NotificationType.WARNING);
+      GROUP.createNotification(IdeBundle.message("notification.title.shortcuts.conflicts"), message, NotificationType.WARNING);
 
     if (hasOtherConflicts) {
       final AnAction showKeymapPanelAction = DumbAwareAction.create(IdeBundle.message("action.text.modify.shortcuts"), e -> {
@@ -387,15 +376,11 @@ public final class SystemShortcuts {
   private void readSystem() {
     myKeyStroke2SysShortcut.clear();
 
-    if (!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm) {
+    if (!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm || !Registry.is("read.system.shortcuts")) {
       return;
     }
 
     try {
-      if (!Registry.is("read.system.shortcuts")) {
-        return;
-      }
-
       if (ourShkClass == null) {
         ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
       }
@@ -445,19 +430,21 @@ public final class SystemShortcuts {
         myKeyStroke2SysShortcut.put(sysKS, shk);
 
         if (DEBUG_SYSTEM_SHORTCUTS) {
-          debugInfo.append(shk.toString()).append(";\n");
+          debugInfo.append(shk).append(";\n");
         }
       }
       if (DEBUG_SYSTEM_SHORTCUTS) {
         Logger.getInstance(SystemShortcuts.class).info("system shortcuts:\n" + debugInfo);
       }
+    }
+    catch (Throwable e) {
+      Logger.getInstance(SystemShortcuts.class).debug(e);
+    }
+    finally {
       if (SystemInfo.isMacOSBigSur) {
         addCustomShortcut(KeyEvent.VK_OPEN_BRACKET, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, "Select Next Tab Window");
         addCustomShortcut(KeyEvent.VK_CLOSE_BRACKET, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, "Select Previous Tab Window");
       }
-    }
-    catch (Throwable e) {
-      Logger.getInstance(SystemShortcuts.class).debug(e);
     }
   }
 
@@ -484,22 +471,22 @@ public final class SystemShortcuts {
         return;
       }
       myMutedActions = new HashSet<>();
-      final String[] muted = PropertiesComponent.getInstance().getValues(MUTED_ACTIONS_KEY);
+      List<String> muted = PropertiesComponent.getInstance().getList(MUTED_ACTIONS_KEY);
       if (muted != null) {
-        Collections.addAll(myMutedActions, muted);
+        myMutedActions.addAll(muted);
       }
     }
 
     void addMutedAction(@NotNull String actId) {
       init();
       myMutedActions.add(actId);
-      PropertiesComponent.getInstance().setValues(MUTED_ACTIONS_KEY, ArrayUtilRt.toStringArray(myMutedActions));
+      PropertiesComponent.getInstance().setList(MUTED_ACTIONS_KEY, myMutedActions);
     }
 
     void removeMutedAction(@NotNull String actId) {
       init();
       myMutedActions.remove(actId);
-      PropertiesComponent.getInstance().setValues(MUTED_ACTIONS_KEY, ArrayUtilRt.toStringArray(myMutedActions));
+      PropertiesComponent.getInstance().setList(MUTED_ACTIONS_KEY, myMutedActions);
     }
 
     public boolean isMutedAction(@NotNull String actionId) {

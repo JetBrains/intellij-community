@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.inference.nullability;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -18,170 +18,158 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/inference/nullability")
-public abstract class NullabilityInferenceTestGenerated extends AbstractNullabilityInferenceTest {
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inference/nullability")
-    public static class TestBucket1 extends AbstractNullabilityInferenceTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("arrayOfArraysOfNull.kt")
-        public void testArrayOfArraysOfNull() throws Exception {
-            runTest("testData/inference/nullability/arrayOfArraysOfNull.kt");
-        }
-
-        @TestMetadata("arrayOfNulls.kt")
-        public void testArrayOfNulls() throws Exception {
-            runTest("testData/inference/nullability/arrayOfNulls.kt");
-        }
-
-        @TestMetadata("binaryExpressionOperand.kt")
-        public void testBinaryExpressionOperand() throws Exception {
-            runTest("testData/inference/nullability/binaryExpressionOperand.kt");
-        }
-
-        @TestMetadata("callExternallyAnnotatedJavaFunction.kt")
-        public void testCallExternallyAnnotatedJavaFunction() throws Exception {
-            runTest("testData/inference/nullability/callExternallyAnnotatedJavaFunction.kt");
-        }
-
-        @TestMetadata("classTypeParameters.kt")
-        public void testClassTypeParameters() throws Exception {
-            runTest("testData/inference/nullability/classTypeParameters.kt");
-        }
-
-        @TestMetadata("compareWithNull.kt")
-        public void testCompareWithNull() throws Exception {
-            runTest("testData/inference/nullability/compareWithNull.kt");
-        }
-
-        @TestMetadata("forcedNullability.kt")
-        public void testForcedNullability() throws Exception {
-            runTest("testData/inference/nullability/forcedNullability.kt");
-        }
-
-        @TestMetadata("functionTypeParameterNullability.kt")
-        public void testFunctionTypeParameterNullability() throws Exception {
-            runTest("testData/inference/nullability/functionTypeParameterNullability.kt");
-        }
-
-        @TestMetadata("functions.kt")
-        public void testFunctions() throws Exception {
-            runTest("testData/inference/nullability/functions.kt");
-        }
-
-        @TestMetadata("ifCondition.kt")
-        public void testIfCondition() throws Exception {
-            runTest("testData/inference/nullability/ifCondition.kt");
-        }
-
-        @TestMetadata("javaStream.kt")
-        public void testJavaStream() throws Exception {
-            runTest("testData/inference/nullability/javaStream.kt");
-        }
-
-        @TestMetadata("lambdaReturnNull.kt")
-        public void testLambdaReturnNull() throws Exception {
-            runTest("testData/inference/nullability/lambdaReturnNull.kt");
-        }
-
-        @TestMetadata("listOfWithNullLiteral.kt")
-        public void testListOfWithNullLiteral() throws Exception {
-            runTest("testData/inference/nullability/listOfWithNullLiteral.kt");
-        }
-
-        @TestMetadata("loopIterator.kt")
-        public void testLoopIterator() throws Exception {
-            runTest("testData/inference/nullability/loopIterator.kt");
-        }
-
-        @TestMetadata("loops.kt")
-        public void testLoops() throws Exception {
-            runTest("testData/inference/nullability/loops.kt");
-        }
-
-        @TestMetadata("notNullCallSequence.kt")
-        public void testNotNullCallSequence() throws Exception {
-            runTest("testData/inference/nullability/notNullCallSequence.kt");
-        }
-
-        @TestMetadata("nullAsAssignment.kt")
-        public void testNullAsAssignment() throws Exception {
-            runTest("testData/inference/nullability/nullAsAssignment.kt");
-        }
-
-        @TestMetadata("nullAsInitializer.kt")
-        public void testNullAsInitializer() throws Exception {
-            runTest("testData/inference/nullability/nullAsInitializer.kt");
-        }
-
-        @TestMetadata("nullLiteral.kt")
-        public void testNullLiteral() throws Exception {
-            runTest("testData/inference/nullability/nullLiteral.kt");
-        }
-
-        @TestMetadata("returnNull.kt")
-        public void testReturnNull() throws Exception {
-            runTest("testData/inference/nullability/returnNull.kt");
-        }
+public class NullabilityInferenceTestGenerated extends AbstractNullabilityInferenceTest {
+    private void runTest(String testDataFilePath) throws Exception {
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inference/nullability")
-    public static class TestBucket2 extends AbstractNullabilityInferenceTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+    @TestMetadata("arrayOfArraysOfNull.kt")
+    public void testArrayOfArraysOfNull() throws Exception {
+        runTest("testData/inference/nullability/arrayOfArraysOfNull.kt");
+    }
 
-        @TestMetadata("sequenceOfCallsWIthLambda.kt")
-        public void testSequenceOfCallsWIthLambda() throws Exception {
-            runTest("testData/inference/nullability/sequenceOfCallsWIthLambda.kt");
-        }
+    @TestMetadata("arrayOfNulls.kt")
+    public void testArrayOfNulls() throws Exception {
+        runTest("testData/inference/nullability/arrayOfNulls.kt");
+    }
 
-        @TestMetadata("smartCast.kt")
-        public void testSmartCast() throws Exception {
-            runTest("testData/inference/nullability/smartCast.kt");
-        }
+    @TestMetadata("binaryExpressionOperand.kt")
+    public void testBinaryExpressionOperand() throws Exception {
+        runTest("testData/inference/nullability/binaryExpressionOperand.kt");
+    }
 
-        @TestMetadata("spreadExpression.kt")
-        public void testSpreadExpression() throws Exception {
-            runTest("testData/inference/nullability/spreadExpression.kt");
-        }
+    @TestMetadata("callExternallyAnnotatedJavaFunction.kt")
+    public void testCallExternallyAnnotatedJavaFunction() throws Exception {
+        runTest("testData/inference/nullability/callExternallyAnnotatedJavaFunction.kt");
+    }
 
-        @TestMetadata("superMethod.kt")
-        public void testSuperMethod() throws Exception {
-            runTest("testData/inference/nullability/superMethod.kt");
-        }
+    @TestMetadata("classTypeParameters.kt")
+    public void testClassTypeParameters() throws Exception {
+        runTest("testData/inference/nullability/classTypeParameters.kt");
+    }
 
-        @TestMetadata("typeCast.kt")
-        public void testTypeCast() throws Exception {
-            runTest("testData/inference/nullability/typeCast.kt");
-        }
+    @TestMetadata("compareWithNull.kt")
+    public void testCompareWithNull() throws Exception {
+        runTest("testData/inference/nullability/compareWithNull.kt");
+    }
 
-        @TestMetadata("typeParameters.kt")
-        public void testTypeParameters() throws Exception {
-            runTest("testData/inference/nullability/typeParameters.kt");
-        }
+    @TestMetadata("forcedNullability.kt")
+    public void testForcedNullability() throws Exception {
+        runTest("testData/inference/nullability/forcedNullability.kt");
+    }
 
-        @TestMetadata("typeParametersReturnType.kt")
-        public void testTypeParametersReturnType() throws Exception {
-            runTest("testData/inference/nullability/typeParametersReturnType.kt");
-        }
+    @TestMetadata("functionTypeParameterNullability.kt")
+    public void testFunctionTypeParameterNullability() throws Exception {
+        runTest("testData/inference/nullability/functionTypeParameterNullability.kt");
+    }
 
-        @TestMetadata("typeParametersValueParams.kt")
-        public void testTypeParametersValueParams() throws Exception {
-            runTest("testData/inference/nullability/typeParametersValueParams.kt");
-        }
+    @TestMetadata("functions.kt")
+    public void testFunctions() throws Exception {
+        runTest("testData/inference/nullability/functions.kt");
+    }
 
-        @TestMetadata("useAsReceiver.kt")
-        public void testUseAsReceiver() throws Exception {
-            runTest("testData/inference/nullability/useAsReceiver.kt");
-        }
+    @TestMetadata("ifCondition.kt")
+    public void testIfCondition() throws Exception {
+        runTest("testData/inference/nullability/ifCondition.kt");
+    }
 
-        @TestMetadata("whileCondition.kt")
-        public void testWhileCondition() throws Exception {
-            runTest("testData/inference/nullability/whileCondition.kt");
-        }
+    @TestMetadata("javaStream.kt")
+    public void testJavaStream() throws Exception {
+        runTest("testData/inference/nullability/javaStream.kt");
+    }
+
+    @TestMetadata("lambdaReturnNull.kt")
+    public void testLambdaReturnNull() throws Exception {
+        runTest("testData/inference/nullability/lambdaReturnNull.kt");
+    }
+
+    @TestMetadata("listOfWithNullLiteral.kt")
+    public void testListOfWithNullLiteral() throws Exception {
+        runTest("testData/inference/nullability/listOfWithNullLiteral.kt");
+    }
+
+    @TestMetadata("loopIterator.kt")
+    public void testLoopIterator() throws Exception {
+        runTest("testData/inference/nullability/loopIterator.kt");
+    }
+
+    @TestMetadata("loops.kt")
+    public void testLoops() throws Exception {
+        runTest("testData/inference/nullability/loops.kt");
+    }
+
+    @TestMetadata("notNullCallSequence.kt")
+    public void testNotNullCallSequence() throws Exception {
+        runTest("testData/inference/nullability/notNullCallSequence.kt");
+    }
+
+    @TestMetadata("nullAsAssignment.kt")
+    public void testNullAsAssignment() throws Exception {
+        runTest("testData/inference/nullability/nullAsAssignment.kt");
+    }
+
+    @TestMetadata("nullAsInitializer.kt")
+    public void testNullAsInitializer() throws Exception {
+        runTest("testData/inference/nullability/nullAsInitializer.kt");
+    }
+
+    @TestMetadata("nullLiteral.kt")
+    public void testNullLiteral() throws Exception {
+        runTest("testData/inference/nullability/nullLiteral.kt");
+    }
+
+    @TestMetadata("returnNull.kt")
+    public void testReturnNull() throws Exception {
+        runTest("testData/inference/nullability/returnNull.kt");
+    }
+
+    @TestMetadata("sequenceOfCallsWIthLambda.kt")
+    public void testSequenceOfCallsWIthLambda() throws Exception {
+        runTest("testData/inference/nullability/sequenceOfCallsWIthLambda.kt");
+    }
+
+    @TestMetadata("smartCast.kt")
+    public void testSmartCast() throws Exception {
+        runTest("testData/inference/nullability/smartCast.kt");
+    }
+
+    @TestMetadata("spreadExpression.kt")
+    public void testSpreadExpression() throws Exception {
+        runTest("testData/inference/nullability/spreadExpression.kt");
+    }
+
+    @TestMetadata("superMethod.kt")
+    public void testSuperMethod() throws Exception {
+        runTest("testData/inference/nullability/superMethod.kt");
+    }
+
+    @TestMetadata("typeCast.kt")
+    public void testTypeCast() throws Exception {
+        runTest("testData/inference/nullability/typeCast.kt");
+    }
+
+    @TestMetadata("typeParameters.kt")
+    public void testTypeParameters() throws Exception {
+        runTest("testData/inference/nullability/typeParameters.kt");
+    }
+
+    @TestMetadata("typeParametersReturnType.kt")
+    public void testTypeParametersReturnType() throws Exception {
+        runTest("testData/inference/nullability/typeParametersReturnType.kt");
+    }
+
+    @TestMetadata("typeParametersValueParams.kt")
+    public void testTypeParametersValueParams() throws Exception {
+        runTest("testData/inference/nullability/typeParametersValueParams.kt");
+    }
+
+    @TestMetadata("useAsReceiver.kt")
+    public void testUseAsReceiver() throws Exception {
+        runTest("testData/inference/nullability/useAsReceiver.kt");
+    }
+
+    @TestMetadata("whileCondition.kt")
+    public void testWhileCondition() throws Exception {
+        runTest("testData/inference/nullability/whileCondition.kt");
     }
 }

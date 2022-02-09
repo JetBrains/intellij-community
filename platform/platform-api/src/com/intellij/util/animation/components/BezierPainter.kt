@@ -12,7 +12,7 @@ import javax.swing.JComponent
 import kotlin.properties.Delegates
 import kotlin.reflect.KProperty
 
-class BezierPainter(x1: Double, y1: Double, x2: Double, y2: Double) : JComponent() {
+open class BezierPainter(x1: Double, y1: Double, x2: Double, y2: Double) : JComponent() {
 
   private val controlSize = 10
   private val gridColor = JBColor(Color(0xF0F0F0), Color(0x313335))

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages.handlers
 
@@ -29,8 +29,8 @@ import com.intellij.util.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinIndependentBundle
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
+import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.findUsages.*
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.getTopMostOverriddenElementsToHighlight
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isDataClassComponentFunction
@@ -80,7 +80,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             mustOpenInNewTab: Boolean
         ): AbstractFindUsagesDialog {
             val options = factory.findFunctionOptions
-            val lightMethod = getElement().providedToLightMethods().firstOrNull()
+            val lightMethod = getElement().toLightMethods().firstOrNull()
             if (lightMethod != null) {
                 return KotlinFindFunctionUsagesDialog(lightMethod, project, options, toShowInNewTab, mustOpenInNewTab, isSingleFile, this)
             }
@@ -144,7 +144,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             if (element is KtParameter && !element.hasValOrVar() && factory.findPropertyOptions.isSearchInOverridingMethods) {
                 val function = element.ownerFunction
                 if (function != null && function.isOverridable()) {
-                    function.providedToLightMethods().singleOrNull()?.let { method ->
+                    function.toLightMethods().singleOrNull()?.let { method ->
                         if (OverridingMethodsSearch.search(method).any()) {
                             val parametersCount = method.parameterList.parametersCount
                             val parameterIndex = element.parameterIndex()
@@ -273,11 +273,11 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                     // TODO: very bad code!! ReferencesSearch does not work correctly for constructors and annotation parameters
                     val psiMethodScopeSearch = when {
                         element is KtParameter && element.isDataClassComponentFunction ->
-                            options.searchScope.excludeKotlinSources()
+                            options.searchScope.excludeKotlinSources(project)
                         else -> options.searchScope
                     }
 
-                    for (psiMethod in element.providedToLightMethods().filterDataClassComponentsIfDisabled(kotlinSearchOptions)) {
+                    for (psiMethod in element.toLightMethods().filterDataClassComponentsIfDisabled(kotlinSearchOptions)) {
                         addTask {
                             val query = MethodReferencesSearch.search(psiMethod, psiMethodScopeSearch, true)
                             applyQueryFilters(
@@ -343,7 +343,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
         private const val DISABLE = "DISABLE"
         private val DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT
             @Nls
-            get() = KotlinIndependentBundle.message(
+            get() = KotlinBundle.message(
                 "find.usages.text.find.usages.for.data.class.components.and.destruction.declarations",
                 DISABLE_ONCE,
                 DISABLE

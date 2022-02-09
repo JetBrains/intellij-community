@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
+import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -69,7 +71,7 @@ val DEFAULT_GRADLE_PLUGIN_REPOSITORY = RepositoryDescription(
 fun devRepository(version: String) = RepositoryDescription(
     "teamcity.kotlin.dev",
     "Teamcity Repository of Kotlin Development Builds",
-    "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Compiler),number:$version,branch:(default:any)/artifacts/content/maven",
+    "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Aggregate),number:$version,branch:(default:any)/artifacts/content/maven",
     null,
     isSnapshot = false
 )
@@ -121,29 +123,54 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  * DO NOT CALL THIS ON AWT THREAD
  */
 @RequiresBackgroundThread
-fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
+fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
     if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
     val disposable = KotlinPluginDisposable.getInstance(project)
-    val kotlinFiles = ReadAction.nonBlocking<Collection<VirtualFile>> {
-        return@nonBlocking FileTypeIndex.getFiles(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
+
+    val projectScope = project.projectScope()
+    // nothing to configure if there is no Kotlin files in entire project
+    val anyKotlinFileInProject = disposable.nonBlockingReadAction {
+        FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
-        .inSmartMode(project)
-        .expireWith(disposable)
-        .executeSynchronously()
+    if (!anyKotlinFileInProject) {
+        return emptyList()
+    }
 
     val projectFileIndex = ProjectFileIndex.getInstance(project)
-    val modules = kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
-        project.runReadActionInSmartMode {
-            if (projectFileIndex.isInSourceContent(ktFile)) {
-                projectFileIndex.getModuleForFile(ktFile)
-            } else null
+
+    val modules =
+        if (modulesWithKotlinFacets.isNullOrEmpty()) {
+            val kotlinFiles = disposable.nonBlockingReadAction {
+                FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
+            }
+
+            kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
+                if (projectFileIndex.isInSourceContent(ktFile)) {
+                    projectFileIndex.getModuleForFile(ktFile)
+                } else null
+            }
+        } else {
+            // filter modules with Kotlin facet AND have at least a single Kotlin file in them
+            disposable.nonBlockingReadAction {
+                modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
+                    if (module.isDisposed) return@filterTo false
+
+                    FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, module.moduleScope)
+                }
+            }
         }
-    }
     return modules
 }
+
+private fun <T> Disposable.nonBlockingReadAction(task: () -> T): T =
+    ReadAction.nonBlocking<T> {
+        task()
+    }
+        .expireWith(this)
+        .executeSynchronously()
 
 /**
  * Returns a list of modules which contain sources in Kotlin, grouped by base module.

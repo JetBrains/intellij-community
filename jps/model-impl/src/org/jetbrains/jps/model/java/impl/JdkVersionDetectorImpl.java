@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -58,17 +58,16 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         if (versionString != null) {
           JavaVersion version = JavaVersion.parse(versionString);
 
-          String arch = unquoteProperty(p, "OS_ARCH");
-          boolean x64 = "x86_64".equals(arch) || "amd64".equals(arch);
-          Bitness bitness = x64 ? Bitness.x64 : Bitness.x32;
-
           Variant variant = detectVariant(p);
           if (variant == null && version.feature < 9) {
             // pre-modular release files rarely contain enough information
             JdkVersionInfo fromJar = detectFromJar(homePath);
             if (fromJar != null) variant = fromJar.variant;
           }
-          return new JdkVersionInfo(version, bitness, variant);
+
+          CpuArch arch = CpuArch.fromString(unquoteProperty(p, "OS_ARCH"));
+
+          return new JdkVersionInfo(version, variant, arch);
         }
       }
       catch (IOException | IllegalArgumentException e) {
@@ -91,7 +90,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
             boolean x64 = SystemInfo.isMac || Files.isDirectory(rtFile.resolveSibling("amd64"));
             String vendorString = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
             Variant variant = vendorString != null ? detectVendor(vendorString) : null;
-            return new JdkVersionInfo(version, x64 ? Bitness.x64 : Bitness.x32, variant);
+            return new JdkVersionInfo(version, variant, x64 ? CpuArch.X86_64 : CpuArch.UNKNOWN);
           }
         }
       }
@@ -125,8 +124,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           JavaVersion base = JavaVersion.parse(lines.get(0));
           JavaVersion rt = JavaVersion.tryParse(lines.size() > 2 ? lines.get(1) : null);
           JavaVersion version = rt != null && rt.feature == base.feature && rt.minor == base.minor ? rt : base;
-          boolean x64 = lines.stream().anyMatch(s -> s.contains("64-Bit") || s.contains("x86_64") || s.contains("amd64"));
-          return new JdkVersionInfo(version, x64 ? Bitness.x64 : Bitness.x32, null);
+          return new JdkVersionInfo(version, null, CpuArch.UNKNOWN);
         }
       }
       catch (IOException | IllegalArgumentException e) {
@@ -188,7 +186,6 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
   private static class VersionOutputReader extends BaseOutputReader {
     private static final BaseOutputReader.Options OPTIONS = new BaseOutputReader.Options() {
       @Override public SleepingPolicy policy() { return SleepingPolicy.BLOCKING; }
-      @Override public boolean splitToLines() { return true; }
       @Override public boolean sendIncompleteLines() { return false; }
       @Override public boolean withSeparators() { return false; }
     };

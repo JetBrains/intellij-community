@@ -11,6 +11,7 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.decompiler.builtIns.BuiltInDefinitionFile
 import org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInFileType
@@ -22,9 +23,11 @@ import org.jetbrains.kotlin.metadata.js.JsProtoBuf
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import org.jetbrains.kotlin.utils.JsMetadataVersion
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.lang.manifest.ManifestFileType
 import java.io.ByteArrayInputStream
 import java.io.DataInput
@@ -45,7 +48,7 @@ abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExten
         override fun isEqual(val1: FqName?, val2: FqName?) = val1 == val2
     }
 
-    private val LOG = Logger.getInstance(classOfIndex)
+    protected val LOG = Logger.getInstance(classOfIndex)
 
     override fun getName() = KEY
 
@@ -73,6 +76,54 @@ abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExten
 
 fun <T> KotlinFileIndexBase<T>.hasSomethingInPackage(fqName: FqName, scope: GlobalSearchScope): Boolean =
     !FileBasedIndex.getInstance().processValues(name, fqName, null, { _, _ -> false }, scope)
+
+object KotlinPartialPackageNamesIndex: KotlinFileIndexBase<KotlinPartialPackageNamesIndex>(KotlinPartialPackageNamesIndex::class.java) {
+
+    override fun getIndexer() = INDEXER
+
+    override fun getInputFilter(): DefaultFileTypeSpecificInputFilter {
+        return DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE, KotlinFileType.INSTANCE)
+    }
+
+    override fun getVersion() = VERSION
+
+    private const val VERSION = 1
+
+    private val INDEXER = DataIndexer<FqName, Void, FileContent> { fileContent ->
+        try {
+            val fqName =
+                fileContent.takeIf { it.fileType == KotlinFileType.INSTANCE }?.psiFile.safeAs<KtFile>()?.packageFqName?.asString()
+                    ?: IDEKotlinBinaryClassCache.getInstance()
+                        .getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)?.packageName
+            fqName?.let {
+                val voidValue = null as Void?
+                mapOf<FqName, Void?>(FqName(it) to voidValue, toPartialFqName(it) to voidValue)
+            } ?: emptyMap()
+        } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (e: Throwable) {
+            LOG.warn("Error while indexing file " + fileContent.fileName, e)
+            emptyMap()
+        }
+    }
+
+
+    fun toPartialFqName(fqName: FqName): FqName = toPartialFqName(fqName.asString())
+
+    /**
+     * Picks partial name from `fqName`,
+     * actually it is the most top segment from `fqName`
+     *
+     * @param fqName
+     * @return
+     */
+    fun toPartialFqName(fqName: String): FqName {
+        // so far we use only the most top segment frm fqName if it is not a root
+        // i.e. only `foo` from `foo.bar.zoo`
+        val dotIndex = fqName.indexOf('.')
+        return FqName(if (dotIndex > 0) fqName.substring(0, dotIndex) else fqName)
+    }
+}
 
 object KotlinClassFileIndex : KotlinFileIndexBase<KotlinClassFileIndex>(KotlinClassFileIndex::class.java) {
 

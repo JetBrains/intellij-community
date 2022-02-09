@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
@@ -20,6 +20,57 @@ object KotlinPluginCompatibilityVerifier {
     }
 }
 
+data class KotlinVersionVerbose(val plainVersion: KotlinVersion, val milestone: KotlinVersionMilestone?, val buildNumber: Int?) {
+    @Suppress("EnumEntryName")
+    enum class KotlinVersionMilestone {
+        SNAPSHOT, dev, M1, M2, RC, RC2, release;
+    }
+
+    companion object {
+        const val REGEX =
+            "(\\d+)\\." +
+                    "(\\d+)\\." +
+                    "(\\d+)" +
+                    "(?:-([A-Za-z]+\\d?))?" +
+                    "(?:-(\\d+))?"
+
+        @JvmStatic
+        fun parse(version: String): KotlinVersionVerbose? {
+            val (major, minor, patch, milestone, buildNumber) = REGEX.toRegex().matchEntire(version)
+                .let { it ?: return null }.destructured
+            return fromRawArgs(major, minor, patch, milestone, buildNumber)
+        }
+
+        internal fun fromRawArgs(
+            major: String,
+            minor: String,
+            patch: String,
+            milestone: String?,
+            buildNumber: String?
+        ): KotlinVersionVerbose {
+            val enumMilestone = KotlinVersionMilestone.values().singleOrNull { it.name.equals(milestone, ignoreCase = true) }
+            val intBuildNumber = buildNumber?.toIntOrNull()
+            return KotlinVersionVerbose(KotlinVersion(major.toInt(), minor.toInt(), patch.toInt()), enumMilestone, intBuildNumber)
+        }
+    }
+
+    override fun toString(): String = buildString {
+        append(plainVersion)
+        milestone?.let {
+            append('-')
+            append(it.name)
+        }
+
+        buildNumber?.let {
+            append('-')
+            append(it)
+        }
+    }
+}
+
+/**
+ * Tests - [org.jetbrains.kotlin.test.CompatibilityVerifierVersionComparisonTest]
+ */
 interface KotlinPluginVersion {
     val kotlinVersion: String // 1.2.3
     val status: String?
@@ -36,30 +87,34 @@ interface KotlinPluginVersion {
 }
 
 data class NewKotlinPluginVersion(
-    override val kotlinVersion: String, // 1.2.3
-    override val status: String?, // release, eap, rc
-    val kotlinBuildNumber: String?,
+    val kotlinVersionVerbose: KotlinVersionVerbose,
     override val buildNumber: String?, // 53
     override val platformVersion: PlatformVersion,
     val patchNumber: String?
 ) : KotlinPluginVersion {
+    override val kotlinVersion: String
+        get() = kotlinVersionVerbose.plainVersion.toString()
+
+    override val status: String?
+        get() = kotlinVersionVerbose.milestone?.name
+
     companion object {
         //203-1.4.20-dev-4575-IJ1234.45-1
         private const val KID_KOTLIN_VERSION_REGEX_STRING =
-            "^(\\d{3})" +                            // IDEA_VERSION_ID, like '202'
-                    "-([\\d.]+)" +                   // COMPILER_VERSION name, like '1.4.10'
-                    "(?:-([A-Za-z]+))?" +            // (Optional) COMPILER_VERSION milestone, like 'eap/dev/release'
-                    "(?:-(\\d+))?" +                 // (Optional) COMPILER_VERSION build number, like '4242'
-                    "-([A-Z]{2})" +                  // Platform kind, like 'IJ'
-                    "(?:(\\d+)\\.)?" +               // (Optional) BRANCH_SUFFIX, like '1234'
-                    "(\\d*)" +                       // Build number, like '45'
-                    "(?:-(\\d+))?"                   // (Optional) Tooling update, like '-1'
+            "^(\\d{3})" +                               // IDEA_VERSION_ID, like '202'
+                    "-${KotlinVersionVerbose.REGEX}" +  // Kotlin Compiler version
+                    "-([A-Z]{2})" +                     // Platform kind, like 'IJ'
+                    "(?:(\\d+)\\.)?" +                  // (Optional) BRANCH_SUFFIX, like '1234'
+                    "(\\d*)" +                          // Build number, like '45'
+                    "(?:-(\\d+))?"                      // (Optional) Tooling update, like '-1'
 
         private val KID_KOTLIN_VERSION_REGEX = KID_KOTLIN_VERSION_REGEX_STRING.toRegex()
 
         fun parse(version: String): NewKotlinPluginVersion? {
             val matchResult = KID_KOTLIN_VERSION_REGEX.matchEntire(version) ?: return null
-            val (ideaVersionId, kotlinVersion, kotlinMilestone, kotlinBuild, ideaKind, branchSuffix, buildNumber, update) = matchResult.destructured
+            val (ideaVersionId, major, minor, patch,
+                kotlinMilestone, kotlinBuildNumber, ideaKind,
+                branchSuffix, buildNumber, update) = matchResult.destructured
 
             val platformVersionString = buildString {
                 append(ideaKind)
@@ -72,9 +127,7 @@ data class NewKotlinPluginVersion(
             val platformVersion = PlatformVersion.parse(platformVersionString) ?: return null
 
             return NewKotlinPluginVersion(
-                kotlinVersion,
-                kotlinMilestone.nullize(),
-                kotlinBuild.nullize(),
+                KotlinVersionVerbose.fromRawArgs(major, minor, patch, kotlinMilestone, kotlinBuildNumber) ?: return null,
                 buildNumber.nullize(),
                 platformVersion,
                 update.nullize()

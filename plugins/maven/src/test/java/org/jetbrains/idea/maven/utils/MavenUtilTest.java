@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenTestCase;
+import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 
 import java.io.File;

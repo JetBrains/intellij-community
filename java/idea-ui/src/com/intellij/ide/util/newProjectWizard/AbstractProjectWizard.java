@@ -380,8 +380,8 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   @Override
-  protected void helpAction() {
-    super.helpAction();
+  protected void doHelpAction() {
+    super.doHelpAction();
     if (isNewWizard()) {
       NewProjectWizardCollector.logHelpNavigation(myWizardContext);
     }

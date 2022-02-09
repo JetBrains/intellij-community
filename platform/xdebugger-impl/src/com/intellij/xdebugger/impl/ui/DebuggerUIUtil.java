@@ -4,9 +4,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -23,14 +21,16 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.AnActionLink;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -48,6 +48,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +65,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public final class DebuggerUIUtil {
   @NonNls public static final String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
+  @NonNls public static final String TEXT_VIEWER_POPUP_DIMENSION_KEY = "XDebugger.TextViewerPopup";
 
   private DebuggerUIUtil() {
   }
@@ -129,13 +131,7 @@ public final class DebuggerUIUtil {
   }
 
   public static void showValuePopup(@NotNull XFullValueEvaluator evaluator, @NotNull MouseEvent event, @NotNull Project project, @Nullable Editor editor) {
-    EditorTextField textArea = new TextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
-    textArea.setBackground(HintUtil.getInformationColor());
-
-    textArea.addSettingsProvider(e -> {
-      e.getScrollPane().setBorder(JBUI.Borders.empty());
-      e.getScrollPane().setViewportBorder(JBUI.Borders.empty());
-    });
+    EditorTextField textArea = createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
 
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
     evaluator.startEvaluation(callback);
@@ -163,20 +159,92 @@ public final class DebuggerUIUtil {
     }
   }
 
+  @ApiStatus.Experimental
+  public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project) {
+    TextViewer textArea = new TextViewer(initialText, project);
+    textArea.setBackground(HintUtil.getInformationColor());
+
+    textArea.addSettingsProvider(e -> {
+      e.getScrollPane().setBorder(JBUI.Borders.empty());
+      e.getScrollPane().setViewportBorder(JBUI.Borders.empty());
+    });
+
+    return textArea;
+  }
+
+  @NotNull
+  private static FullValueEvaluationCallbackImpl startEvaluation(@NotNull TextViewer textViewer,
+                                                                 @NotNull XFullValueEvaluator evaluator,
+                                                                 @Nullable Runnable afterFullValueEvaluation) {
+    FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textViewer) {
+      @Override
+      public void evaluated(@NotNull String fullValue) {
+        super.evaluated(fullValue);
+        AppUIUtil.invokeOnEdt(() -> {
+          if (afterFullValueEvaluation != null) {
+            afterFullValueEvaluation.run();
+          }
+        });
+      }
+    };
+    evaluator.startEvaluation(callback);
+    return callback;
+  }
+
+  @ApiStatus.Experimental
+  public static JBPopup createTextViewerPopup(@NotNull TextViewer textViewer,
+                                              @NotNull XFullValueEvaluator evaluator,
+                                              @Nullable Runnable afterFullValueEvaluation,
+                                              @NotNull Project project,
+                                              @Nullable Runnable hideRunnable,
+                                              @Nullable JComponent bottomToolBar) {
+    Dimension  preferredSize  = DimensionService.getInstance().getSize(TEXT_VIEWER_POPUP_DIMENSION_KEY, project);
+    if (preferredSize == null) {
+      Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
+      preferredSize = new Dimension(frameSize.width / 4, frameSize.height / 4);
+    }
+    textViewer.setPreferredSize(preferredSize);
+
+    final @NotNull FullValueEvaluationCallbackImpl callback = startEvaluation(textViewer, evaluator, afterFullValueEvaluation);
+
+    Runnable cancelCallback = () -> {
+      callback.setObsolete();
+      if (hideRunnable != null) {
+        hideRunnable.run();
+      }
+    };
+
+    BorderLayoutPanel componentToShow = JBUI.Panels.simplePanel();
+    componentToShow.addToCenter(textViewer);
+    if (bottomToolBar != null) {
+      componentToShow.addToBottom(bottomToolBar);
+    }
+
+    return createCancelablePopup(project, componentToShow, cancelCallback, TEXT_VIEWER_POPUP_DIMENSION_KEY);
+  }
+
   public static JBPopup createValuePopup(Project project,
                                           JComponent component,
                                           @Nullable final FullValueEvaluationCallbackImpl callback) {
+    Runnable cancelCallback = callback == null ? null : () -> callback.setObsolete();
+    return createCancelablePopup(project, component, cancelCallback, FULL_VALUE_POPUP_DIMENSION_KEY);
+  }
+
+  private static JBPopup createCancelablePopup(Project project,
+                                               JComponent component,
+                                               @Nullable Runnable cancelCallback,
+                                               @NotNull String dimensionKey) {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null);
     builder.setResizable(true)
       .setMovable(true)
-        .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
-        .setRequestFocus(true);
-      if (callback != null) {
-        builder.setCancelCallback(() -> {
-          callback.setObsolete();
-          return true;
-        });
-      }
+      .setDimensionServiceKey(project, dimensionKey, false)
+      .setRequestFocus(true);
+    if (cancelCallback != null) {
+      builder.setCancelCallback(() -> {
+        cancelCallback.run();
+        return true;
+      });
+    }
     return builder.createPopup();
   }
 
@@ -188,7 +256,7 @@ public final class DebuggerUIUtil {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
-                                                                    showAllOptions);
+                                          showAllOptions);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);
@@ -514,5 +582,50 @@ public final class DebuggerUIUtil {
       editor.getContentComponent().revalidate();
       editor.getContentComponent().repaint();
     }
+  }
+
+
+  @ApiStatus.Experimental
+  public static @NotNull JPanel createCustomToolbarComponent(@NotNull AnAction action, @NotNull AnActionLink actionLink) {
+    JPanel actionPanel = new JPanel(new GridBagLayout());
+
+    GridBag gridBag = new GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST);
+    int topInset = 5;
+    int bottomInset = 4;
+
+    actionPanel.add(actionLink, gridBag.next().insets(topInset, 10, bottomInset, 4));
+
+    Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
+    String shortcutsText = KeymapUtil.getShortcutsText(shortcuts);
+    if (!shortcutsText.isEmpty()) {
+      JComponent keymapHint = createKeymapHint(shortcutsText);
+      actionPanel.add(keymapHint, gridBag.next().insets(topInset, 4, bottomInset, 12));
+    }
+
+    actionPanel.setBackground(UIUtil.getToolTipActionBackground());
+    return actionPanel;
+  }
+
+  private static JComponent createKeymapHint(@NlsContexts.Label String shortcutRunAction) {
+    JBLabel shortcutHint = new JBLabel(shortcutRunAction) {
+      @Override
+      public Color getForeground() {
+        return getKeymapColor();
+      }
+    };
+    shortcutHint.setBorder(JBUI.Borders.empty());
+    shortcutHint.setFont(UIUtil.getToolTipFont());
+    return shortcutHint;
+  }
+
+  private static Color getKeymapColor() {
+    return JBColor.namedColor("ToolTip.Actions.infoForeground", new JBColor(0x99a4ad, 0x919191));
+  }
+
+  @ApiStatus.Experimental
+  public static JPanel getSecretComponentForToolbar() {
+    JPanel secretPanel = new JPanel();
+    secretPanel.setPreferredSize(new Dimension(0, 27));
+    return secretPanel;
   }
 }

@@ -35,6 +35,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     assertNotNull(action);
   }
 
+  public void testPatternMatchingInSwitchJava18() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, this::doTest);
+  }
+
   public void testPatternMatchingWithGuard() {
     doTest();
   }
@@ -110,6 +114,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testMalformedReferenceExpression() {
+    doTest();
+  }
+
+  public void testBrokenSealedHierarchy() {
     doTest();
   }
 

@@ -3,14 +3,19 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
+/**
+ * @deprecated Moved into private API
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 public class ActionToolbarBorder implements Border {
 
   private static final int WIDTH = 1;

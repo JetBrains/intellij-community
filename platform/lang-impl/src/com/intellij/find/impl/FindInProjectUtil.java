@@ -229,6 +229,16 @@ public final class FindInProjectUtil {
     }
   }
 
+  public static void findUsages(@NotNull final FindModel findModel,
+                                @NotNull final Project project,
+                                @NotNull final ProgressIndicator progressIndicator,
+                                @NotNull final FindUsagesProcessPresentation processPresentation,
+                                @NotNull final Set<? extends VirtualFile> filesToStart,
+                                @NotNull final Processor<? super UsageInfo> consumer) {
+    Runnable runnable = () -> new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
+    ProgressManager.getInstance().executeProcessUnderProgress(runnable, progressIndicator);
+  }
+
   static boolean processUsagesInFile(@NotNull final PsiFile psiFile,
                                      @NotNull final VirtualFile virtualFile,
                                      @NotNull final FindModel findModel,

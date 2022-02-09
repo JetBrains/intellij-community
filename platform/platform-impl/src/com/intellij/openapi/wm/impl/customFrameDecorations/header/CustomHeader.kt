@@ -5,16 +5,16 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.io.WindowsRegistryUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
@@ -25,8 +25,6 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.WinReg
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
@@ -41,29 +39,13 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     private val LOGGER = logger<CustomHeader>()
 
     val H
-      get() = 7
+      get() = 12
     val V
       get() = 5
 
 
     val LABEL_BORDER: JBEmptyBorder
       get() = JBUI.Borders.empty(V, 0)
-
-    val WINDOWS_VERSION = getWindowsReleaseId()
-
-    private fun getWindowsReleaseId(): String? {
-      try {
-        if (JnaLoader.isLoaded()) {
-          return Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
-                                                     "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                                                     "ReleaseId")
-        }
-      }
-      catch (e: Throwable) {
-        LOGGER.warn(e)
-      }
-      return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
-    }
 
     fun create(window: Window): CustomHeader {
       return if (window is JFrame) {
@@ -120,7 +102,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   init {
     isOpaque = true
-    background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground()
+    background = getHeaderBackground()
 
     fun onClose() {
       Disposer.dispose(this)
@@ -152,6 +134,8 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     setCustomFrameTopBorder()
   }
+
+  open protected fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
 
   protected fun setCustomFrameTopBorder(isTopNeeded: () -> Boolean = { true }, isBottomNeeded: () -> Boolean = { false }) {
     customFrameTopBorder = CustomFrameTopBorder(isTopNeeded, isBottomNeeded)
@@ -225,7 +209,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     buttonPanes.updateVisibility()
     customFrameTopBorder?.repaintBorder()
 
-    background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(myActive)
+    background = getHeaderBackground(myActive)
   }
 
   protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }
@@ -285,8 +269,8 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     private var activeColor: Color = defaultActiveBorder
 
     private fun calculateAffectsBorders(): Boolean {
-      val windowsVersion = WINDOWS_VERSION?.toIntOrNull() ?: 0
-      if (windowsVersion < 1809) return true // should always be active on older versions on Windows
+      val windowsBuild = SystemInfo.getWinBuildNumber() ?: 0
+      if (windowsBuild < 17763) return true // should always be active on older versions on Windows
       return Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
     }
 

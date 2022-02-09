@@ -338,7 +338,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     }
 
     @Override
-    @Nullable
     public Icon getIcon() {
       return null;
     }

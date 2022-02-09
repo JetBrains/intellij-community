@@ -8,6 +8,7 @@ import kotlin.io.path.readText
 
 fun isEap(version: String): Boolean {
     return version.contains("rc") || version.contains("eap") || version.contains("-M") || version.contains("RC")
+            || version.contains("Beta")
 }
 
 fun isDev(version: String): Boolean {
@@ -16,9 +17,4 @@ fun isDev(version: String): Boolean {
 
 fun isSnapshot(version: String): Boolean {
     return version.contains("SNAPSHOT", ignoreCase = true)
-}
-
-val buildNumber: String by lazy {
-    val versionFile = KotlinArtifacts.instance.kotlincDirectory.toPath().resolve("build.txt")
-    if (versionFile.exists()) versionFile.readText().trim() else "unknown"
 }

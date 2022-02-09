@@ -246,7 +246,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       val stateModel = GHPRStateModelImpl(project, dataProvider.stateData, dataProvider.changesData, model, disposable)
 
-      GHPRDetailsComponent.create(dataContext.securityService,
+      GHPRDetailsComponent.create(project,
+                                  dataContext.securityService,
                                   dataContext.avatarIconsProvider,
                                   branchesModel, detailsModel, metadataModel, stateModel)
     }.also {

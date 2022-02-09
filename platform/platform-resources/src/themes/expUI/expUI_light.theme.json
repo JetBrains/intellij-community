@@ -144,8 +144,21 @@
       }
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "Grey9",
+      "selectedEndBorderColor": "Grey9",
+      "selectedButtonColor": "Grey13",
+      "focusedSelectedButtonColor": "Blue6"
+    },
+
     "ComboBox": {
       "ArrowButton.background": "Grey13"
+    },
+
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
     },
 
     "TextField.background": "Grey13",
@@ -155,16 +168,25 @@
       "focusedBorderColor": "Grey13"
     },
 
+    "DragAndDrop": {
+      "borderColor": "Blue6",
+      "rowBackground": "#3573F026"
+    },
+
     "EditorTabs": {
       "tabInsets": "-3,12,-4,8",
       "hoverBackground": "Grey13",
       "hoverInactiveBackground": "Grey13"
     },
 
+    "Editor.searchFieldInsets": "7,10,7,8",
+
     "FileColor": {
       "Yellow": "Yellow11",
       "Green": "Green11"
     },
+
+    "Label.errorForeground": "#d92b2b",
 
     "Link": {
       "activeForeground": "Blue4",
@@ -179,22 +201,28 @@
       "background": "Grey2",
       "borderColor": "Grey4",
       "foreground": "Grey13",
-      "separatorColor": "Grey4"
+      "disabledForeground": "Grey6",
+      "separatorColor": "Grey4",
+      "selectionBackground": "Blue5",
+      "selectionForeground": "Grey13"
     },
 
     "PopupMenu": {
       "background": "Grey2",
-      "foreground": "Grey13"
+      "foreground": "Grey13",
+      "selectionForeground": "Grey13"
+    },
+
+    "MenuItem": {
+      "background": "Grey2",
+      "foreground": "Grey13",
+      "disabledForeground": "Grey6",
+      "selectionForeground": "Grey13"
     },
 
     "MemoryIndicator": {
       "allocatedBackground": "Grey10",
       "usedBackground": "#B7CEFA75"
-    },
-
-    "MenuItem": {
-      "background": "Grey2",
-      "foreground": "Grey13"
     },
 
     "Notification": {
@@ -209,11 +237,21 @@
     },
 
     "Popup": {
-      "Header": {
-        "activeBackground": "Grey12",
-        "inactiveBackground": "Grey11"
+      "background": "Grey13",
+      "borderWidth": 0.5,
+      "Advertiser": {
+        "borderInsets": "6,20,6,20",
+        "foreground": "Grey7",
+        "fontSizeOffset": {
+          "os.default": -1,
+          "os.windows": 0
+        }
       },
-      "Advertiser.foreground": "Grey7"
+      "Header": {
+        "activeBackground": "Grey13",
+        "inactiveBackground": "Grey13",
+        "inactiveForeground": "Grey7"
+      }
     },
 
     "CompletionPopup": {
@@ -227,11 +265,23 @@
       "indeterminateEndColor": "Blue6",
       "trackColor": "Grey10"
     },
+    "ToolBar.verticalToolbarInsets": "7,4,7,4",
+    "ToolBar.horizontalToolbarInsets": "4,7,4,7",
+
+    "SearchField": {
+      "errorForeground": "#d92b2b",
+      "errorBackground": "Red10"
+    },
 
     "SearchEverywhere": {
       "Tab.selectedBackground": "Blue13",
       "SearchField.background": "Grey13",
       "Advertiser.foreground": "Grey7"
+    },
+
+    "SearchMatch": {
+      "startBackground": "Yellow9",
+      "endBackground": "Yellow9"
     },
 
     "StatusBar": {
@@ -247,8 +297,10 @@
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "floatingBackground": "Grey13",
-        "itemInsets": "0,0,0,2",
-        "chevronInset": "2"
+        "itemInsets": "0,0,0,0",
+        "chevronInset": "0",
+        "floatingToolbarInsets": "8,12,8,12",
+        "itemBackgroundInsets": "2,4,2,4"
       }
     },
 
@@ -268,18 +320,30 @@
       "Header": {
         "inactiveBackground": "Grey12",
         "font.size.offset": 0
+      },
+      "HeaderTab": {
+        "hoverBackground": "Grey11",
+        "hoverInactiveBackground": "Grey11",
+        "leftRightInsets": "0,12,0,12"
+      },
+      "Button": {
+        "DragAndDrop" : {
+          "stripeBackground" : "Grey12",
+          "buttonDropBackground": "Blue13"
+        }
       }
     },
 
     "MainToolbar": {
       "background": "Grey2",
-      "icon": {
+      "inactiveBackground": "Grey2",
+      "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
         "hoverBackground": "Grey1",
         "pressedBackground": "Grey1"
       },
-      "dropdown": {
+      "Dropdown": {
         "foreground": "Grey11",
         "borderInsets": "12,6,12,6",
         "background": "Grey2",
@@ -288,12 +352,12 @@
       }
     },
 
+    "OnePixelDivider.background": "Grey11",
+
     "TitlePane": {
-      "background": "Grey2",
-      "inactiveBackground": "Grey2",
       "Button": {
         "hoverBackground": "Grey3",
-        "preferredSize": "28,40"
+        "preferredSize": "36,40"
       }
     },
 

@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -34,8 +33,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-  final override val useKotlinDslProperty = propertyGraph.graphProperty { false }
+  final override val sdkProperty = propertyGraph.property<Sdk?>(null)
+  final override val useKotlinDslProperty = propertyGraph.property(false)
 
   final override var sdk by sdkProperty
   final override var useKotlinDsl by useKotlinDslProperty
@@ -51,12 +50,12 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .columns(COLUMNS_MEDIUM)
       }.bottomGap(BottomGap.SMALL)
       row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
-        segmentedButton(listOf(false, true), useKotlinDslProperty) {
+        segmentedButton(listOf(false, true)) {
           when (it) {
             true -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
             else -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
           }
-        }
+        }.bind(useKotlinDslProperty)
       }.bottomGap(BottomGap.SMALL)
     }
     super.setupUI(builder)

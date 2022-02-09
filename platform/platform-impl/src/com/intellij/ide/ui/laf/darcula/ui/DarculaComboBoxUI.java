@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -336,7 +336,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       border = cc.getBorder();
       enabled = cc.isEnabled();
       cc.setBorder(JBUI.Borders.empty());
-      cc.setIpad(JBUI.emptyInsets());
+      cc.setIpad(JBInsets.emptyInsets());
       cc.setEnabled(comboBox.isEnabled());
       icon = cc.getIcon();
       if (!cc.isIconOnTheRight()) {
@@ -519,7 +519,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   public Insets getBorderInsets(Component c) {
     return DarculaUIUtil.isTableCellEditor(c) || isCompact(c) ? JBInsets.create(2, 3) :
-           isBorderless(c) ? JBUI.emptyInsets() : getDefaultComboBoxInsets();
+           isBorderless(c) ? JBInsets.emptyInsets() : getDefaultComboBoxInsets();
   }
 
   @Override
@@ -633,6 +633,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         }
       }
     }
+  }
+
+  @Override
+  public boolean isFocusTraversable(JComboBox<?> c) {
+    return !comboBox.isEditable() || !(editor instanceof ComboBoxCompositeEditor && ((ComboBoxCompositeEditor<?, ?>)editor).isEditable());
   }
 
   @Override

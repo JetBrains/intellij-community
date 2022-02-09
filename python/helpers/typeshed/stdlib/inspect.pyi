@@ -3,20 +3,27 @@ import sys
 import types
 from _typeshed import Self
 from collections import OrderedDict
-from collections.abc import Awaitable, Callable, Generator, Mapping, Sequence, Set
+from collections.abc import Awaitable, Callable, Generator, Mapping, Sequence, Set as AbstractSet
 from types import (
     AsyncGeneratorType,
     BuiltinFunctionType,
+    BuiltinMethodType,
     CodeType,
     CoroutineType,
     FrameType,
     FunctionType,
     GeneratorType,
+    GetSetDescriptorType,
+    LambdaType,
     MethodType,
     ModuleType,
     TracebackType,
 )
-from typing import Any, ClassVar, NamedTuple, Tuple, Type, Union
+
+if sys.version_info >= (3, 7):
+    from types import ClassMethodDescriptorType, WrapperDescriptorType, MemberDescriptorType, MethodDescriptorType
+
+from typing import Any, ClassVar, NamedTuple, Protocol, Tuple, Type, TypeVar, Union
 from typing_extensions import Literal, TypeGuard
 
 #
@@ -46,6 +53,8 @@ CO_ITERABLE_COROUTINE: int
 CO_ASYNC_GENERATOR: int
 TPFLAGS_IS_ABSTRACT: int
 
+modulesbyfile: dict[str, Any]
+
 def getmembers(object: object, predicate: Callable[[Any], bool] | None = ...) -> list[tuple[str, Any]]: ...
 def getmodulename(path: str) -> str | None: ...
 def ismodule(object: object) -> TypeGuard[ModuleType]: ...
@@ -71,17 +80,47 @@ if sys.version_info >= (3, 8):
 else:
     def isasyncgenfunction(object: object) -> bool: ...
 
+_T_cont = TypeVar("_T_cont", contravariant=True)
+_V_cont = TypeVar("_V_cont", contravariant=True)
+
+class _SupportsSet(Protocol[_T_cont, _V_cont]):
+    def __set__(self, __instance: _T_cont, __value: _V_cont) -> None: ...
+
+class _SupportsDelete(Protocol[_T_cont]):
+    def __delete__(self, __instance: _T_cont) -> None: ...
+
 def isasyncgen(object: object) -> TypeGuard[AsyncGeneratorType[Any, Any]]: ...
 def istraceback(object: object) -> TypeGuard[TracebackType]: ...
 def isframe(object: object) -> TypeGuard[FrameType]: ...
 def iscode(object: object) -> TypeGuard[CodeType]: ...
 def isbuiltin(object: object) -> TypeGuard[BuiltinFunctionType]: ...
-def isroutine(object: object) -> bool: ...
+
+if sys.version_info >= (3, 7):
+    def isroutine(
+        object: object,
+    ) -> TypeGuard[
+        FunctionType
+        | LambdaType
+        | MethodType
+        | BuiltinFunctionType
+        | BuiltinMethodType
+        | WrapperDescriptorType
+        | MethodDescriptorType
+        | ClassMethodDescriptorType
+    ]: ...
+    def ismethoddescriptor(object: object) -> TypeGuard[MethodDescriptorType]: ...
+    def ismemberdescriptor(object: object) -> TypeGuard[MemberDescriptorType]: ...
+
+else:
+    def isroutine(
+        object: object,
+    ) -> TypeGuard[FunctionType | LambdaType | MethodType | BuiltinFunctionType | BuiltinMethodType]: ...
+    def ismethoddescriptor(object: object) -> bool: ...
+    def ismemberdescriptor(object: object) -> bool: ...
+
 def isabstract(object: object) -> bool: ...
-def ismethoddescriptor(object: object) -> bool: ...
-def isdatadescriptor(object: object) -> bool: ...
-def isgetsetdescriptor(object: object) -> bool: ...
-def ismemberdescriptor(object: object) -> bool: ...
+def isgetsetdescriptor(object: object) -> TypeGuard[GetSetDescriptorType]: ...
+def isdatadescriptor(object: object) -> TypeGuard[_SupportsSet[Any, Any] | _SupportsDelete[Any]]: ...
 
 #
 # Retrieving source code
@@ -168,7 +207,8 @@ class _ParameterKind(enum.IntEnum):
     VAR_KEYWORD: int
 
     if sys.version_info >= (3, 8):
-        description: str
+        @property
+        def description(self) -> str: ...
 
 class Parameter:
     def __init__(self, name: str, kind: _ParameterKind, *, default: Any = ..., annotation: Any = ...) -> None: ...
@@ -210,19 +250,20 @@ class BoundArguments:
 def getclasstree(classes: list[type], unique: bool = ...) -> list[Any]: ...
 def walktree(classes: list[type], children: dict[Type[Any], list[type]], parent: Type[Any] | None) -> list[Any]: ...
 
-class ArgSpec(NamedTuple):
-    args: list[str]
-    varargs: str | None
-    keywords: str | None
-    defaults: Tuple[Any, ...]
-
 class Arguments(NamedTuple):
     args: list[str]
     varargs: str | None
     varkw: str | None
 
 def getargs(co: CodeType) -> Arguments: ...
-def getargspec(func: object) -> ArgSpec: ...
+
+if sys.version_info < (3, 11):
+    class ArgSpec(NamedTuple):
+        args: list[str]
+        varargs: str | None
+        keywords: str | None
+        defaults: Tuple[Any, ...]
+    def getargspec(func: object) -> ArgSpec: ...
 
 class FullArgSpec(NamedTuple):
     args: list[str]
@@ -244,21 +285,24 @@ class ArgInfo(NamedTuple):
 def getargvalues(frame: FrameType) -> ArgInfo: ...
 def formatannotation(annotation: object, base_module: str | None = ...) -> str: ...
 def formatannotationrelativeto(object: object) -> Callable[[object], str]: ...
-def formatargspec(
-    args: list[str],
-    varargs: str | None = ...,
-    varkw: str | None = ...,
-    defaults: Tuple[Any, ...] | None = ...,
-    kwonlyargs: Sequence[str] | None = ...,
-    kwonlydefaults: dict[str, Any] | None = ...,
-    annotations: dict[str, Any] = ...,
-    formatarg: Callable[[str], str] = ...,
-    formatvarargs: Callable[[str], str] = ...,
-    formatvarkw: Callable[[str], str] = ...,
-    formatvalue: Callable[[Any], str] = ...,
-    formatreturns: Callable[[Any], str] = ...,
-    formatannotation: Callable[[Any], str] = ...,
-) -> str: ...
+
+if sys.version_info < (3, 11):
+    def formatargspec(
+        args: list[str],
+        varargs: str | None = ...,
+        varkw: str | None = ...,
+        defaults: Tuple[Any, ...] | None = ...,
+        kwonlyargs: Sequence[str] | None = ...,
+        kwonlydefaults: dict[str, Any] | None = ...,
+        annotations: dict[str, Any] = ...,
+        formatarg: Callable[[str], str] = ...,
+        formatvarargs: Callable[[str], str] = ...,
+        formatvarkw: Callable[[str], str] = ...,
+        formatvalue: Callable[[Any], str] = ...,
+        formatreturns: Callable[[Any], str] = ...,
+        formatannotation: Callable[[Any], str] = ...,
+    ) -> str: ...
+
 def formatargvalues(
     args: list[str],
     varargs: str | None,
@@ -276,7 +320,7 @@ class ClosureVars(NamedTuple):
     nonlocals: Mapping[str, Any]
     globals: Mapping[str, Any]
     builtins: Mapping[str, Any]
-    unbound: Set[str]
+    unbound: AbstractSet[str]
 
 def getclosurevars(func: Callable[..., Any]) -> ClosureVars: ...
 def unwrap(func: Callable[..., Any], *, stop: Callable[[Any], Any] | None = ...) -> Any: ...
@@ -290,7 +334,7 @@ class Traceback(NamedTuple):
     lineno: int
     function: str
     code_context: list[str] | None
-    index: int | None  # type: ignore
+    index: int | None  # type: ignore[assignment]
 
 class FrameInfo(NamedTuple):
     frame: FrameType
@@ -298,7 +342,7 @@ class FrameInfo(NamedTuple):
     lineno: int
     function: str
     code_context: list[str] | None
-    index: int | None  # type: ignore
+    index: int | None  # type: ignore[assignment]
 
 def getframeinfo(frame: FrameType | TracebackType, context: int = ...) -> Traceback: ...
 def getouterframes(frame: Any, context: int = ...) -> list[FrameInfo]: ...

@@ -1,11 +1,8 @@
-from typing import Any, Mapping, Text, Type
+from typing import Any, Mapping, Type
+
+from .retry import Retry
 
 ssl_available: Any
-hiredis_version: Any
-HIREDIS_SUPPORTS_CALLABLE_ERRORS: Any
-HIREDIS_SUPPORTS_BYTE_BUFFER: Any
-msg: Any
-HIREDIS_USE_BYTE_BUFFER: Any
 SYM_STAR: Any
 SYM_DOLLAR: Any
 SYM_CRLF: Any
@@ -53,8 +50,8 @@ DefaultParser: Any
 
 class Encoder:
     def __init__(self, encoding, encoding_errors, decode_responses: bool) -> None: ...
-    def encode(self, value: Text | bytes | memoryview | bool | float) -> bytes: ...
-    def decode(self, value: Text | bytes | memoryview, force: bool = ...) -> Text: ...
+    def encode(self, value: str | bytes | memoryview | bool | float) -> bytes: ...
+    def decode(self, value: str | bytes | memoryview, force: bool = ...) -> str: ...
 
 class Connection:
     description_format: Any
@@ -71,26 +68,28 @@ class Connection:
     encoding: Any
     encoding_errors: Any
     decode_responses: Any
+    retry: Retry
     def __init__(
         self,
-        host: Text = ...,
+        host: str = ...,
         port: int = ...,
         db: int = ...,
-        password: Text | None = ...,
+        password: str | None = ...,
         socket_timeout: float | None = ...,
         socket_connect_timeout: float | None = ...,
         socket_keepalive: bool = ...,
         socket_keepalive_options: Mapping[str, int | str] | None = ...,
         socket_type: int = ...,
         retry_on_timeout: bool = ...,
-        encoding: Text = ...,
-        encoding_errors: Text = ...,
+        encoding: str = ...,
+        encoding_errors: str = ...,
         decode_responses: bool = ...,
         parser_class: Type[BaseParser] = ...,
         socket_read_size: int = ...,
         health_check_interval: int = ...,
-        client_name: Text | None = ...,
-        username: Text | None = ...,
+        client_name: str | None = ...,
+        username: str | None = ...,
+        retry: Retry | None = ...,
     ) -> None: ...
     def __del__(self): ...
     def register_connect_callback(self, callback): ...
@@ -105,7 +104,7 @@ class Connection:
     def read_response(self): ...
     def pack_command(self, *args): ...
     def pack_commands(self, commands): ...
-    def repr_pieces(self) -> list[tuple[Text, Text]]: ...
+    def repr_pieces(self) -> list[tuple[str, str]]: ...
 
 class SSLConnection(Connection):
     description_format: Any
@@ -128,6 +127,7 @@ class UnixDomainSocketConnection(Connection):
     encoding: Any
     encoding_errors: Any
     decode_responses: Any
+    retry: Retry
     def __init__(
         self,
         path=...,
@@ -135,22 +135,21 @@ class UnixDomainSocketConnection(Connection):
         username=...,
         password=...,
         socket_timeout=...,
-        encoding=...,
-        encoding_errors=...,
-        decode_responses=...,
-        retry_on_timeout=...,
+        encoding: str = ...,
+        encoding_errors: str = ...,
+        decode_responses: bool = ...,
+        retry_on_timeout: bool = ...,
         parser_class=...,
         socket_read_size: int = ...,
         health_check_interval: int = ...,
         client_name=...,
+        retry: Retry | None = ...,
     ) -> None: ...
-    def repr_pieces(self) -> list[tuple[Text, Text]]: ...
-
-def to_bool(value: object) -> bool: ...
+    def repr_pieces(self) -> list[tuple[str, str]]: ...
 
 class ConnectionPool:
     @classmethod
-    def from_url(cls, url: Text, db: int | None = ..., decode_components: bool = ..., **kwargs) -> ConnectionPool: ...
+    def from_url(cls, url: str, *, db: int = ..., decode_components: bool = ..., **kwargs) -> ConnectionPool: ...
     connection_class: Any
     connection_kwargs: Any
     max_connections: Any
@@ -175,3 +174,6 @@ class BlockingConnectionPool(ConnectionPool):
     def get_connection(self, command_name, *keys, **options): ...
     def release(self, connection): ...
     def disconnect(self): ...
+
+def to_bool(value: object) -> bool: ...
+def parse_url(url: str) -> dict[str, Any]: ...

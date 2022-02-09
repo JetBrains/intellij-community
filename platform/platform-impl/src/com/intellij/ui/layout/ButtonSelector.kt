@@ -10,13 +10,16 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Dimension
 import java.util.function.Supplier
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+@ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): ButtonSelectorToolbar {
   val actionGroup = DefaultActionGroup(options.map { ButtonSelectorAction(it, property, renderer(it)) })
   val config = DialogPanelConfig()
@@ -26,8 +29,26 @@ fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, r
   return toolbar
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+/**
+ * Creates segmented button or combobox if screen reader mode
+ */
+@Deprecated("Use Kotlin UI DSL Version 2")
+fun <T> Row.segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): SegmentedButton<T> {
+  lateinit var result: SegmentedButton<T>
+  val panel = com.intellij.ui.dsl.builder.panel {
+    row {
+      result = segmentedButton(options, renderer)
+        .customize(Gaps.EMPTY)
+        .bind(property)
+    }
+  }
+  panel.border = JBUI.Borders.empty(3, 3)
+  component(panel)
+  return result
+}
+
+@ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL Version 2")
 class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
                                                         private val property: GraphProperty<T>,
                                                         optionText: Supplier<@NlsActions.ActionText String>,
@@ -70,8 +91,8 @@ private class ButtonSelector(
   }
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+@ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL Version 2")
 class ButtonSelectorToolbar internal constructor(
   place: String,
   actionGroup: ActionGroup,

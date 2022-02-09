@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BooleanSupplier;
@@ -69,8 +70,7 @@ public final class FileBasedIndexScanUtil {
     if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
       ensureIdFilterUpToDate();
       //noinspection unchecked
-      Collection<K> names = (Collection<K>)FSRecords.getAllNames();
-      return ContainerUtil.process(names, processor);
+      return FSRecords.processAllNames((Processor<String>)processor);
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
       ensureIdFilterUpToDate();
@@ -94,7 +94,7 @@ public final class FileBasedIndexScanUtil {
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
         if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
-        if (!FileBasedIndexImpl.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
+        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
         Document document = fileDocumentManager.getCachedDocument(file);
         CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
         Map<K, ?> map = indexer.map(FileContentImpl.createByText(file, s, project));
@@ -115,21 +115,20 @@ public final class FileBasedIndexScanUtil {
     if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
       ensureIdFilterUpToDate();
       IntOpenHashSet ids = new IntOpenHashSet();
-      FSRecords.processFilesWithName((String)dataKey, id -> {
+      FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
         if (idFilter != null && !idFilter.containsFileId(id)) return true;
         ids.add(id);
         return true;
       });
-      InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       PersistentFS fs = PersistentFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
         VirtualFile file = fs.findFileById(iterator.nextInt());
         if (file == null || !scope.contains(file)) continue;
-        if (!threadProcessor.process(() -> processor.process(file, null))) return false;
+        if (!processor.process(file, null)) return false;
         if (ensureValueProcessedOnce) break;
       }
-      return threadProcessor.processQueue();
+      return true;
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
       ensureIdFilterUpToDate();
@@ -159,7 +158,7 @@ public final class FileBasedIndexScanUtil {
       ConcurrentHashMap<V, Boolean> visitedValues = ensureValueProcessedOnce ? new ConcurrentHashMap<>() : null;
       if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
         if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
-        if (!FileBasedIndexImpl.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
+        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
         Document document = fileDocumentManager.getCachedDocument(file);
         CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
         Map<K, V> map = indexer.map(FileContentImpl.createByText(file, s, project));
@@ -191,7 +190,7 @@ public final class FileBasedIndexScanUtil {
       FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
       FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
       DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
-      if (!FileBasedIndexImpl.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
+      if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       Document document = fileDocumentManager.getCachedDocument(file);
       CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
@@ -218,7 +217,7 @@ public final class FileBasedIndexScanUtil {
       DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
-        if (!FileBasedIndexImpl.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
+        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
         Document document = fileDocumentManager.getCachedDocument(file);
         CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
         Map<K, V> map = indexer.map(FileContentImpl.createByText(file, s, project));
@@ -243,6 +242,35 @@ public final class FileBasedIndexScanUtil {
     if (query != null && query.getIndexId() == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
       FileBasedIndex.AllKeysQuery<IdIndexEntry, Integer> q = (FileBasedIndex.AllKeysQuery<IdIndexEntry, Integer>)query;
       return processFilesContainingAllKeys(IdIndex.NAME, q.getDataKeys(), scope, q.getValueChecker(), processor);
+    }
+    return null;
+  }
+
+  public static <K, V> Boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                            @NotNull Collection<? extends K> keys,
+                                                            @NotNull GlobalSearchScope scope,
+                                                            @Nullable IdFilter idFilter,
+                                                            @Nullable Condition<? super V> valueChecker,
+                                                            @NotNull Processor<? super VirtualFile> processor) {
+    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+      ensureIdFilterUpToDate();
+      IntOpenHashSet ids = new IntOpenHashSet();
+      //noinspection unchecked
+      FSRecords.processFilesWithNames((Set<String>)keys, id -> {
+        if (idFilter != null && !idFilter.containsFileId(id)) return true;
+        ids.add(id);
+        return true;
+      });
+      PersistentFS fs = PersistentFS.getInstance();
+      IntIterator iterator = ids.iterator();
+      while (iterator.hasNext()) {
+        VirtualFile file = fs.findFileById(iterator.nextInt());
+        if (file == null || !scope.contains(file)) continue;
+        //noinspection unchecked
+        if (valueChecker != null && !valueChecker.value((V)file.getName())) continue;
+        if (!processor.process(file)) return false;
+      }
+      return true;
     }
     return null;
   }

@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
@@ -23,6 +24,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import org.toml.ide.experiments.TomlExperiments
+import org.toml.lang.psi.TomlTableHeader
 
 class TomlJsonSchemaCompletionContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -64,7 +66,7 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
                     val adapter = walker.getParentPropertyAdapter(checkable)
 
                     val schemaProperties = schema.properties
-                    addAllPropertyVariants(properties, adapter, schemaProperties, knownNames)
+                    addAllPropertyVariants(properties, adapter, schemaProperties, knownNames, originalPosition)
                 }
             }
 
@@ -77,7 +79,8 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
             properties: Collection<String>,
             adapter: JsonPropertyAdapter?,
             schemaProperties: Map<String, JsonSchemaObject>,
-            knownNames: MutableSet<String>
+            knownNames: MutableSet<String>,
+            originalPosition: PsiElement
         ) {
             val variants = schemaProperties.keys.filter { name ->
                 !properties.contains(name) && !knownNames.contains(name) || name == adapter?.name
@@ -88,6 +91,11 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
                 val jsonSchemaObject = schemaProperties[variant]
 
                 if (jsonSchemaObject != null) {
+                    // skip basic types keys as they can't be in the table header
+                    val isTomlHeader = originalPosition.parentOfType<TomlTableHeader>() != null
+
+                    if (isTomlHeader && jsonSchemaObject.guessType() !in JSON_COMPOUND_TYPES) continue
+
                     addPropertyVariant(variant, jsonSchemaObject)
                 }
             }
@@ -115,5 +123,12 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
             JsonSchemaType._array -> AllIcons.Json.Array
             else -> AllIcons.Nodes.Property
         }
+    }
+
+    companion object {
+        private val JSON_COMPOUND_TYPES = listOf(
+            JsonSchemaType._array, JsonSchemaType._object,
+            JsonSchemaType._any, null // type is uncertain
+        )
     }
 }

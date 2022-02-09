@@ -5,7 +5,7 @@ import com.intellij.codeInsight.unwrap.Unwrapper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractUnwrapRemoveTest : KotlinLightCodeInsightFixtureTestCase() {

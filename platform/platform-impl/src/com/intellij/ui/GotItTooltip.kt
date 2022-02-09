@@ -360,7 +360,7 @@ class GotItTooltip(@NonNls val id: String,
             currentlyShown?.nextToShow = null
             currentlyShown = null
 
-            gotIt("$PROPERTY_PREFIX.$id")
+            gotIt()
           }
           else {
             pendingRefresh = true
@@ -417,6 +417,8 @@ class GotItTooltip(@NonNls val id: String,
 
     return balloon
   }
+
+  fun gotIt() = gotIt("$PROPERTY_PREFIX.$id")
 
   private fun scheduleNext(tooltip: GotItTooltip, show: () -> Unit) {
     nextToShow = tooltip

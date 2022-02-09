@@ -5,6 +5,7 @@
 
 package org.toml.ide.completion
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
@@ -15,25 +16,57 @@ class TomlCompletionFixture(
 ) : BaseFixture() {
 
     fun checkContainsCompletion(
-        variants: List<String>,
+        variants: Set<String>,
         code: String,
         render: LookupElement.() -> String
-    ) {
+    ) = withNoAutoCompletion {
         myFixture.configureByText(defaultFileName, code.trimIndent())
         doContainsCompletion(variants, render)
     }
 
-    private fun doContainsCompletion(variants: List<String>, render: LookupElement.() -> String) {
+    fun checkNotContainsCompletion(
+        variants: Set<String>,
+        code: String,
+        render: LookupElement.() -> String
+    ) = withNoAutoCompletion {
+        myFixture.configureByText(defaultFileName, code.trimIndent())
+        doNotContainsCompletion(variants, render)
+    }
+
+    private fun withNoAutoCompletion(block: () -> Unit) {
+        val prevSetting = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
+        CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
+        try {
+            block()
+        } finally {
+            CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = prevSetting
+        }
+    }
+
+    private fun doContainsCompletion(variants: Set<String>, render: LookupElement.() -> String) {
         val lookups = myFixture.completeBasic()
 
         checkNotNull(lookups) {
-            "No completions found"
+            "Expected completions that contain $variants, but no completions found"
         }
 
+        val renderedLookups = lookups.map { it.render() }
         for (variant in variants) {
-            if (lookups.all { it.render() != variant }) {
+            if (variant !in renderedLookups) {
                 error("Expected completions that contain $variant, but got ${lookups.map { it.render() }}")
             }
+        }
+    }
+
+    private fun doNotContainsCompletion(variants: Set<String>, render: LookupElement.() -> String = { lookupString }) {
+        val lookups = myFixture.completeBasic()
+
+        checkNotNull(lookups) {
+            "Expected completions that contain $variants, but no completions found"
+        }
+
+        if (lookups.any { it.render() in variants }) {
+            error("Expected completions that don't contain $variants, but got ${lookups.map { it.render() }}")
         }
     }
 }

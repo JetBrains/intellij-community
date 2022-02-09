@@ -29,3 +29,39 @@ class Shadowing {
     int Y = C.X;
   }
 }
+
+class MultipleInheritance2 {
+  interface I1 {
+    String X = "x";
+  }
+  static class Y implements I1 {
+    public static final String X = "y";
+  }
+  
+  static class Z extends Y {
+    {
+      System.out.println(X);
+    }
+  }
+
+  static class Z1 extends Y implements I1 {
+    {
+      System.out.println(<error descr="Reference to 'X' is ambiguous, both 'Y.X' and 'I1.X' match">X</error>);
+    }
+  }
+  
+  interface I2 extends I1 {}
+  static class Z2 extends Y implements I2 {
+    {
+      System.out.println(<error descr="Reference to 'X' is ambiguous, both 'Y.X' and 'I1.X' match">X</error>);
+    }
+  }
+
+  static class Z3 extends Y implements Runnable, I2 {
+    {
+      System.out.println(<error descr="Reference to 'X' is ambiguous, both 'Y.X' and 'I1.X' match">X</error>);
+    }
+    
+    public void run() {}
+  }
+}

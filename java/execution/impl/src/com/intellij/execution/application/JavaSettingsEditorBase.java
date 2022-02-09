@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -8,9 +8,9 @@ import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.macro.MacrosDialog;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
-import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
 public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase> extends RunConfigurationFragmentedEditor<T> {
   public JavaSettingsEditorBase(T runConfiguration) {
@@ -46,7 +43,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
 
     String group = ExecutionBundle.message("group.java.options");
     RawCommandLineEditor vmOptions = new RawCommandLineEditor();
-    setMinimumWidth(vmOptions, 400);
+    CommandLinePanel.setMinimumWidth(vmOptions, 400);
     CommonParameterFragments.setMonospaced(vmOptions.getTextField());
     String message = ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text");
     vmOptions.getEditorField().getAccessibleContext().setAccessibleName(message);
@@ -58,7 +55,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
                                    15,
                                    (configuration, c) -> c.setText(configuration.getVMParameters()),
                                    (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
-                                   configuration -> isNotEmpty(configuration.getVMParameters()));
+                                   configuration -> StringUtil.isNotEmpty(configuration.getVMParameters()));
     vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
     vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
     vmParameters.setEditorGetter(editor -> editor.getEditorField());

@@ -8,11 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class IdeaProjectLoaderUtil {
+  private static final String JPS_BOOTSTRAP_COMMUNITY_HOME_ENV_NAME = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String ULTIMATE_REPO_MARKER_FILE = "intellij.idea.ultimate.tests.main.iml";
   private static final String COMMUNITY_REPO_MARKER_FILE = "intellij.idea.community.main.iml";
 
   public static Path guessUltimateHome(Class<?> klass) {
-    final Path start = getPathFromClass(klass);
+    final Path start = getSomeRoot(klass);
     Path home = start;
 
     while (home != null) {
@@ -23,12 +24,12 @@ public class IdeaProjectLoaderUtil {
       home = home.getParent();
     }
 
-    throw new IllegalArgumentException("Cannot guess ultimate project home from class '" + klass.getName() + "'" +
-                                       "(directory '" + start + "', marker file '" + ULTIMATE_REPO_MARKER_FILE + "')");
+    throw new IllegalArgumentException("Cannot guess ultimate project home from root '" + start + "'" +
+                                       ", marker file '" + ULTIMATE_REPO_MARKER_FILE + "'");
   }
 
   public static Path guessCommunityHome(Class<?> klass) {
-    final Path start = getPathFromClass(klass);
+    final Path start = getSomeRoot(klass);
     Path home = start;
 
     while (home != null) {
@@ -43,8 +44,18 @@ public class IdeaProjectLoaderUtil {
       home = home.getParent();
     }
 
-    throw new IllegalArgumentException("Cannot guess community project home from class '" + klass.getName() + "'" +
-                                       "(directory '" + start + "', marker file '" + COMMUNITY_REPO_MARKER_FILE + "')");
+    throw new IllegalArgumentException("Cannot guess community project home from root '" + start + "'" +
+                                       ", marker file '" + COMMUNITY_REPO_MARKER_FILE + "'");
+  }
+
+  private static Path getSomeRoot(Class<?> klass) {
+    // Under jps-bootstrap home is already known, reuse it
+    String communityHome = System.getenv(JPS_BOOTSTRAP_COMMUNITY_HOME_ENV_NAME);
+    if (communityHome != null) {
+      return Path.of(communityHome);
+    }
+
+    return getPathFromClass(klass);
   }
 
   private static Path getPathFromClass(Class<?> klass) {

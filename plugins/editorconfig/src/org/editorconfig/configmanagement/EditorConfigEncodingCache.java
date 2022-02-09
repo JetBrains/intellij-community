@@ -6,11 +6,13 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.ObjectUtils;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
@@ -151,12 +153,20 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
     }
   }
 
-  public static class FileEditorListener implements FileEditorManagerListener.Before {
+  public static class VfsListener extends BulkVirtualFileListenerAdapter {
 
-    @Override
-    public void beforeFileOpened(@NotNull FileEditorManager source,
-                                 @NotNull VirtualFile file) {
-      getInstance().cacheEncoding(source.getProject(), file);
+    public VfsListener() {
+      super(new VirtualFileListener() {
+        @Override
+        public void fileCreated(@NotNull VirtualFileEvent event) {
+          VirtualFile file = event.getFile();
+          Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+          if (project != null) {
+            getInstance().cacheEncoding(project, event.getFile());
+          }
+        }
+      });
     }
+
   }
 }

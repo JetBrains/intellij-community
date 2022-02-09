@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
@@ -55,13 +55,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
     setDoNotAskOption(new DoNotAskOption.Adapter() {
       @Override
       public void rememberChoice(boolean selected, int exitCode) {
-        PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, true);
+        PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, isOpenInEditorEnabledByDefault());
         RefactoringDialogUsageCollector.logOpenInEditorSaved(myProject, selected, RefactoringDialog.this.getClass());
       }
 
       @Override
       public boolean isSelectedByDefault() {
-        boolean selected = PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", true);
+        boolean selected = PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", isOpenInEditorEnabledByDefault());
         RefactoringDialogUsageCollector.logOpenInEditorShown(myProject, selected, RefactoringDialog.this.getClass());
         return selected;
       }
@@ -72,6 +72,10 @@ public abstract class RefactoringDialog extends DialogWrapper {
         return RefactoringBundle.message("open.in.editor.label");
       }
     });
+  }
+
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return true;
   }
 
   @NonNls

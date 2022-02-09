@@ -87,10 +87,10 @@ class GradleCommandLine(val tasksAndArguments: TasksAndArguments, val scriptPara
       val tasks = ArrayList<Task>()
       val options = ArrayList<String>()
 
-      val shortOptions = GradleCommandLineOptionsProvider.OPTIONS.options.asSequence()
+      val shortOptions = getAllOptions().asSequence()
         .filter { it.opt != null }
         .associateBy { "-${it.opt}" }
-      val longOptions = GradleCommandLineOptionsProvider.OPTIONS.options.asSequence()
+      val longOptions = getAllOptions().asSequence()
         .filter { it.longOpt != null }
         .associateBy { "--${it.longOpt}" }
       val allOptions = shortOptions + longOptions
@@ -98,6 +98,10 @@ class GradleCommandLine(val tasksAndArguments: TasksAndArguments, val scriptPara
       fun getParsedCommandLine(): GradleCommandLine {
         return GradleCommandLine(TasksAndArguments(tasks), ScriptParameters(options))
       }
+
+      private fun getAllOptions() =
+        GradleCommandLineOptionsProvider.OPTIONS.options +
+        GradleCommandLineOptionsProvider.UNSUPPORTED_OPTIONS.options
     }
   }
 }

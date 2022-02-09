@@ -29,12 +29,13 @@ internal class SearchEverywhereMLStatisticsCollector {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val data = arrayListOf<Pair<String, Any>>(
       CLOSE_POPUP_KEY to closePopup,
-      FORCE_EXPERIMENT_GROUP to experimentFromRegistry,
-      EXPERIMENT_GROUP to experimentGroup,
-      ORDER_BY_ML_GROUP to orderByMl
+      FORCE_EXPERIMENT_GROUP to experimentFromRegistry
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, data,
-      selectedIndices, selectedItems, elementsProvider)
+    reportElements(
+      project, SESSION_FINISHED, seSessionId, searchIndex, experimentGroup, orderByMl,
+      elementIdProvider, context, cache, timeToFirstResult, data,
+      selectedIndices, selectedItems, elementsProvider
+    )
   }
 
   fun onSearchFinished(project: Project?, seSessionId: Int, searchIndex: Int,
@@ -47,26 +48,32 @@ internal class SearchEverywhereMLStatisticsCollector {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val additional = listOf(
       CLOSE_POPUP_KEY to true,
-      FORCE_EXPERIMENT_GROUP to experimentFromRegistry,
-      EXPERIMENT_GROUP to experimentGroup,
-      ORDER_BY_ML_GROUP to orderByMl
+      FORCE_EXPERIMENT_GROUP to experimentFromRegistry
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, additional,
-      EMPTY_ARRAY, emptyList(),elementsProvider)
+    reportElements(
+      project, SESSION_FINISHED, seSessionId, searchIndex, experimentGroup, orderByMl,
+      elementIdProvider, context, cache, timeToFirstResult, additional,
+      EMPTY_ARRAY, emptyList(), elementsProvider
+    )
   }
 
   fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
+                        experimentGroup: Int, orderByMl: Boolean,
                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
                         timeToFirstResult: Int,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, emptyList(),
-      EMPTY_ARRAY, emptyList(), elementsProvider)
+    reportElements(
+      project, SEARCH_RESTARTED, seSessionId, searchIndex, experimentGroup, orderByMl,
+      elementIdProvider, context, cache, timeToFirstResult, emptyList(),
+      EMPTY_ARRAY, emptyList(), elementsProvider
+    )
   }
 
   private fun reportElements(project: Project?, eventId: String,
                              seSessionId: Int, searchIndex: Int,
+                             experimentGroup: Int, orderByMl: Boolean,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              context: SearchEverywhereMLContextInfo,
                              state: SearchEverywhereMlSearchState,
@@ -83,6 +90,8 @@ internal class SearchEverywhereMLStatisticsCollector {
       data[SEARCH_INDEX_DATA_KEY] = searchIndex
       data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
       data[SE_TAB_ID_KEY] = state.tabId
+      data[EXPERIMENT_GROUP] = experimentGroup
+      data[ORDER_BY_ML_GROUP] = orderByMl
       data[SEARCH_START_TIME_KEY] = state.searchStartTime
 
       if (timeToFirstResult > -1) {
@@ -96,38 +105,84 @@ internal class SearchEverywhereMLStatisticsCollector {
       data.putAll(additional)
       data.putAll(context.features)
 
-      if (selectedElements.isNotEmpty()) {
-        data[SELECTED_INDEXES_DATA_KEY] = selectedElements.map { it.toString() }
-        data[SELECTED_ELEMENTS_DATA_KEY] = selectedElements.map {
-          if (it < elements.size) {
-            val element = elements[it].element
-            if (elementIdProvider.isElementSupported(element)) {
-              return@map elementIdProvider.getId(element)
-            }
-          }
-          return@map -1
-        }
-        data[SELECTED_ELEMENTS_CONSISTENT] = isSelectionConsistent(selectedElements, selectedItems, elements)
+      val elementData = getElementsData(selectedElements, elements, elementIdProvider, selectedItems, project, state)
+      data[IS_PROJECT_DISPOSED_KEY] = elementData == null
+      if (elementData != null) {
+        data.putAll(elementData)
       }
-
-      val actionManager = ActionManager.getInstance()
-      data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-        if (project != null && project.isDisposed) {
-          return@execute
-        }
-
-        val result: HashMap<String, Any> = hashMapOf(
-          CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
-        )
-        addElementFeatures(elementIdProvider, it, state, result, actionManager)
-        result
-      }
-
       loggerProvider.logger.logAsync(GROUP, eventId, data, false)
     }
   }
 
-  private fun isSelectionConsistent(selectedIndices: IntArray, selectedElements: List<Any>, elements: List<SearchEverywhereFoundElementInfo>): Boolean {
+  private fun getElementsData(selectedElements: IntArray,
+                              elements: List<SearchEverywhereFoundElementInfo>,
+                              elementIdProvider: SearchEverywhereMlItemIdProvider,
+                              selectedItems: List<Any>,
+                              project: Project?,
+                              state: SearchEverywhereMlSearchState): Map<String, Any>? {
+    return hashMapOf<String, Any>().apply {
+      putAll(getSelectedElementsData(selectedElements, elements, elementIdProvider, selectedItems))
+      putAll(getCollectedElementsData(elements, project, elementIdProvider, state) ?: return null)
+    }
+  }
+
+  private fun getSelectedElementsData(selectedElements: IntArray,
+                                      elements: List<SearchEverywhereFoundElementInfo>,
+                                      elementIdProvider: SearchEverywhereMlItemIdProvider,
+                                      selectedItems: List<Any>): Map<String, Any> {
+    val data = hashMapOf<String, Any>()
+    if (selectedElements.isNotEmpty()) {
+      data[SELECTED_INDEXES_DATA_KEY] = selectedElements.map { it.toString() }
+      data[SELECTED_ELEMENTS_DATA_KEY] = selectedElements.map {
+        if (it < elements.size) {
+          val element = elements[it].element
+          if (elementIdProvider.isElementSupported(element)) {
+            return@map elementIdProvider.getId(element)
+          }
+        }
+        return@map -1
+      }
+      data[SELECTED_ELEMENTS_CONSISTENT] = isSelectionConsistent(selectedElements, selectedItems, elements)
+    }
+
+    return data
+  }
+
+  /**
+   * Gets features of the collected elements.
+   * May return null if the project gets disposed.
+   */
+  private fun getCollectedElementsData(elements: List<SearchEverywhereFoundElementInfo>,
+                                       project: Project?,
+                                       elementIdProvider: SearchEverywhereMlItemIdProvider,
+                                       state: SearchEverywhereMlSearchState): Map<String, Any>? {
+    val data = hashMapOf<String, Any>()
+    val actionManager = ActionManager.getInstance()
+    data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
+      if (project != null && project.isDisposed) {
+        return null
+      }
+
+      val result: HashMap<String, Any> = hashMapOf(
+        CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
+      )
+
+      if (elementIdProvider.isElementSupported(it.element)) {
+        // After changing tabs, it may happen that the code will run for an outdated list of results,
+        // for example, results from All tab will be reported after switching to the Actions tab.
+        // As this can lead to exceptions, we'll check if the element is supported, before collecting
+        // features for it.
+        addElementFeatures(elementIdProvider, it, state, result, actionManager)
+      }
+      result
+    }
+
+    return data
+  }
+
+  private fun isSelectionConsistent(selectedIndices: IntArray,
+                                    selectedElements: List<Any>,
+                                    elements: List<SearchEverywhereFoundElementInfo>): Boolean {
     if (selectedIndices.size != selectedElements.size) return false
 
     for (i in selectedIndices.indices) {
@@ -178,7 +233,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 13)
+    private val GROUP = EventLogGroup("mlse.log", 17)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
@@ -194,6 +249,7 @@ internal class SearchEverywhereMLStatisticsCollector {
 
     // context fields
     private const val PROJECT_OPENED_KEY = "projectOpened"
+    private const val IS_PROJECT_DISPOSED_KEY = "projectDisposed"
     private const val SE_TAB_ID_KEY = "seTabId"
     private const val CLOSE_POPUP_KEY = "closePopup"
     private const val SEARCH_START_TIME_KEY = "startTime"

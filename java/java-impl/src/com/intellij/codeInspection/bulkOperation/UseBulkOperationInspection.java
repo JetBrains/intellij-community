@@ -14,7 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -163,12 +163,8 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   @Nullable
-  public static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
-    return findIterableForIndexedLoop(CountingLoop.from(loop), getElementExpression);
-  }
-
-  @Nullable
-  public static PsiExpression findIterableForIndexedLoop(CountingLoop countingLoop, PsiExpression getElementExpression) {
+  private static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
+    CountingLoop countingLoop = CountingLoop.from(loop);
     if (countingLoop == null ||
         countingLoop.isIncluding() ||
         countingLoop.isDescending() ||
@@ -316,7 +312,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
         iterable = findIterable((PsiMethodCallExpression)parent, myInfo);
       }
       if (iterable == null) return;
-      PsiElement parent = RefactoringUtil.getParentStatement(iterable, false);
+      PsiElement parent = CommonJavaRefactoringUtil.getParentStatement(iterable, false);
       if (parent == null) return;
       CommentTracker ct = new CommentTracker();
       String iterableText = calculateIterableText(iterable, ct);

@@ -102,6 +102,8 @@
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
 
     <lookup.usageDetails implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor"/>
+    <statistics.collectorExtension implementation="com.intellij.completion.ml.features.MLRankingCompletionCollectorExtension"/>
+
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>

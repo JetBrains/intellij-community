@@ -18,8 +18,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -38,6 +39,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
@@ -114,7 +117,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, ArrayUtil.EMPTY_STRING_ARRAY);
-    FileBasedIndex.getInstance().getContainingFiles(TodoIndex.NAME, new TodoIndexEntry("todo", true), GlobalSearchScope.allScope(getProject()));
+    FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()));
 
     String projectLocation = myProject.getPresentableUrl();
     assert projectLocation != null : myProject;
@@ -135,6 +138,8 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     root.refresh(false, true);
 
     LocalFileSystem.getInstance().refresh(false);
+    Set<String> rootChildren = Stream.of(root.getChildren()).map(f -> f.getName()).collect(Collectors.toSet());
+    assertTrue(rootChildren.contains("1.java"));
 
     myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectLocation), getTestRootDisposable());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
@@ -149,8 +154,17 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     myPsiManager = (PsiManagerImpl) PsiManager.getInstance(myProject);
     myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
 
-    objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope);
     assertNotNull(objectClass);
+
+    Set<String> filesWithObject =
+      FileBasedIndex
+        .getInstance()
+        .getContainingFiles(IdIndex.NAME, new IdIndexEntry("Object", true), scope)
+        .stream().map(f -> f.getName()).collect(Collectors.toSet());
+    assertTrue(filesWithObject.contains("1.java"));
+
     checkUsages(objectClass, new String[]{"1.java"});
   }
 
@@ -366,7 +380,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
       }
     }
 
-    assertEquals(expectedFiles.length, files.size());
+    assertEquals(Arrays.toString(expectedFiles) + ".length != " + files + ".size()", expectedFiles.length, files.size());
 
     Collections.sort(files, Comparator.comparing(PsiFileSystemItem::getName));
     Arrays.sort(expectedFiles);

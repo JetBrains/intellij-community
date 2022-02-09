@@ -2,6 +2,8 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -184,13 +186,48 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "}");
   }
 
+  public void testDefaultInParameterizedSealedHierarchy() {
+    doTest("class X {" +
+           "  void x(J<Integer> j) {" +
+           "    switch (j) {" +
+           "      case D2 d2 -> {}" +
+           "      case default -> {}" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
+  public void testDefaultInParameterizedSealedHierarchyJava18() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, () -> {
+      doTest("class X {" +
+             "  void x(J<Integer> j) {" +
+             "    switch (j) {" +
+             "      case D2 d2 -> {}" +
+             "      case /*'default' branch is unnecessary*/default/*_*//**/ -> {}" +
+             "    }" +
+             "  }" +
+             "}");
+      checkQuickFix("Remove 'default' branch",
+                    "class X {" +
+                    "  void x(J<Integer> j) {" +
+                    "    switch (j) {" +
+                    "      case D2 d2 -> {}\n" +
+                    "}" +
+                    "  }" +
+                    "}");
+    });
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "enum E { A, B }\n" +
       "sealed interface I {}\n" +
       "final class C1 implements I {}\n" +
-      "final class C2 implements I {}\n"
+      "final class C2 implements I {}\n" +
+      "sealed interface J<T>\n" +
+      "final class D1 implements J<String> {}\n" +
+      "final class D2<T> implements J<T> {}\n"
     };
   }
 

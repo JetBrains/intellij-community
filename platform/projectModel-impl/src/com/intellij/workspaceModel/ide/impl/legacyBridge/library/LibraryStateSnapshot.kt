@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
-import com.intellij.openapi.roots.libraries.LibraryKind
+import com.intellij.openapi.roots.libraries.LibraryKindRegistry
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
@@ -42,7 +42,7 @@ class LibraryStateSnapshot(
   private val kindProperties by lazy {
     val customProperties = libraryEntity.getCustomProperties()
     val k = customProperties?.libraryType?.let {
-      LibraryKind.findById(it) ?: UnknownLibraryKind.getOrCreate(it)
+      LibraryKindRegistry.getInstance().findKindById(it) ?: UnknownLibraryKind.getOrCreate(it)
     } as? PersistentLibraryKind<*>
     val p = loadProperties(k, customProperties)
     k to p

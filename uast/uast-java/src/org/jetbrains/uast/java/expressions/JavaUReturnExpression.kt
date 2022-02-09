@@ -17,11 +17,10 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiMethodUtil
-import com.intellij.psi.util.PsiUtil
-import com.intellij.psi.util.parentOfType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUReturnExpression(
   override val sourcePsi: PsiReturnStatement,
   givenParent: UElement?

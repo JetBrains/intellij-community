@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.SmartList;
 import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.ClasspathCache;
 import com.intellij.util.lang.Resource;
@@ -35,7 +34,10 @@ import java.util.function.Function;
 public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
-  private static final boolean isParallelCapable = registerAsParallelCapable();
+  static {
+    boolean parallelCapable = registerAsParallelCapable();
+    assert parallelCapable;
+  }
 
   private static final @Nullable Writer logStream;
   private static final AtomicInteger instanceIdProducer = new AtomicInteger();
@@ -137,31 +139,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   public interface ResolveScopeManager {
     String isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
-  }
-
-  public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
-                           @NotNull IdeaPluginDescriptorImpl @NotNull [] dependencies,
-                           @NotNull PluginDescriptor pluginDescriptor,
-                           @Nullable Path pluginRoot,
-                           @NotNull ClassLoader coreLoader) {
-    super(builder, null, isParallelCapable);
-
-    instanceId = instanceIdProducer.incrementAndGet();
-
-    this.resolveScopeManager = (p1, p2, p3) -> null;
-    this.pluginDescriptor = pluginDescriptor;
-    pluginId = pluginDescriptor.getPluginId();
-    this.packagePrefix = null;
-    this.coreLoader = coreLoader;
-    this.parents = dependencies;
-
-    libDirectories = new SmartList<>();
-    if (pluginRoot != null) {
-      Path libDir = pluginRoot.resolve("lib");
-      if (Files.exists(libDir)) {
-        libDirectories.add(libDir.toAbsolutePath().toString());
-      }
-    }
   }
 
   public PluginClassLoader(@NotNull List<Path> files,
@@ -294,7 +271,19 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         }
         else if (classloader instanceof UrlClassLoader) {
           try {
-            c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, fileName, packageNameHash, false);
+            UrlClassLoader urlClassLoader = (UrlClassLoader)classloader;
+            BiFunction<String, Boolean, String> resolveScopeManager = urlClassLoader.resolveScopeManager;
+            String consistencyError = resolveScopeManager == null
+                                      ? null
+                                      : resolveScopeManager.apply(name, forceLoadFromSubPluginClassloader);
+            if (consistencyError != null) {
+              if (!consistencyError.isEmpty() && error == null) {
+                // yes, we blame requestor plugin
+                error = new PluginException(consistencyError, pluginId);
+              }
+              continue;
+            }
+            c = urlClassLoader.loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);
@@ -386,6 +375,12 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                                                (className.startsWith("kotlin.reflect.") &&
                                                 className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
+  }
+
+  @Override
+  public boolean hasLoadedClass(String name) {
+    String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, false);
+    return consistencyError == null && super.hasLoadedClass(name);
   }
 
   @Override

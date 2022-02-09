@@ -108,8 +108,10 @@ class KotlinLanguageInjectionSupport : AbstractLanguageInjectionSupport() {
         return commentRef.get() as? PsiComment
     }
 
-    internal fun findAnnotationInjectionLanguageId(host: KtElement): InjectionInfo? {
-        val annotationEntry = findAnnotationInjection(host) ?: return null
+    internal fun findAnnotationInjectionLanguageId(host: KtElement): InjectionInfo? =
+        findAnnotationInjection(host)?.let(::toInjectionInfo)
+
+    internal fun toInjectionInfo(annotationEntry: KtAnnotationEntry): InjectionInfo? {
         val extractLanguageFromInjectAnnotation = extractLanguageFromInjectAnnotation(annotationEntry) ?: return null
         val prefix = extractStringArgumentByName(annotationEntry, "prefix")
         val suffix = extractStringArgumentByName(annotationEntry, "suffix")

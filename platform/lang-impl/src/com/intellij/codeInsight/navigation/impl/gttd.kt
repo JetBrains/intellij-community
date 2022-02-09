@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.SymbolTypeProvider
+import com.intellij.codeInsight.navigation.*
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationPlaceAwareProvider
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
@@ -53,6 +51,21 @@ internal class GTTDActionData(
       0 -> null
       1 -> SingleSymbolCtrlMouseInfo(typeSymbols.single(), targetData.elementAtOffset(), targetData.highlightRanges(), false)
       else -> MultipleTargetElementsInfo(targetData.highlightRanges())
+    }
+  }
+
+  fun ctrlMouseData(): CtrlMouseData? {
+    val typeSymbols = typeSymbols().take(2).toList()
+    return when (typeSymbols.size) {
+      0 -> null
+      1 -> symbolCtrlMouseData(
+        project,
+        typeSymbols.single(),
+        targetData.elementAtOffset(),
+        targetData.highlightRanges(),
+        declared = false,
+      )
+      else -> multipleTargetsCtrlMouseData(targetData.highlightRanges())
     }
   }
 

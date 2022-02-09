@@ -15,6 +15,7 @@ import com.intellij.psi.util.findParentInFile
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.kotlin.analyzer.AnalysisResult
+import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.GlobalContext
@@ -48,7 +49,6 @@ import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.checkWithAttachment
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 
 internal class PerFileAnalysisCache(val file: KtFile, componentProvider: ComponentProvider) {
@@ -125,7 +125,14 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             } else null
 
             // step 3: perform analyze of analyzableParent as nothing has been cached yet
-            val result = analyze(analyzableParent, null, localCallback)
+            val result = try {
+              analyze(analyzableParent, null, localCallback)
+            } catch (e: Throwable) {
+                e.throwAsInvalidModuleException {
+                    ProcessCanceledException(it)
+                }
+                throw e
+            }
 
             // some diagnostics could be not handled with a callback - send out the rest
             callback?.let { c ->
@@ -183,10 +190,11 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
 
                     analysisResult
                 }
-            } catch (e: InvalidModuleException) {
-                clearFileResultCache()
-                throw ProcessCanceledException(e)
             } catch (e: Throwable) {
+                e.throwAsInvalidModuleException {
+                    clearFileResultCache()
+                    ProcessCanceledException(it)
+                }
                 if (e !is ControlFlowException) {
                     clearFileResultCache()
                 }
@@ -241,13 +249,21 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
     ): AnalysisResult {
         val newBindingCtx = elementBindingTrace.stackedContext
         return when {
-            oldResult.isError() -> AnalysisResult.internalError(newBindingCtx, oldResult.error)
-            newResult.isError() -> AnalysisResult.internalError(newBindingCtx, newResult.error)
-            else -> AnalysisResult.success(
-                newBindingCtx,
-                oldResult.moduleDescriptor,
-                oldResult.shouldGenerateCode
-            )
+            oldResult.isError() -> {
+                oldResult.error.throwAsInvalidModuleException()
+                AnalysisResult.internalError(newBindingCtx, oldResult.error)
+            }
+            newResult.isError() -> {
+                newResult.error.throwAsInvalidModuleException()
+                AnalysisResult.internalError(newBindingCtx, newResult.error)
+            }
+            else -> {
+                AnalysisResult.success(
+                    newBindingCtx,
+                    oldResult.moduleDescriptor,
+                    oldResult.shouldGenerateCode
+                )
+            }
         }
     }
 
@@ -281,8 +297,10 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         } catch (e: IndexNotReadyException) {
             throw e
         } catch (e: Throwable) {
+            e.throwAsInvalidModuleException()
+
             DiagnosticUtils.throwIfRunningOnServer(e)
-            LOG.error(e)
+            LOG.warn(e)
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }
@@ -291,6 +309,24 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
     private fun clearFileResultCache() {
         file.clearInBlockModifications()
         fileResult = null
+    }
+}
+
+private fun Throwable.asInvalidModuleException(): InvalidModuleException? {
+    return when (this) {
+        is InvalidModuleException -> this
+        is AssertionError ->
+            // temporary workaround till 1.6.0 / KT-48977
+            if (message?.contains("contained in his own dependencies, this is probably a misconfiguration") == true)
+                InvalidModuleException(message!!)
+            else null
+        else -> cause?.takeIf { it != this }?.asInvalidModuleException()
+    }
+}
+
+private inline fun Throwable.throwAsInvalidModuleException(crossinline action: (InvalidModuleException) -> Throwable = { it }) {
+    asInvalidModuleException()?.let {
+        throw action(it)
     }
 }
 
@@ -344,12 +380,6 @@ private class StackedCompositeBindingContextTrace(
         val all = parentContext.diagnostics.all()
         val filtered = all.filter { it.psiElement == element && selfDiagnosticToHold(it) } + all.filter { it.psiElement.parentsWithSelf.none { e -> e == element } }
         filtered
-    }
-
-    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback) {
-        if (diagnosticsCallback == null) {
-            super.setCallback(callback)
-        }
     }
 
     inner class StackedCompositeBindingContext : BindingContext {
@@ -488,10 +518,9 @@ private object KotlinResolveDataProvider {
 
             val targetPlatform = moduleInfo.platform
 
+            var callbackSet = false
             try {
-                callback?.let {
-                    trace.setCallback(it)
-                }
+                callbackSet = callback?.let(trace::setCallbackIfNotSet) ?: false
                 /*
                 Note that currently we *have* to re-create LazyTopDownAnalyzer with custom trace in order to disallow resolution of
                 bodies in top-level trace (trace from DI-container).
@@ -513,12 +542,15 @@ private object KotlinResolveDataProvider {
                     analyzableElement.languageVersionSettings,
                     IdeaModuleStructureOracle(),
                     IdeMainFunctionDetectorFactory(),
-                    IdeSealedClassInheritorsProvider
-            ).get<LazyTopDownAnalyzer>()
+                    IdeSealedClassInheritorsProvider,
+                    ControlFlowInformationProviderImpl.Factory,
+                ).get<LazyTopDownAnalyzer>()
 
                 lazyTopDownAnalyzer.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, listOf(analyzableElement))
             } finally {
-                trace.resetCallback()
+                if (callbackSet) {
+                    trace.resetCallback()
+                }
             }
 
             return AnalysisResult.success(trace.bindingContext, moduleDescriptor)
@@ -527,8 +559,10 @@ private object KotlinResolveDataProvider {
         } catch (e: IndexNotReadyException) {
             throw e
         } catch (e: Throwable) {
+            e.throwAsInvalidModuleException()
+
             DiagnosticUtils.throwIfRunningOnServer(e)
-            LOG.error(e)
+            LOG.warn(e)
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
@@ -461,7 +461,7 @@ public final class ActionUtil {
   }
 
   public static @Nullable ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
-    return KeymapUtil.getMnemonicAsShortcut(action.getTemplatePresentation().getMnemonic());
+    return KeymapUtil.getShortcutsForMnemonicCode(action.getTemplatePresentation().getMnemonic());
   }
 
   @ApiStatus.Experimental

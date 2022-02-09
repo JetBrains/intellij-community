@@ -18,7 +18,6 @@ package com.intellij.diff.actions.impl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -28,16 +27,12 @@ public abstract class GoToChangePopupAction extends ActionGroup implements DumbA
   public GoToChangePopupAction() {
     ActionUtil.copyFrom(this, "GotoChangedFile");
     setPopup(true);
+    getTemplatePresentation().setPerformGroup(true);
   }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return AnAction.EMPTY_ARRAY;
-  }
-
-  @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return true;
   }
 
   @Override

@@ -59,6 +59,30 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
     }
   }
 
+  @Override
+  public void onMarkReferenced(PsiElement what, PsiElement from, boolean referencedFromClassInitializer) {
+    if (from instanceof PsiFunctionalExpression) {
+      RefElement refResolved = myRefManager.getReference(what);
+      if (refResolved instanceof RefMethodImpl) {
+        PsiFunctionalExpression expression = (PsiFunctionalExpression)from;
+        final Collection<PsiClassType> exceptionTypes;
+        if (expression instanceof PsiLambdaExpression) {
+          PsiElement body = ((PsiLambdaExpression)expression).getBody();
+          exceptionTypes = body != null ? ExceptionUtil.collectUnhandledExceptions(body, expression, false) : Collections.emptyList();
+        }
+        else {
+          final PsiElement resolve = ((PsiMethodReferenceExpression)expression).resolve();
+          exceptionTypes = resolve instanceof PsiMethod
+                           ? Arrays.asList(((PsiMethod)resolve).getThrowsList().getReferencedTypes())
+                           : Collections.emptyList();
+        }
+        for (final PsiClassType exceptionType : exceptionTypes) {
+          ((RefMethodImpl)refResolved).updateThrowsList(exceptionType);
+        }
+      }
+    }
+  }
+
   public static Set<PsiClassType> getUnhandledExceptions(PsiCodeBlock body, PsiMethod method, PsiClass containingClass) {
     Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method, false);
     Set<PsiClassType> unhandled = new HashSet<>(types);

@@ -150,23 +150,6 @@ public final class JdkUtil {
 
   //<editor-fold desc="Deprecated stuff.">
 
-  /**
-   * @deprecated use {@link SimpleJavaParameters#toCommandLine()}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static GeneralCommandLine setupJVMCommandLine(String exePath, SimpleJavaParameters javaParameters, boolean forceDynamicClasspath) {
-    try {
-      javaParameters.setUseDynamicClasspath(forceDynamicClasspath);
-      GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
-      setupCommandLine(commandLine, javaParameters);
-      return commandLine;
-    }
-    catch (CantRunException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {
     LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
     JdkCommandLineSetup setup = new JdkCommandLineSetup(request);

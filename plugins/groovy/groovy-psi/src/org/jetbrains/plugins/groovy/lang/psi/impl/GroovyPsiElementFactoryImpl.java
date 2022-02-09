@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -992,6 +992,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrTraitTypeDefinition createTrait(@NotNull String name) {
     return (GrTraitTypeDefinition)createTypeDefinition("trait " + name + "{}");
+  }
+
+  @NotNull
+  @Override
+  public GrTraitTypeDefinition createRecord(@NotNull String name) {
+    return (GrTraitTypeDefinition)createTypeDefinition("record " + name + "() {}");
   }
 
   @NotNull

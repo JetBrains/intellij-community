@@ -52,6 +52,10 @@ fun path(sdk: Sdk): String? {
     return homePath.removePrefix("target://")
   }
 
+  if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) {
+    return homePath.takeIf { homePath !in name }
+  }
+
   return homePath.let { FileUtil.getLocationRelativeToUserHome(it) }.takeIf { homePath !in name && it !in name }
 }
 
@@ -67,8 +71,11 @@ fun path(sdk: Sdk): String? {
  * @see LanguageLevel.SUPPORTED_LEVELS
  */
 fun icon(sdk: Sdk): Icon? {
-  val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
-  val icon = if (flavor != null) flavor.icon else (sdk.sdkType as? SdkType)?.icon ?: return null
+  val flavor: PythonSdkFlavor? = when (sdk.sdkAdditionalData) {
+    !is PyRemoteSdkAdditionalDataMarker -> PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
+    else -> null
+  }
+  val icon = flavor?.icon ?: ((sdk.sdkType as? SdkType)?.icon ?: return null)
 
   val providedIcon = PySdkProvider.EP_NAME.extensions.firstNotNullOfOrNull { it.getSdkIcon(sdk) }
 

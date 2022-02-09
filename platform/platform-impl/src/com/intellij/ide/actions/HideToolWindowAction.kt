@@ -1,28 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.impl.ToolWindowEventSource
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.util.ui.UIUtil
 
 internal class HideToolWindowAction : AnAction(), DumbAware {
   companion object {
-    internal fun shouldBeHiddenByShortCut(manager: ToolWindowManager, id: String): Boolean {
-      val window = manager.getToolWindow(id)
-      return window != null && window.isVisible && window.type != ToolWindowType.WINDOWED && window.type != ToolWindowType.FLOATING
+    internal fun shouldBeHiddenByShortCut(window: ToolWindow): Boolean {
+      return window.isVisible && window.type != ToolWindowType.WINDOWED && window.type != ToolWindowType.FLOATING
     }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val toolWindowManager = ToolWindowManager.getInstance(e.project ?: return) as ToolWindowManagerImpl
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
-    toolWindowManager.hideToolWindow(id, false, true, ToolWindowEventSource.HideToolWindowAction)
+    toolWindowManager.hideToolWindow(id = id, source = ToolWindowEventSource.HideToolWindowAction)
   }
 
   override fun update(event: AnActionEvent) {
@@ -34,18 +34,15 @@ internal class HideToolWindowAction : AnAction(), DumbAware {
     }
 
     val toolWindowManager = ToolWindowManager.getInstance(project)
-    val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId
-    val window = if (id == null) null else toolWindowManager.getToolWindow(id)
+    val window = (toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId)?.let(toolWindowManager::getToolWindow)
     if (window == null) {
       presentation.isEnabled = false
-      return
     }
-
-    if (window.isVisible && UIUtil.isDescendingFrom(IdeFocusManager.getGlobalInstance().focusOwner, window.component)) {
+    else if (window.isVisible && UIUtil.isDescendingFrom(IdeFocusManager.getGlobalInstance().focusOwner, window.component)) {
       presentation.isEnabled = true
     }
     else {
-      presentation.isEnabled = shouldBeHiddenByShortCut(toolWindowManager, id!!)
+      presentation.isEnabled = shouldBeHiddenByShortCut(window)
     }
   }
 }

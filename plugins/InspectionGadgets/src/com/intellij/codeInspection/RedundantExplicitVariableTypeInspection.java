@@ -7,7 +7,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
 
         PsiTypeElement typeElementCopy = copyVariable.getTypeElement();
         if (typeElementCopy != null) {
-          IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
+          IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
           if (variable.getType().equals(getNormalizedType(copyVariable))) {
             holder.registerProblem(element2Highlight,
                                    InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"),
@@ -88,7 +88,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiTypeElement) {
         CodeStyleManager.getInstance(project)
-          .reformat(IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar((PsiTypeElement)element, element));
+          .reformat(IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar((PsiTypeElement)element, element));
       }
     }
   }

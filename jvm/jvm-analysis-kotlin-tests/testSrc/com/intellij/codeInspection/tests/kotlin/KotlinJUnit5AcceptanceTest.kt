@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInsight.TestFrameworks
+import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.psi.PsiClassOwner
 import com.intellij.testFramework.RunsInEdt
@@ -28,5 +29,18 @@ annotation class CombinedKotlinAnnotation""")
     """.trimIndent())
 
     Assertions.assertNotNull(TestFrameworks.detectFramework ((file as PsiClassOwner).classes[0]))
+  }
+
+  @Test
+  fun bracesInMethodName() {
+    val file = fixture.configureByText("tests.kt", """
+      class Tests {
+         @org.junit.jupiter.api.Test
+         fun `test wi<caret>th (in name)`() {}
+      }
+    """.trimIndent())
+    Assertions.assertInstanceOf(PsiClassOwner::class.java, file)
+    val testMethod = (file as PsiClassOwner).classes[0].methods[0]
+    Assertions.assertEquals("test with (in name)()", JUnitConfiguration.Data.getMethodPresentation(testMethod))
   }
 }

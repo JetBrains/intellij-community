@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.util.GradleConstants

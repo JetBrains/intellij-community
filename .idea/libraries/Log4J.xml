@@ -1,8 +1,12 @@
 <component name="libraryTable">
   <library name="Log4J" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:log4j:1.2.17.2" />
+    <properties maven-id="org.slf4j:log4j-over-slf4j:1.7.32">
+      <exclude>
+        <dependency maven-id="org.slf4j:slf4j-api" />
+      </exclude>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/log4j/1.2.17.2/log4j-1.2.17.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/log4j-over-slf4j/1.7.32/log4j-over-slf4j-1.7.32.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

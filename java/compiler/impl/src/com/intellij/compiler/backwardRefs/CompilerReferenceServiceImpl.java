@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader;
 import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
@@ -13,8 +12,7 @@ import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -38,21 +36,21 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
               }
             }));
 
-    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
+    MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
       @Override
       public void buildStarted(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {
-        if (project == myProject) {
+        if (project == CompilerReferenceServiceImpl.this.project) {
           closeReaderIfNeeded(IndexCloseReason.COMPILATION_STARTED);
         }
       }
 
       @Override
       public void buildFinished(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {
-        if (project == myProject) {
+        if (project == CompilerReferenceServiceImpl.this.project) {
           executeOnBuildThread(() -> {
-            if (!ReadAction.compute(() -> myProject.isDisposed())) {
-              openReaderIfNeeded(IndexOpenReason.COMPILATION_FINISHED);
+            if (!ReadAction.compute(() -> CompilerReferenceServiceImpl.this.project.isDisposed())) {
+              openReaderIfNeeded();
             }
           });
         }
@@ -60,17 +58,22 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
     });
   }
 
-  @NotNull
   @Override
-  public SortedSet<ChainOpAndOccurrences<MethodCall>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                     @SignatureData.IteratorKind byte iteratorKind,
-                                                                                     @NotNull ChainCompletionContext context) {
+  public @NotNull SortedSet<ChainOpAndOccurrences<MethodCall>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                                              @SignatureData.IteratorKind byte iteratorKind,
+                                                                                              @NotNull ChainCompletionContext context) {
     try {
-      if (!myReadDataLock.tryLock()) return Collections.emptySortedSet();
+      if (!myReadDataLock.tryLock()) {
+        return Collections.emptySortedSet();
+      }
       try {
-        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        if (myReader == null) {
+          throw new ReferenceIndexUnavailableException();
+        }
         final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
-        if (type == 0) return Collections.emptySortedSet();
+        if (type == 0) {
+          return Collections.emptySortedSet();
+        }
         return Stream.of(new SignatureData(type, iteratorKind, true), new SignatureData(type, iteratorKind, false))
           .flatMap(sd -> StreamEx.of(myReader.getMembersFor(sd))
             .peek(r -> ProgressManager.checkCanceled())
@@ -104,26 +107,31 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
     }
   }
 
-  @Nullable
   @Override
-  public ChainOpAndOccurrences<TypeCast> getMostUsedTypeCast(@NotNull String operandQName)
+  public @Nullable ChainOpAndOccurrences<TypeCast> getMostUsedTypeCast(@NotNull String operandQName)
     throws ReferenceIndexUnavailableException {
     try {
-      if (!myReadDataLock.tryLock()) return null;
+      if (!myReadDataLock.tryLock()) {
+        return null;
+      }
       try {
-        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        if (myReader == null) {
+          throw new ReferenceIndexUnavailableException();
+        }
         int nameId = getNameId(operandQName);
         if (nameId == 0) return null;
         CompilerRef.JavaCompilerClassRef target = new CompilerRef.JavaCompilerClassRef(nameId);
         OccurrenceCounter<CompilerRef> typeCasts = myReader.getTypeCastOperands(target, null);
         CompilerRef bestCast = typeCasts.getBest();
         if (bestCast == null) return null;
-        return new ChainOpAndOccurrences<>(new TypeCast((CompilerRef.CompilerClassHierarchyElementDef)bestCast, target, this), typeCasts.getBestOccurrences());
+        return new ChainOpAndOccurrences<>(new TypeCast((CompilerRef.CompilerClassHierarchyElementDef)bestCast, target, this),
+                                           typeCasts.getBestOccurrences());
       }
       finally {
         myReadDataLock.unlock();
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       onException(e, "best type cast search");
       return null;
     }
@@ -131,12 +139,12 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
 
   /**
    * finds one best candidate to do a cast type before given method call (eg.: <code>((B) a).someMethod()</code>). Follows given formula:
-   *
+   * <p>
    * #(files where method & type cast is occurred) / #(files where method is occurred) > 1 - 1 / probabilityThreshold
    */
-  @Nullable
   @Override
-  public CompilerRef.CompilerClassHierarchyElementDef mayCallOfTypeCast(@NotNull CompilerRef.JavaCompilerMethodRef method, int probabilityThreshold)
+  public @Nullable CompilerRef.CompilerClassHierarchyElementDef mayCallOfTypeCast(@NotNull CompilerRef.JavaCompilerMethodRef method,
+                                                                                  int probabilityThreshold)
     throws ReferenceIndexUnavailableException {
     try {
       if (!myReadDataLock.tryLock()) return null;
@@ -157,7 +165,8 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
       finally {
         myReadDataLock.unlock();
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       onException(e, "conditional probability");
       return null;
     }
@@ -165,7 +174,7 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
 
   /**
    * conditional probability P(ref1 | ref2) = P(ref1 * ref2) / P(ref2) > 1 - 1 / threshold
-   *
+   * <p>
    * where P(ref) is a probability that ref is occurred in a file.
    */
   @Override
@@ -179,11 +188,7 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
         IntSet ids1 = myReader.getAllContainingFileIds(qualifier);
         IntSet ids2 = myReader.getAllContainingFileIds(base);
         IntSet intersection = intersection(ids1, ids2);
-
-        if ((ids2.size() - intersection.size()) * probabilityThreshold < ids2.size()) {
-          return true;
-        }
-        return false;
+        return (ids2.size() - intersection.size()) * probabilityThreshold < ids2.size();
       }
       finally {
         myReadDataLock.unlock();
@@ -195,11 +200,12 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
     }
   }
 
-  @NotNull
   @Override
-  public String getName(int idx) throws ReferenceIndexUnavailableException {
+  public @NotNull String getName(int idx) throws ReferenceIndexUnavailableException {
     try {
-      if (!myReadDataLock.tryLock()) throw new ReferenceIndexUnavailableException();
+      if (!myReadDataLock.tryLock()) {
+        throw new ReferenceIndexUnavailableException();
+      }
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         return myReader.getNameEnumerator().valueOf(idx);
@@ -207,7 +213,8 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
       finally {
         myReadDataLock.unlock();
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       onException(e, "find methods");
       throw new ReferenceIndexUnavailableException();
     }
@@ -216,13 +223,14 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
   @Override
   public int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException {
     try {
-      if (!myReadDataLock.tryLock()) return 0;
+      if (!myReadDataLock.tryLock()) {
+        return 0;
+      }
       try {
-        if (myReader == null) throw new ReferenceIndexUnavailableException();
-        int id;
-        id = myReader.getNameEnumerator().tryEnumerate(name);
-
-        return id;
+        if (myReader == null) {
+          throw new ReferenceIndexUnavailableException();
+        }
+        return myReader.getNameEnumerator().tryEnumerate(name);
       }
       finally {
         myReadDataLock.unlock();
@@ -235,7 +243,8 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
   }
 
   @Override
-  public @NotNull Collection<CompilerRef.CompilerClassHierarchyElementDef> getDirectInheritors(@NotNull CompilerRef.CompilerClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+  public @NotNull Collection<CompilerRef.CompilerClassHierarchyElementDef> getDirectInheritors(@NotNull CompilerRef.CompilerClassHierarchyElementDef baseClass)
+    throws ReferenceIndexUnavailableException {
     try {
       if (!myReadDataLock.tryLock()) return Collections.emptyList();
       try {
@@ -246,7 +255,8 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
       finally {
         myReadDataLock.unlock();
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       onException(e, "find methods");
       throw new ReferenceIndexUnavailableException();
     }
@@ -270,13 +280,6 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
     catch (Exception e) {
       onException(e, "inheritor count");
       throw new ReferenceIndexUnavailableException();
-    }
-  }
-
-  static final class InitializationActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      CompilerReferenceService.getInstanceIfEnabled(project);
     }
   }
 }

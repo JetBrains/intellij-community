@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +28,8 @@ public class CoreLocalVirtualFile extends VirtualFile {
     this(fileSystem, ioFile.toPath());
   }
 
-  /** @deprecated use {@link CoreLocalVirtualFile#CoreLocalVirtualFile(CoreLocalFileSystem, Path, BasicFileAttributes)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
-  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, @SuppressWarnings("unused") boolean isDirectory) {
-    this(fileSystem, ioFile.toPath());
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, boolean isDirectory) {
+    this(fileSystem, ioFile.toPath(), isDirectory);
   }
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file) {
@@ -41,10 +37,20 @@ public class CoreLocalVirtualFile extends VirtualFile {
     myFile = file;
   }
 
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file, boolean isDirectory) {
+    myFileSystem = fileSystem;
+    myFile = file;
+    myAttributes = isDirectory ? new IncompleteDirectoryAttributes() : null;
+  }
+
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file, @NotNull BasicFileAttributes attributes) {
     myFileSystem = fileSystem;
     myFile = file;
     myAttributes = attributes;
+  }
+
+  protected @NotNull Path getFile() {
+    return myFile;
   }
 
   @Override
@@ -76,7 +82,10 @@ public class CoreLocalVirtualFile extends VirtualFile {
   @Override
   public boolean is(@NotNull VFileProperty property) {
     BasicFileAttributes attrs = getAttributes(true);
-    if (property == VFileProperty.HIDDEN) return attrs instanceof DosFileAttributes && ((DosFileAttributes)attrs).isHidden();
+    if (property == VFileProperty.HIDDEN) {
+      return attrs instanceof DosFileAttributes && ((DosFileAttributes)attrs).isHidden() ||
+             NioFiles.getFileName(myFile).startsWith(".");
+    }
     if (property == VFileProperty.SYMLINK) return attrs != null && attrs.isSymbolicLink();
     if (property == VFileProperty.SPECIAL) return attrs != null && attrs.isOther();
     return super.is(property);

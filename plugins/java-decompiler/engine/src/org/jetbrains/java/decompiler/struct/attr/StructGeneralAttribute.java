@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -22,10 +22,16 @@ public class StructGeneralAttribute {
   public static final Key<StructEnclosingMethodAttribute> ATTRIBUTE_ENCLOSING_METHOD = new Key<>("EnclosingMethod");
   public static final Key<StructAnnotationAttribute> ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS = new Key<>("RuntimeVisibleAnnotations");
   public static final Key<StructAnnotationAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS = new Key<>("RuntimeInvisibleAnnotations");
+  public static final Key<?>[] ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS};
   public static final Key<StructAnnotationParameterAttribute> ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS = new Key<>("RuntimeVisibleParameterAnnotations");
   public static final Key<StructAnnotationParameterAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS = new Key<>("RuntimeInvisibleParameterAnnotations");
+  public static final Key<?>[] PARAMETER_ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
   public static final Key<StructTypeAnnotationAttribute> ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS = new Key<>("RuntimeVisibleTypeAnnotations");
   public static final Key<StructTypeAnnotationAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS = new Key<>("RuntimeInvisibleTypeAnnotations");
+  public static final Key<?>[] TYPE_ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS};
   public static final Key<StructLocalVariableTableAttribute> ATTRIBUTE_LOCAL_VARIABLE_TABLE = new Key<>("LocalVariableTable");
   public static final Key<StructLocalVariableTypeTableAttribute> ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE = new Key<>("LocalVariableTypeTable");
   public static final Key<StructConstantValueAttribute> ATTRIBUTE_CONSTANT_VALUE = new Key<>("ConstantValue");
@@ -36,6 +42,7 @@ public class StructGeneralAttribute {
   public static final Key<StructMethodParametersAttribute> ATTRIBUTE_METHOD_PARAMETERS = new Key<>("MethodParameters");
   public static final Key<StructModuleAttribute> ATTRIBUTE_MODULE = new Key<>("Module");
   public static final Key<StructRecordAttribute> ATTRIBUTE_RECORD = new Key<>("Record");
+  public static final Key<StructPermittedSubclassesAttribute> ATTRIBUTE_PERMITTED_SUBCLASSES = new Key<>("PermittedSubclasses");
 
   @SuppressWarnings("unused")
   public static class Key<T extends StructGeneralAttribute> {
@@ -100,6 +107,8 @@ public class StructGeneralAttribute {
     }
     else if (ATTRIBUTE_RECORD.name.equals(name)) {
       return new StructRecordAttribute();
+    } else if (ATTRIBUTE_PERMITTED_SUBCLASSES.name.equals(name)) {
+      return new StructPermittedSubclassesAttribute();
     }
     else {
       return null; // unsupported attribute

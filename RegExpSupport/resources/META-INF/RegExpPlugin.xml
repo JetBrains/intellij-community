@@ -77,5 +77,8 @@
     <localInspection language="RegExp" shortName="RegExpSuspiciousBackref" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.suspicious.backref"
                      implementationClass="org.intellij.lang.regexp.inspection.SuspiciousBackrefInspection"/>
+    <localInspection language="RegExp" shortName="RegExpSimplifiable" enabledByDefault="true" level="WEAK WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.simplifiable.expression"
+                     implementationClass="org.intellij.lang.regexp.inspection.RegExpSimplifiableInspection"/>
   </extensions>
 </idea-plugin>

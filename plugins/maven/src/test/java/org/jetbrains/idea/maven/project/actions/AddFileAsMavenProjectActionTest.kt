@@ -7,7 +7,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.TestActionEvent
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {

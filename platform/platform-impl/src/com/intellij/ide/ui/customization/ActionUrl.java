@@ -278,4 +278,10 @@ public class ActionUrl implements JDOMExternalizable {
            ", myInitialPosition=" + myInitialPosition +
            '}';
   }
+
+  public ActionUrl copy() {
+    ActionUrl url = new ActionUrl(new ArrayList<>(getGroupPath()), getComponent(), getActionType(), getAbsolutePosition());
+    url.setInitialPosition(getInitialPosition());
+    return url;
+  }
 }

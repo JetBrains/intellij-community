@@ -157,10 +157,13 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     val screen = ScreenUtil.getScreenRectangle(location)
 
     if (screen != null) {
-      val delta = screen.width + screen.x - location.x
-      if (size.width > delta) {
-        size.width = delta
+      var delta = screen.width + screen.x - location.x
+      val origLocation = originalPopup?.content?.locationOnScreen
+      // On the left side of the original popup: avoid overlap
+      if (origLocation != null && location.x < origLocation.x) {
+        delta = delta.coerceAtMost(origLocation.x - screen.x - PositionAdjuster.DEFAULT_GAP)
       }
+      size.width = size.width.coerceAtMost(delta)
     }
 
     component.editors.forEach {

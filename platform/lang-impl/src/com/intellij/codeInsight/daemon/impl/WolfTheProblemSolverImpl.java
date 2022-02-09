@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -41,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,7 +56,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   private final Project myProject;
 
-  WolfTheProblemSolverImpl(@NotNull Project project) {
+  private WolfTheProblemSolverImpl(@NotNull Project project) {
     myProject = project;
     PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
       @Override
@@ -252,7 +254,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     AtomicReference<HighlightInfo> error = new AtomicReference<>();
     AtomicBoolean hasErrorElement = new AtomicBoolean();
     try {
-      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(),
+      GeneralHighlightingPass pass = new GeneralHighlightingPass(psiFile, document, 0, document.getTextLength(),
                                                                  false, new ProperTextRange(0, document.getTextLength()), null, HighlightInfoProcessor.getEmpty()) {
         @NotNull
         @Override
@@ -374,9 +376,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   @Override
   public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems) {
     if (problems.isEmpty()) return;
-    boolean fireListener = false;
     ProblemFileInfo storedProblems = myProblems.computeIfAbsent(virtualFile, __ -> new ProblemFileInfo());
-    fireListener = storedProblems.problems.isEmpty();
+    boolean fireListener = storedProblems.problems.isEmpty();
     storedProblems.problems.addAll(problems);
     doQueue(virtualFile);
     if (fireListener) {
@@ -505,7 +506,10 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     return ContainerUtil.process(myProblems.keySet(), processor);
   }
 
-  public static WolfTheProblemSolver createInstance(Project project){
+  @NotNull
+  @TestOnly
+  public static WolfTheProblemSolver createTestInstance(@NotNull Project project){
+    assert ApplicationManager.getApplication().isUnitTestMode();
     return new WolfTheProblemSolverImpl(project);
   }
 }

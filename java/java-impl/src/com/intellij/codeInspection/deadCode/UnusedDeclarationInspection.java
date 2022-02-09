@@ -262,18 +262,18 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
           }
         }
       }
-      else if (refElement instanceof RefField) {
-        UField field = ((RefField)refElement).getUastElement();
-        if (field != null) {
-          UExpression initializer = field.getUastInitializer();
-          if (initializer != null) {
-            initializer = UastUtils.skipParenthesizedExprDown(initializer);
-            if (initializer instanceof ULambdaExpression) {
-              findUnusedLocalVariables(((ULambdaExpression)initializer).getBody(), refElement);
-            }
-          }
-        }
-      }
+      //else if (refElement instanceof RefField) {
+      //  UField field = ((RefField)refElement).getUastElement();
+      //  if (field != null) {
+      //    UExpression initializer = field.getUastInitializer();
+      //    if (initializer != null) {
+      //      initializer = UastUtils.skipParenthesizedExprDown(initializer);
+      //      if (initializer instanceof ULambdaExpression) {
+      //        findUnusedLocalVariables(((ULambdaExpression)initializer).getBody(), refElement);
+      //      }
+      //    }
+      //  }
+      //}
     }
 
     private void findUnusedLocalVariables(UExpression body, RefElement refElement) {

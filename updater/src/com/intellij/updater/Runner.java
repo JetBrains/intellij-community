@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -143,6 +143,9 @@ public class Runner {
       List<String> deleteFiles = extractArguments(args, "delete");
       Map<String, String> warnings = buildWarningMap(extractArguments(args, "warning"));
 
+      String timeoutStr = getArgument(args, "timeout");
+      int timeout = timeoutStr != null ? Integer.parseInt(timeoutStr) : 0;
+
       PatchSpec spec = new PatchSpec()
         .setOldVersionDescription(oldVersionDesc)
         .setNewVersionDescription(newVersionDesc)
@@ -159,7 +162,8 @@ public class Runner {
         .setStrictFiles(strictFiles)
         .setOptionalFiles(optionalFiles)
         .setDeleteFiles(deleteFiles)
-        .setWarnings(warnings);
+        .setWarnings(warnings)
+        .setTimeout(timeout);
 
       boolean success = create(spec);
       System.exit(success ? 0 : 1);
@@ -280,10 +284,10 @@ public class Runner {
       "    delete: A set of regular expressions for paths that is safe to delete without user confirmation.\n" +
       "  <flags>: Can be:\n" +
       "    --zip_as_binary: Zip and jar files will be treated as binary files and not inspected internally.\n" +
-      "    --strict: The created patch will contain extra information to fully validate an installation. A strict\n" +
-      "              patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
-      "              the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
-      "              will be validated\n" +
+      "    --strict:     The created patch will contain extra information to fully validate an installation. A strict\n" +
+      "                  patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
+      "                  the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
+      "                  will be validated\n" +
       "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be\n" +
       "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root.\n" +
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
@@ -292,6 +296,8 @@ public class Runner {
       "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but\n" +
       "                  the generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
       "                  guarantees that the patched version will match exactly the original one.\n" +
+      "    --timeout=<T> A time budget for building a 'bsdiff' patch between a pair of files, in seconds.\n" +
+      "                  If exceeded, the new version is included into the patch as a whole.\n" +
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
 

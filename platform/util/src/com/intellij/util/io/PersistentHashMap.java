@@ -88,15 +88,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     force();
   }
 
-  /**
-   * @deprecated Please use an utility function directly, not this method
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static void deleteFilesStartingWith(@NotNull File prefixFile) {
-    IOUtil.deleteAllFilesStartingWith(prefixFile);
-  }
-
   @Override
   public final void put(Key key, Value value) throws IOException {
     myImpl.put(key, value);

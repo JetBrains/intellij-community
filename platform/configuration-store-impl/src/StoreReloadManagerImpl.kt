@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectReloadState
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.processOpenedProjects
@@ -376,7 +377,7 @@ private fun doReloadProject(project: Project) {
 
     // must compute here, before project dispose
     val presentableUrl = project1.presentableUrl!!
-    if (!ProjectManagerEx.getInstanceEx().closeAndDispose(project1)) {
+    if (!ProjectManager.getInstance().closeAndDispose(project1)) {
       return@submit
     }
 

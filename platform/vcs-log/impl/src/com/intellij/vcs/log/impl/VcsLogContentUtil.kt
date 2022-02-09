@@ -1,18 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -22,107 +15,41 @@ import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.guava.await
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JComponent
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Utility methods to operate VCS Log tabs as [Content]s of the [ContentManager] of the VCS toolwindow.
  */
 object VcsLogContentUtil {
+
   private fun getLogUi(c: JComponent): VcsLogUiEx? {
     val uis = VcsLogPanel.getLogUis(c)
     require(uis.size <= 1) { "Component $c has more than one log ui: $uis" }
     return uis.singleOrNull()
   }
 
-  fun <U : VcsLogUiEx> findAndSelect(project: Project,
-                                     clazz: Class<U>,
-                                     condition: Condition<in U>): U? {
-    return find(project, clazz, true, condition)
-  }
-
-  fun <U : VcsLogUiEx> find(project: Project,
-                            clazz: Class<U>,
-                            select: Boolean,
-                            condition: Condition<in U>): U? {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return null
+  internal fun selectLogUi(project: Project, logUi: VcsLogUi): Boolean {
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
     val manager = toolWindow.contentManager
-    val component = ContentUtilEx.findContentComponent(manager) { c: JComponent ->
-      getLogUi(c).safeCastTo(clazz)?.let { condition.value(it) } ?: false
-    } ?: return null
+    val component = ContentUtilEx.findContentComponent(manager) { c -> getLogUi(c)?.id == logUi.id } ?: return false
 
-    if (select) {
-      if (!toolWindow.isVisible) {
-        toolWindow.activate(null)
-      }
-      if (!ContentUtilEx.selectContent(manager, component, true)) {
-        return null
-      }
+    if (!toolWindow.isVisible) {
+      toolWindow.activate(null)
     }
-
-    @Suppress("UNCHECKED_CAST")
-    return getLogUi(component) as U
+    return ContentUtilEx.selectContent(manager, component, true)
   }
 
   fun getId(content: Content): String? {
     return getLogUi(content.component)?.id
-  }
-
-  @JvmStatic
-  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): CompletableFuture<Boolean> {
-    val resultFuture = CompletableFuture<Boolean>()
-
-    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.asString())
-    runBackgroundableTask(progressTitle, project, true) { indicator ->
-      runBlockingCancellable(indicator) {
-        resultFuture.computeResult {
-          withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-            jumpToRevision(project, root, hash, filePath)
-          }
-        }
-      }
-    }
-
-    return resultFuture
-  }
-
-  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): Boolean {
-    return runInCurrentOrCreateNewTab(project) { logUi ->
-      if (logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-          logUi.properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-          !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()) {
-        // Structure filter might prevent us from navigating to FilePath
-        return@runInCurrentOrCreateNewTab false
-      }
-
-      val jumpResult = VcsLogUtil.jumpToCommit(logUi, hash, root, true, true).await()
-      when (jumpResult) {
-        VcsLogUiEx.JumpResult.SUCCESS -> {
-          logUi.selectFilePath(filePath, true)
-          true
-        }
-        null, VcsLogUiEx.JumpResult.COMMIT_NOT_FOUND -> true
-        VcsLogUiEx.JumpResult.COMMIT_DOES_NOT_MATCH -> false
-      }
-    }
   }
 
   @JvmStatic
@@ -132,7 +59,7 @@ object VcsLogContentUtil {
                                   tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
                                   factory: VcsLogUiFactory<out U>,
                                   focus: Boolean): U {
-    val logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
+    val logUi = logManager.createLogUi(factory, VcsLogTabLocation.TOOL_WINDOW)
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
                      ?: throw IllegalStateException("Could not find tool window for id ${ChangesViewContentManager.TOOLWINDOW_ID}")
     ContentUtilEx.addTabbedContent(toolWindow.contentManager, tabGroupId,
@@ -171,61 +98,21 @@ object VcsLogContentUtil {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING)
   }
 
-  private fun isMainLogTab(content: Content?): Boolean {
-    if (content == null) return false
-    return VcsLogContentProvider.TAB_NAME == content.tabName
+  internal fun findMainLog(cm: ContentManager): Content? {
+    // here tab name is used instead of log ui id to select the correct tab
+    // it's done this way since main log ui may not be created when this method is called
+    return cm.contents.find { VcsLogContentProvider.TAB_NAME == it.tabName }
   }
 
-  private fun selectMainLog(cm: ContentManager): Boolean {
-    val contents = cm.contents
-    for (content in contents) {
-      // here tab name is used instead of log ui id to select the correct tab
-      // it's done this way since main log ui may not be created when this method is called
-      if (isMainLogTab(content)) {
-        cm.setSelectedContent(content)
-        return true
-      }
-    }
-    return false
+  internal fun selectMainLog(cm: ContentManager): Boolean {
+    val mainContent = findMainLog(cm) ?: return false
+    cm.setSelectedContent(mainContent)
+    return true
   }
 
   fun selectMainLog(project: Project): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
     return selectMainLog(toolWindow.contentManager)
-  }
-
-  private suspend fun runInCurrentOrCreateNewTab(project: Project, consumer: suspend (MainVcsLogUi) -> Boolean): Boolean {
-    val logInitFuture = VcsProjectLog.waitWhenLogIsReady(project)
-    if (!logInitFuture.isDone) {
-      withContext(Dispatchers.IO) {
-        logInitFuture.get()
-      }
-    }
-
-    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
-    if (!window.isVisible) {
-      suspendCancellableCoroutine<Unit> { continuation ->
-        window.activate { continuation.resumeWith(Result.success(Unit)) }
-      }
-    }
-
-    val manager = VcsProjectLog.getInstance(project).logManager ?: return false
-
-    val visibleLogUis = manager.getVisibleLogUis(VcsLogManager.LogWindowKind.TOOL_WINDOW)
-    val selectedUi = visibleLogUis.filterIsInstance<MainVcsLogUi>().firstOrNull() // can't filter out update logs
-    if (selectedUi != null && consumer(selectedUi)) return true
-
-    if (selectedUi == null && isMainLogTab(window.contentManager.selectedContent)) {
-      // main log tab is already selected, just need to wait for initialization
-      val mainLogUi = VcsLogContentProvider.getInstance(project)!!.waitMainUiCreation().await()
-      if (mainLogUi != null && consumer(mainLogUi)) return true
-    }
-
-    val newUi = VcsProjectLog.getInstance(project).openLogTab(VcsLogFilterObject.EMPTY_COLLECTION,
-                                                              VcsLogManager.LogWindowKind.TOOL_WINDOW)
-    if (newUi != null && consumer(newUi)) return true
-
-    return false
   }
 
   @JvmStatic
@@ -243,24 +130,5 @@ object VcsLogContentUtil {
   fun getOrCreateLog(project: Project): VcsLogManager? {
     VcsProjectLog.ensureLogCreated(project)
     return VcsProjectLog.getInstance(project).logManager
-  }
-
-  private suspend fun <T> CompletableFuture<T>.computeResult(task: suspend () -> T) {
-    try {
-      val result = task()
-      this.complete(result)
-    }
-    catch (e: CancellationException) {
-      this.cancel(false)
-    }
-    catch (e: Throwable) {
-      this.completeExceptionally(e)
-    }
-  }
-
-  private fun <U> Any?.safeCastTo(clazz: Class<U>): U? {
-    @Suppress("UNCHECKED_CAST")
-    if (this != null && clazz.isInstance(this)) return this as U
-    return null
   }
 }

@@ -11,31 +11,23 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.gradle.checkFiles
-import org.jetbrains.kotlin.test.TagsTestDataUtil
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
 import java.io.File
 
-abstract class GradleTestRunConfigurationAndHighlightingTest : KotlinGradleImportingTestCase() {
-    class ExpectClassWithTests : GradleTestRunConfigurationAndHighlightingTest() {
-        @Test
-        fun testExpectClassWithTests() = doTest()
-    }
+class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
+    @Test
+    fun testExpectClassWithTests() = doTest()
 
-    class PreferredConfigurations : GradleTestRunConfigurationAndHighlightingTest() {
-        @Test
-        fun preferredConfigurations() = doTest()
-    }
+    @Test
+    fun preferredConfigurations() = doTest()
 
-    class MultiplatformTestsInObject : GradleTestRunConfigurationAndHighlightingTest() {
-        @Test
-        fun multiplatformTestsInObject() = doTest()
-    }
+    @Test
+    fun multiplatformTestsInObject() = doTest()
 
-    class MultiProjectBuild : GradleTestRunConfigurationAndHighlightingTest() {
-        @Test
-        fun testMultiProjectBuild() = doTest()
-    }
+    @Test
+    fun testMultiProjectBuild() = doTest()
 
     protected fun doTest() {
         val files = importProjectFromTestData()

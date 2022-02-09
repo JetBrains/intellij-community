@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.DiffUtil;
@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDifferenceIterable, IndexProvider {
-  private int lastIterableIndex = 0;
+public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDifferenceIterable {
   @NotNull
   protected abstract List<? extends T> getChanges();
 
@@ -44,9 +43,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
     int line = getEditor().getCaretModel().getLogicalPosition().line;
 
     T next = null;
-    for (int i = 0; i < changes.size(); i++) {
-      lastIterableIndex = i;
-      T change = changes.get(i);
+    for (T change : changes) {
       if (getStartLine(change) <= line) continue;
 
       next = change;
@@ -79,7 +76,6 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
     T prev = null;
     for (int i = 0; i < changes.size(); i++) {
-      lastIterableIndex = i;
       T change = changes.get(i);
 
       T next = i < changes.size() - 1 ? changes.get(i + 1) : null;
@@ -91,10 +87,5 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
     assert prev != null;
     scrollToChange(prev);
-  }
-
-  @Override
-  public int getIndex() {
-    return lastIterableIndex;
   }
 }

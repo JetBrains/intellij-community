@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService;
@@ -107,7 +107,7 @@ public final class NewProjectUtil {
   }
 
   private static void recordProjectCreatedFromWizard(@NotNull AbstractProjectWizard wizard) {
-    if (Registry.is("platform.feedback", false)) {
+    if (Registry.is("platform.feedback", true)) {
       final ProjectBuilder projectBuilder = wizard.getWizardContext().getProjectBuilder();
       if (projectBuilder instanceof AbstractModuleBuilder) {
         final PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(projectBuilder.getClass());
@@ -156,7 +156,7 @@ public final class NewProjectUtil {
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
         String name = wizard.getProjectName();
         if (projectBuilder == null) {
-          newProject = projectManager.newProject(projectFile, OpenProjectTask.newProject().withProjectName(name));
+          newProject = projectManager.newProject(projectFile, OpenProjectTask.build().asNewProject().withProjectName(name));
         }
         else {
           newProject = projectBuilder.createProject(name, projectFilePath);
@@ -211,7 +211,7 @@ public final class NewProjectUtil {
 
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFile);
-        OpenProjectTask options = OpenProjectTask.withCreatedProject(newProject);
+        OpenProjectTask options = OpenProjectTask.build().withProject(newProject);
         Path fileName = projectFile.getFileName();
         if (fileName != null) {
           options = options.withProjectName(fileName.toString());

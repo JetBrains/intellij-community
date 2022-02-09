@@ -5,11 +5,7 @@
         "stubs"
     ],
     "exclude": [
-        // Python 2 only modules.
-        "**/@python2",
-        "stubs/enum34",
-        "stubs/futures",
-        "stubs/ipaddress"
+        "**/@python2"
     ],
     "typeCheckingMode": "basic",
     "strictListInference": true,

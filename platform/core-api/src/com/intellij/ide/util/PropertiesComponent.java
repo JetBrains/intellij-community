@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -12,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Allows simple persistence of application/project-level values.
@@ -20,16 +21,14 @@ import java.lang.reflect.Field;
  * <p/>
  * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Using PropertiesComponent for Simple non-roamable Persistence</a>.
  *
- * @author max
  * @author Konstantin Bulenkov
  */
-public abstract class PropertiesComponent extends SimpleModificationTracker {
+public abstract class PropertiesComponent {
   public abstract void unsetValue(@NonNls @NotNull String name);
 
   public abstract boolean isValueSet(@NonNls @NotNull String name);
 
-  @Nullable
-  public abstract @NonNls String getValue(@NonNls @NotNull String name);
+  public abstract @Nullable @NonNls String getValue(@NonNls @NotNull String name);
 
   /**
    * Consider to use {@link #setValue(String, String, String)} to avoid write defaults.
@@ -63,9 +62,26 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
    */
   public abstract void setValue(@NonNls @NotNull String name, boolean value, boolean defaultValue);
 
+  /**
+   * @deprecated Use {@link #getList(String)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated
   public abstract String @Nullable [] getValues(@NonNls @NotNull String name);
 
+  /**
+   * @deprecated Use {@link #getList(String)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated
   public abstract void setValues(@NonNls @NotNull String name, String[] values);
+
+  public abstract @Nullable List<String> getList(@NonNls @NotNull String name);
+
+  /**
+   * The passed collection will be copied.
+   */
+  public abstract void setList(@NonNls @NotNull String name, @Nullable Collection<String> values);
 
   /**
    * Returns the project-level instance.
@@ -86,15 +102,15 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   }
 
   public final boolean getBoolean(@NonNls @NotNull String name, boolean defaultValue) {
-    return isValueSet(name) ? isTrueValue(name) : defaultValue;
+    String value = getValue(name);
+    return value == null ? defaultValue : Boolean.parseBoolean(value);
   }
 
   public final boolean getBoolean(@NonNls @NotNull String name) {
     return getBoolean(name, false);
   }
 
-  @NotNull
-  public @NlsSafe String getValue(@NonNls @NotNull String name, @NotNull String defaultValue) {
+  public @NotNull @NlsSafe String getValue(@NonNls @NotNull String name, @NotNull String defaultValue) {
     String value = getValue(name);
     return value == null ? defaultValue : value;
   }
@@ -104,6 +120,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
    * Init was never performed and in any case is not recommended.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final int getOrInitInt(@NonNls @NotNull String name, int defaultValue) {
     return getInt(name, defaultValue);
   }
@@ -121,21 +138,9 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
    * Init was never performed and in any case is not recommended.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final long getOrInitLong(@NonNls @NotNull String name, long defaultValue) {
     return getLong(name, defaultValue);
-  }
-
-  /**
-   * @deprecated Use {@link #getValue(String, String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public String getOrInit(@NonNls @NotNull String name, String defaultValue) {
-    if (!isValueSet(name)) {
-      setValue(name, defaultValue);
-      return defaultValue;
-    }
-    return getValue(name);
   }
 
   public final boolean saveFields(@NotNull Object object) {
@@ -165,27 +170,58 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
 
           String defaultValue = annotation.defaultValue();
           if (PropertyName.NOT_SET.equals(defaultValue)) {
-            if (type.equals(boolean.class))     {defaultValue = String.valueOf(field.getBoolean(object));}
-            else if (type.equals(long.class))   {defaultValue = String.valueOf(field.getLong(object));}
-            else if (type.equals(int.class))    {defaultValue = String.valueOf(field.getInt(object));}
-            else if (type.equals(short.class))  {defaultValue = String.valueOf(field.getShort(object));}
-            else if (type.equals(byte.class))   {defaultValue = String.valueOf(field.getByte(object));}
-            else if (type.equals(double.class)) {defaultValue = String.valueOf(field.getDouble(object));}
-            else if (type.equals(float.class))  {defaultValue = String.valueOf(field.getFloat(object));}
-            else if (type.equals(String.class)) {defaultValue = String.valueOf(field.get(object));}
-
+            if (type.equals(boolean.class)) {
+              defaultValue = String.valueOf(field.getBoolean(object));
+            }
+            else if (type.equals(long.class)) {
+              defaultValue = String.valueOf(field.getLong(object));
+            }
+            else if (type.equals(int.class)) {
+              defaultValue = String.valueOf(field.getInt(object));
+            }
+            else if (type.equals(short.class)) {
+              defaultValue = String.valueOf(field.getShort(object));
+            }
+            else if (type.equals(byte.class)) {
+              defaultValue = String.valueOf(field.getByte(object));
+            }
+            else if (type.equals(double.class)) {
+              defaultValue = String.valueOf(field.getDouble(object));
+            }
+            else if (type.equals(float.class)) {
+              defaultValue = String.valueOf(field.getFloat(object));
+            }
+            else if (type.equals(String.class)) {
+              defaultValue = String.valueOf(field.get(object));
+            }
           }
           final String stringValue = getValue(annotation.value(), defaultValue);
           Object value = null;
 
-          if (type.equals(boolean.class))     {value = Boolean.valueOf(stringValue);}
-          else if (type.equals(long.class))   {value = Long.parseLong(stringValue);}
-          else if (type.equals(int.class))    {value = Integer.parseInt(stringValue);}
-          else if (type.equals(short.class))  {value = Short.parseShort(stringValue);}
-          else if (type.equals(byte.class))   {value = Byte.parseByte(stringValue);}
-          else if (type.equals(double.class)) {value = Double.parseDouble(stringValue);}
-          else if (type.equals(float.class))  {value = Float.parseFloat(stringValue);}
-          else if (type.equals(String.class)) {value = stringValue;}
+          if (type.equals(boolean.class)) {
+            value = Boolean.valueOf(stringValue);
+          }
+          else if (type.equals(long.class)) {
+            value = Long.parseLong(stringValue);
+          }
+          else if (type.equals(int.class)) {
+            value = Integer.parseInt(stringValue);
+          }
+          else if (type.equals(short.class)) {
+            value = Short.parseShort(stringValue);
+          }
+          else if (type.equals(byte.class)) {
+            value = Byte.parseByte(stringValue);
+          }
+          else if (type.equals(double.class)) {
+            value = Double.parseDouble(stringValue);
+          }
+          else if (type.equals(float.class)) {
+            value = Float.parseFloat(stringValue);
+          }
+          else if (type.equals(String.class)) {
+            value = stringValue;
+          }
 
           if (value != null) {
             field.set(object, value);

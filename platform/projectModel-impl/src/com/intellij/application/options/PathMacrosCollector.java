@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.PathMacroFilter;
@@ -28,15 +28,13 @@ public final class PathMacrosCollector extends PathMacroMap {
     myMatcher = MACRO_PATTERN.matcher("");
   }
 
-  @NotNull
-  public static Set<String> getMacroNames(@NotNull final Element e) {
+  public static @NotNull Set<String> getMacroNames(final @NotNull Element e) {
     return getMacroNames(e, new CompositePathMacroFilter(MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList()),
                          PathMacrosImpl.getInstanceEx());
   }
 
-  @NotNull
-  public static Set<String> getMacroNames(@NotNull Element root, @Nullable PathMacroFilter filter, @NotNull PathMacrosImpl pathMacros) {
-    final PathMacrosCollector collector = new PathMacrosCollector();
+  public static @NotNull Set<String> getMacroNames(@NotNull Element root, @Nullable PathMacroFilter filter, @NotNull PathMacrosImpl pathMacros) {
+    PathMacrosCollector collector = new PathMacrosCollector();
     collector.substitute(root, true, false, filter);
     Set<String> preResult = collector.myMacroMap.keySet();
     if (preResult.isEmpty()) {
@@ -51,9 +49,8 @@ public final class PathMacrosCollector extends PathMacroMap {
     return result;
   }
 
-  @NotNull
   @Override
-  public CharSequence substituteRecursively(@NotNull String text, boolean caseSensitive) {
+  public @NotNull CharSequence substituteRecursively(@NotNull String text, boolean caseSensitive) {
     if (Strings.isEmpty(text)) {
       return text;
     }
@@ -66,9 +63,8 @@ public final class PathMacrosCollector extends PathMacroMap {
     return text;
   }
 
-  @NotNull
   @Override
-  public String substitute(@NotNull String text, boolean caseSensitive) {
+  public @NotNull String substitute(@NotNull String text, boolean caseSensitive) {
     if (Strings.isEmpty(text)) {
       return text;
     }

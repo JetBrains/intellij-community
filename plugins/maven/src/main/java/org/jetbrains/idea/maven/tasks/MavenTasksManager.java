@@ -215,15 +215,6 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     return StringUtil.join(result, ", ");
   }
 
-  /**
-   * @deprecated use #addListener(Listener, Disposable)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public void addListener(Listener l) {
-    myListeners.add(l);
-  }
-
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
     myListeners.add(l, disposable);
   }

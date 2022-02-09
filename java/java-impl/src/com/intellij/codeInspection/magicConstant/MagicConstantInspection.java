@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
@@ -133,6 +133,25 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         if (r == null) return;
         checkBinary(l, r);
         checkBinary(r, l);
+      }
+
+      @Override
+      public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+        PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(list, PsiSwitchBlock.class);
+        if (switchBlock == null) return;
+        PsiExpression selector = switchBlock.getExpression();
+        PsiElement resolved = null;
+        if (selector instanceof PsiReference) {
+          resolved = ((PsiReference)selector).resolve();
+        }
+        else if (selector instanceof PsiMethodCallExpression) {
+          resolved = ((PsiCallExpression)selector).resolveMethod();
+        }
+        if (!(resolved instanceof PsiModifierListOwner)) return;
+        for (PsiCaseLabelElement element : list.getElements()) {
+          if (!(element instanceof PsiExpression)) continue;
+          checkExpression((PsiExpression)element, (PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), holder);
+        }
       }
 
       private void checkBinary(@NotNull PsiExpression l, @NotNull PsiExpression r) {

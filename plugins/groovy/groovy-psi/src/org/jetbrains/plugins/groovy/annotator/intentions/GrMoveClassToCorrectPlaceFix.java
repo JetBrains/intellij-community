@@ -87,9 +87,4 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
       }
     };
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

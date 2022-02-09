@@ -338,9 +338,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       return;
     }
 
-    InputStream in = null;
-    try {
-      in = new BufferedInputStream(new FileInputStream(manifestFile));
+    try (InputStream in = new BufferedInputStream(new FileInputStream(manifestFile))) {
       final Manifest manifest = new Manifest(in);
       final String attributes = manifest.getMainAttributes().getValue("Require-Bundle");
       if (!StringUtil.isEmpty(attributes)) {
@@ -363,15 +361,6 @@ public abstract class AbstractEclipseClasspathReader<T> {
     }
     catch (IOException e) {
       throw new ConversionException(e.getMessage());
-    }
-    finally {
-      if (in != null) {
-        try {
-          in.close();
-        }
-        catch (IOException ignored) {
-        }
-      }
     }
   }
 

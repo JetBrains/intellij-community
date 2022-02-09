@@ -598,7 +598,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   }
 
   private Collection<ExternalDependency> getDependencies(@NotNull Iterable<?> fileCollections, @NotNull String scope) {
-    Collection<ExternalDependency> result = new ArrayList<ExternalDependency>();
+    Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
     for (Object fileCollection : fileCollections) {
       if (fileCollection instanceof FileCollection) {
         result.addAll(getDependencies((FileCollection)fileCollection, scope));

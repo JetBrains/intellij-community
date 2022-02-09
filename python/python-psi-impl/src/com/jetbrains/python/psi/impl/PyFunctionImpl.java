@@ -33,7 +33,6 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NotNull;
@@ -297,19 +296,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       @Override
       public String getPresentableText() {
         return notNullize(getName(), PyNames.UNNAMED_ELEMENT) + getParameterList().getPresentableText(true);
-      }
-
-      @Nullable
-      @Override
-      public String getLocationString() {
-        final PyClass containingClass = getContainingClass();
-        final PsiFile containingFile = getContainingFile();
-        final String packageForFile = getPackageForFile(containingFile);
-        if (containingClass != null && packageForFile != null) {
-          final String fileInfoStr = containingFile instanceof PyiFile ? packageForFile + " stub" : packageForFile;
-          return String.format("(%s in %s)", containingClass.getName(), fileInfoStr);
-        }
-        return super.getLocationString();
       }
     };
   }

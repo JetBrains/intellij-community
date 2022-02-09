@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,12 +13,11 @@ import java.util.Set;
  * Abstract some file operations that can be differently implemented depending on the JVM version
  *
  * @author Eugene Zhuravlev
- * Date: 18-Oct-18
  */
 public interface FileOperations {
   interface Archive {
     @NotNull
-    Iterable<JavaFileObject> list(String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) throws IOException;
+    Iterable<JavaFileObject> list(String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException;
 
     void close() throws IOException;
   }

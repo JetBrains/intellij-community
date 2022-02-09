@@ -2,6 +2,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +18,17 @@ public interface Formatter extends IndentFactory, WrapFactory, AlignmentFactory,
     return instance;
   }
 
-
   @ApiStatus.Internal
   @Nullable
   FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile, @Nullable FormattingModelBuilder langBuilder);
+
+  @ApiStatus.Internal
+  boolean isEligibleForVirtualFormatting(@NotNull PsiElement context);
+
+  @ApiStatus.Internal
+  @Nullable
+  FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context, @Nullable FormattingModelBuilder originalModel);
+
 }
 
 final class Holder {

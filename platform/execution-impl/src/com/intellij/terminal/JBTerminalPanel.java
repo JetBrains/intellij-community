@@ -294,11 +294,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
-  }
-
-  @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
@@ -348,7 +343,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
         if (LOG.isDebugEnabled()) {
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
-        IdeEventQueue.getInstance().flushDelayedKeyEvents();
         JBTerminalPanel.this.dispatchEvent(e);
         return true;
       }

@@ -36,7 +36,7 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
   }
 
   override fun getTestFrameworks(): List<StarterTestRunner> {
-    return listOf(JUNIT_TEST_RUNNER, TESTNG_TEST_RUNNER)
+    return listOf(JUNIT_TEST_RUNNER)
   }
 
   override fun getStarterPack(): StarterPack {
@@ -53,6 +53,10 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
         Library("formsfx", null, "FormsFX", JavaFXBundle.message("library.formsfx.description"),
                 "com.dlsc.formsfx", "formsfx-core", listOf(
           LibraryLink(LibraryLinkType.WEBSITE, "https://github.com/dlsc-software-consulting-gmbh/FormsFX/")
+        )),
+        Library("fxgl", null, "FXGL", JavaFXBundle.message("library.fxgl.description"),
+                "com.github.almasb", "fxgl", listOf(
+          LibraryLink(LibraryLinkType.WEBSITE, "https://github.com/AlmasB/FXGL")
         )),
         Library("ikonli", null, "Ikonli", JavaFXBundle.message("library.ikonli.description"),
                 "org.kordamp.ikonli", "ikonli-javafx", listOf(

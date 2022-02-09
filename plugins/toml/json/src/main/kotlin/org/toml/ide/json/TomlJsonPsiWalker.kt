@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
@@ -29,12 +30,16 @@ object TomlJsonPsiWalker : JsonLikePsiWalker {
         val position = JsonPointerPosition()
         var current = element
 
+        val tableHeaderSegments = mutableListOf<String?>()
+        var nestedIndex: Int? = null
+
         while (current !is PsiFile) {
             val parent = current.parent
 
             when {
-                // TODO: Support nested array tables
                 current is TomlKeySegment && parent is TomlKey -> {
+                    // forceLastTransition as true is used in inspections, whether as false is used in completion
+                    // to skip the last segment as it may not have been typed completely yet
                     if (current != element || forceLastTransition) {
                         position.addPrecedingStep(current.name)
                     }
@@ -42,21 +47,10 @@ object TomlJsonPsiWalker : JsonLikePsiWalker {
                         position.addPrecedingStep(segment.name)
                     }
                 }
-                current is TomlKeyValue && parent is TomlTable -> {
-                    val key = parent.header.key ?: break
-                    for (segment in key.segments.asReversed()) {
-                        position.addPrecedingStep(segment.name)
-                    }
-                }
-                current is TomlKeyValue && parent is TomlArrayTable -> {
-                    val tomlFile = parent.parent
-                    val entries = tomlFile.children.filterIsInstance<TomlArrayTable>()
-                    position.addPrecedingStep(entries.indexOf(parent))
-
-                    val key = parent.header.key ?: break
-                    for (segment in key.segments.asReversed()) {
-                        position.addPrecedingStep(segment.name)
-                    }
+                current is TomlKeyValue && parent is TomlHeaderOwner -> {
+                    val parentKey = parent.header.key ?: break
+                    // add table header segments to process all the previous siblings to handle nested array tables cases
+                    parentKey.segments.mapTo(tableHeaderSegments) { it.name }
                 }
                 current is TomlValue && parent is TomlArray -> {
                     if (current != element || forceLastTransition) {
@@ -64,17 +58,56 @@ object TomlJsonPsiWalker : JsonLikePsiWalker {
                     }
                 }
                 current is TomlValue && parent is TomlKeyValue -> {
-                    val key = parent.key
+                    val parentKey = parent.key
 
-                    for (segment in key.segments.asReversed()) {
+                    for (segment in parentKey.segments.asReversed()) {
                         if (segment != element || forceLastTransition) {
                             position.addPrecedingStep(segment.name)
                         }
                     }
                 }
+                current is TomlHeaderOwner && parent is PsiFile -> {
+                    val currentSegments = current.header.key?.segments?.map { it.name }.orEmpty()
+
+                    // lower keys size until it is equals current header key size
+                    while (tableHeaderSegments.size > currentSegments.size && ContainerUtil.startsWith(tableHeaderSegments, currentSegments)) {
+                        // add index if it is present (meaning that the current segment is array one)
+                        if (nestedIndex != null) {
+                            position.addPrecedingStep(nestedIndex)
+                            nestedIndex = null
+                        }
+                        position.addPrecedingStep(tableHeaderSegments.removeLast())
+                    }
+
+                    // increment array table index if keys are equal
+                    if (currentSegments == tableHeaderSegments && current is TomlArrayTable) {
+                        if (nestedIndex != null) {
+                            nestedIndex += 1
+                        } else {
+                            nestedIndex = 0
+                        }
+                    }
+                }
             }
 
-            current = current.parent
+            // take previous sibling if it is the top-level item, otherwise use parent
+            if (current is TomlHeaderOwner && parent is PsiFile && current.prevSibling != null) {
+                // skip everything else than TomlHeaderOwner
+                do {
+                    current = current.prevSibling
+                } while (current !is TomlHeaderOwner && current.prevSibling != null)
+            } else {
+                current = current.parent
+            }
+        }
+
+        // process the left segments after last top-element which was equal with them
+        while (tableHeaderSegments.isNotEmpty()) {
+            if (nestedIndex != null) {
+                position.addPrecedingStep(nestedIndex)
+                nestedIndex = null
+            }
+            position.addPrecedingStep(tableHeaderSegments.removeLast())
         }
 
         return position
@@ -108,6 +141,7 @@ object TomlJsonPsiWalker : JsonLikePsiWalker {
     override fun hasMissingCommaAfter(element: PsiElement): Boolean = false
 
     override fun acceptsEmptyRoot(): Boolean = true
+
     override fun requiresNameQuotes(): Boolean = false
     override fun allowsSingleQuotes(): Boolean = false
 }

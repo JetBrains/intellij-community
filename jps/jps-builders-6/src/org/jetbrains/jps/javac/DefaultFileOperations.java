@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -7,15 +7,14 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-class DefaultFileOperations implements FileOperations {
+final class DefaultFileOperations implements FileOperations {
   private static final Iterable<File> NULL_ITERABLE = new Iterable<File>() {
     @NotNull
     @Override
@@ -31,7 +30,7 @@ class DefaultFileOperations implements FileOperations {
   private static final Archive NULL_ARCHIVE = new Archive() {
     @NotNull
     @Override
-    public Iterable<JavaFileObject> list(String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) {
+    public Iterable<JavaFileObject> list(String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) {
       return Collections.emptyList();
     }
     @Override
@@ -153,7 +152,7 @@ class DefaultFileOperations implements FileOperations {
     return null;
   }
 
-  // true iff this file exists, denotes a file and has jar or zip extension
+  // true iff this file exists, denotes a file and has `jar` or `zip` extension
   private  boolean isJarOrZip(File root) {
     if (!isFile(root)) {
       return false;
@@ -195,7 +194,7 @@ class DefaultFileOperations implements FileOperations {
   }
 
   @Nullable
-  protected Iterable<File> listFiles(File file) throws IOException {
+  private static Iterable<File> listFiles(File file) throws IOException {
     final File[] files = file.listFiles();
     return files != null? Arrays.asList(files) : null;
   }
@@ -236,7 +235,7 @@ class DefaultFileOperations implements FileOperations {
 
     @NotNull
     @Override
-    public Iterable<JavaFileObject> list(final String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
+    public Iterable<JavaFileObject> list(final String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
       final Collection<ZipEntry> entries = myPaths.get(relPath);
       if (entries == null || entries.isEmpty()) {
         return Collections.emptyList();
@@ -282,5 +281,4 @@ class DefaultFileOperations implements FileOperations {
       return path.substring(0, idx);
     }
   }
-
 }

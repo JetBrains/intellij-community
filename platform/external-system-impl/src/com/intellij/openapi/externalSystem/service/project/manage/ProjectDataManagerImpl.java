@@ -127,7 +127,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         long startTime = System.currentTimeMillis();
         doImportData(key, grouped.get(key), projectData, project, modelsProvider,
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
-        trace.logPerformance("Data import by " + key.toString(), System.currentTimeMillis() - startTime);
+        trace.logPerformance("Data import by " + key, System.currentTimeMillis() - startTime);
       }
 
       for (Runnable postImportTask : postImportTasks) {

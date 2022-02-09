@@ -1,0 +1,3 @@
+package simple
+
+class F

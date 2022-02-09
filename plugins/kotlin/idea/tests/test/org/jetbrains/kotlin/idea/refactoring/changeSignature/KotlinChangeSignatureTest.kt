@@ -42,8 +42,8 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -1258,6 +1258,10 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         newReturnTypeInfo = KotlinTypeInfo(true, BUILT_INS.stringType)
     }
 
+    fun testChangeClassParameterWithInvalidCharacter() = doTest {
+        newParameters[0].name = "a@bc"
+    }
+
     fun testParameterPropagation() = doTestAndIgnoreConflicts {
         val psiFactory = KtPsiFactory(project)
 
@@ -1290,7 +1294,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         newParameters.add(ParameterInfoImpl(-1, "n", PsiType.INT, "1"))
         newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType, "\"abc\""))
 
-        val classA = JavaFullClassNameIndex.getInstance().get("A".hashCode(), project, project.allScope()).first { it.name == "A" }
+        val classA = JavaFullClassNameIndex.getInstance().get("A", project, project.allScope()).first { it.name == "A" }
         val methodBar = classA.methods.first { it.name == "bar" }
         parameterPropagationTargets.add(methodBar)
 

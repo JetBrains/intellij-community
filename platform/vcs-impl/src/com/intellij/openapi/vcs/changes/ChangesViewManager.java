@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -114,7 +114,8 @@ public class ChangesViewManager implements ChangesViewEx,
     myProject = project;
     ChangesViewModifier.KEY.addChangeListener(project, this::refreshImmediately, this);
 
-    project.getMessageBus().connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateCommitWorkflow());
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflow());
     // invokeLater to avoid potential cyclic dependency with ChangesViewCommitPanel constructor
     ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow(), myProject.getDisposed());
   }
@@ -203,7 +204,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   private void migrateShowFlattenSetting() {
     if (!myState.myShowFlatten) {
-      myState.groupingKeys = set(DEFAULT_GROUPING_KEYS);
+      myState.groupingKeys = Set.copyOf(DEFAULT_GROUPING_KEYS);
       myState.myShowFlatten = true;
     }
   }
@@ -684,7 +685,7 @@ public class ChangesViewManager implements ChangesViewEx,
       actions.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(treeExpander, myView));
       actions.add(CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, myView));
       actions.add(Separator.getInstance());
-      actions.add(new ToggleDetailsAction());
+      actions.add(ActionManager.getInstance().getAction("ChangesView.SingleClickPreview"));
 
       return actions;
     }
@@ -874,26 +875,22 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
-    private class ToggleDetailsAction extends ShowDiffPreviewAction {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setEnabledAndVisible(mySplitterDiffPreview != null || isOpenEditorDiffPreviewWithSingleClick.asBoolean());
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
-        ObjectUtils.chooseNotNull(mySplitterDiffPreview, myEditorDiffPreview).setPreviewVisible(state, false);
-        setCommitSplitOrientation();
-      }
-
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
-      }
-    }
   }
+
+
+  public boolean isDiffPreviewAvailable() {
+    if (myToolWindowPanel == null) return false;
+
+    return myToolWindowPanel.mySplitterDiffPreview != null || ChangesViewToolWindowPanel.isOpenEditorDiffPreviewWithSingleClick.asBoolean();
+  }
+
+  public void diffPreviewChanged(boolean state) {
+    if (myToolWindowPanel == null) return;
+    ObjectUtils.chooseNotNull(myToolWindowPanel.mySplitterDiffPreview, myToolWindowPanel.myEditorDiffPreview)
+      .setPreviewVisible(state, false);
+    myToolWindowPanel.setCommitSplitOrientation();
+  }
+
 
   private static final class MyContentDnDTarget extends VcsToolwindowDnDTarget {
     private MyContentDnDTarget(@NotNull Project project, @NotNull Content content) {

@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.utils;
 
-import com.intellij.util.BooleanFunction;
 import com.intellij.vcs.log.graph.utils.impl.PermanentListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Predicate;
+
 public class PermanentListIntToIntMapTest extends UpdatableIntToIntMapTest {
   @Override
-  protected UpdatableIntToIntMap createUpdatableIntToIntMap(final @NotNull BooleanFunction<? super Integer> thisIsVisible, final int longSize) {
+  protected UpdatableIntToIntMap createUpdatableIntToIntMap(final @NotNull Predicate<? super Integer> thisIsVisible, final int longSize) {
     return new UpdatableIntToIntMapWrapper(new Flags() {
       @Override
       public int size() {
@@ -16,7 +17,7 @@ public class PermanentListIntToIntMapTest extends UpdatableIntToIntMapTest {
 
       @Override
       public boolean get(int index) {
-        return thisIsVisible.fun(index);
+        return thisIsVisible.test(index);
       }
 
       @Override

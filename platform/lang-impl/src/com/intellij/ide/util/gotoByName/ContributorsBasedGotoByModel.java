@@ -22,12 +22,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Processor;
-import com.intellij.util.Processors;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FindSymbolParameters;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -167,39 +165,70 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return answer;
   }
 
-  public Object @NotNull [] getElementsByName(@NotNull final String name,
-                                              @NotNull final FindSymbolParameters parameters,
-                                              @NotNull final ProgressIndicator canceled) {
-    List<ChooseByNameContributor> applicable = ContainerUtil.filter(filterDumb(getContributorList()), contributor -> {
+  public Object @NotNull [] getElementsByName(@NotNull String name,
+                                              @NotNull FindSymbolParameters parameters,
+                                              @NotNull ProgressIndicator canceled) {
+    return getElementsByNames(Set.of(name), parameters, canceled);
+  }
+
+  public Object @NotNull [] getElementsByNames(@NotNull Set<String> names,
+                                               @NotNull FindSymbolParameters parameters,
+                                               @NotNull ProgressIndicator canceled) {
+    if (names.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    MultiMap<ChooseByNameContributor, String> applicable = MultiMap.createSet();
+    for (ChooseByNameContributor contributor : filterDumb(getContributorList())) {
       IntSet filter = myContributorToItsSymbolsMap.get(contributor);
-      return filter == null || filter.contains(name.hashCode());
-    });
-    if (applicable.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-
-    long elementByNameStarted = System.currentTimeMillis();
-    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<>());
-
-    Processor<ChooseByNameContributor> processor = contributor -> {
-      if (myProject.isDisposed()) {
-        return true;
-      }
-      try {
-        boolean searchInLibraries = parameters.isSearchInLibraries();
-        long contributorStarted = System.currentTimeMillis();
-
-        if (contributor instanceof ChooseByNameContributorEx) {
-          ((ChooseByNameContributorEx)contributor).processElementsWithName(name, item -> {
-            canceled.checkCanceled();
-            if (acceptItem(item)) items.add(item);
-            return true;
-          }, parameters);
-
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + ",");
-          }
+      for (String name : names) {
+        if (filter == null || filter.contains(name.hashCode())) {
+          applicable.putValue(contributor, name);
         }
-        else {
+      }
+    }
+    if (applicable.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    long start = System.nanoTime();
+    List<NavigationItem> items = Collections.synchronizedList(new ArrayList<>());
+
+    Processor<ChooseByNameContributor> processor = contributor ->
+      processContributorForNames(contributor, (Set<String>)applicable.get(contributor), parameters, canceled, items);
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(applicable.keySet()), canceled, processor)) {
+      canceled.cancel();
+    }
+    canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Retrieving " + names + ":" + items.size() + " for " + TimeoutUtil.getDurationMillis(start));
+    }
+    return ArrayUtil.toObjectArray(items);
+  }
+
+  private boolean processContributorForNames(@NotNull ChooseByNameContributor contributor,
+                                             @NotNull Set<String> names,
+                                             @NotNull FindSymbolParameters parameters,
+                                             @NotNull ProgressIndicator canceled,
+                                             @NotNull List<NavigationItem> items) {
+    if (myProject.isDisposed()) {
+      return true;
+    }
+    try {
+      boolean searchInLibraries = parameters.isSearchInLibraries();
+      long start = System.nanoTime();
+      int[] count = { 0 };
+
+      if (contributor instanceof ChooseByNameContributorEx) {
+        ((ChooseByNameContributorEx)contributor).processElementsWithNames(names, item -> {
+          canceled.checkCanceled();
+          count[0]++;
+          if (acceptItem(item)) items.add(item);
+          return true;
+        }, parameters);
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
+        }
+      }
+      else {
+        for (String name : names) {
           NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
+          count[0] += itemsByName.length;
           for (NavigationItem item : itemsByName) {
             canceled.checkCanceled();
             if (item == null) {
@@ -214,28 +243,19 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
               items.add(item);
             }
           }
-
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + "," + itemsByName.length);
-          }
         }
       }
-      catch (ProcessCanceledException ex) {
-        // index corruption detected, ignore
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
       }
-      catch (Exception ex) {
-        LOG.error(ex);
-      }
-      return true;
-    };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(applicable, canceled, processor)) {
-      canceled.cancel();
     }
-    canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Retrieving " + name + ":" + items.size() + " for " + (System.currentTimeMillis() - elementByNameStarted));
+    catch (ProcessCanceledException ex) {
+      // index corruption detected, ignore
     }
-    return ArrayUtil.toObjectArray(items);
+    catch (Exception ex) {
+      LOG.error(ex);
+    }
+    return true;
   }
 
   /**

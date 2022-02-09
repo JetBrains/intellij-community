@@ -8,6 +8,7 @@ import com.intellij.execution.junit.JUnitUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 
 object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
     override val canRunJvmTests: Boolean
@@ -22,10 +23,10 @@ object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
     }
 
     override fun isTestJavaClass(testClass: PsiClass): Boolean {
-        return JUnitUtil.isTestClass(testClass, false, true)
+        return testClass.actionUnderSafeAnalyzeBlock({ JUnitUtil.isTestClass(testClass, false, true) }, { false })
     }
 
     override fun isTestJavaMethod(testMethod: PsiMethod): Boolean {
-        return JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(testMethod), false)
+        return testMethod.actionUnderSafeAnalyzeBlock({ JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(testMethod), false) }, { false })
     }
 }

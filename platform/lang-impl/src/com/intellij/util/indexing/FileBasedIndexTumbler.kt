@@ -34,8 +34,8 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {
-        val unitTestMode = app.isUnitTestMode
-        if (!unitTestMode) {
+        val headless = app.isHeadlessEnvironment
+        if (!headless) {
           val wasUp = dumbModeSemaphore.isUp
           dumbModeSemaphore.down()
           if (wasUp) {
@@ -76,11 +76,11 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
     if (nestedLevelCount == 0) {
       try {
         fileBasedIndex.loadIndexes()
-        val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
-        if (unitTestMode) {
+        val headless = ApplicationManager.getApplication().isHeadlessEnvironment
+        if (headless) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
         }
-        if (!unitTestMode) {
+        if (!headless) {
           dumbModeSemaphore.up()
         }
 
@@ -93,10 +93,10 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           for (project in ProjectUtil.getOpenProjects()) {
             UnindexedFilesUpdater(project, reason).queue(project)
           }
-          LOG.info("Index rescanning has been started after plugin load/unload")
+          LOG.info("Index rescanning has been started after `$reason`")
         }
         else {
-          LOG.info("Index rescanning has been skipped after plugin load/unload")
+          LOG.info("Index rescanning has been skipped after `$reason`")
         }
       }
       finally {

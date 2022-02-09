@@ -460,7 +460,7 @@ public final class JBCefApp {
         JBCefFileSchemeHandlerFactory.FILE_SCHEME_NAME, "", new JBCefFileSchemeHandlerFactory());
     }
 
-    @Override
+    //@Override
     public void onBeforeChildProcessLaunch(String command_line) {
       if (myGPUCrashLimit >= 0 && command_line != null && command_line.contains("--type=gpu-process")) {
         if (++myGPUCrashCounter > myGPUCrashLimit && !myNotificationShown) {

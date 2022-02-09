@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -20,6 +19,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 public class HeavyAwareExecutor implements Disposable {
   @NotNull private final Project myProject;
@@ -141,12 +141,12 @@ public class HeavyAwareExecutor implements Disposable {
   }
 
   private static class ExecutingHeavyOrPowerSaveListener implements PowerSaveMode.Listener, Disposable {
-    @NotNull private final AtomicReference<Computable<ListenableFuture<?>>> myTask = new AtomicReference<>(null);
+    @NotNull private final AtomicReference<Supplier<ListenableFuture<?>>> myTask = new AtomicReference<>(null);
     private final int myDelayMs;
     private final SettableFuture<ListenableFuture<?>> myFuture;
 
     ExecutingHeavyOrPowerSaveListener(@NotNull Project project, int delayMs, @NotNull Disposable parent,
-                                      @NotNull Computable<ListenableFuture<?>> task) {
+                                      @NotNull Supplier<ListenableFuture<?>> task) {
       myDelayMs = delayMs;
       myFuture = SettableFuture.create();
       myTask.set(task);
@@ -173,7 +173,7 @@ public class HeavyAwareExecutor implements Disposable {
           if (!HeavyProcessLatch.INSTANCE.isRunning() && !PowerSaveMode.isEnabled()) {
             Disposer.dispose(this);
 
-            Computable<ListenableFuture<?>> task = myTask.getAndSet(null);
+            Supplier<ListenableFuture<?>> task = myTask.getAndSet(null);
             if (task != null) {
               runTask(task);
             }
@@ -185,9 +185,9 @@ public class HeavyAwareExecutor implements Disposable {
       }
     }
 
-    private void runTask(@NotNull Computable<? extends ListenableFuture<?>> task) {
+    private void runTask(@NotNull Supplier<? extends ListenableFuture<?>> task) {
       try {
-        myFuture.set(task.compute());
+        myFuture.set(task.get());
       }
       catch (Throwable t) {
         myFuture.setException(t);

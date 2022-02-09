@@ -29,8 +29,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -53,7 +54,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
 
   public CompilingEvaluatorImpl(@NotNull Project project,
                                 @NotNull PsiElement context,
-                                @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
+                                @NotNull LightMethodObjectExtractedData data) {
     super(project, context, data);
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     myModule = module;
@@ -159,7 +160,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
           XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
           JavaSdkVersion javaVersion = getJavaVersion(currentSession);
           PsiElement physicalContext = findPhysicalContext(psiContext);
-          ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
+          LightMethodObjectExtractedData data = JavaSpecialRefactoringProvider.getInstance().extractLightMethodObject(
             project,
             physicalContext != null ? physicalContext : psiContext,
             fragmentFactory.apply(psiContext),

@@ -52,11 +52,6 @@ public final class SearchUtil {
       if (!(configurable instanceof SearchableConfigurable)) {
         continue;
       }
-      //ignore invisible root nodes
-      //noinspection deprecation
-      if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
-        continue;
-      }
 
       final SearchableConfigurable searchableConfigurable = (SearchableConfigurable)configurable;
 
@@ -652,15 +647,8 @@ public final class SearchUtil {
     }
 
     for (Configurable configurable : result) {
-      if (isAcceptable(configurable)) {
-        consumer.accept(configurable);
-      }
+      consumer.accept(configurable);
     }
-  }
-
-  public static boolean isAcceptable(@NotNull Configurable configurable) {
-    //noinspection deprecation
-    return !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible();
   }
 
   private static void addChildren(@NotNull Configurable configurable, @NotNull List<? super Configurable> list) {

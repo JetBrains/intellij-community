@@ -17,7 +17,7 @@ import org.junit.Ignore
 import org.junit.Test
 
 abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
-    class KtsInJsProject : GradleBuildFileHighlightingTest() {
+    class KtsInJsProject2114 : GradleBuildFileHighlightingTest() {
         @TargetVersions("4.8 <=> 6.0")
         @Test
         fun testKtsInJsProject() {
@@ -49,7 +49,7 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
 
     }
 
-    class JavaLibraryPlugin : GradleBuildFileHighlightingTest() {
+    class JavaLibraryPlugin14 : GradleBuildFileHighlightingTest() {
         @Test
         @TargetVersions("6.0.1+")
         fun testJavaLibraryPlugin() {

@@ -568,7 +568,7 @@ class EntityStorageSerializerImpl(
   }
 
   fun serializeClassToIntConverter(stream: OutputStream) {
-    val converterMap = ClassToIntConverter.getMap().toMap()
+    val converterMap = ClassToIntConverter.INSTANCE.getMap().toMap()
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
       val kryo = createKryo()
@@ -769,7 +769,7 @@ class EntityStorageSerializerImpl(
 
       val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
       val map = classes.map { (first, second) -> typesResolver.resolveClass(first.name, first.pluginId) to second }.toMap()
-      ClassToIntConverter.fromMap(map)
+      ClassToIntConverter.INSTANCE.fromMap(map)
     }
   }
 

@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.insertMember
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.BodyType
+import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateUnsupportedOrSuperCall
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.setupEditorSelection
@@ -165,7 +165,7 @@ abstract class KotlinGenerateTestSupportActionBase(
                 name?.let {
                     function = substituteNewName(function, it)
                 }
-                val functionInPlace = insertMember(editor, klass, function)
+                val functionInPlace = insertMembersAfterAndReformat(editor, klass, function)
 
                 val functionDescriptor = functionInPlace.unsafeResolveToDescriptor() as FunctionDescriptor
                 val overriddenDescriptors = functionDescriptor.overriddenDescriptors

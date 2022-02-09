@@ -16,13 +16,14 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiDoWhileStatement
-import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.ChildRole
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UDoWhileExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 
+@ApiStatus.Internal
 class JavaUDoWhileExpression(
   override val sourcePsi: PsiDoWhileStatement,
   givenParent: UElement?

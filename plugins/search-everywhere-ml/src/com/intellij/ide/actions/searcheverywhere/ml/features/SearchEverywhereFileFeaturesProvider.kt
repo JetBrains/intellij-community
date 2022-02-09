@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.favoritesTreeView.FavoritesManager
 import com.intellij.navigation.TargetPresentation
@@ -17,7 +18,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.Time.*
 
 internal class SearchEverywhereFileFeaturesProvider
-  : SearchEverywhereClassOrFileFeaturesProvider(FileSearchEverywhereContributor::class.java) {
+  : SearchEverywhereClassOrFileFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
   companion object {
     internal const val IS_DIRECTORY_DATA_KEY = "isDirectory"
     internal const val FILETYPE_DATA_KEY = "fileType"

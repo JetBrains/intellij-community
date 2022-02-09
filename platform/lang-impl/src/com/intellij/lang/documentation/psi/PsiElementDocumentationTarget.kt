@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.psi
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.lang.documentation.*
 import com.intellij.model.Pointer
@@ -14,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
@@ -53,6 +57,10 @@ class PsiElementDocumentationTarget private constructor(
 
   override val navigatable: Navigatable? get() = targetElement as? Navigatable
 
+  override fun computeDocumentationHint(): String? {
+    return SingleTargetElementInfo.generateInfo(targetElement, sourceElement, isNavigatableQuickDoc(sourceElement, targetElement)).text
+  }
+
   override fun computeDocumentation(): DocumentationResult? {
     val provider = DocumentationManager.getProviderFromElement(targetElement, sourceElement)
     val localDoc = localDoc(provider) // compute in this read action
@@ -63,23 +71,33 @@ class PsiElementDocumentationTarget private constructor(
     if (urls == null || urls.isEmpty()) {
       return localDoc
     }
-    return pointer.fetchExternal(targetElement, provider, urls, localDoc)
+    return pointer.fetchExternal(targetElement, provider, urls, localDoc?.copy(links = localDoc.links.copy(linkUrls = urls)))
   }
 
   @RequiresReadLock
-  private fun localDoc(provider: DocumentationProvider): DocumentationResult? {
+  private fun localDoc(provider: DocumentationProvider): DocumentationResultData? {
+    val html = localDocHtml(provider)
+               ?: return null
+    return DocumentationResultData(
+      content = DocumentationContentData(
+        html = html,
+        imageResolver = pointer.imageResolver,
+      ),
+      anchor = pointer.anchor,
+    )
+  }
+
+  @RequiresReadLock
+  private fun localDocHtml(provider: DocumentationProvider): @Nls String? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
     val doc = provider.generateDoc(targetElement, originalPsi)
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
-        return DocumentationResult.documentation(if (doc == null) fileDoc else doc + fileDoc, pointer.anchor, pointer.imageResolver)
+        return if (doc == null) fileDoc else doc + fileDoc
       }
     }
-    if (doc != null) {
-      return DocumentationResult.documentation(doc, pointer.anchor, pointer.imageResolver)
-    }
-    return null
+    return doc
   }
 
   private class PsiElementDocumentationTargetPointer(
@@ -104,7 +122,7 @@ class PsiElementDocumentationTarget private constructor(
       targetElement: PsiElement,
       provider: ExternalDocumentationProvider,
       urls: List<String>,
-      localDoc: DocumentationResult?,
+      localDoc: DocumentationResult.Data?,
     ): DocumentationResult = DocumentationResult.asyncDocumentation(Supplier {
       LOG.debug("External documentation URLs: $urls")
       for (url in urls) {
@@ -112,7 +130,14 @@ class PsiElementDocumentationTarget private constructor(
         val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
                   ?: continue
         LOG.debug("Fetched documentation from $url")
-        return@Supplier DocumentationResult.externalDocumentation(doc, anchor, url, imageResolver)
+        return@Supplier DocumentationResultData(
+          content = DocumentationContentData(
+            html = doc,
+            imageResolver = imageResolver,
+          ),
+          anchor = anchor,
+          links = LinkData(externalUrl = url),
+        )
       }
       localDoc
     })

@@ -45,6 +45,7 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
         with(config) {
             warmup = 8
             iterations = 15
+            stabilityWatermark = 20
         }
     }
 
@@ -52,36 +53,6 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
     protected open fun PerformanceSuite.ApplicationScope.kotlinProject(block: PerformanceSuite.ProjectScope.() -> Unit) {
         project(name = "kotlin", path = ExternalProject.KOTLIN_PROJECT_PATH, openWith = GRADLE_PROJECT, block = block)
-    }
-
-    fun testHelloWorldProject() {
-        suite("Hello world project") {
-            myProject = perfOpenProject(stats = hwStats) {
-                name("helloKotlin")
-
-                module {
-                    kotlinStandardLibrary()
-
-                    kotlinFile("HelloMain") {
-                        topFunction("main") {
-                            param("args", "Array<String>")
-                            body("""println("Hello World!")""")
-                        }
-                    }
-
-                    kotlinFile("HelloMain2") {
-                        topFunction("main") {
-                            param("args", "Array<String>")
-                            body("""println("Hello World!")""")
-                        }
-                    }
-                }
-            }
-
-            // highlight
-            perfHighlightFile("src/HelloMain.kt", hwStats)
-            perfHighlightFile("src/HelloMain2.kt", hwStats)
-        }
     }
 
     fun testKotlinProject() {
@@ -105,19 +76,19 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                         "compiler/backend/src/org/jetbrains/kotlin/codegen/inline/MethodInliner.kt"
                     )
 
-                    profile(EmptyProfile)
-
-                    filesToHighlight.forEach {fileToHighlight ->
-                        fixture(fileToHighlight).use { fixture ->
-                            measureHighlight(fixture, "empty profile")
-                        }
-                    }
-
                     profile(DefaultProfile)
 
                     filesToHighlight.forEach {fileToHighlight ->
                         fixture(fileToHighlight).use { fixture ->
                             measureHighlight(fixture)
+                        }
+                    }
+
+                    profile(EmptyProfile)
+
+                    filesToHighlight.forEach {fileToHighlight ->
+                        fixture(fileToHighlight).use { fixture ->
+                            measureHighlight(fixture, "empty profile")
                         }
                     }
 

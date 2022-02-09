@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.getCleanRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.toApiVersion
@@ -37,10 +38,7 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
-import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.versions.findAllUsedLibraries
-import org.jetbrains.kotlin.idea.versions.findKotlinRuntimeLibrary
-import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
+import org.jetbrains.kotlin.idea.versions.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
@@ -361,7 +359,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         RepositoryAddLibraryAction.addLibraryToModule(
             RepositoryLibraryDescription.findDescription(libraryJarDescriptor.repositoryLibraryProperties),
             module,
-            kotlinStdlibVersion ?: kotlinCompilerVersionShort(),
+            kotlinStdlibVersion ?: KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort,
             scope,
             /* downloadSources = */ true,
             /* downloadJavaDocs = */ true

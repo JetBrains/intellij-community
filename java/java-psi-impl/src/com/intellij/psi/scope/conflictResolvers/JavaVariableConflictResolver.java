@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.conflictResolvers;
 
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -91,7 +92,8 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
         if (oldClassIsInheritor == null) {
           oldClassIsInheritor = oldClass != null && newClass != null && oldClass.isInheritor(newClass, true);
         }
-        if (oldClassIsInheritor) {
+        if (oldClassIsInheritor && (scope instanceof PsiAnonymousClass ||
+                                    !(scope instanceof PsiClass && ((PsiClass)scope).isInheritorDeep(oldClass, newClass)))) {
           // both fields are accessible
           // field in derived hides field in base
           conflicts.remove(candidate);

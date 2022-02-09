@@ -47,6 +47,10 @@ public final class RepositoryHelper {
     if (pluginsUrl != null && !"__BUILTIN_PLUGINS_URL__".equals(pluginsUrl)) {
       hosts.add(pluginsUrl);
     }
+    List<CustomPluginRepoContributor> repoContributors = CustomPluginRepoContributor.EP_NAME.getExtensionsIfPointIsRegistered();
+    for (CustomPluginRepoContributor contributor : repoContributors) {
+      hosts.addAll(contributor.getRepoUrls());
+    }
     hosts.add(null);  // main plugin repository
     return hosts;
   }

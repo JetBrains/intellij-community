@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.tasks
@@ -9,6 +9,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.isWindows
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.writeNewZip
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.NoSuchFileException
@@ -25,6 +26,20 @@ private const val fileFlag = 32768
 const val executableFileUnixMode = fileFlag or 493
 // 0644
 const val regularFileUnixMode = fileFlag or 420
+
+internal fun packInternalUtilities(outFile: Path, files: List<Path>) {
+  writeNewZip(outFile, compress = true) { writer ->
+    for (file in files) {
+      writer.file(file.fileName.toString(), file)
+    }
+
+    readZipFile(files.last()) { name, entry ->
+      if (name.endsWith(".xml")) {
+        writer.uncompressedData(name, entry.getByteBuffer())
+      }
+    }
+  }
+}
 
 @Suppress("unused")
 fun crossPlatformZip(macDistDir: Path,

@@ -50,4 +50,9 @@ public interface GlobalOptions {
    * This will allow JPS process to access bundle's resources and provide localized error/warning/diagnostic messages
    */
   String LANGUAGE_BUNDLE = "jps.language.bundle";
+
+  /**
+   * See https://reproducible-builds.org/specs/source-date-epoch/
+   */
+  String BUILD_DATE_IN_SECONDS = "SOURCE_DATE_EPOCH";
 }

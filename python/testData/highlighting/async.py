@@ -13,13 +13,13 @@ async = 1
 <error descr="Indent expected">d</error>ef <info descr="PY.FUNC_DEFINITION">regular</info>(<info descr="PY.PARAMETER">xs</info>):
 
     <info descr="null">async</info> def <info descr="PY.NESTED_FUNC_DEFINITION">quux</info>():
-        <info descr="null">async</info> for x in xs:
+        <info descr="null">async</info> for x in <info descr="PY.PARAMETER">xs</info>:
             pass
 
-        <info descr="null">async</info> with xs:
+        <info descr="null">async</info> with <info descr="PY.PARAMETER">xs</info>:
             pass
 
-        <info descr="null">async</info> for x in xs:
+        <info descr="null">async</info> for x in <info descr="PY.PARAMETER">xs</info>:
             pass
 
     <error descr="'async' keyword is not expected here">async</error> with <info descr="PY.PARAMETER">xs</info>:

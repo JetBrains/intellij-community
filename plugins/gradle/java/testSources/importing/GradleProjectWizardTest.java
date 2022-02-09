@@ -47,7 +47,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside;
+import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
 public class GradleProjectWizardTest extends NewProjectWizardTestCase {

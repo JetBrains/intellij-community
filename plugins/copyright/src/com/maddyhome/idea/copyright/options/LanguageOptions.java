@@ -7,6 +7,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
+import java.util.Objects;
+
 public final class LanguageOptions implements Cloneable {
   public static final int NO_COPYRIGHT = 1;
   public static final int USE_TEMPLATE = 2;
@@ -116,7 +118,7 @@ public final class LanguageOptions implements Cloneable {
     if (box != that.box) {
       return false;
     }
-    if (filler != that.filler) {
+    if (!Objects.equals(filler, that.filler)) {
       return false;
     }
     if (lenAfter != that.lenAfter) {

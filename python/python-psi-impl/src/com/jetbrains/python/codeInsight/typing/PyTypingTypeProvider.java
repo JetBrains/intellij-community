@@ -84,10 +84,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String TUPLE = "typing.Tuple";
   public static final String CLASS_VAR = "typing.ClassVar";
   public static final String TYPE_VAR = "typing.TypeVar";
-  public static final String PARAM_SPEC = "typing.ParamSpec";
+  public static final String TYPING_PARAM_SPEC = "typing.ParamSpec";
+  public static final String TYPING_EXTENSIONS_PARAM_SPEC = "typing_extensions.ParamSpec";
   private static final String CHAIN_MAP = "typing.ChainMap";
   public static final String UNION = "typing.Union";
-  public static final String CONCATENATE = "typing.Concatenate";
+  public static final String TYPING_CONCATENATE = "typing.Concatenate";
+  public static final String TYPING_EXTENSIONS_CONCATENATE = "typing_extensions.Concatenate";
   public static final String OPTIONAL = "typing.Optional";
   public static final String NO_RETURN = "typing.NoReturn";
   public static final String FINAL = "typing.Final";
@@ -154,8 +156,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(ANY)
     .add(TYPE_VAR)
     .add(GENERIC)
-    .add(PARAM_SPEC)
-    .add(CONCATENATE)
+    .add(TYPING_PARAM_SPEC)
+    .add(TYPING_EXTENSIONS_PARAM_SPEC)
+    .add(TYPING_CONCATENATE)
+    .add(TYPING_EXTENSIONS_CONCATENATE)
     .add(TUPLE)
     .add(CALLABLE)
     .add(TYPE)
@@ -1332,9 +1336,19 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return PyUtil.multiResolveTopPriority(parametersExpr, resolveContext).stream().anyMatch(it -> {
       if (!(it instanceof PyTypedElement)) return false;
       final var type = context.getType((PyTypedElement)it);
-      if (!(type instanceof PyClassLikeType)) return false;
-      return PARAM_SPEC.equals(((PyClassLikeType)type).getClassQName());
+      return isParamSpec(type);
     });
+  }
+
+  private static boolean isParamSpec(@Nullable PyType type) {
+    if (type instanceof PyClassLikeType) {
+      String classQName = ((PyClassLikeType)type).getClassQName();
+      return TYPING_PARAM_SPEC.equals(classQName) || TYPING_EXTENSIONS_PARAM_SPEC.equals(classQName);
+    }
+    else if (type instanceof PyUnionType) {
+      return ((PyUnionType)type).getMembers().stream().anyMatch(it -> isParamSpec(it));
+    }
+    return false;
   }
 
   public static boolean isConcatenate(@NotNull PyExpression parametersExpr, @NotNull TypeEvalContext context) {
@@ -1363,7 +1377,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final var subscriptionExpr = (PySubscriptionExpression)element;
     final var operand = subscriptionExpr.getOperand();
     final var operandNames = resolveToQualifiedNames(operand, context.myContext);
-    if (!operandNames.contains(CONCATENATE)) return null;
+    if (!operandNames.contains(TYPING_CONCATENATE) && !operandNames.contains(TYPING_EXTENSIONS_CONCATENATE)) return null;
 
     final var parameters = getConcatenateParametersTypes(subscriptionExpr, context.myContext);
     if (parameters == null) return null;
@@ -1415,7 +1429,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (callee == null) return null;
 
     final var calleeQNames = resolveToQualifiedNames(callee, context.getTypeContext());
-    if (!calleeQNames.contains(PARAM_SPEC)) return null;
+    if (!calleeQNames.contains(TYPING_PARAM_SPEC) && !calleeQNames.contains(TYPING_EXTENSIONS_PARAM_SPEC)) return null;
 
     final var arguments = assignedCall.getArguments();
     if (arguments.length == 0) return null;

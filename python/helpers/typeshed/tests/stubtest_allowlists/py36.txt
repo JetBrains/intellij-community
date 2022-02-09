@@ -2,6 +2,7 @@ _collections_abc.AsyncGenerator.ag_await
 _collections_abc.AsyncGenerator.ag_code
 _collections_abc.AsyncGenerator.ag_frame
 _collections_abc.AsyncGenerator.ag_running
+_dummy_threading
 asyncio.Future.__init__  # Usually initialized from c object
 asyncio.exceptions  # Added in Python 3.8
 asyncio.format_helpers  # Added in Python 3.7
@@ -20,55 +21,86 @@ collections.AsyncGenerator.ag_running
 collections.Callable
 collections.UserString.maketrans
 contextlib._GeneratorContextManager.__init__
+datetime.datetime_CAPI
+distutils.cygwinccompiler.RE_VERSION
+distutils.dist.command_re
+distutils.fancy_getopt.longopt_re
+distutils.fancy_getopt.neg_alias_re
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 hmac.HMAC.__init__
 importlib.metadata  # Added in 3.8
+importlib.metadata._meta  # Added in 3.10
 importlib.resources  # Added in 3.7
 io.StringIO.readline
 ipaddress._BaseNetwork.__init__
 json.loads
 mmap.ACCESS_DEFAULT
 multiprocessing.shared_memory
-os.utime
+(os|posix).utime
 plistlib.Dict.__init__
 pyexpat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
 random.Random.randrange  # missing undocumented arg _int
 random.randrange  # missing undocumented arg _int
 sched.Event.__doc__  # __slots__ is overridden
+stringprep.unicodedata  # re-exported from unicodedata
 sre_compile.dis
 typing.AsyncGenerator.ag_await
 typing.AsyncGenerator.ag_code
 typing.AsyncGenerator.ag_frame
 typing.AsyncGenerator.ag_running
+typing.ChainMap.fromkeys
 typing.Coroutine.cr_await
 typing.Coroutine.cr_code
 typing.Coroutine.cr_frame
 typing.Coroutine.cr_running
-typing.Generator.__new__
 typing.Generator.gi_code
 typing.Generator.gi_frame
 typing.Generator.gi_running
 typing.Generator.gi_yieldfrom
-typing.GenericMeta.__new__
 typing.IO.closed  # Incorrect definition in CPython, fixed in bpo-39493
 typing.Mapping.get
-typing.NamedTuple.__new__
 typing.NamedTuple._asdict
 typing.NamedTuple._make
 typing.NamedTuple._replace
 typing.Sequence.index
+typing.Text.maketrans
 typing.runtime_checkable
+typing\.\w+\.__new__
+unittest._log  # New in Python 3.9
 unittest.async_case  # Added in Python 3.8
 uuid.UUID.int
+uuid.libname
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
 xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
 xml.parsers.expat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
 # These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
 tkinter.EventType.__new__
+tkinter.commondialog.[A-Z_]+
+tkinter.commondialog.TclVersion
+tkinter.commondialog.TkVersion
+tkinter.commondialog.wantobjects
+tkinter.dialog.[A-Z_]+
+tkinter.dialog.TclVersion
+tkinter.dialog.TkVersion
+tkinter.dialog.wantobjects
+tkinter.filedialog.[A-Z_]+
+tkinter.filedialog.TclVersion
+tkinter.filedialog.TkVersion
+tkinter.filedialog.wantobjects
+tkinter.simpledialog.wantobjects
+tkinter.tix.wantobjects
 
 builtins.memoryview.__iter__  # C type that implements __getitem__
 builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
+sqlite3.dbapi2.Binary.__iter__  # C type that implements __getitem__
+sqlite3.dbapi2.Binary.cast  # inspect.signature is incorrect about shape being kw-only
+sqlite3.Binary.__iter__  # C type that implements __getitem__
+sqlite3.Binary.cast  # inspect.signature is incorrect about shape being kw-only
+
+sqlite3.OptimizedUnicode.maketrans
+sqlite3.dbapi2.OptimizedUnicode.maketrans
+
 collections.Coroutine.cr_await
 collections.Coroutine.cr_code
 collections.Coroutine.cr_frame
@@ -79,3 +111,53 @@ collections.Generator.gi_running
 collections.Generator.gi_yieldfrom
 collections.Mapping.get  # Adding None to the Union messed up mypy
 collections.Sequence.index  # Supporting None in end is not mandatory
+
+# Exists at runtime, but missing from stubs
+_bisect.bisect
+_bisect.insort
+asyncio.async
+asyncio.futures._TracebackLogger.loop
+asyncio.futures._TracebackLogger.source_traceback
+asyncio.tasks.async
+calendar.HTMLCalendar.cssclasses
+distutils.cmd.install_misc
+distutils.command.bdist_wininst
+distutils.command.bdist_wininst.bdist_wininst
+distutils.sysconfig.expand_makefile_vars
+distutils.sysconfig.get_python_version
+dummy_threading.Barrier
+dummy_threading.BoundedSemaphore
+dummy_threading.BrokenBarrierError
+dummy_threading.Condition
+dummy_threading.Event
+dummy_threading.Lock
+dummy_threading.RLock
+dummy_threading.Semaphore
+dummy_threading.TIMEOUT_MAX
+dummy_threading.Thread
+dummy_threading.ThreadError
+dummy_threading.Timer
+dummy_threading.active_count
+dummy_threading.current_thread
+dummy_threading.enumerate
+dummy_threading.get_ident
+dummy_threading.local
+dummy_threading.main_thread
+dummy_threading.setprofile
+dummy_threading.settrace
+dummy_threading.stack_size
+html.parser.HTMLParser.unescape
+platform.popen
+plistlib.Data.asBase64
+plistlib.Data.fromBase64
+plistlib.Plist
+ssl.SSLObject.verify_client_post_handshake
+ssl.SSLSocket.verify_client_post_handshake
+sys.callstats
+sys.get_coroutine_wrapper
+sys.set_coroutine_wrapper
+tempfile.SpooledTemporaryFile.softspace
+tkinter.dnd.Icon
+tkinter.dnd.Tester
+tkinter.dnd.test
+xml.dom.xmlbuilder.DocumentLS.async

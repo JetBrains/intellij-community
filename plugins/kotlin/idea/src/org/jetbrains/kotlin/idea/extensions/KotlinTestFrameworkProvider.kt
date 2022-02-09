@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.extensions
 
 import com.intellij.execution.actions.ConfigurationFromContext
@@ -50,7 +50,7 @@ interface KotlinTestFrameworkProvider {
         val testFunction = if (checkMethod) element.getParentOfType<KtNamedFunction>(strict = false) else null
         val owner = PsiTreeUtil.getParentOfType(testFunction ?: element, KtClassOrObject::class.java, KtDeclarationWithBody::class.java)
 
-        var testClass = (owner as? KtClass)?.toLightClass()
+        var testClass = (owner as? KtClassOrObject)?.toLightClass()
         if (testClass == null || !isTestJavaClass(testClass)) {
             val file = element.containingFile as? KtFile ?: return null
             testClass = findSingleJavaTestClassInFile(file, ::isTestJavaClass) ?: return null
@@ -58,7 +58,7 @@ interface KotlinTestFrameworkProvider {
 
         if (testFunction != null) {
             for (testMethod in testClass.methods) {
-                if (testMethod.navigationElement == testFunction) {
+                if (PsiTreeUtil.isAncestor(testMethod.navigationElement, testFunction, false)) {
                     if (isTestJavaMethod(testMethod)) {
                         return JavaTestEntity(testClass, testMethod)
                     }
@@ -71,4 +71,26 @@ interface KotlinTestFrameworkProvider {
     }
 
     class JavaTestEntity(val testClass: PsiClass, val testMethod: PsiMethod?)
+
+    fun getJavaEntity(element: PsiElement): JavaEntity? {
+        val function = element.getParentOfType<KtNamedFunction>(strict = false)
+        val owner = PsiTreeUtil.getParentOfType(function ?: element, KtClassOrObject::class.java, KtDeclarationWithBody::class.java)
+
+        var testClass = (owner as? KtClassOrObject)?.toLightClass()
+        if (testClass == null) {
+            val file = element.containingFile as? KtFile ?: return null
+            testClass = findSingleJavaTestClassInFile(file) { true } ?: return null
+        }
+
+        if (function != null) {
+            for (method in testClass.methods) {
+                if (PsiTreeUtil.isAncestor(method.navigationElement, function, false)) {
+                    return JavaEntity(testClass, method)
+                }
+            }
+        }
+
+        return JavaEntity(testClass, null)
+    }
+    class JavaEntity(val testClass: PsiClass, val method: PsiMethod?)
 }

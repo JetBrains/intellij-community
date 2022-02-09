@@ -25,7 +25,6 @@ def deleteObsoleteJdkArchives = ext.deleteObsoleteArchivesTask('Jdk', jbsdkDir)
 
 /**
  * Update this method together with:
- *  `setupJbre.gradle`
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
  *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
  */
@@ -50,7 +49,7 @@ static def splitJbrBuild(String jreBuild, String version) {
 
 jbrs.each { jbrVersion, jbrBuild ->
   def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
-  def jbrArtifactPrefix = setupJbrSdk ? 'jbrsdk-' : 'jbr_dcevm-'
+  def jbrArtifactPrefix = jbrArtifactPrefix(setupJbrSdk)
 
   def jbrOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/$jbrVersion")
 
@@ -171,6 +170,20 @@ static def jbrArch() {
   if (arch == '32') return 'x86'
   if (arch == '64') return 'x64'
   return currentArch()
+}
+
+static String jbrArtifactPrefix(Boolean setupJbrSdk) {
+  def arch = jbrArch()
+  def platform = currentPlatformName()
+
+  if (setupJbrSdk) return 'jbrsdk-'
+
+  // for now there's no linux-aarch64 with DCEVM flavour available
+  if (arch == 'aarch64' && platform == 'linux') {
+    return 'jbr-'
+  }
+
+  return 'jbr_dcevm-'
 }
 
 @SuppressWarnings("GrMethodMayBeStatic")

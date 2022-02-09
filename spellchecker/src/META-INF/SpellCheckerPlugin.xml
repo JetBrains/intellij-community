@@ -32,6 +32,7 @@
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
     <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
     <lookup.usageDetails implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor"/>
+    <statistics.collectorExtension implementation="com.intellij.spellchecker.statistics.SpellcheckerCompletionCollectorExtension"/>
     <statistics.counterUsagesCollector groupId="spellchecker.events" version="1"/>
 
     <notificationGroup id="Spellchecker" displayType="BALLOON" bundle="messages.SpellCheckerBundle" key="spellchecker"/>

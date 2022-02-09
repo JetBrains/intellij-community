@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 
 infix fun Int.func(s: String): Int{}

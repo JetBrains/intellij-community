@@ -22,9 +22,7 @@ public final class WindowsCommandLineProcessor {
         Method method = ourMainRunnerClass.getMethod("processWindowsLauncherCommandLine", String.class, String[].class);
         return (Integer)method.invoke(null, currentDirectory, args);
       }
-      catch (NoSuchMethodException ignored) { }
-      catch (InvocationTargetException ignored) { }
-      catch (IllegalAccessException ignored) { }
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) { }
     }
     return 1;
   }

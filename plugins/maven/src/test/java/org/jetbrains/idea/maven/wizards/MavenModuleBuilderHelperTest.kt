@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import com.intellij.maven.testFramework.MavenImportingTestCase
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject

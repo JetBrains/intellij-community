@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
@@ -384,7 +384,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     Window window = getWindow();
     if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null) {
-      UIUtil.setCustomTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
+      ToolbarUtil.setTransparentTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
     }
 
     Container contentPane = getContentPane();
@@ -529,7 +529,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                     Project project,
                     @NotNull ActionCallback focused) {
       super(owner);
-      UIUtil.markAsTypeAheadAware(this);
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
 

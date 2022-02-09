@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.CommonActionsManager;
@@ -22,6 +21,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -38,10 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -215,7 +212,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(myGlobalInspectionContext.createToggleAutoscrollAction());
-    specialGroup.add(new ExportHTMLAction(this));
+    specialGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("InspectionToolWindow.Toolbar"));
     specialGroup.add(new InvokeQuickFixAction(this));
     return createToolbar(specialGroup);
   }
@@ -536,8 +533,10 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(wrapper);
 
+        HighlightSeverity severity = presentation.getSeverity((RefElement)refElement);
+        HighlightDisplayLevel level = HighlightDisplayLevel.find(severity == null ? HighlightSeverity.INFORMATION : severity);
         final InspectionTreeNode toolNode =
-          myTree.getToolProblemsRootNode(wrapper, HighlightDisplayLevel.find(presentation.getSeverity((RefElement)refElement)),
+          myTree.getToolProblemsRootNode(wrapper, level,
                                          uiOptions.GROUP_BY_SEVERITY, isSingleInspectionRun());
         final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>(1);
         problems.put(refElement, descriptors);
@@ -686,6 +685,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     }
 
     return null;
+  }
+
+  public @NlsContexts.TabTitle String getViewTitle() {
+    return InspectionsBundle.message(isSingleInspectionRun() ?
+                              "inspection.results.for.inspection.toolwindow.title" :
+                              "inspection.results.for.profile.toolwindow.title",
+                              getCurrentProfileName(), myScope.getShortenName());
   }
 
   @Nullable

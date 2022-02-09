@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="kotlinx-collections-immutable-jvm" type="repository">
-    <properties maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4">
+    <properties maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
@@ -8,11 +8,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.4/kotlinx-collections-immutable-jvm-0.3.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.5/kotlinx-collections-immutable-jvm-0.3.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.4/kotlinx-collections-immutable-jvm-0.3.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.5/kotlinx-collections-immutable-jvm-0.3.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

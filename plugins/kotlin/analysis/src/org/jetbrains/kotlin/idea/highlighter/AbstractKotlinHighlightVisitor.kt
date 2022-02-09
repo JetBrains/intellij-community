@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.Divider
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.problems.ProblemImpl
 import com.intellij.lang.annotation.HighlightSeverity
@@ -26,11 +27,13 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
+import org.jetbrains.kotlin.diagnostics.rendering.parameters
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -51,6 +54,10 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
 
     override fun analyze(psiFile: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
         val file = psiFile as? KtFile ?: return false
+        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
+        if (highlightingLevelManager.runEssentialHighlightingOnly(file)) {
+            return true
+        }
 
         try {
             analyze(file, holder)
@@ -114,10 +121,18 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
                 )
             } else {
                 file.analyzeWithAllCompilerChecks()
-            }.also { it.throwIfError() }
+            }
         // resolve is done!
 
-        val bindingContext = analysisResult.bindingContext
+        val bindingContext =
+            file.actionUnderSafeAnalyzeBlock(
+                {
+                    analysisResult.throwIfError()
+                    analysisResult.bindingContext
+                },
+                { BindingContext.EMPTY }
+            )
+
 
         afterAnalysisVisitor = getAfterAnalysisVisitor(holder, bindingContext)
 

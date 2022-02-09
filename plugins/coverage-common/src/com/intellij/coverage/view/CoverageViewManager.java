@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageBundle;
@@ -7,7 +7,6 @@ import com.intellij.coverage.CoverageOptionsProvider;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,17 +17,18 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.scale.JBUIScale;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @State(name = "CoverageViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
@@ -45,16 +45,15 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     myProject = project;
 
     AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
-      RegisterToolWindowTask registerToolWindowTask = RegisterToolWindowTask.closableSecondary(
-        TOOLWINDOW_ID,
-        CoverageBundle.messagePointer("coverage.view.title"),
-        AllIcons.Toolwindows.ToolWindowCoverage,
-        ToolWindowAnchor.RIGHT
-      );
-      ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(registerToolWindowTask);
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(TOOLWINDOW_ID, builder -> {
+        builder.sideTool = true;
+        builder.icon = AllIcons.Toolwindows.ToolWindowCoverage;
+        builder.anchor = ToolWindowAnchor.RIGHT;
+        builder.stripeTitle = CoverageBundle.messagePointer("coverage.view.title");
+        return Unit.INSTANCE;
+      });
       toolWindow.setHelpId(CoverageView.HELP_ID);
       myContentManager = toolWindow.getContentManager();
-      ContentManagerWatcher.watchContentManager(toolWindow, myContentManager);
     });
   }
 
@@ -64,12 +63,20 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
 
   @Override
   public StateBean getState() {
+    if (!myViews.isEmpty()) {
+      final CoverageView view = myViews.values().iterator().next();
+      view.saveSize();
+    }
     return myStateBean;
   }
 
   @Override
   public void loadState(@NotNull StateBean state) {
     myStateBean = state;
+  }
+
+  public StateBean getStateBean() {
+    return myStateBean;
   }
 
   public CoverageView getToolwindow(CoverageSuitesBundle suitesBundle) {
@@ -132,6 +139,8 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     public boolean myFlattenPackages = false;
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;
-    public int myElementSize = JBUIScale.scale(200);
+    public List<Integer> myColumnSize;
+    public boolean myAscendingOrder = true;
+    public int mySortingColumn = 0;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.Application;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.ui.ToolbarUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Native;
@@ -107,13 +108,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = myFrame.getRootPane();
-          if (Registry.is("ide.mac.transparentTitleBarAppearance")) {
-            UIUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
-              if(!Disposer.isDisposed(parentDisposable)) {
-                Disposer.register(parentDisposable, () -> runnable.run());
-              }
-            });
-          }
+          ToolbarUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
+            if(!Disposer.isDisposed(parentDisposable)) {
+              Disposer.register(parentDisposable, () -> runnable.run());
+            }
+          });
+
           exitFullScreen();
           ActiveWindowsWatcher.addActiveWindow(myFrame);
           myFrame.validate();

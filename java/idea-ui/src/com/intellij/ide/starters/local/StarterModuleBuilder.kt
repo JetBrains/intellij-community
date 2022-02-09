@@ -1,6 +1,7 @@
 package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectWizard.ProjectSettingsStep
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
@@ -14,6 +15,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
@@ -27,7 +29,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -41,6 +44,7 @@ import com.intellij.openapi.roots.ui.configuration.setupNewModuleJdk
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -198,6 +202,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return null
   }
 
+  @Throws(ConfigurationException::class)
   override fun setupModule(module: Module) {
     super.setupModule(module)
 
@@ -261,6 +266,35 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     doAddContentEntry(modifiableRootModel)
   }
 
+  internal fun loadDependencyConfigInternal(): Map<String, DependencyConfig> {
+    return loadDependencyConfig()
+  }
+
+  protected fun loadDependencyConfig(): Map<String, DependencyConfig> {
+    return starterContext.starterPack.starters.associate { starter ->
+      starter.id to starter.versionConfigUrl.openStream().use {
+        val dependencyConfigUpdates = starterContext.startersDependencyUpdates[starter.id]
+        val dependencyConfigUpdatesVersion = dependencyConfigUpdates?.version?.let { version -> Version.parseVersion(version) }
+                                             ?: Version(-1, -1, -1)
+
+        val starterDependencyConfig = JDOMUtil.load(it)
+        val starterDependencyConfigVersion = StarterUtils.parseDependencyConfigVersion(starterDependencyConfig,
+                                                                                       starter.versionConfigUrl.path)
+
+        val mergeDependencyUpdate = starterDependencyConfigVersion < dependencyConfigUpdatesVersion
+        if (mergeDependencyUpdate) {
+          StarterUtils.mergeDependencyConfigs(
+            StarterUtils.parseDependencyConfig(starterDependencyConfig, starter.versionConfigUrl.path, false),
+            dependencyConfigUpdates)
+        }
+        else {
+          StarterUtils.parseDependencyConfig(starterDependencyConfig, starter.versionConfigUrl.path)
+        }
+      }
+    }
+  }
+
+  @Throws(ConfigurationException::class)
   private fun startGenerator(module: Module) {
     val moduleContentRoot =
       if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -274,7 +308,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     val starter = starterContext.starter ?: throw IllegalStateException("Starter is not set")
     val dependencyConfig = starterContext.starterDependencyConfig ?: error("Starter dependency config is not set")
-    val sdk = ModuleRootManager.getInstance(module).sdk
+    val sdk = moduleJdk
 
     val rootPackage = suggestPackageName(starterContext.group, starterContext.artifact)
 
@@ -284,7 +318,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       starterContext.group,
       starterContext.artifact,
       starterContext.version,
-      starterContext.testFramework!!.id,
+      starterContext.testFramework?.id,
       rootPackage,
       sdk?.let { JavaSdk.getInstance().getVersion(it) },
       starterContext.language.id,
@@ -296,27 +330,25 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     )
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        {
-          WriteAction.runAndWait<Throwable> {
-            try {
-              AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
-            }
-            catch (e: IOException) {
-              logger<StarterModuleBuilder>().error("Unable to create module by template", e)
+      WriteAction.runAndWait<Throwable> {
+        try {
+          AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+        }
+        catch (e: IOException) {
+          logger<StarterModuleBuilder>().error("Unable to create module by template", e)
 
-              ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                  JavaStartersBundle.message("starter.generation.error", e.message ?: ""),
-                  presentableName)
-              }
-            }
-
-            applyAdditionalChanges(module)
+          ApplicationManager.getApplication().invokeLater {
+            Messages.showErrorDialog(
+              JavaStartersBundle.message("starter.generation.error", e.message ?: ""),
+              presentableName)
           }
-        },
-        JavaStartersBundle.message("starter.generation.progress", presentableName),
-        true, module.project)
+          return@runAndWait
+        }
+
+        applyAdditionalChanges(module)
+      }
+
+      preprocessModuleCreated(module, this, starterContext.starter?.id)
 
       StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, module.disposed, Runnable {
@@ -325,6 +357,12 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
           ReformatCodeProcessor(module.project, module, false).run()
           // import of module may dispose it and create another, open files first
           openSampleFiles(module, getFilePathsToOpen())
+
+          if (starterContext.gitIntegration) {
+            runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
+              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot)
+            }
+          }
 
           importModule(module)
         })

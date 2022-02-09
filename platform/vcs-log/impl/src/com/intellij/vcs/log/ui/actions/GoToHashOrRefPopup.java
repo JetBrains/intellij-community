@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -18,7 +18,7 @@ import com.intellij.util.Function;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
@@ -89,7 +89,7 @@ public class GoToHashOrRefPopup {
     myTextField.setBorder(JBUI.Borders.empty(3));
 
     JBLabel label = new JBLabel(VcsLogBundle.message("vcs.log.go.to.hash.popup.label"));
-    label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    label.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     label.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     JPanel panel = new JPanel();

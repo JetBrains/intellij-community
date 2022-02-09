@@ -938,17 +938,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_type_handler.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 5);
+        toggleBreakpoint(getFilePath(getScriptName()), 11);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
         eval("s1").hasValue("'\\\\'");
-        eval("s2").hasValue("'\\''");
-        eval("s3").hasValue("'\"'");
-        eval("s4").hasValue("'\n'");
-        eval("s5").hasValue("'\\'foo\\'bar\nbaz\\\\'");
+        eval("s2").hasValue("'\\\\\\\\'");
+        eval("s3").hasValue("\"'\"");
+        eval("s4").hasValue("'\"'");
+        eval("s5").hasValue("'\n'");
+        eval("s6").hasValue("\"'foo'bar\nbaz\\\\\"");
+        eval("s7").hasValue("'^\\\\w+$'");
+        eval("s8").hasValue("\"'459'\"");
+        eval("s9").hasValue("'459'");
+        eval("s10").hasValue("'\u2764'");
       }
     });
   }

@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinModule
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
@@ -111,7 +111,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
     }
 
     companion object {
-        private val KotlinModule.kind
+        private val KotlinComponent.kind
             get() = when (this) {
                 is KotlinCompilation -> KotlinModuleKind.COMPILATION_AND_SOURCE_SET_HOLDER
                 is KotlinSourceSet -> KotlinModuleKind.SOURCE_SET_HOLDER
@@ -215,7 +215,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             kotlinFacet.noVersionAutoAdvance()
 
             with(kotlinFacet.configuration.settings) {
-                kind = kotlinSourceSet.kotlinModule.kind
+                kind = kotlinSourceSet.kotlinComponent.kind
 
                 isTestModule = kotlinSourceSet.isTestModule
                 externalSystemRunTasks = ArrayList(kotlinSourceSet.externalSystemRunTasks)

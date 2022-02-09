@@ -351,9 +351,9 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(fooPyFile);
     final Document fooDocument = fooPyFile.getViewProvider().getDocument();
     assertNotNull(fooDocument);
-    final Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+    final Collection<PyClass> classes = PyClassNameIndex.find("Foo123", project, GlobalSearchScope.allScope(project));
     assertEquals(0, classes.size());
-    WriteCommandAction.writeCommandAction(project, fooPyFile).run(() -> fooDocument.setText("class Foo: pass"));
+    WriteCommandAction.writeCommandAction(project, fooPyFile).run(() -> fooDocument.setText("class Foo123: pass"));
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(fooDocument);
     documentManager.performForCommittedDocument(fooDocument, () -> {
@@ -368,7 +368,7 @@ public class PyStubsTest extends PyTestCase {
       finally {
         DumbServiceImpl.getInstance(project).setDumb(false);
       }
-      final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+      final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo123", project, GlobalSearchScope.allScope(project));
       assertEquals(1, committedClasses.size());
     });
   }

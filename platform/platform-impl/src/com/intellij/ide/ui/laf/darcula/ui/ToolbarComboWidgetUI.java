@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -61,7 +62,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     ToolbarComboWidget combo = (ToolbarComboWidget)c;
-    paintBackground(g, combo);
+    if (c.isOpaque()) paintBackground(g, combo);
 
     List<Icon> leftIcons = combo.getLeftIcons();
     List<Icon> rightIcons = combo.getRightIcons();
@@ -79,7 +80,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
       if (!StringUtil.isEmpty(text)) {
         int maxTextWidth = calcMaxTextWidth(combo, paintRect);
         g2.setColor(c.getForeground());
-        Rectangle textRect = drawText(text, maxTextWidth, g2);
+        Rectangle textRect = drawText(c, text, maxTextWidth, g2);
         doClip(g2, textRect.width + ELEMENTS_GAP);
       }
 
@@ -121,7 +122,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
   }
 
-  private static Rectangle drawText(@NotNull String fullText, int maxWidth, Graphics2D g) {
+  private static Rectangle drawText(JComponent c, @NotNull String fullText, int maxWidth, Graphics2D g) {
     FontMetrics metrics = g.getFontMetrics();
     Rectangle clipBounds = g.getClipBounds();
     clipBounds.width = maxWidth;
@@ -131,7 +132,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     strBounds.setLocation((int)(clipBounds.getCenterX() - strBounds.getCenterX()),
                           (int)(clipBounds.getCenterY() - strBounds.getCenterY()));
 
-    g.drawString(text, strBounds.x, strBounds.y);
+    SwingUtilities2.drawString(c, g, text, strBounds.x, strBounds.y);
     return clipBounds;
   }
 

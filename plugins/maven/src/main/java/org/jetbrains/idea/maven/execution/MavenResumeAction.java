@@ -96,9 +96,6 @@ public class MavenResumeAction extends AnAction {
     final MavenRunConfiguration runConfiguration = (MavenRunConfiguration)environment.getRunProfile();
     myMavenVersion = getMavenVersion(runConfiguration);
 
-
-    getTemplatePresentation().setEnabled(false);
-
     if (VersionComparatorUtil.compare(myMavenVersion, "3.5.3") < 0 || context == null) {
       processHandler.addProcessListener(new LegacyMavenResumeProcessAdapter(runConfiguration));
     }

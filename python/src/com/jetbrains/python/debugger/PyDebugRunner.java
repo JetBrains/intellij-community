@@ -20,7 +20,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugProcess;
@@ -122,7 +122,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
       .thenAsync(ignored ->
-                   Experiments.getInstance().isFeatureEnabled("python.use.targets.api")
+                   Registry.get("python.use.targets.api").asBoolean()
                    ? createSessionUsingTargetsApi(state, environment)
                    : createSessionLegacy(state, environment));
   }
@@ -598,7 +598,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                           @NotNull GeneralCommandLine cmd) {
     if (pyState.isMultiprocessDebug()) {
       //noinspection SpellCheckingInspection
-      debugParams.addParameter("--multiproc");
+      debugParams.addParameter(getMultiprocessDebugParameter());
     }
 
     configureCommonDebugParameters(project, debugParams);
@@ -610,10 +610,25 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                           boolean debuggerScriptInServerMode) {
     if (pyState.isMultiprocessDebug() && !debuggerScriptInServerMode) {
       //noinspection SpellCheckingInspection
-      debuggerScript.addParameter("--multiproc");
+      debuggerScript.addParameter(getMultiprocessDebugParameter());
     }
 
     configureCommonDebugParameters(project, debuggerScript);
+  }
+
+  /**
+   * @deprecated the dispatcher code must be removed if no issues arise in Python debugger and this method must be replaced with
+   * {@link #MULTIPROCESS_PARAM} constant.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  private static @NotNull String getMultiprocessDebugParameter() {
+    if (Registry.get("python.debugger.use.dispatcher").asBoolean()) {
+      return "--multiproc";
+    }
+    else {
+      return "--multiprocess";
+    }
   }
 
   /**

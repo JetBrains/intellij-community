@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
@@ -20,5 +21,5 @@ public final class ReportMessages {
 
   /** @deprecated Use {@code NotificationGroupManager.getInstance().getNotificationGroup("Error Report")} instead */
   @Deprecated
-  public static final NotificationGroup GROUP = new NotificationGroup("Error Report", NotificationDisplayType.BALLOON, false);
+  public static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Error Report");
 }

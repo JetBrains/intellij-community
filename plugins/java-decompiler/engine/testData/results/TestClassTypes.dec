@@ -24,16 +24,16 @@ public class TestClassTypes {
    }
 
    public void testSwitchConsts(int var1) {
-      switch(var1) {// 46
-      case 88:
-         System.out.println("1");// 48
-         break;// 49
-      case 656:
-         System.out.println("2");// 51
-         break;// 52
-      case 65201:
-      case 65489:
-         System.out.println("3");// 55
+      switch (var1) {// 46
+         case 88:
+            System.out.println("1");// 48
+            break;// 49
+         case 656:
+            System.out.println("2");// 51
+            break;// 52
+         case 65201:
+         case 65489:
+            System.out.println("3");// 55
       }
 
    }// 57

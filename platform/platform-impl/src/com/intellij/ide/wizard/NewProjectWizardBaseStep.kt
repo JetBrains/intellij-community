@@ -5,15 +5,15 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.transform
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
@@ -26,15 +26,36 @@ import java.nio.file.Path
 
 
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
-  override val nameProperty = propertyGraph.graphProperty { suggestName() }
-  override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
+  override val nameProperty = propertyGraph.lazyProperty(::suggestName)
+  override val pathProperty = propertyGraph.lazyProperty(::suggestLocation)
 
   override var name by nameProperty
   override var path by pathProperty
 
-  override val projectPath: Path get() = Path.of(path, name)
+  private fun suggestLocation(): String {
+    val location = context.projectFileDirectory
+    if (context.isCreatingNewProject) {
+      return location
+    }
+    if (isModuleDirectory(location)) {
+      return location
+    }
+    val parentLocation = File(location).parent
+    if (parentLocation == null) {
+      return location
+    }
+    return getCanonicalPath(parentLocation)
+  }
 
   private fun suggestName(): String {
+    val location = context.projectFileDirectory
+    if (FileUtil.pathsEqual(File(location).parent, path)) {
+      return File(location).name
+    }
+    return suggestUniqueName()
+  }
+
+  private fun suggestUniqueName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
     return FileUtil.createSequentFileName(File(path), "untitled", "") {
       !it.exists() && it.name !in moduleNames
@@ -47,14 +68,24 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
     return moduleManager.modules.toList()
   }
 
+  private fun isModuleDirectory(path: String): Boolean {
+    return findAllModules().asSequence()
+      .flatMap { it.rootManager.contentRoots.asSequence() }
+      .any { it.isDirectory && FileUtil.pathsEqual(it.path, path) }
+  }
+
+  init {
+    nameProperty.dependsOn(pathProperty, ::suggestUniqueName)
+  }
+
   override fun setupUI(builder: Panel) {
     with(builder) {
       row(UIBundle.message("label.project.wizard.new.project.name")) {
         textField()
           .bindText(nameProperty)
           .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateName() }
-          .validationOnInput { validateName() }
+          .validationOnApply { validateNameAndLocation() }
+          .validationOnInput { validateNameAndLocation() }
           .focused()
         installNameGenerators(getBuilderId(), nameProperty)
       }.bottomGap(BottomGap.SMALL)
@@ -62,7 +93,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
         val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-        val uiPathProperty = pathProperty.transform(::getPresentablePath, ::getCanonicalPath)
+        val uiPathProperty = pathProperty.toUiPathProperty()
         textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
           .bindText(uiPathProperty)
           .horizontalAlign(HorizontalAlign.FILL)
@@ -72,7 +103,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
       onApply {
         context.projectName = name
-        context.setProjectFileDirectory(projectPath, false)
+        context.setProjectFileDirectory(Path.of(path, name), false)
       }
     }
   }
@@ -85,52 +116,59 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
     return null
   }
 
-  private fun ValidationInfoBuilder.validateName(): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateNameAndLocation(): ValidationInfo? {
     if (name.isEmpty()) {
-      return error(UIBundle.message("label.project.wizard.new.project.missing.name.error", if (context.isCreatingNewProject) 1 else 0))
+      return error(UIBundle.message("label.project.wizard.new.project.missing.name.error", context.isCreatingNewProjectInt))
     }
     if (name in findAllModules().map { it.name }.toSet()) {
-      return error(UIBundle.message("label.project.wizard.new.project.name.exists.error", if (context.isCreatingNewProject) 1 else 0, name))
-    }
-    return null
-  }
-
-  private fun ValidationInfoBuilder.validateLocation(): ValidationInfo? {
-    if (path.isEmpty()) {
-      return error(UIBundle.message("label.project.wizard.new.project.missing.path.error", if (context.isCreatingNewProject) 1 else 0))
+      return error(UIBundle.message("label.project.wizard.new.project.name.exists.error", context.isCreatingNewProjectInt, name))
     }
 
-    val projectPath = try {
-      projectPath
-    }
-    catch (ex: InvalidPathException) {
-      return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))
-    }
-    for (project in ProjectManager.getInstance().openProjects) {
-      if (ProjectUtil.isSameProject(projectPath, project)) {
-        return error(UIBundle.message("label.project.wizard.new.project.directory.already.taken.error", project.name))
+    if (validateLocation() == null) {
+      val projectPath = try {
+        Path.of(path, name)
       }
-    }
+      catch (ex: InvalidPathException) {
+        return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))
+      }
 
-    val file = projectPath.toFile()
-    if (file.exists()) {
-      if (!file.canWrite()) {
-        return error(UIBundle.message("label.project.wizard.new.project.directory.not.writable.error"))
+      if (context.isCreatingNewProject) {
+        for (project in ProjectManager.getInstance().openProjects) {
+          if (ProjectUtil.isSameProject(projectPath, project)) {
+            return error(UIBundle.message("label.project.wizard.new.project.directory.already.taken.error", project.name))
+          }
+        }
       }
-      val children = file.list()
-      if (children == null) {
-        return error(UIBundle.message("label.project.wizard.new.project.file.not.directory.error"))
-      }
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
+
+      val file = projectPath.toFile()
+      if (file.exists()) {
+        if (!file.canWrite()) {
+          return error(UIBundle.message("label.project.wizard.new.project.directory.not.writable.error", name))
+        }
+        val children = file.list()
+        if (children == null) {
+          return error(UIBundle.message("label.project.wizard.new.project.file.not.directory.error", name))
+        }
         if (children.isNotEmpty()) {
-          return warning(UIBundle.message("label.project.wizard.new.project.directory.not.empty.warning"))
+          return warning(UIBundle.message("label.project.wizard.new.project.directory.not.empty.warning", name))
         }
       }
     }
     return null
   }
 
-  override fun setupProject(project: Project) {}
+  private fun ValidationInfoBuilder.validateLocation(): ValidationInfo? {
+    if (path.isEmpty()) {
+      return error(UIBundle.message("label.project.wizard.new.project.missing.path.error", context.isCreatingNewProjectInt))
+    }
+    try {
+      Path.of(path)
+    }
+    catch (ex: InvalidPathException) {
+      return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))
+    }
+    return null
+  }
 
   init {
     data.putUserData(NewProjectWizardBaseData.KEY, this)

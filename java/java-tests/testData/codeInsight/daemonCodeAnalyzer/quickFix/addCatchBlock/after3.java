@@ -10,7 +10,7 @@ class a {
             g();
             // comment after
         } catch (Exception e) {
-            <caret><selection>e.printStackTrace();</selection>
+            <caret><selection>throw new RuntimeException(e);</selection>
         }
     }
 }

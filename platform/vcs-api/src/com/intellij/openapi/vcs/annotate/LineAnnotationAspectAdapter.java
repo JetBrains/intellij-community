@@ -78,4 +78,16 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   }
 
   protected abstract void showAffectedPaths(int lineNum);
+
+  public static final LineAnnotationAspect NULL_ASPECT = new LineAnnotationAspectAdapter() {
+    @Override
+    protected void showAffectedPaths(int lineNum) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getValue(int line) {
+      throw new UnsupportedOperationException();
+    }
+  };
 }

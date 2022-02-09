@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
 import java.util.*
 import javax.swing.JComponent
@@ -17,7 +18,7 @@ fun Cell<JSlider>.bindValue(binding: PropertyBinding<Int>): Cell<JSlider> {
 }
 
 fun Cell<JSlider>.bindValue(prop: KMutableProperty0<Int>): Cell<JSlider> {
-  return bindValue(prop.toBinding())
+  return bindValue(prop.toBindingInternal())
 }
 
 fun Cell<JSlider>.bindValue(getter: () -> Int, setter: (Int) -> Unit): Cell<JSlider> {

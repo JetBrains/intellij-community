@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
@@ -14,7 +14,6 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
-import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commit.signature.GitCommitSignature
 import git4idea.history.GitLogUtil
@@ -48,11 +47,10 @@ internal abstract class GitCommitSignatureLoaderBase(private val project: Projec
     root: VirtualFile,
     commits: Collection<Hash>
   ): Map<Hash, GitCommitSignature> {
-    val vcs = GitVcs.getInstance(project)
     val h = GitLogUtil.createGitHandler(project, root)
 
     h.setStdoutSuppressed(true)
-    h.addParameters(GitLogUtil.getNoWalkParameter(vcs))
+    h.addParameters(GitLogUtil.getNoWalkParameter(project))
     h.addParameters("--format=$COMMIT_SIGNATURES_FORMAT")
     h.addParameters(GitLogUtil.STDIN)
     h.endOptions()
@@ -77,10 +75,27 @@ internal abstract class GitCommitSignatureLoaderBase(private val project: Projec
     return result
   }
 
+  /**
+   * From git log man:
+   *
+   * "G" for a good (valid) signature,
+   * "B" for a bad signature,
+   * "U" for a good signature with unknown validity,
+   * "X" for a good signature that has expired,
+   * "Y" for a good signature made by an expired key,
+   * "R" for a good signature made by a revoked key,
+   * "E" if the signature cannot be checked (e.g. missing key) and
+   * "N" for no signature
+   */
   private fun createSignature(status: String, signer: String, fingerprint: String): GitCommitSignature? =
     when (status) {
-      "B", "E" -> GitCommitSignature.NotVerified
-      "G", "U", "X", "Y", "R" -> GitCommitSignature.Verified(signer, fingerprint)
+      "G" -> GitCommitSignature.Verified(signer, fingerprint)
+      "U" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.UNKNOWN)
+      "X" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.EXPIRED)
+      "Y" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.EXPIRED_KEY)
+      "R" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.REVOKED_KEY)
+      "E" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.CANNOT_VERIFY)
+      "B" -> GitCommitSignature.Bad
       "N" -> null
       else -> null.also { LOG.error("Unknown signature status $status") }
     }

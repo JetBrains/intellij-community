@@ -9,7 +9,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -27,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -140,7 +144,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         Trigger.LOG.debug("Starting SDK refresh for '" + mySdkKey + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
+        if (Registry.get("python.use.targets.api").asBoolean()) {
           PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(sdk, myProject);
           String version = targetsFacade.getInterpreterVersion(indicator);
           commitSdkVersionIfChanged(sdk, version);
@@ -572,17 +576,12 @@ public class PythonSdkUpdater implements StartupActivity.Background {
 
   private static boolean isUnderModuleRootsButNotSdk(@NotNull VirtualFile file, @NotNull Set<VirtualFile> moduleRoots, @NotNull Sdk sdk) {
     if (VfsUtilCore.isUnder(file, moduleRoots)) {
-      final String binaryPath = sdk.getHomePath();
-      if (binaryPath == null) {
-        return true;
-      }
-
-      final File envRoot = PythonSdkUtil.getVirtualEnvRoot(binaryPath);
+      final VirtualFile envRoot = PySdkExtKt.getInnerVirtualEnvRoot(sdk);
       if (envRoot == null) {
         return true;
       }
 
-      return !VfsUtilCore.isAncestor(envRoot, VfsUtilCore.virtualToIoFile(file), false);
+      return !VfsUtilCore.isAncestor(envRoot, file, false);
     }
 
     return false;

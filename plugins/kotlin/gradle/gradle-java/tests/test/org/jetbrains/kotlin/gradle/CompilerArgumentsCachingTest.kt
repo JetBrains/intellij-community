@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.idea.gradle.configuration.CachedArgumentsRestoring
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.*
-import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.junit.Assert
@@ -190,7 +190,6 @@ class CompilerArgumentsCachingTest {
         multiPlatform = Random.nextBoolean()
         noCheckActual = Random.nextBoolean()
         inlineClasses = Random.nextBoolean()
-        polymorphicSignature = Random.nextBoolean()
         legacySmartCastAfterTry = Random.nextBoolean()
         effectSystem = Random.nextBoolean()
         readDeserializedContracts = Random.nextBoolean()
@@ -224,7 +223,6 @@ class CompilerArgumentsCachingTest {
 
         pluginOptions = generateRandomStringArray(20)
         pluginClasspaths = generateRandomStringArray(20)
-        experimental = generateRandomStringArray(20)
         useExperimental = generateRandomStringArray(20)
         optIn = generateRandomStringArray(20)
         commonSources = generateRandomStringArray(20)
@@ -266,17 +264,14 @@ class CompilerArgumentsCachingTest {
         noCallAssertions = Random.nextBoolean()
         noReceiverAssertions = Random.nextBoolean()
         noParamAssertions = Random.nextBoolean()
-        strictJavaNullabilityAssertions = Random.nextBoolean()
         noOptimize = Random.nextBoolean()
         inheritMultifileParts = Random.nextBoolean()
         useTypeTable = Random.nextBoolean()
-        skipRuntimeVersionCheck = Random.nextBoolean()
         useOldClassFilesReading = Random.nextBoolean()
         singleModule = Random.nextBoolean()
         suppressMissingBuiltinsError = Random.nextBoolean()
         useJavac = Random.nextBoolean()
         compileJava = Random.nextBoolean()
-        noExceptionOnExplicitEqualsForBoxedNull = Random.nextBoolean()
         disableStandardScript = Random.nextBoolean()
         strictMetadataVersionSemantics = Random.nextBoolean()
         sanitizeParentheses = Random.nextBoolean()
@@ -286,7 +281,6 @@ class CompilerArgumentsCachingTest {
         noKotlinNothingValueException = Random.nextBoolean()
         noResetJarTimestamps = Random.nextBoolean()
         noUnifiedNullChecks = Random.nextBoolean()
-        useOldSpilledVarTypeAnalysis = Random.nextBoolean()
         useOldInlineClassesManglingScheme = Random.nextBoolean()
         enableJvmPreview = Random.nextBoolean()
         suppressDeprecatedJvmTargetWarning = Random.nextBoolean()
@@ -299,7 +293,6 @@ class CompilerArgumentsCachingTest {
         jvmTarget = generateRandomString(20)
         abiStability = generateRandomString(20)
         javaModulePath = generateRandomString(20)
-        constructorCallNormalizationMode = generateRandomString(20)
         assertionsMode = generateRandomString(20)
         buildFile = generateRandomString(20)
         declarationsOutputPath = generateRandomString(20)
@@ -335,7 +328,6 @@ class CompilerArgumentsCachingTest {
         irProduceKlibFile = Random.nextBoolean()
         irProduceJs = Random.nextBoolean()
         irDce = Random.nextBoolean()
-        irDceDriven = Random.nextBoolean()
         irDcePrintReachabilityInfo = Random.nextBoolean()
         irPropertyLazyInitialization = Random.nextBoolean()
         irOnly = Random.nextBoolean()

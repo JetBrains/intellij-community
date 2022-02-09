@@ -373,8 +373,9 @@ public class GitPushOperation {
     boolean setUpstream = target.isNewBranchCreated() && !branchTrackingInfoIsSet(repository, sourceBranch);
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
 
-    String targetRefPrefix = setUpstream ? "refs/heads/" : "";
-    String spec = gitPushSource.getRevision() + ":" + targetRefPrefix + targetBranch.getNameForRemoteOperations();
+    String remoteBranchName = targetBranch.getNameForRemoteOperations();
+    String targetRef = createReferenceForNewTargetBranch(remoteBranchName, setUpstream);
+    String spec = gitPushSource.getRevision() + ":" + targetRef;
     GitRemote remote = targetBranch.getRemote();
 
     List<GitPushParams.ForceWithLease> forceWithLease = emptyList();
@@ -392,6 +393,18 @@ public class GitPushOperation {
       BackgroundTaskUtil.syncPublisher(myProject, GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote);
     }
     return new ResultWithOutput(res);
+  }
+
+  private static boolean isParticularReferenceSpecified(@NotNull String remoteBranchName) {
+    return remoteBranchName.startsWith("refs/");
+  }
+
+  private static String createReferenceForNewTargetBranch(@NotNull String remoteBranchName, boolean setUpstream) {
+    if (!isParticularReferenceSpecified(remoteBranchName) && setUpstream) {
+      return "refs/heads/" + remoteBranchName;
+    }
+
+    return remoteBranchName;
   }
 
   private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull final GitLocalBranch source) {

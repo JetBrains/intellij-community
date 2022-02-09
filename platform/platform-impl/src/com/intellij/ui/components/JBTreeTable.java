@@ -324,7 +324,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     @Override
     public void setRowHeight(int rowHeight) {
       super.setRowHeight(rowHeight);
-      if (myTree != null && myTree.getRowHeight() != rowHeight) {
+      if (myTree != null && myTree.getRowHeight() < rowHeight) {
         myTree.setRowHeight(getRowHeight());
       }
     }

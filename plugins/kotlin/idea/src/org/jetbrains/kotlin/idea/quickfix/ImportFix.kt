@@ -1,28 +1,43 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
+import com.intellij.codeInspection.HintAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
-internal class ImportFix(expression: KtSimpleNameExpression) : AbstractImportFix(expression, MyFactory) {
+internal open class ImportFix(expression: KtSimpleNameExpression) : AbstractImportFix(expression, MyFactory) {
+    override fun elementsToCheckDiagnostics(): Collection<PsiElement> {
+        val expression = element ?: return emptyList()
+        return listOfNotNull(expression, expression.parent?.takeIf { it is KtCallExpression })
+    }
+
+    companion object MyFactory : Factory() {
+        override fun createImportAction(diagnostic: Diagnostic): ImportFix? {
+            val simpleNameExpression = when (val element = diagnostic.psiElement) {
+                is KtSimpleNameExpression -> element
+                is KtCallExpression -> element.calleeExpression
+                else -> null
+            } as? KtSimpleNameExpression ?: return null
+
+            val hintsEnabled = AbstractImportFixInfo.isHintsEnabled(diagnostic.psiFile)
+            return if (hintsEnabled) ImportFixWithHint(simpleNameExpression) else ImportFix(simpleNameExpression)
+        }
+    }
+}
+
+internal class ImportFixWithHint(expression: KtSimpleNameExpression): ImportFix(expression), HintAction {
     override fun fixSilently(editor: Editor): Boolean {
         if (isOutdated()) return false
         val element = element ?: return false
         val project = element.project
-        if (!ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(element.containingFile)) return false
         val addImportAction = createActionWithAutoImportsFilter(project, editor, element)
-        if (addImportAction.isUnambiguous()) {
+        return if (addImportAction.isUnambiguous()) {
             addImportAction.execute()
-            return true
-        }
-        return false
-    }
-
-    companion object MyFactory : Factory() {
-        override fun createImportAction(diagnostic: Diagnostic) =
-            (diagnostic.psiElement as? KtSimpleNameExpression)?.let(::ImportFix)
+            true
+        } else false
     }
 }

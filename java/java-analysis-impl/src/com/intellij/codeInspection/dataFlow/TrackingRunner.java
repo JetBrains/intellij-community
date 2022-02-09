@@ -1211,6 +1211,17 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           MemoryStateChange rValuePush = factDef.findSubExpressionPush(rExpression);
           if (rValuePush != null) {
             CauseItem assignmentItem = createAssignmentCause((AssignInstruction)factDef.myInstruction, value);
+            MemoryStateChange previous = factDef.getPrevious();
+            if (previous != null && previous.myInstruction instanceof WrapDerivedVariableInstruction) {
+              WrapDerivedVariableInstruction instruction = (WrapDerivedVariableInstruction)previous.myInstruction;
+              DerivedVariableDescriptor descriptor = instruction.getDerivedVariableDescriptor();
+              if (descriptor == SpecialField.UNBOX) {
+                DfaAnchor anchor = instruction.getDfaAnchor();
+                assignmentItem.addChildren(
+                  new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.primitive.boxed"),
+                                anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() : rExpression));
+              }
+            }
             assignmentItem.addChildren(findNullabilityCause(rValuePush, nullability));
             return assignmentItem;
           }

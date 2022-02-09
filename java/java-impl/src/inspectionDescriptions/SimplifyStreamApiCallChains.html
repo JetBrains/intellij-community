@@ -31,7 +31,7 @@ Simplification will often avoid some temporary object creation during collection
   <li><code>optional.orElseGet(() -> { throw new ...; })</code> &rarr; <code>optional.orElseThrow()</code></li>
 </ul>
 <p>
-  Note that the replacements semantic may have minor difference in some cases. For example,
+  Note that the replacement semantics may have minor differences in some cases. For example,
   <code>Collections.synchronizedList(...).stream().forEach()</code> is not synchronized while
   <code>Collections.synchronizedList(...).forEach()</code> is synchronized.
   Also, <code>collect(Collectors.maxBy())</code> returns an empty <code>Optional</code> if the resulting element is

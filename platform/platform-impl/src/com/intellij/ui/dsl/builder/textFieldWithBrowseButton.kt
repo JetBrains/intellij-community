@@ -2,8 +2,13 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.columns(columns: Int): Cell<T> {
@@ -15,14 +20,17 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(binding: PropertyBinding<St
   return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, binding)
 }
 
-fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: GraphProperty<String>): Cell<T> {
-  component.text = property.get()
-  return graphProperty(property)
-    .applyToComponent { bind(property) }
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
+
+fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
+  installValidationRequestor(property)
+  return applyToComponent { bind(property) }
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
-  return bindText(prop.toBinding())
+  return bindText(prop.toBindingInternal())
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(getter: () -> String, setter: (String) -> Unit): Cell<T> {

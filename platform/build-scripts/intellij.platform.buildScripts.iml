@@ -13,7 +13,7 @@
     <orderEntry type="library" exported="" name="jps-build-script-dependencies-bootstrap" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="commons-cli" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="decentxml" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" exported="" />
     <orderEntry type="library" scope="PROVIDED" name="commons-compress" level="project" />
   </component>
 </module>

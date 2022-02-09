@@ -56,8 +56,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -259,7 +259,7 @@ public final class CreateFromUsageUtils {
       Pair<PsiExpression, PsiType> arg = arguments.get(i);
       PsiExpression exp = arg.first;
 
-      PsiType argType = exp == null ? arg.second : RefactoringUtil.getTypeByExpression(exp);
+      PsiType argType = exp == null ? arg.second : CommonJavaRefactoringUtil.getTypeByExpression(exp);
       SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
         VariableKind.PARAMETER, null, exp, argType);
       @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name

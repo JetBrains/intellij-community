@@ -10,9 +10,7 @@ import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Version
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
@@ -44,7 +42,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
   private val libraryDescriptionPanel: LibraryDescriptionPanel by lazy { LibraryDescriptionPanel() }
   private val selectedLibrariesPanel: SelectedLibrariesPanel by lazy { createSelectedLibrariesPanel() }
 
-  private val dependencyConfig: Map<String, DependencyConfig> by lazy { loadDependencyConfig() }
+  private val dependencyConfig: Map<String, DependencyConfig> by lazy { moduleBuilder.loadDependencyConfigInternal() }
 
   private val selectedLibraryIds: MutableSet<String> = mutableSetOf()
   private var selectedStarterId: String? = null
@@ -67,30 +65,6 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
 
   override fun getComponent(): JComponent {
     return topLevelPanel
-  }
-
-  private fun loadDependencyConfig(): Map<String, DependencyConfig> {
-    return starterContext.starterPack.starters.associate { starter ->
-      starter.id to starter.versionConfigUrl.openStream().use {
-        val dependencyConfigUpdates = starterContext.startersDependencyUpdates[starter.id]
-        val dependencyConfigUpdatesVersion = dependencyConfigUpdates?.version?.let { version -> Version.parseVersion(version) }
-                                             ?: Version(-1, -1, -1)
-
-        val starterDependencyConfig = JDOMUtil.load(it)
-        val starterDependencyConfigVersion = StarterUtils.parseDependencyConfigVersion(starterDependencyConfig,
-                                                                                       starter.versionConfigUrl.path)
-
-        val mergeDependencyUpdate = starterDependencyConfigVersion < dependencyConfigUpdatesVersion
-        if (mergeDependencyUpdate) {
-          StarterUtils.mergeDependencyConfigs(
-            StarterUtils.parseDependencyConfig(starterDependencyConfig, starter.versionConfigUrl.path, false),
-            dependencyConfigUpdates)
-        }
-        else {
-          StarterUtils.parseDependencyConfig(starterDependencyConfig, starter.versionConfigUrl.path)
-        }
-      }
-    }
   }
 
   @NlsSafe

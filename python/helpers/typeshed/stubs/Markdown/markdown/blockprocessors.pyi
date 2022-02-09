@@ -62,4 +62,8 @@ class HRProcessor(BlockProcessor):
     match: Match[str]
 
 class EmptyBlockProcessor(BlockProcessor): ...
+
+class ReferenceProcessor(BlockProcessor):
+    RE: Pattern[str]
+
 class ParagraphProcessor(BlockProcessor): ...

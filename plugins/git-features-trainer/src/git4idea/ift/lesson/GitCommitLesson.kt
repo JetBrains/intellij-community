@@ -320,7 +320,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
   private fun TaskRuntimeContext.modifyFiles() = invokeLater {
     DocumentUtil.writeInRunUndoTransparentAction {
-      val projectRoot = ProjectUtils.getProjectRoot(project)
+      val projectRoot = ProjectUtils.getCurrentLearningProjectRoot()
       appendToFile(projectRoot, firstFileName, firstFileAddition)
       appendToFile(projectRoot, secondFileName, secondFileAddition)
       PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -333,6 +333,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     file.refresh(false, false)
     val document = FileDocumentManager.getInstance().getDocument(file)!! // it's not directory or binary file and it isn't large
     document.insertString(document.textLength, text)
+    FileDocumentManager.getInstance().saveDocument(document)
   }
 
   private fun TaskTestContext.clickChangeElement(partOfText: String) {

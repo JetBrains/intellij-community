@@ -61,7 +61,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
         PythonContextActionsLesson(),
         GotoActionLesson(ls("Actions.py.sample")),
         PythonSelectLesson(),
-        SingleLineCommentLesson(ls("Comment.py.sample")),
+        CommentUncommentLesson(ls("Comment.py.sample")),
         DuplicateLesson(ls("Duplicate.py.sample")),
         MoveLesson("accelerate", ls("Move.py.sample")),
         CollapseLesson(ls("Collapse.py.sample")),

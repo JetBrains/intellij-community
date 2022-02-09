@@ -28,6 +28,7 @@ import com.jetbrains.python.sdk.add.PyAddSystemWideInterpreterPanel
 import com.jetbrains.python.sdk.add.showProcessExecutionErrorDialog
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
+import com.jetbrains.python.sdk.poetry.createPoetryPanel
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.CardLayout
 import java.util.function.Supplier
@@ -78,11 +79,12 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
     val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context, targetEnvironmentConfiguration, config)
     val newProjectPath = null
     val pipEnvPanel = if (isUnderLocalTarget) createPipEnvPanel(newProjectPath) else null
+    val poetryPanel = if (isUnderLocalTarget) createPoetryPanel(project, module, existingSdks, newProjectPath, context) else null
     return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
-      listOfNotNull(condaPanel, venvPanel, systemWidePanel, pipEnvPanel)
+      listOfNotNull(condaPanel, venvPanel, systemWidePanel, pipEnvPanel, poetryPanel)
     }
     else {
-      listOfNotNull(venvPanel, condaPanel, systemWidePanel, pipEnvPanel)
+      listOfNotNull(venvPanel, condaPanel, systemWidePanel, pipEnvPanel, poetryPanel)
     }
   }
 

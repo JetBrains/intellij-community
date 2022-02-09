@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradle.configuration
 
@@ -16,20 +16,26 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.gradle.configuration.state.DontShowAgainKotlinAdditionPluginSuggestionService
 
-private var isNativeDebugSuggestionEnabled
-    get() =
-        PropertiesComponent.getInstance().getBoolean("isNativeDebugSuggestionEnabled", true)
+private var isNativeDebugSuggestionEnabled: Boolean
+    get() {
+        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
+        return !service.state.dontShowAgainKotlinNativeDebuggerPluginSuggestion
+    }
     set(value) {
-        PropertiesComponent.getInstance().setValue("isNativeDebugSuggestionEnabled", value)
+        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
+        service.state.dontShowAgainKotlinNativeDebuggerPluginSuggestion = !value
     }
 
-private const val isKotlinJSInspectionsPackSuggestionEnabledPropertyName = "isKotlinJSInspectionsPackSuggestionEnabled"
-
-private var isKotlinJSInspectionsPackSuggestionEnabled
-    get() = PropertiesComponent.getInstance().getBoolean(isKotlinJSInspectionsPackSuggestionEnabledPropertyName, true)
+private var isKotlinJSInspectionsPackSuggestionEnabled: Boolean
+    get() {
+        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
+        return !service.state.dontShowAgainKotlinJSInspectionPackSuggestion
+    }
     set(value) {
-        PropertiesComponent.getInstance().setValue(isKotlinJSInspectionsPackSuggestionEnabledPropertyName, value)
+        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
+        service.state.dontShowAgainKotlinJSInspectionPackSuggestion = !value
     }
 
 fun suggestNativeDebug(projectPath: String) {
@@ -37,6 +43,7 @@ fun suggestNativeDebug(projectPath: String) {
     suggestPluginInstall(
         projectPath = projectPath,
         notificationContent = KotlinIdeaGradleBundle.message("notification.text.native.debug.provides.debugger.for.kotlin.native"),
+        displayId = "kotlin.native.debug",
         pluginId = PluginId.getId("com.intellij.nativeDebug"),
         onDontShowAgainActionPerformed = { isNativeDebugSuggestionEnabled = false }
     )
@@ -47,6 +54,7 @@ fun suggestKotlinJsInspectionPackPlugin(projectPath: String) {
     suggestPluginInstall(
         projectPath = projectPath,
         notificationContent = KotlinIdeaGradleBundle.message("notification.text.kotlin.js.inspections.pack.provides.inspections.and.quick.fixes.for.kotlin.js"),
+        displayId = "kotlin.js",
         pluginId = PluginId.getId("org.jetbrains.kotlin-js-inspection-pack-plugin"),
         onDontShowAgainActionPerformed = { isKotlinJSInspectionsPackSuggestionEnabled = false }
     )
@@ -56,6 +64,7 @@ private fun suggestPluginInstall(
     projectPath: String,
     @NlsContexts.NotificationContent notificationContent: String,
     pluginId: PluginId,
+    displayId: String,
     onDontShowAgainActionPerformed: () -> Unit = { }
 ) {
     if (!PlatformUtils.isIdeaUltimate()) return
@@ -66,6 +75,8 @@ private fun suggestPluginInstall(
 
     notificationGroup
         .createNotification(KotlinIdeaGradleBundle.message("notification.title.plugin.suggestion"), notificationContent, NotificationType.INFORMATION)
+        .setDisplayId(displayId)
+        .setSuggestionType(true)
         .addAction(object : NotificationAction(KotlinIdeaGradleBundle.message("action.text.install")) {
             override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 installAndEnable(project, setOf<@NotNull PluginId>(pluginId)) { notification.expire() }

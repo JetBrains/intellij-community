@@ -1,7 +1,6 @@
 import sys
 import types
-from typing import Any, Callable, Generic, Iterable, Mapping, Tuple, Type, TypeVar, overload
-from typing_extensions import Protocol
+from typing import Any, Callable, Generic, Iterable, Mapping, Protocol, Tuple, Type, TypeVar, overload
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -201,6 +200,7 @@ if sys.version_info >= (3, 10):
         unsafe_hash: bool = ...,
         frozen: bool = ...,
         match_args: bool = ...,
+        kw_only: bool = ...,
         slots: bool = ...,
     ) -> type: ...
 

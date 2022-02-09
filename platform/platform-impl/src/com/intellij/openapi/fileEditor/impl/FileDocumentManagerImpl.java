@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -107,7 +107,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       if (project == null) {
-        project = ProjectUtil.guessProjectForFile(getFile(document));
+        VirtualFile virtualFile = getFile(document);
+        project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
       }
       String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
@@ -826,7 +827,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     ApplicationManager.getApplication().invokeLater(() -> {
       String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
 
-      DialogWrapper dialog = new DialogWrapper(null) {
+      DialogWrapper dialog = new DialogWrapper((Project)null) {
         {
           init();
           setTitle(UIBundle.message("cannot.save.files.dialog.title"));

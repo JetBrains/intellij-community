@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class BalloonUsageCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("balloons", 2)
+    private val GROUP = EventLogGroup("balloons", 3)
 
     @JvmField
     val BALLOON_SHOWN = GROUP.registerEvent("balloon.shown", BalloonIdField())

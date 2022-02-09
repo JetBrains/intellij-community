@@ -1,13 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash
 
 import com.intellij.openapi.vcs.Executor.echo
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.vcs.log.util.VcsLogUtil
+import git4idea.history.GitLogUtil
 import git4idea.test.*
-import git4idea.test.git
 import git4idea.ui.StashInfo
-import junit.framework.TestCase
 import org.apache.commons.lang.RandomStringUtils
 import java.util.regex.Pattern
 
@@ -41,13 +40,18 @@ class GitStashTest : GitSingleRepoTest() {
     val stash2 = stack.first()
     val stash1 = stack.last()
 
+    assertStashInfoIsCorrect(0, msg2, branch, stash2)
+    assertStashInfoIsCorrect(1, msg1, "master", stash1)
+  }
 
-    assertEquals("stash@{0}", stash2.stash)
-    assertStashMessageEquals(msg2, stash2)
-    TestCase.assertEquals("WIP on $branch", stash2.branch)
-    assertEquals("stash@{1}", stash1.stash)
-    assertStashMessageEquals(msg1, stash1)
-    TestCase.assertEquals("WIP on master", stash1.branch)
+  private fun assertStashInfoIsCorrect(expectedNumber: Int,
+                                       expectedMessage: String,
+                                       expectedBranch: String,
+                                       actualStash: StashInfo) {
+    assertEquals("stash@{$expectedNumber}", actualStash.stash)
+    assertStashMessageEquals(expectedMessage, actualStash)
+    assertEquals("WIP on $expectedBranch", actualStash.branch)
+    assertEquals(stashAuthorTime(expectedNumber), actualStash.authorTime)
   }
 
   private fun assertStashMessageEquals(expectedMessage: String, stash: StashInfo) {
@@ -58,4 +62,10 @@ class GitStashTest : GitSingleRepoTest() {
   private fun stashMessagePattern(commitMessage: String) = Pattern.compile("${VcsLogUtil.HASH_REGEX.pattern()} ${commitMessage}")
 
   private fun stash() = git(project, "stash")
+
+  private fun stashAuthorTime(stashNumber: Int): Long {
+    val noWalkParameter = GitLogUtil.getNoWalkParameter(project)
+    val timeString = git(project, "log --pretty=format:%at $noWalkParameter stash@{$stashNumber}")
+    return GitLogUtil.parseTime(timeString)
+  }
 }

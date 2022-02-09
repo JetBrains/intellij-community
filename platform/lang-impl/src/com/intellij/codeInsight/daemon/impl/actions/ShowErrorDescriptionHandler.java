@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
 
-  ShowErrorDescriptionHandler(final boolean requestFocus) {
+  ShowErrorDescriptionHandler(boolean requestFocus) {
     myRequestFocus = requestFocus;
   }
 

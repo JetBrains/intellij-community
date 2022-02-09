@@ -21,8 +21,8 @@ import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.uast.UastModificationTracker;
 import com.intellij.ui.IconManager;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -41,6 +41,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 
 final class LanguageResolvingUtil {
   private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
@@ -51,12 +52,54 @@ final class LanguageResolvingUtil {
     return languageDefinitions;
   }
 
-  private static List<LanguageDefinition> collectLanguageDefinitions(final ConvertContext context) {
-    final Project project = context.getProject();
-    final Collection<PsiClass> allLanguages =
+  static boolean processAllLanguageDefinitions(ConvertContext context, Processor<? super LanguageDefinition> processor) {
+    if (!processLanguageDefinitions(context, processor)) {
+      return false;
+    }
+    LanguageDefinition any = createAnyLanguageDefinition(context);
+    return any != null && processor.process(any);
+  }
+
+  private static boolean processLanguageDefinitions(ConvertContext context, Processor<? super LanguageDefinition> processor) {
+    Project project = context.getProject();
+    GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
+    GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
+
+    // force finding inside IDEA project first
+    PsiClass languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(), projectProductionScope);
+    if (languageClass == null) {
+      languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(), librariesScope);
+    }
+    Iterable<PsiClass> allLanguages;
+    List<LanguageDefinition> libraryDefinitions;
+    if (languageClass == null) {
+      allLanguages = Collections.emptyList();
+      libraryDefinitions = Collections.emptyList();
+    }
+    else {
+      GlobalSearchScope allScope = projectProductionScope.union(librariesScope);
+      allLanguages = ClassInheritorsSearch.search(languageClass, allScope, true);
+      libraryDefinitions = collectLibraryLanguages(context, allScope);
+    }
+
+    if (!ContainerUtil.process(libraryDefinitions, processor)) {
+      return false;
+    }
+    return
+    StreamSupport.stream(allLanguages.spliterator(), false)
+      .filter(aClass -> PsiSearchScopeUtil.isInScope(projectProductionScope, aClass))
+      .map(language -> getDefinition(language, libraryDefinitions))
+      .filter(Objects::nonNull)
+      .allMatch(processor::process);
+  }
+
+  private static List<LanguageDefinition> collectLanguageDefinitions(ConvertContext context) {
+    Project project = context.getProject();
+    GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
+    GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
+    GlobalSearchScope allScope = projectProductionScope.union(librariesScope);
+    Collection<PsiClass> allLanguages =
       CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-        final GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
-        final GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
 
         // force finding inside IDEA project first
         PsiClass languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(), projectProductionScope);
@@ -67,7 +110,6 @@ final class LanguageResolvingUtil {
           return Result.create(Collections.emptyList(), UastModificationTracker.getInstance(project));
         }
 
-        GlobalSearchScope allScope = projectProductionScope.union(librariesScope);
         Collection<PsiClass> allInheritors = new HashSet<>(ClassInheritorsSearch.search(languageClass, allScope, true).findAll());
         return Result.create(allInheritors, UastModificationTracker.getInstance(project));
       });
@@ -75,66 +117,71 @@ final class LanguageResolvingUtil {
       return new SmartList<>();
     }
 
-    final List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context, allLanguages);
+    List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context, allScope);
 
-    final GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
-    final Collection<PsiClass> projectLanguages =
+    Collection<PsiClass> projectLanguages =
       ContainerUtil.filter(allLanguages, aClass -> PsiSearchScopeUtil.isInScope(projectProductionScope, aClass));
-    final List<LanguageDefinition> projectDefinitions = collectProjectLanguages(projectLanguages, libraryDefinitions);
+    List<LanguageDefinition> projectDefinitions = mapToProjectDefinitions(projectLanguages, libraryDefinitions);
 
-    final List<LanguageDefinition> all = new ArrayList<>(libraryDefinitions);
+    List<LanguageDefinition> all = new ArrayList<>(libraryDefinitions);
     all.addAll(projectDefinitions);
     return all;
   }
 
-  private static List<LanguageDefinition> collectLibraryLanguages(final ConvertContext context,
-                                                                  final Collection<PsiClass> allLanguages) {
-    return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), (NullableFunction<Language, LanguageDefinition>)language -> {
-      if (language.getID().isEmpty()) {
-        return null;
-      }
-      final PsiClass psiClass = DomJavaUtil.findClass(language.getClass().getName(), context.getInvocationElement(), true);
-      if (psiClass == null || !allLanguages.contains(psiClass)) {
-        return null;
-      }
-
-      return new LanguageDefinition(language.getID(), psiClass, () -> {
-        final LanguageFileType type = language.getAssociatedFileType();
-        return type == null ? null : type.getIcon();
-      }, () -> language.getDisplayName());
-    });
+  private static List<LanguageDefinition> collectLibraryLanguages(ConvertContext context, GlobalSearchScope scope) {
+    return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), language -> getLibraryDefinition(context, language, scope));
   }
 
-  private static List<LanguageDefinition> collectProjectLanguages(final Collection<PsiClass> projectLanguages,
-                                                                  final List<LanguageDefinition> libraryLanguages) {
-    return ContainerUtil.mapNotNull(projectLanguages, (NullableFunction<PsiClass, LanguageDefinition>)language -> {
-      if (language.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return null;
+  @Nullable
+  private static LanguageDefinition getLibraryDefinition(ConvertContext context,
+                                                         Language language,
+                                                         @NotNull GlobalSearchScope scope) {
+    if (language.getID().isEmpty()) {
+      return null;
+    }
+    PsiClass psiClass = DomJavaUtil.findClass(language.getClass().getName(), context.getInvocationElement(), true);
+    if (psiClass == null || !PsiSearchScopeUtil.isInScope(scope, psiClass)) {
+      return null;
+    }
+
+    return new LanguageDefinition(language.getID(), psiClass, () -> {
+      LanguageFileType type = language.getAssociatedFileType();
+      return type == null ? null : type.getIcon();
+    }, () -> language.getDisplayName());
+  }
+
+  private static List<LanguageDefinition> mapToProjectDefinitions(Collection<? extends PsiClass> projectLanguages,
+                                                                  List<? extends LanguageDefinition> libraryDefinitions) {
+    return ContainerUtil.mapNotNull(projectLanguages, language -> getDefinition(language, libraryDefinitions));
+  }
+
+  private static LanguageDefinition getDefinition(@NotNull PsiClass language, List<? extends LanguageDefinition> libraryLanguages) {
+    if (language.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return null;
+    }
+
+    if (ContainerUtil.exists(libraryLanguages, definition -> definition.clazz.equals(language))) {
+      return null;
+    }
+
+    return CachedValuesManager.getCachedValue(language, () -> {
+      String languageId = computeConstantSuperCtorCallParameter(language, 0);
+      if (languageId == null) {
+        languageId = computeConstantSuperCtorCallParameter(language, 1);
+      }
+      if (languageId == null) {
+        languageId = computeConstantReturnValue(language, "getID");
+      }
+      if (StringUtil.isEmpty(languageId)) {
+        return Result.create(null, language);
       }
 
-      if (ContainerUtil.exists(libraryLanguages, definition -> definition.clazz.equals(language))) {
-        return null;
-      }
+      LanguageDefinition definition =
+        new LanguageDefinition(languageId, language,
+                               () -> computeIconForProjectLanguage(language),
+                               () -> computeConstantReturnValue(language, "getDisplayName"));
 
-      return CachedValuesManager.getCachedValue(language, () -> {
-        String languageId = computeConstantSuperCtorCallParameter(language, 0);
-        if (languageId == null) {
-          languageId = computeConstantSuperCtorCallParameter(language, 1);
-        }
-        if (languageId == null) {
-          languageId = computeConstantReturnValue(language, "getID");
-        }
-        if (StringUtil.isEmpty(languageId)) {
-          return Result.create(null, language);
-        }
-
-        final LanguageDefinition definition =
-          new LanguageDefinition(languageId, language,
-                                 () -> computeIconForProjectLanguage(language),
-                                 () -> computeConstantReturnValue(language, "getDisplayName"));
-
-        return Result.createSingleDependency(definition, language);
-      });
+      return Result.createSingleDependency(definition, language);
     });
   }
 
@@ -269,7 +316,7 @@ final class LanguageResolvingUtil {
   }
 
   private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = Collections
-    .unmodifiableSet(new HashSet<>(Arrays.asList(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName())));
+    .unmodifiableSet(ContainerUtil.set(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName()));
 
   private static @NlsSafe String calculateAnyLanguageId(@NotNull ConvertContext context) {
     final Extension extension = context.getInvocationElement().getParentOfType(Extension.class, true);

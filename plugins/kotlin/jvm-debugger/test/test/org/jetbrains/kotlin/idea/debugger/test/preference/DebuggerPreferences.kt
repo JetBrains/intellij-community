@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.test.preference
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 class DebuggerPreferences(val project: Project, fileContents: String) {
     private val values: Map<String, Any?>

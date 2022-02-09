@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile
 class KotlinFormattingModelBuilder : FormattingModelBuilder {
     override fun createModel(formattingContext: FormattingContext): FormattingModel {
         val settings = formattingContext.codeStyleSettings
-        val element = formattingContext.psiElement
         val containingFile = formattingContext.containingFile
         val block = KotlinBlock(
             containingFile.node,
@@ -20,13 +19,6 @@ class KotlinFormattingModelBuilder : FormattingModelBuilder {
             settings,
             createSpacingBuilder(settings, KotlinSpacingBuilderUtilImpl)
         )
-
-        if (element is PsiFile) {
-            val collectChangesModel = createCollectFormattingChangesModel(element, block)
-            if (collectChangesModel != null) {
-                return collectChangesModel
-            }
-        }
 
         return FormattingModelProvider.createFormattingModelForPsiFile(containingFile, block, settings)
     }

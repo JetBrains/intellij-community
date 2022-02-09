@@ -12,6 +12,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
@@ -45,7 +47,8 @@ public final class PopupMenuPreloader implements Runnable {
                              @NotNull String actionPlace,
                              @Nullable PopupHandler popupHandler,
                              @NotNull Supplier<? extends ActionGroup> groupSupplier) {
-    if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4) {
+    if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4 ||
+        component instanceof IdeMenuBar && SwingUtilities.getWindowAncestor(component) instanceof IdeFrame.Child) {
       return;
     }
     Runnable runnable = () -> {

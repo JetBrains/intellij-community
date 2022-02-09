@@ -28,4 +28,11 @@ public class Main {
       }
     }
   }
+
+  void convert(Map<Integer, ? extends List<? extends Appendable>> map) {
+    map.forEach((integer, appendables) -> {
+      System.out.println(integer);
+      System.out.println(appendables);
+    });
+  }
 }

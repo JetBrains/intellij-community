@@ -183,11 +183,5 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
       callback.computed(myPosition);
       return ThreeState.YES;
     }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return true;
-    }
-
   }
 }

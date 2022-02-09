@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes;
 
 import com.intellij.openapi.components.Service;
@@ -193,9 +193,7 @@ public final class GitCommittedChangeListProvider implements CommittedChangesPro
   private static VcsFullCommitDetails getCommitDetails(@NotNull Project project,
                                                        @NotNull VirtualFile root,
                                                        @NotNull VcsRevisionNumber number) throws VcsException {
-    GitVcs gitVcs = GitVcs.getInstance(project);
-
-    String[] hashParameters = GitHistoryUtils.formHashParameters(gitVcs, Collections.singleton(number.asString()));
+    String[] hashParameters = GitHistoryUtils.formHashParameters(project, Collections.singleton(number.asString()));
     List<GitCommit> gitCommits = GitHistoryUtils.history(project, root, hashParameters);
     if (gitCommits.size() != 1) return null;
 

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-final class LineMarkersUtil {
+public final class LineMarkersUtil {
   private static final Logger LOG = Logger.getInstance(LineMarkersUtil.class);
 
   static boolean processLineMarkers(@NotNull Project project,
@@ -43,11 +43,11 @@ final class LineMarkersUtil {
     );
   }
 
-  static void setLineMarkersToEditor(@NotNull Project project,
-                                     @NotNull Document document,
-                                     @NotNull Segment bounds,
-                                     @NotNull Collection<? extends LineMarkerInfo<?>> markers,
-                                     int group) {
+  public static void setLineMarkersToEditor(@NotNull Project project,
+                                            @NotNull Document document,
+                                            @NotNull Segment bounds,
+                                            @NotNull Collection<? extends LineMarkerInfo<?>> markers,
+                                            int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
@@ -63,7 +63,7 @@ final class LineMarkersUtil {
                 "); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
     }
 
-    for (final LineMarkerInfo<?> info : markers) {
+    for (LineMarkerInfo<?> info : markers) {
       PsiElement element = info.getElement();
       if (element == null) {
         continue;

@@ -1,41 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
-import com.intellij.CommonBundle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.openapi.ui.DialogWrapperPeer
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.PopupBorder
-import com.intellij.ui.TitlePanel
-import com.intellij.ui.WindowMoveListener
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.scale.JBUIScale
-import com.intellij.uiDesigner.core.GridConstraints
-import com.intellij.uiDesigner.core.GridLayoutManager
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
-import com.intellij.util.ui.DialogUtil
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.Contract
+import com.intellij.util.ui.EdtInvocationManager
 import org.jetbrains.annotations.Nls
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Window
-import java.awt.event.ActionEvent
-import java.io.File
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import javax.swing.*
 import javax.swing.border.Border
 
@@ -52,196 +40,94 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   private var myWasShown = false
   private val myStartMillis = System.currentTimeMillis()
 
-  private val myRepaintRunnable = Runnable {
-    val text = myProgressWindow.text
-    val fraction = myProgressWindow.fraction
-    val text2 = myProgressWindow.text2
+  private val ui = ProgressDialogUI()
 
-    if (myProgressBar.isShowing) {
-      myProgressBar.isIndeterminate = myProgressWindow.isIndeterminate
-      myProgressBar.value = (fraction * 100).toInt()
-      if (myProgressBar.isIndeterminate && isWriteActionProgress() && myProgressBar.ui is DarculaProgressBarUI) {
-        (myProgressBar.ui as DarculaProgressBarUI).updateIndeterminateAnimationIndex(myStartMillis)
+  private val myRepaintRunnable = Runnable {
+    ui.updateTitle(myProgressWindow.title)
+    ui.updateProgress(ProgressState(
+      text = myProgressWindow.text,
+      details = myProgressWindow.text2,
+      fraction = if (myProgressWindow.isIndeterminate) -1.0 else myProgressWindow.fraction,
+    ))
+    val progressBar = ui.progressBar
+    if (progressBar.isShowing && progressBar.isIndeterminate && isWriteActionProgress()) {
+      val progressBarUI = progressBar.ui
+      if (progressBarUI is DarculaProgressBarUI) {
+        progressBarUI.updateIndeterminateAnimationIndex(myStartMillis)
       }
     }
-
-    myTextLabel.text = fitTextToLabel(text, myTextLabel)
-    myText2Label.text = fitTextToLabel(text2, myText2Label)
-
-    myTitlePanel.setText(StringUtil.defaultIfEmpty(myProgressWindow.title, " "))
-
     myLastTimeDrawn = System.currentTimeMillis()
     synchronized(this@ProgressDialog) {
       myRepaintedFlag = true
     }
   }
 
-  private val myPanel = JPanel()
-  private val myTextLabel = JLabel(" ")
-
-  private val myText2Label = JBLabel("")
-  private val myCancelButton = JButton()
-
-  private val myBackgroundButton = JButton()
-  private val myProgressBar = JProgressBar()
-
   private var myRepaintedFlag = true // guarded by this
-
-  private val myTitlePanel = TitlePanel()
   private var myPopup: DialogWrapper? = null
-  private val myDisableCancelAlarm = SingleAlarm(this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
-  private val myEnableCancelAlarm = SingleAlarm(this::setCancelButtonEnabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
+  private val myDisableCancelAlarm = SingleAlarm(
+    this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any()
+  )
+  private val myEnableCancelAlarm = SingleAlarm(
+    this::setCancelButtonEnabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any()
+  )
 
   init {
-    setupUI()
-    initDialog(cancelText)
-  }
-
-  private fun setupUI() {
-    myPanel.layout = GridLayoutManager(2, 1, JBUI.emptyInsets(), -1, -1, false, false)
-
-    val panel = JPanel()
-    panel.layout = GridLayoutManager(1, 2, JBUI.insets(6, 10, 10, 10), -1, -1, false, false)
-    panel.isOpaque = false
-    myPanel.add(panel, GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                       GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK,
-                                       GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK, null, null, null))
-
-    val innerPanel = JPanel()
-    innerPanel.layout = GridLayoutManager(3, 2, JBUI.emptyInsets(), -1, -1, false, false)
-    innerPanel.preferredSize = Dimension(if (SystemInfo.isMac) 350 else JBUIScale.scale(450), -1)
-    panel.add(innerPanel, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                          GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                            GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null))
-
-    innerPanel.add(myTextLabel, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                                (GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                                  GridConstraints.SIZEPOLICY_WANT_GROW), GridConstraints.SIZEPOLICY_FIXED,
-                                                Dimension(0, -1), null, null))
-
-    myText2Label.componentStyle = UIUtil.ComponentStyle.REGULAR
-    innerPanel.add(myText2Label, GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_HORIZONTAL,
-                                                 (GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                                   GridConstraints.SIZEPOLICY_WANT_GROW), GridConstraints.SIZEPOLICY_FIXED,
-                                                 Dimension(0, -1), null, null))
-
-    myProgressBar.putClientProperty("html.disable", java.lang.Boolean.FALSE)
-    innerPanel.add(myProgressBar, GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                                  (GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                                    GridConstraints.SIZEPOLICY_WANT_GROW), GridConstraints.SIZEPOLICY_FIXED, null, null,
-                                                  null))
-
-    innerPanel.add(JLabel(" "),
-                   GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null))
-    innerPanel.add(JLabel(" "),
-                   GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null))
-
-    val buttonPanel = JPanel()
-    buttonPanel.layout = GridLayoutManager(2, 1, JBUI.emptyInsets(), -1, -1, false, false)
-    panel.add(buttonPanel, GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                           GridConstraints.SIZEPOLICY_CAN_SHRINK, GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
-                                           null))
-
-    myCancelButton.text = CommonBundle.getCancelButtonText()
-    DialogUtil.registerMnemonic(myCancelButton, '&')
-    buttonPanel.add(myCancelButton, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                                    GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK,
-                                                    GridConstraints.SIZEPOLICY_FIXED, null, null, null))
-
-    myBackgroundButton.text = CommonBundle.message("button.background")
-    DialogUtil.registerMnemonic(myBackgroundButton, '&')
-    buttonPanel.add(myBackgroundButton, GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                                        GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK,
-                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null))
-
-    myPanel.add(myTitlePanel, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                              (GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                                GridConstraints.SIZEPOLICY_WANT_GROW), GridConstraints.SIZEPOLICY_FIXED, null, null, null))
-  }
-
-  @Contract(pure = true)
-  private fun fitTextToLabel(fullText: String?, label: JLabel): String {
-    if (fullText == null || fullText.isEmpty()) return " "
-    var newFullText = StringUtil.last(fullText, 500, true).toString() // avoid super long strings
-    while (label.getFontMetrics(label.font).stringWidth(newFullText) > label.width) {
-      val sep = newFullText.indexOf(File.separatorChar, 4)
-      if (sep < 0) return newFullText
-      newFullText = "..." + newFullText.substring(sep)
-    }
-    return newFullText
-  }
-
-  private fun initDialog(cancelText: @Nls String?) {
-    if (SystemInfo.isMac) {
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label)
-    }
-    myText2Label.foreground = UIUtil.getContextHelpForeground()
-
-    myCancelButton.addActionListener { doCancelAction() }
-
-    val cancelFunction: (e: ActionEvent) -> Unit = {
-      if (myCancelButton.isEnabled) {
-        doCancelAction()
-      }
-    }
-    for (shortcut in myProgressWindow.cancelShortcuts) {
-      myCancelButton.registerKeyboardAction(cancelFunction, shortcut, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-    }
-
+    ui.progressBar.isIndeterminate = myProgressWindow.isIndeterminate
+    val cancelButton = ui.cancelButton
     if (cancelText != null) {
-      myProgressWindow.setCancelButtonText(cancelText)
+      cancelButton.text = cancelText
     }
-    myProgressBar.isIndeterminate = myProgressWindow.isIndeterminate
-    myProgressBar.maximum = 100
-    createCenterPanel()
-
-    myTitlePanel.setActive(true)
-    val moveListener = object : WindowMoveListener(myTitlePanel) {
-      override fun getView(component: Component): Component {
-        return SwingUtilities.getAncestorOfClass(DialogWrapperDialog::class.java, component)
+    if (myProgressWindow.myShouldShowCancel) {
+      cancelButton.addActionListener {
+        myProgressWindow.cancel()
+      }
+      val cancelFunction = ActionListener {
+        if (cancelButton.isEnabled) {
+          myProgressWindow.cancel()
+        }
+      }
+      cancelButton.registerKeyboardAction(
+        cancelFunction,
+        KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+      )
+    }
+    else {
+      cancelButton.isVisible = false
+    }
+    val backgroundButton = ui.backgroundButton
+    if (myShouldShowBackground) {
+      backgroundButton.addActionListener {
+        myProgressWindow.background()
       }
     }
-    myTitlePanel.addMouseListener(moveListener)
-    myTitlePanel.addMouseMotionListener(moveListener)
+    else {
+      backgroundButton.isVisible = false
+    }
   }
 
   override fun dispose() {
-    UIUtil.disposeProgress(myProgressBar)
-    UIUtil.dispose(myTitlePanel)
-    UIUtil.dispose(myBackgroundButton)
-    UIUtil.dispose(myCancelButton)
+    Disposer.dispose(ui)
     myEnableCancelAlarm.cancelAllRequests()
     myDisableCancelAlarm.cancelAllRequests()
   }
 
-  fun getPanel(): JPanel = myPanel
+  val panel: JPanel get() = ui.panel
 
   fun getRepaintRunnable(): Runnable = myRepaintRunnable
 
   fun getPopup(): DialogWrapper? = myPopup
-
-  fun changeCancelButtonText(text: @Nls String) {
-    myCancelButton.text = text
-  }
-
-  private fun doCancelAction() {
-    if (myProgressWindow.myShouldShowCancel) {
-      myProgressWindow.cancel()
-    }
-  }
 
   fun cancel() {
     enableCancelButtonIfNeeded(false)
   }
 
   private fun setCancelButtonEnabledInEDT() {
-    myCancelButton.isEnabled = true
+    ui.cancelButton.isEnabled = true
   }
 
   private fun setCancelButtonDisabledInEDT() {
-    myCancelButton.isEnabled = false
+    ui.cancelButton.isEnabled = false
   }
 
   fun enableCancelButtonIfNeeded(enable: Boolean) {
@@ -250,33 +136,17 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
   }
 
-  private fun createCenterPanel() {
-    // Cancel button (if any)
-
-    if (myProgressWindow.myCancelText != null) {
-      myCancelButton.text = myProgressWindow.myCancelText
-    }
-    myCancelButton.isVisible = myProgressWindow.myShouldShowCancel
-
-    myBackgroundButton.isVisible = myShouldShowBackground
-    myBackgroundButton.addActionListener {
-      if (myShouldShowBackground) {
-        myProgressWindow.background()
-      }
-    }
-  }
-
   @Synchronized
   fun update() {
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false
-        UIUtil.invokeLaterIfNeeded(myRepaintRunnable)
+        EdtInvocationManager.invokeLaterIfNeeded(myRepaintRunnable)
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed && myUpdateAlarm.isEmpty) {
-          UIUtil.invokeLaterIfNeeded {
+          EdtInvocationManager.invokeLaterIfNeeded {
             if (!myUpdateAlarm.isDisposed) {
               myUpdateAlarm.request(myProgressWindow.modalityState)
             }
@@ -289,7 +159,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   @Synchronized
   fun background() {
     if (myShouldShowBackground) {
-      myBackgroundButton.isEnabled = false
+      ui.backgroundButton.isEnabled = false
     }
 
     hide()
@@ -338,14 +208,14 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     // (see IdeGlassPaneImp.addImpl), requesting focus to cancel button until that time has no effect, as it's not showing.
     SwingUtilities.invokeLater {
       if (myPopup != null && !myPopup!!.isDisposed) {
-        val window = SwingUtilities.getWindowAncestor(myCancelButton)
+        val window = SwingUtilities.getWindowAncestor(ui.cancelButton)
         if (window != null) {
           val originalFocusOwner = window.mostRecentFocusOwner
           if (originalFocusOwner != null) {
             Disposer.register(myPopup!!.disposable) { originalFocusOwner.requestFocusInWindow() }
           }
         }
-        myCancelButton.requestFocusInWindow()
+        ui.cancelButton.requestFocusInWindow()
         myRepaintRunnable.run()
       }
     }
@@ -355,43 +225,53 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     return myProgressWindow is PotemkinProgress
   }
 
-  private fun createDialog(window: Window): MyDialogWrapper {
+  private fun createDialog(window: Window): DialogWrapper {
+    if (Registry.`is`("ide.modal.progress.wrapper.refactoring")) {
+      return createDialogWrapper(
+        panel = panel,
+        cancelAction = {
+          if (myProgressWindow.myShouldShowCancel) {
+            myProgressWindow.cancel()
+          }
+        },
+        window = window,
+        lightPopup = !isWriteActionProgress(),
+        project = myProgressWindow.myProject,
+      )
+    }
     if (System.getProperty("vintage.progress") != null || isWriteActionProgress()) {
       if (window.isShowing) {
-        return object : MyDialogWrapper(window, myProgressWindow.myShouldShowCancel) {
+        return object : MyDialogWrapper(window) {
           override fun useLightPopup(): Boolean {
             return false
           }
         }
       }
-      return object : MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel) {
+      return object : MyDialogWrapper(myProgressWindow.myProject) {
         override fun useLightPopup(): Boolean {
           return false
         }
       }
     }
     if (window.isShowing) {
-      return MyDialogWrapper(window, myProgressWindow.myShouldShowCancel)
+      return MyDialogWrapper(window)
     }
-    return MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel)
+    return MyDialogWrapper(myProgressWindow.myProject)
   }
 
   private open inner class MyDialogWrapper : DialogWrapper {
-    private val myIsCancellable: Boolean
 
-    constructor(project: Project?, cancellable: Boolean) : super(project, false) {
+    constructor(project: Project?) : super(project, false) {
       init()
-      myIsCancellable = cancellable
     }
 
-    constructor(parent: Component, cancellable: Boolean) : super(parent, false) {
+    constructor(parent: Component) : super(parent, false) {
       init()
-      myIsCancellable = cancellable
     }
 
     override fun doCancelAction() {
-      if (myIsCancellable) {
-        this@ProgressDialog.doCancelAction()
+      if (myProgressWindow.myShouldShowCancel) {
+        myProgressWindow.cancel()
       }
     }
 
@@ -447,7 +327,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
       super.init()
       setUndecorated(true)
       rootPane.windowDecorationStyle = JRootPane.NONE
-      myPanel.border = PopupBorder.Factory.create(true, true)
+      panel.border = PopupBorder.Factory.create(true, true)
     }
 
     override fun isProgressDialog(): Boolean {
@@ -455,7 +335,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
 
     override fun createCenterPanel(): JComponent {
-      return myPanel
+      return panel
     }
 
     override fun createSouthPanel(): JComponent? {

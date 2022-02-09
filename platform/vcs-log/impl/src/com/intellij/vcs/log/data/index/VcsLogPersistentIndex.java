@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
@@ -64,6 +65,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogBigRepositoriesList myBigRepositoriesList;
   @NotNull private final VcsLogIndexCollector myIndexCollector;
+  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   @Nullable private final IndexStorage myIndexStorage;
   @Nullable private final IndexDataGetter myDataGetter;
@@ -114,6 +116,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);
 
     Disposer.register(disposableParent, this);
+    Disposer.register(this, myDisposableFlag);
   }
 
   private static int getIndexingLimit() {
@@ -144,7 +147,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   }
 
   private synchronized void doScheduleIndex(boolean full, @NotNull Consumer<IndexingRequest> requestConsumer) {
-    if (Disposer.isDisposed(this)) return;
+    if (myDisposableFlag.isDisposed()) return;
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     // for fresh index, wait for complete log to load and index everything in one command
     if (myIndexStorage.isFresh() && !full) return;

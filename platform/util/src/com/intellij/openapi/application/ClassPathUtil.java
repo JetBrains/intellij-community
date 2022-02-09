@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.text.Strings;
@@ -38,12 +38,13 @@ public final class ClassPathUtil {
   }
 
   public static @NotNull Class<?> @NotNull [] getUtilClasses() {
-    @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
+    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"}) Class<?>[] classes = {
       PathManager.class,                                  // module 'intellij.platform.util'
       Strings.class,                                      // module 'intellij.platform.util.base'
       XmlDomReader.class,                                 // module 'intellij.platform.util.xmlDom'
       MinusculeMatcher.class,                             // module 'intellij.platform.util.text.matching'
       com.intellij.openapi.util.SystemInfoRt.class,       // module 'intellij.platform.util.rt'
+      com.intellij.diff.comparison.ComparisonUtil.class,  // module 'intellij.platform.util.diff'
       com.intellij.util.lang.UrlClassLoader.class,        // module 'intellij.platform.util.classLoader'
       Xx3UnencodedString.class,                           // intellij.platform.util.rt.java8 (required for classLoader)
       org.intellij.lang.annotations.Flow.class,           // jetbrains-annotations-java5

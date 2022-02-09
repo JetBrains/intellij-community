@@ -97,9 +97,13 @@ internal object OpenLessonActivities {
       LOG.debug("${projectWhereToStartLesson.name}: trying to find LearnProject in opened projects ${learnProject != null}")
       if (learnProject != null) LearningUiManager.learnProject = learnProject
 
+      val lessonType = params.lesson.lessonType
       when {
-        params.lesson.lessonType == LessonType.SCRATCH -> {
+        lessonType == LessonType.SCRATCH -> {
           LOG.debug("${projectWhereToStartLesson.name}: scratch based lesson")
+        }
+        lessonType == LessonType.USER_PROJECT -> {
+          LOG.debug("The lesson opened in user project ${projectWhereToStartLesson.name}")
         }
         learnProject == null || learnProject.isDisposed -> {
           if (!isLearningProject(projectWhereToStartLesson, langSupport)) {
@@ -133,13 +137,17 @@ internal object OpenLessonActivities {
         }
       }
 
-      if (params.lesson.lessonType.isProject) {
-        if (projectWhereToStartLesson != learnProject) {
-          LOG.error(Exception("Invalid learning project initialization: " +
-                              "projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
-          return
+      if (lessonType.isProject) {
+        if (lessonType == LessonType.USER_PROJECT) {
+          prepareAndOpenLesson(params, withCleanup = false)
+        } else {
+          if (projectWhereToStartLesson != learnProject) {
+            LOG.error(Exception("Invalid learning project initialization: " +
+                                "projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
+            return
+          }
+          prepareAndOpenLesson(params)
         }
-        prepareAndOpenLesson(params)
       }
       else {
         openLessonForPreparedProject(params)
@@ -185,7 +193,7 @@ internal object OpenLessonActivities {
     }
     else {
       LOG.debug("${project.name}: 4. LearnProject is the current project")
-      getFileInLearnProject(lesson)
+      getFileInLearnProject(langSupport, lesson)
     }
 
     if (lesson.lessonType != LessonType.SCRATCH) {
@@ -300,7 +308,7 @@ internal object OpenLessonActivities {
   }
 
   private fun openReadme(project: Project) {
-    val root = ProjectUtils.getProjectRoot(project)
+    val root = ProjectUtils.getCurrentLearningProjectRoot()
     val readme = root.findFileByRelativePath("README.md") ?: return
     TextEditorWithPreview.openPreviewForFile(project, readme)
   }
@@ -423,8 +431,7 @@ internal object OpenLessonActivities {
                              LearnBundle.message("dialog.askToSwitchToLearnProject.title"))
   }
 
-  @Throws(IOException::class)
-  private fun getFileInLearnProject(lesson: Lesson): VirtualFile? {
+  private fun getFileInLearnProject(langSupport: LangSupport, lesson: Lesson): VirtualFile? {
     if (!lesson.properties.openFileAtStart) {
       LOG.debug("${lesson.name} does not open any file at the start")
       return null
@@ -436,7 +443,7 @@ internal object OpenLessonActivities {
         val existedFile = lesson.existedFile ?: lesson.module.primaryLanguage?.projectSandboxRelativePath
         val manager = ProjectRootManager.getInstance(learnProject)
         if (existedFile != null) {
-          val root = ProjectUtils.getProjectRoot(learnProject)
+          val root = ProjectUtils.getProjectRoot(langSupport)
           val findFileByRelativePath = root.findFileByRelativePath(existedFile)
           if (findFileByRelativePath != null) return findFileByRelativePath
         }

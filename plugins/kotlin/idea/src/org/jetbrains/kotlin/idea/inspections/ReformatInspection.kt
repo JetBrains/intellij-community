@@ -2,75 +2,65 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.actions.VcsFacade
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
+import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection
 import com.intellij.openapi.project.Project
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.formatter.FormattingChange
-import org.jetbrains.kotlin.idea.formatter.FormattingChange.ReplaceWhiteSpace
-import org.jetbrains.kotlin.idea.formatter.FormattingChange.ShiftIndentInsideRange
-import org.jetbrains.kotlin.idea.formatter.collectFormattingChanges
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.KtFile
-import javax.swing.JComponent
+
 
 class ReformatInspection(@JvmField var processChangedFilesOnly: Boolean = false) : LocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+
         if (file !is KtFile || !file.isWritable || !ProjectRootsUtil.isInProjectSource(file)) {
             return null
         }
 
-        if (processChangedFilesOnly && !VcsFacade.getInstance().hasChanges(file)) {
+        if (isIncorrectFormattingInspectionEnabled(file.project)) {
             return null
         }
 
-        return collectFormattingChanges(file)
-            .takeIf { it.isNotEmpty() }
-            ?.mapNotNull(fun(change: FormattingChange): ProblemDescriptor? {
-                val rangeOffset = when (change) {
-                    is ShiftIndentInsideRange -> change.range.startOffset
-                    is ReplaceWhiteSpace -> change.textRange.startOffset
-                }
+        return arrayOf(
+            manager.createProblemDescriptor(
+                file,
+                KotlinBundle.message("kotlin.formatting.inspection.is.deprecated"),
+                EnableCommonInspection,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                isOnTheFly
+            )
+        )
 
-                val leaf = file.findElementAt(rangeOffset) ?: return null
-                if (!leaf.isValid) return null
-                if (leaf is PsiWhiteSpace && isEmptyLineReformat(leaf, change)) return null
-
-                return manager.createProblemDescriptor(
-                    leaf,
-                    KotlinBundle.message("file.is.not.properly.formatted"),
-                    ReformatQuickFix,
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    isOnTheFly
-                )
-            })
-            ?.toTypedArray()
     }
 
-    override fun createOptionsPanel(): JComponent = SingleCheckboxOptionsPanel(
-        KotlinBundle.message("apply.only.to.modified.files.for.projects.under.a.version.control"),
-        this,
-        "processChangedFilesOnly",
-    )
+}
 
-    private fun isEmptyLineReformat(whitespace: PsiWhiteSpace, change: FormattingChange): Boolean {
-        if (change !is ReplaceWhiteSpace) return false
 
-        val beforeText = whitespace.text
-        val afterText = change.whiteSpace
+private val incorrectFormattingInspectionKey: HighlightDisplayKey? by lazy { HighlightDisplayKey.findById(IncorrectFormattingInspection().id) }
+private val incorrectFormattingInspectionShortName: String by lazy { IncorrectFormattingInspection().shortName }
 
-        return beforeText.count { it == '\n' } == afterText.count { it == '\n' } &&
-                beforeText.substringAfterLast('\n') == afterText.substringAfterLast('\n')
-    }
+private val reformatInspectionShortName: String by lazy { org.jetbrains.kotlin.idea.inspections.ReformatInspection().shortName }
 
-    private object ReformatQuickFix : LocalQuickFix {
-        override fun getFamilyName(): String = KotlinBundle.message("reformat.quick.fix.family.name")
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            CodeStyleManager.getInstance(project).reformat(descriptor.psiElement.containingFile)
-        }
+private fun isIncorrectFormattingInspectionEnabled(project: Project) =
+    InspectionProjectProfileManager
+        .getInstance(project)
+        .currentProfile
+        .isToolEnabled(incorrectFormattingInspectionKey)
+
+private object EnableCommonInspection : LocalQuickFix {
+    override fun getFamilyName(): String = KotlinBundle.message("enable.reformat.inspection.fix.family.name")
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        InspectionProjectProfileManager
+            .getInstance(project)
+            .currentProfile
+            .enableTool(incorrectFormattingInspectionShortName, project)
+
+        InspectionProjectProfileManager
+            .getInstance(project)
+            .currentProfile
+            .setToolEnabled(reformatInspectionShortName, false, project)
     }
 }

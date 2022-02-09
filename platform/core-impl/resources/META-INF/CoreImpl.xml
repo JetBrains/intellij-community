@@ -42,7 +42,6 @@
                         serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
-    <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON"/>
 
     <projectService serviceInterface="com.intellij.psi.PsiManager"
                     serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>

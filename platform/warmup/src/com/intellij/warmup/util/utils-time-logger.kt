@@ -73,6 +73,7 @@ suspend fun <Y> runTaskAndLogTime(
         val message = stackElement.logStack(progressName) ?: continue
         val prefix = "keep running ${message}... so far ${cookie.formatDuration()}"
         val threadDump = ThreadDumper.dumpThreadsToString()
+        ConsoleLog.info("Printing a threadDump for diagnostic in case of process' hanging")
         ConsoleLog.info("... $prefix\n$threadDump")
 
         try {

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -52,7 +53,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final JPanel myComponent;
   private final boolean myWriteableFileRequired;
-  private boolean actionEnabled;
+  protected boolean actionEnabled;
   private final Alarm update;
   // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
   private volatile Reference<Editor> myEditor = new WeakReference<>(null);
@@ -68,6 +69,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         update();
+        UIEventLogger.StatusBarPopupShown.log(project, EditorBasedStatusBarPopup.this.getClass());
         showPopup(e);
         return true;
       }
@@ -211,6 +213,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return myComponent;
   }
 
+  protected Alarm getUpdateAlarm() {
+    return update;
+  }
+
   protected boolean isEmpty() {
     Boolean result = ObjectUtils.doIfCast(myComponent, TextPanel.WithIconAndArrows.class,
                                           textPanel -> StringUtil.isEmpty(textPanel.getText()) && !textPanel.hasIcon());
@@ -351,6 +357,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     @Nls
     public String getText() {
       return text;
+    }
+
+    public boolean isActionEnabled() {
+      return actionEnabled;
     }
 
     public @Tooltip String getToolTip() {

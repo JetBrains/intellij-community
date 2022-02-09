@@ -317,6 +317,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       val offset = document.charsSequence.indexOf(commentingLineText)
       if (offset == -1) error("Not found '$commentingLineText' item in text")
       document.insertString(offset + commentingLineText.length, "  $commentText")
+      FileDocumentManager.getInstance().saveDocument(document)
     }
   }
 

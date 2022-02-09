@@ -1,0 +1,1 @@
+public final static [BODY_RESOLVE] enum entry ENTRY1: R|library/TopLevelEnum|

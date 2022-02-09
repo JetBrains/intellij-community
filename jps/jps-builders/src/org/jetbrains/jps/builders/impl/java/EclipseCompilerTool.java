@@ -35,11 +35,6 @@ public final class EclipseCompilerTool extends JavaCompilingTool {
   }
 
   @Override
-  public boolean isCompilerTreeAPISupported() {
-    return false;
-  }
-
-  @Override
   public @NotNull String getDescription() {
     String version = myVersion;
     if (version == null) {

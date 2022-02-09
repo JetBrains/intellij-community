@@ -5,14 +5,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 

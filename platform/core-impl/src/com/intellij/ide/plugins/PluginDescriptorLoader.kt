@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment")
 @file:JvmName("PluginDescriptorLoader")
 @file:ApiStatus.Internal
@@ -10,17 +10,20 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.util.plugins.DataLoader
-import com.intellij.platform.util.plugins.LocalFsDataLoader
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
+import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.io.*
+import java.io.Closeable
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -415,22 +418,15 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   // should be the only plugin in lib (only for Ultimate and WebStorm for now)
   if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
       (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
-    loadCoreProductPlugin(data = classLoader.getResourceAsStream(PluginManagerCore.PLUGIN_XML_PATH)!!,
+    loadCoreProductPlugin(getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!,
                           context = context,
                           pathResolver = pathResolver,
                           useCoreClassLoader = useCoreClassLoader)
   }
   else {
     val fileName = "${platformPrefix}Plugin.xml"
-    if (classLoader is UrlClassLoader) {
-      classLoader.getResourceAsBytes("${PluginManagerCore.META_INF}$fileName", false)?.let {
-        loadCoreProductPlugin(data = ByteArrayInputStream(it), context, pathResolver, useCoreClassLoader)
-      }
-    }
-    else {
-      classLoader.getResourceAsStream("${PluginManagerCore.META_INF}$fileName")?.let {
-        loadCoreProductPlugin(data = it, context, pathResolver, useCoreClassLoader)
-      }
+    getResourceReader("${PluginManagerCore.META_INF}$fileName", classLoader)?.let {
+      loadCoreProductPlugin(it, context, pathResolver, useCoreClassLoader)
     }
 
     val urlToFilename = collectPluginFilesInClassPath(classLoader)
@@ -452,7 +448,16 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   activity.end()
 }
 
-private fun loadCoreProductPlugin(data: InputStream,
+private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStreamReader2? {
+  if (classLoader is UrlClassLoader) {
+    return createNonCoalescingXmlStreamReader(classLoader.getResourceAsBytes(path, false) ?: return null, path)
+  }
+  else {
+    return createNonCoalescingXmlStreamReader(classLoader.getResourceAsStream(path) ?: return null, path)
+  }
+}
+
+private fun loadCoreProductPlugin(reader: XMLStreamReader2,
                                   context: DescriptorListLoadingContext,
                                   pathResolver: ClassPathXmlPathResolver,
                                   useCoreClassLoader: Boolean) {
@@ -460,18 +465,20 @@ private fun loadCoreProductPlugin(data: InputStream,
     override val pool: ZipFilePool
       get() = throw IllegalStateException("must be not called")
 
+    override val emptyDescriptorIfCannotResolve: Boolean
+      get() = true
+
     override fun load(path: String) = throw IllegalStateException("must be not called")
 
     override fun toString() = "product classpath"
   }
 
-  val raw = readModuleDescriptor(data,
+  val raw = readModuleDescriptor(reader,
                                  readContext = context,
                                  pathResolver = pathResolver,
                                  dataLoader = dataLoader,
                                  includeBase = null,
-                                 readInto = null,
-                                 locationSource = null)
+                                 readInto = null)
   val descriptor = IdeaPluginDescriptorImpl(raw = raw,
                                             path = Paths.get(PathManager.getLibPath()),
                                             isBundled = true,

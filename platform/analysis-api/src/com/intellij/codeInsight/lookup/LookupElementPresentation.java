@@ -30,7 +30,7 @@ public class LookupElementPresentation {
   private boolean myItemTextItalic;
   private boolean myTypeGrayed;
   @Nullable private List<TextFragment> myTail;
-  private boolean myFrozen;
+  private volatile boolean myFrozen;
 
   public void setIcon(@Nullable Icon icon) {
     ensureMutable();

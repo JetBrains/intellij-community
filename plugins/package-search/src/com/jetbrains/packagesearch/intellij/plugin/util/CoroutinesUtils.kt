@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
@@ -30,7 +29,6 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -64,53 +62,7 @@ internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlo
         .launchIn(this)
 }
 
-@Suppress("UNCHECKED_CAST")
-fun <T1, T2, T3, T4, T5, T6, T7, R> combineTyped(
-    flow: Flow<T1>,
-    flow2: Flow<T2>,
-    flow3: Flow<T3>,
-    flow4: Flow<T4>,
-    flow5: Flow<T5>,
-    flow6: Flow<T6>,
-    flow7: Flow<T7>,
-    transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
-): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6, flow7) { args: Array<Any?> ->
-    transform(
-        args[0] as T1,
-        args[1] as T2,
-        args[2] as T3,
-        args[3] as T4,
-        args[4] as T5,
-        args[5] as T6,
-        args[6] as T7
-    )
-}
-
-@Suppress("UNCHECKED_CAST")
-fun <T1, T2, T3, T4, T5, T6, T7, T8, R> combineTyped(
-    flow: Flow<T1>,
-    flow2: Flow<T2>,
-    flow3: Flow<T3>,
-    flow4: Flow<T4>,
-    flow5: Flow<T5>,
-    flow6: Flow<T6>,
-    flow7: Flow<T7>,
-    flow8: Flow<T8>,
-    transform: suspend (T1, T2, T3, T4, T5, T6, T7, T8) -> R
-): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6, flow7, flow8) { args: Array<Any?> ->
-    transform(
-        args[0] as T1,
-        args[1] as T2,
-        args[2] as T3,
-        args[3] as T4,
-        args[4] as T5,
-        args[5] as T6,
-        args[6] as T7,
-        args[7] as T8
-    )
-}
-
-internal suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend (T) -> R) = coroutineScope {
+suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend CoroutineScope.(T) -> R) = coroutineScope {
     map { async { transform(it) } }.awaitAll()
 }
 
@@ -120,7 +72,7 @@ internal suspend fun <T> Iterable<T>.parallelFilterNot(transform: suspend (T) ->
 internal suspend fun <T, R> Iterable<T>.parallelMapNotNull(transform: suspend (T) -> R?) =
     channelFlow { parallelForEach { transform(it)?.let { send(it) } } }.toList()
 
-internal suspend fun <T> Iterable<T>.parallelForEach(action: suspend (T) -> Unit) = coroutineScope {
+internal suspend fun <T> Iterable<T>.parallelForEach(action: suspend CoroutineScope.(T) -> Unit) = coroutineScope {
     forEach { launch { action(it) } }
 }
 
@@ -176,10 +128,14 @@ internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
     crossinline transform: suspend (T, R) -> T
 ): Flow<T> = flow {
     coroutineScope {
-        val queue = Channel<Any?>()
+        val queue = Channel<Any?>(capacity = 1)
 
-        // wait for first main element using stateIn()
-        stateIn(this).onEach { queue.send(it) }.launchIn(this)
+        val mutex = Mutex(locked = true)
+        this@modifiedBy.onEach {
+            queue.send(it)
+            if (mutex.isLocked) mutex.unlock()
+        }.launchIn(this)
+        mutex.lock()
         modifierFlow.onEach { queue.send(it) }.launchIn(this)
 
         var currentState: T = queue.receive() as T
@@ -198,21 +154,21 @@ internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
 
 internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
     loggingContext: String,
-    loadingFlow: MutableStateFlow<Boolean>,
+    loadingFlow: MutableStateFlow<Boolean>? = null,
     transform: suspend CoroutineScope.(T) -> R
 ) =
     mapLatest {
         measureTimedValue {
-            loadingFlow.emit(true)
+            loadingFlow?.emit(true)
             val result = try {
                 coroutineScope { transform(it) }
             } finally {
-                loadingFlow.emit(false)
+                loadingFlow?.emit(false)
             }
             result
         }
     }.map {
-        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to elaborate" }
+        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to process" }
         it.value
     }
 
@@ -243,23 +199,6 @@ internal inline fun <reified T> Flow<T>.batchAtIntervals(duration: Duration) = c
                     send(buffer.toTypedArray())
                     buffer.clear()
                 }
-            }
-        }
-    }
-}
-
-internal inline fun <reified T> Flow<T>.batchUntil(duration: Duration) = channelFlow {
-    val mutex = Mutex()
-    val buffer = mutableListOf<T>()
-    var job: Job? = null
-    collect {
-        job?.cancel()
-        mutex.withLock { buffer.add(it) }
-        job = launch {
-            delay(duration)
-            mutex.withLock {
-                send(buffer.toTypedArray())
-                buffer.clear()
             }
         }
     }

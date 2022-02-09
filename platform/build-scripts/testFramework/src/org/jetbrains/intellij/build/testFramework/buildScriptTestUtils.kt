@@ -1,15 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.TracerManager
 import org.jetbrains.intellij.build.impl.TracerProviderManager
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import org.junit.AssumptionViolatedException
+import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -66,12 +70,20 @@ fun runTestBuild(homePath: String,
       verifier(buildContext.paths)
     }
     catch (e: Throwable) {
-      span.recordException(e)
+      if (e !is FileComparisonFailure) {
+        span.recordException(e)
+      }
       span.setStatus(StatusCode.ERROR)
 
       copyDebugLog(productProperties, messages)
 
-      throw e
+      if (ExceptionUtil.causedBy(e, HttpConnectTimeoutException::class.java)) {
+        //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
+        throw AssumptionViolatedException("failed to load data for build scripts", e)
+      }
+      else {
+        throw e
+      }
     }
     finally {
       // redirect debug logging to some other file to prevent locking of output directory on Windows

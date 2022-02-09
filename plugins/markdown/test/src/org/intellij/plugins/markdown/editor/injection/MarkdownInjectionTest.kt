@@ -8,7 +8,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.injection.alias.LanguageGuesser.guessLanguageForInjection
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser.guessLanguageForInjection
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 

@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
   </component>
   <component name="copyright">
     <Base>

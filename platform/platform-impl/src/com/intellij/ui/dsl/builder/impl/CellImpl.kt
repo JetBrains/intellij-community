@@ -1,20 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.LabelPosition
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -24,8 +26,7 @@ internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
   private val parent: RowImpl,
-  val viewComponent: JComponent = component,
-  visualPaddings: Gaps?) : CellBaseImpl<Cell<T>>(), Cell<T> {
+  val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
     private set
@@ -39,12 +40,10 @@ internal class CellImpl<T : JComponent>(
   var labelPosition: LabelPosition = LabelPosition.LEFT
     private set
 
-  var customGaps: Gaps? = null
+  var widthGroup: String? = null
     private set
 
-  val visualPaddings: Gaps = visualPaddings ?: getViewComponentVisualPaddings()
-
-  private var property: GraphProperty<*>? = null
+  private var property: ObservableProperty<*>? = null
   private var applyIfEnabled = false
 
   private var visible = viewComponent.isVisible
@@ -119,9 +118,18 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): Cell<T> {
+    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+    return this
+  }
+
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
     this.comment = if (comment == null) null else createComment(comment, maxLineLength, action)
     return this
+  }
+
+  override fun commentHtml(@NlsContexts.DetailedDescription comment: String?, action: HyperlinkEventAction): Cell<T> {
+    return comment(if (comment == null) null else removeHtml(comment), MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
   override fun label(label: String, position: LabelPosition): CellImpl<T> {
@@ -131,6 +139,12 @@ internal class CellImpl<T : JComponent>(
   override fun label(label: JLabel, position: LabelPosition): CellImpl<T> {
     this.label = label
     labelPosition = position
+    label.putClientProperty(DslComponentPropertyInternal.CELL_LABEL, true)
+    return this
+  }
+
+  override fun widthGroup(group: String): CellImpl<T> {
+    widthGroup = group
     return this
   }
 
@@ -158,8 +172,10 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun graphProperty(property: GraphProperty<*>): CellImpl<T> {
-    this.property = property
+  override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {
+    val origin = component.origin
+    dialogPanelConfig.componentValidationRequestors.getOrPut(origin) { SmartList() }
+      .add(validationRequestor)
     return this
   }
 
@@ -176,7 +192,18 @@ internal class CellImpl<T : JComponent>(
   override fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
     dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
-    property?.let { dialogPanelConfig.customValidationRequestors.getOrPut(origin, { SmartList() }).add(it::afterPropagation) }
+
+    property?.let { property ->
+      if (dialogPanelConfig.validationRequestors.isNotEmpty()) return this
+      if (component.origin in dialogPanelConfig.componentValidationRequestors) return this
+      logger<Cell<*>>().warn("Please, install Cell.validationRequestor or Panel.validationRequestor", Throwable())
+      if (property is GraphProperty) {
+        validateAfterPropagation(property)
+      } else {
+        validateAfterChange(property)
+      }
+    }
+
     return this
   }
 
@@ -196,7 +223,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun customize(customGaps: Gaps): CellImpl<T> {
-    this.customGaps = customGaps
+    super.customize(customGaps)
     return this
   }
 
@@ -221,8 +248,19 @@ internal class CellImpl<T : JComponent>(
     label?.let { it.isEnabled = isEnabled }
   }
 
-  private fun getViewComponentVisualPaddings(): Gaps {
-    val insets = viewComponent.origin.insets
-    return Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+  companion object {
+    internal fun Cell<*>.installValidationRequestor(property: ObservableProperty<*>) {
+      if (this is CellImpl) {
+        this.property = property
+      }
+    }
   }
+}
+
+private const val HTML = "<html>"
+
+@Deprecated("Not needed in the future")
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+internal fun removeHtml(text: @Nls String): @Nls String {
+  return if (text.startsWith(HTML, ignoreCase = true)) text.substring(HTML.length) else text
 }

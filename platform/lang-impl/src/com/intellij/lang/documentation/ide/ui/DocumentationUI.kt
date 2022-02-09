@@ -1,17 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.*
-import com.intellij.codeInsight.documentation.DocumentationManager.*
+import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
+import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationImageResolver
+import com.intellij.lang.documentation.DocumentationResultData
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.impl.DocumentationRequest
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
@@ -64,7 +68,7 @@ internal class DocumentationUI(
 
     browser.ui = this
     Disposer.register(this, browser)
-    Disposer.register(this, browser.addStateListener { request, result, _ ->
+    Disposer.register(this, browser.addStateListener { request, result ->
       applyStateLater(request, result)
     })
 
@@ -116,7 +120,7 @@ internal class DocumentationUI(
     }
   }
 
-  private fun applyStateLater(request: DocumentationRequest, asyncData: Deferred<DocumentationData?>) {
+  private fun applyStateLater(request: DocumentationRequest, asyncData: Deferred<DocumentationResultData?>) {
     // to avoid flickering: don't show ""Fetching..." message right away, give a chance for documentation to load
     val fetchingMessage = cs.launch {
       delay(DEFAULT_UI_RESPONSE_TIMEOUT)
@@ -136,16 +140,25 @@ internal class DocumentationUI(
     }
   }
 
-  private fun applyState(request: DocumentationRequest, data: DocumentationData?) {
+  private fun applyState(request: DocumentationRequest, data: DocumentationResultData?) {
     icons.clear()
     imageResolver = null
     if (data == null) {
       showMessage(CodeInsightBundle.message("no.documentation.found"))
       return
     }
-    imageResolver = data.imageResolver
+    val content = data.content
+    imageResolver = content.imageResolver
     val presentation = request.presentation
-    val locationChunk = presentation.locationText?.let { locationText ->
+    val locationChunk = getDefaultLocationChunk(presentation)
+    val linkChunk = linkChunk(presentation.presentableText, data.links)
+    val decorated = decorate(content.html, locationChunk, linkChunk)
+    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
+    update(decorated, scrollingPosition)
+  }
+
+  private fun getDefaultLocationChunk(presentation: TargetPresentation): HtmlChunk? {
+    return presentation.locationText?.let { locationText ->
       presentation.locationIcon?.let { locationIcon ->
         val iconKey = registerIcon(locationIcon)
         HtmlChunk.fragment(
@@ -155,10 +168,6 @@ internal class DocumentationUI(
         )
       } ?: HtmlChunk.text(locationText)
     }
-    val linkChunk = getLink(presentation.presentableText, data.externalUrl)
-    val decorated = decorate(data.html, locationChunk, linkChunk)
-    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
-    update(decorated, scrollingPosition)
   }
 
   private fun registerIcon(icon: Icon): String {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn
 
 import com.intellij.ide.IdeEventQueue
@@ -12,10 +12,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ui.TimerUtil
@@ -119,8 +121,8 @@ internal class ActionsRecorder(private val project: Project,
 
       override fun fileOpenedSync(source: FileEditorManager,
                                   file: VirtualFile,
-                                  editors: Pair<Array<FileEditor>, Array<FileEditorProvider>>) {
-        editorListener?.fileOpenedSync(source, file, editors)
+                                  editorsWithProviders: List<FileEditorWithProvider>) {
+        editorListener?.fileOpenedSync(source, file, editorsWithProviders)
       }
 
       override fun selectionChanged(event: FileEditorManagerEvent) {

@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,14 +87,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     assert !isDisposed;
 
     if (!project.isInitialized() && !project.isDefault()) {
-      @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
-      try {
-        Disposer.dispose(project);
-      }
-      catch (Throwable ignored) {
-        // do not fill log with endless exceptions
-      }
-      throw new RuntimeException(s);
+      throw new IllegalArgumentException("Must not call sync commit with unopened project: "+ project + "; Disposed: " + project.isDisposed() + "; Open: " + project.isOpen());
     }
 
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);

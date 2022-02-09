@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
@@ -65,10 +65,7 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
   }
 
   private fun getComponentWidth(icon: Icon): Int {
-    val scrollBar = ComponentUtil.getScrollPane(this)?.verticalScrollBar
-    val hasTransparentScrollbar = scrollBar != null && scrollBar.isVisible && !scrollBar.isOpaque
-    if (hasTransparentScrollbar) return icon.iconWidth + UIUtil.getScrollBarWidth()
-    return icon.iconWidth
+    return icon.iconWidth + getTransparentScrollbarWidth()
   }
 
   private class MyTreeRenderer(renderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(renderer) {
@@ -112,7 +109,7 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
       }
 
       val componentWidth = tree.getComponentWidth(foreground)
-      val componentHeight = if (tree.isFixedRowHeight) tree.getRowHeight() else preferredSize.height
+      val componentHeight = tree.getRowHeight(this)
       val background = ColorIcon(componentWidth, componentHeight, componentWidth, componentHeight,
                                  tree.getBackground(row, selected), false)
 
@@ -124,11 +121,6 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
       val location = tree.getComponentXCoordinate(componentWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
 
       return FloatingIcon(icon, location)
-    }
-
-    private fun Tree.getBackground(row: Int, selected: Boolean): Color {
-      if (selected) return RenderingUtil.getBackground(this, selected)
-      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: RenderingUtil.getBackground(this, selected)
     }
 
     private data class FloatingIcon(val icon: Icon, val location: Int)
@@ -168,6 +160,24 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
   private data class HoverData(val node: ChangesBrowserNode<*>,
                                val isOverOperationIcon: Boolean,
                                val hoverIcon: HoverIcon)
+
+  companion object {
+    fun Tree.getBackground(row: Int, selected: Boolean): Color {
+      if (selected) return RenderingUtil.getBackground(this, selected)
+      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: RenderingUtil.getBackground(this, selected)
+    }
+
+    fun ChangesTree.getRowHeight(renderer: ChangesTreeCellRenderer): Int {
+      return if (isFixedRowHeight) rowHeight else renderer.preferredSize.height
+    }
+
+    fun Component.getTransparentScrollbarWidth(): Int {
+      val scrollBar = ComponentUtil.getScrollPane(this)?.verticalScrollBar
+      val hasTransparentScrollbar = scrollBar != null && scrollBar.isVisible && !scrollBar.isOpaque
+      if (hasTransparentScrollbar) return UIUtil.getScrollBarWidth()
+      return 0
+    }
+  }
 }
 
 /**

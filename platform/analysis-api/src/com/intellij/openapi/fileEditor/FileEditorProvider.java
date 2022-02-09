@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -22,6 +22,7 @@ public interface FileEditorProvider {
   ExtensionPointName<FileEditorProvider> EP_FILE_EDITOR_PROVIDER = new ExtensionPointName<>("com.intellij.fileEditorProvider");
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
+  FileEditorProvider[] EMPTY_ARRAY = {};
   /**
    * Method is expected to run fast.
    *

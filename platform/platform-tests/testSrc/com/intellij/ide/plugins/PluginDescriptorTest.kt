@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -6,12 +6,12 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.NoOpXmlInterner
+import com.intellij.util.io.directoryContent
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
@@ -165,7 +165,21 @@ class PluginDescriptorTest {
 
   @Test
   fun testMetaInfInClasses() {
-    val descriptor = loadDescriptorInTest("metaInfInClasses")
+    val tempDir = directoryContent {
+      dir("lib") {
+        zip("empty.jar") {}
+      }
+      dir("classes") {
+        dir("META-INF") {
+          file("plugin.xml",
+               """<idea-plugin>
+               |  <id>foo.bar</id>
+               |</idea-plugin>""")
+        }
+      }
+    }.generateInTempDir()
+
+    val descriptor = loadDescriptorInTest(tempDir)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
 
@@ -175,7 +189,22 @@ class PluginDescriptorTest {
 
   @Test
   fun testStandaloneMetaInf() {
-    val descriptor = loadDescriptorInTest("standaloneMetaInf")
+    val tempDir = directoryContent {
+      dir("classes") {
+        file("Empty.class", "") // `com.intellij.util.io.java.classFile` requires dependency on `intellij.java.testFramework`
+      }
+      dir("lib") {
+        zip("empty.jar") {}
+      }
+      dir("META-INF") {
+        file("plugin.xml",
+             """<idea-plugin>
+               |  <id>foo.bar</id>
+               |</idea-plugin>""")
+      }
+    }.generateInTempDir()
+
+    val descriptor = loadDescriptorInTest(tempDir)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
 

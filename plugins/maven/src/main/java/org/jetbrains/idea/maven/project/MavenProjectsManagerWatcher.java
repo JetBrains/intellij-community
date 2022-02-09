@@ -22,9 +22,10 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -105,7 +106,7 @@ public class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
-    if(Registry.is("maven.new.import")) {
+    if(MavenUtil.isLinearImportEnabled()) {
       return Promises.resolvedPromise();
     }
 
@@ -118,6 +119,7 @@ public class MavenProjectsManagerWatcher {
     }
     finally {
       promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
     }
     return promise;
   }
@@ -127,7 +129,7 @@ public class MavenProjectsManagerWatcher {
                                       boolean force,
                                       final boolean forceImportAndResolve) {
 
-    if(Registry.is("maven.new.import")) {
+    if (MavenUtil.isLinearImportEnabled()) {
       return Promises.resolvedPromise();
     }
     final AsyncPromise<Void> promise = new AsyncPromise<>();
@@ -204,7 +206,8 @@ public class MavenProjectsManagerWatcher {
   private class MavenIgnoredModulesWatcher implements ModuleListener {
     @Override
     public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
-      if(Registry.is("maven.modules.do.not.ignore.on.delete")) return;
+      if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
+      if (MavenProjectImporter.isImportToTreeStructureEnabled()) return;
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       MavenProject mavenProject = projectsManager.findProject(module);
@@ -228,7 +231,7 @@ public class MavenProjectsManagerWatcher {
 
     @Override
     public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
-      if(Registry.is("maven.modules.do.not.ignore.on.delete")) return;
+      if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
       // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);

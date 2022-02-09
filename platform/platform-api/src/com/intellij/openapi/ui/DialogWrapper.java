@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
@@ -23,11 +22,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.UIBundle;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -130,7 +133,11 @@ public abstract class DialogWrapper {
 
   public static final Object DIALOG_CONTENT_PANEL_PROPERTY = new Object();
 
-  public static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+  /**
+   * @deprecated use {@link UIUtil#getErrorForeground()}
+   */
+  @Deprecated
+  public static final Color ERROR_FOREGROUND_COLOR = UIUtil.getErrorForeground();
 
   /**
    * The shared instance of default border for dialog's content pane.
@@ -158,7 +165,6 @@ public abstract class DialogWrapper {
   private final boolean myCreateSouthSection;
   private final List<JBOptionButton> myOptionsButtons = new ArrayList<>();
   private final Alarm myValidationAlarm = new Alarm(getValidationThreadToUse(), myDisposable);
-  private final Alarm myErrorTextAlarm = new Alarm(myRoot, myDisposable);
 
   private JComponent centerPanel;
   private boolean myClosed;
@@ -185,8 +191,6 @@ public abstract class DialogWrapper {
   private ErrorText myErrorText;
   private int myValidationDelay = 300;
   private boolean myValidationStarted;
-  private final ErrorPainter myErrorPainter = new ErrorPainter();
-  private boolean myErrorPainterInstalled;
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -228,6 +232,11 @@ public abstract class DialogWrapper {
     myPeer = parentComponent == null ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType)
                                      : createPeer(parentComponent, canBeParent);
     myCreateSouthSection = createSouth;
+    initResizeListener();
+    createDefaultActions();
+  }
+
+  protected final void initResizeListener() {
     Window window = myPeer.getWindow();
     if (window != null) {
       myResizeListener = new ComponentAdapter() {
@@ -243,7 +252,6 @@ public abstract class DialogWrapper {
       };
       window.addComponentListener(myResizeListener);
     }
-    createDefaultActions();
   }
 
   /**
@@ -306,6 +314,16 @@ public abstract class DialogWrapper {
     myCreateSouthSection = true;
     myPeer = createPeer(parent, canBeParent);
     createDefaultActions();
+  }
+
+  protected DialogWrapper(@NotNull PeerFactory peerFactory) {
+    myPeer = peerFactory.createPeer(this);
+    myCreateSouthSection = false;
+    createDefaultActions();
+  }
+
+  public interface PeerFactory {
+    @NotNull DialogWrapperPeer createPeer(@NotNull DialogWrapper dialogWrapper);
   }
 
   protected @NotNull @NlsContexts.Checkbox String getDoNotShowMessage() {
@@ -391,23 +409,11 @@ public abstract class DialogWrapper {
     myValidationDelay = delay;
   }
 
-  private void installErrorPainter() {
-    if (myErrorPainterInstalled) return;
-    myErrorPainterInstalled = true;
-    IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable);
-  }
-
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
-    boolean updateNeeded = isInplaceValidationToolTipEnabled() ? !myInfo.equals(info) : !myErrorText.isTextSet(info);
-    if (updateNeeded) {
+    if (!myInfo.equals(info)) {
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
-        if (!info.isEmpty()) {
-          installErrorPainter();
-        }
-        myErrorPainter.setValidationInfo(info);
         setErrorInfoAll(info);
-        myPeer.getRootPane().getGlassPane().repaint();
         getOKAction().setEnabled(ContainerUtil.all(info, info1 -> info1.okEnabled));
       });
     }
@@ -633,7 +639,7 @@ public abstract class DialogWrapper {
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
     JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = JBUI.emptyInsets();
+    Insets insets = JBInsets.emptyInsets();
 
     if (!rightSideButtons.isEmpty() || !leftSideButtons.isEmpty()) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -914,7 +920,6 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     ensureEventDispatchThread();
-    myErrorTextAlarm.cancelAllRequests();
     myValidationAlarm.cancelAllRequests();
     myDisposed = true;
 
@@ -1254,7 +1259,7 @@ public abstract class DialogWrapper {
 
   protected void init() {
     ensureEventDispatchThread();
-    myErrorText = new ErrorText(getErrorTextAlignment());
+    myErrorText = new ErrorText(createContentPaneBorder(), getErrorTextAlignment());
     myErrorText.setVisible(false);
     ComponentAdapter resizeListener = new ComponentAdapter() {
       private int myHeight;
@@ -1842,9 +1847,7 @@ public abstract class DialogWrapper {
         if (info.component != null && info.component.isVisible()) {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
-        if (!isInplaceValidationToolTipEnabled()) {
-          DialogEarthquakeShaker.shake(getPeer().getWindow());
-        }
+
         updateErrorInfo(infoList);
         startTrackingValidation();
         if (ContainerUtil.exists(infoList, info1 -> !info1.okEnabled)) {
@@ -1933,67 +1936,77 @@ public abstract class DialogWrapper {
     setErrorInfoAll(text == null ? List.of() : List.of(new ValidationInfo(text, component)));
   }
 
-  protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
+  protected final void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
     if (myInfo.equals(info)) return;
 
-    Application application = ApplicationManager.getApplication();
-    boolean headless = application != null && application.isHeadlessEnvironment();
-
-    myErrorTextAlarm.cancelAllRequests();
-    Runnable clearErrorRunnable = () -> {
-      if (myErrorText != null) {
-        myErrorText.clearError(ContainerUtil.all(info, i -> StringUtil.isEmpty(i.message)));
-      }
-    };
-    if (headless) {
-      clearErrorRunnable.run();
-    }
-    else {
-      SwingUtilities.invokeLater(clearErrorRunnable);
-    }
-
-    if (isInplaceValidationToolTipEnabled()) {
-      myInfo.stream()
-        .filter(vi -> !info.contains(vi))
-        .filter(vi -> vi.component != null)
-        .map(vi -> ComponentValidator.getInstance(vi.component))
-        .forEach(c -> c.ifPresent(vi -> vi.updateInfo(null)));
-    }
+    updateErrorText(info);
+    updateComponentErrors(info);
 
     myInfo = info;
+  }
 
-    if (isInplaceValidationToolTipEnabled() && !myInfo.isEmpty()) {
-      myInfo.forEach(vi -> {
-        if (vi.component != null) {
-          ComponentValidator v = ComponentValidator.getInstance(vi.component).
-            orElseGet(() -> new ComponentValidator(getDisposable()).installOn(vi.component));
+  private void updateComponentErrors(@NotNull List<ValidationInfo> info) {
+    // clear current component errors
+    myInfo.stream()
+      .filter(vi -> !info.contains(vi))
+      .filter(vi -> vi.component != null)
+      .map(vi -> ComponentValidator.getInstance(vi.component))
+      .forEach(c -> c.ifPresent(vi -> vi.updateInfo(null)));
 
-          if (v != null) {
-            v.updateInfo(vi);
-            return;
-          }
-        }
+    // show current errors
+    for (ValidationInfo vi : info) {
+      JComponent component = vi.component;
+      if (component == null) continue;
 
-        if (StringUtil.isNotEmpty(vi.message)) SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
-      });
-    }
-    else if (!myInfo.isEmpty()) {
-      Runnable updateErrorTextRunnable = () -> {
-        for (ValidationInfo vi: myInfo) {
-          if (StringUtil.isNotEmpty(vi.message)) myErrorText.appendError(vi);
-        }
-      };
-      if (headless) {
-        updateErrorTextRunnable.run();
-      }
-      else {
-        myErrorTextAlarm.addRequest(updateErrorTextRunnable, 300, null);
-      }
+      ComponentValidator validator = ComponentValidator.getInstance(component)
+        .orElseGet(() -> new ComponentValidator(getDisposable()).installOn(component));
+      validator.updateInfo(vi);
     }
   }
 
-  private static boolean isInplaceValidationToolTipEnabled() {
-    return Registry.is("ide.inplace.validation.tooltip", true);
+  private void updateErrorText(@NotNull List<ValidationInfo> infos) {
+    //init was not called - there's nothing to update
+    ErrorText errorText = myErrorText;
+    if (errorText == null) return;
+
+    Runnable updateRunnable = () -> {
+      if (!myDisposed) doUpdateErrorText(errorText, infos);
+    };
+
+    Application application = ApplicationManager.getApplication();
+    boolean headless = application != null && application.isHeadlessEnvironment();
+    if (headless) {
+      updateRunnable.run();
+    }
+    else {
+      SwingUtilities.invokeLater(updateRunnable);
+    }
+  }
+
+  private void doUpdateErrorText(@NotNull ErrorText errorText, @NotNull List<ValidationInfo> infos) {
+    HtmlBuilder htmlBuilder = new HtmlBuilder();
+    for (ValidationInfo info : infos) {
+      if (info.component != null || StringUtil.isEmptyOrSpaces(info.message)) continue;
+
+      Color color = info.warning ? MessageType.WARNING.getTitleForeground() : UIUtil.getErrorForeground();
+      htmlBuilder
+        .append(
+          HtmlChunk.raw(info.message)
+            .wrapWith("left")
+            .wrapWith(HtmlChunk.font(ColorUtil.toHex(color)))
+        )
+        .br();
+    }
+
+    // avoid updating size unnecessarily
+    boolean needsSizeUpdate = true;
+    if (htmlBuilder.isEmpty()) {
+      needsSizeUpdate = errorText.clear();
+    }
+    else {
+      errorText.setText(htmlBuilder.wrapWithHtmlBody().toString());
+    }
+    if (needsSizeUpdate) updateSize();
   }
 
   /**
@@ -2023,13 +2036,12 @@ public abstract class DialogWrapper {
     return findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
   }
 
-  private final class ErrorText extends JPanel {
+  private static final class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private final List<ValidationInfo> errors = new ArrayList<>();
 
-    private ErrorText(int horizontalAlignment) {
+    private ErrorText(@Nullable Border contentBorder, int horizontalAlignment) {
       setLayout(new BorderLayout());
-      myLabel.setBorder(createErrorTextBorder());
+      myLabel.setBorder(createErrorTextBorder(contentBorder));
       myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -2040,9 +2052,21 @@ public abstract class DialogWrapper {
       add(pane, BorderLayout.CENTER);
     }
 
-    private @NotNull Border createErrorTextBorder() {
-      Border border = createContentPaneBorder();
-      Insets contentInsets = border != null ? border.getBorderInsets(null) : JBUI.emptyInsets();
+    public void setText(@NotNull @Nls String errorText) {
+      myLabel.setText(errorText);
+      setVisible(true);
+    }
+
+    public boolean clear() {
+      boolean isCurrentlyVisible = isVisible();
+      myLabel.setBounds(0, 0, 0, 0);
+      myLabel.setText("");
+      setVisible(false);
+      return isCurrentlyVisible;
+    }
+
+    private static @NotNull Border createErrorTextBorder(@Nullable Border contentBorder) {
+      Insets contentInsets = contentBorder != null ? contentBorder.getBorderInsets(null) : JBInsets.emptyInsets();
       Insets baseInsets = JBInsets.create(16, 13);
 
       //noinspection UseDPIAwareBorders: Insets are already scaled, so use raw version.
@@ -2050,41 +2074,6 @@ public abstract class DialogWrapper {
                              baseInsets.left > contentInsets.left ? baseInsets.left - contentInsets.left : 0,
                              baseInsets.bottom > contentInsets.bottom ? baseInsets.bottom - contentInsets.bottom : 0,
                              baseInsets.right > contentInsets.right ? baseInsets.right - contentInsets.right : 0);
-    }
-
-    private void clearError(boolean full) {
-      errors.clear();
-      if (full) {
-        myLabel.setBounds(0, 0, 0, 0);
-        myLabel.setText("");
-        setVisible(false);
-        updateSize();
-      }
-    }
-
-    private void appendError(@NotNull ValidationInfo info) {
-      errors.add(info);
-
-      StringBuilder sb = new StringBuilder("<html>");
-      errors.forEach(
-        vi -> {
-          Color color = vi.warning ? MessageType.WARNING.getTitleForeground() : ERROR_FOREGROUND_COLOR;
-          sb.append("<font color='#").append(ColorUtil.toHex(color)).append("'>")
-            .append("<left>")
-            .append(vi.message)
-            .append("</left></font><br/>");
-        }
-      );
-      sb.append("</html>");
-
-      //noinspection HardCodedStringLiteral
-      myLabel.setText(sb.toString());
-      setVisible(true);
-      updateSize();
-    }
-
-    private boolean isTextSet(@NotNull List<ValidationInfo> info) {
-      return errors.equals(info);
     }
   }
 
@@ -2114,30 +2103,6 @@ public abstract class DialogWrapper {
   public void disposeIfNeeded() {
     if (isDisposed()) return;
     Disposer.dispose(getDisposable());
-  }
-
-  private static class ErrorPainter extends AbstractPainter {
-    private List<ValidationInfo> info;
-
-    @Override
-    public void executePaint(Component component, Graphics2D g) {
-      for (ValidationInfo i : info) {
-        if (i.component != null && !Registry.is("ide.inplace.errors.outline", true)) {
-          int w = i.component.getWidth();
-          Point p = SwingUtilities.convertPoint(i.component, w, 0, component);
-          AllIcons.General.Error.paintIcon(component, g, p.x - 8, p.y - 8);
-        }
-      }
-    }
-
-    @Override
-    public boolean needsRepaint() {
-      return true;
-    }
-
-    private void setValidationInfo(@NotNull List<ValidationInfo> info) {
-      this.info = info;
-    }
   }
 
   private static void clearOwnFields(@Nullable Object object, @NotNull Condition<? super Field> selectCondition) {

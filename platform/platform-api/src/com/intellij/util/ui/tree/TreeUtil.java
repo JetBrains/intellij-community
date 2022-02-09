@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
@@ -1365,6 +1365,18 @@ public final class TreeUtil {
   public static @Nullable TreePath getSelectedPathIfOne(@Nullable JTree tree) {
     TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
     return paths != null && paths.length == 1 ? paths[0] : null;
+  }
+
+  /**
+   * @param tree      a tree, which selection is requested
+   * @param predicate a predicate that validates selected paths
+   * @return an array with all selected paths if all of them are valid
+   */
+  public static TreePath @Nullable [] getSelectedPathsIfAll(@Nullable JTree tree, @NotNull Predicate<? super TreePath> predicate) {
+    TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
+    if (paths == null || paths.length == 0) return null;
+    for (TreePath path : paths) if (path == null || !predicate.test(path)) return null;
+    return paths;
   }
 
   /** @deprecated use TreeUtil#treePathTraverser() */

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -40,6 +40,9 @@ public class Topic<L> {
     this(name, listenerClass, BroadcastDirection.TO_CHILDREN);
   }
 
+  /**
+   * Consider using {@link #Topic(Class, BroadcastDirection)} and {@link BroadcastDirection#NONE}.
+   */
   public Topic(@NotNull Class<L> listenerClass) {
     this(listenerClass.getSimpleName(), listenerClass, BroadcastDirection.TO_CHILDREN);
   }

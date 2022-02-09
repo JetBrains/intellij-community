@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
+import org.jetbrains.kotlin.idea.intentions.branches
 import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
@@ -27,15 +29,20 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
-import org.jetbrains.kotlin.resolve.calls.callUtil.*
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
+import org.jetbrains.kotlin.resolve.calls.util.*
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.types.CommonSupertypes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.TypeUtils.NO_EXPECTED_TYPE
+import org.jetbrains.kotlin.types.isDefinitelyNotNullType
 import org.jetbrains.kotlin.types.typeUtil.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 //TODO: should use change signature to deal with cases of multiple overridden descriptors
@@ -58,6 +65,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         when (diagnostic.factory) {
             Errors.TYPE_MISMATCH -> {
                 val diagnosticWithParameters = Errors.TYPE_MISMATCH.cast(diagnostic)
+                expectedType = diagnosticWithParameters.a
+                expressionType = diagnosticWithParameters.b
+            }
+            Errors.TYPE_MISMATCH_WARNING -> {
+                val diagnosticWithParameters = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
                 expectedType = diagnosticWithParameters.a
                 expressionType = diagnosticWithParameters.b
             }
@@ -87,6 +99,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                     // And here we have signed type
                     expressionType = signedConstantValue.getType(NO_EXPECTED_TYPE)
                 } else return emptyList()
+            }
+            ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS -> {
+                val diagnosticWithParameters = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
+                expectedType = diagnosticWithParameters.a
+                expressionType = diagnosticWithParameters.b
             }
             else -> {
                 LOG.error("Unexpected diagnostic: " + DefaultErrorMessages.render(diagnostic))
@@ -145,7 +162,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             return qualifiedOrThis
         }
 
-        // We don't want to cast a cast or type-asserted expression:
+        // We don't want to cast a cast or type-asserted expression.
         if (diagnostic.factory != Errors.SIGNED_CONSTANT_CONVERTED_TO_UNSIGNED &&
             diagnosticElement !is KtBinaryExpressionWithTypeRHS &&
             diagnosticElement.parent !is KtBinaryExpressionWithTypeRHS
@@ -157,7 +174,13 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             val nullableExpected = expectedType.makeNullable()
             if (expressionType.isSubtypeOf(nullableExpected)) {
                 val targetExpression = diagnosticElement.getTopMostQualifiedForSelectorIfAny()
-                actions.add(AddExclExclCallFix(targetExpression))
+                // With implicit receivers (e.g., inside a scope function),
+                // NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS is reported on the callee, so we need
+                // to explicitly check for nullable implicit receiver
+                val checkCalleeExpression =
+                    diagnostic.factory == ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS &&
+                    targetExpression.parent?.safeAs<KtCallExpression>()?.calleeExpression == targetExpression
+                getAddExclExclCallFix(targetExpression, checkCalleeExpression)?.let { actions.add(it) }
                 if (expectedType.isBoolean()) {
                     actions.add(AddEqEqTrueFix(targetExpression))
                 }
@@ -177,6 +200,23 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             actions.add(createFix(callable, typeToInsert))
         }
 
+        // Suggest replacing the parameter type `T` with its expected definitely non-nullable subtype `T & Any`.
+        // Types that contain DNN types as arguments (like `(Mutable)Collection<T & Any>`) are currently not supported.
+        if (diagnosticElement is KtReferenceExpression && expectedType.isDefinitelyNotNullType) {
+            val descriptor = context[BindingContext.REFERENCE_TARGET, diagnosticElement]?.safeAs<CallableDescriptor>()
+            when (val declaration = QuickFixUtil.safeGetDeclaration(descriptor)) {
+                is KtParameter -> {
+                    // Check the parent parameter list to avoid creating actions for loop iterators
+                    if (declaration.parent is KtParameterList) {
+                        actions.add(ChangeParameterTypeFix(declaration, expectedType))
+                    }
+                }
+                is KtProperty -> {
+                    addChangeTypeFix(declaration, expectedType, ::ChangeVariableTypeFix)
+                }
+            }
+        }
+
         // Property initializer type mismatch property type:
         val property = PsiTreeUtil.getParentOfType(diagnosticElement, KtProperty::class.java)
         if (property != null) {
@@ -185,7 +225,8 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             if (QuickFixUtil.canEvaluateTo(initializer, diagnosticElement)
                 || getter != null && QuickFixUtil.canFunctionOrGetterReturnExpression(getter, diagnosticElement)
             ) {
-                addChangeTypeFix(property, expressionType, ::ChangeVariableTypeFix)
+                val returnType = property.returnType(diagnosticElement, expressionType, context)
+                addChangeTypeFix(property, returnType, ::ChangeVariableTypeFix)
             }
         }
 
@@ -198,15 +239,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         else
             PsiTreeUtil.getParentOfType(diagnosticElement, KtFunction::class.java, true)
         if (function is KtFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function, diagnosticElement)) {
-            val returnExpressions = function.collectDescendantsOfType<KtReturnExpression> {
-                it.getStrictParentOfType<KtFunction>() == function || it.getTargetFunction(context) == function
-            }
-            val returnType = if (returnExpressions.size > 1) {
-                val returnTypes = returnExpressions.mapNotNull { it.returnedExpression?.getType(context) }
-                if (returnTypes.isNotEmpty()) CommonSupertypes.commonSupertype(returnTypes) else expressionType
-            } else {
-                expressionType
-            }
+            val returnType = function.returnType(diagnosticElement, expressionType, context)
             addChangeTypeFix(function, returnType, ChangeCallableReturnTypeFix::ForEnclosing)
         }
 
@@ -285,6 +318,40 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             }
         }
         return actions
+    }
+
+    private fun KtCallableDeclaration.returnType(
+        diagnosticElement: KtExpression,
+        candidateType: KotlinType,
+        context: BindingContext
+    ): KotlinType {
+        val (initializers, functionOrGetter) = when (this) {
+            is KtNamedFunction -> listOfNotNull(this.initializer) to this
+            is KtProperty -> listOfNotNull(this.initializer, this.getter?.initializer) to this.getter
+            else -> return candidateType
+        }
+        val returnedExpressions = if (functionOrGetter != null) {
+            val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, functionOrGetter]
+            functionOrGetter
+                .collectDescendantsOfType<KtReturnExpression> { it.getTargetFunctionDescriptor(context) == descriptor }
+                .mapNotNull { it.returnedExpression }
+                .plus(initializers)
+        } else {
+            initializers
+        }.mapNotNull { KtPsiUtil.deparenthesize(it) }
+
+        return if (returnedExpressions.singleOrNull() == diagnosticElement) {
+            candidateType
+        } else {
+            val returnTypes = returnedExpressions.flatMap {
+                when (it) {
+                    is KtIfExpression -> it.branches
+                    is KtWhenExpression -> it.entries.map { entry -> entry.expression }
+                    else -> listOf(it)
+                }
+            }.mapNotNull { it?.getType(context) }.ifEmpty { listOf(candidateType) }
+            returnTypes.singleOrNull() ?: CommonSupertypes.commonSupertype(returnTypes)
+        }
     }
 
     companion object {

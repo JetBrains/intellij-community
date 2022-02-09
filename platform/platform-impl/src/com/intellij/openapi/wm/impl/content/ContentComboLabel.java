@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.rd.GraphicsExKt;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
@@ -42,7 +41,7 @@ final class ContentComboLabel extends ContentLabel {
   private final ComboContentLayout myLayout;
 
   ContentComboLabel(@NotNull ComboContentLayout layout) {
-    super(layout.myUi, true);
+    super(layout.ui, true);
 
     myLayout = layout;
     addMouseListener(new MouseAdapter(){});
@@ -84,7 +83,7 @@ final class ContentComboLabel extends ContentLabel {
 
   void update() {
     setBorder(isToDrawCombo() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty());
-    updateTextAndIcon(getContent(), true, Registry.is("ide.experimental.ui"));
+    updateTextAndIcon(getContent(), true, ExperimentalUI.isNewUI());
     updateAdditionalActions();
   }
 
@@ -114,7 +113,7 @@ final class ContentComboLabel extends ContentLabel {
       size.width += myComboIcon.getIconWidth();
     }
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       setBorder(myLayout.shouldShowId()
                 ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, ICONS_GAP)
                 : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, ICONS_GAP));

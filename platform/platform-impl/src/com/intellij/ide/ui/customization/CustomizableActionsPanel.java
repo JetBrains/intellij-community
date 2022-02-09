@@ -30,6 +30,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,16 +55,16 @@ public class CustomizableActionsPanel {
   private static final Logger LOG = Logger.getInstance(CustomizableActionsPanel.class);
 
   private JPanel myPanel;
-  private JTree myActionsTree;
+  protected JTree myActionsTree;
   private JPanel myTopPanel;
-  private CustomActionsSchema mySelectedSchema;
+  protected CustomActionsSchema mySelectedSchema;
 
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
     Group rootGroup = new Group("root", null, null);
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
-    myActionsTree.setModel(model);
+    myActionsTree = new Tree(model);
     myActionsTree.setRootVisible(false);
     myActionsTree.setShowsRootHandles(true);
     myActionsTree.setCellRenderer(createDefaultRenderer());
@@ -71,9 +72,13 @@ public class CustomizableActionsPanel {
     patchActionsTreeCorrespondingToSchema(root);
 
     TreeExpansionMonitor.install(myActionsTree);
-    myTopPanel.setLayout(new BorderLayout());
+    myTopPanel = new BorderLayoutPanel();
     myTopPanel.add(setupFilterComponent(myActionsTree), BorderLayout.WEST);
     myTopPanel.add(createToolbar(), BorderLayout.CENTER);
+
+    myPanel = new BorderLayoutPanel(5, 5);
+    myPanel.add(myTopPanel, BorderLayout.NORTH);
+    myPanel.add(ScrollPaneFactory.createScrollPane(myActionsTree), BorderLayout.CENTER);
   }
 
   private ActionToolbarImpl createToolbar() {
@@ -81,16 +86,22 @@ public class CustomizableActionsPanel {
     addGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.add.action.group"));
     addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
     addGroup.setPopup(true);
-    ActionGroup restoreGroup = new DefaultActionGroup(new RestoreSelectionAction(), new RestoreAllAction());
-    restoreGroup.setPopup(true);
-    restoreGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
-    restoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
+    ActionGroup restoreGroup = getRestoreGroup();
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(addGroup, new RemoveAction(), new EditIconAction(), new MoveUpAction(), new MoveDownAction(), restoreGroup), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.setTargetComponent(myTopPanel);
     return toolbar;
+  }
+
+  @NotNull
+  protected ActionGroup getRestoreGroup() {
+    ActionGroup restoreGroup = new DefaultActionGroup(new RestoreSelectionAction(), new RestoreAllAction());
+    restoreGroup.setPopup(true);
+    restoreGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
+    restoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
+    return restoreGroup;
   }
 
   static FilterComponent setupFilterComponent(JTree tree) {
@@ -183,13 +194,17 @@ public class CustomizableActionsPanel {
       CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
     }
     restorePathsAfterTreeOptimization(treePaths);
-    CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
+    updateGlobalScheme();
     CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
     if (SystemInfo.isMac) {
       TouchbarSupport.reloadAllActions();
     }
 
     CustomActionsListener.fireSchemaChanged();
+  }
+
+  protected void updateGlobalScheme() {
+    CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
   }
 
   private void restorePathsAfterTreeOptimization(final List<? extends TreePath> treePaths) {
@@ -210,7 +225,7 @@ public class CustomizableActionsPanel {
     return CustomActionsSchema.getInstance().isModified(mySelectedSchema);
   }
 
-  private void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
+  protected void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
     root.removeAllChildren();
     if (mySelectedSchema != null) {
       mySelectedSchema.fillCorrectedActionGroups(root);

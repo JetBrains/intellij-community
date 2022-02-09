@@ -23,14 +23,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenDisposable;
+import org.jetbrains.idea.maven.importing.MavenModelUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import static com.intellij.openapi.util.text.StringUtil.compareVersionNumbers;
-import static com.intellij.util.ObjectUtils.notNull;
-import static org.jetbrains.idea.maven.importing.MavenModuleImporter.getDefaultLevel;
+import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.TEST_SUFIX;
 
 /**
  * @author Sergey Evdokimov
@@ -43,13 +42,21 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
   public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     if (!Boolean.TRUE.equals(module.getUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY))) {
-      String targetLevel = mavenProject.getReleaseLevel();
-      if (targetLevel == null || compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") < 0) {
-        targetLevel = mavenProject.getTargetLevel();
+      LanguageLevel level;
+      if (module.getName().endsWith(TEST_SUFIX)) {
+        level = MavenModelUtil.getTargetTestLanguageLevel(mavenProject);
+        if (level == null) {
+          level = MavenModelUtil.getTargetLanguageLevel(mavenProject);
+        }
+      } else {
+        level = MavenModelUtil.getTargetLanguageLevel(mavenProject);
       }
+       if (level == null) {
+         level = MavenModelUtil.getDefaultLevel(mavenProject);
+       }
 
       // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin!
-      configuration.setBytecodeTargetLevel(module, notNull(targetLevel, getDefaultLevel(mavenProject).toJavaVersion().toString()));
+      configuration.setBytecodeTargetLevel(module, level.toJavaVersion().toString());
     }
     module.putUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY, Boolean.FALSE);
 

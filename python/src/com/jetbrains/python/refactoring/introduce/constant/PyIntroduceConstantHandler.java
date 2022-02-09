@@ -17,7 +17,6 @@ package com.jetbrains.python.refactoring.introduce.constant;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,12 +25,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
@@ -48,7 +46,7 @@ import java.util.List;
  */
 public class PyIntroduceConstantHandler extends IntroduceHandler {
   public PyIntroduceConstantHandler() {
-    super(new ConstantValidator(), PyBundle.message("refactoring.introduce.constant.dialog.title"));
+    super(new ConstantValidator(), PyPsiBundle.message("refactoring.introduce.constant.dialog.title"));
   }
 
   @Override
@@ -67,7 +65,7 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
     assert containingFile instanceof PyFile;
     PsiElement initialPosition = AddImportHelper.getFileInsertPosition((PyFile)containingFile);
 
-    List<PsiElement> sameFileRefs = collectReferencedDefinitionsInSameFile(operation);
+    List<PsiElement> sameFileRefs = collectReferencedDefinitionsInSameFile(operation.getElement(), operation.getFile());
     PsiElement maxPosition = getLowermostTopLevelStatement(sameFileRefs);
 
     if (maxPosition == null) {
@@ -102,39 +100,12 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
     Editor editor = operation.getEditor();
     if (editor == null) return false;
 
-    List<PsiElement> sameFileRefs = collectReferencedDefinitionsInSameFile(operation);
+    List<PsiElement> sameFileRefs = collectReferencedDefinitionsInSameFile(operation.getElement(), operation.getFile());
     if (!ContainerUtil.all(sameFileRefs, it -> PyUtil.isTopLevel(it))) return false;
     PsiElement maxPosition = getLowermostTopLevelStatement(sameFileRefs);
     if (maxPosition == null) return true;
     return PsiUtilCore.compareElementsByPosition(maxPosition, selectionElement) <= 0 &&
            !PsiTreeUtil.isAncestor(maxPosition, selectionElement, false);
-  }
-
-  private static @NotNull List<PsiElement> collectReferencedDefinitionsInSameFile(@NotNull IntroduceOperation operation) {
-    PsiElement selectionElement = getOriginalSelectionCoveringElement(operation.getElement());
-    TextRange textRange = getTextRangeForOperationElement(operation.getElement());
-
-    return StreamEx.of(PsiTreeUtil.collectElementsOfType(selectionElement, PyReferenceExpression.class))
-      .filter(it -> textRange.contains(it.getTextRange()))
-      .filter(ref -> !ref.isQualified())
-      .flatMap(expr -> PyResolveUtil.resolveLocally(expr).stream())
-      .filter(it -> it != null && it.getContainingFile() == operation.getFile())
-      .toList();
-  }
-
-  private static @NotNull TextRange getTextRangeForOperationElement(@NotNull PsiElement operationElement) {
-    var userData = operationElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
-    if (userData == null || userData.first == null || userData.second == null) {
-      return operationElement.getTextRange();
-    }
-    else {
-      return userData.second.shiftRight(userData.first.getTextOffset());
-    }
-  }
-
-  private static @NotNull PsiElement getOriginalSelectionCoveringElement(@NotNull PsiElement operationElement) {
-    var userData = operationElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
-    return userData == null ? operationElement : userData.first;
   }
 
   private static @Nullable PsiElement getLowermostTopLevelStatement(@NotNull List<PsiElement> elements) {
@@ -147,7 +118,7 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
 
   @Override protected void showCanNotIntroduceErrorHint(@NotNull Project project, @NotNull Editor editor) {
     String message =
-      RefactoringBundle.getCannotRefactorMessage(PyBundle.message("refactoring.introduce.constant.cannot.extract.selected.expression"));
+      RefactoringBundle.getCannotRefactorMessage(PyPsiBundle.message("refactoring.introduce.constant.cannot.extract.selected.expression"));
     CommonRefactoringUtil.showErrorHint(project, editor, message, myDialogTitle, getHelpId());
   }
 

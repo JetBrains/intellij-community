@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.notification;
 
@@ -6,7 +6,10 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.notification.impl.*;
+import com.intellij.notification.impl.NotificationCollector;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.notification.impl.NotificationsToolWindowFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -23,7 +26,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
@@ -448,7 +450,7 @@ public final class EventLog {
   }
 
   public static void toggleLog(final @Nullable Project project, final @Nullable Notification notification) {
-    if (Registry.is("ide.notification.action.center", false)) {
+    if (ActionCenter.isEnabled()) {
       if (project != null) {
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID);
         if (toolWindow != null) {
@@ -504,7 +506,7 @@ public final class EventLog {
         }
       }
 
-      project.getMessageBus().connect().subscribe(Notifications.TOPIC, new Notifications() {
+      project.getMessageBus().simpleConnect().subscribe(Notifications.TOPIC, new Notifications() {
         @Override
         public void notify(@NotNull Notification notification) {
           printNotification(notification);
@@ -545,6 +547,9 @@ public final class EventLog {
     }
 
     private void printNotification(Notification notification) {
+      if (ActionCenter.isEnabled()) {
+        return;
+      }
       if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
         return;
       }
@@ -554,7 +559,7 @@ public final class EventLog {
       NotificationCollector.getInstance().logNotificationLoggedInEventLog(myProject, notification);
       EventLogConsole console = getConsole(notification);
       if (console == null) {
-        if (!Registry.is("ide.notification.action.center", false)) {
+        if (!ActionCenter.isEnabled()) {
           myInitial.add(notification);
         }
       }
@@ -620,7 +625,7 @@ public final class EventLog {
     }
 
     private @Nullable EventLogConsole getConsole(@NotNull String groupId) {
-      if (Registry.is("ide.notification.action.center", false)) {
+      if (ActionCenter.isEnabled()) {
         return null;
       }
       if (myCategoryMap.get(DEFAULT_CATEGORY) == null) {
@@ -722,6 +727,9 @@ public final class EventLog {
   static final class MyNotificationListener implements Notifications {
     @Override
     public void notify(@NotNull Notification notification) {
+      if (ActionCenter.isEnabled()) {
+        return;
+      }
       ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
       Project[] openProjects = projectManager == null ? null : projectManager.getOpenProjects();
       if (openProjects == null || openProjects.length == 0) {

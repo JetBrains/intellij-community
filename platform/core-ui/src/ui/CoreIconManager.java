@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.AbstractBundle;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -70,16 +71,15 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
                                                                           int imageFlags) {
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = IconLoader.patchPath(path, classLoader);
-    String effectivePath = path;
-    if (patchedPath != null) {
-      // not safe for now to decide should patchPath return path with leading slash or not
-      effectivePath = patchedPath.first.startsWith("/") ? patchedPath.first.substring(1) : patchedPath.first;
-      if (patchedPath.second != null) {
-        classLoader = patchedPath.second;
-      }
+    ImageDataLoader resolver;
+    WeakReference<ClassLoader> classLoaderWeakRef = new WeakReference<>(classLoader);
+    if (patchedPath == null) {
+      resolver = new RasterizedImageDataLoader(path, classLoaderWeakRef, path, classLoaderWeakRef, cacheKey, imageFlags);
     }
-
-    ImageDataLoader resolver = new RasterizedImageDataLoader(effectivePath, classLoader, cacheKey, imageFlags);
+    else {
+      // not safe for now to decide should patchPath return path with leading slash or not
+      resolver = RasterizedImageDataLoader.createPatched(path, classLoaderWeakRef, patchedPath, cacheKey, imageFlags);
+    }
     if (startTime != -1) {
       IconLoadMeasurer.findIcon.end(startTime);
     }
@@ -208,21 +208,21 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   }
 
   private static final class IconDescriptionLoader implements Supplier<String> {
-    private final String myPath;
-    private String myResult;
-    private boolean myCalculated;
+    private final String path;
+    private String result;
+    private boolean isCalculated;
 
     private IconDescriptionLoader(String path) {
-      myPath = path;
+      this.path = path;
     }
 
     @Override
     public String get() {
-      if (!myCalculated) {
-        myResult = findIconDescription(myPath);
-        myCalculated = true;
+      if (!isCalculated) {
+        result = findIconDescription(path);
+        isCalculated = true;
       }
-      return myResult;
+      return result;
     }
   }
 

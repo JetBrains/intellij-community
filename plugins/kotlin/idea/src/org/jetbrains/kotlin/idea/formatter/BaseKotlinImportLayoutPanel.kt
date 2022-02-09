@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -10,7 +10,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.table.JBTable
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
@@ -32,7 +32,7 @@ open class BaseKotlinImportLayoutPanel(@Nls title: String) : JPanel(BorderLayout
         border = IdeBorderFactory.createTitledBorder(
             title,
             false,
-            JBUI.emptyInsets()
+            JBInsets.emptyInsets()
         )
     }
 

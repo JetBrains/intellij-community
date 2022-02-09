@@ -46,8 +46,7 @@ class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
     }
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean =
-    invokeAndWaitIfNeeded { project.service<GHPRToolWindowController>().isAvailable() }
+  override fun shouldBeAvailable(project: Project): Boolean = false
 
   companion object {
     const val ID = "Pull Requests"

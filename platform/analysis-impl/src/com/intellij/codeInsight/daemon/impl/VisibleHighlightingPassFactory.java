@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
@@ -12,17 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public abstract class VisibleHighlightingPassFactory  {
-  public static Key<ProperTextRange> HEADLESS_VISIBLE_AREA = Key.create("Editor.headlessVisibleArea");
-
-  @NotNull
-  public static ProperTextRange calculateVisibleRange(@NotNull Document document) {
-    ProperTextRange textRange = document.getUserData(HEADLESS_VISIBLE_AREA);
-    ProperTextRange entireTextRange = new ProperTextRange(0, document.getTextLength());
-    if (textRange != null && entireTextRange.contains(textRange)) {
-      return textRange;
-    }
-    return entireTextRange;
-  }
+  private static final Key<ProperTextRange> HEADLESS_VISIBLE_AREA = Key.create("Editor.headlessVisibleArea");
 
   @NotNull
   public static ProperTextRange calculateVisibleRange(@NotNull Editor editor) {
@@ -44,5 +33,12 @@ public abstract class VisibleHighlightingPassFactory  {
     int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
 
     return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
+  }
+
+  public static void setVisibleRangeForHeadlessMode(@NotNull Editor editor, @NotNull ProperTextRange range) {
+    if (range.getEndOffset() > editor.getDocument().getTextLength()) {
+      throw new IllegalArgumentException("Invalid range: " + range + "; document length: " + editor.getDocument().getTextLength());
+    }
+    editor.putUserData(HEADLESS_VISIBLE_AREA, range);
   }
 }

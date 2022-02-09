@@ -3,11 +3,13 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -76,7 +78,7 @@ class NewDeclarationNameValidator(
             val bindingContext = visibleDeclarationsContext.analyze(BodyResolveMode.PARTIAL_FOR_COMPLETION)
             val resolutionScope =
                 visibleDeclarationsContext.getResolutionScope(bindingContext, visibleDeclarationsContext.getResolutionFacade())
-            if (resolutionScope.hasConflict(identifier)) return false
+            if (resolutionScope.hasConflict(identifier, visibleDeclarationsContext.getResolutionFacade().getLanguageVersionSettings())) return false
         }
 
         return checkDeclarationsIn.none {
@@ -86,10 +88,10 @@ class NewDeclarationNameValidator(
 
     private fun isExcluded(it: DeclarationDescriptorWithSource) = ErrorUtils.isError(it) || it.source.getPsi() in excludedDeclarations
 
-    private fun LexicalScope.hasConflict(name: Name): Boolean {
+    private fun LexicalScope.hasConflict(name: Name, languageVersionSettings: LanguageVersionSettings): Boolean {
         fun DeclarationDescriptor.isVisible(): Boolean {
             return when (this) {
-                is DeclarationDescriptorWithVisibility -> isVisible(ownerDescriptor)
+                is DeclarationDescriptorWithVisibility -> isVisible(ownerDescriptor, languageVersionSettings)
                 else -> true
             }
         }

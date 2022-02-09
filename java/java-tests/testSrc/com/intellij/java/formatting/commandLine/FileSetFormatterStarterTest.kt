@@ -40,7 +40,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
       assertInstanceOf(processor, FileSetFormatter::class.java)
       assertFalse(processor.isRecursive)
       assertEmpty(processor.getFileMasks())
-      assertEquals(CodeStyleSettingsManager.getInstance().createSettings(), processor.codeStyleSettings)
+      assertNull(processor.defaultCodeStyle)
       assertEquals(1, processor.getEntries().size)
       assertEquals(File(".").absolutePath, processor.getEntries()[0].absolutePath)
     }
@@ -58,6 +58,13 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
       assertEquals(2, processor.getEntries().size)
       assertEquals(File(".").absolutePath, processor.getEntries()[0].absolutePath)
       assertEquals(File("..").absolutePath, processor.getEntries()[1].absolutePath)
+    }
+  }
+
+  fun testNonDefaultArgs2() {
+    createFormatter(arrayOf("format", "-d", "-allowDefaults", ".")).use { processor ->
+      assertInstanceOf(processor, FileSetFormatValidator::class.java)
+      assertEquals(CodeStyleSettingsManager.getInstance().createSettings(), processor.defaultCodeStyle)
     }
   }
 

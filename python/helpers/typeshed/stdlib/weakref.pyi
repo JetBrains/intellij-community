@@ -1,4 +1,3 @@
-import types
 from _weakrefset import WeakSet as WeakSet
 from typing import Any, Callable, Generic, Iterable, Iterator, Mapping, MutableMapping, Tuple, Type, TypeVar, overload
 
@@ -16,12 +15,13 @@ _S = TypeVar("_S")
 _T = TypeVar("_T")
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
+_CallableT = TypeVar("_CallableT", bound=Callable[..., Any])
 
 ProxyTypes: Tuple[Type[Any], ...]
 
-class WeakMethod(ref[types.MethodType]):
-    def __new__(cls, meth: types.MethodType, callback: Callable[[types.MethodType], Any] | None = ...) -> WeakMethod: ...
-    def __call__(self) -> types.MethodType | None: ...
+class WeakMethod(ref[_CallableT], Generic[_CallableT]):
+    def __new__(cls, meth: _CallableT, callback: Callable[[_CallableT], object] | None = ...) -> WeakMethod[_CallableT]: ...
+    def __call__(self) -> _CallableT | None: ...
 
 class WeakValueDictionary(MutableMapping[_KT, _VT]):
     @overload
@@ -37,11 +37,16 @@ class WeakValueDictionary(MutableMapping[_KT, _VT]):
     def __str__(self) -> str: ...
     def copy(self) -> WeakValueDictionary[_KT, _VT]: ...
     # These are incompatible with Mapping
-    def keys(self) -> Iterator[_KT]: ...  # type: ignore
-    def values(self) -> Iterator[_VT]: ...  # type: ignore
-    def items(self) -> Iterator[tuple[_KT, _VT]]: ...  # type: ignore
+    def keys(self) -> Iterator[_KT]: ...  # type: ignore[override]
+    def values(self) -> Iterator[_VT]: ...  # type: ignore[override]
+    def items(self) -> Iterator[tuple[_KT, _VT]]: ...  # type: ignore[override]
     def itervaluerefs(self) -> Iterator[KeyedRef[_KT, _VT]]: ...
     def valuerefs(self) -> list[KeyedRef[_KT, _VT]]: ...
+    def setdefault(self, key: _KT, default: _VT = ...) -> _VT: ...
+    @overload
+    def pop(self, key: _KT) -> _VT: ...
+    @overload
+    def pop(self, key: _KT, default: _VT | _T = ...) -> _VT | _T: ...
 
 class KeyedRef(ref[_T], Generic[_KT, _T]):
     key: _KT
@@ -63,10 +68,15 @@ class WeakKeyDictionary(MutableMapping[_KT, _VT]):
     def __str__(self) -> str: ...
     def copy(self) -> WeakKeyDictionary[_KT, _VT]: ...
     # These are incompatible with Mapping
-    def keys(self) -> Iterator[_KT]: ...  # type: ignore
-    def values(self) -> Iterator[_VT]: ...  # type: ignore
-    def items(self) -> Iterator[tuple[_KT, _VT]]: ...  # type: ignore
+    def keys(self) -> Iterator[_KT]: ...  # type: ignore[override]
+    def values(self) -> Iterator[_VT]: ...  # type: ignore[override]
+    def items(self) -> Iterator[tuple[_KT, _VT]]: ...  # type: ignore[override]
     def keyrefs(self) -> list[ref[_KT]]: ...
+    def setdefault(self, key: _KT, default: _VT = ...) -> _VT: ...
+    @overload
+    def pop(self, key: _KT) -> _VT: ...
+    @overload
+    def pop(self, key: _KT, default: _VT | _T = ...) -> _VT | _T: ...
 
 class finalize:
     def __init__(self, __obj: object, __func: Callable[..., Any], *args: Any, **kwargs: Any) -> None: ...

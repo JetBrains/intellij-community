@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.Function;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
-import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -48,11 +47,6 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   @Override
   public String getDescription(String refExpression) throws Exception {
     return myDebugProcess.getDescription(refExpression);
-  }
-
-  @Override
-  public boolean isWaitingForInput() {
-    return waitingForInput;
   }
 
   @Override

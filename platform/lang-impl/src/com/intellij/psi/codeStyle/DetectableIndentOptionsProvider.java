@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,8 +7,6 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,7 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -45,11 +43,8 @@ import static com.intellij.psi.codeStyle.DetectAndAdjustIndentOptionsTask.getDef
  * @author Rustam Vishnyakov
  */
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Automatic indent detection", NotificationDisplayType.STICKY_BALLOON, true);
-
   private boolean myIsEnabledInTest;
-  private final Map<VirtualFile,IndentOptions> myDiscardedOptions = ContainerUtil.createWeakMap();
+  private final Map<VirtualFile, IndentOptions> myDiscardedOptions = CollectionFactory.createWeakMap();
 
   @Nullable
   @Override
@@ -146,7 +141,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   private static final class DetectionDisabledNotification extends Notification {
     private DetectionDisabledNotification(Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(),
+      super("Automatic indent detection",
             ApplicationBundle.message("code.style.indent.detector.notification.content"), "",
             NotificationType.INFORMATION);
       addAction(new ReEnableDetection(project, this));
@@ -276,8 +271,5 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
         areDetected(getIndentOptions()) ||
         myDiscardedOptions.containsKey(file);
     }
-
-
-
   }
 }

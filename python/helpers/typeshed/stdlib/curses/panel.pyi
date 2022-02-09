@@ -1,5 +1,7 @@
 from _curses import _CursesWindow
 
+version: str
+
 class _Curses_Panel:  # type is <class '_curses_panel.curses panel'> (note the space in the class name)
     def above(self) -> _Curses_Panel: ...
     def below(self) -> _Curses_Panel: ...

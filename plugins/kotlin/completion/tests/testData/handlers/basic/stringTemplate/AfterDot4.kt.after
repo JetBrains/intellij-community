@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class Foo(val bar: Bar)
 class Bar(val baz: String)
 

@@ -7,3 +7,4 @@ fun anyFoo(vararg a: Any) {}
 fun test() {
     anyFoo(a = in<caret>tArrayOf(1))
 }
+/* IGNORE_FIR */

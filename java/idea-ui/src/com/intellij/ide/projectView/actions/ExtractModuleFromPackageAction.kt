@@ -27,7 +27,7 @@ import com.intellij.packageDependencies.ForwardDependenciesBuilder
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
+import com.intellij.refactoring.JavaSpecialRefactoringProvider
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -151,7 +151,8 @@ class ExtractModuleFromPackageAction : AnAction() {
       }
       if (targetSourceRoot != null) {
         val targetDirectory = VfsUtil.createDirectoryIfMissing(targetSourceRoot, packagePrefix.replace('.', '/'))
-        MoveClassesOrPackagesUtil.moveDirectoryRecursively(directory, PsiManager.getInstance(module.project).findDirectory(targetDirectory.parent))
+        JavaSpecialRefactoringProvider.getInstance()
+          .moveDirectoryRecursively(directory, PsiManager.getInstance(module.project).findDirectory(targetDirectory.parent))
       }
       SaveAndSyncHandler.getInstance().scheduleProjectSave(module.project)
     }

@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun is1(): Boolean{}
 fun is2(): Boolean{}
 

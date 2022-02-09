@@ -10,7 +10,7 @@ class Test {
       foo();
     } catch (MyException1 e) {
     } catch (MyException2 e) {
-        <caret><selection>e.printStackTrace();</selection>
+        <caret><selection>throw new RuntimeException(e);</selection>
     }
   }
 }

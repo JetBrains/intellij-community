@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -11,7 +11,9 @@ import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
@@ -21,13 +23,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 
 open class PluginAdvertiserService {
 
+  private val notificationManager: SingletonNotificationManager =
+    SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
+
   companion object {
     @JvmStatic
-    val instance: PluginAdvertiserService
-      get() = service()
+    fun getInstance(): PluginAdvertiserService = service()
   }
 
   open fun run(
@@ -40,7 +46,7 @@ open class PluginAdvertiserService {
     val disabledPlugins = HashMap<PluginData, IdeaPluginDescriptor>()
 
     val ids = mutableMapOf<PluginId, PluginData>()
-    val dependencies = PluginFeatureCacheService.instance.dependencies
+    val dependencies = PluginFeatureCacheService.getInstance().dependencies
 
     val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
     for (feature in unknownFeatures) {
@@ -66,7 +72,7 @@ open class PluginAdvertiserService {
         putFeature(installedPluginData)
       }
       else if (featureType == DEPENDENCY_SUPPORT_FEATURE && dependencies != null) {
-        dependencies[implementationName].forEach { putFeature(it) }
+        dependencies.get(implementationName).forEach(::putFeature)
       }
       else {
         MarketplaceRequests.getInstance()
@@ -152,7 +158,9 @@ open class PluginAdvertiserService {
             project,
           )
 
-          PluginBooleanOptionDescriptor.togglePluginState(disabledDescriptors, true)
+          ApplicationManager.getApplication().invokeLater {
+            PluginBooleanOptionDescriptor.togglePluginState(disabledDescriptors, true)
+          }
         }
       }
       else {
@@ -188,15 +196,18 @@ open class PluginAdvertiserService {
     else {
       if (includeIgnored) {
         notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+          .setDisplayId("advertiser.no.plugins")
           .notify(project)
       }
       return
     }
 
     ProgressManager.checkCanceled()
-    notificationGroup.createNotification(notificationMessage, NotificationType.INFORMATION)
-      .addActions(notificationActions as Collection<AnAction>)
-      .notify(project)
+
+    notificationManager.notify("", notificationMessage, project, Consumer {
+      it.setSuggestionType(true)
+        .addActions(notificationActions as Collection<AnAction>)
+    })
   }
 
   private fun createIgnoreUnknownFeaturesAction(project: Project,
@@ -254,11 +265,20 @@ open class PluginAdvertiserService {
         )
       }
       else {
-        IdeBundle.message(
-          "plugins.advertiser.missing.feature.dependency",
-          pluginsNumber,
-          feature.value.joinToString()
-        )
+        if (feature.value.size <= 1) {
+          IdeBundle.message(
+            "plugins.advertiser.missing.feature.dependency",
+            pluginsNumber,
+            feature.value.joinToString()
+          )
+        }
+        else {
+          IdeBundle.message(
+            "plugins.advertiser.missing.features.dependency",
+            pluginsNumber,
+            feature.value.joinToString()
+          )
+        }
       }
     }
     else {
@@ -280,6 +300,19 @@ open class PluginAdvertiserService {
     }
   }
 
+  @ApiStatus.Internal
+  open fun collectDependencyUnknownFeatures(project: Project, includeIgnored: Boolean = false): Sequence<UnknownFeature> {
+    return DependencyCollectorBean.EP_NAME.extensions.asSequence()
+      .flatMap { dependencyCollectorBean ->
+        dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
+          UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
+                         IdeBundle.message("plugins.advertiser.feature.dependency"),
+                         dependencyCollectorBean.kind + ":" + coordinate, null)
+        }
+      }
+      .filter { includeIgnored || !UnknownFeaturesCollector.getInstance(project).isIgnored(it) }
+  }
+
   protected fun collectFeaturesByName(ids: Set<PluginId>,
                                       features: MultiMap<PluginId, UnknownFeature>): MultiMap<String, String> {
     val result = MultiMap.createSet<String, String>()
@@ -292,7 +325,7 @@ open class PluginAdvertiserService {
   fun rescanDependencies(project: Project) {
     val dependencyUnknownFeatures = collectDependencyUnknownFeatures(project).toList()
     if (dependencyUnknownFeatures.isNotEmpty()) {
-      instance.run(
+      getInstance().run(
         project,
         loadPluginsFromCustomRepositories(),
         dependencyUnknownFeatures,

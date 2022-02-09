@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.renderer.AbstractDescriptorRendererTest
+import org.jetbrains.kotlin.idea.renderer.AbstractDescriptorRendererTest
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode

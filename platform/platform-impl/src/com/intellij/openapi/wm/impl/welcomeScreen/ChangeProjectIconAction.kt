@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
@@ -38,6 +38,7 @@ import com.intellij.ide.RecentProjectsManagerBase.Companion.instanceEx as Projec
 class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   override fun actionPerformed(e: AnActionEvent) {
     val projectPath = (getSelectedElements(e).first() as ReopenProjectAction).projectPath
+    val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return
 
     val ui = ProjectIconUI(projectPath)
 
@@ -60,7 +61,6 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
     }
 
     if (dialog(IdeBundle.message("dialog.title.change.project.icon"), panel).showAndGet()) {
-      val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath)
       val iconSvg = basePath.resolve("icon.svg").toFile()
       val iconPng = basePath.resolve("icon.png").toFile()
 
@@ -120,8 +120,8 @@ class ProjectIconUI(val projectPath: @SystemIndependent String) {
         e.presentation.isEnabledAndVisible = pathToIcon != null || (Files.exists(pathToIcon()) && !iconRemoved)
       }
     }
-    return ActionManager.getInstance().createActionToolbar("ProjectIconDialog", DefaultActionGroup(removeIconAction),true)
-      .apply { setTargetComponent(iconLabel) }
+    return ActionManager.getInstance().createActionToolbar("ProjectIconDialog", DefaultActionGroup(removeIconAction), true)
+      .apply { targetComponent = iconLabel }
   }
 
   fun pathToIcon() = Path("${projectPath}/.idea/icon.svg")

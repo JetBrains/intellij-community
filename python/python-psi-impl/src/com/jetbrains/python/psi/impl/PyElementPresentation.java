@@ -20,12 +20,16 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyPossibleClassMember;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.pyi.PyiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
 /**
 * @author vlan
@@ -53,8 +57,29 @@ public class PyElementPresentation implements ColoredItemPresentation {
   @Nullable
   @Override
   public String getLocationString() {
-    String packageForFile = getPackageForFile(myElement.getContainingFile());
-    return packageForFile != null ? String.format("(%s)", packageForFile) : null;
+    PsiFile containingFile = myElement.getContainingFile();
+
+    String packageForFile = getPackageForFile(containingFile);
+    if (packageForFile == null) return null;
+
+    boolean isPyiFile = containingFile instanceof PyiFile;
+
+    PyClass containingClass = myElement instanceof PyPossibleClassMember ? ((PyPossibleClassMember)myElement).getContainingClass() : null;
+    if (containingClass != null) {
+      if (isPyiFile) {
+        return PyPsiBundle.message("element.presentation.location.string.in.class.stub", containingClass.getName(), packageForFile);
+      }
+      else {
+        return PyPsiBundle.message("element.presentation.location.string.in.class", containingClass.getName(), packageForFile);
+      }
+    }
+
+    if (isPyiFile) {
+      return PyPsiBundle.message("element.presentation.location.string.module.stub", packageForFile);
+    }
+    else {
+      return PyPsiBundle.message("element.presentation.location.string.module", packageForFile);
+    }
   }
 
   @Nullable

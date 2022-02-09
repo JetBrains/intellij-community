@@ -3,10 +3,16 @@ interface ILambdaTest {
 }
 
 class LambdaTest implements ILambdaTest {
-  ILambdaTest lambda = this::getResult;
-
   @Override
   public int getResult() {
     return 42;
+  }
+}
+
+class LamdaTest2 implements ILambdaTest {
+
+  @Override
+  public int getResult() {
+    return 43;
   }
 }

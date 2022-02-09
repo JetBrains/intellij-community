@@ -1,14 +1,11 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:7.1" />
-    <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/plugins/gradle/anno" />
-    </ANNOTATIONS>
+    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:7.1.1-sp2" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/7.1/gradle-api-7.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/7.1/gradle-api-impldep-7.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/7.1/gradle-wrapper-7.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/7.1/gradle-launcher-7.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/7.1.1-sp2/gradle-api-7.1.1-sp2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/7.1.1-sp2/gradle-api-impldep-7.1.1-sp2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/7.1.1-sp2/gradle-wrapper-7.1.1-sp2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/7.1.1-sp2/gradle-launcher-7.1.1-sp2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

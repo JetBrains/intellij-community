@@ -56,7 +56,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     }
   }
 
-  private var state: RunToolbarMainSlotState? = null
+  private var state: RunToolbarMainSlotState = RunToolbarMainSlotState.CONFIGURATION
 
   private fun updateState() {
     state = project?.let {
@@ -78,7 +78,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       }
 
       value
-    }
+    } ?: RunToolbarMainSlotState.CONFIGURATION
 
     if(RunToolbarProcess.logNeeded) LOG.info("MAIN SLOT state updated: $state RunToolbar")
   }
@@ -161,6 +161,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       counter[project] = value
       if (value == 0) {
         RunToolbarSlotManager.getInstance(project).active = false
+        counter.remove(project)
       }
     }
 

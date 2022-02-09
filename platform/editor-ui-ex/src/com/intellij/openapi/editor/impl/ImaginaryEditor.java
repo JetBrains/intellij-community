@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,8 +20,8 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 
 /**
- * This class is intended to simplify implementation of dummy editors needed only to pass to places which expect {@link Editor}
- * but do nothing complicated with it, only simple things like getting document/project/caret/selection.<p></p>
+ * This class is intended to simplify implementation of dummy editors needed only to pass to place which expect {@link Editor}
+ * but do nothing complicate with it, only simple things like getting document/project/caret/selection.<p></p>
  * <p>
  * Since Imaginary* classes are intended to be used by multiple parties,
  * they should be as free as possible of simplified versions of any real Editor's logic.

@@ -19,12 +19,14 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUObjectLiteralExpression(
   override val sourcePsi: PsiNewExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpressionEx, UMultiResolvable {
+) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpression, UMultiResolvable {
   override val declaration: UClass by lz { JavaUClass.create(sourcePsi.anonymousClass!!, this) }
 
   override val classReference: UReferenceExpression? by lz {

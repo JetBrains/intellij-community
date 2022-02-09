@@ -37,11 +37,23 @@ internal fun PackageVersionUtils.upgradeCandidateVersionOrNull(
     val availableSemanticVersions = availableVersions.filterIsInstance<NormalizedPackageVersion.Semantic>()
         .sortedDescending()
 
-    // We can't really compare non-semantic versions, so we simply get the max semantic version (if any)
-    if (currentVersion !is NormalizedPackageVersion.Semantic) {
-        return availableSemanticVersions.find { it.nonSemanticSuffixOrNull().isNullOrBlank() && it > currentVersion }
+    return when (currentVersion) {
+        is NormalizedPackageVersion.Semantic -> getUpgradeSemanticVersionOrNull(availableSemanticVersions, currentVersion)
+        else -> {
+            // A Semantic version is always better than the current one, so we should prefer that
+            if (availableSemanticVersions.isNotEmpty()) {
+                availableSemanticVersions.filter { it.nonSemanticSuffixOrNull().isNullOrBlank() }.maxOrNull()
+            } else {
+                availableVersions.maxOrNull()?.takeIf { it > currentVersion }
+            }
+        }
     }
+}
 
+private fun getUpgradeSemanticVersionOrNull(
+    availableSemanticVersions: List<NormalizedPackageVersion.Semantic>,
+    currentVersion: NormalizedPackageVersion.Semantic
+): NormalizedPackageVersion<out PackageVersion>? {
     // Finding the upgrade version for semantic versions is a multi-step process:
     //  1. Find a version with a higher semantic version part (including stability modifiers)
     //  2. If there's one with the same non-semantic suffix, pick that

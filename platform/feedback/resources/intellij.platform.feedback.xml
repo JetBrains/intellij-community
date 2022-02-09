@@ -1,7 +1,7 @@
 <idea-plugin package="com.intellij.feedback">
   <extensions defaultExtensionNs="com.intellij">
 
-    <applicationService serviceImplementation="com.intellij.feedback.state.projectCreation.ProjectCreationInfoService"/>
+    <applicationService serviceImplementation="com.intellij.feedback.state.DontShowAgainFeedbackService"/>
 
     <notificationGroup displayType="BALLOON" id="Project Creation Feedback" bundle="messages.FeedbackMessages"/>
 
@@ -9,9 +9,7 @@
     <editorFactoryMouseListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
     <editorFactoryMouseMotionListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
 
-    <registryKey defaultValue="false" description="Enable to collect user feedback" key="platform.feedback"/>
-
-    <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector"/>
+    <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
   </extensions>
 
   <actions>

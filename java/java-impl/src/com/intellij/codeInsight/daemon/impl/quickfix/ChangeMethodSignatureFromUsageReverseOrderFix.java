@@ -8,7 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -87,7 +87,7 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
       }
       else if (expression != null) {
         if (varargParam != null && pi >= parameters.length) return false;
-        PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
+        PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
         if (exprType == null) return false;
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);

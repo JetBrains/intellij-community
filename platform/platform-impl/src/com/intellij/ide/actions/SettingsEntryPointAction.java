@@ -22,8 +22,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
+import com.intellij.ui.BadgeIcon;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,10 +182,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   private static @NotNull Icon getActionIcon() {
     if (ourShowPlatformUpdateIcon) {
-      return AllIcons.Ide.Notification.IdeUpdate;
+      return ExperimentalUI.isNewUI()
+             ? new BadgeIcon(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.WARNING)
+             : AllIcons.Ide.Notification.IdeUpdate;
     }
     if (ourShowPluginsUpdateIcon) {
-      return AllIcons.Ide.Notification.PluginUpdate;
+      return ExperimentalUI.isNewUI()
+             ? new BadgeIcon(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.INFORMATION)
+             : AllIcons.Ide.Notification.PluginUpdate;
     }
     return AllIcons.General.GearPlain;
   }
@@ -215,6 +222,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
     return !uiSettings.getShowMainToolbar() &&
            !uiSettings.getShowNavigationBar() &&
+           !ExperimentalUI.isNewToolbar() &&
            !(toolbarSettings.isEnabled() && toolbarSettings.isVisible());
   }
 
@@ -327,6 +335,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     public boolean isIdeUpdate() {
+      return false;
+    }
+
+    public boolean isRestartRequired() {
       return false;
     }
 

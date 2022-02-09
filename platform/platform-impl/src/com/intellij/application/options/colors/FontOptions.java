@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
       c.gridy = 1;
       c.gridx = 0;
       c.gridwidth = 1;
-      c.insets = JBUI.emptyInsets();
+      c.insets = JBInsets.emptyInsets();
       topPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(FONT_PANEL_LEFT_OFFSET, 0))), c);
       c.gridx = 1;
       c.anchor = GridBagConstraints.NORTHWEST;
@@ -96,7 +97,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
   }
 
   @Nullable
-  private Component createOverwriteCheckBox() {
+  protected Component createOverwriteCheckBox() {
     if (getInheritedFontTitle() != null) {
       JPanel overwritePanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
       overwritePanel.setBorder(BorderFactory.createEmptyBorder());

@@ -5,17 +5,20 @@ import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.Nls
 import java.util.*
 
 @Service(Service.Level.APP)
-internal class ToolboxSettingsActionRegistry : Disposable {
+class ToolboxSettingsActionRegistry : Disposable {
   private val readActions = Collections.synchronizedSet(HashSet<String>())
   private val pendingActions = Collections.synchronizedList(LinkedList<ToolboxUpdateAction>())
 
@@ -37,7 +40,7 @@ internal class ToolboxSettingsActionRegistry : Disposable {
     })
   }
 
-  fun registerUpdateAction(action: ToolboxUpdateAction) {
+  internal fun registerUpdateAction(action: ToolboxUpdateAction) {
     action.registry = this
 
     val dispose = Disposable {
@@ -46,6 +49,8 @@ internal class ToolboxSettingsActionRegistry : Disposable {
     }
 
     pendingActions += action
+    ApplicationManager.getApplication().messageBus.syncPublisher(UpdateActionsListener.TOPIC).actionReceived(action)
+
     if (!Disposer.tryRegister(action.lifetime, dispose)) {
       Disposer.dispose(dispose)
       return
@@ -66,7 +71,8 @@ internal class ToolboxUpdateAction(
   val lifetime: Disposable,
   text: @Nls String,
   description: @Nls String,
-  val actionHandler: Consumer<AnActionEvent>
+  val actionHandler: Consumer<AnActionEvent>,
+  val restartRequired: Boolean
 ) : SettingsEntryPointAction.UpdateAction(text) {
   lateinit var registry : ToolboxSettingsActionRegistry
 
@@ -75,6 +81,10 @@ internal class ToolboxUpdateAction(
   }
 
   override fun isIdeUpdate() = true
+
+  override fun isRestartRequired(): Boolean {
+    return restartRequired
+  }
 
   override fun isNewAction(): Boolean {
     return registry.isNewAction(actionId)
@@ -94,4 +104,12 @@ internal class ToolboxUpdateAction(
       e.presentation.isEnabledAndVisible = false
     }
   }
+}
+
+interface UpdateActionsListener: EventListener {
+  companion object {
+    val TOPIC = Topic(UpdateActionsListener::class.java)
+  }
+
+  fun actionReceived(action: SettingsEntryPointAction.UpdateAction)
 }

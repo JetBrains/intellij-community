@@ -210,11 +210,11 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
                                                               "  <count name=\"failed\" value=\"1\" />\n" +
-                                                              "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
-                                                              "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
-                                                              "      <diff actual=\"5\" expected=\"4\" />\n" +
-                                                              "      <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
-                                                              "      <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                                                              "  <root name=\"AlsoTest\" location=\"java:suite://AlsoTest\" />\n" +
+                                                              "  <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                                                              "    <diff actual=\"5\" expected=\"4\" />\n" +
+                                                              "    <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
+                                                              "    <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
                                                               "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
                                                               "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
                                                               "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
@@ -223,8 +223,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
                                                               "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
-                                                              "    </test>\n" +
-                                                              "  </suite>\n" +
+                                                              "  </test>\n" +
                                                               "</testrun>")
   }
 
@@ -320,11 +319,11 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
                                                               "  <count name=\"failed\" value=\"1\" />\n" +
-                                                              "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
-                                                              "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
-                                                              "      <diff actual=\"5\" expected=\"4\" />\n" +
-                                                              "      <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
-                                                              "      <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                                                              "  <root name=\"AlsoTest\" location=\"java:suite://AlsoTest\" />\n" +
+                                                              "  <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                                                              "    <diff actual=\"5\" expected=\"4\" />\n" +
+                                                              "    <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
+                                                              "    <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
                                                               "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
                                                               "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
                                                               "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
@@ -333,8 +332,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
                                                               "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
-                                                              "    </test>\n" +
-                                                              "  </suite>\n" +
+                                                              "  </test>\n" +
                                                               "</testrun>")
   }
 

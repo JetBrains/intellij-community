@@ -7,7 +7,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -208,7 +207,6 @@ public final class BlockUtils {
    * @return a first inlined statement, or null if <code>codeBlock</code> doesn't contain any statements.
    */
   @Nullable
-  @Contract(pure = true)
   public static PsiElement inlineCodeBlock(@NotNull PsiStatement statement, @NotNull PsiCodeBlock codeBlock) {
     PsiJavaToken lBrace = codeBlock.getLBrace();
     PsiJavaToken rBrace = codeBlock.getRBrace();

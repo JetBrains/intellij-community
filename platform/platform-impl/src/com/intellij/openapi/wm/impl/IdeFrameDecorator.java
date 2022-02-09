@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,11 +7,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.ui.mac.MacWinTabsHandler;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -41,7 +42,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   public void setProject() {
   }
   /**
-   * Returns applied state or rejected promise if cannot be applied.
+   * Returns applied state or rejected promise if it cannot be applied.
    */
   @NotNull
   public abstract Promise<Boolean> toggleFullScreen(boolean state);
@@ -94,7 +95,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
     @Override
     public boolean isInFullScreen() {
-      return UIUtil.isWindowClientPropertyTrue(myFrame, FULL_SCREEN);
+      return ClientProperty.isTrue(myFrame, FULL_SCREEN);
     }
 
     @NotNull
@@ -171,17 +172,17 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         // KDE sends an unexpected MapNotify event if a window is deiconified.
         // suppress.focus.stealing fix handles the MapNotify event differently
         // if the application is not active
-        final WindowAdapter deiconifyListener = new WindowAdapter() {
+        final WindowAdapter deIconifyListener = new WindowAdapter() {
           @Override
           public void windowDeiconified(WindowEvent event) {
             frame.toFront();
           }
         };
-        frame.addWindowListener(deiconifyListener);
+        frame.addWindowListener(deIconifyListener);
         Disposer.register(parentDisposable, new Disposable() {
           @Override
           public void dispose() {
-            frame.removeWindowListener(deiconifyListener);
+            frame.removeWindowListener(deIconifyListener);
           }
         });
       }
@@ -209,7 +210,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   public static boolean isCustomDecorationAvailable() {
-    return SystemInfo.isWindows && JdkEx.isCustomDecorationSupported();
+    return SystemInfoRt.isWindows && JdkEx.isCustomDecorationSupported();
   }
 
   private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();

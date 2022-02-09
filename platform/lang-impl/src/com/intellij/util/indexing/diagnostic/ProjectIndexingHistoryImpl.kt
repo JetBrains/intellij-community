@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -42,15 +42,17 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
 
+  override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
+
   private val events = mutableListOf<Event>()
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
   }
 
-  fun addProviderStatistics(statistics: IndexingJobStatistics) {
+  fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
     // Convert to Json to release memory occupied by statistic values.
-    providerStatistics += statistics.toJsonStatistics()
+    providerStatistics += statistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio)
 
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
@@ -247,6 +249,9 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   /** Just a stage, don't have to cover whole indexing period, may intersect **/
   enum class Stage {
+    CreatingIterators {
+      override fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration> = IndexingTimesImpl::creatingIteratorsDuration
+    },
     Scanning {
       override fun getProperty() = IndexingTimesImpl::scanFilesDuration
     },
@@ -324,9 +329,10 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var indexingDuration: Duration = Duration.ZERO,
-    override var contentLoadingDuration: Duration = Duration.ZERO,
+    override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
     override var pushPropertiesDuration: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
+    override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var scanFilesDuration: Duration = Duration.ZERO,
     override var suspendedDuration: Duration = Duration.ZERO,
     override var wasInterrupted: Boolean = false

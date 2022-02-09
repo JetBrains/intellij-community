@@ -130,7 +130,7 @@ public abstract class GroupedElementsRenderer implements Accessible {
 
     @Override
     protected Color getBackground() {
-      return UIUtil.getListBackground();
+      return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground();
     }
 
     @Override

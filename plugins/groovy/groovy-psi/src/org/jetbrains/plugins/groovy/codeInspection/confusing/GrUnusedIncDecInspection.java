@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -26,10 +26,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Iterator;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
 /**
  * @author Max Medvedev
@@ -70,7 +73,9 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       GrControlFlowOwner ownerOfDeclaration = ControlFlowUtils.findControlFlowOwner(resolved);
       if (ownerOfDeclaration != owner) return;
 
-      final Instruction cur = ControlFlowUtils.findInstruction(operand, owner.getControlFlow());
+      GroovyControlFlow groovyFlow = ControlFlowUtils.getGroovyControlFlow(owner);
+
+      final Instruction cur = ControlFlowUtils.findInstruction(operand, groovyFlow.getFlow());
 
       if (cur == null) {
         LOG.error("no instruction found in flow." + "operand: " + operand.getText(), new Attachment("", owner.getText()));
@@ -83,7 +88,8 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       Instruction writeAccess = iterator.next();
       LOG.assertTrue(!iterator.hasNext());
 
-      List<ReadWriteVariableInstruction> accesses = ControlFlowUtils.findAccess((GrVariable)resolved, true, false, writeAccess);
+      int variableIndex = groovyFlow.getIndex(createDescriptor((GrVariable)resolved));
+      List<ReadWriteVariableInstruction> accesses = ControlFlowUtils.findAccess(variableIndex, true, false, writeAccess);
 
       boolean allAreWrite = true;
       for (ReadWriteVariableInstruction access : accesses) {

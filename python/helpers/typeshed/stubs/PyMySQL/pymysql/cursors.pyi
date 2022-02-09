@@ -40,11 +40,11 @@ class DictCursorMixin:
     def __iter__(self) -> Iterator[dict[Text, Any]]: ...
 
 class SSCursor(Cursor):
-    def fetchall(self) -> list[Tuple[Any, ...]]: ...  # type: ignore
+    def fetchall(self) -> list[Tuple[Any, ...]]: ...  # type: ignore[override]
     def fetchall_unbuffered(self) -> Iterator[Tuple[Any, ...]]: ...
     def scroll(self, value: int, mode: Text = ...) -> None: ...
 
-class DictCursor(DictCursorMixin, Cursor): ...  # type: ignore
+class DictCursor(DictCursorMixin, Cursor): ...  # type: ignore[misc]
 
-class SSDictCursor(DictCursorMixin, SSCursor):  # type: ignore
-    def fetchall_unbuffered(self) -> Iterator[dict[Text, Any]]: ...  # type: ignore
+class SSDictCursor(DictCursorMixin, SSCursor):  # type: ignore[misc]
+    def fetchall_unbuffered(self) -> Iterator[dict[Text, Any]]: ...  # type: ignore[override]

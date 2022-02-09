@@ -57,8 +57,6 @@ public class FindUIHelper implements Disposable {
       registerAction("ReplaceInPath", true, component, myUI);
       registerAction("FindInPath", false, component, myUI);
       Disposer.register(myUI.getDisposable(), this);
-    } else {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
     }
     return myUI;
   }

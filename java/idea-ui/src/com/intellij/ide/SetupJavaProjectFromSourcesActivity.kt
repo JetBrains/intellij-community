@@ -37,7 +37,7 @@ import com.intellij.util.SystemProperties
 import java.io.File
 import javax.swing.event.HyperlinkEvent
 
-private val NOTIFICATION_GROUP = NotificationGroup("Build Script Found", NotificationDisplayType.STICKY_BALLOON, true)
+private val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Build Script Found")
 private val SETUP_JAVA_PROJECT_IS_DISABLED = SystemProperties.getBooleanProperty("idea.java.project.setup.disabled", false)
 
 private const val SCAN_DEPTH_LIMIT = 5

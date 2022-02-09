@@ -25,9 +25,9 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.UniqueIdConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitEntryPoint"/>
     <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
-    <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="before junit4"/>
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
-    <testFramework implementation="com.intellij.execution.junit.JUnit3Framework" order="after junit4"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit3Framework" id="junit3" order="after junit4"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="after junit3"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
@@ -76,6 +76,11 @@
                      key="junit5.nested.test.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
+ 
+    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedExtensions" bundle="messages.JUnitBundle"
+                     key="junit5.extensions.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedExtensionsInspection"/>
 
     <localInspection language="UAST" shortName="Junit5MalformedParameterized" bundle="messages.JUnitBundle"
                      key="junit5.malformed.parameterized.display.name"

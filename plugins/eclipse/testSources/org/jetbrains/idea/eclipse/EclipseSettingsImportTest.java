@@ -149,8 +149,7 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
     javaSettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST = true;
     javaSettings.KEEP_LINE_BREAKS = true;
 
-    InputStream inputStream = new FileInputStream(input);
-    try {
+    try (InputStream inputStream = new FileInputStream(input)) {
       new EclipseCodeStyleImportWorker().importScheme(inputStream, null, scheme);
 
       assertTrue(javaSettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
@@ -265,7 +264,6 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
       assertFalse(javaSettings.KEEP_LINE_BREAKS);
     }
     finally {
-      inputStream.close();
       schemes.deleteScheme(scheme);
       editorSettings.setEnsureNewLineAtEOF(currAddLineFeed);
     }

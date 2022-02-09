@@ -5,16 +5,12 @@ curses.COLOR_PAIRS  # Initialized after start_color
 curses.COLS  # Initialized only after initscr call.
 curses.LINES  # Initialized only after initscr call.
 distutils.command.bdist_msi  # msi is only available on windows
-grp.struct_group._asdict  # PyStructSequence
-grp.struct_group._make  # PyStructSequence
-grp.struct_group._replace  # PyStructSequence
 os.EX_NOTFOUND
 os.SF_MNOWAIT
 os.SF_NODISKIO
 os.SF_SYNC
-posix.sched_param  # system dependent. Unclear if macos has it.
+(os|posix).sched_param  # system dependent. Unclear if macos has it.
 posix.EX_NOTFOUND
-posix.XATTR.*  # Value seems to be in docs but not defined in github macos
 readline.append_history_file  # not defined in macos
 select.KQ_FILTER_NETDEV  # system dependent
 select.kqueue.__init__  # default C signature is wrong
@@ -36,13 +32,24 @@ winsound
 ossaudiodev
 spwd
 
-# NamedTuple like, but not actually NamedTuples (PyStructSequence)
-posix.[a-z]+_(param|result)._(asdict|make|replace)
-
 # Platform differences that cannot be captured by the type system
 fcntl.[A-Z0-9_]+
 os.SCHED_[A-Z_]+
+posix.SCHED_[A-Z_]+
 
 # Loadable SQLite extensions are disabled on GitHub runners
 (sqlite3(.dbapi2)?.Connection.enable_load_extension)?
 (sqlite3(.dbapi2)?.Connection.load_extension)?
+
+# Exists at runtime, but missing from stubs
+distutils.msvccompiler.MSVCCompiler.get_msvc_paths
+distutils.msvccompiler.MSVCCompiler.set_path_env_var
+distutils.msvccompiler.MacroExpander
+mimetypes.MimeTypes.read_windows_registry
+os.ST_NOSUID
+os.ST_RDONLY
+selectors.DefaultSelector.fileno
+socket.AddressInfo.AI_DEFAULT
+socket.AddressInfo.AI_MASK
+socket.AddressInfo.AI_V4MAPPED_CFG
+socket.MsgFlag.MSG_EOF

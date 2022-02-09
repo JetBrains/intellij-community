@@ -106,8 +106,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
                                  HashSet<TestIdentifier> visited) {
     final String idAndName = idAndName(root);
     if (root.isContainer()) {
-      boolean isEngine = isEngine(root);
-      if (!isEngine) myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + " " + getLocationHint(root) + "]");
+      boolean skipContainer = shouldSkipContainer(root);
+      if (!skipContainer) myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + " " + getLocationHint(root) + "]");
       for (TestIdentifier childIdentifier : myTestPlan.getChildren(root)) {
         if (visited.add(childIdentifier)) {
           sendTreeUnderRoot(childIdentifier, visited);
@@ -116,7 +116,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           System.err.println("Identifier '" + getId(childIdentifier) + "' is reused");
         }
       }
-      if (!isEngine) myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
+      if (!skipContainer) myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
     }
     else if (root.isTest()) {
       myPrintStream.println("##teamcity[suiteTreeNode " + idAndName + " " + getLocationHint(root) + "]");
@@ -139,7 +139,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testStarted(testIdentifier);
       myCurrentTestStart = System.currentTimeMillis();
     }
-    else if (!isEngine(testIdentifier)) {
+    else if (!shouldSkipContainer(testIdentifier)) {
       myFinishCount = 0;
       myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + getLocationHint(testIdentifier) + "]");
     }
@@ -169,7 +169,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testFinished(testIdentifier, duration);
       myFinishCount++;
     }
-    else if (!isEngine(testIdentifier)){
+    else if (!shouldSkipContainer(testIdentifier)){
       String messageName = null;
       if (status == TestExecutionResult.Status.FAILED) {
         messageName = MapSerializerUtil.TEST_FAILED;
@@ -204,11 +204,13 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }
   }
 
-  private static boolean isEngine(TestIdentifier testIdentifier) {
+  private boolean shouldSkipContainer(TestIdentifier testIdentifier) {
     UniqueId id = UniqueId.parse(testIdentifier.getUniqueId());
     List<UniqueId.Segment> segments = id.getSegments();
     if (segments.isEmpty()) return false;
-    return segments.get(segments.size() - 1).getType().equals("engine");
+    UniqueId.Segment lastSegment = segments.get(segments.size() - 1);
+    return lastSegment.getType().equals("engine") || 
+           myRootName != null && myRootName.equals(lastSegment.getValue());
   }
 
   protected long getDuration() {
@@ -319,7 +321,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
     
     return parent
-      .map(identifier -> isEngine(identifier) ? getParentId(identifier) : identifier.getUniqueId() + myIdSuffix)
+      .map(identifier -> shouldSkipContainer(identifier) ? getParentId(identifier) : identifier.getUniqueId() + myIdSuffix)
       .orElse("0");
   }
 

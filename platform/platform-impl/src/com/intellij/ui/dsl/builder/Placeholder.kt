@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
@@ -26,6 +27,8 @@ interface Placeholder : CellBase<Placeholder> {
   override fun resizableColumn(): Placeholder
 
   override fun gap(rightGap: RightGap): Placeholder
+
+  override fun customize(customGaps: Gaps): Placeholder
 
   /**
    * Component placed in the cell. If the component is [DialogPanel] then all functionality related to

@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.inspections
 
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinConstantConditionsInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/dfa")

@@ -1,13 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.feedback
 
-import com.intellij.feedback.FeedbackTypeResolver.isFeedbackNotificationEnabled
+import com.intellij.feedback.FeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.feedback.dialog.ProjectCreationFeedbackDialog
 import com.intellij.feedback.notification.RequestFeedbackNotification
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoState
-import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -48,7 +47,7 @@ enum class FeedbackTypes {
     }
 
     override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return ProjectCreationFeedbackDialog(project, getLastCreatedProjectTypeName(forTest))
+      return ProjectCreationFeedbackDialog(project, getLastCreatedProjectTypeName(forTest), forTest)
     }
 
     private fun getLastCreatedProjectTypeName(forTest: Boolean): String {
@@ -83,31 +82,25 @@ enum class FeedbackTypes {
   protected abstract fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper
 
   protected abstract fun updateStateAfterNotificationShowed()
-
-  //TODO: Implement method for resolve zendesk form - staging or production
-
+  
   fun showNotification(project: Project?, forTest: Boolean = false) {
     val notification = createNotification(forTest)
     notification.addAction(
       NotificationAction.createSimpleExpiring(FeedbackBundle.message("notification.request.feedback.action.respond.text")) {
-        if (!forTest) {
-          ProjectCreationFeedbackCountCollector.logNotificationActionCalled()
-        }
         val dialog = createFeedbackDialog(project, forTest)
         dialog.show()
-        if (!forTest && dialog.exitCode == DialogWrapper.CLOSE_EXIT_CODE) {
-          ProjectCreationFeedbackCountCollector.logDialogClosed()
-        }
       }
     )
     notification.addAction(
       NotificationAction.createSimpleExpiring(FeedbackBundle.message("notification.request.feedback.action.dont.show.text")) {
         if (!forTest) {
-          isFeedbackNotificationEnabled = false
+          isFeedbackNotificationDisabled = true
         }
       }
     )
     notification.notify(project)
-    updateStateAfterNotificationShowed()
+    if (!forTest) {
+      updateStateAfterNotificationShowed()
+    }
   }
 }

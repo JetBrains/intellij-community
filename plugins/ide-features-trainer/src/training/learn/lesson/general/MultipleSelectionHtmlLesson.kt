@@ -72,6 +72,13 @@ class MultipleSelectionHtmlLesson
         stateCheck { checkMultiChange() }
         test { type("td") }
       }
+      task("EditorEscape") {
+        stateCheck {
+          editor.caretModel.caretCount < 2
+        }
+        text(LessonsBundle.message("multiple.selections.escape", action(it)))
+        test { actions(it) }
+      }
     }
 
   private fun TaskRuntimeContext.checkMultiChange(): Boolean {

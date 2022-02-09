@@ -27,9 +27,11 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
 public class UseCompareMethodInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new UseCompareMethodInspection(),
-    };
+    UseCompareMethodInspection inspection = new UseCompareMethodInspection();
+    if (getTestName(false).endsWith("NoFloating.java")) {
+      inspection.suggestFloatingCompare = false;
+    }
+    return new LocalInspectionTool[]{inspection};
   }
 
   @Override

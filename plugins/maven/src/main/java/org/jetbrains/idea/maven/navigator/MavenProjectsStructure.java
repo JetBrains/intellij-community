@@ -9,7 +9,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.wizard.UIWizardUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -63,6 +62,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
@@ -888,7 +888,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         .append("</tr>")
         .append("<tr>")
         .append("<td nowrap>").append(message("detailed.description.location")).append("</td>")
-        .append("<td nowrap>").append(UIWizardUtil.getPresentablePath(myMavenProject.getPath())).append("</td>")
+        .append("<td nowrap>").append(getPresentablePath(myMavenProject.getPath())).append("</td>")
         .append("</tr>")
         .append("</table>").append("</td>")
         .append("</tr>");
@@ -1265,7 +1265,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
           if (validChildCount < myChildren.size()) {
             DependencyNode currentValidNode = myChildren.get(validChildCount);
 
-            if (currentValidNode.myArtifact.equals(each.getArtifact())) {
+            if (currentValidNode.myArtifact.equals(each.getArtifact())
+                && currentValidNode.myArtifactNode.getArtifact().isResolvedArtifact() == each.getArtifact().isResolvedArtifact()) {
               if (each.getState() == MavenArtifactState.ADDED) {
                 currentValidNode.updateChildren(each.getDependencies(), mavenProject);
               }
@@ -1305,7 +1306,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject, int from) {
       for (int i = from; i < myChildren.size(); i++) {
         DependencyNode node = myChildren.get(i);
-        if (node.myArtifact.equals(artifact.getArtifact())) {
+        if (node.myArtifact.equals(artifact.getArtifact())
+            && node.myArtifactNode.getArtifact().isResolvedArtifact() == artifact.getArtifact().isResolvedArtifact()) {
           return node;
         }
       }

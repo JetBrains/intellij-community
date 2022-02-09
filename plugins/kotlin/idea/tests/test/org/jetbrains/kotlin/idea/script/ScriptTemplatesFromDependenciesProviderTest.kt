@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.script
 
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -12,11 +11,16 @@ import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.runner.RunWith
+import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 @TestRoot("idea/tests")
@@ -28,17 +32,29 @@ class ScriptTemplatesFromDependenciesProviderTest : AbstractScriptConfigurationT
         super.setUp()
 
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         runWriteAction {
             project.invalidateProjectRoots()
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     }
 
     @TestMetadata("customDefinitionInJar")
     fun testCustomDefinitionInJar() {
-        val allDefinitions = ScriptDefinitionsManager.getInstance(project).getAllDefinitions()
+        val allDefinitions = run {
+            var definitions = emptyList<ScriptDefinition>()
+            val timeoutMs = 100L
+            val attempts = 20
+            // definitions are loaded in a background, spin some time to get them loaded
+            for (attempt in 0 until attempts) {
+                definitions = ScriptDefinitionsManager.getInstance(project).getAllDefinitions()
+                if (definitions.any { it.name == "Custom Init Script" }) {
+                    return@run definitions
+                }
+                Thread.sleep(timeoutMs)
+            }
+
+            definitions
+        }
         assertTrue(allDefinitions.joinToString { it.name }, allDefinitions.any { it.name == "Custom Init Script" })
         assertTrue(allDefinitions.joinToString { it.name }, allDefinitions.any { it.name == "Custom Setting Script" })
     }

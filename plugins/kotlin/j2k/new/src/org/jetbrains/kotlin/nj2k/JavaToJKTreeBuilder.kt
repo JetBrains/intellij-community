@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -141,7 +141,7 @@ class JavaToJKTreeBuilder constructor(
         val name =
             target.safeAs<KtLightElement<*, *>>()?.kotlinOrigin?.getKotlinFqName()?.asString()
                 ?: target.safeAs<KtLightClass>()?.containingFile?.safeAs<KtFile>()?.packageFqName?.asString()?.let { "$it.*" }
-                ?: target.safeAs<KtLightClassForFacade>()?.fqName?.parent()?.asString()?.let { "$it.*" }
+                ?: target.safeAs<KtLightClassForFacade>()?.facadeClassFqName?.parent()?.asString()?.let { "$it.*" }
                 ?: target.safeAs<KtLightClassForDecompiledDeclaration>()?.fqName()?.parent()?.asString()?.let { "$it.*" }
                 ?: rawName
 
@@ -547,7 +547,9 @@ class JavaToJKTreeBuilder constructor(
                         typeArgumentList,
                         with(declarationMapper) { anonymousClass?.createClassBody() } ?: JKClassBody(),
                         anonymousClass != null
-                    )
+                    ).also {
+                        it.psi = this
+                    }
                 }
             return newExpression.qualified(qualifier?.toJK())
         }

@@ -30,7 +30,7 @@ import org.intellij.plugins.markdown.highlighting.MarkdownColorSettingsPage;
 import org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition;
-import org.intellij.plugins.markdown.lang.psi.MarkdownASTFactory;
+import org.intellij.plugins.markdown.lang.psi.MarkdownAstFactory;
 
 import java.io.IOException;
 
@@ -48,7 +48,7 @@ public class MarkdownParserTest extends ParsingTestCase {
 
     addExplicitExtension(LanguageFileViewProviders.INSTANCE, MarkdownLanguage.INSTANCE, new MarkdownFileViewProviderFactory());
 
-    addExplicitExtension(LanguageASTFactory.INSTANCE, MarkdownLanguage.INSTANCE, new MarkdownASTFactory());
+    addExplicitExtension(LanguageASTFactory.INSTANCE, MarkdownLanguage.INSTANCE, new MarkdownAstFactory());
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
 
     addExplicitExtension(TemplateDataElementType.TREE_PATCHER, XMLLanguage.INSTANCE, new XmlTemplateTreePatcher());

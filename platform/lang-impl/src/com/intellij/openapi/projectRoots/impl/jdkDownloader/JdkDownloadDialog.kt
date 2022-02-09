@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.textFieldWithBrowseButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.text.VersionComparatorUtil
 import java.awt.Component
 import java.awt.event.ItemEvent
@@ -275,6 +275,7 @@ internal class JdkDownloadDialog(
       installDirTextField.onTextChange {
         onTargetPathChanged(it)
       }
+      installDirTextField.textField.columns = 36
       installDirCombo = null
       installDirComponent = installDirTextField
     }
@@ -285,9 +286,9 @@ internal class JdkDownloadDialog(
 
 
     panel = panel {
-      row(ProjectBundle.message("dialog.row.jdk.version")) { versionComboBox.invoke().sizeGroup("combo") }
-      row(ProjectBundle.message("dialog.row.jdk.vendor")) { vendorComboBox.invoke().sizeGroup("combo").focused() }
-      row(ProjectBundle.message("dialog.row.jdk.location")) { installDirComponent.invoke() }
+      row(ProjectBundle.message("dialog.row.jdk.version")) { cell(versionComboBox).widthGroup("combo") }
+      row(ProjectBundle.message("dialog.row.jdk.vendor")) { cell(vendorComboBox).widthGroup("combo").focused() }
+      row(ProjectBundle.message("dialog.row.jdk.location")) { cell(installDirComponent) }
     }
 
     myOKAction.putValue(Action.NAME, ProjectBundle.message("dialog.button.download.jdk"))

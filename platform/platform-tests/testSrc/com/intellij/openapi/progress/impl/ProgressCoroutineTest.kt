@@ -1,17 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.ApplicationExtension
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 
-class ProgressCoroutineTest : LightPlatformTestCase() {
+class ProgressCoroutineTest {
+
+  companion object {
+
+    @RegisterExtension
+    @JvmField
+    val applicationExtension = ApplicationExtension()
+  }
 
   private fun backgroundActivity(indicator: ProgressIndicator, action: () -> Unit): Future<*> {
     return AppExecutorUtil.getAppExecutorService().submit {
@@ -19,7 +30,8 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     }
   }
 
-  fun `test suspending action job is a child of current job`() {
+  @Test
+  fun `suspending action job is a child of current job`() {
     val job = Job()
     withJob(job) {
       runBlockingCancellable {
@@ -28,11 +40,12 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     }
   }
 
-  fun `test indicator cancellation cancels job`() {
+  @Test
+  fun `indicator cancellation cancels job`() {
     val lock = Semaphore(1)
     val indicator = EmptyProgressIndicator()
     val future = backgroundActivity(indicator) {  // some blocking code under indicator
-      assertThrows(ProcessCanceledException::class.java) {
+      assertThrows<ProcessCanceledException> {
         runBlockingCancellable {                     // want to switch to coroutine world from under the blocking code
           ensureActive()
           lock.up()
@@ -43,12 +56,13 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         }
       }
     }
-    assertTrue(lock.waitFor(2000))
+    lock.timeoutWaitUp()
     indicator.cancel()
-    future.get(2000, TimeUnit.MILLISECONDS)
+    future.timeoutGet()
   }
 
-  fun `test job cancellation cancels indicator`(): Unit = runBlocking {
+  @Test
+  fun `job cancellation cancels indicator`(): Unit = runBlocking {
     val lock = Semaphore(1)
     val job = launch(Dispatchers.Default) {   // some coroutine
       runUnderIndicator {                     // want to execute blocking Java code from under coroutine
@@ -60,13 +74,13 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         }
       }
     }
-    assertTrue(lock.waitFor(2000))
-    withTimeout(2000) {
-      job.cancelAndJoin()
-    }
+    lock.timeoutWaitUp()
+    job.cancel()
+    job.timeoutJoin()
   }
 
-  fun `test PCE from runUnderIndicator is rethrown`(): Unit = runBlocking {
+  @Test
+  fun `PCE from runUnderIndicator is rethrown`(): Unit = runBlocking {
     val lock = Semaphore(1)
     supervisorScope {
       val deferred: Deferred<Unit> = async(Dispatchers.Default) {
@@ -75,17 +89,15 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
           throw ProcessCanceledException()
         }
       }
-      assertTrue(lock.waitFor(2000))
-      try {
+      lock.timeoutWaitUp()
+      assertThrows<ProcessCanceledException> {
         deferred.await()
-        fail("PCE expected")
-      }
-      catch (e: ProcessCanceledException) {
       }
     }
   }
 
-  fun `test indicator text via progress sink`() {
+  @Test
+  fun `indicator text via progress sink`() {
     suspend fun xx() = progressSink()?.fraction(0.42)
     val indicator = object : EmptyProgressIndicator() {
       var myText: String? = null
@@ -110,13 +122,14 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         progressSink?.details("World")
         xx()
       }
-    }.get(2000, TimeUnit.MILLISECONDS)
+    }.timeoutGet()
     assertEquals(indicator.myText, "Hello")
     assertEquals(indicator.myText2, "World")
     assertEquals(indicator.myFraction, 0.42)
   }
 
-  fun `test sink via progress indicator`() = runBlocking {
+  @Test
+  fun `sink via progress indicator`(): Unit = runBlocking {
     val sink = object : ProgressSink {
       var text: String? = null
       var details: String? = null
@@ -134,7 +147,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         this.fraction = fraction
       }
     }
-    withContext(progressSinkElement(sink)) {
+    withContext(sink.asContextElement()) {
       runUnderIndicator {
         ProgressManager.progress("Hello", "World")
         ProgressManager.getInstance().progressIndicator.fraction = 0.42
@@ -145,26 +158,26 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     assertEquals(sink.fraction, 0.42)
   }
 
-  fun `test checkCancelledEvenWithPCEDisabled checks job`() {
+  @Test
+  fun `checkCancelledEvenWithPCEDisabled checks job`() {
     val started = Semaphore(1)
     val canCheck = Semaphore(1)
     val job = Job()
     val f = ApplicationManager.getApplication().executeOnPooledThread {
       withJob(job) {
-        checkCancelledEvenWithPCEDisabled(null)
-        started.up()
-        assertTrue(canCheck.waitFor(2000))
-        try {
+        assertDoesNotThrow {
           checkCancelledEvenWithPCEDisabled(null)
-          fail()
         }
-        catch (ignored: JobCanceledException) {
+        started.up()
+        canCheck.timeoutWaitUp()
+        assertThrows<JobCanceledException> {
+          checkCancelledEvenWithPCEDisabled(null)
         }
       }
     }
-    assertTrue(started.waitFor(2000))
+    started.timeoutWaitUp()
     job.cancel()
     canCheck.up()
-    f.get(2000, TimeUnit.MILLISECONDS)
+    f.timeoutGet()
   }
 }

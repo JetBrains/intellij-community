@@ -1,0 +1,5 @@
+// "Change return type of enclosing function 'test' to 'Any'" "true"
+class O
+class P
+
+fun test(b: Boolean): Any = if (b) O() else P()

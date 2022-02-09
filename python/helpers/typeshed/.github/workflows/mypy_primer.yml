@@ -11,12 +11,13 @@ on:
 jobs:
   mypy_primer:
     name: Run
+    if: github.actor != 'pre-commit-ci[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     strategy:
       matrix:
-        shard-index: [0, 1]
+        shard-index: [0, 1, 2, 3]
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
@@ -25,14 +26,14 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: "3.10"
       - name: Install dependencies
         run: pip install git+https://github.com/hauntsaninja/mypy_primer.git
       - name: Run mypy_primer
         shell: bash
         run: |
           cd typeshed_to_test
-          MYPY_VERSION=$(grep mypy== requirements-tests-py3.txt | cut -d = -f 3)
+          MYPY_VERSION=$(grep mypy== requirements-tests.txt | cut -d = -f 3)
           echo "new commit"
           git rev-list --format=%s --max-count=1 $GITHUB_SHA
           git checkout -b upstream_master origin/master
@@ -46,7 +47,7 @@ jobs:
             --new v${MYPY_VERSION} --old v${MYPY_VERSION} \
             --custom-typeshed-repo typeshed_to_test \
             --new-typeshed $GITHUB_SHA --old-typeshed upstream_master \
-            --num-shards 2 --shard-index ${{ matrix.shard-index }} \
+            --num-shards 4 --shard-index ${{ matrix.shard-index }} \
             --debug \
             --output concise \
             | tee diff_${{ matrix.shard-index }}.txt

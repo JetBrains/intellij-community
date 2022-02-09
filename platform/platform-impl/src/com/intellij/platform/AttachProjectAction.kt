@@ -13,9 +13,16 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isProjectDirectoryExistsUsingIo
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectAttachProcessor
+import com.intellij.util.SystemProperties
+import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -42,7 +49,19 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
 
   fun chooseAndAttachToProject(project: Project) {
     val descriptor = OpenProjectFileChooserDescriptor(true)
-    FileChooser.chooseFiles(descriptor, project, null) {
+    var preselectedDirectory = project.getUserData(TO_SELECT_KEY)?.let {
+      project.putUserData(TO_SELECT_KEY, null) // reset the value
+      LocalFileSystem.getInstance().findFileByNioFile(it)
+    }
+    if (preselectedDirectory == null) {
+      preselectedDirectory =
+        if (StringUtil.isNotEmpty(GeneralSettings.getInstance().defaultProjectDirectory))
+          VfsUtil.findFileByIoFile(File(GeneralSettings.getInstance().defaultProjectDirectory), true)
+        else
+          VfsUtil.findFileByIoFile(File(SystemProperties.getUserHome()), true)
+    }
+
+    FileChooser.chooseFiles(descriptor, project, preselectedDirectory) {
       val directory = it[0]
       if (validateDirectory(project, directory)) {
         attachProject(directory, project)
@@ -51,6 +70,9 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
   }
 
   companion object {
+    @JvmStatic
+    val TO_SELECT_KEY = Key.create<Path>("attach_to_select_key")
+
     fun attachProject(virtualFile: VirtualFile, project: Project) {
       var baseDir: VirtualFile? = virtualFile
       if (!virtualFile.isDirectory) {

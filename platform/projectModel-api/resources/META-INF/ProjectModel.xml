@@ -8,4 +8,8 @@
     <extensionPoint name="primaryModuleManager" interface="com.intellij.openapi.module.PrimaryModuleManager" dynamic="true"/>
     <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.openapi.roots.libraries.LibraryKindRegistry"/>
+  </extensions>
 </idea-plugin>

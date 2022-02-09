@@ -72,7 +72,7 @@ class LightNavigateToStdlibSourceTest : KotlinLightCodeInsightFixtureTestCase() 
     fun testRefToPrintlnWithJS() {
         doTest(
             "fun foo() { <caret>println() }",
-            "console.kt"
+            "Console.kt"
         )
     }
 
@@ -88,7 +88,7 @@ class LightNavigateToStdlibSourceTest : KotlinLightCodeInsightFixtureTestCase() 
     fun testRefToPrintlnWithJSAndJVM() {
         doTest(
             "fun foo() { <caret>println() }",
-            "console.kt"
+            "Console.kt"
         )
     }
 

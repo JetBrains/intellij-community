@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
-import com.intellij.compiler.CompilerReferenceService
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.CommonClassNames
@@ -9,19 +8,12 @@ import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
-import com.intellij.testFramework.runAll
 import org.jetbrains.kotlin.search.assertWithExpectedScope
-import kotlin.properties.Delegates
 
 @SkipSlowTestLocally
 class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
-    private var defaultCommonEnableState by Delegates.notNull<Boolean>()
-
     override fun setUp() {
         super.setUp()
-        defaultCommonEnableState = CompilerReferenceService.IS_ENABLED_KEY.asBoolean()
-        CompilerReferenceService.IS_ENABLED_KEY.setValue(true)
-
         myFixture.addFileToProject(
             "one/JavaClass.java",
             """
@@ -97,11 +89,6 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
         installCompiler()
         rebuildProject()
     }
-
-    override fun tearDown() = runAll(
-        { CompilerReferenceService.IS_ENABLED_KEY.setValue(defaultCommonEnableState) },
-        { super.tearDown() },
-    )
 
     fun `test array list with code usage scope`() {
         PsiSearchHelper.getInstance(project)

@@ -17,9 +17,9 @@ import com.intellij.util.ref.DebugReflectionUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
-import org.jetbrains.kotlin.asJava.PsiClassRenderer
-import org.jetbrains.kotlin.asJava.PsiClassRenderer.renderClass
+import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.asJava.classes.*
+import org.jetbrains.kotlin.idea.asJava.renderClass
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
 import kotlin.test.assertFails
@@ -68,9 +68,9 @@ object UltraLightChecker {
 
         val oldForceFlag = KtUltraLightSupport.forceUsingOldLightClasses
         KtUltraLightSupport.forceUsingOldLightClasses = true
-        val gold = KtLightClassForFacade.createForFacadeNoCache(fqName, searchScope, project)
+        val gold = KtLightClassForFacadeImpl.createForFacadeNoCache(fqName, searchScope, project)
         KtUltraLightSupport.forceUsingOldLightClasses = false
-        val ultraLightClass = KtLightClassForFacade.createForFacadeNoCache(fqName, searchScope, project) ?: return null
+        val ultraLightClass = KtLightClassForFacadeImpl.createForFacadeNoCache(fqName, searchScope, project) ?: return null
         KtUltraLightSupport.forceUsingOldLightClasses = oldForceFlag
 
         checkClassEquivalenceByRendering(gold, ultraLightClass)

@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.language
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionBean
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
@@ -108,7 +109,13 @@ class ReportingTest : BasePlatformTestCase() {
   }
 
   private fun isAuxiliaryIntention(text: String) =
-    text.contains("Edit inspection") || text.contains("Run inspection") || text.contains("Disable inspection") || text.contains("Fix all")
+    text.contains("Edit inspection")
+    || text.contains("Run inspection")
+    || text.contains("Disable inspection")
+    || text.contains("Fix all")
+    || text == CodeInsightBundle.message("assign.intention.shortcut")
+    || text == CodeInsightBundle.message("edit.intention.shortcut")
+    || text == CodeInsightBundle.message("remove.intention.shortcut")
 
   private fun mockProblem(text: TextContent, range: TextRange, corrections: List<String>, customFixes: List<LocalQuickFix>): TextProblem {
     val rule = object : Rule("something.something", "something", "something") {
@@ -117,7 +124,7 @@ class ReportingTest : BasePlatformTestCase() {
     return object : TextProblem(rule, text, range) {
       override fun getShortMessage() = "this problem"
       override fun getDescriptionTemplate(isOnTheFly: Boolean) = "something"
-      override fun getReplacementRange() = highlightRange
+      override fun getReplacementRange() = range
       override fun getCorrections() = corrections
       override fun getCustomFixes() = customFixes
     }

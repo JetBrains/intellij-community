@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.findUsages
 
@@ -458,5 +458,12 @@ class Bar { static def <caret>getFoo() {} }
     myFixture.configureByText("_.groovy", "11")
     PsiFile[] words = PsiSearchHelper.getInstance(getProject()).findFilesWithPlainTextWords("11")
     assertEquals(1, words.length)
+  }
+
+  void 'test find usages for path of a package'() {
+    def file = myFixture.addFileToProject("aaa/bbb/Foo.groovy", "package aaa.bbb \n class Foo {}")
+    myFixture.addFileToProject("Bar.groovy", "import aaa.bbb.Foo")
+    def packageStatement = file.children[0].children[1].reference.resolve() // package 'aaa.bbb'
+    assertEquals(2, ReferencesSearch.search(packageStatement).findAll().size())
   }
 }

@@ -64,9 +64,8 @@ UF_IMMUTABLE: int
 UF_APPEND: int
 UF_OPAQUE: int
 UF_NOUNLINK: int
-if sys.platform == "darwin":
-    UF_COMPRESSED: int  # OS X 10.6+ only
-    UF_HIDDEN: int  # OX X 10.5+ only
+UF_COMPRESSED: int  # OS X 10.6+ only
+UF_HIDDEN: int  # OX X 10.5+ only
 SF_ARCHIVED: int
 SF_IMMUTABLE: int
 SF_APPEND: int

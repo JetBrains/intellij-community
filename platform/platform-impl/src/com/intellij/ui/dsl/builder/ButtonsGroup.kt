@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
-import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 
-@ApiStatus.Experimental
 interface ButtonsGroup {
 
   /**
@@ -20,7 +19,7 @@ inline fun <reified T : Any> ButtonsGroup.bind(noinline getter: () -> T, noinlin
 }
 
 inline fun <reified T : Any> ButtonsGroup.bind(prop: KMutableProperty0<T>): ButtonsGroup {
-  return bind(prop.toBinding())
+  return bind(prop.toBindingInternal())
 }
 
 inline fun <reified T : Any> ButtonsGroup.bind(binding: PropertyBinding<T>): ButtonsGroup {

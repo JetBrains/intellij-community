@@ -1,5 +1,6 @@
 <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
           zendesk-form-id="360003391800" zendesk-url="https://jbs1454063113.zendesk.com">
+  <field id="26095025" type="product_tag"/>
   <field id="1900001421894" type="feedback_type"/>
   <field id="1900001312814" type="collected_data"/>
 </feedback>

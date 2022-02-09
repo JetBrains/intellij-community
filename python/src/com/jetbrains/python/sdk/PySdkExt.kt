@@ -21,9 +21,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootManager
@@ -233,7 +235,7 @@ var Project.pythonSdk: Sdk?
   }
 
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
-  val root = sdk.homePath?.let { PythonSdkUtil.getVirtualEnvRoot(it) }?.let { LocalFileSystem.getInstance().findFileByIoFile(it) } ?: return
+  val root = getInnerVirtualEnvRoot(sdk) ?: return
 
   val model = ModuleRootManager.getInstance(this).modifiableModel
 
@@ -245,6 +247,28 @@ fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
 
   WriteAction.run<Throwable> {
     model.commit()
+  }
+}
+
+fun Project?.excludeInnerVirtualEnv(sdk: Sdk) {
+  val binary = sdk.homeDirectory ?: return
+  val possibleProjects = if (this != null) listOf(this) else ProjectManager.getInstance().openProjects.asList()
+  possibleProjects.firstNotNullOfOrNull { ModuleUtil.findModuleForFile(binary, it) }?.excludeInnerVirtualEnv(sdk)
+}
+
+fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
+  val binaryPath = sdk.homePath ?: return null
+
+  val possibleVirtualEnv = PythonSdkUtil.getVirtualEnvRoot(binaryPath)
+
+  return if (possibleVirtualEnv != null) {
+    LocalFileSystem.getInstance().findFileByIoFile(possibleVirtualEnv)
+  }
+  else if (PythonSdkUtil.isCondaVirtualEnv(binaryPath)) {
+    PythonSdkUtil.getCondaDirectory(sdk)
+  }
+  else {
+    null
   }
 }
 

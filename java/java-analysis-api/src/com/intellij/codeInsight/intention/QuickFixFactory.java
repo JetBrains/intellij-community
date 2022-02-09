@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -530,8 +530,22 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
 
-  public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
-                                                                          @NotNull PsiType enclosingClassType);
+  /**
+   * Creates a fix that changes the type of the receiver parameter
+   *
+   * @param parameter receiver parameter to change type for
+   * @param type      new type of the receiver parameter
+   *                  <p>
+   *                  In an instance method the type of the receiver parameter must be
+   *                  the class or interface in which the method is declared.
+   *                  <p>
+   *                  In an inner class's constructor the type of the receiver parameter
+   *                  must be the class or interface which is the immediately enclosing
+   *                  type declaration of the inner class.
+   * @return a new fix
+   */
+  public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter parameter,
+                                                                          @NotNull PsiType type);
 
   public abstract @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass);
 
@@ -557,4 +571,32 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
                                                               @NotNull PsiCaseLabelElement labelElement);
+
+  @NotNull
+  public abstract IntentionAction createSimplifyBooleanFix(@NotNull PsiExpression expression, boolean value);
+
+  /**
+   * Creates a fix that sets explicit variable type
+   *
+   * @param variable variable to update
+   * @param type type to set
+   * @return a new fix
+   */
+  public abstract @NotNull IntentionAction createSetVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type);
+
+  /**
+   * Creates a fix that changes the name of the receiver parameter
+   *
+   * @param parameter receiver parameter to change name for
+   * @param newName   new name of the receiver parameter
+   *                  <p>
+   *                  In an instance method the name of the receiver parameter must be <code>this</code>.
+   *                  <p>
+   *                  In an inner class's constructor the name of the receiver parameter must be <i>Identifier</i> . <code>this</code>
+   *                  where <i>Identifier</i> is the simple name of the class or interface which is the immediately enclosing type
+   *                  declaration of the inner class.
+   * @return a new fix
+   */
+  public abstract @NotNull IntentionAction createReceiverParameterNameFix(@NotNull PsiReceiverParameter parameter,
+                                                                          @NotNull String newName);
 }

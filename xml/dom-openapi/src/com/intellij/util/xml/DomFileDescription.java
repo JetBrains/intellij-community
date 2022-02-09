@@ -61,20 +61,6 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * Register an implementation class to provide additional functionality for DOM elements.
-   *
-   * @param domElementClass     interface class.
-   * @param implementationClass abstract implementation class.
-   * @see #initializeFileDescription()
-   * @deprecated use dom.implementation extension point instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final <Dom extends DomElement> void registerImplementation(Class<Dom> domElementClass, Class<? extends Dom> implementationClass) {
-    myImplementations.put(domElementClass, implementationClass);
-  }
-
-  /**
    * Map namespace key, call from {@link #initializeFileDescription()}.
    *
    * @param namespaceKey namespace identifier

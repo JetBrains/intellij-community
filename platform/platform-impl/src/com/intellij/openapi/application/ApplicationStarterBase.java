@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,17 +20,10 @@ import java.util.concurrent.Future;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class ApplicationStarterBase implements ApplicationStarter {
-  private final String myCommandName;
   private final int[] myArgsCount;
 
-  protected ApplicationStarterBase(@NotNull @NonNls String commandName, int... possibleArgumentsCount) {
-    myCommandName = commandName;
+  protected ApplicationStarterBase(int... possibleArgumentsCount) {
     myArgsCount = possibleArgumentsCount;
-  }
-
-  @Override
-  public String getCommandName() {
-    return myCommandName;
   }
 
   @Override

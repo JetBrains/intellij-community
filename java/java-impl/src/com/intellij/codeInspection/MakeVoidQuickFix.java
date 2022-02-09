@@ -13,9 +13,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
@@ -75,19 +74,18 @@ public class MakeVoidQuickFix implements LocalQuickFix {
       return;
     }
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodsToModify)) return;
-    final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
-                                                                      psiMethod,
-                                                                      false, null, psiMethod.getName(),
-                                                                      PsiType.VOID,
-                                                                      ParameterInfoImpl.fromMethod(psiMethod)) {
-      @Override
-      protected void performRefactoring(UsageInfo @NotNull [] usages) {
-        super.performRefactoring(usages);
-        for (final PsiMethod method: methodsToModify) {
-          replaceReturnStatements(method);
-        }
-      }
-    };
+    var provider = JavaSpecialRefactoringProvider.getInstance();
+    var csp = provider.getChangeSignatureProcessorWithCallback(project,
+                                                                     psiMethod,
+                                                                     false, null, psiMethod.getName(),
+                                                                     PsiType.VOID,
+                                                                     ParameterInfoImpl.fromMethod(psiMethod),
+                                                                     true,
+                                                                     infos -> {
+                                                                       for (final PsiMethod method : methodsToModify) {
+                                                                         replaceReturnStatements(method);
+                                                                       }
+                                                                     });
     csp.run();
   }
 

@@ -54,7 +54,10 @@ open class LanguageToolChecker : TextChecker() {
             .map { Problem(it, lang, extracted, this is TestChecker) }
             .filterNot { isGitCherryPickedFrom(it.match, extracted) }
             .filterNot { isKnownLTBug(it.match, extracted) }
-            .filterNot { extracted.hasUnknownFragmentsIn(it.patternRange) }
+            .filterNot {
+              val range = if (it.fitsGroup(RuleGroup.CASING)) includeSentenceBounds(extracted, it.patternRange) else it.patternRange
+              extracted.hasUnknownFragmentsIn(range)
+            }
             .toList()
         }
       }
@@ -69,6 +72,15 @@ open class LanguageToolChecker : TextChecker() {
     }
   }
 
+  private fun includeSentenceBounds(text: CharSequence, range: TextRange): TextRange {
+    var start = range.startOffset
+    var end = range.endOffset
+
+    while (start > 0 && text[start - 1].isWhitespace()) start--
+    while (end < text.length && text[end].isWhitespace()) end++
+    return TextRange(start, end)
+  }
+
   private class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)
     : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
 
@@ -81,11 +93,12 @@ open class LanguageToolChecker : TextChecker() {
 
     override fun getTooltipTemplate(): String = toTooltipTemplate(match)
 
-    override fun getReplacementRange() = highlightRange
+    override fun getReplacementRange(): TextRange = highlightRanges[0]
     override fun getCorrections(): List<String> = match.suggestedReplacements
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
     override fun fitsGroup(group: RuleGroup): Boolean {
+      val highlightRange = highlightRanges[0]
       val ruleId = match.rule.id
       if (RuleGroup.INCOMPLETE_SENTENCE in group.rules) {
         if (highlightRange.startOffset == 0 &&

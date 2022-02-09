@@ -1,29 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.state.projectCreation
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
+import kotlinx.serialization.Serializable
 
-
-@State(name = "ProjectCreationInfoState", reloadable = true, storages = [Storage("ProjectCreationInfoState.xml")])
+@Service(Service.Level.APP)
+@State(name = "ProjectCreationInfoState", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
 class ProjectCreationInfoService : PersistentStateComponent<ProjectCreationInfoState> {
-
   companion object {
     @JvmStatic
-    fun getInstance(): ProjectCreationInfoService {
-      return ApplicationManager.getApplication().getService(ProjectCreationInfoService::class.java)
-    }
+    fun getInstance(): ProjectCreationInfoService = service()
   }
 
-  private var state: ProjectCreationInfoState = ProjectCreationInfoState()
+  private var state = ProjectCreationInfoState()
 
-  override fun getState(): ProjectCreationInfoState {
-    return state
-  }
+  override fun getState(): ProjectCreationInfoState = state
 
   override fun loadState(state: ProjectCreationInfoState) {
     this.state = state
   }
 }
+
+@Serializable
+data class ProjectCreationInfoState(
+  var numberNotificationShowed: Int = 0,
+  var feedbackSent: Boolean = false,
+  var lastCreatedProjectBuilderId: String? = null
+)

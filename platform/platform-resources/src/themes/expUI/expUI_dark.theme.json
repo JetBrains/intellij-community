@@ -110,7 +110,7 @@
 
       "focusColor": "Blue6",
 
-      "separatorColor": "Grey4",
+      "separatorColor": "Grey3",
       "separatorForeground": "Grey7"
     },
 
@@ -143,8 +143,21 @@
       }
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "Grey5",
+      "selectedEndBorderColor": "Grey5",
+      "selectedButtonColor": "Grey3",
+      "focusedSelectedButtonColor": "Blue6"
+    },
+
     "ComboBox": {
       "ArrowButton.background": "Grey2"
+    },
+
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
     },
 
     "FileColor": {
@@ -159,12 +172,21 @@
       "focusedBorderColor": "Grey2"
     },
 
+    "DragAndDrop": {
+      "borderColor": "Blue6",
+      "rowBackground": "#3573F026"
+    },
+
     "EditorTabs": {
       "tabInsets": "-3,12,-4,8",
       "hoverBackground": "Grey1",
       "inactiveHoverBackground": "Grey1",
       "underTabsBorderColor":"Grey3"
     },
+
+    "Editor.searchFieldInsets": "7,10,7,8",
+
+    "Label.errorForeground": "Red6",
 
     "Link": {
       "activeForeground": "Blue8",
@@ -187,20 +209,35 @@
 
     "Notification": {
       "background": "Grey2",
-      "borderColor": "Grey2",
+      "borderColor": "Grey3",
       "MoreButton": {
         "background": "Grey2",
         "innerBorderColor": "Grey4"
       }
     },
 
+    "OnePixelDivider.background": "Grey3",
+
     "Popup": {
+      "Advertiser": {
+        "borderInsets": "6,20,6,20",
+        "foreground": "Grey8",
+        "background": "Grey3",
+        "borderColor": "Grey3",
+        "fontSizeOffset": {
+          "os.default": -1,
+          "os.windows": 0
+        }
+      },
       "Header": {
         "activeBackground": "Grey2",
-        "inactiveBackground": "Grey3"
+        "inactiveBackground": "Grey2",
+        "inactiveForeground": "Grey7"
       },
-      "Advertiser.foreground": "Grey7"
+      "borderWidth": 0.5
     },
+
+    "ComplexPopup.Header.background": "Grey3",
 
     "CompletionPopup": {
       "foreground": "Grey10",
@@ -213,14 +250,30 @@
       "indeterminateEndColor": "Blue5",
       "trackColor": "Grey4"
     },
+    "ToolBar.verticalToolbarInsets": "7,4,7,4",
+    "ToolBar.horizontalToolbarInsets": "4,7,4,7",
+
+    "SearchField": {
+      "errorForeground": "Red6",
+      "errorBackground": "Red2"
+    },
 
     "SearchEverywhere": {
       "Tab": {
         "selectedBackground": "Blue2",
         "selectedForeground": "Grey14"
       },
-      "Advertiser.foreground": "Grey7"
+      "Advertiser": {
+        "foreground": "Grey8",
+        "background": "Grey3"
+      }
     },
+
+    "SearchMatch": {
+      "startBackground": "Yellow5",
+      "endBackground": "Yellow5"
+    },
+
 
     "StatusBar": {
       "Widget": {
@@ -234,8 +287,10 @@
         "foreground": "Grey7",
         "hoverForeground": "Grey12",
         "hoverBackground": "Grey3",
-        "itemInsets": "0,0,0,2",
-        "chevronInset": "2"
+        "itemInsets": "0,0,0,0",
+        "chevronInset": "0",
+        "floatingToolbarInsets": "8,12,8,12",
+        "itemBackgroundInsets": "2,4,2,4"
       }
     },
 
@@ -254,24 +309,36 @@
       "Header": {
         "inactiveBackground": "Grey2",
         "font.size.offset": 0
+      },
+      "HeaderTab": {
+        "hoverBackground": "Grey3",
+        "hoverInactiveBackground": "Grey3",
+        "leftRightInsets": "0,12,0,12"
+      },
+      "Button": {
+        "DragAndDrop" : {
+          "stripeBackground" : "Grey2",
+          "buttonDropBackground": "#35538F99"
+        }
       }
     },
 
     "MainToolbar": {
-      "icon": {
+      "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
         "hoverBackground": "Blue1",
         "pressedBackground": "Blue1"
       },
-      "dropdown": {
+      "Dropdown": {
         "borderInsets": "12,6,12,6"
-      }
+      },
+      "background": "Grey2"
     },
 
     "Tree.rowHeight": "24",
 
-    "TitlePane.Button.preferredSize": "28,40"
+    "TitlePane.Button.preferredSize": "36,40"
   },
 
   "icons": {

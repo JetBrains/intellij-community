@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -35,10 +35,9 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     if (fileStatusManager != null) {
       for (int i = 0; i != windows.length; ++ i) {
         final EditorWindow window = windows [i];
-        final EditorComposite [] editors = window.getEditors ();
-        for (final EditorComposite editor : editors) {
-          if (isFileToClose(editor, window) || isFileToCloseInContext(event.getDataContext(), editor, window)) {
-            res.add(Pair.create(editor, window));
+        for (EditorComposite composite : window.getAllComposites()) {
+          if (isFileToClose(composite, window) || isFileToCloseInContext(event.getDataContext(), composite, window)) {
+            res.add(Pair.create(composite, window));
           }
         }
       }

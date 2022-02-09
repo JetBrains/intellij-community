@@ -33,7 +33,7 @@ public class JavaHomeFinderBasic {
   public JavaHomeFinderBasic(boolean checkDefaultLocations,
                              boolean forceEmbeddedJava,
                              @NotNull JavaHomeFinder.SystemInfoProvider systemInfo,
-                             String... paths) {
+                             String @NotNull ... paths) {
     mySystemInfo = systemInfo;
     if (checkDefaultLocations) {
       myFinders.add(this::checkDefaultLocations);

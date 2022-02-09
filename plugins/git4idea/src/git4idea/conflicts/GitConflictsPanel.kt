@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.conflicts
 
 import com.intellij.openapi.Disposable
@@ -23,9 +23,9 @@ import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import git4idea.GitUtil
 import git4idea.conflicts.GitConflictsUtil.acceptConflictSide
+import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
 import git4idea.conflicts.GitConflictsUtil.getConflictType
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
-import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
 import git4idea.repo.GitRepository
@@ -38,13 +38,12 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.DefaultTreeModel
 
-class GitConflictsPanel(
+internal class GitConflictsPanel(
   private val project: Project,
   private val mergeHandler: GitMergeHandler
 ) : Disposable {
-
   private val panel: JComponent
-  private val conflictsTree: MyChangesTree
+  private val conflictsTree = MyChangesTree(project)
 
   private val conflicts: MutableList<GitConflict> = ArrayList()
   private val reversedRoots: MutableSet<VirtualFile> = HashSet()
@@ -54,8 +53,7 @@ class GitConflictsPanel(
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   init {
-    conflictsTree = MyChangesTree(project)
-    conflictsTree.setKeepTreeState(true)
+    conflictsTree.isKeepTreeState = true
 
     updateQueue = MergingUpdateQueue("GitConflictsView", 300, true, conflictsTree, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
@@ -227,7 +225,7 @@ private class MyChangesTree(project: Project)
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
     val groupingSupport = ChangesGroupingSupport(myProject, this, false)
-    installGroupingSupport(this, groupingSupport, GROUPING_KEYS_PROPERTY, DIRECTORY_GROUPING)
+    installGroupingSupport(this, groupingSupport, GROUPING_KEYS_PROPERTY, listOf(DIRECTORY_GROUPING))
     return groupingSupport
   }
 

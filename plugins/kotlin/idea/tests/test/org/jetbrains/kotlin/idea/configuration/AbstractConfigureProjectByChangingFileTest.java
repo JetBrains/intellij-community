@@ -18,8 +18,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightTestCase;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;

@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="jbr-api" type="repository">
+    <properties maven-id="com.jetbrains:jbr-api:11.1.0.1" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/11.1.0.1/jbr-api-11.1.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/11.1.0.1/jbr-api-11.1.0.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

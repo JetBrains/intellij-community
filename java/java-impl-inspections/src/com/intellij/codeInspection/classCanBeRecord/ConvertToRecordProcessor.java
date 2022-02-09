@@ -153,7 +153,8 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         renameMethodProcessor.findExistingNameConflicts(renameMethodInfo.myMethod, renameMethodInfo.myNewName, conflicts, myAllRenames);
       }
     }
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(conflictingFields, myRecordCandidate.getPsiClass(), conflicts, PRIVATE);
+    RefactoringConflictsUtil.getInstance()
+      .analyzeAccessibilityConflictsAfterMemberMove(myRecordCandidate.getPsiClass(), PRIVATE, conflictingFields, conflicts);
 
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ConflictsInTestsException.isTestIgnore()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
@@ -63,7 +63,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     final List<ZenCodingFilter> filters = ZenCodingFilter.getInstances();
     final GridBagLayout layoutManager = new GridBagLayout();
     final GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                                  JBUI.emptyInsets(), 0, 0);
+                                                                  JBInsets.emptyInsets(), 0, 0);
     myFiltersListPanel.setLayout(layoutManager);
     int added = 0;
     for (ZenCodingFilter filter : filters) {

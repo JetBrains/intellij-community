@@ -15,12 +15,12 @@ import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.introduceField.ElementToWorkOn
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.DocCommentPolicy
+import com.intellij.refactoring.util.JavaNameSuggestionUtil
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -56,9 +56,9 @@ import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.util.findElementByCommentPrefix
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.io.File
 import java.util.*
@@ -179,9 +179,9 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 expr,
                 true
             )
-            val suggestedNames = AbstractJavaInplaceIntroducer.appendUnresolvedExprName(
-                JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
-                initializer
+            val suggestedNames = JavaNameSuggestionUtil.appendUnresolvedExprName(
+              JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
+              initializer
             )
 
             IntroduceParameterProcessor(
@@ -375,8 +375,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         withCustomCompilerOptions(fileText, project, module) {
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
 
-            val addKotlinRuntime = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// WITH_RUNTIME") != null ||
-                    InTextDirectivesUtils.findStringWithPrefixes(fileText, "// WITH_STDLIB") != null
+            val addKotlinRuntime = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// WITH_STDLIB") != null
             if (addKotlinRuntime) {
                 ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, IdeaTestUtil.getMockJdk18())
             }

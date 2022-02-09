@@ -198,6 +198,18 @@ class GitMergeDialog(private val project: Project,
       })
   }
 
+  /**
+   * ```
+   * $ git branch --all
+   * |  master
+   * |  feature
+   * |* checked-out
+   * |+ checked-out-by-worktree
+   * |  remotes/origin/master
+   * |  remotes/origin/feature
+   * |  remotes/origin/HEAD -> origin/master
+   * ```
+   */
   @RequiresBackgroundThread
   private fun loadUnmergedBranches(root: VirtualFile): List<@NlsSafe String>? {
     var result: List<String>? = null
@@ -208,8 +220,14 @@ class GitMergeDialog(private val project: Project,
     try {
       result = Git.getInstance().runCommand(handler).getOutputOrThrow()
         .lines()
-        .filter { branch -> !LINK_REF_REGEX.matcher(branch).matches() }
-        .map { it.trim() }
+        .filter { line -> !LINK_REF_REGEX.matcher(line).matches() }
+        .mapNotNull { line ->
+          val matcher = BRANCH_NAME_REGEX.matcher(line)
+          when {
+            matcher.matches() -> matcher.group(1)
+            else -> null
+          }
+        }
     }
     catch (e: Exception) {
       LOG.warn("Failed to load unmerged branches for root: ${root}", e)
@@ -418,7 +436,8 @@ class GitMergeDialog(private val project: Project,
 
   companion object {
     private val LOG = logger<GitMergeDialog>()
-    private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
+    private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+") // aka 'symrefs'
+    private val BRANCH_NAME_REGEX = Pattern.compile(". (\\S+)\\s*")
 
     @NlsSafe
     private const val REMOTE_REF = "remotes/"

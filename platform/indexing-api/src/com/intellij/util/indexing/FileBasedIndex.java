@@ -124,6 +124,13 @@ public abstract class FileBasedIndex {
                                                                @Nullable Condition<? super V> valueChecker,
                                                                @NotNull Processor<? super VirtualFile> processor);
 
+  public abstract <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                              @NotNull Collection<? extends K> dataKeys,
+                                                              @NotNull GlobalSearchScope filter,
+                                                              @Nullable IdFilter idFilter,
+                                                              @Nullable Condition<? super V> valueChecker,
+                                                              @NotNull Processor<? super VirtualFile> processor);
+
   /**
    * It is guaranteed to return data which is up-to-date within the given project.
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist.

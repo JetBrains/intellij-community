@@ -12,11 +12,5 @@
     <problem_class>Method returns the same value</problem_class>
     <description>Method always returns &lt;code&gt;0&lt;/code&gt;</description>
   </problem>
-  <problem>
-    <file>LambdaWithSameValue.java</file>
-    <line>2</line>
-    <problem_class>Method returns the same value</problem_class>
-    <description>All implementations of this method always return &lt;code&gt;42&lt;/code&gt;</description>
-  </problem>
 </problems>
 

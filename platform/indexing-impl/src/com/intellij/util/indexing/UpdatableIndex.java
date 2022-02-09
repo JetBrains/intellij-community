@@ -13,9 +13,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-/**
- * @author Eugene Zhuravlev
- */
 public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Value, Input> {
 
   boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws

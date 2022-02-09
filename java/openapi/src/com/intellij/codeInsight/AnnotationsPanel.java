@@ -191,6 +191,8 @@ public class AnnotationsPanel {
   }
 
   private void loadAdvancedAnnotations(@NotNull AnnotationPanelModel model) {
+    // No project-specific annotations are possible for default project
+    if (myProject.isDefault()) return;
     String loading = JavaBundle.message("loading.additional.annotations");
     myCombo.addItem(loading);
     DumbService.getInstance(myProject).runWhenSmart(() -> {

@@ -648,5 +648,15 @@ public abstract class AbstractVcs extends StartedActivated {
   public boolean needsCaseSensitiveDirtyScope() {
     return false;
   }
+
+  /**
+   * Returns true if VCS root needs to be added to watched roots by 
+   * {@link com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestModifier} when updating VCS mappings.
+   *
+   * @return true if VCS root needs to be added to watched roots, false otherwise.
+   */
+  public boolean needsLFSWatchesForRoots() {
+    return true;
+  }
 }
 

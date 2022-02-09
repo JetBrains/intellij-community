@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
@@ -126,7 +126,8 @@ private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImp
   }
 }
 
-private fun getOrEmpty(map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>, descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
+private fun getOrEmpty(map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+                       descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
   return map.getOrDefault(descriptor, Collections.emptyList())
 }
 
@@ -175,6 +176,13 @@ private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
   return idMap.get(PluginManagerCore.JAVA_MODULE_ID.idString)
 }
 
+val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
+  // Migration started with converting intellij.notebooks.visualization to a platform plugin, but adding a package prefix to Pythonid
+  // or com.jetbrains.pycharm.ds.customization is a difficult task that can't be done by a single shot.
+  "Pythonid",
+  "com.jetbrains.pycharm.ds.customization",
+)
+
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
                                                  idMap: Map<String, IdeaPluginDescriptorImpl>,
                                                  result: MutableSet<IdeaPluginDescriptorImpl>) {
@@ -195,6 +203,15 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
 
         result.add(dep)
       }
+    }
+
+    if (rootDescriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID) {
+        idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.firstOrNull { it.name == "intellij.platform.feedback" }?.let {
+        result.add(it.requireDescriptor())
+      }
+    }
+    else if (knownNotFullyMigratedPluginIds.contains(rootDescriptor.pluginId.idString)) {
+      idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.mapTo(result) { it.requireDescriptor() }
     }
 
     dependency.subDescriptor?.let {

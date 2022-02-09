@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleS
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.JBUI.CurrentTheme
 import net.miginfocom.swing.MigLayout
@@ -46,7 +46,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     }
 
     class MyBorder(val color: ()-> Color) : Border {
-      override fun getBorderInsets(c: Component?): Insets = JBUI.emptyInsets()
+      override fun getBorderInsets(c: Component?): Insets = JBInsets.emptyInsets()
 
       override fun isBorderOpaque(): Boolean = false
 

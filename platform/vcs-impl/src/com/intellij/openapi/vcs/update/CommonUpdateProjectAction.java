@@ -24,5 +24,4 @@ public class CommonUpdateProjectAction extends AbstractCommonUpdateAction {
   protected boolean filterRootsBeforeAction() {
     return false;
   }
-
 }

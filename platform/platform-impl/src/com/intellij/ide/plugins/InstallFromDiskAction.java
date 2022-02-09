@@ -19,8 +19,8 @@ public class InstallFromDiskAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
-      getTemplatePresentation().setEnabled(false);
-      getTemplatePresentation().setDescription(IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"));
+      e.getPresentation().setEnabled(false);
+      e.getPresentation().setDescription(IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"));
     }
   }
 

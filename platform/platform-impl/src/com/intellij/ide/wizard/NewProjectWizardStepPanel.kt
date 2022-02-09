@@ -1,51 +1,43 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.validateAfterPropagation
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import javax.swing.JComponent
-import javax.swing.JLabel
 
 class NewProjectWizardStepPanel(val step: NewProjectWizardStep) {
-  private val builder = NewProjectWizardPanelBuilder(step.context)
+  fun getPreferredFocusedComponent() = component.preferredFocusedComponent
 
-  fun getPreferredFocusedComponent() = builder.getPreferredFocusedComponent()
+  fun validate() =
+    component.validateCallbacks
+      .mapNotNull { it() }
+      .map { it.also(::logValidationInfoInHeadlessMode) }
+      .all { it.okEnabled }
 
-  fun validate() = builder.validate()
+  private fun logValidationInfoInHeadlessMode(info: ValidationInfo) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      logger<ModuleBuilder>().warn(info.message)
+    }
+  }
 
-  fun isModified() = builder.isModified()
+  fun isModified() = component.isModified()
 
-  fun apply() = builder.apply()
+  fun apply() = component.apply()
 
-  fun reset() = builder.reset()
+  fun reset() = component.reset()
 
   val component by lazy {
-    builder.panel(step::setupUI)
-      .apply { withBorder(JBUI.Borders.empty(14, 20)) }
-      .also { fixUiShiftingWhenChoosingMultiStep(it) }
-  }
-
-  private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {
-    val labels = UIUtil.uiTraverser(panel)
-      .filterIsInstance<JLabel>()
-      .filter { isRowLabel(it) }
-    val width = labels.maxOf { it.preferredSize.width }
-    labels.forEach { it.setMinimumWidth(width) }
-  }
-
-  private fun isRowLabel(label: JLabel): Boolean {
-    val layout = (label.parent as? DialogPanel)?.layout as? GridLayout
-    if (layout == null) {
-      return false
+    panel {
+      validateAfterPropagation(step.propertyGraph)
+      step.setupUI(this)
+    }.apply {
+      registerValidators(step.context.disposable)
+      withBorder(JBUI.Borders.empty(14, 20))
+      setMinimumWidthForAllRowLabels(JBUI.scale(90))
     }
-    val constraints = layout.getConstraints(label)
-    return label.getClientProperty(DslComponentProperty.ROW_LABEL) == true && constraints != null && constraints.gaps.left == 0
-  }
-
-  private fun JComponent.setMinimumWidth(width: Int) {
-    minimumSize = minimumSize.apply { this.width = width }
   }
 }

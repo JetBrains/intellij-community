@@ -153,14 +153,14 @@ public class TerminalSettingsPanel {
     return !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
-           || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
-           || (myMouseReportCheckBox.isSelected() != myOptionsProvider.enableMouseReporting())
-           || (mySoundBellCheckBox.isSelected() != myOptionsProvider.audibleBell())
-           || (myCopyOnSelectionCheckBox.isSelected() != myOptionsProvider.copyOnSelection())
-           || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.pasteOnMiddleMouseButton())
-           || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
-           || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
-           || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks())
+           || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.getCloseSessionOnLogout())
+           || (myMouseReportCheckBox.isSelected() != myOptionsProvider.getMouseReporting())
+           || (mySoundBellCheckBox.isSelected() != myOptionsProvider.getAudibleBell())
+           || (myCopyOnSelectionCheckBox.isSelected() != myOptionsProvider.getCopyOnSelection())
+           || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.getPasteOnMiddleMouseButton())
+           || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.getOverrideIdeShortcuts())
+           || (myShellIntegration.isSelected() != myOptionsProvider.getShellIntegration())
+           || (myHighlightHyperlinks.isSelected() != myOptionsProvider.getHighlightHyperlinks())
            || (myUseOptionAsMetaKey.isSelected() != myOptionsProvider.getUseOptionAsMetaKey())
            || myConfigurables.stream().anyMatch(c -> c.isModified())
            || !Comparing.equal(myEnvVarField.getData(), myProjectOptionsProvider.getEnvData())
@@ -172,8 +172,8 @@ public class TerminalSettingsPanel {
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
     myOptionsProvider.setCloseSessionOnLogout(myCloseSessionCheckBox.isSelected());
-    myOptionsProvider.setReportMouse(myMouseReportCheckBox.isSelected());
-    myOptionsProvider.setSoundBell(mySoundBellCheckBox.isSelected());
+    myOptionsProvider.setMouseReporting(myMouseReportCheckBox.isSelected());
+    myOptionsProvider.setAudibleBell(mySoundBellCheckBox.isSelected());
     myOptionsProvider.setCopyOnSelection(myCopyOnSelectionCheckBox.isSelected());
     myOptionsProvider.setPasteOnMiddleMouseButton(myPasteOnMiddleButtonCheckBox.isSelected());
     myOptionsProvider.setOverrideIdeShortcuts(myOverrideIdeShortcuts.isSelected());
@@ -196,14 +196,14 @@ public class TerminalSettingsPanel {
     myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
-    myCloseSessionCheckBox.setSelected(myOptionsProvider.closeSessionOnLogout());
-    myMouseReportCheckBox.setSelected(myOptionsProvider.enableMouseReporting());
-    mySoundBellCheckBox.setSelected(myOptionsProvider.audibleBell());
-    myCopyOnSelectionCheckBox.setSelected(myOptionsProvider.copyOnSelection());
-    myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.pasteOnMiddleMouseButton());
-    myOverrideIdeShortcuts.setSelected(myOptionsProvider.overrideIdeShortcuts());
-    myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
-    myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
+    myCloseSessionCheckBox.setSelected(myOptionsProvider.getCloseSessionOnLogout());
+    myMouseReportCheckBox.setSelected(myOptionsProvider.getMouseReporting());
+    mySoundBellCheckBox.setSelected(myOptionsProvider.getAudibleBell());
+    myCopyOnSelectionCheckBox.setSelected(myOptionsProvider.getCopyOnSelection());
+    myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.getPasteOnMiddleMouseButton());
+    myOverrideIdeShortcuts.setSelected(myOptionsProvider.getOverrideIdeShortcuts());
+    myShellIntegration.setSelected(myOptionsProvider.getShellIntegration());
+    myHighlightHyperlinks.setSelected(myOptionsProvider.getHighlightHyperlinks());
     myUseOptionAsMetaKey.setSelected(myOptionsProvider.getUseOptionAsMetaKey());
     myConfigurables.forEach(c -> c.reset());
     myEnvVarField.setData(myProjectOptionsProvider.getEnvData());

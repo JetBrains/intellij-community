@@ -2,8 +2,13 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C> {
@@ -12,14 +17,17 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C>
     binding)
 }
 
-fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: GraphProperty<T>): Cell<C> {
-  component.selectedItem = property.get()
-  return graphProperty(property)
-    .applyToComponent { bind(property) }
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: GraphProperty<T>) = bindItem(property)
+
+fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: ObservableMutableProperty<T>): Cell<C> {
+  installValidationRequestor(property)
+  return applyToComponent { bind(property) }
 }
 
 inline fun <reified T : Any, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T>): Cell<C> {
-  return bindItem(prop.toBinding().toNullable())
+  return bindItem(prop.toBindingInternal().toNullable())
 }
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit): Cell<C> {

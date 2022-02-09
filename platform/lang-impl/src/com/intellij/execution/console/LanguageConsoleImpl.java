@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -144,7 +144,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleExecutionEditor.getComponent());
     myPanel.add(myScrollBar);
-    myPanel.setBackground(new JBColor(() -> myConsoleExecutionEditor.getEditor().getBackgroundColor()));
+    myPanel.setBackground(JBColor.lazy(() -> myConsoleExecutionEditor.getEditor().getBackgroundColor()));
     DataManager.registerDataProvider(myPanel, this);
   }
 

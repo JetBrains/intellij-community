@@ -1,6 +1,7 @@
 name: Check stubs
 
 on:
+  workflow_dispatch:
   push:
   pull_request:
 
@@ -17,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - run: pip install $(grep tomli== requirements-tests-py3.txt)
+      - run: pip install $(grep tomli== requirements-tests.txt)
       - run: ./tests/check_consistent.py
 
   new-syntax:
@@ -34,26 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - run: pip install $(grep flake8 requirements-tests-py3.txt)
+      - run: pip install $(grep flake8 requirements-tests.txt)
       - run: flake8
-
-  black:
-    name: Check formatting with black
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - run: pip install $(grep black requirements-tests-py3.txt)
-      - run: black --check --diff stdlib stubs
-
-  isort:
-    name: Check imports with isort
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - run: pip install $(grep isort requirements-tests-py3.txt)
-      - run: isort --check-only --diff stdlib stubs
 
   pytype:
     name: Run pytype against the stubs
@@ -63,7 +46,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - run: pip install -r requirements-tests-py3.txt
+      - run: pip install -r requirements-tests.txt
       - run: ./tests/pytype_test.py
 
   mypy:
@@ -77,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - run: pip install $(grep tomli== requirements-tests-py3.txt) $(grep mypy== requirements-tests-py3.txt)
+      - run: pip install $(grep tomli== requirements-tests.txt) $(grep mypy== requirements-tests.txt)
       - run: ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
 
   pyright:
@@ -89,7 +72,7 @@ jobs:
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
       fail-fast: false
     env:
-      PYRIGHT_VERSION: 1.1.175 # Must match pyright_test.py.
+      PYRIGHT_VERSION: 1.1.192 # Must match pyright_test.py.
     steps:
       - uses: actions/checkout@v2
       - uses: jakebailey/pyright-action@v1
@@ -111,9 +94,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        # Python 3.9.7 is required due to changes to ForwardRef.
-        python-version: ["3.6", "3.7", "3.8", "3.9.7", "3.10"]
+        # Temporarily disable "macos-latest", since Python 3.10.1 is not available.
+        # os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        os: ["ubuntu-latest", "windows-latest"]
+        # Temporarily hard-coded 3.10.1 due to stubtest incompatibilities.
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10.1"]
       fail-fast: false
 
     steps:
@@ -125,23 +110,29 @@ jobs:
       - name: Update pip
         run: python -m pip install -U pip
       - name: Install dependencies
-        run: pip install $(grep tomli== requirements-tests-py3.txt) $(grep mypy== requirements-tests-py3.txt)
+        run: pip install $(grep tomli== requirements-tests.txt) $(grep mypy== requirements-tests.txt)
       - name: Run stubtest
-        run: python tests/stubtest_stdlib.py --ignore-unused-allowlist
+        run: python tests/stubtest_stdlib.py
 
   stubtest-third-party:
     name: Check third party stubs with stubtest
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        shard-index: [0, 1, 2, 3]
-      fail-fast: false
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
       - name: Install dependencies
-        run: pip install $(grep tomli== requirements-tests-py3.txt)
+        run: pip install $(grep tomli== requirements-tests.txt)
       - name: Run stubtest
-        run: python tests/stubtest_third_party.py --num-shards 4 --shard-index ${{ matrix.shard-index }}
+        run: |
+          STUBS=$(git diff --name-only origin/${{ github.base_ref }} HEAD | egrep ^stubs/ | cut -d "/" -f 2 | sort -u | (while read stub; do [ -d stubs/$stub ] && echo $stub || true; done))
+          if test -n "$STUBS"; then
+            echo "Testing $STUBS..."
+            python tests/stubtest_third_party.py $STUBS
+          else
+            echo "Nothing to test"
+          fi

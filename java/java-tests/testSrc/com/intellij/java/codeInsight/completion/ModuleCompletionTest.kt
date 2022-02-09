@@ -75,11 +75,18 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testProvidesWithUnambiguous() =
     complete("module M { provides pkg.main.MySvc with pkg.other.M<caret> }", "module M { provides pkg.main.MySvc with pkg.other.MySvcImpl<caret> }")
 
-  @NeedsIndex.Full // for inheritance check
+  @NeedsIndex.SmartMode(reason = "Smart mode is necessary for optimizing imports; full index is needed for inheritance check")
   fun testProvidesOrder() {
-    myFixture.configureByText("module-info.java", "import pkg.main.*;import pkg.other.*; module M {provides MySvc with <caret>}")
+    myFixture.configureByText("module-info.java", "import pkg.main.*; module M {provides MySvc with M<caret>}")
     myFixture.completeBasic()
-    assertEquals(listOf("MySvc", "MySvcImpl", "pkg", "MyAnno"), myFixture.lookupElementStrings)
+    assertEquals(listOf("MySvc", "MySvcImpl", "MyAnno"), myFixture.lookupElementStrings)
+    myFixture.lookup.currentItem = myFixture.lookupElements!![1]
+    myFixture.type('\n')
+    myFixture.checkResult("import pkg.main.*;\n" +
+                          "import pkg.other.MySvcImpl;\n" +
+                          "\n" +
+                          "module M {provides MySvc with MySvcImpl\n" +
+                          "}")
   }
 
   @NeedsIndex.Full

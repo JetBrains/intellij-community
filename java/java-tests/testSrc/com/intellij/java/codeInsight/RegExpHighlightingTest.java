@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -8,6 +8,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.regexp.inspection.AnonymousGroupInspection;
+import org.intellij.lang.regexp.inspection.RegExpSimplifiableInspection;
 import org.intellij.lang.regexp.inspection.UnexpectedAnchorInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +27,12 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("<warning descr=\"Anonymous capturing group\">(</warning>moo)<warning descr=\"Numeric back reference\">\\1</warning>");
   }
 
-  public void testSingleRepetition() {
-    doTest("a<weak_warning descr=\"Single repetition\">{1}</weak_warning>");
+  public void testWhiteSpaceProperty() {
+    // needs only partial escaping
+    @NonNls String code = "<weak_warning descr=\"'\\\\P{IsBlank}' can be simplified to '[^ \\t]'\">\\\\P{IsBlank}</weak_warning>";
+    myFixture.enableInspections(new RegExpSimplifiableInspection());
+    myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
+    myFixture.testHighlighting();
   }
 
   public void testRedundantEscape1() {
@@ -38,22 +43,6 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("\\b <error descr=\"This boundary is not supported in this regex dialect\">\\b{g}</error> \\B \\A \\z \\Z \\G");
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), myFixture.getTestRootDisposable());
     doTest("\\b \\b{g} \\B \\A \\z \\Z \\G");
-  }
-
-  public void testSimplifiableRange1() {
-    doTest("a<weak_warning descr=\"Repetition range replaceable by '?'\">{0,1}</weak_warning>");
-  }
-
-  public void testSimplifiableRange2() {
-    doTest("a<weak_warning descr=\"Repetition range replaceable by '+'\">{1,}</weak_warning>");
-  }
-
-  public void testSimplifiableRange3() {
-    doTest("a<weak_warning descr=\"Repetition range replaceable by '*'\">{0,}</weak_warning>");
-  }
-
-  public void testFixedRepetitionRange() {
-    doTest("a<weak_warning descr=\"Fixed repetition range\">{3,3}</weak_warning>");
   }
 
   public void testNotDuplicateControlCharacter() {
@@ -108,10 +97,6 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
 
   public void testValidGroupName() {
     doTest("(?<importantValue1>\\d\\d)");
-  }
-
-  public void testRedundantCharacterRange() {
-    doTest("[<warning descr=\"Redundant character range\">a-a</warning>]");
   }
 
   public void testIllegalCharacterRange1() {
@@ -210,13 +195,12 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("a{2147483647}");
     doTest("a{<error descr=\"Repetition value too large\">2147483648</error>}");
     doTest("a{<error descr=\"Illegal repetition range (min > max)\">1,0</error>}");
-    doTest("a<weak_warning descr=\"Repetition range replaceable by '*'\">{<error descr=\"Number expected\">,</error>}</weak_warning>");
   }
 
   public void testOptions() {
-    doTest("(?i)<error descr=\"Dangling metacharacter\">+</error>");
-    doTest("(?i)<error descr=\"Dangling metacharacter\">*</error>");
-    doTest("(?i)<error descr=\"Dangling metacharacter\">{5,6}</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '+'\">+</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '*'\">*</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '{5,6}'\">{5,6}</error>");
   }
 
   public void testLookbehind() {

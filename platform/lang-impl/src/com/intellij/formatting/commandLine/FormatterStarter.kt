@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ArgumentsException
@@ -17,20 +17,15 @@ import java.io.IOException
 import java.nio.charset.Charset
 import kotlin.system.exitProcess
 
-
-const val FORMAT_COMMAND_NAME = "format"
-
 private val LOG = Logger.getInstance(FormatterStarter::class.java)
-
 
 /**
  * A launcher class for command-line formatter.
  */
-class FormatterStarter : ApplicationStarter {
-
+internal class FormatterStarter : ApplicationStarter {
   val messageOutput = StdIoMessageOutput
 
-  override fun getCommandName() = FORMAT_COMMAND_NAME
+  override fun getCommandName() = "format"
 
   override fun main(args: Array<String>) {
     messageOutput.info("$appInfo Formatter\n")
@@ -103,6 +98,7 @@ fun createFormatter(args: Array<String>, messageOutput: MessageOutput = StdIoMes
                 .onFailure { messageOutput.error("Ignoring charset setting: ${it.message}") }
               skipFlag.skip()
             }
+            "-allowDefaults" -> allowFactoryDefaults()
             else -> {
               if (arg.startsWith("-")) throw ArgumentsException("Unknown option $arg")
               withEntry(arg)
@@ -114,19 +110,29 @@ fun createFormatter(args: Array<String>, messageOutput: MessageOutput = StdIoMes
 
 
 private const val usageInfo = """
-Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset charsetName] path1 path2...
-  -h|-help       Show a help message and exit.
-  -s|-settings   A path to Intellij IDEA code style settings .xml file.
-  -r|-R          Scan directories recursively.
-  -d|-dry        Perform a dry run: no file modifications, only exit status.
-  -m|-mask       A comma-separated list of file masks.
-  -charset       Force charset to use when reading and writing files. 
+Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset charsetName] [-allowDefaults] path1 path2...
+  -h|-help         Show a help message and exit.
+  -s|-settings     A path to Intellij IDEA code style settings .xml file. This setting will be
+                   be used as a primary one regardless to the surrounding project settings
+  -r|-R            Scan directories recursively.
+  -d|-dry          Perform a dry run: no file modifications, only exit status.
+  -m|-mask         A comma-separated list of file masks.
+  -charset         Force charset to use when reading and writing files.
+  -allowDefaults   Use factory defaults when style is not defined for a given file. I.e. when -s
+                   is not not set and file doesn't belong to any IDEA project. Otherwise file will
+                   be ignored.
   path<n>        A path to a file or a directory.  
 """
 
+fun readSettings(settingsFile: File): CodeStyleSettings? =
+  VfsUtil.findFileByIoFile(settingsFile, true)
+    ?.let {
+      it.refresh(false, false)
+      CodeStyleSettingsLoader().loadSettings(it)
+    }
+
 private fun readSettings(settingsPath: String): CodeStyleSettings? =
-  VfsUtil.findFileByIoFile(File(settingsPath), true)
-    ?.let { CodeStyleSettingsLoader().loadSettings(it) }
+  readSettings(File(settingsPath))
 
 
 private val appInfo: String =

@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.actions.SynchronizeCurrentFileAction
 import com.intellij.ide.actions.cache.CacheInconsistencyProblem
+import com.intellij.ide.actions.cache.FilesRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
+import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -27,28 +30,30 @@ class RefreshIndexableFilesAction : RecoveryAction {
   override val actionKey: String
     get() = "refresh"
 
-  override fun performSync(project: Project): List<CacheInconsistencyProblem> {
+  override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
+    val project = recoveryScope.project
     //refresh files to be sure all changes processed before writing event log
-    val localRoots = ManagingFS.getInstance().localRoots
-    RefreshQueue.getInstance().refresh(false, true, null, *localRoots)
+    val rootsToRefresh = if (recoveryScope is FilesRecoveryScope) recoveryScope.files.toTypedArray() else ManagingFS.getInstance().localRoots
+    RefreshQueue.getInstance().refresh(false, true, null, *rootsToRefresh)
 
     val eventLog = EventLog()
     Disposer.newDisposable().use { actionDisposable ->
       project.messageBus.connect(actionDisposable).subscribe(VirtualFileManager.VFS_CHANGES, eventLog)
-
-      val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-      val rootUrls = fileBasedIndex.getIndexableFilesProviders(project).flatMap { it.rootUrls }
-      val files = arrayListOf<VirtualFile>()
-      for (rootUrl in rootUrls) {
-        val file = VirtualFileManager.getInstance().refreshAndFindFileByUrl(rootUrl)
-        if (file != null) {
-          files.add(file)
-        }
+      val files: Collection<VirtualFile>
+      if (recoveryScope is FilesRecoveryScope) {
+        files = recoveryScope.files
+      } else {
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        val rootUrls = fileBasedIndex.getIndexableFilesProviders(project).flatMap { it.getRootUrls(project) }
+        files = rootUrls.mapNotNull { VirtualFileManager.getInstance().refreshAndFindFileByUrl(it) }
       }
       SynchronizeCurrentFileAction.synchronizeFiles(files, project, false)
     }
-    return eventLog.loggedEvents.map { it.toCacheInconsistencyProblem() }
+    return eventLog.loggedEvents
+      .filter { event -> runReadAction { event.file.isValid && rootsToRefresh.any { it.isValid && VfsUtilCore.isAncestor(it, event.file, false) } } }
+      .map { it.toCacheInconsistencyProblem() }
   }
+
 
   private class EventLog : BulkFileListener {
     val loggedEvents: MutableList<Event> = mutableListOf()
@@ -70,16 +75,16 @@ class RefreshIndexableFilesAction : RecoveryAction {
 
     private fun logEvent(event: VFileEvent) {
       event.file?.let {
-        loggedEvents.add(Event(it.url))
+        loggedEvents.add(Event(it))
       }
     }
   }
 
-  private data class Event(val affectedFileUrl: String) {
+  private data class Event(val file: VirtualFile) {
     fun toCacheInconsistencyProblem(): CacheInconsistencyProblem {
       return object : CacheInconsistencyProblem {
         override val message: String
-          get() = "vfs event on $affectedFileUrl"
+          get() = "vfs event on ${file.url}"
       }
     }
   }

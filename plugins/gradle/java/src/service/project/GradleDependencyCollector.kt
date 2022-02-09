@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -35,7 +36,9 @@ class GradleDependencyUpdater : ExternalSystemTaskNotificationListenerAdapter() 
   override fun onEnd(id: ExternalSystemTaskId) {
     if (id.projectSystemId == GradleConstants.SYSTEM_ID && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
       id.findProject()?.let {
-        PluginAdvertiserService.instance.rescanDependencies(it)
+        ApplicationManager.getApplication().executeOnPooledThread {
+          PluginAdvertiserService.getInstance().rescanDependencies(it)
+        }
       }
     }
   }

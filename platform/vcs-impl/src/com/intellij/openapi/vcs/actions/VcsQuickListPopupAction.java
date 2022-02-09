@@ -6,7 +6,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsActions;
@@ -19,15 +18,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @author Roman.Chernyatchik
- * <p>
  * Context aware VCS actions quick list.
- * May be customized using com.intellij.openapi.vcs.actions.VcsQuickListContentProvider extension point.
+ * <p>
+ * Can be customized using {@link com.intellij.openapi.vcs.actions.VcsQuickListContentProvider} extension point.
  */
 public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements DumbAware {
-
-  public enum SupportedVCS {VCS, NOT_IN_VCS}
-
   public VcsQuickListPopupAction() {
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;
     getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
@@ -47,19 +42,22 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     group.add(schema.getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP));
   }
 
-  @NotNull
-  private static Pair<SupportedVCS, AbstractVcs> getActiveVCS(@NotNull Project project, @NotNull DataContext dataContext) {
+  private static boolean isUnderVcs(@NotNull Project project) {
+    return ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
+  }
+
+  @Nullable
+  private static AbstractVcs getContextVcs(@Nullable Project project, @NotNull DataContext dataContext) {
+    if (project == null) return null;
+
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     AbstractVcs[] activeVcss = vcsManager.getAllActiveVcss();
-    if (activeVcss.length == 0) {
-      return new Pair<>(SupportedVCS.NOT_IN_VCS, null);
-    }
-    else if (activeVcss.length == 1) {
-      return Pair.create(SupportedVCS.VCS, activeVcss[0]);
-    }
+    if (activeVcss.length == 0) return null;
+    if (activeVcss.length == 1) return activeVcss[0];
+
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    AbstractVcs vscForFile = file != null ? ProjectLevelVcsManager.getInstance(project).getVcsFor(file) : null;
-    return vscForFile != null ? Pair.create(SupportedVCS.VCS, vscForFile) : Pair.create(SupportedVCS.VCS, null);
+    if (file == null) return null;
+    return ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
   }
 
   public static class Providers extends ActionGroup implements DumbAware {
@@ -68,22 +66,25 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
       if (e == null) return EMPTY_ARRAY;
       Project project = e.getProject();
       DataContext dataContext = e.getDataContext();
-      Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, dataContext);
+      if (project == null) return EMPTY_ARRAY;
+
       JBIterable<VcsQuickListContentProvider> providers = JBIterable.of(VcsQuickListContentProvider.EP_NAME.getExtensions());
       JBIterable<AnAction> actions;
-      if (pair.first == SupportedVCS.NOT_IN_VCS) {
+      if (!isUnderVcs(project)) {
         actions = providers.flatMap(p -> p.getNotInVcsActions(project, dataContext));
       }
-      else if (pair.second != null) {
-        AbstractVcs vcs = pair.second;
-        List<AnAction> replacingActions = providers
-          .filterMap(p -> p.replaceVcsActionsFor(vcs, dataContext) ? p.getVcsActions(project, vcs, dataContext) : null)
-          .first();
-        actions = replacingActions != null ? JBIterable.from(replacingActions) :
-                  providers.flatMap(p -> p.getVcsActions(project, vcs, dataContext));
-      }
       else {
-        actions = JBIterable.empty();
+        AbstractVcs vcs = getContextVcs(project, dataContext);
+        if (vcs != null) {
+          List<AnAction> replacingActions = providers
+            .filterMap(p -> p.replaceVcsActionsFor(vcs, dataContext) ? p.getVcsActions(project, vcs, dataContext) : null)
+            .first();
+          actions = replacingActions != null ? JBIterable.from(replacingActions) :
+                    providers.flatMap(p -> p.getVcsActions(project, vcs, dataContext));
+        }
+        else {
+          actions = JBIterable.empty();
+        }
       }
       return actions.toList().toArray(EMPTY_ARRAY);
     }
@@ -94,12 +95,12 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
       Project project = e.getProject();
-      Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, e.getDataContext());
-      if (pair.first != SupportedVCS.VCS || pair.second == null) {
-        return EMPTY_ARRAY;
+      AbstractVcs vcs = getContextVcs(project, e.getDataContext());
+      if (vcs != null) {
+        return new AnAction[]{Separator.create(vcs.getDisplayName())};
       }
       else {
-        return new AnAction[]{Separator.create(pair.second.getDisplayName())};
+        return EMPTY_ARRAY;
       }
     }
   }
@@ -109,9 +110,8 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       DataContext dataContext = e.getDataContext();
-      Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, dataContext);
-      if (pair.first == SupportedVCS.VCS && pair.second != null) {
-        AbstractVcs vcs = pair.second;
+      AbstractVcs vcs = getContextVcs(project, dataContext);
+      if (vcs != null) {
         JBIterable<VcsQuickListContentProvider> providers = JBIterable.of(VcsQuickListContentProvider.EP_NAME.getExtensions());
         List<AnAction> replacingActions = providers
           .filterMap(p -> p.replaceVcsActionsFor(vcs, dataContext) ? p.getVcsActions(project, vcs, dataContext) : null)
@@ -128,8 +128,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, e.getDataContext());
-      e.getPresentation().setVisible(pair.first == SupportedVCS.NOT_IN_VCS);
+      e.getPresentation().setVisible(project != null && !isUnderVcs(project));
     }
   }
 }

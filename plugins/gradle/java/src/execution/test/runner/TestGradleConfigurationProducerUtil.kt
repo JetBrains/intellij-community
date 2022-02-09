@@ -92,13 +92,14 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   createFilter: (T) -> String,
   getTestsTaskToRun: (VirtualFile) -> List<List<String>>
 ): Boolean {
-  val testRunConfigurations = LinkedHashMap<String, MutableSet<String>>()
+  // escaped-tasks -> arguments
+  val testRunConfigurations = LinkedHashMap<List<String>, MutableSet<String>>()
   for (test in tests) {
     val sourceFile = findTestSource(test) ?: return false
     for (tasks in getTestsTaskToRun(sourceFile)) {
       if (tasks.isEmpty()) continue
-      val commandLine = tasks.joinToString(" ") { it.escapeIfNeeded() }
-      val arguments = testRunConfigurations.getOrPut(commandLine, ::LinkedHashSet)
+      val escapedTasks = tasks.map { it.escapeIfNeeded() }
+      val arguments = testRunConfigurations.getOrPut(escapedTasks, ::LinkedHashSet)
       val testFilter = createFilter(test).trim()
       if (testFilter.isNotEmpty()) {
         arguments.add(testFilter)
@@ -107,7 +108,7 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   }
 
   externalProjectPath = projectPath
-  taskNames = testRunConfigurations.entries.flatMap { it.key.split(" ") + it.value }
+  taskNames = testRunConfigurations.entries.flatMap { it.key + it.value }
   scriptParameters = if (testRunConfigurations.size > 1) "--continue" else ""
 
   return true

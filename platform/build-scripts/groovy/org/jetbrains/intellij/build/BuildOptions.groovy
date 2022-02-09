@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 
 @CompileStatic
 final class BuildOptions {
@@ -57,7 +58,7 @@ final class BuildOptions {
   public static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
   static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   public static final String GENERATE_JAR_ORDER_STEP = "jar_order"
-  static final String SOURCES_ARCHIVE_STEP = "sources_archive"
+  public static final String SOURCES_ARCHIVE_STEP = "sources_archive"
   public static final String SCRAMBLING_STEP = "scramble"
   public static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
   /** Build Maven artifacts for IDE modules. */
@@ -88,6 +89,7 @@ final class BuildOptions {
   static final String COMMUNITY_DIST_STEP = "community_dist"
   public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
   public static final String SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
+  public static final String VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
   /**
    * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
    * Comprises many small publication steps.
@@ -103,11 +105,6 @@ final class BuildOptions {
    * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
    */
   static final String REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
-
-  /**
-   * May be useful to skip this step in TeamCity build to use experimental JBR provided via artifact dependency.
-   */
-  static final String RUNTIME_DOWNLOADING_STEP = "runtime_downloading_step"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
@@ -222,18 +219,6 @@ final class BuildOptions {
   String bundledRuntimePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
-   * Directory path to unpack JetBrains Runtime builds into
-   */
-  static final String JBR_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
-  String jbrTargetDir = System.getProperty(JBR_TARGET_DIR_OPTION)
-
-  /**
-   * Specifies JetBrains Runtime version to be used as project SDK, 11 by default.
-   */
-  static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
-  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "11").toInteger()
-
-  /**
    * Specifies an algorithm to build distribution checksums.
    */
   String hashAlgorithm = "SHA-384"
@@ -243,6 +228,9 @@ final class BuildOptions {
    */
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
+
+  @ApiStatus.Internal
+  public boolean compressNonBundledPluginArchive = true
 
   /**
    * Max attempts of dependencies resolution on fault. "1" means no retries.
@@ -261,6 +249,11 @@ final class BuildOptions {
   long resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
 
   static final String TARGET_OS = "intellij.build.target.os"
+
+  /**
+   * See https://reproducible-builds.org/specs/source-date-epoch/
+   */
+  long buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLong() ?: System.currentTimeSeconds()
 
   BuildOptions() {
     targetOS = System.getProperty(TARGET_OS)

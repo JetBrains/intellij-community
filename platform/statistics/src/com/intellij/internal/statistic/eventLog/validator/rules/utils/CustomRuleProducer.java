@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -24,10 +23,6 @@ public final class CustomRuleProducer extends UtilRuleProducer {
   public @Nullable UtilValidationRule createValidationRule(@NotNull String value,
                                                            @NotNull EventGroupContextData contextData) {
     for (CustomValidationRule extension : CustomValidationRule.EP_NAME.getExtensions()) {
-      if (isAcceptedRule(extension) && extension.acceptRuleId(value)) return extension;
-    }
-
-    for (CustomWhiteListRule extension : CustomWhiteListRule.EP_NAME.getExtensions()) {
       if (isAcceptedRule(extension) && extension.acceptRuleId(value)) return extension;
     }
     return null;

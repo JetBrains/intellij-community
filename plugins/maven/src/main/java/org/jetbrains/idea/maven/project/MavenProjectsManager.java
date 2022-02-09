@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSy
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.NullableConsumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
@@ -49,6 +53,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
+import org.jetbrains.idea.maven.importing.MavenModelUtil;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
@@ -261,7 +266,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
           fireActivated();
           listenForExternalChanges();
         }
-        if (!Registry.is("maven.new.import")) {
+        if (!MavenUtil.isLinearImportEnabled()) {
           scheduleUpdateAllProjects(isNew);
         }
       });
@@ -688,6 +693,16 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Nullable
   public MavenProject findProject(@NotNull Module module) {
+    MavenProject mavenProject = getMavenProject(module);
+    String moduleName = module.getName();
+    if (mavenProject == null && MavenModelUtil.isMainOrTestSubmodule(moduleName)) {
+      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(moduleName.substring(0, moduleName.length() - 5));
+      mavenProject = parentModule != null ? getMavenProject(parentModule) : null;
+    }
+    return mavenProject;
+  }
+
+  private MavenProject getMavenProject(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       VirtualFile f = findPomFile(module, new MavenModelsProvider() {
         @Override
@@ -833,21 +848,27 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsTree = newTree;
   }
 
+  @ApiStatus.Internal
+  @Nullable
+  public MavenProjectsTree getProjectsTree() {
+    return myProjectsTree;
+  }
+
   private void scheduleUpdateAllProjects(boolean forceImportAndResolve) {
     doScheduleUpdateProjects(null, false, forceImportAndResolve);
   }
 
   @ApiStatus.Internal
   public AsyncPromise<Void> forceUpdateProjects() {
-    return doScheduleUpdateProjects(null, true, true);
+    return (AsyncPromise<Void>)doScheduleUpdateProjects(null, true, true);
   }
 
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    return doScheduleUpdateProjects(projects, true, true);
+    return (AsyncPromise<Void>)doScheduleUpdateProjects(projects, true, true);
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
-    if (Registry.is("maven.new.import")) {
+    if (MavenUtil.isLinearImportEnabled()) {
       MavenImportingManager.getInstance(myProject)
         .openProjectAndImport(new FilesList(collectAllAvailablePomFiles()), getImportingSettings(), getGeneralSettings());
       return;
@@ -858,9 +879,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(null, true, true);
   }
 
-  private AsyncPromise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
+  private Promise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {
+    if (MavenUtil.isLinearImportEnabled()){
+      return MavenImportingManager.getInstance(myProject)
+        .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(), getGeneralSettings()).then(it -> null);
+    }
     MavenDistributionsCache.getInstance(myProject).cleanCaches();
     MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
@@ -887,9 +912,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     console.startImport(myProgressListener);
     fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
-    promise.onProcessed(m -> {
-      completeMavenSyncOnImportCompletion(console);
-    });
     return promise;
   }
 
@@ -901,15 +923,10 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     getSyncConsole().terminated(exitCode);
   }
 
-  private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    waitForImportCompletion().onProcessed(o -> {
-      MavenUtil.notifyMavenProblems(myProject);
-      console.finishImport();
-    });
-  }
-
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
+    if(MavenUtil.isLinearImportEnabled()) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
+
     AsyncPromise<?> promise = new AsyncPromise<>();
     MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false, indicator -> {
       if (myReadingProcessor != null) {
@@ -1255,25 +1272,10 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<>();
 
     final Runnable r = () -> {
-      MavenProjectImporter projectImporter = new MavenProjectImporter(myProject,
-                                                                      myProjectsTree,
-                                                                      getFileToModuleMapping(new MavenModelsProvider() {
-                                                                        @Override
-                                                                        public Module[] getModules() {
-                                                                          return ArrayUtil.remove(modelsProvider.getModules(),
-                                                                                                  myDummyModule);
-                                                                        }
-
-                                                                        @Override
-                                                                        public VirtualFile[] getContentRoots(Module module) {
-                                                                          return modelsProvider.getContentRoots(module);
-                                                                        }
-                                                                      }),
-                                                                      projectsToImportWithChanges,
-                                                                      importModuleGroupsRequired,
-                                                                      modelsProvider,
-                                                                      getImportingSettings(),
-                                                                      myDummyModule);
+      MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(
+        myProject, myProjectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
+        modelsProvider, getImportingSettings(), myDummyModule
+      );
       importer.set(projectImporter);
       postTasks.set(projectImporter.importProject());
     };

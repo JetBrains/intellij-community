@@ -116,7 +116,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private static PersistentLibraryKind<?> findPersistentLibraryKind(@NotNull Element element) {
     String typeString = element.getAttributeValue(JpsLibraryTableSerializer.TYPE_ATTRIBUTE);
     if (typeString == null) return null;
-    LibraryKind kind = LibraryKind.findById(typeString);
+    LibraryKind kind = LibraryKindRegistry.getInstance().findKindById(typeString);
     if (kind == null) {
       return UnknownLibraryKind.getOrCreate(typeString);
     }
@@ -300,7 +300,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     final String typeId = element.getAttributeValue(JpsLibraryTableSerializer.TYPE_ATTRIBUTE);
     if (typeId == null) return;
 
-    myKind = (PersistentLibraryKind<?>) LibraryKind.findById(typeId);
+    myKind = (PersistentLibraryKind<?>)LibraryKindRegistry.getInstance().findKindById(typeId);
     final Element propertiesElement = element.getChild(JpsLibraryTableSerializer.PROPERTIES_TAG);
     if (myKind == null) {
       myKind = UnknownLibraryKind.getOrCreate(typeId);
@@ -470,7 +470,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   public void restoreKind() {
     if (myKind == null || !(myKind instanceof UnknownLibraryKind)) return;
-    myKind = (PersistentLibraryKind<?>)LibraryKind.findById(myKind.getKindId());
+    myKind = (PersistentLibraryKind<?>)LibraryKindRegistry.getInstance().findKindById(myKind.getKindId());
     Element configuration = ((UnknownLibraryKind.UnknownLibraryProperties)myProperties).getConfiguration();
     myProperties = myKind.createDefaultProperties();
     if (configuration != null) {

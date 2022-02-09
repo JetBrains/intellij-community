@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -32,9 +33,9 @@ public class JavaTextExtractor extends TextExtractor {
   private static final TokenSet EXCLUDED =
     TokenSet.create(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END, DOC_PARAMETER_REF);
   private static final TextContentBuilder javadocBuilder = TextContentBuilder.FromPsi
-    .withUnknown(e -> e instanceof PsiInlineDocTag)
+    .withUnknown(e -> e instanceof PsiInlineDocTag && !(e instanceof PsiSnippetDocTag))
     .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)))
-    .removingIndents(" \t");
+    .removingIndents(" \t").removingLineSuffixes(" \t");
 
   @Override
   public TextContent buildTextContent(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
@@ -51,7 +52,7 @@ public class JavaTextExtractor extends TextExtractor {
       List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, e ->
         JAVA_PLAIN_COMMENT_BIT_SET.contains(PsiUtilCore.getElementType(e)));
       return TextContent.joinWithWhitespace('\n', ContainerUtil.mapNotNull(roots, c ->
-        TextContentBuilder.FromPsi.removingIndents(" \t*/").build(c, COMMENTS)));
+        TextContentBuilder.FromPsi.removingIndents(" \t*/").removingLineSuffixes(" \t").build(c, COMMENTS)));
     }
 
     if (root instanceof PsiLiteralExpression &&

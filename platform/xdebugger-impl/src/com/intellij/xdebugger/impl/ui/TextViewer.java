@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;

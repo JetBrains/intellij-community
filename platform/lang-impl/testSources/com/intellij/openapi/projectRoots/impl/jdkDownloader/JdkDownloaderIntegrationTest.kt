@@ -2,7 +2,9 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.system.CpuArch
 import org.junit.Assert
 import org.junit.Test
 import java.lang.RuntimeException
@@ -38,7 +40,7 @@ class JdkDownloaderIntegrationTest : BasePlatformTestCase() {
       val result = runCatching {
         val data = JdkListDownloader.getInstance().downloadModelForJdkInstaller(null)
         val jbr = data.filter { it.matchesVendor("jbr") }
-        Assert.assertTrue(jbr.isNotEmpty())
+        Assert.assertTrue(jbr.isNotEmpty() || SystemInfo.isLinux && CpuArch.isArm64())
       }
       if (result.isSuccess) return
       lastError = result.exceptionOrNull()!!

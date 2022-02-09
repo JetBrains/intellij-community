@@ -44,4 +44,8 @@ final class VirtualDirectoryCache {
   @NotNull Collection<VirtualFileSystemEntry> getCachedDirs() {
     return myIdToDirCache.values();
   }
+
+  void clear() {
+    myIdToDirCache.clear();
+  }
 }

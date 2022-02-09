@@ -40,6 +40,7 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -225,16 +226,33 @@ public class ComponentValidator {
     return validationInfo;
   }
 
+  private boolean needResetForInfo(@Nullable ValidationInfo info) {
+    if (info == null && validationInfo != null) return true;
+    else if (info != null && validationInfo != null) {
+      if (info.warning != validationInfo.warning) return true;
+      if (tipComponent != null && !Objects.equals(info.message, validationInfo.message)) {
+        String message = HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(info.message, tipComponent)).
+                           wrapWith(HtmlChunk.html()).toString();
+        View v = BasicHTML.createHTMLView(tipComponent, message);
+
+        Dimension size = tipComponent.getPreferredSize();
+        JBInsets.removeFrom(size, tipComponent.getInsets());
+
+        if (v.getPreferredSpan(View.Y_AXIS) != size.height) return true;
+      }
+    }
+    return false;
+  }
+
   public void updateInfo(@Nullable ValidationInfo info) {
     if (disableValidation) return;
 
-    boolean resetInfo = info == null && validationInfo != null;
     boolean hasNewInfo = info != null && !info.equals(validationInfo);
-
-    if (resetInfo) {
+    if (needResetForInfo(info)) {
       reset();
     }
-    else if (hasNewInfo) {
+
+    if (hasNewInfo) {
       validationInfo = info;
 
       if (popup != null && popup.isVisible() && tipComponent != null) {

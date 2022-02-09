@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.facet.FacetUtilsKt;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind;
@@ -46,29 +47,31 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import static java.util.Collections.*;
-import static org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt.kotlinCompilerVersionShort;
+import static org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt.getLastStableKnownCompilerVersionShort;
 
 @RunWith(JUnit38ClassRunner.class)
 public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     public void testNewLibrary() {
         doTestSingleJvmModule();
 
+        String kotlinVersion = getLastStableKnownCompilerVersionShort(KotlinPluginLayout.getInstance());
+
         ModuleRootManager.getInstance(getModule()).orderEntries().forEachLibrary(library -> {
             assertSameElements(
                     Arrays.stream(library.getRootProvider().getFiles(OrderRootType.CLASSES)).map(VirtualFile::getName).toArray(),
-                    PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
-                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
-                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
-                    "kotlin-stdlib-common-" + kotlinCompilerVersionShort() + ".jar",
+                    PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinVersion + ".jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinVersion + ".jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinVersion + ".jar",
+                    "kotlin-stdlib-common-" + kotlinVersion + ".jar",
                     "annotations-13.0.jar"
             );
 
             assertSameElements(
                     Arrays.stream(library.getRootProvider().getFiles(OrderRootType.SOURCES)).map(VirtualFile::getName).toArray(),
-                    PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
-                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
-                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
-                    "kotlin-stdlib-common-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinVersion + "-sources.jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinVersion + "-sources.jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinVersion + "-sources.jar",
+                    "kotlin-stdlib-common-" + kotlinVersion + "-sources.jar",
                     "annotations-13.0-sources.jar"
             );
 
@@ -156,7 +159,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertFalse(settings.getUseProjectSettings());
         assertEquals(LanguageVersion.KOTLIN_1_1, settings.getLanguageLevel());
         assertEquals(LanguageVersion.KOTLIN_1_0, settings.getApiLevel());
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
         assertEquals("1.7", arguments.getJvmTarget());
@@ -183,7 +186,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertFalse(settings.getUseProjectSettings());
         assertEquals(LanguageVersion.KOTLIN_1_1, settings.getLanguageLevel());
         assertEquals(LanguageVersion.KOTLIN_1_0, settings.getApiLevel());
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
         assertEquals("1.7", arguments.getJvmTarget());
@@ -210,7 +213,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertFalse(settings.getUseProjectSettings());
         assertEquals(LanguageVersion.KOTLIN_1_1, settings.getLanguageLevel());
         assertEquals(LanguageVersion.KOTLIN_1_0, settings.getApiLevel());
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
         assertEquals("1.7", arguments.getJvmTarget());
@@ -225,7 +228,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertFalse(settings.getUseProjectSettings());
         assertEquals(LanguageVersion.KOTLIN_1_4, settings.getLanguageLevel());
         assertEquals(LanguageVersion.KOTLIN_1_2, settings.getApiLevel());
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), settings.getTargetPlatform());
         assertEquals("1.4", arguments.getLanguageVersion());
         assertEquals("1.2", arguments.getApiVersion());
         assertEquals("1.8", arguments.getJvmTarget());
@@ -324,7 +327,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     public void testProjectWithoutFacetWithJvmTarget18() {
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), PlatformKt.getPlatform(getModule()));
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), PlatformKt.getPlatform(getModule()));
     }
 
     private static class LibraryCountingRootPolicy extends RootPolicy<Integer> {

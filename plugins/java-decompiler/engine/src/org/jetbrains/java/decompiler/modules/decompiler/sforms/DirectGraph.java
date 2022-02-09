@@ -56,8 +56,8 @@ public class DirectGraph {
 
       setVisited.add(node);
 
-      for (; index < node.succs.size(); index++) {
-        DirectNode succ = node.succs.get(index);
+      for (; index < node.successors.size(); index++) {
+        DirectNode succ = node.successors.get(index);
 
         if (!setVisited.contains(succ)) {
           stackIndex.add(index + 1);
@@ -69,7 +69,7 @@ public class DirectGraph {
         }
       }
 
-      if (index == node.succs.size()) {
+      if (index == node.successors.size()) {
         lst.add(0, node);
 
         stackNode.removeLast();
@@ -107,7 +107,7 @@ public class DirectGraph {
         }
       }
 
-      stack.addAll(node.succs);
+      stack.addAll(node.successors);
     }
 
     return true;

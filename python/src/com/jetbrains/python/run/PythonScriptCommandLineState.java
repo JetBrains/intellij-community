@@ -177,10 +177,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
-    super.customizePythonExecutionEnvironmentVars(targetEnvironment, envs, passParentEnvs);
+  protected void customizePythonExecutionEnvironmentVars(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
+    super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs);
     if (emulateTerminal()) {
       if (!SystemInfo.isWindows) {
         envs.put("TERM", TargetEnvironmentFunctions.constant("xterm-256color"));
@@ -204,11 +204,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
             @Override
             public boolean splitToLines() {
               return false;
-            }
-
-            @Override
-            public boolean withSeparators() {
-              return true;
             }
           };
         }
@@ -239,6 +234,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
       pythonExecution = pythonScriptExecution;
     }
+
+    pythonExecution.addParameters(getExpandedScriptParameters(myConfig));
 
     pythonExecution.setCharset(EncodingProjectManager.getInstance(myConfig.getProject()).getDefaultCharset());
 

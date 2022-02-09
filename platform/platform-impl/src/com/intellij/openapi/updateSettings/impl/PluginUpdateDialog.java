@@ -206,7 +206,7 @@ final class PluginUpdateDialog extends DialogWrapper {
           }
 
           if (downloaders.size() == installedDescriptors.size()) {
-            UpdateChecker.getNotificationGroupForUpdateResults()
+            UpdateChecker.getNotificationGroupForPluginUpdateResults()
               .createNotification(getUpdateNotificationMessage(installedDescriptors),
                                   NotificationType.INFORMATION)
               .setDisplayId("plugins.updated.without.restart")

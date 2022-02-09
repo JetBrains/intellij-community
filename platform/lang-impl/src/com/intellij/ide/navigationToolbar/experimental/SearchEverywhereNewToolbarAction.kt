@@ -16,12 +16,15 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.BigPopup.searchFieldBackground
@@ -29,19 +32,26 @@ import com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_TEXT_COLOR
 import java.awt.Cursor
 import java.awt.Cursor.DEFAULT_CURSOR
 import java.awt.Cursor.TEXT_CURSOR
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
+import java.beans.PropertyChangeListener
 import javax.swing.FocusManager
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
+import javax.swing.event.AncestorEvent
 import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
   companion object {
     const val SHOW_HOT_KEY_TIP = "com.intellij.ide.navigationToolbar.experimental.showSearchEverywhereHotKeyTip"
   }
+
+  private val logger = logger<SearchEverywhereNewToolbarAction>()
 
   private val margin = JBUI.scale(4)
   private var subscribedForDoubleShift = false
@@ -50,6 +60,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   var seManager: SearchEverywhereManager? = null
 
   override fun update(event: AnActionEvent) {
+    if (event.place != ActionPlaces.MAIN_TOOLBAR) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     val project = event.project ?: return
     if (seManager == null) {
       seManager = SearchEverywhereManager.getInstance(project)
@@ -61,7 +75,8 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
     else {
-      ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text")
+      val shortcut = ActionsBundle.message("action.SearchEverywhereToolbarHotKey.hotkey")
+      ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text", shortcut)
     }
     event.presentation.icon = AllIcons.Actions.Search
     if (!subscribedForDoubleShift) {
@@ -73,11 +88,27 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
 
     return object : ActionButtonWithText(this, presentation, place,
-                                         ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+                                         Dimension(0, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)) {
+
+      private val listener = PropertyChangeListener { this.repaint() }
+
       init {
-        FocusManager.getCurrentManager().addPropertyChangeListener { this.repaint() }
         setHorizontalTextAlignment(SwingConstants.LEFT)
         cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
+      }
+
+      override fun addNotify() {
+        FocusManager.getCurrentManager().addPropertyChangeListener(listener)
+        super.addNotify()
+      }
+
+      override fun removeNotify() {
+        FocusManager.getCurrentManager().removePropertyChangeListener(listener)
+        super.removeNotify()
+      }
+
+      override fun getPreferredSize(): Dimension {
+        return Dimension(super.getPreferredSize().width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
       }
 
       override fun updateToolTipText() {
@@ -87,18 +118,18 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
           HelpTooltip.dispose(this)
           if (presentation.isEnabledAndVisible) {
             HelpTooltip()
-              .setTitle(myPresentation.text)
+              .setTitle(ActionsBundle.message("action.SearchEverywhereToolbar.text"))
               .setShortcut(shortcutText)
               .setDescription(IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName))
               .installOn(this)
           }
         }
         else {
-          if (presentation.isEnabledAndVisible) {
-            toolTipText = IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
+          toolTipText = if (presentation.isEnabledAndVisible) {
+            IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
           }
           else {
-            toolTipText = ""
+            ""
           }
         }
       }
@@ -131,21 +162,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
 
       override fun paint(g: Graphics?) {
-        if (parent.bounds.width < parent.preferredSize.width) {
-          if (presentation.isEnabledAndVisible) {
-            presentation.isEnabledAndVisible = false
-            updateToolTipText()
-            cursor = Cursor.getPredefinedCursor(DEFAULT_CURSOR)
-          }
-          return
-        }
-        else {
-          if (!presentation.isEnabledAndVisible) {
-            presentation.isEnabledAndVisible = true
-            updateToolTipText()
-            cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
-          }
-        }
+        if (preferredSize.width < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width) return
         foreground = DISABLED_TEXT_COLOR
         background = searchFieldBackground()
         super.paint(g)
@@ -203,9 +220,14 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   }
 
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    if (action is SearchEverywhereAction && showHotkey()) {
-      if (event.inputEvent is KeyEvent) {
-        if ((event.inputEvent as KeyEvent).keyCode == KeyEvent.VK_SHIFT) {
+    if (action is SearchEverywhereAction) {
+      logger.trace("SearchEverywhereAction was called (afterAction works)")
+
+      if (showHotkey()) {
+        logger.trace("SearchEverywhereAction hot key flag is on")
+
+        if (event.inputEvent is KeyEvent) {
+          logger.trace("SearchEverywhereAction key event happened, switching the flag off")
           PropertiesComponent.getInstance().setValue(SHOW_HOT_KEY_TIP, false, true)
         }
       }

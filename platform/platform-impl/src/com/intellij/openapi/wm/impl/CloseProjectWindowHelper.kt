@@ -9,7 +9,6 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -51,7 +50,7 @@ open class CloseProjectWindowHelper {
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     runInAutoSaveDisabledMode {
       if (project != null && project.isOpen) {
-        ProjectManagerEx.getInstanceEx().closeAndDispose(project)
+        ProjectManager.getInstance().closeAndDispose(project)
       }
 
       val app = ApplicationManager.getApplication()

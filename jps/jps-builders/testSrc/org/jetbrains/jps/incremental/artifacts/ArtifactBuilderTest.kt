@@ -7,6 +7,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.zipFile
+import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root
@@ -18,11 +19,19 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.security.DigestInputStream
+import java.security.MessageDigest
+import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.jar.JarFile
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.inputStream
 
 class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   fun testFileCopy() {
@@ -304,6 +313,39 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(a, directoryContent { zip("a.jar") {
       file("file.txt", "text")
     }})
+  }
+
+  private fun Path.checksum(): String = inputStream().buffered().use { input ->
+    val digest = MessageDigest.getInstance("SHA-256")
+    DigestInputStream(input, digest).use {
+      var bytesRead = 0
+      val buffer = ByteArray(1024 * 8)
+      while (bytesRead != -1) {
+        bytesRead = it.read(buffer)
+      }
+    }
+    Base64.getEncoder().encodeToString(digest.digest())
+  }
+
+  fun `test jars build reproducibility`() {
+    myBuildParams[GlobalOptions.BUILD_DATE_IN_SECONDS] = (System.currentTimeMillis() / 1000).toString()
+    val jar = root().archive("a.jar")
+      .extractedDir(createXJarFile(), "/")
+      .dir("META-INF").fileCopy(createFile("src/MANIFEST.MF"))
+      .let { addArtifact("a", it).outputPath }
+      ?.let { Paths.get(it).resolve("a.jar") }
+    requireNotNull(jar)
+    val checksums = (1..2).map {
+      // sleeping more than a second ensures different last modification time
+      // for the next iteration jar if the build date isn't provided or ignored
+      TimeUnit.SECONDS.sleep(2)
+      FileUtil.delete(jar.parent)
+      assert(!Files.exists(jar))
+      buildAll()
+      assert(Files.exists(jar))
+      jar.checksum()
+    }.distinct()
+    assert(checksums.count() == 1)
   }
 
   fun `test no duplicated directory entries for extracted directory packed into JAR file`() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.ASTNode;
@@ -12,6 +12,8 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public final class ChangeContextUtil {
   private static final Logger LOG = Logger.getInstance(ChangeContextUtil.class);
@@ -75,7 +77,8 @@ public final class ChangeContextUtil {
               refExpr.putCopyableUserData(REF_CLASS_KEY, (PsiClass)refElement);
             }
           }
-          else if (refElement instanceof PsiMember){
+          else if (refElement instanceof PsiMember && 
+                   !Objects.equals(((PsiMember)refElement).getContainingClass(), topLevelScope)) {
             refExpr.putCopyableUserData(REF_MEMBER_KEY, ( (PsiMember)refElement));
             final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
             if (resolveScope instanceof PsiClass && !PsiTreeUtil.isAncestor(topLevelScope, resolveScope, false)) {
@@ -203,7 +206,7 @@ public final class ChangeContextUtil {
 
       if (refMember != null && refMember.isValid()){
         PsiClass containingClass = refMember.getContainingClass();
-        if (refMember.hasModifierProperty(PsiModifier.STATIC)){
+        if (containingClass != null && containingClass.isValid() && refMember.hasModifierProperty(PsiModifier.STATIC)){
           PsiElement refElement = refExpr.resolve();
           if (!manager.areElementsEquivalent(refMember, refElement)){
             final PsiClass currentClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);

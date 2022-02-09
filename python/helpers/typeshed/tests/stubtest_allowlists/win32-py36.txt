@@ -9,3 +9,7 @@ urllib.parse.parse_qsl
 
 hashlib.scrypt
 os.startfile
+
+# Exists at runtime, but missing from stubs
+asyncio.windows_utils.socketpair
+venv.EnvBuilder.include_binary

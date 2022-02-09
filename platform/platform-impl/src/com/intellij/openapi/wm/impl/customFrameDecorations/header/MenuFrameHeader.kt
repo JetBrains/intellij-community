@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
@@ -57,11 +57,11 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
 
     mainMenuUpdater = UISettingsListener {
-      menuHolder.isVisible = UISettings.instance.showMainMenu
+      menuHolder.isVisible = UISettings.getInstance().showMainMenu
       SwingUtilities.invokeLater { updateCustomDecorationHitTestSpots() }
     }
 
-    menuHolder.isVisible = UISettings.instance.showMainMenu
+    menuHolder.isVisible = UISettings.getInstance().showMainMenu
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {
@@ -79,7 +79,7 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
     Disposer.register(ApplicationManager.getApplication(), disp)
 
     ApplicationManager.getApplication().messageBus.connect(disp).subscribe(UISettingsListener.TOPIC, mainMenuUpdater)
-    mainMenuUpdater.uiSettingsChanged(UISettings.instance)
+    mainMenuUpdater.uiSettingsChanged(UISettings.getInstance())
     disposable = disp
 
     super.installListeners()

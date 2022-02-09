@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
@@ -43,6 +44,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
+  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   /**
    * Current user name, as specified in the VCS settings.
@@ -124,6 +126,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
         }
       }
     });
+    Disposer.register(this, myDisposableFlag);
   }
 
   @NotNull
@@ -227,7 +230,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       for (DataPackChangeListener listener : myDataPackChangeListeners) {
         listener.onDataPackChange(dataPack);
       }
-    }, o -> Disposer.isDisposed(this));
+    }, o -> myDisposableFlag.isDisposed());
   }
 
   public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {

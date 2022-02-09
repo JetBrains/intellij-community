@@ -344,7 +344,7 @@ public class InspectionTree extends Tree {
       if (sortedByPosition) {
         stream = stream.sorted(DESCRIPTOR_COMPARATOR);
       }
-      descriptors.add(stream.toArray(CommonProblemDescriptor.ARRAY_FACTORY::create));
+      descriptors.add(stream.distinct().toArray(CommonProblemDescriptor.ARRAY_FACTORY::create));
     }
 
     return descriptors;

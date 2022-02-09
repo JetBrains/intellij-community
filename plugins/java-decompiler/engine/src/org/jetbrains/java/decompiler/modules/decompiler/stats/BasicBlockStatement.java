@@ -15,8 +15,7 @@ public class BasicBlockStatement extends Statement {
   private final BasicBlock block;
 
   public BasicBlockStatement(BasicBlock block) {
-    type = Statement.TYPE_BASICBLOCK;
-    id = block.id;
+    super(StatementType.BASIC_BLOCK, block.id);
     this.block = block;
 
     CounterContainer container = DecompilerContext.getCounterContainer();
@@ -27,10 +26,10 @@ public class BasicBlockStatement extends Statement {
     Instruction instr = block.getLastInstruction();
     if (instr != null) {
       if (instr.group == CodeConstants.GROUP_JUMP && instr.opcode != CodeConstants.opc_goto) {
-        lastBasicType = LASTBASICTYPE_IF;
+        lastBasicType = StatementType.IF;
       }
       else if (instr.group == CodeConstants.GROUP_SWITCH) {
-        lastBasicType = LASTBASICTYPE_SWITCH;
+        lastBasicType = StatementType.SWITCH;
       }
     }
 

@@ -6,3 +6,4 @@ class Baz(val qux: Int)
 fun test(foo: Foo) {
     foo.bar.baz?.qux
 }
+/* IGNORE_FIR */

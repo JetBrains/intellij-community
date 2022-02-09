@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -27,7 +27,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +63,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
                           @Nullable HighlightSeverity selectedSeverity,
                           @NotNull SeverityRegistrar severityRegistrar,
                           boolean closeDialogWhenSettingsShown,
-                          @Nullable Consumer<? super HighlightSeverity> chosenSeverityCallback) {
+                          @Nullable Consumer<? super @NotNull HighlightSeverity> chosenSeverityCallback) {
     final SeverityEditorDialog dialog = new SeverityEditorDialog(project, selectedSeverity, severityRegistrar, closeDialogWhenSettingsShown);
     if (dialog.showAndGet()) {
       final HighlightInfoType type = dialog.getSelectedType();
@@ -207,7 +207,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
     final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
     button.addActionListener(e -> editColorsAndFonts());
     disabled.add(button,
-                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0,
+                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0,
                                         0));
     myRightPanel.add(DEFAULT, disabled);
     myRightPanel.add(EDITABLE, myOptionsPanel);

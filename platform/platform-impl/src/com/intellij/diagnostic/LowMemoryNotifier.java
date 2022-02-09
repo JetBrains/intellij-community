@@ -33,7 +33,7 @@ final class LowMemoryNotifier implements Disposable {
     String title = IdeBundle.message("low.memory.notification.title");
     String message = IdeBundle.message("low.memory.notification.content");
     NotificationType type = error ? NotificationType.ERROR : NotificationType.WARNING;
-    Notification notification = new Notification(NotificationGroup.createIdWithTitle("Low Memory", title), title, message, type);
+    Notification notification = NotificationGroupManager.getInstance().getNotificationGroup("Low Memory").createNotification(title, message, type);
 
     notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.analyze.action")) {
       @Override

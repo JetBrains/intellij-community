@@ -16,9 +16,9 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -80,8 +80,8 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     getEditorTextField().setDocument(document);
     for (DocumentListener listener : myDocumentListeners) {
       document.addDocumentListener(listener);
-      listener.documentChanged(new DocumentEventImpl(document, 0, oldText, text, -1, false, 0, oldText.length(), 0));
     }
+    WriteAction.run(() -> document.setText(text));
   }
 
   public boolean isEditable() {

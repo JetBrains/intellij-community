@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.awt.*;
 import java.io.File;
@@ -191,12 +191,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     @Override
     protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
         try {
-            if (runInWriteAction()) {
-                WriteAction.run(() -> super.runTestRunnable(testRunnable));
-            }
-            else {
-                super.runTestRunnable(testRunnable);
-            }
+            super.runTestRunnable(testRunnable);
         }
         catch (Exception throwable) {
             Throwable each = throwable;
@@ -209,10 +204,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
             while ((each = each.getCause()) != null);
             throw throwable;
         }
-    }
-
-    protected boolean runInWriteAction() {
-        return false;
     }
 
     protected static String getRoot() {
