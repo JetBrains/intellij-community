@@ -1509,6 +1509,7 @@ public final class IncProjectBuilder {
 
             try {
               for (ModuleLevelBuilder builder : builders) {
+                outputConsumer.setCurrentBuilderName(builder.getPresentableName());
                 processDeletedPaths(context, chunk.getTargets());
                 long start = System.nanoTime();
                 int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
@@ -1556,6 +1557,7 @@ public final class IncProjectBuilder {
               }
             }
             finally {
+              outputConsumer.setCurrentBuilderName(null);
               final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
               if (moreToCompile) {
                 nextPassRequired = true;
