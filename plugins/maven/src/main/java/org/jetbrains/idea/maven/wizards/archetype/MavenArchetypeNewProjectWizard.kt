@@ -256,20 +256,23 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private fun addArchetype() {
       val dialog = MavenAddArchetypeDialog(context.projectOrDefault)
       if (dialog.showAndGet()) {
-        val catalog = dialog.getCatalog()
-        val groupId = dialog.archetypeGroupId
-        val artifactId = dialog.archetypeArtifactId
-        val version = dialog.archetypeVersion
+        setArchetype(dialog.getArchetype())
+      }
+    }
 
-        if (catalog != null) {
-          catalogComboBox.collectionModel.add(catalog)
-        }
-        catalogItem = catalog ?: MavenCatalog.System.Internal
-        archetypeComboBox.invokeWhenBackgroundTasksFinished {
-          archetypeComboBox.text = "$groupId:$artifactId"
-          archetypeVersionComboBox.invokeWhenBackgroundTasksFinished {
-            archetypeVersionComboBox.text = version
-          }
+    private fun setArchetype(archetype: MavenArchetype) {
+      val catalogLocation = archetype.repository
+      var catalog = catalogComboBox.collectionModel.items
+        .find { it.location == catalogLocation }
+      if (catalogLocation != null && catalog == null) {
+        catalog = createCatalog(catalogLocation)
+        catalogComboBox.collectionModel.add(catalog)
+      }
+      catalogItem = catalog ?: MavenCatalog.System.Internal
+      archetypeComboBox.invokeWhenBackgroundTasksFinished {
+        archetypeComboBox.text = "${archetype.groupId}:${archetype.artifactId}"
+        archetypeVersionComboBox.invokeWhenBackgroundTasksFinished {
+          archetypeVersionComboBox.text = archetype.version
         }
       }
     }

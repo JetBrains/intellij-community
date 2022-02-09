@@ -25,6 +25,14 @@ internal fun createCatalog(name: String, location: String): MavenCatalog? {
   }
 }
 
+internal fun createCatalog(location: String): MavenCatalog? {
+  if (location.isNotEmpty()) {
+    val name = suggestCatalogNameByLocation(location)
+    return createCatalog(name, location)
+  }
+  return null
+}
+
 internal fun getPathOrError(location: String) = runCatching { Path(FileUtil.expandUserHome(location)) }
 internal fun getUrlOrError(location: String) = runCatching { URL(location) }
 

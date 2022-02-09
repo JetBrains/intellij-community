@@ -13,7 +13,7 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
+import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
 class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(project, true) {
@@ -29,12 +29,8 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
   var archetypeVersion by archetypeVersionProperty
   var catalogLocation by catalogLocationProperty
 
-  fun getCatalog(): MavenCatalog? {
-    if (catalogLocation.isNotEmpty()) {
-      val name = suggestCatalogNameByLocation(catalogLocation)
-      return createCatalog(name, catalogLocation)
-    }
-    return null
+  fun getArchetype(): MavenArchetype {
+    return MavenArchetype(archetypeGroupId, archetypeArtifactId, archetypeVersion, catalogLocation, null)
   }
 
   private fun ValidationInfoBuilder.validateCatalogLocation(): ValidationInfo? {
