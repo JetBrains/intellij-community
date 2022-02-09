@@ -819,7 +819,7 @@ public final class JBUI {
 
     public static final class ComplexPopup {
 
-      public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", 0xe6e6e6);
+      public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
 
       public static Insets headerInsets() {
         return insets("ComplexPopup.Header.insets", insets(12, 10, 10, 10));

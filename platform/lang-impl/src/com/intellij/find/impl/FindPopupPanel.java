@@ -15,10 +15,12 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -634,7 +636,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       scopeActions.add(new MySelectScopeToggleAction(scopeType));
       myScopeDetailsPanel.add(scopeType.name, scopeComponent.second);
     }
-    myScopeSelectionToolbar = createToolbar(scopeActions.toArray(AnAction.EMPTY_ARRAY));
+    myScopeSelectionToolbar = createScopeToolbar(scopeActions.toArray(AnAction.EMPTY_ARRAY));
     myScopeSelectionToolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     mySelectedScope = scopeComponents[0].first;
 
@@ -1638,6 +1640,41 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    return toolbar;
+  }
+
+  @NotNull
+  private static ActionToolbarImpl createScopeToolbar(AnAction @NotNull ... actions) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true) {
+      @Override
+      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
+                                                          ActionButtonLook look,
+                                                          @NotNull String place,
+                                                          @NotNull Presentation presentation,
+                                                          @NotNull Dimension minimumSize) {
+        if (!ExperimentalUI.isNewUI()) {
+          return super.createToolbarButton(action, look, place, presentation, minimumSize);
+        }
+
+        ActionButtonWithText result = new ActionButtonWithText(action, presentation, place, minimumSize){
+          @Override
+          protected Insets getMargins() {
+            return new JBInsets(4, 6, 4, 6);
+          }
+        };
+
+        result.setLook(look);
+        result.setBorder(JBUI.Borders.emptyRight(4));
+        result.setFont(JBFont.medium());
+
+        return result;
+      }
+    };
+
+    toolbar.setForceMinimumSize(true);
+    toolbar.setTargetComponent(toolbar);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+
     return toolbar;
   }
 

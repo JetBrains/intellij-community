@@ -106,9 +106,9 @@ public class FindPopupDirectoryChooser extends JPanel {
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myFindPopupPanel);
 
     add(myDirectoryComboBox, BorderLayout.CENTER);
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
-    buttonsPanel.add(mySelectDirectoryButton);
-    buttonsPanel.add(FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent()); //check if toolbar updates the button with no delays
+    JPanel buttonsPanel = new JPanel(new BorderLayout());
+    buttonsPanel.add(mySelectDirectoryButton, BorderLayout.CENTER);
+    buttonsPanel.add(FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent(), BorderLayout.EAST); //check if toolbar updates the button with no delays
     add(buttonsPanel, BorderLayout.EAST);
   }
 
