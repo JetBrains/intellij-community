@@ -178,6 +178,11 @@ public class FirLegacyUastResolveEverythingTestGenerated extends AbstractFirLega
         runTest("../uast-kotlin/tests/testData/InnerNonFixedTypeVariable.kt");
     }
 
+    @TestMetadata("LambdaExpressionFunctionalInterfaceType.kt")
+    public void testLambdaExpressionFunctionalInterfaceType() throws Exception {
+        runTest("../uast-kotlin/tests/testData/LambdaExpressionFunctionalInterfaceType.kt");
+    }
+
     @TestMetadata("LambdaParameters.kt")
     public void testLambdaParameters() throws Exception {
         runTest("../uast-kotlin/tests/testData/LambdaParameters.kt");
