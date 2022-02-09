@@ -25,7 +25,7 @@ final class LineMarkersPassFactory implements TextEditorHighlightingPassFactory,
     Document document = editor.getDocument();
     Project project = file.getProject();
     if (restrictRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, document);
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
     return new LineMarkersPass(project, file, document, expandRangeToCoverWholeLines(document, visibleRange), expandRangeToCoverWholeLines(document, restrictRange));
   }
 

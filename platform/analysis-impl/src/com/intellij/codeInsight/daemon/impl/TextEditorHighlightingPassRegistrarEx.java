@@ -23,10 +23,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHighlightingPassRegistrar {
 
   public static TextEditorHighlightingPassRegistrarEx getInstanceEx(Project project) {
@@ -34,7 +36,9 @@ public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHi
   }
 
   @NotNull
-  public abstract List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile, @NotNull Editor editor, int @NotNull [] passesToIgnore);
+  public abstract List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
+                                                                     @NotNull Editor editor,
+                                                                     int @NotNull [] passesToIgnore);
   @NotNull
   public abstract List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
                                                                          @NotNull Document document,

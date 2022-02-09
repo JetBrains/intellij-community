@@ -10,6 +10,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -31,6 +32,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -101,13 +104,14 @@ final class PassExecutorService implements Disposable {
     }
   }
 
-  void submitPasses(@NotNull Map<FileEditor, HighlightingPass[]> passesMap, @NotNull DaemonProgressIndicator updateProgress) {
+  void submitPasses(@NotNull Map<FileEditor, HighlightingPass[]> passesMap,
+                    // a list of opened FileEditors for each Document. The first FileEditor in the list is the preferred one
+                    @NotNull Map<Document, List<FileEditor>> documentToEditors,
+                    @NotNull DaemonProgressIndicator updateProgress) {
     if (isDisposed()) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
 
     // null keys are ok
-    MultiMap<Document, FileEditor> documentToEditors = MultiMap.createSet();
-    MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = new MultiMap<>();
+    Map<FileEditor, List<TextEditorHighlightingPass>> documentBoundPasses = new HashMap<>();
     MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = new MultiMap<>();
     Map<FileEditor, Int2ObjectMap<TextEditorHighlightingPass>> id2Pass = new HashMap<>();
 
@@ -133,8 +137,7 @@ final class PassExecutorService implements Disposable {
             tePass = (TextEditorHighlightingPass)pass;
 
             checkUniquePassId(tePass.getId(), tePass, thisEditorId2Pass);
-            documentBoundPasses.putValue(fileEditor, tePass);
-            documentToEditors.putValue(tePass.getDocument(), fileEditor);
+            documentBoundPasses.computeIfAbsent(fileEditor, __->new ArrayList<>()).add(tePass);
           }
           else {
             // generic HighlightingPass, run all of them concurrently
@@ -148,12 +151,11 @@ final class PassExecutorService implements Disposable {
     // fileEditor-> (passId -> created pass)
     Map<FileEditor, Int2ObjectMap<ScheduledPass>> toBeSubmitted = new HashMap<>(passesMap.size());
 
-    for (Map.Entry<Document, Collection<FileEditor>> entry : documentToEditors.entrySet()) {
-      Collection<FileEditor> fileEditors = entry.getValue();
-      Document document = entry.getKey();
-      FileEditor preferredFileEditor = getPreferredFileEditor(document, fileEditors);
-      List<TextEditorHighlightingPass> passes = (List<TextEditorHighlightingPass>)documentBoundPasses.get(preferredFileEditor);
-      if (passes.isEmpty()) {
+    for (Map.Entry<Document, List<FileEditor>> entry : documentToEditors.entrySet()) {
+      List<FileEditor> fileEditors = entry.getValue();
+      FileEditor preferredFileEditor = fileEditors.get(0); // assumption: the preferred fileEditor is stored first
+      List<TextEditorHighlightingPass> passes = documentBoundPasses.get(preferredFileEditor);
+      if (passes == null || passes.isEmpty()) {
         continue;
       }
       sortById(passes);
@@ -306,13 +308,16 @@ final class PassExecutorService implements Disposable {
 
     if (pass.isRunIntentionPassAfter() && fileEditor instanceof TextEditor) {
       Editor editor = ((TextEditor)fileEditor).getEditor();
-      ShowIntentionsPass ip = new ShowIntentionsPass(myProject, editor, false);
-      int id = nextAvailablePassId.incrementAndGet();
-      ip.setId(id);
-      checkUniquePassId(id, ip, thisEditorId2Pass);
-      ip.setCompletionPredecessorIds(new int[]{passId});
-
-      createScheduledPass(fileEditor, ip, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+      VirtualFile virtualFile = fileEditor.getFile();
+      PsiFile psiFile = virtualFile == null ? null : ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(virtualFile));
+      if (psiFile != null) {
+        ShowIntentionsPass ip = new ShowIntentionsPass(psiFile, editor, false);
+        int id = nextAvailablePassId.incrementAndGet();
+        ip.setId(id);
+        checkUniquePassId(id, ip, thisEditorId2Pass);
+        ip.setCompletionPredecessorIds(new int[]{passId});
+        createScheduledPass(fileEditor, ip, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+      }
     }
 
     return scheduledPass;
@@ -327,7 +332,7 @@ final class PassExecutorService implements Disposable {
                                                     @NotNull AtomicInteger myThreadsToStartCountdown,
                                                     int predecessorId,
                                                     @NotNull Int2ObjectMap<ScheduledPass> thisEditorId2ScheduledPass,
-                                                    @NotNull Int2ObjectMap<TextEditorHighlightingPass> thisEditorId2Pass) {
+                                                    @NotNull Int2ObjectMap<? extends TextEditorHighlightingPass> thisEditorId2Pass) {
     ScheduledPass predecessor = thisEditorId2ScheduledPass.get(predecessorId);
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = thisEditorId2Pass.get(predecessorId);

@@ -456,11 +456,13 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return myStdJobDescriptors;
   }
 
-  public static void assertUnderDaemonProgress() {
+  @NotNull
+  public static DaemonProgressIndicator assertUnderDaemonProgress() {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator original = indicator == null ? null : ProgressWrapper.unwrapAll(indicator);
     if (!(original instanceof DaemonProgressIndicator)) {
       throw new IllegalStateException("must be run under DaemonProgressIndicator, but got: " + (original == null ? "null" : ": " +original.getClass()) + ": "+ original);
     }
+    return (DaemonProgressIndicator)original;
   }
 }

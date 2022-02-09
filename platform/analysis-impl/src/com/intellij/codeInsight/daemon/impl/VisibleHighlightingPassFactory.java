@@ -15,6 +15,7 @@ public abstract class VisibleHighlightingPassFactory  {
 
   @NotNull
   public static ProperTextRange calculateVisibleRange(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       ProperTextRange textRange = editor.getUserData(HEADLESS_VISIBLE_AREA);
       ProperTextRange entireTextRange = new ProperTextRange(0, editor.getDocument().getTextLength());

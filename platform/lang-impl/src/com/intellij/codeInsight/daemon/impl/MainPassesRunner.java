@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -116,8 +117,7 @@ public class MainPassesRunner {
     if (psiFile == null || document == null || !ReadAction.compute(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {
       return;
     }
-    //HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, ProperTextRange.create(psiFile.getTextRange()),
-    //                                                  false);
+    HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, ProperTextRange.create(psiFile.getTextRange()), false);
 
     ProgressManager.getInstance().runProcess(() -> runMainPasses(daemonIndicator, result, psiFile, document), daemonIndicator);
   }
