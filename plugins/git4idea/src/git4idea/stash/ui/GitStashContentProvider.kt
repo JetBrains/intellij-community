@@ -53,7 +53,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     return savedPatchesUi
   }
 
-  private inner class GitSavedPatchesUi : SavedPatchesUi(project, listOf(GitStashProvider(project), ShelfProvider(project)),
+  private inner class GitSavedPatchesUi : SavedPatchesUi(project, listOf(GitStashProvider(project), ShelfProvider(project, disposable!!)),
                                                          isVertical(), isEditorDiffPreview(),
                                                          ::returnFocusToToolWindow, disposable!!) {
     init {

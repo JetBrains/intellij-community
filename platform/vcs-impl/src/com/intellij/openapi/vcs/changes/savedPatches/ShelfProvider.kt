@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
@@ -16,17 +18,24 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.DateFormatUtil
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import javax.swing.event.ChangeListener
 
-class ShelfProvider(private val project: Project) : SavedPatchesProvider<ShelvedChangeList> {
+class ShelfProvider(private val project: Project, parent: Disposable) : SavedPatchesProvider<ShelvedChangeList>, Disposable {
+  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Shelved Changes Loader", 1)
   private val shelveManager: ShelveChangesManager get() = ShelveChangesManager.getInstance(project)
 
   override val dataClass: Class<ShelvedChangeList> get() = ShelvedChangeList::class.java
   override val dataKey: DataKey<List<ShelvedChangeList>> get() = SHELVED_CHANGELIST_KEY
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Apply")
   override val popAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Pop")
+
+  init {
+    Disposer.register(parent, this)
+  }
 
   override fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit) {
     val disposableFlag = Disposer.newCheckedDisposable()
@@ -55,6 +64,15 @@ class ShelfProvider(private val project: Project) : SavedPatchesProvider<Shelved
     }
   }
 
+  override fun dispose() {
+    executor.shutdown()
+    try {
+      executor.awaitTermination(10, TimeUnit.MILLISECONDS)
+    }
+    finally {
+    }
+  }
+
   class ShelvedChangeListChangesBrowserNode(private val shelf: ShelfObject) : ChangesBrowserNode<ShelfObject>(shelf) {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
       val listName = shelf.data.DESCRIPTION.ifBlank { VcsBundle.message("changes.nodetitle.empty.changelist.name") }
@@ -80,18 +98,17 @@ class ShelfProvider(private val project: Project) : SavedPatchesProvider<Shelved
       if (cachedChangeObjects != null) {
         return CompletableFuture.completedFuture(SavedPatchesProvider.LoadingResult.Changes(cachedChangeObjects))
       }
-      return CompletableFuture.supplyAsync {
+      return BackgroundTaskUtil.submitTask(executor, this@ShelfProvider, Computable {
         try {
           data.loadChangesIfNeededOrThrow(project)
-          return@supplyAsync SavedPatchesProvider.LoadingResult.Changes(data.getChangeObjects()!!)
-        }
-        catch (throwable: Throwable) {
-          return@supplyAsync when (throwable) {
+          return@Computable SavedPatchesProvider.LoadingResult.Changes(data.getChangeObjects()!!)
+        } catch (throwable : Throwable) {
+          return@Computable when (throwable) {
             is VcsException -> SavedPatchesProvider.LoadingResult.Error(throwable)
             else -> SavedPatchesProvider.LoadingResult.Error(VcsException(throwable))
           }
         }
-      }
+      }).future
     }
 
     private fun ShelvedChangeList.getChangeObjects(): Set<SavedPatchesProvider.ChangeObject>? {
