@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Block;
@@ -967,7 +967,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitDocTag(@NotNull GrDocTag docTag) {
-    if (myType1 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START || myType2 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
+    if ((myType1 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START && myChild1 == docTag.getFirstChild()) ||
+        (myType2 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END && myChild2 == docTag.getLastChild())) {
       createSpaceProperty(false, false, 0);
     }
     else if (myType1 == GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN && myType2 != GroovyDocTokenTypes.mGDOC_COMMENT_DATA) {

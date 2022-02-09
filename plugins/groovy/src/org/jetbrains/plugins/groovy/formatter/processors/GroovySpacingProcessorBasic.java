@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.formatter.blocks.MethodCallWithoutQualifierB
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -154,10 +155,7 @@ public abstract class GroovySpacingProcessorBasic {
       return getStatementSpacing(context);
     }
 
-    if (rightType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END ||
-        leftType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START ||
-        rightType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START ||
-        leftType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
+    if (GrDocCommentUtil.isActualTagStartOrEnd(right) || GrDocCommentUtil.isActualTagStartOrEnd(left)) {
       return NO_SPACING;
     }
 
