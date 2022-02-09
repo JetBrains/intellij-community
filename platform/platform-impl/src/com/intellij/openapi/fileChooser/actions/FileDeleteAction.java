@@ -35,7 +35,7 @@ public class FileDeleteAction extends FileChooserAction {
     if (paths.isEmpty()) return;
 
     var project = e.getProject();
-    var ok = MessageDialogBuilder.yesNo(UIBundle.message("delete.dialog.title"), IdeBundle.message("chooser.delete.confirm"))
+    var ok = MessageDialogBuilder.yesNo(UIBundle.message("delete.dialog.title"), UIBundle.message("file.chooser.delete.confirm"))
       .yesText(ApplicationBundle.message("button.delete")).noText(CommonBundle.getCancelButtonText())
       .icon(UIUtil.getWarningIcon())
       .ask(project);

@@ -6,7 +6,6 @@ import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -34,10 +33,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
-import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.SortedListModel;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -517,7 +513,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       update(id, cancelled, () -> {
         myList.setPaintBusy(false);
         if (myModel.getSize() == 0) {
-          myList.setEmptyText(IdeBundle.message("chooser.cannot.load.roots"));
+          myList.setEmptyText(UIBundle.message("file.chooser.cannot.load.roots"));
         }
         else {
           FsItem selectedItem = selection.get();

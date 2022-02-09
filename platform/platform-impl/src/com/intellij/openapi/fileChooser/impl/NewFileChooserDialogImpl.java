@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,7 +99,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     myPanel = new FileChooserPanelImpl(myDescriptor, this::doOKAction, recentPaths);
     myPanel.setPreferredSize(JBUI.size(400));
 
-    var dndLabel = new JLabel(IdeBundle.message("chooser.tooltip.drag.drop"), SwingConstants.CENTER);
+    var dndLabel = new JLabel(UIBundle.message("file.chooser.tooltip.drag.drop"), SwingConstants.CENTER);
     dndLabel.setFont(JBUI.Fonts.miniFont());
     dndLabel.setForeground(UIUtil.getLabelDisabledForeground());
 
@@ -114,7 +113,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   protected void doOKAction() {
     List<Path> paths = myPanel.chosenPaths();
     if (paths.isEmpty()) {
-      Messages.showWarningDialog(myPanel, IdeBundle.message("chooser.nothing.selected"), getTitle());
+      Messages.showWarningDialog(myPanel, UIBundle.message("file.chooser.nothing.selected"), getTitle());
       return;
     }
 
@@ -133,7 +132,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
 
     if (!misses.isEmpty()) {
       var urls = misses.stream().map(s -> "&nbsp;&nbsp;&nbsp;" + s).collect(Collectors.joining("<br>"));
-      var message = IdeBundle.message("chooser.vfs.lookup", urls);
+      var message = UIBundle.message("file.chooser.vfs.lookup", urls);
       Messages.showErrorDialog(myPanel, message, getTitle());
       myPanel.reload();
       return;
