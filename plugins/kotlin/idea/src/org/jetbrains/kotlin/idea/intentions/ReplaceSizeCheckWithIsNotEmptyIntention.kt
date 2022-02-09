@@ -2,11 +2,14 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("DEPRECATION")
 class ReplaceSizeCheckWithIsNotEmptyInspection : IntentionBasedInspection<KtBinaryExpression>(
@@ -18,8 +21,6 @@ class ReplaceSizeCheckWithIsNotEmptyInspection : IntentionBasedInspection<KtBina
 }
 
 class ReplaceSizeCheckWithIsNotEmptyIntention : ReplaceSizeCheckIntention(KotlinBundle.lazyMessage("replace.size.check.with.isnotempty")) {
-    override fun getGenerateMethodSymbol() = "isNotEmpty()"
-
     override fun getTargetExpression(element: KtBinaryExpression): KtExpression? = when (element.operationToken) {
         KtTokens.EXCLEQ -> when {
             element.right.isZero() -> element.left
@@ -31,5 +32,28 @@ class ReplaceSizeCheckWithIsNotEmptyIntention : ReplaceSizeCheckIntention(Kotlin
         KtTokens.GTEQ -> if (element.right.isOne()) element.left else null
         KtTokens.LTEQ -> if (element.left.isOne()) element.right else null
         else -> null
+    }
+
+    override fun getReplacement(expression: KtExpression, isCountCall: Boolean): Replacement {
+        return if (isCountCall && expression.isRange()) {
+            Replacement(
+                targetExpression = expression,
+                newFunctionCall = "isEmpty()",
+                negate = true,
+                intentionTextGetter = KotlinBundle.lazyMessage("replace.size.check.with.0", "!isEmpty")
+            )
+        } else {
+            Replacement(
+                targetExpression = expression,
+                newFunctionCall = "isNotEmpty()",
+                negate = false,
+                intentionTextGetter = KotlinBundle.lazyMessage("replace.size.check.with.0", "isNotEmpty")
+            )
+        }
+    }
+
+    private fun KtExpression.isRange(): Boolean {
+        val receiver = resolveToCall()?.let { it.extensionReceiver ?: it.dispatchReceiver } ?: return false
+        return receiver.type.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.isRange() == true
     }
 }
