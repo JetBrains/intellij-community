@@ -159,6 +159,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
         toolbar.targetComponent = null
         toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
         component.add(toolbar.component, layoutConstraints)
+        toolbar.updateActionsImmediately()
       }
     }
     component.revalidate()
@@ -282,6 +283,10 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     panel.isEnabled = toolbarSettings.isEnabled
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
     project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
+
+    if (!panel.isVisible) {
+      panel.remove(layout.getLayoutComponent(BorderLayout.EAST))
+    }
 
     panel.revalidate()
     panel.repaint()
