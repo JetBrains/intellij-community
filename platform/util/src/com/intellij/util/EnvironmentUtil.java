@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.Activity;
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.*;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -334,28 +336,45 @@ public final class EnvironmentUtil {
       }
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
-      final Process process = builder.start();
-      final StreamGobbler stdoutGobbler = new StreamGobbler(process.getInputStream(), Charset.defaultCharset());
-      final StreamGobbler stderrGobbler = new StreamGobbler(process.getErrorStream(), Charset.defaultCharset());
-      final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
-      try {
-        stdoutGobbler.waitFor();
-      }
-      catch (InterruptedException ie) {
-        LOG.warn("Output reader for Environment reader process is interrupted", ie);
-      }
 
-      final String output = stdoutGobbler.getText().trim();
-      final String stderr = stderrGobbler.getText().trim();
-      if (exitCode != 0 || output.isEmpty()) {
-        EnvironmentReaderException ex = new EnvironmentReaderException("command " + command +
-                                                                       "\n\texit code: " + exitCode +
-                                                                       "\n\tOS: " + SystemInfoRt.OS_NAME,
-                                                                       output, stderr);
-        LOG.error(ex);
-        throw ex;
+      Path stdoutFile = null, stderrFile = null;
+      try {
+        stdoutFile = Files.createTempFile("intellij-shell-env.stdout.", ".tmp");
+        stderrFile = Files.createTempFile("intellij-shell-env.stderr.", ".tmp");
+        final Process process = builder
+          .redirectOutput(ProcessBuilder.Redirect.to(stdoutFile.toFile()))
+          .redirectError(ProcessBuilder.Redirect.to(stderrFile.toFile()))
+          .start();
+        final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
+
+        final String output = new String(Files.readAllBytes(stdoutFile), StandardCharsets.UTF_8);
+        final String stderr = new String(Files.readAllBytes(stderrFile), StandardCharsets.UTF_8);
+        if (exitCode != 0 || output.isEmpty()) {
+          EnvironmentReaderException ex = new EnvironmentReaderException("command " + command +
+                                                                         "\n\texit code: " + exitCode +
+                                                                         "\n\tOS: " + SystemInfoRt.OS_NAME,
+                                                                         output, stderr);
+          LOG.error(ex);
+          throw ex;
+        }
+        return new AbstractMap.SimpleImmutableEntry<>(stderr, parseEnv(output));
       }
-      return new AbstractMap.SimpleImmutableEntry<>(stderr, parseEnv(output));
+      finally {
+        deleteLoggingErrors(stdoutFile);
+        deleteLoggingErrors(stderrFile);
+      }
+    }
+
+    private static void deleteLoggingErrors(@Nullable Path file) {
+      try {
+        if (file != null) {
+          Files.delete(file);
+        }
+      }
+      catch (NoSuchFileException ignore) { }
+      catch (IOException e) {
+        LOG.warn("Cannot delete temporary file", e);
+      }
     }
 
     protected @NotNull List<String> getShellProcessCommand() {
@@ -557,42 +576,6 @@ public final class EnvironmentUtil {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private static final class StreamGobbler extends BaseOutputReader {
-    private static final Options OPTIONS = new Options() {
-      @Override
-      public SleepingPolicy policy() {
-        return SleepingPolicy.BLOCKING;
-      }
-
-      @Override
-      public boolean splitToLines() {
-        return false;
-      }
-    };
-
-    private final StringBuffer myBuffer;
-
-    StreamGobbler(@NotNull InputStream stream, @NotNull Charset charset) {
-      super(stream, charset, OPTIONS);
-      myBuffer = new StringBuffer();
-      startWithoutChangingThreadName();
-    }
-
-    @Override
-    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return ProcessIOExecutorService.INSTANCE.submit(runnable);
-    }
-
-    @Override
-    protected void onTextAvailable(@NotNull String text) {
-      myBuffer.append(text);
-    }
-
-    public @NotNull String getText() {
-      return myBuffer.toString();
     }
   }
 
