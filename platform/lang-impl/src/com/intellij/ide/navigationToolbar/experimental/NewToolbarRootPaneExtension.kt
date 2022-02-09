@@ -284,8 +284,9 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
     project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
 
-    if (!panel.isVisible) {
-      panel.remove(layout.getLayoutComponent(BorderLayout.EAST))
+    val rightPanel = layout.getLayoutComponent(BorderLayout.EAST)
+    if (!panel.isVisible && rightPanel != null) {
+      panel.remove(rightPanel)
     }
 
     panel.revalidate()
