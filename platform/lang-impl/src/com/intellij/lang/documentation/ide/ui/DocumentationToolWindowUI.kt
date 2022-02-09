@@ -117,6 +117,11 @@ private val TW_UI_KEY: Key<DocumentationToolWindowUI> = Key.create("documentatio
 private fun CoroutineScope.updateContentTab(browser: DocumentationBrowser, content: Content, asterisk: Boolean): Disposable {
   val updateJob = launch(Dispatchers.EDT + CoroutineName("DocumentationToolWindowUI content update")) {
     browser.pageFlow.collectLatest { page ->
+      // Wait for content a bit to avoid showing the title of the new page while the old page is still displayed.
+      // Either the title will update together with the content, or the title will update together with "Fetching" message.
+      withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
+        page.waitForContent()
+      }
       val presentation = page.request.presentation
       content.icon = presentation.icon
       content.displayName = if (asterisk) "* ${presentation.presentableText}" else presentation.presentableText
