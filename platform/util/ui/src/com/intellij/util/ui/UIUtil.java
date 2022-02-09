@@ -1199,12 +1199,16 @@ public final class UIUtil {
   }
 
   public static boolean isGraphite() {
-    if (!SystemInfoRt.isMac) return false;
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
+
     try {
       // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
       // NSGraphiteControlTint = 6
       return Foundation.invoke("NSColor", "currentControlTint").intValue() == 6;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return false;
     }
   }

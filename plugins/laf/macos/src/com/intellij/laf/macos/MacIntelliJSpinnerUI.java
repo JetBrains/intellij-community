@@ -5,7 +5,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -59,7 +59,7 @@ public final class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   }
 
   @Override
-  protected void paintArrowButton(Graphics g, BasicArrowButton button, int direction) {}
+  protected void paintArrowButton(Graphics g, BasicArrowButton button, int direction) { }
 
   @Override
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
@@ -79,21 +79,22 @@ public final class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   @Override
   protected void layout() {
     JComponent editor = spinner.getEditor();
-    if (editor != null) {
-      Insets i = spinner.getInsets();
-      Insets m = editorMargins();
-      int editorHeight = editor.getPreferredSize().height;
-      int editorOffset = (spinner.getHeight() - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2;
-
-      editor.setBounds(i.left + m.left,
-                       i.top + m.top + editorOffset,
-                       spinner.getWidth() - (i.left + i.right + DEFAULT_ICON.getIconWidth() + m.right + m.left),
-                       editor.getPreferredSize().height);
+    if (editor == null) {
+      return;
     }
+
+    Insets i = spinner.getInsets();
+    Insets m = editorMargins();
+    int editorHeight = editor.getPreferredSize().height;
+    int editorOffset = (spinner.getHeight() - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2;
+
+    editor.setBounds(i.left + m.left,
+                     i.top + m.top + editorOffset,
+                     spinner.getWidth() - (i.left + i.right + DEFAULT_ICON.getIconWidth() + m.right + m.left),
+                     editor.getPreferredSize().height);
   }
 
-  @Nullable
-  Rectangle getArrowButtonBounds() {
+  @NotNull Rectangle getArrowButtonBounds() {
     Insets i = spinner.getInsets();
     return new Rectangle(spinner.getWidth() - DEFAULT_ICON.getIconWidth() - i.right, i.top,
                          DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());

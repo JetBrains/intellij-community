@@ -21,7 +21,7 @@ import java.awt.geom.Path2D;
 
 import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
-class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+final class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   WinIntelliJEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
     super(editorTextField, editor);
     editor.addEditorMouseListener(new EditorMouseListener() {

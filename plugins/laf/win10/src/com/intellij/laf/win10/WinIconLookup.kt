@@ -6,7 +6,7 @@ import com.intellij.util.ui.LafIconLookup
 import javax.swing.Icon
 
 private class WinDirProvider : DirProvider() {
-  override fun dir(): String = "/icons/"
+  override fun dir() = "icons/"
 }
 
 object WinIconLookup {
@@ -18,7 +18,6 @@ object WinIconLookup {
               enabled: Boolean = true,
               editable: Boolean = false,
               pressed: Boolean = false): Icon {
-
     return LafIconLookup.findIcon(name,
                                   selected = selected,
                                   focused = focused,

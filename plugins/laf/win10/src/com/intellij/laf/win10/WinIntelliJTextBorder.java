@@ -30,7 +30,7 @@ import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJTextBorder extends DarculaTextBorder {
+public final class WinIntelliJTextBorder extends DarculaTextBorder {
   static final JBValue MINIMUM_HEIGHT = new JBValue.Float(22);
 
   @Override
