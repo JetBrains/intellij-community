@@ -9,7 +9,8 @@ import org.junit.AssumptionViolatedException
  * tests become flaky. When such cases are reported via this class, test runs are marked as ignored. There will be a separate build configuration
  * which will monitor tests ignored this way, and will signal an alert if some test becomes ignored too often. 
  * 
- * Note that this can be used in tests written in JUnit 4 or newer.
+ * Note that in order to make this work in JUnit 3 tests, you need to add `@RunWith(JUnit38AssumeSupportRunner.class)` annotation
+ * to the test class.
  */
 object ExternalResourcesChecker {
   /**
