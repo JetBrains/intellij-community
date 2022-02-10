@@ -182,15 +182,13 @@
     "Editor": {
       "SearchField" : {
         "borderInsets" : "7,10,7,8",
-        "textBackground": "Grey13"
+        "background": "Grey13"
       },
 
       "Toolbar" : {
         "borderColor" : "Grey11"
       }
     },
-
-    "EditorToolbar.borderColor" : "#393B40",
 
     "FileColor": {
       "Yellow": "Yellow11",
@@ -247,6 +245,12 @@
       }
     },
 
+    "NotificationsToolwindow": {
+      "newNotification.background": "Grey11",
+      "newNotification.hoverBackground": "#CFDEFCB3",
+      "Notification.hoverBackground": "#CFDEFCB3"
+    },
+
     "Popup": {
       "background": "Grey13",
       "borderWidth": 0.5,
@@ -297,14 +301,14 @@
 
     "StatusBar": {
       "Widget": {
-        "foreground": "Grey7",
+        "foreground": "Grey5",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "pressedBackground": "Grey10",
         "widgetInsets": "6,8,6,8"
       },
       "Breadcrumbs": {
-        "foreground": "Grey7",
+        "foreground": "Grey5",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "floatingBackground": "Grey13",

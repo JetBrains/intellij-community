@@ -225,6 +225,12 @@
       }
     },
 
+    "NotificationsToolwindow": {
+      "newNotification.background": "Grey3",
+      "newNotification.hoverBackground": "#2E436E99",
+      "Notification.hoverBackground": "#2E436E99"
+    },
+
     "OnePixelDivider.background": "Grey3",
 
     "Popup": {
@@ -286,14 +292,14 @@
 
     "StatusBar": {
       "Widget": {
-        "foreground": "Grey7",
+        "foreground": "Grey9",
         "hoverForeground": "Grey12",
         "hoverBackground": "Grey3",
         "pressedBackground": "Grey4",
         "widgetInsets": "6,8,6,8"
       },
       "Breadcrumbs": {
-        "foreground": "Grey7",
+        "foreground": "Grey9",
         "hoverForeground": "Grey12",
         "hoverBackground": "Grey3",
         "itemInsets": "0,0,0,0",
@@ -355,22 +361,6 @@
   },
 
   "icons": {
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBox.svg": "/themes/expUI/icons/dark/checkBox.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxDisabled.svg": "/themes/expUI/icons/dark/checkBoxDisabled.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxFocused.svg": "/themes/expUI/icons/dark/checkBoxFocused.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxIndeterminateSelected.svg": "/themes/expUI/icons/dark/checkBoxIndeterminateSelected.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxIndeterminateSelectedDisabled.svg": "/themes/expUI/icons/dark/checkBoxIndeterminateSelectedDisabled.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxIndeterminateSelectedFocused.svg": "/themes/expUI/icons/dark/checkBoxIndeterminateSelectedFocused.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxSelected.svg": "/themes/expUI/icons/dark/checkBoxSelected.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxSelectedDisabled.svg": "/themes/expUI/icons/dark/checkBoxSelectedDisabled.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxSelectedFocused.svg": "/themes/expUI/icons/dark/checkBoxSelectedFocused.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/radio.svg": "/themes/expUI/icons/dark/radio.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/radioDisabled.svg": "/themes/expUI/icons/dark/radioDisabled.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/radioFocused.svg": "/themes/expUI/icons/dark/radioFocused.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/radioSelected.svg": "/themes/expUI/icons/dark/radioSelected.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/radioSelectedDisabled.svg": "/themes/expUI/icons/dark/radioSelectedDisabled.svg",
-    "/com/intellij/ide/ui/laf/icons/darcula/radioSelectedFocused.svg": "/themes/expUI/icons/dark/radioSelectedFocused.svg",
-
     "ColorPalette": {
       "Checkbox.Background.Default.Dark": "Grey2",
       "Checkbox.Border.Default.Dark": "Grey5",
