@@ -161,7 +161,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceFieldWrapper.setBorder(JBUI.Borders.emptyTop(1));
 
     JPanel leftPanel = new JPanel(new GridBagLayout());
-    leftPanel.setBackground(JBColor.border());
+    leftPanel.setBackground(JBUI.CurrentTheme.Editor.BORDER_COLOR);
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
