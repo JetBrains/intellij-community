@@ -82,9 +82,7 @@ private fun registerNotificationGroup(extension: NotificationGroupEP,
       isLogByDefault = extension.isLogByDefault,
       toolWindowId = extension.toolWindowId,
       title = extension.getDisplayName(pluginDescriptor),
-      icon = null,
-      pluginId = pluginDescriptor.pluginId
-    )
+      pluginId = pluginDescriptor.pluginId)
     notificationGroup.isHideFromSettings = extension.hideFromSettings
     registeredGroups.put(groupId, notificationGroup)?.let { old ->
       LOG.warn("Notification group $groupId is already registered (group=$old). Plugin descriptor: $pluginDescriptor")

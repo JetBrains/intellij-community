@@ -27,39 +27,30 @@ class NotificationGroup private constructor(val displayId: String,
                                             pluginId: PluginId? = null,
                                             registerGroup: Boolean = false) {
   //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated("Not used in the UI. For notifications, please use `Notification#setIcon` instead.")
+  @ApiStatus.ScheduledForRemoval
+  val icon: Icon? = null
+
+  @Deprecated("Use `com.intellij.notification.impl.NotificationGroupEP` and `com.intellij.notification.NotificationGroupManager`")
+  @ApiStatus.ScheduledForRemoval
   constructor(displayId: String,
               displayType: NotificationDisplayType,
               isLogByDefault: Boolean = true,
               toolWindowId: String? = null,
               @Suppress("UNUSED_PARAMETER") icon: Icon? = null,
               @NotificationTitle title: String? = null,
-              pluginId: PluginId? = null) : this(
-    displayId = displayId,
-    displayType = displayType,
-    isLogByDefault = isLogByDefault,
-    toolWindowId = toolWindowId,
-    title = title,
-    pluginId = pluginId,
-    registerGroup = true
-  )
+              pluginId: PluginId? = null) :
+    this(displayId, displayType, isLogByDefault, toolWindowId, title, pluginId, true)
 
-  // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
-  @Suppress("UNUSED_PARAMETER")
   @JvmOverloads
-  @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
+  @Deprecated("Use `com.intellij.notification.impl.NotificationGroupEP` and `com.intellij.notification.NotificationGroupManager`")
+  @ApiStatus.ScheduledForRemoval
   constructor(displayId: String,
               displayType: NotificationDisplayType,
               isLogByDefault: Boolean = true,
               toolWindowId: String? = null,
-              icon: Icon? = null) : this(
-    displayId = displayId,
-    displayType = displayType,
-    isLogByDefault = isLogByDefault,
-    toolWindowId = toolWindowId,
-    registerGroup = true
-  )
+              @Suppress("UNUSED_PARAMETER") icon: Icon? = null) :
+    this(displayId, displayType, isLogByDefault, toolWindowId, registerGroup = true)
   //</editor-fold>
 
   var parentId: String? = null
@@ -92,19 +83,9 @@ class NotificationGroup private constructor(val displayId: String,
                displayType: NotificationDisplayType,
                isLogByDefault: Boolean,
                toolWindowId: String?,
-               @Suppress("UNUSED_PARAMETER") icon: Icon?,
                @NotificationTitle title: String?,
-               pluginId: PluginId?): NotificationGroup {
-      return NotificationGroup(
-        displayId = displayId,
-        displayType = displayType,
-        isLogByDefault = isLogByDefault,
-        toolWindowId = toolWindowId,
-        title = title,
-        pluginId = pluginId,
-        registerGroup = false
-      )
-    }
+               pluginId: PluginId?): NotificationGroup =
+      NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, title, pluginId, false)
 
     //<editor-fold desc="Deprecated stuff.">
     @JvmStatic

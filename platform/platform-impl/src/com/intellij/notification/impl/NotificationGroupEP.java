@@ -48,7 +48,9 @@ public final class NotificationGroupEP implements PluginAware {
   @Attribute("toolWindowId")
   public String toolWindowId;
 
+  /** @deprecated group icons aren't actually used in the UI; for notifications, please use `Notification#setIcon` instead */
   @Attribute("icon")
+  @Deprecated(forRemoval = true)
   public String icon;
 
   /**
@@ -122,15 +124,6 @@ public final class NotificationGroupEP implements PluginAware {
     return BundleBase.messageOrDefault(resourceBundle, key, null);
   }
 
-  public String getIcon() {
-    return icon;
-  }
-
-  //@Transient
-  //public @NotNull PluginDescriptor getPluginDescriptor() {
-  //  return pluginDescriptor;
-  //}
-
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor value) {
     pluginDescriptor = value;
@@ -147,7 +140,6 @@ public final class NotificationGroupEP implements PluginAware {
            ", displayType=" + displayType +
            ", isLogByDefault=" + isLogByDefault +
            ", toolWindowId='" + toolWindowId + '\'' +
-           ", icon='" + icon + '\'' +
            ", bundle='" + bundle + '\'' +
            ", key='" + key + '\'' +
            ", notificationIds='" + notificationIds + '\'' +
