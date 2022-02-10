@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
+import com.jetbrains.CustomWindowDecoration.*
 import net.miginfocom.swing.MigLayout
 import java.awt.Dialog
 import java.awt.Window
@@ -67,12 +68,10 @@ internal class DialogHeader(val window: Window) : CustomHeader(window) {
         }
     }
 
-    override fun getHitTestSpots(): List<RelativeRectangle> {
-        val hitTestSpots = ArrayList<RelativeRectangle>()
-
-        hitTestSpots.add(RelativeRectangle(productIcon))
-        hitTestSpots.add(RelativeRectangle(buttonPanes.getView()))
-
-        return hitTestSpots
+    override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
+        return listOf(
+          Pair(RelativeRectangle(productIcon), OTHER_HIT_SPOT),
+          Pair(RelativeRectangle(buttonPanes.closeButton), CLOSE_BUTTON)
+        )
     }
 }

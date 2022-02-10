@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
+import com.jetbrains.CustomWindowDecoration.*
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import java.awt.Rectangle
@@ -96,7 +97,7 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
     super.uninstallListeners()
   }
 
-  override fun getHitTestSpots(): List<RelativeRectangle> {
+  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
     val hitTestSpots = super.getHitTestSpots().toMutableList()
     if (menuHolder.isVisible) {
       val menuRect = Rectangle(menuHolder.size)
@@ -107,9 +108,9 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
         menuRect.y += topGap
         menuRect.height -= topGap
       }
-      hitTestSpots.add(RelativeRectangle(menuHolder, menuRect))
+      hitTestSpots.add(Pair(RelativeRectangle(menuHolder, menuRect), MENU_BAR))
     }
-    hitTestSpots.addAll(headerTitle.getBoundList())
+    hitTestSpots.addAll(headerTitle.getBoundList().map { Pair(it, OTHER_HIT_SPOT) })
     return hitTestSpots
   }
 }

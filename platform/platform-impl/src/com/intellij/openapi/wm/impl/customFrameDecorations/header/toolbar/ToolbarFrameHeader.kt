@@ -28,6 +28,7 @@ import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
+import com.jetbrains.CustomWindowDecoration.*
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import javax.swing.*
@@ -89,23 +90,23 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     }
   }
 
-  override fun getHitTestSpots(): List<RelativeRectangle> {
+  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
     val result = super.getHitTestSpots().toMutableList()
 
     when (mode) {
       ShowMode.MENU -> {
-        result.add(getElementRect(myMenuBar) { rect ->
+        result.add(Pair(getElementRect(myMenuBar) { rect ->
           val state = frame.extendedState
           if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
             val topGap = (rect.height / 3).toFloat().roundToInt()
             rect.y += topGap
             rect.height -= topGap
           }
-        })
+        }, MENU_BAR))
       }
       ShowMode.TOOLBAR -> {
-        result.add(getElementRect(myMenuButton))
-        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(getElementRect(it)) }
+        result.add(Pair(getElementRect(myMenuButton), MENU_BAR))
+        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(Pair(getElementRect(it), MENU_BAR)) }
       }
     }
 

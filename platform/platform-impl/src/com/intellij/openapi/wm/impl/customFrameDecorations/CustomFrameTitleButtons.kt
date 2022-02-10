@@ -94,7 +94,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     isOpaque = false
   }
 
-  private val myCloseButton: JButton = createButton("Close", myCloseAction)
+  val closeButton: JButton = createButton("Close", myCloseAction)
 
   var isSelected = false
     set(value) {
@@ -105,7 +105,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     }
 
   protected open fun updateStyles() {
-    StyleManager.applyStyle(myCloseButton, if(isSelected) activeCloseStyle else inactiveCloseStyle)
+    StyleManager.applyStyle(closeButton, if(isSelected) activeCloseStyle else inactiveCloseStyle)
   }
 
   protected fun createChildren() {
@@ -124,7 +124,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   }
 
   private fun addCloseButton() {
-    addComponent(myCloseButton)
+    addComponent(closeButton)
   }
 
   protected fun addComponent(component: JComponent) {

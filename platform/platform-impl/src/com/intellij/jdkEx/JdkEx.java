@@ -38,42 +38,6 @@ public final class JdkEx {
     return new DefDisplayModeEx();
   }
 
-  // CUSTOM DECOR SUPPORT {{
-
-  public static boolean isCustomDecorationSupported() {
-    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWin10OrNewer) {
-      return MyCustomDecorMethods.SET_HAS_CUSTOM_DECORATION.isAvailable();
-    }
-    return false;
-  }
-
-  public static void setHasCustomDecoration(@NotNull Window window) {
-    if (!isCustomDecorationSupported()) return;
-    MyCustomDecorMethods.SET_HAS_CUSTOM_DECORATION.invoke(window);
-  }
-
-  public static void setCustomDecorationHitTestSpots(@NotNull Window window, @NotNull List<Rectangle> spots) {
-    if (!isCustomDecorationSupported()) return;
-    MyCustomDecorMethods.SET_CUSTOM_DECORATION_HITTEST_SPOTS.invoke(AWTAccessor.getComponentAccessor().getPeer(window), spots);
-  }
-
-  public static void setCustomDecorationTitleBarHeight(@NotNull Window window, int height) {
-    if (!isCustomDecorationSupported()) return;
-    MyCustomDecorMethods.SET_CUSTOM_DECORATION_TITLEBAR_HEIGHT.invoke(AWTAccessor.getComponentAccessor().getPeer(window), height);
-  }
-
-  // lazy init
-  private static final class MyCustomDecorMethods {
-    public static final MyMethod SET_HAS_CUSTOM_DECORATION =
-      MyMethod.create(Window.class, "setHasCustomDecoration");
-    public static final MyMethod SET_CUSTOM_DECORATION_HITTEST_SPOTS =
-      MyMethod.create("sun.awt.windows.WWindowPeer", "setCustomDecorationHitTestSpots", List.class);
-    public static final MyMethod SET_CUSTOM_DECORATION_TITLEBAR_HEIGHT =
-      MyMethod.create("sun.awt.windows.WWindowPeer","setCustomDecorationTitleBarHeight", int.class);
-  }
-
-  // }} CUSTOM DECOR SUPPORT
-
   public static void setTransparent(@NotNull JWindow window) {
     // disable -Dswing.bufferPerWindow=true for the window
     JComponent rootPane = window.getRootPane();
