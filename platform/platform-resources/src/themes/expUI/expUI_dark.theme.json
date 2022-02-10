@@ -154,6 +154,8 @@
       "ArrowButton.background": "Grey2"
     },
 
+    "ComboPopup.border": "1,1,1,1,#43454A",
+
     "ContextHelp": {
       "fontSizeOffset": {
         "os.windows": 0
@@ -234,6 +236,9 @@
     "OnePixelDivider.background": "Grey3",
 
     "Popup": {
+      "borderWidth": 1,
+      "paintBorder": true,
+      "borderColor": "#393B40B3",
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey8",
@@ -248,8 +253,7 @@
         "activeBackground": "Grey2",
         "inactiveBackground": "Grey2",
         "inactiveForeground": "Grey7"
-      },
-      "borderWidth": 0.5
+      }
     },
 
     "ComplexPopup.Header.background": "Grey3",
@@ -346,11 +350,13 @@
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
-        "hoverBackground": "Blue1",
-        "pressedBackground": "Blue1"
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey3"
       },
       "Dropdown": {
-        "borderInsets": "12,6,12,6"
+        "borderInsets": "12,6,12,6",
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey3"
       },
       "background": "Grey2"
     },

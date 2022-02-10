@@ -152,6 +152,7 @@
     },
 
     "ComboBox": {
+      "background": "Grey13",
       "ArrowButton.background": "Grey13"
     },
 
@@ -253,7 +254,6 @@
 
     "Popup": {
       "background": "Grey13",
-      "borderWidth": 0.5,
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey7",
