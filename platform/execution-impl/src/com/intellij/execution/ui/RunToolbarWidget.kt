@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
@@ -327,7 +328,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware, Upd
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = IconManager.getInstance().getIcon("expui/run/widget/stop.svg", AllIcons::class.java)
+    e.presentation.icon = IconLoader.getIcon("expui/run/widget/stop.svg", AllIcons::class.java.classLoader)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)

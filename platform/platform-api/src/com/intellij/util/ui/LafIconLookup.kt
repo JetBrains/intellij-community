@@ -2,14 +2,15 @@
 package com.intellij.util.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.ui.ImageDataByPathLoader
-import java.util.concurrent.ConcurrentHashMap
+import com.intellij.openapi.util.IconLoader
 import javax.swing.Icon
 
 /**
  * @author Konstantin Bulenkov
  */
 private const val ICONS_DIR_PREFIX = "com/intellij/ide/ui/laf/icons/"
+
+private val defaultDirProver = DirProvider()
 
 open class DirProvider {
   open val defaultExtension: String
@@ -44,7 +45,7 @@ object LafIconLookup {
                enabled: Boolean = true,
                editable: Boolean = false,
                pressed: Boolean = false,
-               dirProvider: DirProvider = DirProvider()): Icon? {
+               dirProvider: DirProvider = defaultDirProver): Icon? {
     var key = name
     if (editable) {
       key += "Editable"
@@ -71,9 +72,7 @@ object LafIconLookup {
       "$dir$key.${dirProvider.defaultExtension}"
     }
 
-    return iconCachePerClass.get(providerClass).computeIfAbsent(path) {
-      ImageDataByPathLoader.findIcon(path, classLoader)
-    }
+    return IconLoader.findIcon(path, classLoader)
   }
 
   @JvmStatic
@@ -81,8 +80,4 @@ object LafIconLookup {
 
   @JvmStatic
   fun getSelectedIcon(name: String): Icon = findIcon(name, selected = true) ?: getIcon(name)
-}
-
-private val iconCachePerClass = object : ClassValue<MutableMap<String, Icon?>>() {
-  override fun computeValue(key: Class<*>) = ConcurrentHashMap<String, Icon?>(100, 0.9f, 2)
 }

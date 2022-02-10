@@ -508,7 +508,7 @@ public final class UITheme {
       }
 
       if (value.endsWith(".png") || value.endsWith(".svg")) {
-        Icon icon = ImageDataByPathLoader.findIcon(value, classLoader);
+        Icon icon = ImageDataByPathLoader.findIcon(value, classLoader, null);
         if (icon != null) {
           return icon;
         }

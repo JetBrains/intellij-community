@@ -359,7 +359,7 @@ public final class IconLoader {
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, ClassLoader)}
    */
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
-    return ImageDataByPathLoader.findIcon(path, aClass.getClassLoader());
+    return ImageDataByPathLoader.findIcon(path, aClass.getClassLoader(), iconCache);
   }
 
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean deferUrlResolve, boolean strict) {
@@ -396,7 +396,7 @@ public final class IconLoader {
                                          @Nullable HandleNotFound handleNotFound,
                                          boolean deferUrlResolve) {
     if (!deferUrlResolve) {
-      return ImageDataByPathLoader.findIcon(originalPath, classLoader);
+      return ImageDataByPathLoader.findIcon(originalPath, classLoader, iconCache);
     }
 
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
@@ -447,7 +447,7 @@ public final class IconLoader {
   }
 
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    return ImageDataByPathLoader.findIcon(path, classLoader);
+    return ImageDataByPathLoader.findIcon(path, classLoader, iconCache);
   }
 
   public static @Nullable Image toImage(@NotNull Icon icon) {

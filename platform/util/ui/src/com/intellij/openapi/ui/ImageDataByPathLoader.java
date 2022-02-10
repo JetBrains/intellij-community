@@ -21,6 +21,7 @@ import java.awt.image.ImageFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings("HardCodedStringLiteral")
@@ -37,7 +38,9 @@ public final class ImageDataByPathLoader implements ImageDataLoader {
   }
 
   // cache is not used - image data resolved using cache in any case.
-  public static @Nullable Icon findIcon(@NotNull @NonNls String originalPath, @NotNull ClassLoader originalClassLoader) {
+  public static @Nullable Icon findIcon(@NotNull @NonNls String originalPath,
+                                        @NotNull ClassLoader originalClassLoader,
+                                        @Nullable Map<@NotNull Pair<String, ClassLoader>, IconLoader.@NotNull CachedImageIcon> cache) {
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
 
     originalPath = normalizePath(originalPath);
@@ -49,16 +52,29 @@ public final class ImageDataByPathLoader implements ImageDataLoader {
     if (IconLoader.isReflectivePath(path)) {
       icon = IconLoader.getReflectiveIcon(path, classLoader);
     }
+    else if (cache == null) {
+      icon = createIcon(originalPath, originalClassLoader, patched, path, classLoader);
+    }
     else {
-      ImageDataByPathLoader loader = new ImageDataByPathLoader(originalPath, originalClassLoader, null);
-      return new IconLoader.CachedImageIcon(null, patched == null ? loader : new ImageDataByPathLoader(path, classLoader, loader), null,
-                                            null);
+      icon = cache.computeIfAbsent(new Pair<>(originalPath, originalClassLoader), pair -> {
+        return createIcon(pair.first, pair.second, patched, path, classLoader);
+      });
     }
 
     if (startTime != -1) {
       IconLoadMeasurer.findIcon.end(startTime);
     }
     return icon;
+  }
+
+  private static @NotNull IconLoader.CachedImageIcon createIcon(@NonNls @NotNull String originalPath,
+                                                                @NotNull ClassLoader originalClassLoader,
+                                                                @Nullable Pair<String, ClassLoader> patched,
+                                                                @NotNull String path,
+                                                                @NotNull ClassLoader classLoader) {
+    ImageDataByPathLoader loader = new ImageDataByPathLoader(originalPath, originalClassLoader, null);
+    ImageDataByPathLoader resolver = patched == null ? loader : new ImageDataByPathLoader(path, classLoader, loader);
+    return new IconLoader.CachedImageIcon(null, resolver, null, null);
   }
 
   @Override
@@ -79,7 +95,7 @@ public final class ImageDataByPathLoader implements ImageDataLoader {
   public int hashCode() {
     int result = path.hashCode();
     result = 31 * result + classLoader.hashCode();
-    result = 31 * result + (original != null ? original.hashCode() : 0);
+    result = 31 * result + Objects.hashCode(original);
     return result;
   }
 

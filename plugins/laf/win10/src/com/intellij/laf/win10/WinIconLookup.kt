@@ -5,7 +5,10 @@ import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.LafIconLookup
 import javax.swing.Icon
 
-private class WinDirProvider : DirProvider() {
+private object WinDirProvider : DirProvider() {
+  override val defaultExtension: String
+    get() = "svg"
+
   override fun dir() = "icons/"
 }
 
@@ -24,6 +27,6 @@ object WinIconLookup {
                                   enabled = enabled,
                                   editable = editable,
                                   pressed = pressed,
-                                  dirProvider = WinDirProvider()) ?: AllIcons.Actions.Stub
+                                  dirProvider = WinDirProvider) ?: AllIcons.Actions.Stub
   }
 }

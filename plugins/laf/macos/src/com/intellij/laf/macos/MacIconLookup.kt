@@ -6,7 +6,7 @@ import com.intellij.util.ui.LafIconLookup
 import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
 
-private class MacDirProvider : DirProvider() {
+private object MacDirProvider : DirProvider() {
   override val defaultExtension: String
     get() = "svg"
 
@@ -29,6 +29,6 @@ object MacIconLookup {
                                   enabled = enabled,
                                   editable = editable,
                                   pressed = pressed,
-                                  dirProvider = MacDirProvider()) ?: AllIcons.Actions.Stub
+                                  dirProvider = MacDirProvider) ?: AllIcons.Actions.Stub
   }
 }
