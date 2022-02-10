@@ -11,12 +11,7 @@ class PythonLanguageIntrospectable(val config: PythonLanguageRuntimeConfiguratio
     val pythonExecutable = "python3"
     val pythonExecutablePathFuture = subject
       .promiseExecuteScript("$WHICH_BINARY $pythonExecutable")
-      .thenApply { result ->
-        result?.trim()?.let { trimmedOutput ->
-          val iterator = trimmedOutput.lineSequence().iterator()
-          if (iterator.hasNext()) config.pythonInterpreterPath = iterator.next()
-        }
-      }
+      .thenApply { it?.firstOutputLine()?.let { firstStdoutLine -> config.pythonInterpreterPath = firstStdoutLine } }
     val userHomeFuture = pythonExecutablePathFuture.thenExecute {
       subject
         .promiseEnvironmentVariable("HOME")
