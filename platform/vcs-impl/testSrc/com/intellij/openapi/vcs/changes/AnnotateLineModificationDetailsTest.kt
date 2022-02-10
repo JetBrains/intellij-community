@@ -80,6 +80,16 @@ class AnnotateLineModificationDetailsTest {
            "X Y_Y B C Y_Y X",
            1,
            "<Y >B C [Y]")
+
+    doTest("XXXX YYYYY ZZZZZ",
+           "XXXX_  YYYYY ZZZZZ",
+           1,
+           "< > YYYYY ZZZZZ")
+
+    doTest("XXXX YYYYY ZZZZZ",
+           "XXXX_  YYYYY ZZZZZ",
+           0,
+           "XXXX|")
   }
 
 
