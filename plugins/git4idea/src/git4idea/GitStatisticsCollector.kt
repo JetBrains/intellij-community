@@ -188,6 +188,21 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 }
 
+private const val MAX_SIZE: Long = 4L * 1024 * 1024 * 1024 // 4 GB
+private const val MAX_TIME: Long = 5 * 1000 * 60 // 5 min
+
+private fun Sequence<Long>.sumWithLimits(): Long {
+  var sum = 0L
+  val startTime = System.currentTimeMillis()
+  for (element in this) {
+    if (System.currentTimeMillis() - startTime > MAX_TIME)
+      return -1
+    sum += element
+    if (sum >= MAX_SIZE) return MAX_SIZE
+  }
+  return sum
+}
+
 /**
  * Calculates size of work tree in given [GitRepository]
  *
@@ -198,7 +213,8 @@ private fun GitRepository.workingCopySize(): Long = try {
   root.walk()
     .onEnter { it.name != GitUtil.DOT_GIT && !isInnerRepo(root, it) }
     .filter { it.isFile }
-    .sumOf { it.length() }
+    .map { it.length() }
+    .sumWithLimits() // don't calculate working copy size over 4 gb to reduce CPU usage
 }
 catch (e: Exception) {
   // if something goes wrong with file system operations
