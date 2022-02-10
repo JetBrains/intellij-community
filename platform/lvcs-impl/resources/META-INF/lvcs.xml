@@ -3,6 +3,7 @@
     <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
       <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction">
         <override-text place="GoToAction"/>
+        <override-text place="Vcs.Toolbar.Widget"/>
       </action>
       <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction">
         <override-text place="GoToAction"/>

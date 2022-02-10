@@ -30,9 +30,6 @@ public class StartUseVcsAction extends DumbAwareAction {
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(enabled);
-    if (enabled) {
-      presentation.setText(VcsBundle.messagePointer("action.enable.version.control.integration.text"));
-    }
   }
 
   @Override

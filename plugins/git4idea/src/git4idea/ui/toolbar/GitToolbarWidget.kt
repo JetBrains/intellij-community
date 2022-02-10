@@ -125,16 +125,16 @@ private class GitToolbarWidget : ToolbarComboWidget(), Disposable {
     project?.let { proj ->
       val repo = repository
 
-      var listPopup: ListPopup
+      val listPopup: ListPopup
       val dataContext = DataManager.getInstance().getDataContext(this)
       if (repo != null) {
         listPopup = GitBranchPopup.getInstance(proj, repo, dataContext).asListPopup()
       }
       else {
-        val group = ActionManager.getInstance().getAction("Vcs.Import") as ActionGroup
-        val place = ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
+        val group = ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
+        val place = ActionPlaces.getPopupPlace(ActionPlaces.VCS_TOOLBAR_WIDGET)
         listPopup = JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, place)
+          .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
       }
       listPopup.showUnderneathOf(this)
     }

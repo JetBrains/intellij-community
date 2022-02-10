@@ -29,6 +29,7 @@
       <add-to-group group-id="Vcs.Import"/>
       <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
       <add-to-group group-id="Vcs.ToolWindow.CreateRepository"/>
+      <override-text place="Vcs.Toolbar.Widget"/>
     </action>
 
     <action id="Git.Log" class="git4idea.log.GitShowExternalLogAction">
@@ -429,6 +430,15 @@
       <reference ref="Git.Commit.Stage"/>
       <reference ref="Vcs.Push"/>
       <reference ref="Vcs.QuickListPopupAction"/>
+    </group>
+
+    <group id="Vcs.ToolbarWidget.CreateRepository" searchable="false">
+      <group id="Vcs.ToolbarWidget.ShareProject" popup="true" searchable="false">
+        <reference id="Start.Use.Vcs"/>
+      </group>
+      <reference id="Git.Init"/>
+      <separator/>
+      <reference id="LocalHistory.ShowHistory"/>
     </group>
   </actions>
 
