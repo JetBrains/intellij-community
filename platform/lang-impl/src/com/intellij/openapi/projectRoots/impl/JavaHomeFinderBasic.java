@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,13 +37,15 @@ public class JavaHomeFinderBasic {
 
   private boolean myCheckEmbeddedJava = false;
 
-  public JavaHomeFinderBasic(@NotNull JavaHomeFinder.SystemInfoProvider systemInfo, String @NotNull ... paths) {
+  private @NotNull String @NotNull[] mySpecifiedPaths = ArrayUtil.EMPTY_STRING_ARRAY;
+
+  public JavaHomeFinderBasic(@NotNull JavaHomeFinder.SystemInfoProvider systemInfo) {
     mySystemInfo = systemInfo;
 
     myFinders.add(this::checkDefaultLocations);
     myFinders.add(this::findInPATH);
     myFinders.add(this::findInJavaHome);
-    myFinders.add(() -> findInSpecifiedPaths(paths));
+    myFinders.add(this::findInSpecifiedPaths);
     myFinders.add(this::findJavaInstalledBySdkMan);
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
@@ -76,12 +79,17 @@ public class JavaHomeFinderBasic {
     return this;
   }
 
+  public @NotNull JavaHomeFinderBasic checkSpecifiedPaths(String @NotNull ... paths) {
+    mySpecifiedPaths = paths;
+    return this;
+  }
+
   protected JavaHomeFinder.SystemInfoProvider getSystemInfo() {
     return mySystemInfo;
   }
 
-  private @NotNull Set<String> findInSpecifiedPaths(String[] paths) {
-    return scanAll(ContainerUtil.map(paths, Paths::get), true);
+  private @NotNull Set<String> findInSpecifiedPaths() {
+    return scanAll(ContainerUtil.map(mySpecifiedPaths, Paths::get), true);
   }
 
   protected void registerFinder(@NotNull Supplier<Set<String>> finder) {

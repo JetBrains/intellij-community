@@ -20,11 +20,12 @@ class JavaHomeFinderWsl extends JavaHomeFinderBasic {
   private final WSLDistribution myDistro;
 
   JavaHomeFinderWsl(@NotNull WSLDistribution distro) {
-    super(new WslSystemInfoProvider(distro), lookupPaths(distro));
+    super(new WslSystemInfoProvider(distro));
     myDistro = distro;
     checkDefaultInstallDir(false);
     checkUsedInstallDirs(false);
     checkConfiguredJdks(false);
+    checkSpecifiedPaths(lookupPaths(distro));
   }
 
   private static String[] lookupPaths(WSLDistribution distro) {

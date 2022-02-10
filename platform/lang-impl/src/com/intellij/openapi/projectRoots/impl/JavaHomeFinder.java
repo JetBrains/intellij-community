@@ -95,10 +95,10 @@ public abstract class JavaHomeFinder {
       return new JavaHomeFinderMac(systemInfoProvider);
     }
     if (SystemInfo.isLinux) {
-      return new JavaHomeFinderBasic(systemInfoProvider, DEFAULT_JAVA_LINUX_PATHS);
+      return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(DEFAULT_JAVA_LINUX_PATHS);
     }
     if (SystemInfo.isSolaris) {
-      return new JavaHomeFinderBasic(systemInfoProvider, "/usr/jdk");
+      return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths("/usr/jdk");
     }
 
     return new JavaHomeFinderBasic(systemInfoProvider);
