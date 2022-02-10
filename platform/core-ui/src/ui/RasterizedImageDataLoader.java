@@ -37,7 +37,6 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
   private final WeakReference<ClassLoader> originalClassLoaderRef;
 
   private final int imageFlags;
-  private boolean isPatched;
 
   RasterizedImageDataLoader(@NotNull String path,
                             @NotNull WeakReference<ClassLoader> classLoaderRef,
@@ -66,9 +65,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
                                                 int imageFlags) {
     String effectivePath = normalizePath(patched.first);
     WeakReference<ClassLoader> effectiveClassLoaderRef = patched.second == null ? originalClassLoaderRef : new WeakReference<>(patched.second);
-    RasterizedImageDataLoader loader = new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey, imageFlags);
-    loader.isPatched = true;
-    return loader;
+    return new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey, imageFlags);
   }
 
   @Override
@@ -82,10 +79,17 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
     if (classLoader == null) {
       return null;
     }
-    boolean isSvg = cacheKey != 0;
+
     // use cache key only if path to image is not customized
-    return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, originalPath == path ? cacheKey : 0, imageFlags,
-                          isPatched);
+    if (originalPath == path) {
+      boolean isSvg = cacheKey != 0;
+      // use cache key only if path to image is not customized
+      return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, cacheKey, imageFlags, false);
+    }
+    else {
+      boolean isSvg = path.endsWith(".svg");
+      return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, 0, imageFlags, true);
+    }
   }
 
   @Override

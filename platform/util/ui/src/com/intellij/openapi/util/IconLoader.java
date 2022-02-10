@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.ui.ImageDataByPathLoader;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.Gray;
 import com.intellij.ui.IconManager;
@@ -384,6 +385,10 @@ public final class IconLoader {
                                         @NotNull ClassLoader classLoader,
                                         @Nullable HandleNotFound handleNotFound,
                                         boolean deferUrlResolve) {
+    if (!deferUrlResolve) {
+      return ImageDataByPathLoader.findIcon(originalPath, classLoader);
+    }
+
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = patchPath(originalPath, classLoader);
     String path = patchedPath == null ? originalPath : patchedPath.first;
@@ -402,20 +407,11 @@ public final class IconLoader {
         cachedIcon = iconCache.computeIfAbsent(key, k -> {
           ClassLoader classLoader1 = k.getSecond();
           ImageDataLoader resolver;
-          if (deferUrlResolve) {
-            HandleNotFound effectiveHandleNotFound = handleNotFound;
-            if (effectiveHandleNotFound == null) {
-              effectiveHandleNotFound = STRICT_LOCAL.get() ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE;
-            }
-            resolver = new ImageDataByUrlLoader(path, aClass, classLoader1, effectiveHandleNotFound, /* useCacheOnLoad = */ true);
+          HandleNotFound effectiveHandleNotFound = handleNotFound;
+          if (effectiveHandleNotFound == null) {
+            effectiveHandleNotFound = STRICT_LOCAL.get() ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE;
           }
-          else {
-            URL url = doResolve(path, classLoader1, null, HandleNotFound.IGNORE);
-            if (url == null) {
-              return null;
-            }
-            resolver = new ResolvedImageDataResolver(url, classLoader1);
-          }
+          resolver = new ImageDataByUrlLoader(path, aClass, classLoader1, effectiveHandleNotFound, /* useCacheOnLoad = */ true);
           return new CachedImageIcon(originalPath, resolver, null, null);
         });
       }
@@ -441,7 +437,7 @@ public final class IconLoader {
   }
 
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    return findIcon(path, null, classLoader, HandleNotFound.IGNORE, false);
+    return ImageDataByPathLoader.findIcon(path, classLoader);
   }
 
   public static @Nullable Image toImage(@NotNull Icon icon) {
@@ -1071,64 +1067,6 @@ public final class IconLoader {
     IGNORE;
 
     void handle(@NotNull String msg) throws RuntimeException {}
-  }
-
-  private static final class ResolvedImageDataResolver implements ImageDataLoader {
-    private final URL url;
-    private final ClassLoader classLoader;
-
-    ResolvedImageDataResolver(@NotNull URL url, @Nullable ClassLoader classLoader) {
-      this.classLoader = classLoader;
-      this.url = url;
-    }
-
-    @Override
-    public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
-      int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING | ImageLoader.USE_CACHE;
-      if (isDark) {
-        flags |= ImageLoader.USE_DARK;
-      }
-
-      String path = url.toString();
-      return ImageLoader.loadImage(path, filters, null, null, flags, scaleContext, !path.endsWith(".svg"));
-    }
-
-    @Override
-    public @NotNull URL getURL() {
-      return this.url;
-    }
-
-    @Override
-    public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-      Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
-      if (patchedPath == null) {
-        return null;
-      }
-
-      ClassLoader classLoader = patchedPath.second == null ? null : patchedPath.second;
-      String path = patchedPath.first;
-      // This use case for temp themes only. Here we want immediately replace existing icon to a local one
-      if (path != null && path.startsWith("file:/")) {
-        try {
-          ImageDataByUrlLoader resolver = new ImageDataByUrlLoader(new URL(path), path, classLoader, true);
-          resolver.resolve();
-          return resolver;
-        }
-        catch (MalformedURLException ignore) {
-        }
-      }
-      return null;
-    }
-
-    @Override
-    public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
-      return classLoader == this.classLoader;
-    }
-
-    @Override
-    public String toString() {
-      return "ResolvedImageDataResolver{url=" + url + '}';
-    }
   }
 
   static @Nullable URL doResolve(@Nullable String path,

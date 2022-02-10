@@ -72,13 +72,7 @@ fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescr
   }
 
   try {
-    return IconLoader.findIcon(
-      bean.icon ?: return null,
-      factory.javaClass,
-      pluginDescriptor.classLoader,
-      null,
-      true,
-    )
+    return IconLoader.findIcon(bean.icon ?: return null, pluginDescriptor.classLoader)
   }
   catch (e: Exception) {
     logger<ToolWindowManagerImpl>().error(e)

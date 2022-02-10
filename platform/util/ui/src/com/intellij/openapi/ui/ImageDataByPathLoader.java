@@ -37,7 +37,7 @@ public final class ImageDataByPathLoader implements ImageDataLoader {
   }
 
   // cache is not used - image data resolved using cache in any case.
-  public static @Nullable Icon findIconFromThemePath(@NotNull @NonNls String originalPath, @NotNull ClassLoader originalClassLoader) {
+  public static @Nullable Icon findIcon(@NotNull @NonNls String originalPath, @NotNull ClassLoader originalClassLoader) {
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
 
     originalPath = normalizePath(originalPath);

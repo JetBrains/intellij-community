@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.BackgroundSupplier;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.DirtyUI;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.render.RenderingHelper;
@@ -28,18 +28,9 @@ import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.tree.AbstractLayoutCache;
-import javax.swing.tree.FixedHeightLayoutCache;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.VariableHeightLayoutCache;
+import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
@@ -66,10 +57,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
-  @NotNull
-  private static Control.Painter getPainter(@NotNull JTree tree) {
-    Control.Painter painter = ComponentUtil.getClientProperty(tree, Control.Painter.KEY);
-    if (painter != null) return painter;
+  private static @NotNull Control.Painter getPainter(@NotNull JTree tree) {
+    Control.Painter painter = ClientProperty.get(tree, Control.Painter.KEY);
+    if (painter != null) {
+      return painter;
+    }
     // painter is not specified for the given tree
     Application application = getApplication();
     if (application != null) {
@@ -84,8 +76,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
     return Control.Painter.DEFAULT;
   }
 
-  @Nullable
-  private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
+  private static @Nullable Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
     // to be consistent with com.intellij.ui.components.WideSelectionListUI#getBackground
     if (selected) {
       return RenderingUtil.getSelectionBackground(tree);
@@ -145,11 +136,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   private static boolean isLargeModelAllowed(@Nullable JTree tree) {
-    return is("ide.tree.large.model.allowed") || UIUtil.isClientPropertyTrue(tree, LARGE_MODEL_ALLOWED);
+    return is("ide.tree.large.model.allowed") || ClientProperty.isTrue(tree, LARGE_MODEL_ALLOWED);
   }
 
   private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
-    Boolean allowed = UIUtil.getClientProperty(tree, AUTO_EXPAND_ALLOWED);
+    Boolean allowed = ClientProperty.get(tree, AUTO_EXPAND_ALLOWED);
     return allowed != null ? allowed : tree.isShowing();
   }
 
@@ -165,13 +156,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
   private final AtomicBoolean painting = new AtomicBoolean();
   private final DispatchThreadValidator validator = new DispatchThreadValidator();
 
-  @Nullable
-  private JTree getTree() {
+  private @Nullable JTree getTree() {
     return super.tree; // TODO: tree ???
   }
 
-  @Nullable
-  private Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
+  private @Nullable Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
     TreeCellRenderer renderer = value instanceof LoadingNode ? LoadingNodeRenderer.SHARED : super.currentCellRenderer;
     if (renderer == null) return null;
     Component component = renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, focused);
@@ -588,9 +577,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
         if (property == null) super.mouseDragged(event); // use Swing-based DnD only if custom DnD is not set
       }
 
-      @NotNull
       @Override
-      protected MouseEvent convert(@NotNull MouseEvent event) {
+      protected @NotNull MouseEvent convert(@NotNull MouseEvent event) {
         JTree tree = getTree();
         if (tree != null && tree == event.getSource() && tree.isEnabled()) {
           if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {

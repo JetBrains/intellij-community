@@ -72,7 +72,7 @@ object LafIconLookup {
     }
 
     return iconCachePerClass.get(providerClass).computeIfAbsent(path) {
-      ImageDataByPathLoader.findIconFromThemePath(path, classLoader)
+      ImageDataByPathLoader.findIcon(path, classLoader)
     }
   }
 

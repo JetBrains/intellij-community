@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.AbstractBundle;
@@ -254,7 +254,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    Icon icon = IconLoader.findIcon(iconPath, actionClass, module.getClassLoader(), null, true);
+    Icon icon = IconLoader.findIcon(iconPath, module.getClassLoader());
     if (icon == null) {
       reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
       icon = AllIcons.Nodes.Unknown;
