@@ -114,8 +114,7 @@ class WrapWithSafeLetCallFix(
                 else -> return null
             }
 
-            if (!isNullabilityMismatch(expected = expectedType, actual = actualType)) return null
-
+            if (element.isNull() || !isNullabilityMismatch(expected = expectedType, actual = actualType)) return null
             return WrapWithSafeLetCallFix(call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call, element)
         }
     }
