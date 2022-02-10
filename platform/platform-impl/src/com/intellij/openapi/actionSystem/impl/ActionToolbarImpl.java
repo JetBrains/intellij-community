@@ -69,6 +69,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final String LOADING_LABEL = "LOADING_LABEL";
   private static final String SUPPRESS_ACTION_COMPONENT_WARNING = "ActionToolbarImpl.suppressCustomComponentWarning";
   private static final String SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning";
+  public static final String DO_NOT_ADD_CUSTOMIZATION_HANDLER = "ActionToolbarImpl.suppressTargetComponentWarning";
 
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
@@ -216,13 +217,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
-    if(isCustomizationSupported()) {
-      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
-    }
-  }
+    myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
 
-  protected Boolean isCustomizationSupported() {
-    return true;
   }
 
   @Override
@@ -400,7 +396,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   protected void addImpl(Component comp, Object constraints, int index) {
     super.addImpl(comp, constraints, index);
     if (myPopupHandler != null && !ContainerUtil.exists(comp.getMouseListeners(), listener -> listener instanceof PopupHandler)) {
-      UIUtil.uiTraverser(comp).traverse().forEach(component -> component.addMouseListener(myPopupHandler));
+      UIUtil.uiTraverser(comp).traverse().forEach(component -> {
+        if (ClientProperty.isTrue(component, DO_NOT_ADD_CUSTOMIZATION_HANDLER)) return;
+        component.addMouseListener(myPopupHandler);
+      });
     }
   }
 

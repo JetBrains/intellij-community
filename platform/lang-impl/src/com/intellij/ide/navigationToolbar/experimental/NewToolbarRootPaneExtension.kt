@@ -12,6 +12,7 @@ import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
