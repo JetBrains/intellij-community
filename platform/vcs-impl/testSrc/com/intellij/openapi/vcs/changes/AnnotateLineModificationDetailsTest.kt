@@ -64,7 +64,7 @@ class AnnotateLineModificationDetailsTest {
     doTest("A B C D E",
            "A_B C D_E",
            1,
-           "|B C D|")
+           "[]B C D[]")
 
     doTest("A_B C D_E",
            "A B C D E",
@@ -89,7 +89,7 @@ class AnnotateLineModificationDetailsTest {
     doTest("XXXX YYYYY ZZZZZ",
            "XXXX_  YYYYY ZZZZZ",
            0,
-           "XXXX|")
+           "XXXX<>")
   }
 
 
