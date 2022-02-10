@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
@@ -12,6 +12,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -40,7 +41,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -85,14 +85,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
-
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
   private static final int CONNECTION_TIMEOUT = 60000;
 
-  public static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup("Python Debugger", ToolWindowId.DEBUG, true, PyBundle.message("debug.notification.group"));
+  public static NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Python Debugger");
+  }
 
   private final ProcessDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
@@ -344,7 +343,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             myProcessHandler.destroyProcess();
           }
           if (shouldLogConnectionException(e)) {
-            NOTIFICATION_GROUP
+            PyDebugProcess.getNotificationGroup()
               .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR)
               .notify(myProject);
           }
@@ -493,7 +492,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
   }
 
-  private static class WatchReturnValuesAction extends ToggleAction {
+  private static final class WatchReturnValuesAction extends ToggleAction {
     private volatile boolean myWatchesReturnValues;
     private final PyDebugProcess myProcess;
     private final @NlsActions.ActionText String myText;

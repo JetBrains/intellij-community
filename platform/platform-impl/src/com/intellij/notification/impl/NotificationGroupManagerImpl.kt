@@ -9,7 +9,6 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.util.IconLoader
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import java.util.concurrent.ConcurrentHashMap
 
@@ -77,14 +76,13 @@ private fun registerNotificationGroup(extension: NotificationGroupEP,
       return
     }
 
-    val icon = extension.icon
     val notificationGroup = NotificationGroup.create(
       displayId = groupId,
       displayType = type,
       isLogByDefault = extension.isLogByDefault,
       toolWindowId = extension.toolWindowId,
-      icon = icon?.let { IconLoader.findIcon(icon, pluginDescriptor.classLoader) },
       title = extension.getDisplayName(pluginDescriptor),
+      icon = null,
       pluginId = pluginDescriptor.pluginId
     )
     notificationGroup.isHideFromSettings = extension.hideFromSettings
