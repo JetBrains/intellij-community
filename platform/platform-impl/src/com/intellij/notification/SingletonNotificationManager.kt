@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
@@ -70,13 +69,11 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
 
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("please use `#SingletonNotificationManager(String, NotificationType)` instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   constructor(group: NotificationGroup, type: NotificationType, defaultListener: NotificationListener? = null) : this(group.displayId, type) {
     this.defaultListener = defaultListener
   }
 
   @Deprecated("please use `#notify(String, String, Project)` instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   fun notify(@NotificationContent content: String, project: Project?): Boolean {
     notify("", content, project) { }
     return true
@@ -84,7 +81,6 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
 
   @JvmOverloads
   @Deprecated("please use `#notify(String, String, Project, Consumer<Notification>)` instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   fun notify(@NotificationTitle title: String = "",
              @NotificationContent content: String,
              project: Project? = null,

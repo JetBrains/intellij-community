@@ -8,7 +8,6 @@ import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -137,13 +136,11 @@ fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T
   }
 }
 
-@ScheduledForRemoval(inVersion = "2022.3")
 @Deprecated(message = "Method was renamed", replaceWith = ReplaceWith("runBlockingCancellable(action)"))
 fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(action)
 }
 
-@ScheduledForRemoval(inVersion = "2022.3")
 @Deprecated(message = "Method was renamed", replaceWith = ReplaceWith("runBlockingCancellable(indicator, action)"))
 fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(indicator, action)

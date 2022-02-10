@@ -116,7 +116,6 @@ interface CellBuilder<out T : JComponent> {
    * All components of the same group share will get the same BoundSize (min/preferred/max),
    * which is that of the biggest component in the group
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   fun sizeGroup(name: String): CellBuilder<T>
   fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
