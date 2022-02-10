@@ -462,6 +462,7 @@ public class FileUtilRt {
    * @return the relative path from the {@code base} to the {@code file}, or {@code null}
    */
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
 
@@ -473,11 +474,13 @@ public class FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return getRelativePath(basePath, filePath, separator, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator, boolean caseSensitive) {
     basePath = ensureEnds(basePath, separator);
 
@@ -510,6 +513,7 @@ public class FileUtilRt {
   }
 
   @NotNull
+  @Contract(pure = true)
   private static String ensureEnds(@NotNull String s, char endsWith) {
     return StringUtilRt.endsWithChar(s, endsWith) ? s : s + endsWith;
   }

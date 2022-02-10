@@ -74,6 +74,7 @@ public class FileUtil extends FileUtilRt {
 
   private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
+  @Contract(pure = true)
   public static @NotNull @NlsSafe String join(String @NotNull ... parts) {
     return String.join(File.separator, parts);
   }
@@ -88,16 +89,19 @@ public class FileUtil extends FileUtilRt {
    * @return the relative path from the {@code base} to the {@code file} or {@code null}
    */
   @Nullable
+  @Contract(pure = true)
   public static @NlsSafe String getRelativePath(File base, File file) {
     return FileUtilRt.getRelativePath(base, file);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static @NlsSafe String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static @NlsSafe String getRelativePath(@NotNull String basePath,
                                                 @NotNull String filePath,
                                                 char separator,
@@ -148,19 +152,23 @@ public class FileUtil extends FileUtilRt {
     return startsWith(filePath, ancestorPath, strict, SystemInfoRt.isFileSystemCaseSensitive, true);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
     return startsWith(path, prefix, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive) {
     return startsWith(path, prefix, isCaseSensitive, false);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive, boolean strict) {
     return !ThreeState.NO.equals(startsWith(path, prefix, strict, isCaseSensitive, false));
   }
 
   @NotNull
+  @Contract(pure = true)
   private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean isCaseSensitive, boolean checkImmediateParent) {
     int pathLength = path.length();
     int prefixLength = prefix.length();
@@ -189,6 +197,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static File findAncestor(@NotNull File f1, @NotNull File f2) {
     File ancestor = f1;
     while (ancestor != null && !isAncestor(ancestor, f2, false)) {
@@ -198,6 +207,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static File getParentFile(@NotNull File file) {
     return FileUtilRt.getParentFile(file);
   }
