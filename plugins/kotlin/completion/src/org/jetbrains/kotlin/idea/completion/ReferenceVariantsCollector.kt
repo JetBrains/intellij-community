@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmartForCompiler
-import java.util.*
 
 data class ReferenceVariants(val imported: Collection<DeclarationDescriptor>, val notImportedExtensions: Collection<CallableDescriptor>)
 
@@ -37,7 +36,8 @@ class ReferenceVariantsCollector(
     private val bindingContext: BindingContext,
     private val importableFqNameClassifier: ImportableFqNameClassifier,
     private val configuration: CompletionSessionConfiguration,
-    private val runtimeReceiver: ExpressionReceiver? = null
+    private val allowExpectedDeclarations: Boolean,
+    private val runtimeReceiver: ExpressionReceiver? = null,
 ) {
 
     private data class FilterConfiguration internal constructor(
@@ -189,8 +189,10 @@ class ReferenceVariantsCollector(
                 )
             }
 
-            val notImportedDeclarationsFilter =
-                shadowedDeclarationsFilter?.createNonImportedDeclarationsFilter<CallableDescriptor>(importedDeclarations = basicVariants.imported + extensionsVariants)
+            val notImportedDeclarationsFilter = shadowedDeclarationsFilter?.createNonImportedDeclarationsFilter<CallableDescriptor>(
+                importedDeclarations = basicVariants.imported + extensionsVariants,
+                allowExpectedDeclarations = allowExpectedDeclarations,
+            )
 
             val filteredImported = filterConfiguration.filterVariants(extensionsVariants + basicVariants.imported)
 

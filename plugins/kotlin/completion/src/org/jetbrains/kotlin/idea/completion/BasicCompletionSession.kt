@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -457,9 +457,16 @@ class BasicCompletionSession(
                     )
 
                     val rvCollector = ReferenceVariantsCollector(
-                        rvHelper, indicesHelper(true), prefixMatcher,
-                        nameExpression, callTypeAndReceiver, resolutionFacade, newContext,
-                        importableFqNameClassifier, configuration
+                        referenceVariantsHelper = rvHelper,
+                        indicesHelper = indicesHelper(true),
+                        prefixMatcher = prefixMatcher,
+                        nameExpression = nameExpression,
+                        callTypeAndReceiver = callTypeAndReceiver,
+                        resolutionFacade = resolutionFacade,
+                        bindingContext = newContext,
+                        importableFqNameClassifier = importableFqNameClassifier,
+                        configuration = configuration,
+                        allowExpectedDeclarations = allowExpectedDeclarations,
                     )
 
                     val receiverTypes = detectReceiverTypes(newContext, nameExpression, callTypeAndReceiver)
