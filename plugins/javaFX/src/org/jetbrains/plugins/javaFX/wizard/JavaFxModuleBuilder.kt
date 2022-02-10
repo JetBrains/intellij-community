@@ -115,6 +115,12 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
     return dependencyConfig.properties["fx.default.version"]
   }
 
+  override fun getCustomizedMessages(): CustomizedMessages {
+    return CustomizedMessages().apply {
+      dependenciesLabel = JavaFXBundle.message("javafx.module.additional.libraries")
+    }
+  }
+
   override fun getAssets(starter: Starter): List<GeneratorAsset> {
     val ftManager = FileTemplateManager.getInstance(ProjectManager.getInstance().defaultProject)
     val standardAssetsProvider = StandardAssetsProvider()
