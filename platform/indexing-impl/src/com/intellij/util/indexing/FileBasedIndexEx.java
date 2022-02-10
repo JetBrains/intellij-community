@@ -234,23 +234,29 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter) {
-    if (filter.getProject() instanceof LightEditCompatible) return Collections.emptyIterator();
-    VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
+  public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope scope) {
+    Project project = scope.getProject();
+    if (project instanceof LightEditCompatible) return Collections.emptyIterator();
+    VirtualFile restrictToFile = getTheOnlyFileInScope(scope);
     if (restrictToFile != null) {
-      return !processValuesInOneFile(indexId, dataKey, restrictToFile, filter, (f, v) -> false) ?
+      return !processValuesInOneFile(indexId, dataKey, restrictToFile, scope, (f, v) -> false) ?
              Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
     }
-    IntSet fileIds = processExceptions(indexId, null, filter, index -> {
+
+    IdFilter filter = extractIdFilter(scope, project);
+    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
+
+    IntSet fileIds = processExceptions(indexId, null, scope, index -> {
       IntSet fileIdsInner = new IntOpenHashSet();
       index.getData(dataKey).forEach((id, value) -> {
+        if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return  true;
         fileIdsInner.add(id);
         return true;
       });
       return fileIdsInner;
     });
 
-    return createLazyFileIterator(fileIds, filter);
+    return createLazyFileIterator(fileIds, scope);
   }
 
 
