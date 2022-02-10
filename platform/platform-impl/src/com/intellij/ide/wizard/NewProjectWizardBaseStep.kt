@@ -5,12 +5,16 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.toUiPathProperty
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
@@ -104,6 +108,17 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       onApply {
         context.projectName = name
         context.setProjectFileDirectory(Path.of(path, name), false)
+      }
+    }
+  }
+
+  override fun setupProject(project: Project) {
+    if (context.isCreatingNewProject) {
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          val projectManager = ProjectRootManager.getInstance(project)
+          projectManager.projectSdk = context.projectJdk
+        }
       }
     }
   }
