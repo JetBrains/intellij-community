@@ -13,7 +13,10 @@ import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.GHNodes
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.pullrequest.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -142,8 +145,7 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
         if (comments.isEmpty())
           null
         else
-          GHPullRequestReviewThread(it.id, it.isResolved, it.line, it.startLine, it.side,
-                                    GHNodes(comments))
+          GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine, GHNodes(comments))
       }
     }
 
@@ -155,13 +157,13 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
     val future = reviewService.updateComment(progressIndicator, pullRequestId, commentId, newText)
     reviewThreadsRequestValue.combineResult(future) { list, newComment ->
       list.map {
-        GHPullRequestReviewThread(it.id, it.isResolved, it.line, it.startLine, it.side,
+        GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine,
                                   GHNodes(it.comments.map { comment ->
                                     if (comment.id == commentId)
                                       GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,
                                                                  newComment.body, comment.createdAt,
-                                                                 comment.state, comment.path, comment.commit, comment.position,
-                                                                 comment.originalCommit, comment.originalPosition, comment.replyTo,
+                                                                 comment.state, comment.commit,
+                                                                 comment.originalCommit, comment.replyTo,
                                                                  comment.diffHunk,
                                                                  comment.reviewId?.let { GHNode(it) }, comment.viewerCanDelete,
                                                                  comment.viewerCanUpdate)

@@ -31,6 +31,7 @@ object GHPRReviewCommentComponent {
 
   fun create(project: Project,
              reviewDataProvider: GHPRReviewDataProvider,
+             thread: GHPRReviewThreadModel,
              comment: GHPRReviewCommentModel,
              avatarIconsProvider: GHAvatarIconsProvider,
              showResolvedMarker: Boolean = true): JComponent {
@@ -60,7 +61,7 @@ object GHPRReviewCommentComponent {
     }
 
 
-    Controller(project, comment, titlePane, pendingLabel, resolvedLabel, textPane, showResolvedMarker)
+    Controller(project, thread, comment, titlePane, pendingLabel, resolvedLabel, textPane, showResolvedMarker)
 
     val editablePaneHandle = GHEditableHtmlPaneHandle(project,
                                                       textPane,
@@ -96,28 +97,37 @@ object GHPRReviewCommentComponent {
   private fun getMaxWidth() = GHUIUtil.getPRTimelineWidth() - JBUIScale.scale(GHUIUtil.AVATAR_SIZE) + AllIcons.Actions.Close.iconWidth
 
   private class Controller(private val project: Project,
-                           private val model: GHPRReviewCommentModel,
+                           private val thread: GHPRReviewThreadModel,
+                           private val comment: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
                            private val bodyPane: HtmlEditorPane,
                            private val showResolvedMarker: Boolean) {
     init {
-      model.addChangesListener {
+      comment.addChangesListener {
         update()
       }
       update()
     }
 
     private fun update() {
-      val htmlBody = GHMarkdownToHtmlConverter(project).convertMarkdownToHtml(model.body, null, model.suggestionInfo)
+      val markdownConverter = GHMarkdownToHtmlConverter(project)
+      val htmlBody = if (containsSuggestedChange(comment.body)) {
+        markdownConverter.convertMarkdownWithSuggestedChange(comment.body, thread.filePath, thread.diffHunk,
+                                                             thread.startLine ?: thread.line, thread.line)
+      }
+      else {
+        markdownConverter.convertMarkdown(comment.body)
+      }
+
       bodyPane.setBody(htmlBody)
 
       val authorLink = HtmlBuilder()
-        .appendLink(model.authorLinkUrl.orEmpty(), model.authorUsername ?: GithubBundle.message("user.someone"))
+        .appendLink(comment.authorLinkUrl.orEmpty(), comment.authorUsername ?: GithubBundle.message("user.someone"))
         .toString()
 
-      when (model.state) {
+      when (comment.state) {
         GHPullRequestReviewCommentState.PENDING -> {
           pendingLabel.isVisible = true
           titlePane.setBody(authorLink)
@@ -125,19 +135,22 @@ object GHPRReviewCommentComponent {
         GHPullRequestReviewCommentState.SUBMITTED -> {
           pendingLabel.isVisible = false
           titlePane.setBody(GithubBundle.message("pull.request.review.commented", authorLink,
-                                                 GHUIUtil.formatActionDate(model.dateCreated)))
+                                                 GHUIUtil.formatActionDate(comment.dateCreated)))
         }
       }
 
-      resolvedLabel.isVisible = model.isFirstInResolvedThread && showResolvedMarker
+      resolvedLabel.isVisible = comment.isFirstInResolvedThread && showResolvedMarker
     }
+
+    private fun containsSuggestedChange(markdownText: String): Boolean = markdownText.lines().any { it.startsWith("```suggestion") }
   }
 
   fun factory(project: Project, reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider,
+              thread: GHPRReviewThreadModel,
               showResolvedMarkerOnFirstComment: Boolean = true)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
-      create(project, reviewDataProvider, comment, avatarIconsProvider, showResolvedMarkerOnFirstComment)
+      create(project, reviewDataProvider, thread, comment, avatarIconsProvider, showResolvedMarkerOnFirstComment)
     }
   }
 }

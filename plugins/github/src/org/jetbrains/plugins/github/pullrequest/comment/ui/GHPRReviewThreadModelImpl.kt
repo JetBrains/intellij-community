@@ -7,9 +7,7 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 
 class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
-  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map {
-  GHPRReviewCommentModel.convert(it, thread.startLine)
-}), GHPRReviewThreadModel {
+  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModel::convert)), GHPRReviewThreadModel {
 
   override val id: String = thread.id
   override val createdAt = thread.createdAt
@@ -68,7 +66,7 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     }
 
     val newComments = thread.comments.subList(size, thread.comments.size)
-    add(newComments.map { GHPRReviewCommentModel.convert(it, thread.startLine) })
+    add(newComments.map(GHPRReviewCommentModel::convert))
     maybeMarkFirstCommentResolved()
   }
 

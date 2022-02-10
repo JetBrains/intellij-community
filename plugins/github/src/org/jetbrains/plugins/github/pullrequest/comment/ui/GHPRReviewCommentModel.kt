@@ -4,13 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
-import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestionInfo
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 
-class GHPRReviewCommentModel(
-  comment: GHPullRequestReviewComment,
-  startLine: Int?
-) {
+class GHPRReviewCommentModel(comment: GHPullRequestReviewComment) {
 
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
@@ -30,11 +26,6 @@ class GHPRReviewCommentModel(
     private set
   var authorAvatarUrl = comment.author?.avatarUrl
     private set
-
-  val suggestionInfo: GHSuggestionInfo? = if (isSuggestion(comment.body))
-    GHSuggestionInfo(comment.path, comment.diffHunk, startLine ?: comment.originalPosition, comment.originalPosition)
-  else
-    null
 
   var isFirstInResolvedThread by equalVetoingObservable(false) {
     changeEventDispatcher.multicaster.eventOccurred()
@@ -84,10 +75,8 @@ class GHPRReviewCommentModel(
     return id.hashCode()
   }
 
-  private fun isSuggestion(markdownText: String): Boolean = markdownText.lines().any { it.startsWith("```suggestion") }
-
   companion object {
-    fun convert(comment: GHPullRequestReviewComment, startLine: Int?): GHPRReviewCommentModel =
-      GHPRReviewCommentModel(comment, startLine)
+    fun convert(comment: GHPullRequestReviewComment): GHPRReviewCommentModel =
+      GHPRReviewCommentModel(comment)
   }
 }

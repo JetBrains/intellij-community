@@ -44,7 +44,7 @@ object GHPRReviewThreadComponent {
       isOpaque = false
     }
     panel.add(
-      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, reviewDataProvider, avatarIconsProvider)))
+      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, reviewDataProvider, avatarIconsProvider, thread)))
 
     if (reviewDataProvider.canComment()) {
       panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
@@ -74,7 +74,7 @@ object GHPRReviewThreadComponent {
 
         add(GHPRReviewThreadCommentsPanel.create(thread,
                                                  GHPRReviewCommentComponent.factory(
-                                                   project, reviewDataProvider, avatarIconsProvider, false
+                                                   project, reviewDataProvider, avatarIconsProvider, thread, false
                                                  )
           ))
 
@@ -188,7 +188,7 @@ object GHPRReviewThreadComponent {
     val toggleModel = SingleValueModel(false)
     val textFieldModel = GHSubmittableTextFieldModel(project) { text ->
       reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
-        thread.addComment(GHPRReviewCommentModel.convert(it, thread.startLine))
+        thread.addComment(GHPRReviewCommentModel.convert(it))
         toggleModel.value = false
       }
     }
