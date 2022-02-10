@@ -69,4 +69,26 @@ class TomlCompletionFixture(
             error("Expected completions that don't contain $variants, but got ${lookups.map { it.render() }}")
         }
     }
+
+    private fun executeSoloCompletion() {
+        val lookups = myFixture.completeBasic()
+
+        if (lookups != null) {
+            if (lookups.size == 1) {
+                // for cases like `frob/*caret*/nicate()`,
+                // completion won't be selected automatically.
+                myFixture.type('\n')
+                return
+            }
+            fun LookupElement.debug(): String = "$lookupString ($psiElement)"
+            error("Expected a single completion, but got ${lookups.size}\n"
+                  + lookups.joinToString("\n") { it.debug() })
+        }
+    }
+
+    fun doSingleCompletion(code: String, after: String) {
+        myFixture.configureByText(defaultFileName, code.trimIndent())
+        executeSoloCompletion()
+        myFixture.checkResult(after.trimIndent())
+    }
 }
