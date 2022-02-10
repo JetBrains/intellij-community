@@ -766,7 +766,9 @@ public final class HighlightControlFlowUtil {
           codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
             public void visitReferenceExpression(PsiReferenceExpression expression) {
-              if (PsiUtil.isAccessedForWriting(expression) && ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) {
+              if (expression.isReferenceTo(variable) &&
+                  PsiUtil.isAccessedForWriting(expression) && 
+                  ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) {
                 stopWalking();
                 stopped.set(true);
               }
