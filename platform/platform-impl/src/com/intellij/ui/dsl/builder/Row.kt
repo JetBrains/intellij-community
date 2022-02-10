@@ -106,7 +106,7 @@ interface Row {
   fun resizableRow(): Row
 
   @Deprecated("Use overloaded rowComment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun rowComment(@NlsContexts.DetailedDescription comment: String,
                  maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Row
 
@@ -125,7 +125,7 @@ interface Row {
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
   @Deprecated("Use cell(component: T) and scrollCell(component: T) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
 
   /**
@@ -191,7 +191,7 @@ interface Row {
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
   @Deprecated("Use overloaded radioButton(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
 
   /**
@@ -215,7 +215,7 @@ interface Row {
                     icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
   @Deprecated("Use overloaded method")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar>
 
   /**
@@ -242,7 +242,7 @@ interface Row {
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
   @Deprecated("Use text(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun labelHtml(@NlsContexts.Label text: String,
                 action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
@@ -260,7 +260,7 @@ interface Row {
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP): Cell<JLabel>
 
   /**
@@ -277,11 +277,11 @@ interface Row {
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
 
   @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun commentHtml(@NlsContexts.DetailedDescription text: String,
                   action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
@@ -358,7 +358,7 @@ interface Row {
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
   @Deprecated("Use overloaded comboBox(...) with Collection")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
   /**

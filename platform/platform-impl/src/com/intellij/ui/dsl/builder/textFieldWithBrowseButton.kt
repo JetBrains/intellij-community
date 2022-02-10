@@ -21,7 +21,7 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(binding: PropertyBinding<St
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {

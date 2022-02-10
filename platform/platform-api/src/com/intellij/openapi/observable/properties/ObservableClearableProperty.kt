@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see AtomicLazyProperty
  */
 @Deprecated("Use instead ObservableMutableProperty")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 interface ObservableClearableProperty<T> : ObservableMutableProperty<T> {
 
   @JvmDefault

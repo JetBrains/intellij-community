@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
  * Extension for the JCEF-based browser preview.
  */
 @Deprecated("Use MarkdownBrowserPreviewExtension instead.")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 interface MarkdownJCEFPreviewExtension: MarkdownBrowserPreviewExtension {
   /**
    * Map of browser events that should be registered and it's IDE callbacks.

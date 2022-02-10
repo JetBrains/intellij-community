@@ -509,7 +509,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use. Tool window content will be initialized automatically.", level = DeprecationLevel.ERROR)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun ensureContentInitialized() {
     createContentIfNeeded()
   }

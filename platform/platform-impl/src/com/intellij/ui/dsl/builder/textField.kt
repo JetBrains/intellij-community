@@ -41,7 +41,7 @@ fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cel
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
 
 fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
@@ -63,7 +63,7 @@ fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cel
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> = bindIntText(property)
 
 fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty<Int>): Cell<T> {

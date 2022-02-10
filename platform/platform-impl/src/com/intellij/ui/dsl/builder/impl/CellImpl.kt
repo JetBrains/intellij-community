@@ -260,7 +260,7 @@ internal class CellImpl<T : JComponent>(
 private const val HTML = "<html>"
 
 @Deprecated("Not needed in the future")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 internal fun removeHtml(text: @Nls String): @Nls String {
   return if (text.startsWith(HTML, ignoreCase = true)) text.substring(HTML.length) else text
 }

@@ -272,7 +272,7 @@ private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : M
 }
 
 @Deprecated("use the simpler overloading method which returns a list")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<StashInfo>) {
   for (stash in loadStashStack(project, root)) {
     consumer.consume(stash)

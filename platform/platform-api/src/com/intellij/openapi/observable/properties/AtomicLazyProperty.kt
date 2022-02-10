@@ -34,7 +34,7 @@ open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObserva
   }
 
   @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun reset() {
     value.set(UNINITIALIZED_VALUE)
     fireResetEvent()

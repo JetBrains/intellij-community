@@ -26,7 +26,7 @@ class AtomicProperty<T>(private val initialValue: T) : AbstractObservableClearab
   }
 
   @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun reset() {
     reference.set(initialValue)
     fireResetEvent()

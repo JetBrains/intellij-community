@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 interface FloatingToolbarProvider {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("Use [order] option in plugin.xml")
   val priority: Int
     get() = 0

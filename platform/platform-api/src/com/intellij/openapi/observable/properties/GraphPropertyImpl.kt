@@ -22,27 +22,27 @@ class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: ()
   }
 
   @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun reset() =
     super<AtomicLazyProperty>.reset()
 
   @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun afterReset(listener: () -> Unit) =
     super<AtomicLazyProperty>.afterReset(listener)
 
   @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) =
     super<AtomicLazyProperty>.afterReset(listener, parentDisposable)
 
   companion object {
     @Deprecated("Please use PropertyGraph.property instead", ReplaceWith("property(initial)"))
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    @ApiStatus.ScheduledForRemoval
     fun <T> PropertyGraph.graphProperty(initial: T): GraphProperty<T> = property(initial)
 
     @Deprecated("Please use PropertyGraph.lazyProperty instead", ReplaceWith("lazyProperty(initial)"))
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    @ApiStatus.ScheduledForRemoval
     fun <T> PropertyGraph.graphProperty(initial: () -> T): GraphProperty<T> = lazyProperty(initial)
   }
 }

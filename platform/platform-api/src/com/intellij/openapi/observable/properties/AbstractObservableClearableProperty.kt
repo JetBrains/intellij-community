@@ -16,13 +16,13 @@ abstract class AbstractObservableClearableProperty<T> : AbstractObservableProper
   }
 
   @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun afterReset(listener: () -> Unit) {
     resetListeners.add(listener)
   }
 
   @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
     resetListeners.add(listener, parentDisposable)
   }

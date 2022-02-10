@@ -30,29 +30,29 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
 
   @JvmDefault
   @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun reset() {}
 
   @JvmDefault
   @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun afterReset(listener: () -> Unit) {}
 
   @JvmDefault
   @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {}
 
   @JvmDefault
   @Deprecated("Use dependsOn with update", ReplaceWith("this.dependsOn(parent) { this.reset(); this.get() }"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun dependsOn(parent: ObservableClearableProperty<*>) {
     dependsOn(parent) { reset(); get() }
   }
 
   @JvmDefault
   @Deprecated("Please recompile code", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun dependsOn(parent: ObservableClearableProperty<*>, update: () -> T) {
     dependsOn(parent, update)
   }

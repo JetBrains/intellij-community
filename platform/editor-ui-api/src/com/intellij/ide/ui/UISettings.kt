@@ -596,7 +596,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
-  @ScheduledForRemoval(inVersion = "2021.3")
+  @ScheduledForRemoval
   fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener)
   }

@@ -56,7 +56,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun bold(): Cell<T>
 
   @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun comment(@NlsContexts.DetailedDescription comment: String?,
               maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Cell<T>
 
@@ -79,7 +79,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun commentHtml(@NlsContexts.DetailedDescription comment: String?,
                   action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
@@ -124,7 +124,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * @deprecated use [validationRequestor] instead
    */
   @Deprecated("Use validationRequestor instead", ReplaceWith("validationRequestor(property::afterPropagation)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun graphProperty(property: GraphProperty<*>): Cell<T> =
     validationRequestor(property::afterPropagation)
 
