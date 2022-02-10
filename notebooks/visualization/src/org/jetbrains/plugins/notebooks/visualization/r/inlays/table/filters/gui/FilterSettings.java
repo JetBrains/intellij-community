@@ -1,7 +1,6 @@
 /*
  * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-
 package org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui;
 
 import com.intellij.openapi.util.IconLoader;
@@ -10,14 +9,12 @@ import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui.
 import javax.swing.*;
 import java.awt.*;
 
-
 /**
  * Class to define some common settings to the TableFilter library.<br>
  * It is just a sugar replacement to using directly system properties (which
  * could be not available, anyway)
  */
-public class FilterSettings {
-
+public final class FilterSettings {
     /** Properties must be defined with this prefix. */
     public final static String PROPERTIES_PREFIX = "net.coderazzi.filters.";
 
@@ -85,7 +82,7 @@ public class FilterSettings {
     public static boolean allowInstantVanishing = Boolean.parseBoolean(getString("AllowInstantVanishing", "false"));
 
     /** The default icon used to represent null/empty values. */
-    public static Icon matchEmptyFilterIcon = IconLoader.getIcon("/icons/matchEmptyIcon.png");
+    public static Icon matchEmptyFilterIcon = IconLoader.getIcon("icons/matchEmptyIcon.png", FilterSettings.class.getClassLoader());
 
     /**
      * The default string associated to a nop operation.

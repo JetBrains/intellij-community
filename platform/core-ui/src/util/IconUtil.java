@@ -311,7 +311,7 @@ public final class IconUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Icon getAnalyzeIcon() {
-    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class);
+    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class.getClassLoader());
   }
 
   public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
@@ -321,7 +321,7 @@ public final class IconUtil {
   }
 
   private static @NotNull @NonNls String getToolbarDecoratorIconsFolder() {
-    return "/toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
+    return "toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
   }
 
   /**

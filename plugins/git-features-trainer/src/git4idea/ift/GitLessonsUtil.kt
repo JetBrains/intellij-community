@@ -302,6 +302,6 @@ object GitLessonsUtil {
   }
 
   fun loadIllustration(illustrationName: String): Icon {
-    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java)
+    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java.classLoader)
   }
 }

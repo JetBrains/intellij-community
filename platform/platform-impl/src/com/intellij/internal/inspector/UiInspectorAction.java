@@ -2461,7 +2461,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     private static @NotNull Icon load(@NotNull String path, Class<?> cls) {
-      Icon icon = IconLoader.getIcon("com/intellij/internal/inspector/icons/" + path, UiInspectorAction.class);
+      Icon icon = IconLoader.getIcon("com/intellij/internal/inspector/icons/" + path, UiInspectorAction.class.getClassLoader());
       if (cls != null) {
         COMPONENT_MAPPING.put(cls, icon);
       }

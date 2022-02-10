@@ -183,9 +183,9 @@ public final class IconLoader {
   }
 
   /**
-   * @deprecated Use {@link #getIcon(String, Class)}
+   * @deprecated Use {@link #getIcon(String, ClassLoader)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Icon getIcon(@NonNls @NotNull String path) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     assert callerClass != null : path;
@@ -233,7 +233,7 @@ public final class IconLoader {
 
   /**
    * Might return null if icon was not found.
-   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String)}
+   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, ClassLoader)}
    */
   public static @Nullable Icon findIcon(@NonNls @NotNull String path) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
@@ -247,6 +247,14 @@ public final class IconLoader {
     Icon icon = findIcon(path, aClass, aClass.getClassLoader(), null, true);
     if (icon == null) {
       throw new IllegalStateException("Icon cannot be found in '" + path + "', class='" + aClass.getName() + "'");
+    }
+    return icon;
+  }
+
+  public static @NotNull Icon getIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
+    Icon icon = findIcon(path, classLoader);
+    if (icon == null) {
+      throw new IllegalStateException("Icon cannot be found in '" + path + "', classLoader='" + classLoader + "'");
     }
     return icon;
   }
@@ -337,18 +345,21 @@ public final class IconLoader {
     isActivated = false;
   }
 
-  // used externally
+  /**
+   * @deprecated Use {@link #findIcon(String, ClassLoader)}
+   */
   @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
   public static @Nullable Icon findLafIcon(@NotNull String key, @NotNull Class<?> aClass, boolean strict) {
     return findIcon(key + ".png", aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, true);
   }
 
   /**
    * Might return null if icon was not found.
-   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
+   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, ClassLoader)}
    */
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
-    return findIcon(path, aClass, aClass.getClassLoader(), null, false);
+    return ImageDataByPathLoader.findIcon(path, aClass.getClassLoader());
   }
 
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean deferUrlResolve, boolean strict) {
@@ -379,12 +390,11 @@ public final class IconLoader {
   }
 
   @SuppressWarnings("DuplicatedCode")
-  @ApiStatus.Internal
-  public static @Nullable Icon findIcon(@NotNull String originalPath,
-                                        @Nullable Class<?> aClass,
-                                        @NotNull ClassLoader classLoader,
-                                        @Nullable HandleNotFound handleNotFound,
-                                        boolean deferUrlResolve) {
+  private static @Nullable Icon findIcon(@NotNull String originalPath,
+                                         @Nullable Class<?> aClass,
+                                         @NotNull ClassLoader classLoader,
+                                         @Nullable HandleNotFound handleNotFound,
+                                         boolean deferUrlResolve) {
     if (!deferUrlResolve) {
       return ImageDataByPathLoader.findIcon(originalPath, classLoader);
     }
