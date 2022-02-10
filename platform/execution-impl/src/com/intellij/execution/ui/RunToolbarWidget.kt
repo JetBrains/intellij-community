@@ -844,9 +844,10 @@ private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
         if (reason == RunState.SCHEDULED) {
           history.register(conf, env.executor.id, reason)
         }
-        if (reason.isRunningState() && ExperimentalUI.isNewUI()) {
-          RunManager.getInstance(env.project).selectedConfiguration = conf
-        }
+          val runManager = RunManager.getInstance(env.project)
+          if (reason.isRunningState() && ExperimentalUI.isNewUI() && !runManager.isRunWidgetActive()) {
+            runManager.selectedConfiguration = conf
+          }
       } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.runnerAndConfigurationSettings}"))
       ActivityTracker.getInstance().inc()
     }
