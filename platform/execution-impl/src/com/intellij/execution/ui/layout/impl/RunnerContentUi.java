@@ -1106,7 +1106,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myViewActions.getChildrenCount() > 0;
   }
 
-  private void updateTabsUI(final boolean validateNow) {
+  public void updateTabsUI(final boolean validateNow) {
     boolean hasToolbarContent = rebuildToolbar();
 
     Set<String> usedNames = new HashSet<>();
@@ -1420,6 +1420,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     if (myMinimizeActionEnabled) {
       if (specialActions.isEmpty()) {
         myViewActions.addAction(new Separator()).setAsSecondary(true);
+        myViewActions.addAction(ActionManager.getInstance().getAction("Runner.ToggleTabLabels")).setAsSecondary(true);
         myViewActions.addAction(ActionManager.getInstance().getAction("Runner.RestoreLayout")).setAsSecondary(true);
       }
     }

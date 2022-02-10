@@ -1309,6 +1309,7 @@
       <group id="Runner.Layout">
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
                 icon="AllIcons.Debugger.RestoreLayout"/>
+        <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
       </group>
       <group id="Runner.View.Close.Group" popup="false">
         <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Close"/>
