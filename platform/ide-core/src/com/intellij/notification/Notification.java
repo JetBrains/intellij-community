@@ -154,11 +154,6 @@ public class Notification {
     return myGroupId;
   }
 
-  public void configureDoNotAskOption(@NotNull String id, @NotNull @Nls String displayName) {
-    myDoNotAskId = id;
-    myDoNotAskDisplayName = displayName;
-  }
-
   public boolean canShowFor(@Nullable Project project) {
     if (mySuggestionType) {
       if (myDoNotAskId == null) {

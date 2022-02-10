@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.notification
 
 import com.intellij.ide.plugins.PluginUtil
@@ -7,7 +9,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts.*
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -77,7 +78,6 @@ class NotificationGroup private constructor(val displayId: String,
     private val registeredTitles = ConcurrentHashMap<String, @NotificationTitle String>()
 
     @ApiStatus.Internal
-    @JvmStatic
     fun create(displayId: String,
                displayType: NotificationDisplayType,
                isLogByDefault: Boolean,
@@ -85,7 +85,14 @@ class NotificationGroup private constructor(val displayId: String,
                icon: Icon?,
                @NotificationTitle title: String?,
                pluginId: PluginId?): NotificationGroup {
-      return NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, icon, title, pluginId, false)
+      return NotificationGroup(displayId = displayId,
+                               displayType = displayType,
+                               isLogByDefault = isLogByDefault,
+                               toolWindowId = toolWindowId,
+                               icon = icon,
+                               title = title,
+                               pluginId = pluginId,
+                               registerGroup = false)
     }
 
     //<editor-fold desc="Deprecated stuff.">
@@ -196,16 +203,25 @@ class NotificationGroup private constructor(val displayId: String,
     //</editor-fold>
 
     @JvmStatic
-    fun findRegisteredGroup(displayId: String): NotificationGroup? =
-      findRegisteredNotificationGroup(displayId) ?: registeredGroups[displayId]
+    fun findRegisteredGroup(displayId: String): NotificationGroup? {
+      return findRegisteredNotificationGroup(displayId) ?: registeredGroups.get(displayId)
+    }
 
-    private fun findRegisteredNotificationGroup(displayId: String): NotificationGroup? =
-      if (ApplicationManager.getApplication() == null) null
-      else NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+    fun isGroupRegistered(displayId: String): Boolean {
+      return registeredGroups.containsKey(displayId) || NotificationGroupManager.getInstance().isGroupRegistered(displayId)
+    }
+
+    private fun findRegisteredNotificationGroup(displayId: String): NotificationGroup? {
+      return if (ApplicationManager.getApplication() == null) {
+        null
+      }
+      else {
+        NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      }
+    }
 
     @JvmStatic
-    fun getGroupTitle(displayId: String): String? =
-      findRegisteredGroup(displayId)?.title ?: registeredTitles[displayId]
+    fun getGroupTitle(displayId: String): String? = findRegisteredGroup(displayId)?.title ?: registeredTitles[displayId]
 
     @JvmStatic
     @Deprecated("Use `<notificationGroup>` extension point to register notification groups")
@@ -217,19 +233,19 @@ class NotificationGroup private constructor(val displayId: String,
       return displayId
     }
 
-    @JvmStatic
     val allRegisteredGroups: Iterable<NotificationGroup>
-      get() = ContainerUtil.concat(NotificationGroupManager.getInstance().registeredNotificationGroups, registeredGroups.values)
+      get() = NotificationGroupManager.getInstance().registeredNotificationGroups.asSequence().plus(registeredGroups.values).asIterable()
   }
 
-  fun createNotification(@NotificationContent content: String, type: MessageType): Notification =
-    createNotification(content, type.toNotificationType())
+  fun createNotification(@NotificationContent content: String, type: MessageType): Notification {
+    return createNotification(content, type.toNotificationType())
+  }
 
-  fun createNotification(@NotificationContent content: String, type: NotificationType): Notification =
-    createNotification("", content, type)
+  fun createNotification(@NotificationContent content: String, type: NotificationType): Notification = createNotification("", content, type)
 
-  fun createNotification(@NotificationTitle title: String, @NotificationContent content: String, type: NotificationType): Notification =
-    Notification(displayId, title, content, type)
+  fun createNotification(@NotificationTitle title: String, @NotificationContent content: String, type: NotificationType): Notification {
+    return Notification(displayId, title, content, type)
+  }
 
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("Use `createNotification(String, String, NotificationType)` along with `Notification#setListener`")
@@ -237,9 +253,14 @@ class NotificationGroup private constructor(val displayId: String,
   fun createNotification(@NotificationTitle title: String,
                          @NotificationContent content: String,
                          type: NotificationType = NotificationType.INFORMATION,
-                         listener: NotificationListener? = null): Notification =
-    createNotification(title, content, type)
-      .also { if (listener != null) it.setListener(listener) }
+                         listener: NotificationListener? = null): Notification {
+    val result = createNotification(title, content, type)
+    if (listener != null) {
+      @Suppress("DEPRECATION")
+      result.setListener(listener)
+    }
+    return result
+  }
 
   @Deprecated("Use `createNotification(String, String, NotificationType)` along with `Notification#setDisplayId` and `Notification#setListener`")
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -247,16 +268,22 @@ class NotificationGroup private constructor(val displayId: String,
                          @NotificationContent content: String,
                          type: NotificationType = NotificationType.INFORMATION,
                          listener: NotificationListener? = null,
-                         notificationDisplayId: String? = null): Notification =
-    createNotification(title, content, type)
-      .also { if (notificationDisplayId != null) it.setDisplayId(notificationDisplayId) }
-      .also { if (listener != null) it.setListener(listener) }
+                         notificationDisplayId: String? = null): Notification {
+    val result = createNotification(title, content, type)
+    if (notificationDisplayId != null) {
+      result.setDisplayId(notificationDisplayId)
+    }
+    if (listener != null) {
+      @Suppress("DEPRECATION")
+      result.setListener(listener)
+    }
+    return result
+  }
 
   @Deprecated("Use `createNotification(String, NotificationType)` or `createNotification(String, String, NotificationType)`")
   @Suppress("DeprecatedCallableAddReplaceWith")
   @JvmOverloads
-  fun createNotification(type: NotificationType = NotificationType.INFORMATION): Notification =
-    Notification(displayId, "", type)
+  fun createNotification(type: NotificationType = NotificationType.INFORMATION): Notification = Notification(displayId, "", type)
 
   @Deprecated("Use `createNotification(String, NotificationType)` or `createNotification(String, String, NotificationType)`" +
               " along with `Notification#setSubtitle` and `Notification#setListener`")
@@ -266,10 +293,15 @@ class NotificationGroup private constructor(val displayId: String,
                          @NotificationSubtitle subtitle: String?,
                          @NotificationContent content: String?,
                          type: NotificationType = NotificationType.INFORMATION,
-                         listener: NotificationListener? = null): Notification =
-    Notification(displayId, content ?: "", type)
-      .setTitle(title, subtitle)
-      .also { if (listener != null) it.setListener(listener) }
+                         listener: NotificationListener? = null): Notification {
+    val result = Notification(displayId, content ?: "", type)
+    result.setTitle(title, subtitle)
+    if (listener != null) {
+      @Suppress("DEPRECATION")
+      result.setListener(listener)
+    }
+    return result
+  }
   //</editor-fold>
 
   fun setParentId(value: String): NotificationGroup {

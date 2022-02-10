@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -18,7 +17,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -124,8 +122,8 @@ public final class NotificationGroupEP implements PluginAware {
     return BundleBase.messageOrDefault(resourceBundle, key, null);
   }
 
-  public @Nullable Icon getIcon(@NotNull PluginDescriptor pluginDescriptor) {
-    return icon == null ? null : IconLoader.findIcon(icon, pluginDescriptor.getClassLoader());
+  public String getIcon() {
+    return icon;
   }
 
   //@Transient
