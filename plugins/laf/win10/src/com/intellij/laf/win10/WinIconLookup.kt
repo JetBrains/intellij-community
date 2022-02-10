@@ -24,7 +24,6 @@ object WinIconLookup {
                                   enabled = enabled,
                                   editable = editable,
                                   pressed = pressed,
-                                  isThrowErrorIfNotFound = true,
                                   dirProvider = WinDirProvider()) ?: AllIcons.Actions.Stub
   }
 }

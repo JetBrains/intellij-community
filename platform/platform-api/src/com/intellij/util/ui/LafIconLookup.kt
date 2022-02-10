@@ -2,7 +2,8 @@
 package com.intellij.util.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.ui.ImageDataByPathLoader
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 /**
@@ -11,6 +12,9 @@ import javax.swing.Icon
 private const val ICONS_DIR_PREFIX = "com/intellij/ide/ui/laf/icons/"
 
 open class DirProvider {
+  open val defaultExtension: String
+    get() = "png"
+
   open fun dir(): String = ICONS_DIR_PREFIX + if (StartupUiUtil.isUnderDarcula()) "darcula/" else "intellij/"
 }
 
@@ -30,7 +34,6 @@ object LafIconLookup {
                     enabled = enabled,
                     editable = editable,
                     pressed = pressed,
-                    isThrowErrorIfNotFound = true,
                     dirProvider = DirProvider())
            ?: AllIcons.Actions.Stub
   }
@@ -41,7 +44,6 @@ object LafIconLookup {
                enabled: Boolean = true,
                editable: Boolean = false,
                pressed: Boolean = false,
-               isThrowErrorIfNotFound: Boolean = false,
                dirProvider: DirProvider = DirProvider()): Icon? {
     var key = name
     if (editable) {
@@ -58,16 +60,20 @@ object LafIconLookup {
     }
 
     // for Mac blue theme and other LAFs use default directory icons
-    val classLoader = dirProvider.javaClass.classLoader
+    val providerClass = dirProvider.javaClass
+    val classLoader = providerClass.classLoader
     val dir = dirProvider.dir()
     val path = if (dir.startsWith(ICONS_DIR_PREFIX)) {
       // optimization - all icons are SVG
       "$dir$key.svg"
     }
     else {
-      "$dir$key.png"
+      "$dir$key.${dirProvider.defaultExtension}"
     }
-    return IconLoader.findLafIcon(path, classLoader, isThrowErrorIfNotFound)
+
+    return iconCachePerClass.get(providerClass).computeIfAbsent(path) {
+      ImageDataByPathLoader.findIconFromThemePath(path, classLoader)
+    }
   }
 
   @JvmStatic
@@ -75,4 +81,8 @@ object LafIconLookup {
 
   @JvmStatic
   fun getSelectedIcon(name: String): Icon = findIcon(name, selected = true) ?: getIcon(name)
+}
+
+private val iconCachePerClass = object : ClassValue<MutableMap<String, Icon?>>() {
+  override fun computeValue(key: Class<*>) = ConcurrentHashMap<String, Icon?>(100, 0.9f, 2)
 }

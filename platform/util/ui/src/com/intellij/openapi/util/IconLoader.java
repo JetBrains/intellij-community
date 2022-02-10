@@ -336,13 +336,10 @@ public final class IconLoader {
     isActivated = false;
   }
 
+  // used externally
+  @SuppressWarnings("unused")
   public static @Nullable Icon findLafIcon(@NotNull String key, @NotNull Class<?> aClass, boolean strict) {
     return findIcon(key + ".png", aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, true);
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable Icon findLafIcon(@NotNull String path, @NotNull ClassLoader classLoader, boolean strict) {
-    return findIcon(path, null, classLoader, strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, true);
   }
 
   /**

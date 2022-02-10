@@ -7,6 +7,9 @@ import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
 
 private class MacDirProvider : DirProvider() {
+  override val defaultExtension: String
+    get() = "svg"
+
   override fun dir() = "icons/" + if (UIUtil.isGraphite()) "graphite/" else "blue/"
 }
 
@@ -26,7 +29,6 @@ object MacIconLookup {
                                   enabled = enabled,
                                   editable = editable,
                                   pressed = pressed,
-                                  isThrowErrorIfNotFound = true,
                                   dirProvider = MacDirProvider()) ?: AllIcons.Actions.Stub
   }
 }
