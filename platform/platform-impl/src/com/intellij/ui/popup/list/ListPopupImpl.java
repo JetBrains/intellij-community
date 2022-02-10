@@ -772,6 +772,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     if (!myListModel.isVisible(before)) {
       selectFirstSelectableItem();
+    } else {
+      myList.setSelectedValue(before, true);
     }
   }
 
