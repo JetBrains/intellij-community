@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -48,6 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public final class FilesScanExecutor {
+  private static final Logger LOG = Logger.getInstance(FilesScanExecutor.class);
   private static final int THREAD_COUNT = Math.max(UnindexedFilesUpdater.getNumberOfScanningThreads() - 1, 1);
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Scanning", THREAD_COUNT);
 
@@ -173,7 +175,19 @@ public final class FilesScanExecutor {
     else {
       deque.addAll(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndexableFilesProviders(project));
     }
+    AtomicInteger skippedCount = new AtomicInteger();
+    AtomicInteger processedCount = new AtomicInteger();
     ConcurrentBitSet visitedFiles = ConcurrentBitSet.create();
+    VirtualFileFilter fileFilter = file -> {
+      int fileId = FileBasedIndex.getFileId(file);
+      if (visitedFiles.set(fileId)) return false;
+      boolean result = (idFilter == null || idFilter.containsFileId(fileId)) &&
+                       !fileIndex.isExcluded(file) &&
+                       scope.contains(file) &&
+                       (includingBinary || file.isDirectory() || !file.getFileType().isBinary());
+      if (!result) skippedCount.incrementAndGet();
+      return result;
+    };
     Processor<Object> consumer = obj -> {
       ProgressManager.checkCanceled();
       if (obj instanceof IndexableFilesIterator) {
@@ -183,23 +197,12 @@ public final class FilesScanExecutor {
           if (file.isDirectory()) return true;
           deque.add(file);
           return true;
-        }, VirtualFileFilter.ALL);
+        }, fileFilter);
       }
       else if (obj instanceof VirtualFile) {
         VirtualFile file = (VirtualFile)obj;
-        int fileId = FileBasedIndex.getFileId(file);
-        if (visitedFiles.set(fileId)) {
-          return true;
-        }
-        if (idFilter != null && !idFilter.containsFileId(fileId) ||
-            !file.isValid() ||
-            fileIndex.isExcluded(file) ||
-            ((VirtualFile)obj).isDirectory() ||
-            !scope.contains(file) ||
-            !includingBinary && file.getFileType().isBinary()) {
-          return true;
-        }
-
+        processedCount.incrementAndGet();
+        if (!file.isValid()) return true;
         return processor.process(file);
       }
       else {
@@ -207,6 +210,12 @@ public final class FilesScanExecutor {
       }
       return true;
     };
-    return processDequeueOnAllThreadsInReadAction(deque, consumer);
+    long start = System.nanoTime();
+    boolean result = processDequeueOnAllThreadsInReadAction(deque, consumer);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(processedCount.get() + " files processed (" + skippedCount.get() + " skipped)" +
+               " in " + TimeoutUtil.getDurationMillis(start) + " ms");
+    }
+    return result;
   }
 }
