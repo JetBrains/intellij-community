@@ -25,9 +25,11 @@ class GFMCommentAwareMarkerProcessor(productionHolder: ProductionHolder, constra
     .filterNot { it is AtxHeaderProvider }
     .filterNot { it is LinkReferenceDefinitionProvider }
     .plus(listOf(
+      DefinitionListMarkerProvider(),
       GitHubTableMarkerProvider(),
       AtxHeaderProvider(),
-      CommentAwareLinkReferenceDefinitionProvider()))
+      CommentAwareLinkReferenceDefinitionProvider()
+    ))
 
   override fun populateConstraintsTokens(pos: LookaheadText.Position,
                                          constraints: MarkdownConstraints,
