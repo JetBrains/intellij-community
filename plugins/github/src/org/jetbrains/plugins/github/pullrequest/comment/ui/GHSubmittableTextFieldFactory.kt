@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.collaboration.ui.codereview.timeline.comment.*
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent
 import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.ActionButtonConfig
 import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.CancelActionConfig
 import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.SubmitActionConfig
 import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.getEditorTextFieldVerticalOffset
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldModel
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
@@ -29,7 +31,7 @@ class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel
     @NlsContexts.Tooltip actionName: String = GithubBundle.message("action.comment.text"),
     onCancel: (() -> Unit)? = null
   ): JComponent {
-    val submittableTextField = SubmittableTextField.create(model, actionName)
+    val submittableTextField = SubmittableTextFieldFactory.create(model, actionName)
     return SubmittableTextFieldComponent.create(model, submittableTextField, createSubmittableTextFieldConfig(actionName, onCancel))
   }
 
@@ -47,11 +49,11 @@ class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    val submittableTextField = SubmittableTextField.create(model, actionName)
-    val submittableTextFieldComponent = SubmittableTextFieldComponent.create(
-      model, submittableTextField, createSubmittableTextFieldConfig(actionName, onCancel)
+    val textField = SubmittableTextFieldFactory.create(model, actionName)
+    val textFieldComponent = SubmittableTextFieldComponent.create(
+      model, textField, createSubmittableTextFieldConfig(actionName, onCancel)
     )
-    return wrapWithAvatar(submittableTextFieldComponent, submittableTextField, authorLabel)
+    return wrapWithAvatar(textFieldComponent, textField, authorLabel)
   }
 
   private fun createSubmittableTextFieldConfig(

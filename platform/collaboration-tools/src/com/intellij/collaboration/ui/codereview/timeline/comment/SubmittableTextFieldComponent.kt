@@ -41,11 +41,11 @@ private val defaultCancelShortcut = CommonShortcuts.ESCAPE
 object SubmittableTextFieldComponent {
   fun create(
     model: SubmittableTextFieldModel,
-    submittableTextField: SubmittableTextField,
+    textField: EditorTextField,
     config: Config
   ): JComponent {
-    submittableTextField.installSubmitAction(model, config.submitConfig)
-    submittableTextField.installCancelAction(config.cancelConfig)
+    textField.installSubmitAction(model, config.submitConfig)
+    textField.installCancelAction(config.cancelConfig)
 
     val contentComponent = JPanel(null).apply {
       isOpaque = false
@@ -63,11 +63,11 @@ object SubmittableTextFieldComponent {
 
     val cancelButton = createCancelButton(config.cancelConfig)
 
-    updateUiOnModelChanges(contentComponent, model, submittableTextField, busyLabel, submitButton)
+    updateUiOnModelChanges(contentComponent, model, textField, busyLabel, submitButton)
 
     installScrollIfChangedController(contentComponent, model, config.scrollOnChange)
 
-    val textFieldWithOverlay = createTextFieldWithOverlay(submittableTextField, submitButton, busyLabel)
+    val textFieldWithOverlay = createTextFieldWithOverlay(textField, submitButton, busyLabel)
     contentComponent.add(textFieldWithOverlay, CC().grow().pushX())
     cancelButton?.let { contentComponent.add(it, CC().alignY("top")) }
 
@@ -179,7 +179,7 @@ private fun createCancelButton(actionConfig: CancelActionConfig?): InlineIconBut
   }
 }
 
-private fun SubmittableTextField.installSubmitAction(
+private fun EditorTextField.installSubmitAction(
   model: SubmittableTextFieldModel,
   submitConfig: SubmitActionConfig
 ) {
@@ -193,7 +193,7 @@ private fun SubmittableTextField.installSubmitAction(
   }
 }
 
-private fun SubmittableTextField.installCancelAction(cancelConfig: CancelActionConfig?) {
+private fun EditorTextField.installCancelAction(cancelConfig: CancelActionConfig?) {
   if (cancelConfig == null) {
     return
   }
@@ -207,7 +207,7 @@ private fun SubmittableTextField.installCancelAction(cancelConfig: CancelActionC
 private fun updateUiOnModelChanges(
   parent: JComponent,
   model: SubmittableTextFieldModel,
-  submittableTextField: SubmittableTextField,
+  textField: EditorTextField,
   busyLabel: JComponent,
   submitButton: InlineIconButton?
 ) {
@@ -216,7 +216,7 @@ private fun updateUiOnModelChanges(
     submitButton?.isEnabled = model.isSubmitAllowed()
   }
 
-  submittableTextField.addDocumentListener(object : DocumentListener {
+  textField.addDocumentListener(object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
       update()
       parent.revalidate()
