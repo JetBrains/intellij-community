@@ -303,6 +303,10 @@
       }
     },
 
+    "TabbedPane": {
+      "tabHeight": 40
+    },
+
     "ToolTip":{
       "background": "Grey2",
       "infoForeground": "Grey7",
