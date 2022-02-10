@@ -16,7 +16,6 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatistic
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -377,8 +376,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   @Override
   @NotNull
-  protected JPanel createSettingsPanel() {
-    return myHeader.getToolbarPanel();
+  protected JComponent createHeader() {
+    return myHeader.getComponent();
   }
 
   @NotNull
@@ -443,12 +442,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     ScrollingUtil.installMoveDownAction(myResultsList, getSearchField());
   }
 
-  @Override
-  @NotNull
-  protected JPanel createTopLeftPanel() {
-    return myHeader.getTabsPanel();
-  }
-
   private static final long REBUILD_LIST_DELAY = 100;
   private final Alarm rebuildListAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
@@ -484,14 +477,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       contributors = DumbService.getInstance(myProject).filterByDumbAwareness(contributorsMap.keySet());
       if (contributors.isEmpty() && DumbService.isDumb(myProject)) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported",
-                                                     myHeader.getSelectedTab().getText(),
+                                                     myHeader.getSelectedTab().getName(),
                                                      ApplicationNamesInfo.getInstance().getFullProductName()));
         myListModel.clear();
         return;
       }
       if (contributors.size() != contributorsMap.size()) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.incomplete.results",
-                                                     myHeader.getSelectedTab().getText(),
+                                                     myHeader.getSelectedTab().getName(),
                                                      ApplicationNamesInfo.getInstance().getFullProductName()));
       }
     }

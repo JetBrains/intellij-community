@@ -26,11 +26,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.SegmentedButton
-import com.intellij.ui.dsl.builder.components.DslLabel
-import com.intellij.ui.dsl.builder.components.DslLabelType
-import com.intellij.ui.dsl.builder.components.SegmentedButtonAction
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.ui.dsl.builder.components.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
@@ -247,6 +243,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     result.items(items)
     cells.add(result)
     return result
+  }
+
+  override fun tabbedPaneHeader(items: Collection<String>): Cell<JBTabbedPane> {
+    val tabbedPaneHeader = TabbedPaneHeader()
+    for (item in items) {
+      tabbedPaneHeader.add(item, JPanel())
+    }
+    return cell(tabbedPaneHeader)
   }
 
   override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {

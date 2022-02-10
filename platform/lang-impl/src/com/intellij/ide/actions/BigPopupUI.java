@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,10 +60,32 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   protected abstract ListCellRenderer<Object> createCellRenderer();
 
   @NotNull
-  protected abstract JPanel createTopLeftPanel();
+  protected JComponent createHeader() {
+    JPanel header = new JPanel(new BorderLayout());
+    header.add(createTopLeftPanel(), BorderLayout.WEST);
+    header.add(createSettingsPanel(), BorderLayout.EAST);
+    return header;
+  }
 
+  /**
+   * @deprecated Override createHeader and remove implementation of this method at all
+   */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @NotNull
-  protected abstract JPanel createSettingsPanel();
+  protected JPanel createTopLeftPanel() {
+    return new JPanel(); // not used
+  }
+
+  /**
+   * @deprecated Override createHeader and remove implementation of this method at all
+   */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @NotNull
+  protected JPanel createSettingsPanel() {
+    return new JPanel(); // not used
+  }
 
 
   @NotNull
@@ -128,8 +151,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   public void init() {
     myResultsList = createList();
 
-    JPanel topLeftPanel = createTopLeftPanel();
-    JPanel settingsPanel = createSettingsPanel();
     mySearchField = createSearchField();
     suggestionsPanel = createSuggestionsPanel();
 
@@ -143,10 +164,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
     installScrollingActions();
 
-    JPanel header = new JPanel(new BorderLayout());
-    header.add(topLeftPanel, BorderLayout.WEST);
-    header.add(settingsPanel, BorderLayout.EAST);
-
+    JComponent header = createHeader();
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.setOpaque(false);
     topPanel.add(header, BorderLayout.NORTH);
@@ -161,11 +179,15 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
     if (ExperimentalUI.isNewUI()) {
       setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-      header.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
-                                                   JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.headerInsets())));
+      if (header.getBorder() == null) {
+        header.setBorder(
+          JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
+                                JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.headerInsets())));
+      }
       header.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       myResultsList.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-    } else {
+    }
+    else {
       suggestionsPanel.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0));
       setBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
     }

@@ -50,7 +50,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   private boolean tabsOverlapBorder;
   private boolean useSelectedRectBackup = false;
 
-  private static final JBValue OFFSET = new JBValue.Float(1);
+  protected static final JBValue OFFSET = new JBValue.Float(1);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -514,7 +514,6 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       JBPopupMenu menu = new JBPopupMenu();
       for (Map.Entry<Integer, Rectangle> entry : invisibleTabs.entrySet()) {
         final int index = entry.getKey();
-        //noinspection HardCodedStringLiteral
         menu.add(new JMenuItem(tabPane.getTitleAt(index), tabPane.getIconAt(index)) {
           @Override
           protected void fireActionPerformed(ActionEvent event) {
