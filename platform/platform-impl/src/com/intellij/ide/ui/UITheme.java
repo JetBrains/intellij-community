@@ -199,7 +199,6 @@ public final class UITheme {
 
       Object palette = theme.icons.get("ColorPalette");
       if (palette instanceof Map) {
-
         @SuppressWarnings("rawtypes")
         Map colors = (Map)palette;
         PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
@@ -721,7 +720,7 @@ public final class UITheme {
     }
 
     @Nullable PaletteScope getScopeByPath(@Nullable String path) {
-      if (path != null && path.contains("/com/intellij/ide/ui/laf/icons/")) {
+      if (path != null && (path.contains("com/intellij/ide/ui/laf/icons/") || path.contains("/com/intellij/ide/ui/laf/icons/"))) {
         String file = path.substring(path.lastIndexOf('/') + 1);
         if (file.equals("treeCollapsed.svg") || file.equals("treeExpanded.svg")) return trees;
         if (file.startsWith("check")) return checkBoxes;
