@@ -203,33 +203,59 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotLeakFirstCancelledCoalescedAction() {
-    Object leak = new Object() {};
+    Object leak = new Object() {
+    };
     Disposable disposable = Disposer.newDisposable();
     Disposer.dispose(disposable);
-    CancellablePromise<String> p = ReadAction
-      .nonBlocking(() -> "a")
-      .expireWith(disposable)
-      .coalesceBy(leak)
-      .submit(AppExecutorUtil.getAppExecutorService());
-    assertTrue(p.isCancelled());
+    try {
+      CancellablePromise<String> p = ReadAction
+        .nonBlocking(() -> "a")
+        .expireWith(disposable)
+        .coalesceBy(leak)
+        .submit(AppExecutorUtil.getAppExecutorService());
+      assertTrue(p.isCancelled());
 
-    LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+      LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+
+      Disposer.disposeChildren(disposable, (child) -> {
+        throw new IllegalStateException(child.toString());
+      });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 
   public void testDoNotLeakSecondCancelledCoalescedAction() throws Exception {
-    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotLeakSecondCancelledCoalescedAction", 10);
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotLeakSecondCancelledCoalescedAction", 10);
 
-    Object leak = new Object(){};
-    CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
-    WriteAction.run(() -> {
-      ReadAction.nonBlocking(() -> "b").coalesceBy(leak).submit(executor).cancel();
-    });
-    assertTrue(p.isDone());
+      Object leak = new Object() {
+      };
+      CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
+      WriteAction.run(() -> {
+        ReadAction.nonBlocking(() -> "b")
+          .coalesceBy(leak)
+          .expireWith(disposable)
+          .submit(executor)
+          .cancel();
+      });
+      assertTrue(p.isDone());
 
-    ((BoundedTaskExecutor) executor).waitAllTasksExecuted(1, TimeUnit.SECONDS);
+      ((BoundedTaskExecutor)executor).waitAllTasksExecuted(1, TimeUnit.SECONDS);
 
-    LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+      LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+
+      Disposer.disposeChildren(disposable, (child) -> {
+        throw new IllegalStateException(child.toString());
+      });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
+
   public void testSyncExecutionHonorsConstraints() {
     setupUncommittedDocument();
 
