@@ -13,6 +13,8 @@ import com.intellij.diff.tools.combined.CombinedDiffRequest.NewChildDiffRequestD
 import com.intellij.diff.tools.combined.CombinedDiffRequestProcessor.CombinedDiffViewerBuilder.Companion.buildLoadingBlockContent
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
+import com.intellij.diff.tools.util.base.DiffViewerBase
+import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -104,13 +106,14 @@ open class CombinedDiffRequestProcessor(project: Project?,
     }
   }
 
+  private val differencesLabel by lazy { MyDifferencesLabel(createGoToChangeAction()) }
+
   //
   // Navigation
   //
 
   override fun getNavigationActions(): List<AnAction> {
-    val goToChangeAction = createGoToChangeAction()
-    return listOfNotNull(prevDifferenceAction, nextDifferenceAction, MyDifferencesLabel(goToChangeAction),
+    return listOfNotNull(prevDifferenceAction, nextDifferenceAction, differencesLabel,
                          openInEditorAction, prevFileAction, nextFileAction)
   }
   final override fun isNavigationEnabled(): Boolean = blockCount > 0
@@ -159,16 +162,29 @@ open class CombinedDiffRequestProcessor(project: Project?,
   private inner class MyDifferencesLabel(goToChangeAction: AnAction?) :
     DifferencesLabel(goToChangeAction, myToolbarWrapper.targetComponent) {
 
+    private val loadedDifferences = hashMapOf<Int, Int>()
+
     override fun getFileCount(): Int = requestProducer.getFilesSize()
     override fun getTotalDifferences(): Int = calculateTotalDifferences()
 
-    private fun calculateTotalDifferences(): Int {
-      val combinedViewer = viewer ?: return 0
+    fun countDifferences(blockId: CombinedBlockId, childViewer: FrameDiffTool.DiffViewer) {
+      val combinedViewer = viewer ?: return
+      val index = combinedViewer.diffBlocksPositions[blockId] ?: return
 
-      return combinedViewer.diffViewers
-        .asSequence()
-        .sumOf { (it as? DifferencesCounter)?.getTotalDifferences() ?: 1 }
+      loadedDifferences[index] = 1
+
+      if (childViewer is DiffViewerBase) {
+        val listener = object : DiffViewerListener() {
+          override fun onAfterRediff() {
+            loadedDifferences[index] = if (childViewer is DifferencesCounter) childViewer.getTotalDifferences() else 1
+          }
+        }
+        childViewer.addListener(listener)
+        Disposer.register(childViewer, Disposable { childViewer.removeListener(listener) })
+      }
     }
+
+    private fun calculateTotalDifferences(): Int = loadedDifferences.values.sum()
   }
 
   //
@@ -239,6 +255,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
       runInEdt {
         CombinedDiffViewerBuilder.buildBlockContent(combinedViewer, context, childDiffRequest, blockId)?.let { newContent ->
           combinedViewer.diffBlocks[blockId]?.let { block ->
+            differencesLabel.countDifferences(blockId, newContent.viewer)
             combinedViewer.updateBlockContent(block, newContent)
             childDiffRequest.onAssigned(true)
           }
