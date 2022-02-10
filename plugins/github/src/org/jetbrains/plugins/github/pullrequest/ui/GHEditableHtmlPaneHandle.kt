@@ -3,11 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.components.panels.VerticalLayout
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingSubmittableTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -22,7 +21,7 @@ internal open class GHEditableHtmlPaneHandle(private val project: Project,
                                              private val loadSource: () -> CompletableFuture<String>,
                                              private val updateText: (String) -> CompletableFuture<out Any?>) {
 
-  val panel = NonOpaquePanel(VerticalLayout(JBUIScale.scale(8))).apply {
+  val panel = NonOpaquePanel(VerticalLayout(8, VerticalLayout.FILL)).apply {
     add(wrapEditorPane(editorPane))
   }
 
@@ -43,7 +42,7 @@ internal open class GHEditableHtmlPaneHandle(private val project: Project,
       editor = GHSubmittableTextFieldFactory(model).create(CommonBundle.message("button.submit"), onCancel = {
         hideEditor()
       })
-      panel.add(editor!!, VerticalLayout.FILL_HORIZONTAL)
+      panel.add(editor!!)
       panel.validate()
       panel.repaint()
     }

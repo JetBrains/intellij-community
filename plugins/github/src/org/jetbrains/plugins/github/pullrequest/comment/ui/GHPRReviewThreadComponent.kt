@@ -7,7 +7,6 @@ import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.InlineIconButton
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -16,6 +15,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
@@ -40,16 +40,14 @@ object GHPRReviewThreadComponent {
 
   fun create(project: Project, thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider, currentUser: GHUser): JComponent {
-    val panel = JPanel(VerticalLayout(JBUIScale.scale(12))).apply {
+    val panel = JPanel(VerticalLayout(12)).apply {
       isOpaque = false
     }
     panel.add(
-      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, reviewDataProvider, avatarIconsProvider)),
-      VerticalLayout.FILL_HORIZONTAL)
+      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, reviewDataProvider, avatarIconsProvider)))
 
     if (reviewDataProvider.canComment()) {
-      panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser),
-                VerticalLayout.FILL_HORIZONTAL)
+      panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
     }
     return panel
   }
@@ -63,27 +61,25 @@ object GHPRReviewThreadComponent {
     val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover,
                                         tooltip = GithubBundle.message("pull.request.timeline.review.thread.expand"))
 
-    val panel = JPanel(VerticalLayout(JBUIScale.scale(4))).apply {
+    val panel = JPanel(VerticalLayout(4)).apply {
       isOpaque = false
-      add(createFileName(thread, selectInToolWindowHelper, collapseButton, expandButton),
-          VerticalLayout.FILL_HORIZONTAL)
+      add(createFileName(thread, selectInToolWindowHelper, collapseButton, expandButton))
     }
 
     object : CollapseController(thread, panel, collapseButton, expandButton) {
-      override fun createThreadsPanel(): JComponent = JPanel(VerticalLayout(JBUIScale.scale(12))).apply {
+      override fun createThreadsPanel(): JComponent = JPanel(VerticalLayout(12)).apply {
         isOpaque = false
 
-        add(diffComponentFactory.createComponent(thread.diffHunk, thread.startLine), VerticalLayout.FILL_HORIZONTAL)
+        add(diffComponentFactory.createComponent(thread.diffHunk, thread.startLine))
 
         add(GHPRReviewThreadCommentsPanel.create(thread,
                                                  GHPRReviewCommentComponent.factory(
                                                    project, reviewDataProvider, avatarIconsProvider, false
                                                  )
-          ), VerticalLayout.FILL_HORIZONTAL)
+          ))
 
         if (reviewDataProvider.canComment()) {
-          add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser),
-              VerticalLayout.FILL_HORIZONTAL)
+          add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
         }
       }
     }
@@ -112,7 +108,7 @@ object GHPRReviewThreadComponent {
       if (shouldBeVisible) {
         if (threadsPanel == null) {
           threadsPanel = createThreadsPanel()
-          panel.add(threadsPanel!!, VerticalLayout.FILL_HORIZONTAL)
+          panel.add(threadsPanel!!)
           panel.validate()
           panel.repaint()
         }

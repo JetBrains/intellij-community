@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFa
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
@@ -14,6 +13,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -171,13 +171,13 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       if (panelHandle != null && review.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
     }
 
-    val contentPanel = NonOpaquePanel(VerticalLayout(JBUIScale.scale(12))).apply {
+    val contentPanel = NonOpaquePanel(VerticalLayout(12)).apply {
       border = JBUI.Borders.emptyTop(4)
-      if (panelHandle != null) add(panelHandle.panel, VerticalLayout.FILL_HORIZONTAL)
+      if (panelHandle != null) add(panelHandle.panel)
       add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
         GHPRReviewThreadComponent.createWithDiff(project, it, reviewDataProvider, selectInToolWindowHelper, reviewDiffComponentFactory,
                                                  avatarIconsProvider, currentUser)
-      }, VerticalLayout.FILL_HORIZONTAL)
+      })
     }
     val actionText = when (review.state) {
       APPROVED -> GithubBundle.message("pull.request.timeline.approved.changes")
