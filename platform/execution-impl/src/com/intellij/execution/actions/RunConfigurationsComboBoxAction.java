@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -95,6 +96,12 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
     }
     else {
+      if (Registry.is("run.current.file.item.in.run.configurations.combobox")) {
+        presentation.setText(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.selected"));
+        presentation.setIcon(null);
+        return;
+      }
+
       presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
       presentation.setText(ExecutionBundle.messagePointer("action.presentation.RunConfigurationsComboBoxAction.text"));
       presentation.setDescription(ActionsBundle.actionDescription(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
@@ -173,6 +180,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
     allActionsGroup.add(new SaveTemporaryAction());
     allActionsGroup.addSeparator();
+
+    allActionsGroup.add(new RunCurrentFileAction());
+    allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
 
     RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
     if (selected != null) {
@@ -304,6 +314,31 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       return ContainerUtil.getFirstItem(RunManager.getInstance(project).getTempConfigurationsList());
     }
   }
+
+
+  private static class RunCurrentFileAction extends AnAction {
+    private RunCurrentFileAction() {
+      super(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.item.in.dropdown"),
+            ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.description"),
+            null);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(e.getProject() != null &&
+                                               Registry.is("run.current.file.item.in.run.configurations.combobox"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project == null) return;
+
+      RunManager.getInstance(project).setSelectedConfiguration(null);
+      updatePresentation(null, null, project, e.getPresentation(), e.getPlace());
+    }
+  }
+
 
   private static final class SelectTargetAction extends AnAction {
     private final Project myProject;
