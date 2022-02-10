@@ -106,6 +106,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
   public static final int THROTTLING_TIMEOUT = 100;
 
+  private static final Icon SHOW_IN_FIND_TOOL_WINDOW_ICON =
+    ExperimentalUI.isNewUI() ? IconManager.getInstance().getIcon("expui/general/openInToolWindow.svg", AllIcons.class)
+                             : AllIcons.General.Pin_tab;
+
   private final SEResultsListFactory myListFactory;
   private SearchListModel myListModel;
   private final SearchEverywhereHeader myHeader;
@@ -937,7 +941,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     ShowInFindToolWindowAction() {
       super(IdeBundle.messagePointer("show.in.find.window.button.name"),
-            IdeBundle.messagePointer("show.in.find.window.button.description"), getShowInFindToolWindowIcon());
+            IdeBundle.messagePointer("show.in.find.window.button.description"), SHOW_IN_FIND_TOOL_WINDOW_ICON);
     }
 
     @Override
@@ -1076,7 +1080,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       SETab selectedTab = myHeader != null ? myHeader.getSelectedTab() : null;
       boolean enabled = selectedTab == null || selectedTab.getContributors().stream().anyMatch(c -> c.showInFindResults());
       e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, getShowInFindToolWindowIcon()));
+      if (!ExperimentalUI.isNewUI()) {
+        e.getPresentation().setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, SHOW_IN_FIND_TOOL_WINDOW_ICON));
+      }
     }
   }
 
@@ -1441,10 +1447,5 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
       };
     }
-  }
-
-  private static Icon getShowInFindToolWindowIcon() {
-    return ExperimentalUI.isNewUI() ? IconManager.getInstance().getIcon("expui/general/openInToolWindow.svg", AllIcons.class)
-                                    : AllIcons.General.Pin_tab;
   }
 }
