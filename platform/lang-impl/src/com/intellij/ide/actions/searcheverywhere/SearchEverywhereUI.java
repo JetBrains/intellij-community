@@ -791,6 +791,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   private void elementsSelected(int[] indexes, int modifiers) {
+    stopSearching();
     if (indexes.length == 1 && myListModel.isMoreElement(indexes[0])) {
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(indexes[0]);
       showMoreElements(contributor);
