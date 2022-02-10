@@ -962,7 +962,6 @@
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
 
     <registryKey key="java.detector.enabled" defaultValue="true" description="Toggles JDK detection features" />
-    <registryKey key="java.detector.include.embedded" defaultValue="false" description="Include embedded JetBrains Runtime" />
 
     <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader" />
     <unknownSdkResolver implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto"/>

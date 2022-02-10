@@ -9,7 +9,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -50,13 +49,9 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
 
-    if (!(this instanceof JavaHomeFinderWsl)) {
-      myFinders.add(
-        () -> myCheckEmbeddedJava || Registry.is("java.detector.include.embedded", false)
-              ? scanAll(getJavaHome(), false)
-              : Collections.emptySet()
-      );
-    }
+    myFinders.add(
+      () -> myCheckEmbeddedJava ? scanAll(getJavaHome(), false) : Collections.emptySet()
+    );
   }
 
   public @NotNull JavaHomeFinderBasic checkDefaultInstallDir(boolean value) {
