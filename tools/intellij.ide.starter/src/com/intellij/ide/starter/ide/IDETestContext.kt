@@ -218,14 +218,8 @@ data class IDETestContext(
     path.toFile().deleteRecursively()
   }
 
-  // TODO: get rid of this method. It's confusing since we're already specifying, what profiler we want to use in [setProfiler]
-  fun runContext(withProfiling: Boolean = true): IDERunContext {
-    return IDERunContext(testContext = this).run {
-      when (withProfiling) {
-        true -> this.installProfiler()
-        false -> this
-      }
-    }
+  fun runContext(): IDERunContext {
+    return IDERunContext(testContext = this)
   }
 
   /**
@@ -341,10 +335,9 @@ data class IDETestContext(
     runTimeout: Duration = Duration.minutes(10),
     useStartupScript: Boolean = true,
     launchName: String = "",
-    withProfiling: Boolean = true,
     expectedKill: Boolean = false
   ): IDEStartResult {
-    return runContext(withProfiling)
+    return runContext()
       .copy(
         commandLine = commandLine,
         commands = commands,
@@ -371,8 +364,7 @@ data class IDETestContext(
       },
       commands = testCase.commands.plus(commands),
       runTimeout = runTimeout,
-      launchName = "warmUp",
-      withProfiling = false
+      launchName = "warmUp"
     )
   }
 
