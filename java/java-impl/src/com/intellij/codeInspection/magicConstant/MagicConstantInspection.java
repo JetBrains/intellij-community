@@ -140,17 +140,17 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(list, PsiSwitchBlock.class);
         if (switchBlock == null) return;
         PsiExpression selector = switchBlock.getExpression();
-        PsiElement resolved = null;
+        PsiModifierListOwner owner = null;
         if (selector instanceof PsiReference) {
-          resolved = ((PsiReference)selector).resolve();
+          owner = ObjectUtils.tryCast(((PsiReference)selector).resolve(), PsiModifierListOwner.class);
         }
         else if (selector instanceof PsiMethodCallExpression) {
-          resolved = ((PsiCallExpression)selector).resolveMethod();
+          owner = ((PsiCallExpression)selector).resolveMethod();
         }
-        if (!(resolved instanceof PsiModifierListOwner)) return;
+        if (owner == null) return;
         for (PsiCaseLabelElement element : list.getElements()) {
           if (!(element instanceof PsiExpression)) continue;
-          checkExpression((PsiExpression)element, (PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), holder);
+          checkExpression((PsiExpression)element, owner, getType(owner), holder);
         }
       }
 
@@ -445,18 +445,18 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
     }
 
-    PsiElement resolved = null;
+    PsiModifierListOwner owner = null;
     AllowedValues allowedForRef = null;
     if (expression instanceof PsiReference) {
-      resolved = ((PsiReference)expression).resolve();
+      owner = ObjectUtils.tryCast(((PsiReference)expression).resolve(), PsiModifierListOwner.class);
     }
     else if (expression instanceof PsiMethodCallExpression) {
       allowedForRef = SPECIAL_CASES.mapFirst((PsiMethodCallExpression)expression);
-      resolved = ((PsiCallExpression)expression).resolveMethod();
+      owner = ((PsiCallExpression)expression).resolveMethod();
     }
 
-    if (allowedForRef == null && resolved instanceof PsiModifierListOwner) {
-      allowedForRef = MagicConstantUtils.getAllowedValues((PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), expression);
+    if (allowedForRef == null && owner != null) {
+      allowedForRef = MagicConstantUtils.getAllowedValues(owner, getType(owner), expression);
     }
     if (allowedForRef != null && allowedForRef.isSubsetOf(allowedValues, manager)) {
       return true;
