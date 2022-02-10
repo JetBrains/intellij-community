@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.ActionButtonConfig
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.CancelActionConfig
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.SubmitActionConfig
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.getEditorTextFieldVerticalOffset
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldFactory
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldModel
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.ActionButtonConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.CancelActionConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.SubmitActionConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.getEditorTextFieldVerticalOffset
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModel
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
@@ -25,14 +25,14 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel) {
+class GHCommentTextFieldFactory(private val model: CommentTextFieldModel) {
 
   fun create(
     @NlsContexts.Tooltip actionName: String = GithubBundle.message("action.comment.text"),
     onCancel: (() -> Unit)? = null
   ): JComponent {
-    val submittableTextField = SubmittableTextFieldFactory.create(model, actionName)
-    return SubmittableTextFieldComponent.create(model, submittableTextField, createSubmittableTextFieldConfig(actionName, onCancel))
+    val commentTextField = CommentTextFieldFactory.create(model, actionName)
+    return CommentInputComponentFactory.create(model, commentTextField, createCommentInputConfig(actionName, onCancel))
   }
 
   fun create(
@@ -49,18 +49,18 @@ class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    val textField = SubmittableTextFieldFactory.create(model, actionName)
-    val textFieldComponent = SubmittableTextFieldComponent.create(
-      model, textField, createSubmittableTextFieldConfig(actionName, onCancel)
+    val textField = CommentTextFieldFactory.create(model, actionName)
+    val textFieldComponent = CommentInputComponentFactory.create(
+      model, textField, createCommentInputConfig(actionName, onCancel)
     )
     return wrapWithAvatar(textFieldComponent, textField, authorLabel)
   }
 
-  private fun createSubmittableTextFieldConfig(
+  private fun createCommentInputConfig(
     @NlsContexts.Tooltip actionName: String,
     onCancel: (() -> Unit)? = null
-  ): SubmittableTextFieldComponent.Config {
-    return SubmittableTextFieldComponent.Config(
+  ): CommentInputComponentFactory.Config {
+    return CommentInputComponentFactory.Config(
       submitConfig = SubmitActionConfig(ActionButtonConfig(actionName)),
       cancelConfig = onCancel?.let { CancelActionConfig(ActionButtonConfig(Messages.getCancelButton()), action = it) }
     )

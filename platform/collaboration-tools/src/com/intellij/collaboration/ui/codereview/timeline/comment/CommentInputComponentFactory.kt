@@ -3,10 +3,10 @@ package com.intellij.collaboration.ui.codereview.timeline.comment
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.InlineIconButton
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.CancelActionConfig
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.ScrollOnChangePolicy
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.SubmitActionConfig
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldComponent.getEditorTextFieldVerticalOffset
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.CancelActionConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.ScrollOnChangePolicy
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.SubmitActionConfig
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.getEditorTextFieldVerticalOffset
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -38,9 +38,9 @@ import javax.swing.border.EmptyBorder
 private val defaultSubmitShortcut = CommonShortcuts.CTRL_ENTER
 private val defaultCancelShortcut = CommonShortcuts.ESCAPE
 
-object SubmittableTextFieldComponent {
+object CommentInputComponentFactory {
   fun create(
-    model: SubmittableTextFieldModel,
+    model: CommentTextFieldModel,
     textField: EditorTextField,
     config: Config
   ): JComponent {
@@ -104,7 +104,7 @@ object SubmittableTextFieldComponent {
 
 private fun installScrollIfChangedController(
   parent: JComponent,
-  model: SubmittableTextFieldModel,
+  model: CommentTextFieldModel,
   policy: ScrollOnChangePolicy,
 ) {
   if (policy == ScrollOnChangePolicy.DontScroll) {
@@ -144,7 +144,7 @@ private fun installScrollIfChangedController(
 
 @Suppress("DialogTitleCapitalization")
 private fun createSubmitButton(
-  model: SubmittableTextFieldModel,
+  model: CommentTextFieldModel,
   actionConfig: SubmitActionConfig
 ): InlineIconButton? {
   val iconConfig = actionConfig.iconConfig ?: return null
@@ -180,7 +180,7 @@ private fun createCancelButton(actionConfig: CancelActionConfig?): InlineIconBut
 }
 
 private fun EditorTextField.installSubmitAction(
-  model: SubmittableTextFieldModel,
+  model: CommentTextFieldModel,
   submitConfig: SubmitActionConfig
 ) {
   val submitAction = object : DumbAwareAction() {
@@ -206,7 +206,7 @@ private fun EditorTextField.installCancelAction(cancelConfig: CancelActionConfig
 
 private fun updateUiOnModelChanges(
   parent: JComponent,
-  model: SubmittableTextFieldModel,
+  model: CommentTextFieldModel,
   textField: EditorTextField,
   busyLabel: JComponent,
   submitButton: InlineIconButton?
@@ -227,9 +227,9 @@ private fun updateUiOnModelChanges(
   update()
 }
 
-private fun SubmittableTextFieldModel.isSubmitAllowed(): Boolean = !isBusy && content.text.isNotBlank()
+private fun CommentTextFieldModel.isSubmitAllowed(): Boolean = !isBusy && content.text.isNotBlank()
 
-private fun SubmittableTextFieldModel.submitWithCheck() {
+private fun CommentTextFieldModel.submitWithCheck() {
   if (isSubmitAllowed()) {
     submit()
   }

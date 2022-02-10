@@ -186,7 +186,7 @@ object GHPRReviewThreadComponent {
     currentUser: GHUser
   ): JComponent {
     val toggleModel = SingleValueModel(false)
-    val textFieldModel = GHSubmittableTextFieldModel(project) { text ->
+    val textFieldModel = GHCommentTextFieldModel(project) { text ->
       reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
         thread.addComment(GHPRReviewCommentModel.convert(it))
         toggleModel.value = false
@@ -225,10 +225,10 @@ object GHPRReviewThreadComponent {
       toggleModel,
       { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
       {
-        GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
-                                                             GithubBundle.message(
+        GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
+                                                         GithubBundle.message(
                                                                "pull.request.review.thread.reply"),
-                                                             onCancel = { toggleModel.value = false })
+                                                         onCancel = { toggleModel.value = false })
       }
     )
     return JPanel().apply {

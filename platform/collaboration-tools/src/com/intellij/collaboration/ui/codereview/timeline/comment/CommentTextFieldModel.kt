@@ -5,7 +5,7 @@ import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 
-interface SubmittableTextFieldModel {
+interface CommentTextFieldModel {
   val project: Project?
 
   /**
@@ -13,7 +13,7 @@ interface SubmittableTextFieldModel {
    */
   val document: Document
 
-  val content: SubmittableTextFieldModelContent
+  val content: CommentTextFieldModelContent
 
   var isBusy: Boolean
 
@@ -24,7 +24,7 @@ interface SubmittableTextFieldModel {
   fun addStateListener(listener: SimpleEventListener)
 }
 
-interface SubmittableTextFieldModelContent {
+interface CommentTextFieldModelContent {
   var text: String
 
   var isReadOnly: Boolean

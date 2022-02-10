@@ -7,12 +7,12 @@ import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.project.Project
 import java.util.concurrent.CompletableFuture
 
-class GHPreLoadingSubmittableTextFieldModel(
+class GHPreLoadingCommentTextFieldModel(
   project: Project,
   initialText: String,
   preLoader: CompletableFuture<String>,
   submitter: (String) -> CompletableFuture<*>
-) : GHSubmittableTextFieldModel(project, initialText, submitter) {
+) : GHCommentTextFieldModel(project, initialText, submitter) {
 
   init {
     content.isAcceptSlashR = true

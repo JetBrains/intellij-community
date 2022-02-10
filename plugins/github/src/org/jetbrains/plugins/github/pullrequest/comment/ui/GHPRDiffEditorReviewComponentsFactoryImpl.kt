@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -33,7 +32,7 @@ internal constructor(private val project: Project,
     }.let(::wrapComponentUsingRoundedPanel)
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldModel(project) {
+    val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
       if (line == startLine) {
         val commitSha = createCommentParametersHelper.commitSha
@@ -54,7 +53,7 @@ internal constructor(private val project: Project,
   }
 
   override fun createNewReviewCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldModel(project) {
+    val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
       val commitSha = createCommentParametersHelper.commitSha
       if (line == startLine) {
@@ -77,7 +76,7 @@ internal constructor(private val project: Project,
   }
 
   override fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldModel(project) {
+    val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
       if (line == startLine) {
         val commitSha = createCommentParametersHelper.commitSha
@@ -97,11 +96,11 @@ internal constructor(private val project: Project,
   }
 
   private fun createCommentComponent(
-    textFieldModel: GHSubmittableTextFieldModel,
+    textFieldModel: GHCommentTextFieldModel,
     @NlsActions.ActionText actionName: String,
     hideCallback: () -> Unit
   ): JComponent =
-    GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser, actionName) {
+    GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser, actionName) {
       hideCallback()
     }.apply {
       border = JBUI.Borders.empty(8)

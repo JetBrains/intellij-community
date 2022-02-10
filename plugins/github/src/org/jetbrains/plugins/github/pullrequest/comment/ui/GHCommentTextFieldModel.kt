@@ -4,15 +4,15 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelBase
 import com.intellij.openapi.project.Project
 import java.util.concurrent.CompletableFuture
 
-open class GHSubmittableTextFieldModel(
+open class GHCommentTextFieldModel(
   project: Project,
   initialText: String,
   private val submitter: (String) -> CompletableFuture<*>
-) : SubmittableTextFieldModelBase(project, initialText) {
+) : CommentTextFieldModelBase(project, initialText) {
 
   constructor(project: Project, submitter: (String) -> CompletableFuture<*>) : this(project, "", submitter)
 

@@ -14,11 +14,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.LanguageTextField
 import com.intellij.util.EventDispatcher
 
-abstract class SubmittableTextFieldModelBase(
+abstract class CommentTextFieldModelBase(
   final override val project: Project?,
   initialText: String,
   language: Language = getMarkdownLanguage() ?: PlainTextLanguage.INSTANCE,
-) : SubmittableTextFieldModel {
+) : CommentTextFieldModel {
 
   private val listeners = EventDispatcher.create(SimpleEventListener::class.java)
 
@@ -29,7 +29,7 @@ abstract class SubmittableTextFieldModelBase(
     LanguageTextField.SimpleDocumentCreator()
   )
 
-  override val content: SubmittableTextFieldModelContent = SubmittableTextFieldModelContentImpl(document as DocumentImpl)
+  override val content: CommentTextFieldModelContent = CommentTextFieldModelContentImpl(document as DocumentImpl)
 
   override var isBusy = false
     set(value) {
@@ -48,7 +48,7 @@ abstract class SubmittableTextFieldModelBase(
   }
 }
 
-private class SubmittableTextFieldModelContentImpl(private val document: DocumentImpl) : SubmittableTextFieldModelContent {
+private class CommentTextFieldModelContentImpl(private val document: DocumentImpl) : CommentTextFieldModelContent {
   override var text: String
     get() = document.text
     set(value) {

@@ -19,12 +19,12 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
-object SubmittableTextFieldFactory {
+object CommentTextFieldFactory {
   fun create(
-    model: SubmittableTextFieldModel,
+    model: CommentTextFieldModel,
     @Nls placeHolder: String,
     withValidation: Boolean = true
-  ): EditorTextField = SubmittableTextField(model.project, model.document).apply {
+  ): EditorTextField = CommentTextField(model.project, model.document).apply {
     putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     setPlaceholder(placeHolder)
     addSettingsProvider {
@@ -38,7 +38,7 @@ object SubmittableTextFieldFactory {
     }
   }
 
-  private class SubmittableTextField(
+  private class CommentTextField(
     project: Project?,
     document: Document
   ) : EditorTextField(document, project, FileTypes.PLAIN_TEXT) {
@@ -70,7 +70,7 @@ object SubmittableTextFieldFactory {
   }
 
   private class ValidatorActivatable(
-    private val model: SubmittableTextFieldModel,
+    private val model: CommentTextFieldModel,
     private val textField: EditorTextField
   ) : Activatable {
     private var validatorDisposable: Disposable? = null

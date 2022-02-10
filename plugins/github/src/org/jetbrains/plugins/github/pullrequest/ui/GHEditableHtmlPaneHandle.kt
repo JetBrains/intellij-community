@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingSubmittableTextFieldModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingCommentTextFieldModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.concurrent.CompletableFuture
@@ -33,13 +33,13 @@ internal open class GHEditableHtmlPaneHandle(private val project: Project,
     if (editor == null) {
       val placeHolderText = StringUtil.repeatSymbol('\n', Integer.max(0, getLineCount() - 1))
 
-      val model = GHPreLoadingSubmittableTextFieldModel(project, placeHolderText, loadSource()) { newText ->
+      val model = GHPreLoadingCommentTextFieldModel(project, placeHolderText, loadSource()) { newText ->
         updateText(newText).successOnEdt {
           hideEditor()
         }
       }
 
-      editor = GHSubmittableTextFieldFactory(model).create(CommonBundle.message("button.submit"), onCancel = {
+      editor = GHCommentTextFieldFactory(model).create(CommonBundle.message("button.submit"), onCancel = {
         hideEditor()
       })
       panel.add(editor!!)
