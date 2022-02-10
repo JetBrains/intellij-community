@@ -29,12 +29,12 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     if (symbolTargets != null && symbolTargets.isNotEmpty()) {
       return symbolTargets.first()
     }
+    val sourceElement = file.findElementAt(editor.caretModel.offset)
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
                         ?: return null
-    psiDocumentationTarget(targetElement)?.let {
+    psiDocumentationTarget(targetElement, sourceElement)?.let {
       return it
     }
-    val sourceElement = file.findElementAt(editor.caretModel.offset)
     return PsiElementDocumentationTarget(project, targetElement, sourceElement, anchor = null)
   }
 
@@ -46,7 +46,7 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     val documentationManager = DocumentationManager.getInstance(project)
     val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file)
                                          ?: return emptyList()
-    psiDocumentationTarget(targetElement)?.let {
+    psiDocumentationTarget(targetElement, sourceElement)?.let {
       return listOf(it)
     }
     return listOf(PsiElementDocumentationTarget(project, targetElement, sourceElement, anchor = null))

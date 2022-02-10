@@ -58,7 +58,7 @@ internal fun symbolCtrlMouseData(
     return targetCtrlMouseData(
       ranges,
       isNavigatable = declared || isNavigatableQuickDoc(elementAtOffset, psi),
-      target = psiDocumentationTarget(psi)
+      target = psiDocumentationTarget(psi, elementAtOffset)
                ?: PsiElementDocumentationTarget(psi.project, psi, elementAtOffset, null)
     )
   }
@@ -76,7 +76,7 @@ internal fun psiCtrlMouseData(
   return targetCtrlMouseData(
     ranges = getReferenceRanges(leafElement),
     isNavigatable = isNavigatableQuickDoc(leafElement, targetElement),
-    target = psiDocumentationTarget(targetElement)
+    target = psiDocumentationTarget(targetElement, leafElement)
              ?: PsiElementDocumentationTarget(leafElement.project, targetElement, leafElement, null)
   )
 }

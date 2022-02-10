@@ -90,7 +90,7 @@ private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget
   }
   val targetElement = dc.getData(CommonDataKeys.PSI_ELEMENT)
   if (targetElement != null) {
-    return listOf(psiDocumentationTarget(targetElement) ?: PsiElementDocumentationTarget(project, targetElement))
+    return listOf(psiDocumentationTarget(targetElement, null) ?: PsiElementDocumentationTarget(project, targetElement))
   }
   return emptyList()
 }

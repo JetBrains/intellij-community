@@ -8,9 +8,9 @@ import com.intellij.psi.PsiElement
 @JvmField
 internal val LOG: Logger = Logger.getInstance("#com.intellij.lang.documentation.psi")
 
-internal fun psiDocumentationTarget(element: PsiElement): DocumentationTarget? {
+internal fun psiDocumentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
   for (factory in PsiDocumentationTargetFactory.EP_NAME.extensionList) {
-    return factory.documentationTarget(element)
+    return factory.documentationTarget(element, originalElement)
            ?: continue
   }
   return null
