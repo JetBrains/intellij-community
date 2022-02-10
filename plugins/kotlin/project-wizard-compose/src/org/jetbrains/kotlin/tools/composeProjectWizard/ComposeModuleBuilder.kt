@@ -35,9 +35,9 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
     override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
     override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
 
-    override fun isAvailable(): Boolean {
-        return Registry.`is`("compose.wizard.enabled", false)
-    }
+    //override fun isAvailable(): Boolean {
+    //    return Registry.`is`("compose.wizard.enabled", false)
+    //}
 
     override fun getStarterPack(): StarterPack {
         return StarterPack("compose", listOf(

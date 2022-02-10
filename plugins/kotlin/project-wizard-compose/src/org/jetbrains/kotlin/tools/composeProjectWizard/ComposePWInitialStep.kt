@@ -56,7 +56,6 @@ class ComposePWInitialStep(contextProvider: StarterContextProvider) : StarterIni
                 "https://github.com/JetBrains/compose-jb/tree/master/tutorials/Getting_Started/README.md"
             )
         }
-        artifactRow.visible(false)
     }
 
     enum class ComposeConfigurationType(val messagePointer: Supplier<@Nls String>) {
