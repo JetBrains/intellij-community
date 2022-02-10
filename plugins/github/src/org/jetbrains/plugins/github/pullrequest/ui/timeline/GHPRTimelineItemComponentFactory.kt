@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFa
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
@@ -76,6 +77,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     }
     catch (e: Exception) {
+      LOG.warn(e)
       return Item(AllIcons.General.Warning, HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
   }
@@ -243,6 +245,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   companion object {
+    private val LOG = logger<GHPRTimelineItemComponentFactory>()
     private val NOT_DEFINED_SIZE = Dimension(-1, -1)
 
     fun getDefaultSize() = Dimension(GHUIUtil.getPRTimelineWidth(), -1)
