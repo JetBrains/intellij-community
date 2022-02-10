@@ -438,7 +438,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
           var item = new FsItem(file, cs, attrs.isDirectory(), visible, selectable, icon);
           update(id, cancelled, () -> {
             myCurrentContent.add(item);
-            if (visible) {
+            if (visible || myShowHiddenFiles) {
               myModel.add(item);
             }
           });
