@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
@@ -10,14 +9,11 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,7 +21,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -339,8 +336,8 @@ public final class EnvironmentUtil {
 
       Path stdoutFile = null, stderrFile = null;
       try {
-        stdoutFile = Files.createTempFile("intellij-shell-env.stdout.", ".tmp");
-        stderrFile = Files.createTempFile("intellij-shell-env.stderr.", ".tmp");
+        stdoutFile = Files.createTempFile("ij-shell-env-out.stdout.", ".tmp");
+        stderrFile = Files.createTempFile("ij-shell-env-out.stderr.", ".tmp");
         final Process process = builder
           .redirectOutput(ProcessBuilder.Redirect.to(stdoutFile.toFile()))
           .redirectError(ProcessBuilder.Redirect.to(stderrFile.toFile()))
@@ -360,12 +357,12 @@ public final class EnvironmentUtil {
         return new AbstractMap.SimpleImmutableEntry<>(stderr, parseEnv(output));
       }
       finally {
-        deleteLoggingErrors(stdoutFile);
-        deleteLoggingErrors(stderrFile);
+        deleteTempFile(stdoutFile);
+        deleteTempFile(stderrFile);
       }
     }
 
-    private static void deleteLoggingErrors(@Nullable Path file) {
+    private static void deleteTempFile(@Nullable Path file) {
       try {
         if (file != null) {
           Files.delete(file);
