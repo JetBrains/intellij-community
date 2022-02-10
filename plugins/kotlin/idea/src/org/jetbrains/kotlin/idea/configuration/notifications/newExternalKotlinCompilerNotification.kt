@@ -12,7 +12,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
@@ -42,6 +41,7 @@ fun checkExternalKotlinCompilerVersion(project: Project) {
             KotlinBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinCompilerVersion),
             NotificationType.INFORMATION,
         )
+        .setSuggestionType(true)
         .addAction(createWhatIsNewAction(bundledKotlinCompilerVersion))
         .setIcon(KotlinIcons.SMALL_LOGO)
         .setImportant(true)
