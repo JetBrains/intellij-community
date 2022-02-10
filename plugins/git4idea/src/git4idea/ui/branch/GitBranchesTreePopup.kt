@@ -249,7 +249,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   }
 
   override fun handleNextStep(nextStep: PopupStep<*>?, parentValue: Any) {
-    val pathBounds = tree.getPathBounds(tree.selectionPath)!!
+    val selectionPath = tree.selectionPath ?: return
+    val pathBounds = tree.getPathBounds(selectionPath) ?: return
     val point = Point(pathBounds.x, pathBounds.y)
     SwingUtilities.convertPointToScreen(point, tree)
 
