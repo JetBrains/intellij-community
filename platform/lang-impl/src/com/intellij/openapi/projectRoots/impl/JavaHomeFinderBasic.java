@@ -30,15 +30,16 @@ public class JavaHomeFinderBasic {
   private final List<Supplier<Set<String>>> myFinders = new ArrayList<>();
   private final JavaHomeFinder.SystemInfoProvider mySystemInfo;
 
-  public JavaHomeFinderBasic(boolean checkDefaultLocations,
-                             boolean forceEmbeddedJava,
-                             @NotNull JavaHomeFinder.SystemInfoProvider systemInfo,
-                             String @NotNull ... paths) {
-    mySystemInfo = systemInfo;
-    if (checkDefaultLocations) {
-      myFinders.add(this::checkDefaultLocations);
-    }
+  private boolean myCheckDefaultInstallDir = true;
+  private boolean myCheckUsedInstallDirs = true;
+  private boolean myCheckConfiguredJdks = true;
 
+  private boolean myCheckEmbeddedJava = false;
+
+  public JavaHomeFinderBasic(@NotNull JavaHomeFinder.SystemInfoProvider systemInfo, String @NotNull ... paths) {
+    mySystemInfo = systemInfo;
+
+    myFinders.add(this::checkDefaultLocations);
     myFinders.add(this::findInPATH);
     myFinders.add(this::findInJavaHome);
     myFinders.add(() -> findInSpecifiedPaths(paths));
@@ -46,9 +47,33 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
 
-    if (!(this instanceof JavaHomeFinderWsl) && (forceEmbeddedJava || Registry.is("java.detector.include.embedded", false))) {
-      myFinders.add(() -> scanAll(getJavaHome(), false));
+    if (!(this instanceof JavaHomeFinderWsl)) {
+      myFinders.add(
+        () -> myCheckEmbeddedJava || Registry.is("java.detector.include.embedded", false)
+              ? scanAll(getJavaHome(), false)
+              : Collections.emptySet()
+      );
     }
+  }
+
+  public @NotNull JavaHomeFinderBasic checkDefaultInstallDir(boolean value) {
+    myCheckDefaultInstallDir = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkUsedInstallDirs(boolean value) {
+    myCheckUsedInstallDirs = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkConfiguredJdks(boolean value) {
+    myCheckConfiguredJdks = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkEmbeddedJava(boolean value) {
+    myCheckEmbeddedJava = value;
+    return this;
   }
 
   protected JavaHomeFinder.SystemInfoProvider getSystemInfo() {
@@ -120,20 +145,28 @@ public class JavaHomeFinderBasic {
     }
 
     Set<Path> paths = new HashSet<>();
-    paths.add(JdkInstaller.getInstance().defaultInstallDir());
-    paths.addAll(JdkInstallerStore.getInstance().listJdkInstallHomes());
 
-    for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
-        continue;
+    if (myCheckDefaultInstallDir) {
+      paths.add(JdkInstaller.getInstance().defaultInstallDir());
+    }
+
+    if (myCheckUsedInstallDirs) {
+      paths.addAll(JdkInstallerStore.getInstance().listJdkInstallHomes());
+    }
+
+    if (myCheckConfiguredJdks) {
+      for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
+        if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
+          continue;
+        }
+
+        String homePath = jdk.getHomePath();
+        if (homePath == null) {
+          continue;
+        }
+
+        paths.addAll(listPossibleJdkInstallRootsFromHomes(mySystemInfo.getPath(homePath)));
       }
-
-      String homePath = jdk.getHomePath();
-      if (homePath == null) {
-        continue;
-      }
-
-      paths.addAll(listPossibleJdkInstallRootsFromHomes(mySystemInfo.getPath(homePath)));
     }
 
     return scanAll(paths, true);

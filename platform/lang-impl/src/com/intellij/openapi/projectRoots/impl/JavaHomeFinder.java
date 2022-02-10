@@ -82,23 +82,26 @@ public abstract class JavaHomeFinder {
   private static JavaHomeFinderBasic getFinder(boolean forceEmbeddedJava) {
     if (!isDetectorEnabled(forceEmbeddedJava)) return null;
 
+    return getFinder().checkEmbeddedJava(forceEmbeddedJava);
+  }
+
+  public static @NotNull JavaHomeFinderBasic getFinder() {
     SystemInfoProvider systemInfoProvider = new SystemInfoProvider();
 
-    boolean checkDefaultLocations = true;
     if (SystemInfo.isWindows) {
-      return new JavaHomeFinderWindows(checkDefaultLocations, forceEmbeddedJava, true, true, systemInfoProvider);
+      return new JavaHomeFinderWindows(true, true, systemInfoProvider);
     }
     if (SystemInfo.isMac) {
-      return new JavaHomeFinderMac(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider);
+      return new JavaHomeFinderMac(systemInfoProvider);
     }
     if (SystemInfo.isLinux) {
-      return new JavaHomeFinderBasic(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider, DEFAULT_JAVA_LINUX_PATHS);
+      return new JavaHomeFinderBasic(systemInfoProvider, DEFAULT_JAVA_LINUX_PATHS);
     }
     if (SystemInfo.isSolaris) {
-      return new JavaHomeFinderBasic(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider, "/usr/jdk");
+      return new JavaHomeFinderBasic(systemInfoProvider, "/usr/jdk");
     }
 
-    return new JavaHomeFinderBasic(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider);
+    return new JavaHomeFinderBasic(systemInfoProvider);
   }
 
   public static @Nullable String defaultJavaLocation() {
