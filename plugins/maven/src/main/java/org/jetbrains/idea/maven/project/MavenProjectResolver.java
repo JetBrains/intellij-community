@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.notification.Notification;
@@ -62,10 +62,10 @@ public class MavenProjectResolver {
                       @NotNull MavenConsole console,
                       @NotNull ResolveContext context,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MultiMap<File, MavenProject> projectMultiMap = groupByBasedir(mavenProjects);
+    MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(mavenProjects);
 
-    for (Map.Entry<File, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
-      String baseDir = entry.getKey().getPath();
+    for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
+      String baseDir = entry.getKey().toString();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir, baseDir);
       try {
         Properties userProperties = new Properties();
@@ -263,10 +263,10 @@ public class MavenProjectResolver {
                                                                            @NotNull MavenConsole console,
                                                                            @NotNull MavenProgressIndicator process)
     throws MavenProcessCanceledException {
-    MultiMap<File, MavenProject> projectMultiMap = groupByBasedir(projects);
+    MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(projects);
     MavenArtifactDownloader.DownloadResult result = new MavenArtifactDownloader.DownloadResult();
-    for (Map.Entry<File, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
-      String baseDir = entry.getKey().getPath();
+    for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
+      String baseDir = entry.getKey().toString();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir, baseDir);
       try {
         embedder.customizeForResolve(console, process);
@@ -290,8 +290,8 @@ public class MavenProjectResolver {
   }
 
   @NotNull
-  private MultiMap<File, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
-    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()).toFile());
+  private MultiMap<Path, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
+    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()));
   }
 
   public void executeWithEmbedder(@NotNull MavenProject mavenProject,

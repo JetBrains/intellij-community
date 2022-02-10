@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -537,21 +537,21 @@ public final class MavenServerManager implements Disposable {
     result.setOffline(settings.isWorkOffline());
     File mavenHome = settings.getEffectiveMavenHome();
     if (mavenHome != null) {
-      String remotePath = transformer.toRemotePath(mavenHome.getAbsolutePath());
+      String remotePath = transformer.toRemotePath(mavenHome.toPath().toAbsolutePath().toString());
       result.setMavenHomePath(remotePath);
     }
 
 
-    String userSettingsPath =
-      MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig()).getAbsolutePath();
+    File userSettings = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig());
+    String userSettingsPath = userSettings.toPath().toAbsolutePath().toString();
     result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
 
     File globalSettings = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig());
     if (globalSettings != null) {
-      result.setGlobalSettingsPath(transformer.toRemotePath(globalSettings.getAbsolutePath()));
+      result.setGlobalSettingsPath(transformer.toRemotePath(globalSettings.toPath().toAbsolutePath().toString()));
     }
 
-    String localRepository = settings.getEffectiveLocalRepository().getAbsolutePath();
+    String localRepository = settings.getEffectiveLocalRepository().toPath().toAbsolutePath().toString();
 
     result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
