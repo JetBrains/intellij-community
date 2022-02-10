@@ -6,7 +6,6 @@ package com.intellij.codeInsight.navigation
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
 import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.lang.documentation.psi.isNavigatableQuickDoc
 import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTarget
@@ -59,7 +58,6 @@ internal fun symbolCtrlMouseData(
       ranges,
       isNavigatable = declared || isNavigatableQuickDoc(elementAtOffset, psi),
       target = psiDocumentationTarget(psi, elementAtOffset)
-               ?: PsiElementDocumentationTarget(psi.project, psi, elementAtOffset, null)
     )
   }
   return targetCtrlMouseData(
@@ -77,7 +75,6 @@ internal fun psiCtrlMouseData(
     ranges = getReferenceRanges(leafElement),
     isNavigatable = isNavigatableQuickDoc(leafElement, targetElement),
     target = psiDocumentationTarget(targetElement, leafElement)
-             ?: PsiElementDocumentationTarget(leafElement.project, targetElement, leafElement, null)
   )
 }
 
