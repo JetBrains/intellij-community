@@ -39,24 +39,7 @@ public final class SnippetDocTagManipulator extends AbstractElementManipulator<P
 
   @Contract(pure = true)
   private static @NotNull String prependAbsentAsterisks(@NotNull String input) {
-    final StringBuilder builder = new StringBuilder();
-    boolean afterNewLine = false;
-    for (char c : input.toCharArray()) {
-      if (c == '\n') {
-        afterNewLine = true;
-      }
-      else if (afterNewLine) {
-        if (c == '*') {
-          afterNewLine = false;
-        }
-        else if (!Character.isWhitespace(c)) {
-          builder.append("* ");
-          afterNewLine = false;
-        }
-      }
-      builder.append(c);
-    }
-    return builder.toString();
+    return input.replaceAll("(\\n\\s*)([^*\\s])", "$1 * $2");
   }
 
   @Override

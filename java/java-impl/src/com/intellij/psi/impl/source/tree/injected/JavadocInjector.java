@@ -35,7 +35,7 @@ public class JavadocInjector implements MultiHostInjector {
     final Language language = getLanguage(snippet);
 
     final String prefix = language == JavaLanguage.INSTANCE ? SNIPPET_INJECTION_JAVA_HEADER : null;
-    final String suffix = language == JavaLanguage.INSTANCE ? " }}" : null;
+    final String suffix = language == JavaLanguage.INSTANCE ? "\n}}" : null;
 
     final List<TextRange> ranges = snippet.getContentRanges();
     if (ranges.isEmpty()) return;

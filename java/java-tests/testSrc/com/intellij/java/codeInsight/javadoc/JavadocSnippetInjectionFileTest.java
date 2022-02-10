@@ -3,8 +3,9 @@ package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,10 +15,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_18;
 
-public class JavadocSnippetInjectionTest extends LightQuickFixParameterizedTestCase {
+public class JavadocSnippetInjectionFileTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected void setUp() throws Exception {
@@ -26,30 +26,37 @@ public class JavadocSnippetInjectionTest extends LightQuickFixParameterizedTestC
 
   @Override
   protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) {
-    final Language language = getInjectedLanguage();
-    final Language expectedLang = Language.findLanguageByID(actionHint.getExpectedText());
+    final int offset = getEditor().getCaretModel().getPrimaryCaret().getOffset();
+    final PsiElement snippet = PsiUtilCore.getElementAtOffset(getFile(), offset);
 
-    assertThat(language)
-      .withFailMessage(String.format("Language '%s' should be injected, but found '%s'", actionHint.getExpectedText(), language.getID()))
-      .isEqualTo(expectedLang);
+    final PsiClass enclosingClass = getEnclosingClass(snippet);
+    final PsiClass injectedClass = getInjectedClass(snippet);
+    WriteAction.run(() -> enclosingClass.replace(injectedClass));
 
+    checkResult(testName);
   }
 
-  @NotNull
-  private Language getInjectedLanguage() {
-    final int offset = getEditor().getCaretModel().getPrimaryCaret().getOffset();
-    final PsiElement element = PsiUtilCore.getElementAtOffset(getFile(), offset);
+  private void checkResult(@NotNull final String testName) {
+    final String expectedFilePath = getBasePath() + "/after" + testName;
+    checkResultByFile(expectedFilePath);
+  }
+
+  private static @NotNull PsiClass getEnclosingClass(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiClass.class);
+  }
+
+  private @NotNull PsiClass getInjectedClass(PsiElement element) {
     final PsiSnippetDocTag snippet = PsiTreeUtil.getParentOfType(element, PsiSnippetDocTag.class);
     final AtomicReference<PsiElement> injected = new AtomicReference<>();
     final InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(getProject());
     injectionManager.enumerate(snippet, (injectedPsi, places) -> { injected.set(injectedPsi); });
 
-    return injected.get().getLanguage();
+    return PsiTreeUtil.findChildOfType(injected.get(), PsiClass.class);
   }
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/javadoc/snippet";
+    return "/codeInsight/javadoc/snippet/file";
   }
 
   @NotNull
