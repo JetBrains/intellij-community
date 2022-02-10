@@ -423,38 +423,43 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     T executeSynchronously() {
-      while (true) {
-        attemptComputation();
+      try {
+        while (true) {
+          attemptComputation();
 
-        if (isCancelled()) {
-          throw new ProcessCanceledException();
-        }
-        if (isDone()) {
-          try {
-            return blockingGet(0, TimeUnit.MILLISECONDS);
-          }
-          catch (TimeoutException e) {
-            throw new RuntimeException(e);
-          }
-        }
-
-        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
-        ContextConstraint[] constraints = builder.myConstraints;
-        if (shouldFinishOnEdt() || constraints.length != 0) {
-          Semaphore semaphore = new Semaphore(1);
-          invokeLater(() -> {
-            if (checkObsolete()) {
-              semaphore.up();
-            }
-            else {
-              BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
-            }
-          });
-          ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
           if (isCancelled()) {
             throw new ProcessCanceledException();
           }
+          if (isDone()) {
+            try {
+              return blockingGet(0, TimeUnit.MILLISECONDS);
+            }
+            catch (TimeoutException e) {
+              throw new RuntimeException(e);
+            }
+          }
+
+          ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
+          ContextConstraint[] constraints = builder.myConstraints;
+          if (shouldFinishOnEdt() || constraints.length != 0) {
+            Semaphore semaphore = new Semaphore(1);
+            invokeLater(() -> {
+              if (checkObsolete()) {
+                semaphore.up();
+              }
+              else {
+                BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
+              }
+            });
+            ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
+            if (isCancelled()) {
+              throw new ProcessCanceledException();
+            }
+          }
         }
+      }
+      finally {
+        cleanupIfNeeded();
       }
     }
 

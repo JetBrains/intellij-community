@@ -256,6 +256,32 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }
   }
 
+  public void testDoNotLeakDisposablesOnCancelledIndicator() {
+    ProgressIndicator outerIndicator = new EmptyProgressIndicator();
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        assertThrows(ProcessCanceledException.class, () -> {
+          ReadAction.nonBlocking(() -> {
+              outerIndicator.cancel();
+              throw new ProcessCanceledException();
+            })
+            .expireWith(disposable)
+            .wrapProgress(outerIndicator)
+            .executeSynchronously();
+        });
+      });
+      waitForFuture(future);
+
+      Disposer.disposeChildren(disposable, (child) -> {
+        throw new IllegalStateException(child.toString());
+      });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
   public void testSyncExecutionHonorsConstraints() {
     setupUncommittedDocument();
 
