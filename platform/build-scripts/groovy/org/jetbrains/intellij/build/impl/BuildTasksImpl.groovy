@@ -153,10 +153,6 @@ final class BuildTasksImpl extends BuildTasks {
             buildContext.messages.debug("  skipped root $url: not a jar file")
           }
         }
-
-        // Android Studio: include sources for the prebuilt Kotlin plugin.
-        def workspaceRoot = "$buildContext.paths.communityHome/../.."
-        buildContext.ant.zipfileset(src: "$workspaceRoot/prebuilts/tools/common/kotlin-plugin/kotlin-plugin-sources.jar")
       }
 
       buildContext.notifyArtifactBuilt(targetFile)
