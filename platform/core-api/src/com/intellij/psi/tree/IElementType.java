@@ -10,7 +10,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
-import java.lang.annotation.ElementType;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,7 +63,7 @@ public class IElementType {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
       if (type != null && type.getClass().getClassLoader() == loader) {
-        ourRegistry[i] = new TombstoneElementType("tombstone of " + type.myDebugName);
+        ourRegistry[i] = TombstoneElementType.create(type);
       }
     }
   }
@@ -76,7 +75,7 @@ public class IElementType {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
       if (type != null && type.getLanguage().equals(language)) {
-        ourRegistry[i] = new TombstoneElementType("tombstone of " + type.myDebugName);
+        ourRegistry[i] = TombstoneElementType.create(type);
       }
     }
   }
@@ -209,7 +208,7 @@ public class IElementType {
     // volatile read; array always grows, never shrinks, never overwritten
     IElementType type = ourRegistry[idx];
     if (type instanceof TombstoneElementType) {
-      throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type.myDebugName);
+      throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type);
     }
     return type;
   }
@@ -247,9 +246,12 @@ public class IElementType {
     return matches.toArray(new IElementType[0]);
   }
 
-  public static final class TombstoneElementType extends IElementType {
-    public TombstoneElementType(@NotNull @NonNls String debugName) {
+  private static final class TombstoneElementType extends IElementType {
+    private TombstoneElementType(@NotNull @NonNls String debugName) {
       super(debugName, Language.ANY);
+    }
+    private static TombstoneElementType create(@NotNull IElementType type) {
+      return new TombstoneElementType("tombstone of " + type +" ("+type.getClass()+")");
     }
   }
 }
