@@ -388,8 +388,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       val list = LearningUiUtil.findComponentOrNull(project, JList::class.java) l@{
         val index = checkList(it) ?: return@l false
         val itemRect = it.getCellBounds(index, index)
-        val listRect = it.visibleRect
-        itemRect.y < listRect.y + listRect.height && itemRect.y + itemRect.height > listRect.y  // intersection condition
+        it.visibleRect.intersects(itemRect)
       }
       if (list != null) {
         taskInvokeLater(ModalityState.any()) {
