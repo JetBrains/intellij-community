@@ -230,7 +230,8 @@ open class PyAddCondaEnvPanel(
     val userHome = if (targetEnvironmentConfiguration == null) SystemProperties.getUserHome() else config.userHome
     val baseDir = defaultBaseDir ?: "$userHome/.conda/envs"
     val dirName = PathUtil.getFileName(projectBasePath ?: "untitled")
-    pathField.text = FileUtil.toSystemDependentName("$baseDir/$dirName")
+    val fullPath = "$baseDir/$dirName"
+    pathField.text = if (targetEnvironmentConfiguration.isLocal()) FileUtil.toSystemDependentName(fullPath) else fullPath
   }
 
   private val defaultBaseDir: String?
