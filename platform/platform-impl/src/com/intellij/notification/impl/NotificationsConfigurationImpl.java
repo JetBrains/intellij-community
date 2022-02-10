@@ -147,7 +147,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   public synchronized boolean isRegistered(@NotNull String id) {
-    return myIdToSettingsMap.containsKey(id) || NotificationGroup.Companion.isGroupRegistered(id);
+    return myIdToSettingsMap.containsKey(id) || NotificationGroup.isGroupRegistered(id);
   }
 
   @Override

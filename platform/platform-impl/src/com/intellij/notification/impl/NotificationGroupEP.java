@@ -23,13 +23,11 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Registers notification group.
+ * Registers a notification group.
  * <p>
  * Use {@link com.intellij.notification.NotificationGroupManager#getNotificationGroup(String)} to obtain instance via {@link #id}.
- * </p>
  * <p>
  * See <a href="https://jetbrains.org/intellij/sdk/docs/user_interface_components/notifications.html#top-level-notifications">Top-Level Notifications</a>.
- * </p>
  */
 public final class NotificationGroupEP implements PluginAware {
   static final ExtensionPointName<NotificationGroupEP> EP_NAME = new ExtensionPointName<>("com.intellij.notificationGroup");
@@ -119,8 +117,7 @@ public final class NotificationGroupEP implements PluginAware {
       return id;
     }
 
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName,
-                                                                             pluginDescriptor.getClassLoader());
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, pluginDescriptor.getClassLoader());
     return BundleBase.messageOrDefault(resourceBundle, key, null);
   }
 

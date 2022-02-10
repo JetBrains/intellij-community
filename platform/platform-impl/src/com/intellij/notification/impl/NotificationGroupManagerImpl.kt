@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.notification.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -37,7 +35,7 @@ class NotificationGroupManagerImpl private constructor() : NotificationGroupMana
       }
 
       override fun extensionRemoved(extension: NotificationGroupEP, pluginDescriptor: PluginDescriptor) {
-        val group = registeredGroups.get(extension.id)!!
+        val group = registeredGroups[extension.id]!!
         if (group.pluginId == pluginDescriptor.pluginId) {
           registeredGroups.remove(extension.id)
         }
@@ -48,7 +46,7 @@ class NotificationGroupManagerImpl private constructor() : NotificationGroupMana
     }, null)
   }
 
-  override fun getNotificationGroup(groupId: String): NotificationGroup? = registeredGroups.get(groupId)
+  override fun getNotificationGroup(groupId: String): NotificationGroup? = registeredGroups[groupId]
 
   override fun isGroupRegistered(groupId: String) = registeredGroups.containsKey(groupId)
 
