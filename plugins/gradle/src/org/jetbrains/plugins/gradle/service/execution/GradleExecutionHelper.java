@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.gradle.util.GradleProperties;
 import org.jetbrains.plugins.gradle.util.GradlePropertiesUtil;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.awt.geom.IllegalPathStateException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -244,6 +246,11 @@ public class GradleExecutionHelper {
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+      try {
+        // if autoimport is active, it should be notified of new files creation as early as possible,
+        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
+        VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(projectPath, "gradle").toFile());
+      } catch (IllegalPathStateException ignore) {}
     }
   }
 
