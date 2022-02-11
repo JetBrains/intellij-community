@@ -9,11 +9,27 @@ import kotlinx.html.style
 import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
+import org.languagetool.JLanguageTool
+import org.languagetool.rules.Categories
+import org.languagetool.rules.ITSIssueType
 import java.net.URL
+import java.util.*
 
 internal class LanguageToolRule(
   private val lang: Lang, private val ltRule: org.languagetool.rules.Rule
-) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, ltRule.category.name) {
+) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description,
+         if (isStyleRule(ltRule)) categoryName(Categories.STYLE, lang, "Style") else ltRule.category.name
+) {
+
+  override fun getSubCategory(): String? {
+    if (isStyleRule(ltRule)) {
+      if (ltRule.category.id == Categories.STYLE.id || ltRule.category.id == Categories.MISC.id) {
+        return categoryName(Categories.MISC, lang, "Other")
+      }
+      return ltRule.category.name
+    }
+    return null
+  }
 
   override fun isEnabledByDefault(): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id)
 
@@ -57,4 +73,20 @@ internal class LanguageToolRule(
   }
 
   override fun getSearchableDescription(): String = "LanguageTool"
+
+  private companion object {
+    private fun categoryName(kind: Categories, lang: Lang, orElse: String): String {
+      try {
+        return kind.getCategory(JLanguageTool.getMessageBundle(lang.jLanguage!!)).name
+      }
+      catch (e: MissingResourceException) {
+        return orElse
+      }
+    }
+
+    private fun isStyleRule(ltRule: org.languagetool.rules.Rule) =
+      ltRule.locQualityIssueType == ITSIssueType.Style ||
+      ltRule.category.id == Categories.STYLE.id ||
+      ltRule.category.id == Categories.TYPOGRAPHY.id
+  }
 }
