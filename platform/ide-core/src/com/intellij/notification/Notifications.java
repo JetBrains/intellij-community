@@ -51,8 +51,7 @@ public interface Notifications {
      *
      * @deprecated use {@link NotificationGroup}
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     public static void register(@NotNull String groupId, @NotNull NotificationDisplayType defaultDisplayType) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       SwingUtilities.invokeLater(() -> {

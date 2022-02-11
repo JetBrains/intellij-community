@@ -337,8 +337,7 @@ public abstract class DialogWrapper {
   /**
    * @deprecated Please use setDoNotAskOption(com.intellij.openapi.ui.DoNotAskOption) instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
     myDoNotAsk = doNotAsk;
   }
@@ -1450,8 +1449,7 @@ public abstract class DialogWrapper {
   }
 
   /** @deprecated Dialog action buttons should be right-aligned. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     if (SwingConstants.CENTER != alignment && SwingConstants.RIGHT != alignment) {
       throw new IllegalArgumentException("unknown alignment: " + alignment);
@@ -2138,8 +2136,7 @@ public abstract class DialogWrapper {
   /**
    * @deprecated Please use com.intellij.openapi.ui.DoNotAskOption instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public interface DoNotAskOption extends com.intellij.openapi.ui.DoNotAskOption {
     abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter implements DoNotAskOption {}
   }

@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +44,7 @@ public final class SimpleDataContext implements DataContext {
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object, DataContext)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data, DataContext parent) {
     return new SimpleDataContext(Map.of(dataId, data), parent);
@@ -61,16 +59,14 @@ public final class SimpleDataContext implements DataContext {
    * @see SimpleDataContext#builder()
    * @deprecated prefer type-safe {@link SimpleDataContext#builder()} where possible.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static DataContext getSimpleContext(@NotNull Map<String, Object> dataId2data, @Nullable DataContext parent) {
     return new SimpleDataContext(dataId2data, parent);
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data) {
     return getSimpleContext(dataId, data, null);

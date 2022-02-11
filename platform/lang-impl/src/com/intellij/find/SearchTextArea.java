@@ -34,7 +34,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -105,8 +104,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   /**
    * @deprecated infoMode is not used. Use the other constructor.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, @SuppressWarnings("unused") boolean infoMode) {
     this (textArea, searchMode);
   }

@@ -91,8 +91,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @deprecated please don't use it, to be will be removed after we collect statistics and make sure versions before 1903 aren't used.
    * Check statistics and remove in the next version
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Path getExecutablePath() {
     return myExecutablePath;
   }
@@ -211,8 +210,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @Nullable String remoteWorkingDir,
@@ -563,8 +561,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull File getUNCRoot() {
     return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }

@@ -32,7 +32,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageView;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,8 +69,7 @@ public class PsiElement2UsageTargetAdapter
    *
    * @param element
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
     this(element, options, true);
   }
@@ -82,8 +80,7 @@ public class PsiElement2UsageTargetAdapter
    *
    * @param element
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
     this(element, true);
   }
@@ -180,8 +177,7 @@ public class PsiElement2UsageTargetAdapter
   /**
    * @deprecated use {@link #convert(PsiElement[], boolean)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
     return convert(psiElements, true);
   }

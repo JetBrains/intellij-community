@@ -192,8 +192,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract int getSelectedIndex();
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected Object @NotNull [] getAllElements() {
     throw new UnsupportedOperationException("See `SpeedSearchBase.getElementIterator(int)` javadoc");
   }
@@ -211,8 +210,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected int convertIndexToModel(final int viewIndex) {
     return viewIndex;
   }

@@ -7,7 +7,6 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,16 +65,14 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @deprecated Quick documentation component's font size is stored in application level property, and can be obtained
    * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#getQuickDocFontSize()}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default FontSize getQuickDocFontSize() { return FontSize.SMALL; }
 
   /**
    * @deprecated Quick documentation component's font size is stored in application level property, and can be set
    * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#setQuickDocFontSize(FontSize)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void setQuickDocFontSize(@NotNull FontSize fontSize) {}
 
   @NotNull
@@ -85,8 +82,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @deprecated Use {@link #getFontPreferences()} and {@link ModifiableFontPreferences}
    * to change fonts.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void setFont(EditorFontType key, Font font);
 
   float getLineSpacing();

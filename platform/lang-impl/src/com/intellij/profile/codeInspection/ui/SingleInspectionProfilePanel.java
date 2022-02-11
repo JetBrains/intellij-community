@@ -703,8 +703,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   /**
    * @deprecated Use {@link DescriptionEditorPaneKt#readHTML(JEditorPane, String)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void readHTML(JEditorPane browser, String text) {
     DescriptionEditorPaneKt.readHTML(browser, text);
   }
@@ -712,8 +711,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   /**
    * @deprecated Use {@link DescriptionEditorPaneKt#toHTML(JEditorPane, String, boolean)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static String toHTML(JEditorPane browser, @Nls String text, boolean miniFontSize) {
     return DescriptionEditorPaneKt.toHTML(browser, text, miniFontSize);
   }

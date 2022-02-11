@@ -76,8 +76,7 @@ public abstract class FileBasedIndex {
   /**
    * @deprecated see {@link com.intellij.openapi.vfs.newvfs.ManagingFS#findFileById(int)}
    */ // note: upsource implementation requires access to Project here, please don't remove (not anymore)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
@@ -344,8 +343,7 @@ public abstract class FileBasedIndex {
   }
 
   /** @deprecated inline true */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 
   @ApiStatus.Internal

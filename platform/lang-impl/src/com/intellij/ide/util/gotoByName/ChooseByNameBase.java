@@ -1051,8 +1051,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean hasPostponedAction() {
     return false;
   }

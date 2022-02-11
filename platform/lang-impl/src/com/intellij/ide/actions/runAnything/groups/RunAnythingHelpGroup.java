@@ -6,7 +6,6 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +34,7 @@ public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnyt
   /**
    * @deprecated API compatibility
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public RunAnythingHelpGroup() { }
 
   @NotNull
@@ -50,8 +48,7 @@ public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnyt
    * See also {@code RunAnythingProviderBase.getHelp*()} methods.
    * @deprecated please use {@link RunAnythingProvider#getHelpGroupTitle()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public Collection<P> getProviders() {
     return myProviders;

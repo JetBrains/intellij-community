@@ -12,7 +12,6 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,8 +145,7 @@ public final class JBUI {
   /**
    * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull <T extends JBScalableIcon> T scale(@NotNull T icon) {
     return JBUIScale.scaleIcon(icon);
   }
@@ -163,8 +161,7 @@ public final class JBUI {
   /**
    * @deprecated use {@link JBUIScale#isUsrHiDPI()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean isUsrHiDPI() {
     return JBUIScale.isUsrHiDPI();
   }
@@ -767,8 +764,7 @@ public final class JBUI {
       /**
        * @deprecated obsolete UI
        */
-      @Deprecated
-      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+      @Deprecated(forRemoval = true)
       public static int tabVerticalPadding() {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
       }
@@ -1076,8 +1072,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#ENABLED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkColor() {
         return Foreground.ENABLED;
       }
@@ -1085,8 +1080,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#HOVERED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkHoverColor() {
         return Foreground.HOVERED;
       }
@@ -1094,8 +1088,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#PRESSED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkPressedColor() {
         return Foreground.PRESSED;
       }
@@ -1103,8 +1096,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#VISITED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkVisitedColor() {
         return Foreground.VISITED;
       }

@@ -4,7 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -335,8 +334,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   /**
    * @deprecated Use {@link #setDependencies(List)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public void setDepends(@NotNull List<PluginId> depends, PluginId @Nullable [] optionalDependencies) {
     myDependencies = new ArrayList<>();
     for (PluginId id : depends) {

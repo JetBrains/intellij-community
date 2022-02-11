@@ -18,7 +18,6 @@ package com.intellij.task;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -32,8 +31,7 @@ import java.util.stream.Collectors;
  * @author Vladislav.Soroka
  * @deprecated in favour of {@link ProjectTaskManager.Result}
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ProjectTaskResult {
   private final boolean myAborted;
   private final int myErrors;

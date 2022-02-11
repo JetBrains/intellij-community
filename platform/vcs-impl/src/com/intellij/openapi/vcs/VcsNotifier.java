@@ -42,8 +42,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyError(String, String, String)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyError(@NotificationTitle @NotNull String title,
                                   @NotificationContent @NotNull String message) {
@@ -71,8 +70,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyError(String, String, String, NotificationListener)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyError(@NotificationTitle @NotNull String title,
                                   @NotificationContent @NotNull String message,
@@ -107,8 +105,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyWeakError(String, String)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyWeakError(@NotificationContent @NotNull String message) {
     return notify(NOTIFICATION_GROUP_ID, null, "", message, NotificationType.ERROR);
@@ -131,8 +128,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifySuccess(String, String, String)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifySuccess(@NotificationContent @NotNull String message) {
     return notify(NOTIFICATION_GROUP_ID, null, "", message, NotificationType.INFORMATION);
@@ -141,8 +137,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifySuccess(String, String, String)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifySuccess(@NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message) {
@@ -159,8 +154,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifySuccess(String, String, String, NotificationListener)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifySuccess(@NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message,
@@ -179,8 +173,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyImportantInfo(String, String, String)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyImportantInfo(@NotificationTitle @NotNull String title,
                                           @NotificationContent @NotNull String message) {
@@ -190,8 +183,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyImportantInfo(String, String, String, NotificationListener)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyImportantInfo(@NotificationTitle @NotNull String title,
                                           @NotificationContent @NotNull String message,
@@ -217,8 +209,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyInfo(String, String, String)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyInfo(@NotificationTitle @NotNull String title,
                                  @NotificationContent @NotNull String message) {
@@ -264,8 +255,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyWarning(String, String, String)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyWarning(@NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message) {
@@ -283,8 +273,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyImportantWarning(String, String, String)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyImportantWarning(@NotificationTitle @NotNull String title,
                                              @NotificationContent @NotNull String message) {
@@ -309,8 +298,7 @@ public class VcsNotifier {
   /**
    * @deprecated use {@link #notifyImportantWarning(String, String, String, NotificationListener)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifyImportantWarning(@NotificationTitle @NotNull String title,
                                              @NotificationContent @NotNull String message,

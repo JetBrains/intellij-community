@@ -1,7 +1,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,8 +28,7 @@ public interface SearchEverywhereContributorFactory<Item> {
    * @deprecated to be removed in IDEA 2022.2
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   default SearchEverywhereTabDescriptor getTab() {
     return SearchEverywhereTabDescriptor.PROJECT;
   }

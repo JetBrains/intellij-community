@@ -73,8 +73,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   private ProjectUtil() { }
 
   /** @deprecated Use {@link #updateLastProjectLocation(Path)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void updateLastProjectLocation(@NotNull String projectFilePath) {
     updateLastProjectLocation(Path.of(projectFilePath));
   }

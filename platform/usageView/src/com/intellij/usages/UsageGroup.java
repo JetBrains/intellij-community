@@ -5,7 +5,6 @@ import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +15,7 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
   /**
    * @deprecated implement {@link #getIcon()} instead
    */
-  @ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @Nullable Icon getIcon(boolean isOpen) {
     if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getIcon") == UsageGroup.class) {
       return null;
@@ -32,8 +30,7 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
   /**
    * @deprecated implement {@link #getPresentableGroupText()} instead
    */
-  @ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @ListItem @NotNull String getText(@Nullable UsageView view) {
     if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getPresentableGroupText") == UsageGroup.class) {
       throw new AbstractMethodError("getPresentableGroupText() must be implemented");

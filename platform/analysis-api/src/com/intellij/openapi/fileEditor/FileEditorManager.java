@@ -64,8 +64,7 @@ public abstract class FileEditorManager {
   /**
    * @deprecated use {@link #openTextEditor(OpenFileDescriptor, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     openTextEditor(descriptor, focusEditor);
   }

@@ -1118,8 +1118,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   /**
    * @deprecated use {@link ClearConsoleAction} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static class ClearAllAction extends ClearConsoleAction {
   }
 

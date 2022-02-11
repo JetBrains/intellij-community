@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharSequenceReader;
 import net.n3.nanoxml.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,8 +124,7 @@ public final class NanoXmlUtil {
   /**
    * @deprecated left for API compatibility
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
 
     /**

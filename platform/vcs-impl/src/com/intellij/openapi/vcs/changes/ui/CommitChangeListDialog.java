@@ -545,12 +545,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setCommitMessage(@Nullable String commitMessage) {}
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public String getCommitMessage() {
     return myCommitMessageArea.getText();

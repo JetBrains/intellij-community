@@ -195,6 +195,5 @@ public interface AnnotationBuilder {
 
   /** @deprecated Use {@link #create()} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   Annotation createAnnotation();
 }

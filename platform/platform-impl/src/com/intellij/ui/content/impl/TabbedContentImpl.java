@@ -31,8 +31,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
    * @deprecated use {@link TabbedContentImpl#TabbedContentImpl(TabGroupId, TabDescriptor, boolean)} instead
    * as it allows to set tab group id separately from display name.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public TabbedContentImpl(JComponent component, @NotNull @NlsContexts.TabTitle String displayName, boolean isPinnable, @NotNull @NonNls String titlePrefix) {
     this(new TabGroupId(titlePrefix, titlePrefix), new TabDescriptor(component, displayName), isPinnable); //NON-NLS
   }

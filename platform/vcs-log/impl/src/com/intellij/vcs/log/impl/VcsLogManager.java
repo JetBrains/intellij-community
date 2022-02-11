@@ -155,8 +155,7 @@ public class VcsLogManager implements Disposable {
   /**
    * @deprecated Use {@link VcsLogManager#createLogUi(VcsLogUiFactory, VcsLogTabLocation)} method instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   @NotNull
   public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull LogWindowKind kind) {
     return createLogUi(factory, kind.getLocation(), true);
@@ -381,8 +380,7 @@ public class VcsLogManager implements Disposable {
   /**
    * @deprecated Use {@link VcsLogTabLocation} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public enum LogWindowKind {
     TOOL_WINDOW(VcsLogTabLocation.TOOL_WINDOW),
     EDITOR(VcsLogTabLocation.EDITOR),

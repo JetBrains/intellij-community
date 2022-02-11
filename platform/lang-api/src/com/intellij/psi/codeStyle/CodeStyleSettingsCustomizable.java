@@ -228,8 +228,7 @@ public interface CodeStyleSettingsCustomizable {
   @Deprecated
   @Nls String SPACES_OTHER = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_OTHER;
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nls String BLANK_LINES_KEEP = CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP;
   @Deprecated
   @Nls String BLANK_LINES = CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES;
@@ -258,7 +257,7 @@ public interface CodeStyleSettingsCustomizable {
   /**
    * @deprecated use {@link CodeStyleSettingsCustomizableOptions#BRACE_OPTIONS} instead
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nls String[] BRACE_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().BRACE_OPTIONS;
 
   int[] BRACE_VALUES = {

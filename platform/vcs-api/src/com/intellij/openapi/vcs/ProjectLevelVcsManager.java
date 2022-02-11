@@ -125,8 +125,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * @deprecated use {@link #addMessageToConsoleWindow(String, ConsoleViewContentType)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addMessageToConsoleWindow(@Nls String message, TextAttributes attributes);
 
   public abstract void addMessageToConsoleWindow(@Nls @Nullable String message, @NotNull ConsoleViewContentType contentType);
@@ -183,8 +182,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * @deprecated Use just {@link #setDirectoryMappings(List)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void updateActiveVcss() {}
 
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
@@ -195,8 +193,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * This method can be used only when initially loading the project configuration!
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void setDirectoryMapping(@NonNls String path, @NonNls String activeVcsName);
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);

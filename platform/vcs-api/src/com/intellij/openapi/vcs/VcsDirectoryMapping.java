@@ -68,8 +68,7 @@ public class VcsDirectoryMapping {
    * @param rootSettings the VCS-specific settings
    * @deprecated Use constructor parameter
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setRootSettings(final VcsRootSettings rootSettings) {
     myRootSettings = rootSettings;
   }

@@ -308,8 +308,7 @@ public final class IconUtil {
   /**
    * @deprecated This icon is not used by platform anymore.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Icon getAnalyzeIcon() {
     return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class.getClassLoader());
   }
@@ -810,8 +809,7 @@ public final class IconUtil {
   /**
    * @deprecated Use {@link #createImageIcon(Image)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull JBImageIcon createImageIcon(final @NotNull BufferedImage img) {
     return createImageIcon((Image)img);
   }

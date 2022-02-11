@@ -14,7 +14,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,8 +21,7 @@ import java.util.List;
 /**
  * @deprecated Use methods from {@link InjectedLanguageManager} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public interface InjectedFileViewProvider extends FileViewProvider, FreeThreadedFileViewProvider {
   default void rootChangedImpl(@NotNull PsiFile psiFile) {
     if (!isPhysical()) return; // injected PSI change happened inside reparse; ignore

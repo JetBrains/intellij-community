@@ -75,7 +75,6 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
    *
    * @deprecated use {@link ActionPromoter}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
 }

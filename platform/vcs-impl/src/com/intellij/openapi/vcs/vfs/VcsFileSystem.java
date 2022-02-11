@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,8 +28,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
   /**
    * @deprecated Use {@link #getCouldNotImplementMessage()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = "Could not implement"; //NON-NLS
 
   private static final String PROTOCOL = "vcs";  //NON-NLS

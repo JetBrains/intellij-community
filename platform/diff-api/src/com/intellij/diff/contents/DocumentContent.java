@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,8 +69,7 @@ public interface DocumentContent extends DiffContent {
    * @deprecated isn't called by the platform anymore
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default OpenFileDescriptor getOpenFileDescriptor(int offset) {
     LineCol position = LineCol.fromOffset(getDocument(), offset);
     return ObjectUtils.tryCast(getNavigatable(position), OpenFileDescriptor.class);
