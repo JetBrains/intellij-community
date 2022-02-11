@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationSettings;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
@@ -158,8 +159,8 @@ public final class AnnotationDocGenerator {
     if (isInferred) buffer.append("</i>");
     if (highlightNonCodeAnnotations) buffer.append("</b>");
     if (generateLink && isNonCodeAnnotation && !isForRenderedDoc) {
-      HtmlChunk.link(isInferred ? "https://www.jetbrains.com/help/idea/annotating-source-code.html#bundled-annotations"
-                                : "https://www.jetbrains.com/help/idea/external-annotations.html",
+      String helpUrl = ApplicationInfoEx.getInstanceEx().getWebHelpUrl();
+      HtmlChunk.link(helpUrl + (isInferred ? "annotating-source-code.html#bundled-annotations" : "external-annotations.html"),
                      DocumentationMarkup.EXTERNAL_LINK_ICON).appendTo(buffer);
     }
   }
