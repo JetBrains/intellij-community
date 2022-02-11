@@ -5,8 +5,10 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import org.jetbrains.kotlin.test.KotlinRoot
+import java.io.File.separator
 
-const val DEBUGGER_TESTDATA_PATH_RELATIVE = "jvm-debugger/test/testData"
+@JvmField
+val DEBUGGER_TESTDATA_PATH_RELATIVE = "jvm-debugger${separator}test${separator}testData"
 
 @JvmField
 val DEBUGGER_TESTDATA_PATH_BASE: String = KotlinRoot.DIR.resolve(DEBUGGER_TESTDATA_PATH_RELATIVE).path
