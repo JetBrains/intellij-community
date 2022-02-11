@@ -74,6 +74,14 @@ public interface IconManager {
   void registerIconLayer(int flagMask, @NotNull Icon icon);
 
   @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon);
+
+  /**
+   * @param icon the icon to which the colored badge should be added
+   * @return an icon that paints the given icon with the colored badge
+   */
+  default @NotNull Icon withIconBadge(@NotNull Icon icon, @NotNull Paint color) {
+    return icon;
+  }
 }
 
 final class IconManagerHelper {
