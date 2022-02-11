@@ -225,6 +225,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
                      key="inspection.use.primitive.types.equals.display.name"/>
+    <localInspection language="JAVA" shortName="RedundantScheduledForRemovalAnnotation"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.RedundantScheduledForRemovalAnnotationInspection"
+                     key="inspection.name.redundant.scheduled.for.removal.annotation"
+                     isInternal="true"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection shortName="HighlightVisitorInternal"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
