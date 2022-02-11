@@ -1016,14 +1016,16 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void disposeUI() {
-    if (myInspectionProfilePanel == null) {
-      return;
-    }
     myAlarm.cancelAllRequests();
-    myProfileFilter.dispose();
-    for (ScopeToolState state : myProfile.getAllTools()) {
-      state.resetConfigPanel();
+    if (myProfileFilter != null) {
+      myProfileFilter.dispose();
     }
+    if (myInspectionProfilePanel != null) {
+      for (ScopeToolState state : myProfile.getAllTools()) {
+        state.resetConfigPanel();
+      }
+    }
+    myProfile.cleanup(myProjectProfileManager.getProject());
     Disposer.dispose(myDisposable);
     myDisposable = null;
   }
