@@ -165,7 +165,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       border = JBUI.Borders.emptyTop(4)
       if (panelHandle != null) add(panelHandle.panel)
       add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
-        GHPRReviewThreadComponent.createWithDiff(project, it, reviewDataProvider, selectInToolWindowHelper, reviewDiffComponentFactory,
+        GHPRReviewThreadComponent.createWithDiff(project, it,
+                                                 reviewDataProvider,
+                                                 detailsDataProvider,
+                                                 selectInToolWindowHelper,
+                                                 reviewDiffComponentFactory,
                                                  avatarIconsProvider, currentUser)
       })
     }

@@ -24,11 +24,10 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
   }
 
   @NlsSafe
-  fun convertMarkdownWithSuggestedChange(@NlsSafe markdownText: String,
-                                         filePath: String, diffHunk: String, startLine: Int, endLine: Int): String {
+  fun convertMarkdownWithSuggestedChange(@NlsSafe markdownText: String, suggestedChangeInfo: GHSuggestedChangeInfo): String {
 
     val text = markdownText.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
-    val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, filePath, diffHunk, startLine, endLine)
+    val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, suggestedChangeInfo)
     val flavourDescriptor = GithubFlavourDescriptor(htmlSyntaxHighlighter)
 
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)

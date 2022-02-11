@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -17,7 +18,8 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
+import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeInfo
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
@@ -27,11 +29,13 @@ import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+
 object GHPRReviewCommentComponent {
 
   fun create(project: Project,
              reviewDataProvider: GHPRReviewDataProvider,
              thread: GHPRReviewThreadModel,
+             detailsDataProvider: GHPRDetailsDataProvider,
              comment: GHPRReviewCommentModel,
              avatarIconsProvider: GHAvatarIconsProvider,
              showResolvedMarker: Boolean = true): JComponent {
@@ -56,14 +60,16 @@ object GHPRReviewCommentComponent {
       background = UIUtil.getPanelBackground()
     }.andOpaque()
 
-    val textPane = HtmlEditorPane().apply {
+    val commentPanel = JPanel(VerticalLayout(8, VerticalLayout.FILL)).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+      isOpaque = false
     }
 
+    Controller(project, thread,
+               reviewDataProvider, detailsDataProvider, comment,
+               titlePane, pendingLabel, resolvedLabel, commentPanel, showResolvedMarker)
 
-    Controller(project, thread, comment, titlePane, pendingLabel, resolvedLabel, textPane, showResolvedMarker)
-
-    val editablePaneHandle = GHEditableHtmlPaneHandle(project, textPane, comment::body) {
+    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentPanel, comment::body) {
       reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
     }
 
@@ -97,11 +103,13 @@ object GHPRReviewCommentComponent {
 
   private class Controller(private val project: Project,
                            private val thread: GHPRReviewThreadModel,
+                           private val reviewDataProvider: GHPRReviewDataProvider,
+                           private val detailsDataProvider: GHPRDetailsDataProvider,
                            private val comment: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
-                           private val bodyPane: HtmlEditorPane,
+                           private val commentPanel: JComponent,
                            private val showResolvedMarker: Boolean) {
     init {
       comment.addChangesListener {
@@ -111,16 +119,20 @@ object GHPRReviewCommentComponent {
     }
 
     private fun update() {
-      val markdownConverter = GHMarkdownToHtmlConverter(project)
-      val htmlBody = if (containsSuggestedChange(comment.body)) {
-        markdownConverter.convertMarkdownWithSuggestedChange(comment.body, thread.filePath, thread.diffHunk,
-                                                             thread.startLine ?: thread.line, thread.line)
+      val commentComponentFactory = GHPRReviewCommentComponentFactory(project)
+      val commentComponent = if (GHSuggestedChangeInfo.containsSuggestedChange(comment.body)) {
+        val suggestedChangeInfo = GHSuggestedChangeInfo.create(thread.diffHunk, thread.filePath,
+                                                               thread.startLine ?: thread.line, thread.line)
+        commentComponentFactory.createCommentWithSuggestedChangeComponent(comment.body, thread.id,
+                                                                          thread.isOutdated, suggestedChangeInfo,
+                                                                          reviewDataProvider, detailsDataProvider)
       }
       else {
-        markdownConverter.convertMarkdown(comment.body)
+        commentComponentFactory.createCommentComponent(comment.body)
       }
 
-      bodyPane.setBody(htmlBody)
+      commentPanel.removeAll()
+      commentPanel.add(commentComponent)
 
       val authorLink = HtmlBuilder()
         .appendLink(comment.authorLinkUrl.orEmpty(), comment.authorUsername ?: GithubBundle.message("user.someone"))
@@ -140,16 +152,15 @@ object GHPRReviewCommentComponent {
 
       resolvedLabel.isVisible = comment.isFirstInResolvedThread && showResolvedMarker
     }
-
-    private fun containsSuggestedChange(markdownText: String): Boolean = markdownText.lines().any { it.startsWith("```suggestion") }
   }
 
   fun factory(project: Project, reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider,
+              detailsDataProvider: GHPRDetailsDataProvider,
               thread: GHPRReviewThreadModel,
               showResolvedMarkerOnFirstComment: Boolean = true)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
-      create(project, reviewDataProvider, thread, comment, avatarIconsProvider, showResolvedMarkerOnFirstComment)
+      create(project, reviewDataProvider, thread, detailsDataProvider, comment, avatarIconsProvider, showResolvedMarkerOnFirstComment)
     }
   }
 }
