@@ -150,7 +150,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         if (owner == null) return;
         for (PsiCaseLabelElement element : list.getElements()) {
           if (!(element instanceof PsiExpression)) continue;
-          checkExpression((PsiExpression)element, owner, getType(owner), holder);
+          checkExpression((PsiExpression)element, owner, PsiUtil.getTypeByPsiElement(owner), holder);
         }
       }
 
@@ -158,7 +158,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         if (l instanceof PsiReference) {
           PsiElement resolved = ((PsiReference)l).resolve();
           if (resolved instanceof PsiModifierListOwner) {
-            checkExpression(r, (PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), holder);
+            checkExpression(r, (PsiModifierListOwner)resolved, PsiUtil.getTypeByPsiElement(resolved), holder);
           }
         }
         else if (l instanceof PsiMethodCallExpression) {
@@ -292,10 +292,6 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       map.put(Calendar.AM_PM, converter.apply(amPm));
       return CachedValueProvider.Result.create(map, method);
     }).get(argument);
-  }
-
-  private static PsiType getType(@NotNull PsiModifierListOwner element) {
-    return element instanceof PsiVariable ? ((PsiVariable)element).getType() : element instanceof PsiMethod ? ((PsiMethod)element).getReturnType() : null;
   }
 
   private static void checkMagicParameterArgument(@NotNull PsiParameter parameter,
@@ -456,7 +452,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     }
 
     if (allowedForRef == null && owner != null) {
-      allowedForRef = MagicConstantUtils.getAllowedValues(owner, getType(owner), expression);
+      allowedForRef = MagicConstantUtils.getAllowedValues(owner, PsiUtil.getTypeByPsiElement(owner), expression);
     }
     if (allowedForRef != null && allowedForRef.isSubsetOf(allowedValues, manager)) {
       return true;
