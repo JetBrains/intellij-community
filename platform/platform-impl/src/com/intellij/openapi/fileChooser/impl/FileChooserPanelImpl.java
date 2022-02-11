@@ -292,7 +292,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (myCurrentDirectory != null) {
         var selection = myList.getSelectedValue();
         myModel.clear();
-        for (int i = 1; i < myCurrentContent.size(); i++) {  // excluding `.`
+        for (var i = 1; i < myCurrentContent.size(); i++) {  // excluding `.`
           FsItem item = myCurrentContent.get(i);
           if (show || item.visible) myModel.add(item);
         }
@@ -507,11 +507,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
 
     var roots = new ArrayList<Path>();
-    for (Path root : FileSystems.getDefault().getRootDirectories()) roots.add(root);
+    for (var root : FileSystems.getDefault().getRootDirectories()) roots.add(root);
     if (WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
       try {
         List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributionsFuture().get(200, TimeUnit.MILLISECONDS);
-        for (WSLDistribution distribution : distributions) roots.add(distribution.getUNCRootPath());
+        for (var distribution : distributions) roots.add(distribution.getUNCRootPath());
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -519,7 +519,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
 
     var selection = new AtomicReference<FsItem>();
-    for (Path root : roots) {
+    for (var root : roots) {
       if (cancelled.get()) break;
       try {
         var attrs = Files.readAttributes(root, BasicFileAttributes.class);
