@@ -670,6 +670,9 @@ public final class IconUtil {
       Icon version = IconLoader.loadCustomVersion((IconLoader.CachedImageIcon)icon, newWidth, newHeight);
       if (version != null) return version;
     }
+    if (icon instanceof ScalableIcon) {
+      return ((ScalableIcon)icon).scale(scale);
+    }
     return scale(icon, null, scale);
   }
 
