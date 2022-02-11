@@ -592,6 +592,11 @@ public final class JBUI {
 
     public interface Editor {
       Color BORDER_COLOR = JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border());
+
+      interface Tooltip {
+        Color BACKGROUND = JBColor.namedColor("Editor.ToolTip.background", UIUtil.getToolTipBackground());
+        Color FOREGROUND = JBColor.namedColor("Editor.ToolTip.foreground", UIUtil.getToolTipForeground());
+      }
     }
 
     public interface DragAndDrop {
