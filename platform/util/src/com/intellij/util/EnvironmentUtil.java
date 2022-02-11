@@ -344,8 +344,8 @@ public final class EnvironmentUtil {
           .start();
         final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
 
-        final String output = new String(Files.readAllBytes(stdoutFile), StandardCharsets.UTF_8);
-        final String stderr = new String(Files.readAllBytes(stderrFile), StandardCharsets.UTF_8);
+        final String output = new String(Files.readAllBytes(stdoutFile), Charset.defaultCharset());
+        final String stderr = new String(Files.readAllBytes(stderrFile), Charset.defaultCharset());
         if (exitCode != 0 || output.isEmpty()) {
           EnvironmentReaderException ex = new EnvironmentReaderException("command " + command +
                                                                          "\n\texit code: " + exitCode +
