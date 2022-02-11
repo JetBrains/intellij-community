@@ -299,6 +299,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       AsyncProjectViewSupport support = getAsyncSupport();
       if (support != null) support.updateByElement((PsiElement)element, updateStructure);
     }
+    else if (element instanceof TreePath) {
+      AsyncProjectViewSupport support = getAsyncSupport();
+      if (support != null) support.update((TreePath)element, updateStructure);
+    }
   }
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
