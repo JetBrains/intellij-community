@@ -45,7 +45,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
-      "intellij.maven.testFramework",
+      "intellij.maven.testFramework"
     ]
 
     versionCheckerConfig = CE_CLASS_VERSIONS
