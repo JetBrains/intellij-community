@@ -22,10 +22,10 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
@@ -33,7 +33,6 @@ import static org.junit.Assert.*;
  * @author Eugene Zhuravlev
  */
 public class StringUtilTest {
-
   private final char myDecimalSeparator = new DecimalFormat("0.##").getDecimalFormatSymbols().getDecimalSeparator();
 
   @Test
@@ -102,6 +101,7 @@ public class StringUtilTest {
   }
 
   @Test
+  @SuppressWarnings("ConstantConditions")
   public void testIsEmptyOrSpaces() {
     assertTrue(StringUtil.isEmptyOrSpaces(null));
     assertTrue(StringUtil.isEmptyOrSpaces(""));
@@ -373,26 +373,25 @@ public class StringUtilTest {
 
   @Test
   public void testJoin() {
-    assertEquals("", StringUtil.join(Collections.emptyList(), ","));
-    assertEquals("qqq", StringUtil.join(singletonList("qqq"), ","));
-    assertEquals("", StringUtil.join(singletonList(null), ","));
-    assertEquals("a,b", StringUtil.join(Arrays.asList("a", "b"), ","));
-    assertEquals("foo,,bar", StringUtil.join(Arrays.asList("foo", "", "bar"), ","));
+    assertEquals("", StringUtil.join(List.of(), ","));
+    assertEquals("qqq", StringUtil.join(List.of("qqq"), ","));
+    assertEquals("", StringUtil.join(Collections.singletonList(null), ","));
+    assertEquals("a,b", StringUtil.join(List.of("a", "b"), ","));
+    assertEquals("foo,,bar", StringUtil.join(List.of("foo", "", "bar"), ","));
     assertEquals("foo,,bar", StringUtil.join(new String[]{"foo", "", "bar"}, ","));
   }
 
   @Test
   public void testSplitByLineKeepingSeparators() {
-    assertEquals(singletonList(""), Arrays.asList(StringUtil.splitByLinesKeepSeparators("")));
-    assertEquals(singletonList("aa"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("aa")));
-    assertEquals(Arrays.asList("\n", "\n", "aa\n", "\n", "bb\n", "cc\n", "\n"),
-                 Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\naa\n\nbb\ncc\n\n")));
+    assertThat(StringUtil.splitByLinesKeepSeparators("")).containsExactly("");
+    assertThat(StringUtil.splitByLinesKeepSeparators("aa")).containsExactly("aa");
+    assertThat(StringUtil.splitByLinesKeepSeparators("\n\naa\n\nbb\ncc\n\n")).containsExactly("\n", "\n", "aa\n", "\n", "bb\n", "cc\n", "\n");
 
-    assertEquals(Arrays.asList("\r", "\r\n", "\r"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("\r\r\n\r")));
-    assertEquals(Arrays.asList("\r\n", "\r", "\r\n"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("\r\n\r\r\n")));
+    assertThat(StringUtil.splitByLinesKeepSeparators("\r\r\n\r")).containsExactly("\r", "\r\n", "\r");
+    assertThat(StringUtil.splitByLinesKeepSeparators("\r\n\r\r\n")).containsExactly("\r\n", "\r", "\r\n");
 
-    assertEquals(Arrays.asList("\n", "\r\n", "\n", "\r\n", "\r", "\r", "aa\r", "bb\r\n", "cc\n", "\r", "dd\n", "\n", "\r\n", "\r"),
-                 Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\r\n\n\r\n\r\raa\rbb\r\ncc\n\rdd\n\n\r\n\r")));
+    assertThat(StringUtil.splitByLinesKeepSeparators("\n\r\n\n\r\n\r\raa\rbb\r\ncc\n\rdd\n\n\r\n\r"))
+      .containsExactly("\n", "\r\n", "\n", "\r\n", "\r", "\r", "aa\r", "bb\r\n", "cc\n", "\r", "dd\n", "\n", "\r\n", "\r");
   }
 
   @Test
@@ -411,9 +410,9 @@ public class StringUtilTest {
   @Test
   public void testReplaceListOfChars() {
     assertEquals("/tmp/filename",
-                 StringUtil.replace("$PROJECT_FILE$/filename", singletonList("$PROJECT_FILE$"), singletonList("/tmp")));
+                 StringUtil.replace("$PROJECT_FILE$/filename", List.of("$PROJECT_FILE$"), List.of("/tmp")));
     assertEquals("/someTextBefore/tmp/filename",
-                 StringUtil.replace("/someTextBefore/$PROJECT_FILE$/filename", singletonList("$PROJECT_FILE$"), singletonList("tmp")));
+                 StringUtil.replace("/someTextBefore/$PROJECT_FILE$/filename", List.of("$PROJECT_FILE$"), List.of("tmp")));
   }
 
   @Test
@@ -704,18 +703,17 @@ public class StringUtilTest {
 
   @Test
   public void testGetWordIndicesIn() {
-    assertEquals(Arrays.asList(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first second"));
-    assertEquals(Arrays.asList(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second"));
-    assertEquals(Arrays.asList(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second    "));
-    assertEquals(Arrays.asList(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first:second"));
-    assertEquals(Arrays.asList(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first-second"));
-    assertEquals(Arrays.asList(new TextRange(0, 12)), StringUtil.getWordIndicesIn("first-second", ContainerUtil.set(' ', '_', '.')));
-    assertEquals(Arrays.asList(new TextRange(0, 5), new TextRange(6, 12)),
-                 StringUtil.getWordIndicesIn("first-second", ContainerUtil.set('-')));
+    assertThat(StringUtil.getWordIndicesIn("first second")).containsExactly(new TextRange(0, 5), new TextRange(6, 12));
+    assertThat(StringUtil.getWordIndicesIn(" first second")).containsExactly(new TextRange(1, 6), new TextRange(7, 13));
+    assertThat(StringUtil.getWordIndicesIn(" first second    ")).containsExactly(new TextRange(1, 6), new TextRange(7, 13));
+    assertThat(StringUtil.getWordIndicesIn("first:second")).containsExactly(new TextRange(0, 5), new TextRange(6, 12));
+    assertThat(StringUtil.getWordIndicesIn("first-second")).containsExactly(new TextRange(0, 5), new TextRange(6, 12));
+    assertThat(StringUtil.getWordIndicesIn("first-second", Set.of(' ', '_', '.'))).containsExactly(new TextRange(0, 12));
+    assertThat(StringUtil.getWordIndicesIn("first-second", Set.of('-'))).containsExactly(new TextRange(0, 5), new TextRange(6, 12));
   }
 
   @Test
-  @SuppressWarnings("SpellCheckingInspection")
+  @SuppressWarnings({"SpellCheckingInspection", "NonAsciiCharacters"})
   public void testIsLatinAlphanumeric() {
     assertTrue(StringUtil.isLatinAlphanumeric("1234567890"));
     assertTrue(StringUtil.isLatinAlphanumeric("123abc593"));
@@ -839,9 +837,9 @@ public class StringUtilTest {
 
   @Test
   public void testStripCharFilter() {
-    assertEquals("mystring", StringUtil.strip("\n   my string ", CharFilter.NOT_WHITESPACE_FILTER));
-    assertEquals("mystring", StringUtil.strip("my string", CharFilter.NOT_WHITESPACE_FILTER));
-    assertEquals("mystring", StringUtil.strip("mystring", CharFilter.NOT_WHITESPACE_FILTER));
+    assertEquals("my-string", StringUtil.strip("\n   my -string ", CharFilter.NOT_WHITESPACE_FILTER));
+    assertEquals("my-string", StringUtil.strip("my- string", CharFilter.NOT_WHITESPACE_FILTER));
+    assertEquals("my-string", StringUtil.strip("my-string", CharFilter.NOT_WHITESPACE_FILTER));
     assertEquals("\n     ", StringUtil.strip("\n   my string ", CharFilter.WHITESPACE_FILTER));
     assertEquals("", StringUtil.strip("", CharFilter.WHITESPACE_FILTER));
     assertEquals("", StringUtil.strip("\n   my string ", ch -> false));
@@ -854,7 +852,7 @@ public class StringUtilTest {
     assertEquals("my string", StringUtil.trim("my string", CharFilter.NOT_WHITESPACE_FILTER));
     assertEquals("my string", StringUtil.trim("my string\t", CharFilter.NOT_WHITESPACE_FILTER));
     assertEquals("my string", StringUtil.trim("\nmy string", CharFilter.NOT_WHITESPACE_FILTER));
-    assertEquals("mystring", StringUtil.trim("mystring", CharFilter.NOT_WHITESPACE_FILTER));
+    assertEquals("my-string", StringUtil.trim("my-string", CharFilter.NOT_WHITESPACE_FILTER));
     assertEquals("\n   my string ", StringUtil.trim("\n   my string ", CharFilter.WHITESPACE_FILTER));
     assertEquals("", StringUtil.trim("", CharFilter.WHITESPACE_FILTER));
     assertEquals("", StringUtil.trim("\n   my string ", ch -> false));
