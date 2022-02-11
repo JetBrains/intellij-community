@@ -98,7 +98,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
       inspection.removeConfigurationsWithUuid(UUID.fromString(shortName));
-      profile.removeTool(shortName);
+      profile.removeTool(selectedTool);
       profile.setModified(true);
       InspectionProfileUtil.fireProfileChanged(profile);
     }

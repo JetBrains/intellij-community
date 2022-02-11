@@ -585,12 +585,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public void removeTool(@NotNull InspectionToolWrapper<?, ?> inspectionTool) {
     String shortName = inspectionTool.getShortName();
-    removeTool(shortName);
-  }
-
-  public void removeTool(@NotNull String shortName) {
     myTools.remove(shortName);
-    HighlightDisplayKey.unregister(shortName);
   }
 
   private static @Nullable InspectionElementsMergerBase getMerger(@NotNull String shortName) {
