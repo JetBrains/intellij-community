@@ -403,7 +403,7 @@ To create an EditorConfig file in a directory, right-click this directory and se
     <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON" bundle="messages.EditorConfigBundle" key="notification.group.disabled"/>
     <localInspection implementationClass="org.editorconfig.configmanagement.EditorConfigEncodingInspection"
                      bundle="messages.EditorConfigBundle"
-                     key="inspection.file.encoding.mismatch"
+                     key="inspection.file.encoding.mismatch.name"
                      enabledByDefault="true"
                      groupKey="editorconfig.inspection.group"/>
   </extensions>

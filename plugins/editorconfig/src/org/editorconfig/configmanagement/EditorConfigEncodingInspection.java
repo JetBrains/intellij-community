@@ -45,7 +45,7 @@ public class EditorConfigEncodingInspection extends LocalInspectionTool {
           return new ProblemDescriptor[]{
             manager.createProblemDescriptor(
               file,
-              EditorConfigBundle.message("inspection.file.encoding.mismatch", charsetData.getCharset().displayName()),
+              EditorConfigBundle.message("inspection.file.encoding.mismatch.descriptor", charsetData.getCharset().displayName()),
               new LocalQuickFix[]{
                 new ApplyEditorConfigEncodingQuickFix(),
                 new IgnoreFileQuickFix()
