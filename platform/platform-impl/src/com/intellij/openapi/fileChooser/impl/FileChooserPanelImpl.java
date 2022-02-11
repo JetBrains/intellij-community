@@ -54,6 +54,7 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -426,7 +427,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     var selection = new AtomicReference<>(uplink);
     try {
-      Files.walkFileTree(directory, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+      var isSymlink = Files.isSymbolicLink(directory);
+      var options = isSymlink ? EnumSet.of(FileVisitOption.FOLLOW_LINKS) : EnumSet.noneOf(FileVisitOption.class);
+
+      Files.walkFileTree(directory, options, 1, new SimpleFileVisitor<>() {
         private Boolean cs = null;
 
         @Override
@@ -434,6 +438,16 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
           if (cs == null) {
             cs = isDirectoryCaseSensitive(file);
           }
+
+          if (attrs.isSymbolicLink()) {
+            try {
+              attrs = new DelegatingFileAttributes(Files.readAttributes(file, BasicFileAttributes.class));
+            }
+            catch (IOException e) {
+              LOG.debug(e);
+            }
+          }
+
           var virtualFile = new LazyDirectoryOrFile(vfsDirectory, file, attrs);
           if (!myDescriptor.isFileVisible(virtualFile, true)) {
             return FileVisitResult.CONTINUE;  // not hidden, just ignored
@@ -448,9 +462,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
               myModel.add(item);
             }
           });
+
           if (pathToSelect != null && file.equals(pathToSelect)) {
             selection.set(item);
           }
+
           return cancelled.get() ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
         }
       });
@@ -756,6 +772,59 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       return myChildren == null
              ? VirtualFile.EMPTY_ARRAY
              : myChildren.values().stream().map(o -> o.orElse(null)).filter(Objects::nonNull).toArray(VirtualFile[]::new);
+    }
+  }
+
+  private static final class DelegatingFileAttributes implements BasicFileAttributes {
+    private final BasicFileAttributes myDelegate;
+
+    private DelegatingFileAttributes(BasicFileAttributes delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public FileTime lastModifiedTime() {
+      return myDelegate.lastModifiedTime();
+    }
+
+    @Override
+    public FileTime lastAccessTime() {
+      return myDelegate.lastAccessTime();
+    }
+
+    @Override
+    public FileTime creationTime() {
+      return myDelegate.creationTime();
+    }
+
+    @Override
+    public boolean isRegularFile() {
+      return myDelegate.isRegularFile();
+    }
+
+    @Override
+    public boolean isDirectory() {
+      return myDelegate.isDirectory();
+    }
+
+    @Override
+    public boolean isSymbolicLink() {
+      return true;
+    }
+
+    @Override
+    public boolean isOther() {
+      return myDelegate.isOther();
+    }
+
+    @Override
+    public long size() {
+      return myDelegate.size();
+    }
+
+    @Override
+    public Object fileKey() {
+      return myDelegate.fileKey();
     }
   }
 }
