@@ -29,6 +29,9 @@ private val rwLock: ReadWriteLock = if (
 ) ReentrantReadWriteLock()
 else EmptyReadWriteLock()
 
+/**
+ * We use VersionedEntityStorage here instead of the builder/snapshot because we need an actual data of the storage for double check
+ */
 internal fun CompositePackagingElementEntity.toCompositeElement(
   project: Project,
   storage: VersionedEntityStorage,
