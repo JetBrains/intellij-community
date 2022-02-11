@@ -910,7 +910,17 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     console.startImport(myProgressListener);
     fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
+    promise.onProcessed(m -> {
+      completeMavenSyncOnImportCompletion();
+    });
     return promise;
+  }
+
+  private void completeMavenSyncOnImportCompletion() {
+    waitForImportCompletion().onProcessed(o -> {
+      MavenResolveResultProcessor.notifyMavenProblems(myProject);
+      MavenSyncConsole.finishTransaction(myProject);
+    });
   }
 
   public void showServerException(Throwable e) {
