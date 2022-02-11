@@ -1,162 +1,132 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.ui;
+package com.intellij.openapi.ui
 
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.ImageDataByUrlLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.ui.icons.IconLoadMeasurer;
-import com.intellij.ui.icons.IconTransform;
-import com.intellij.ui.icons.ImageDataLoader;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ImageLoader;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.IconLoader.CachedImageIcon
+import com.intellij.openapi.util.ImageDataByUrlLoader
+import com.intellij.openapi.util.Pair
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.IconTransform
+import com.intellij.ui.icons.ImageDataLoader
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ImageLoader
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.awt.Image
+import java.awt.image.ImageFilter
+import java.net.MalformedURLException
+import java.net.URL
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.ImageFilter;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-@SuppressWarnings("HardCodedStringLiteral")
+@Suppress("HardCodedStringLiteral")
 @ApiStatus.Internal
-public final class ImageDataByPathLoader implements ImageDataLoader {
-  final String path;
-  final ClassLoader classLoader;
-  private final @Nullable ImageDataByPathLoader original;
+class ImageDataByPathLoader private constructor(val path: String,
+                                                val classLoader: ClassLoader,
+                                                private val original: ImageDataByPathLoader?) : ImageDataLoader {
+  companion object {
+    // cache is not used - image data resolved using cache in any case
+    @JvmStatic
+    fun findIcon(@NonNls originalPath: String,
+                 originalClassLoader: ClassLoader,
+                 cache: MutableMap<Pair<String, ClassLoader>, CachedImageIcon>?): Icon? {
+      val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
 
-  private ImageDataByPathLoader(@NotNull String path, @NotNull ClassLoader classLoader, @Nullable ImageDataByPathLoader original) {
-    this.path = path;
-    this.classLoader = classLoader;
-    this.original = original;
-  }
-
-  // cache is not used - image data resolved using cache in any case.
-  public static @Nullable Icon findIcon(@NotNull @NonNls String originalPath,
-                                        @NotNull ClassLoader originalClassLoader,
-                                        @Nullable Map<@NotNull Pair<String, ClassLoader>, IconLoader.@NotNull CachedImageIcon> cache) {
-    long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
-
-    originalPath = normalizePath(originalPath);
-
-    Pair<String, ClassLoader> patched = IconLoader.patchPath(originalPath, originalClassLoader);
-    String path = patched == null ? originalPath : patched.first;
-    ClassLoader classLoader = patched == null || patched.second == null ? originalClassLoader : patched.second;
-    Icon icon;
-    if (IconLoader.isReflectivePath(path)) {
-      icon = IconLoader.getReflectiveIcon(path, classLoader);
-    }
-    else if (cache == null) {
-      icon = createIcon(originalPath, originalClassLoader, patched, path, classLoader);
-    }
-    else {
-      icon = cache.computeIfAbsent(new Pair<>(originalPath, originalClassLoader), pair -> {
-        return createIcon(pair.first, pair.second, patched, path, classLoader);
-      });
+      @Suppress("NAME_SHADOWING")
+      val originalPath = normalizePath(originalPath)
+      val patched = IconLoader.patchPath(originalPath, originalClassLoader)
+      val path = patched?.first ?: originalPath
+      val classLoader = patched?.second ?: originalClassLoader
+      val icon: Icon? = when {
+        IconLoader.isReflectivePath(path) -> IconLoader.getReflectiveIcon(path, classLoader)
+        cache == null -> createIcon(originalPath, originalClassLoader, patched, path, classLoader)
+        else -> {
+           cache.computeIfAbsent(Pair(originalPath, originalClassLoader)) {
+            createIcon(it.first, it.second, patched, path, classLoader)
+          }
+        }
+      }
+      if (startTime != -1L) {
+        IconLoadMeasurer.findIcon.end(startTime)
+      }
+      return icon
     }
 
-    if (startTime != -1) {
-      IconLoadMeasurer.findIcon.end(startTime);
+    private fun createIcon(originalPath: @NonNls String,
+                           originalClassLoader: ClassLoader,
+                           patched: Pair<String, ClassLoader?>?,
+                           path: String,
+                           classLoader: ClassLoader): CachedImageIcon {
+      val loader = ImageDataByPathLoader(originalPath, originalClassLoader, null)
+      val resolver = if (patched == null) loader else ImageDataByPathLoader(path, classLoader, loader)
+      return CachedImageIcon(null, resolver, null, null)
     }
-    return icon;
+
+    private fun normalizePath(patchedPath: String): String {
+      return if (patchedPath[0] == '/') patchedPath.substring(1) else patchedPath
+    }
+
+    private fun doPatch(originalLoader: ImageDataByPathLoader,
+                        transform: IconTransform,
+                        isOriginal: Boolean): ImageDataLoader? {
+      val patched = transform.patchPath(originalLoader.path, originalLoader.classLoader) ?: return if (isOriginal) null else originalLoader
+      val classLoader = if (patched.second == null) originalLoader.classLoader else patched.second!!
+      return if (patched.first.startsWith("file:/")) {
+        try {
+          ImageDataByUrlLoader(URL(patched.first), patched.first, classLoader, false)
+        }
+        catch (e: MalformedURLException) {
+          throw RuntimeException(e)
+        }
+      }
+      else {
+        ImageDataByPathLoader(normalizePath(patched.first), classLoader, originalLoader)
+      }
+    }
   }
 
-  private static @NotNull IconLoader.CachedImageIcon createIcon(@NonNls @NotNull String originalPath,
-                                                                @NotNull ClassLoader originalClassLoader,
-                                                                @Nullable Pair<String, ClassLoader> patched,
-                                                                @NotNull String path,
-                                                                @NotNull ClassLoader classLoader) {
-    ImageDataByPathLoader loader = new ImageDataByPathLoader(originalPath, originalClassLoader, null);
-    ImageDataByPathLoader resolver = patched == null ? loader : new ImageDataByPathLoader(path, classLoader, loader);
-    return new IconLoader.CachedImageIcon(null, resolver, null, null);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ImageDataByPathLoader)) return false;
-
-    ImageDataByPathLoader loader = (ImageDataByPathLoader)o;
-
-    if (!path.equals(loader.path)) return false;
-    if (!classLoader.equals(loader.classLoader)) return false;
-    if (!Objects.equals(original, loader.original)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = path.hashCode();
-    result = 31 * result + classLoader.hashCode();
-    result = 31 * result + Objects.hashCode(original);
-    return result;
-  }
-
-  private static @NotNull String normalizePath(String patchedPath) {
-    return patchedPath.charAt(0) == '/' ? patchedPath.substring(1) : patchedPath;
-  }
-
-  @Override
-  public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters,
-                                   @NotNull ScaleContext scaleContext,
-                                   boolean isDark) {
-    int flags = ImageLoader.ALLOW_FLOAT_SCALING | ImageLoader.USE_CACHE;
+  override fun loadImage(filters: List<ImageFilter?>,
+                         scaleContext: ScaleContext,
+                         isDark: Boolean): Image? {
+    var flags = ImageLoader.ALLOW_FLOAT_SCALING or ImageLoader.USE_CACHE
     if (isDark) {
-      flags |= ImageLoader.USE_DARK;
+      flags = flags or ImageLoader.USE_DARK
     }
-    return ImageLoader.loadImage(path, filters, null, classLoader, flags, scaleContext, !path.endsWith(".svg"));
+    return ImageLoader.loadImage(path, filters, null, classLoader, flags, scaleContext, !path.endsWith(".svg"))
   }
 
-  @Override
-  public @Nullable URL getURL() {
-    return classLoader.getResource(path);
+  override fun getURL(): URL? {
+    return classLoader.getResource(path)
   }
 
-  @Override
-  public @Nullable ImageDataLoader patch(@NotNull String __, @NotNull IconTransform transform) {
-    boolean isOriginal = original == null;
-    return doPatch(isOriginal ? this : original, transform, isOriginal);
+  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
+    val isOriginal = original == null
+    return doPatch((if (isOriginal) this else original)!!, transform, isOriginal)
   }
 
-  private static @Nullable ImageDataLoader doPatch(@NotNull ImageDataByPathLoader originalLoader,
-                                                   @NotNull IconTransform transform,
-                                                   boolean isOriginal) {
-    Pair<String, ClassLoader> patched = transform.patchPath(originalLoader.path, originalLoader.classLoader);
-    if (patched == null) {
-      return isOriginal ? null : originalLoader;
-    }
-    ClassLoader classLoader = patched.second == null ? originalLoader.classLoader : patched.second;
-    if (patched.first.startsWith("file:/")) {
-      try {
-        return new ImageDataByUrlLoader(new URL(patched.first), patched.first, classLoader, false);
-      }
-      catch (MalformedURLException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else {
-      return new ImageDataByPathLoader(normalizePath(patched.first), classLoader, originalLoader);
-    }
+  override fun isMyClassLoader(classLoader: ClassLoader): Boolean {
+    return this.classLoader === classLoader || original != null && original.classLoader === classLoader
   }
 
-  @Override
-  public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
-    return this.classLoader == classLoader || (original != null && original.classLoader == classLoader);
+  override fun toString(): String {
+    return "ImageDataByPathLoader(classLoader=$classLoader, path=$path, original=$original)"
   }
 
-  @Override
-  public String toString() {
-    return "ImageDataByPathLoader(" +
-           ", classLoader=" + classLoader +
-           ", path='" + path + '\'' +
-           ", original='" + original + '\'' +
-           ')';
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ImageDataByPathLoader) return false
+
+    if (path != other.path) return false
+    if (classLoader != other.classLoader) return false
+    if (original != other.original) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = path.hashCode()
+    result = 31 * result + classLoader.hashCode()
+    result = 31 * result + (original?.hashCode() ?: 0)
+    return result
   }
 }

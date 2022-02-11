@@ -609,7 +609,7 @@ public final class IconLoader {
     graphics.setColor(Gray.TRANSPARENT);
     graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
     graphics.scale(scale, scale);
-    icon.paintIcon(LabelHolder.ourFakeComponent, graphics, 0, 0);
+    icon.paintIcon(LabelHolder.fakeComponent, graphics, 0, 0);
 
     graphics.dispose();
 
@@ -698,8 +698,7 @@ public final class IconLoader {
   public static void detachClassLoader(@NotNull ClassLoader classLoader) {
     iconCache.entrySet().removeIf(entry -> {
       CachedImageIcon icon = entry.getValue();
-      icon.detachClassLoader(classLoader);
-      return entry.getKey().second == classLoader;
+      return icon.detachClassLoader(classLoader) || entry.getKey().second == classLoader;
     });
 
     iconToDisabledIcon.keySet().removeIf(icon -> icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader));
@@ -1230,17 +1229,20 @@ public final class IconLoader {
     if (icon instanceof ScaleContextSupport) {
       return (ScaleContextSupport)icon;
     }
-    if (icon instanceof RetrievableIcon) {
+    else if (icon instanceof RetrievableIcon) {
       return getScaleContextSupport(((RetrievableIcon)icon).retrieveIcon());
     }
-    if (icon instanceof CompositeIcon) {
+    else if (icon instanceof CompositeIcon) {
       CompositeIcon compositeIcon = (CompositeIcon)icon;
-      if (compositeIcon.getIconCount() == 0) return null;
+      if (compositeIcon.getIconCount() == 0) {
+        return null;
+      }
       Icon innerIcon = compositeIcon.getIcon(0);
-      if (innerIcon == null) return null;
-      return getScaleContextSupport(innerIcon);
+      return innerIcon == null ? null : getScaleContextSupport(innerIcon);
     }
-    return null;
+    else {
+      return null;
+    }
   }
 
   private static final class LabelHolder {
@@ -1248,7 +1250,7 @@ public final class IconLoader {
      * To get disabled icon with paint it into the image. Some icons require
      * not null component to paint.
      */
-    private static final JComponent ourFakeComponent = new JComponent() {
+    private static final JComponent fakeComponent = new JComponent() {
     };
   }
 }
