@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -129,12 +128,35 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
+  private static class ProcessorAndData<Data extends TextBlockTransferableData> {
+    final CopyPastePostProcessor<Data> processor;
+    final List<Data> data;
+
+    private ProcessorAndData(@NotNull CopyPastePostProcessor<Data> processor, @NotNull List<Data> data) {
+      this.processor = processor;
+      this.data = data;
+    }
+
+    void process(Project project, Editor editor, RangeMarker bounds, int caretOffset, Ref<Boolean> skipIndentation) {
+      processor.processTransferableData(project, editor, bounds, caretOffset, skipIndentation, data);
+    }
+
+    static <T extends TextBlockTransferableData> @Nullable ProcessorAndData<T> create(
+      @NotNull CopyPastePostProcessor<T> processor,
+      @NotNull Transferable content
+    ) {
+      List<T> data = processor.extractTransferableData(content);
+      if (data.isEmpty()) return null;
+      return new ProcessorAndData<>(processor, data);
+    }
+  }
+
   private static void doPasteAction(final Editor editor,
-                              final Project project,
-                              final PsiFile file,
-                              final Document document,
-                              @NotNull final Transferable content,
-                              @NotNull final TypingActionsExtension typingActionsExtension) {
+                                    final Project project,
+                                    final PsiFile file,
+                                    final Document document,
+                                    @NotNull final Transferable content,
+                                    @NotNull final TypingActionsExtension typingActionsExtension) {
     CopyPasteManager.getInstance().stopKillRings();
 
     String text = null;
@@ -153,14 +175,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    final List<Pair<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>> extraData = new ArrayList<>();
+    final List<ProcessorAndData<?>> extraData = new ArrayList<>();
     final Collection<TextBlockTransferableData> allValues = new ArrayList<>();
 
     for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
-      List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
-      if (!data.isEmpty()) {
-        extraData.add(new Pair<>(processor, data));
-        allValues.addAll(data);
+      ProcessorAndData<? extends TextBlockTransferableData> data = ProcessorAndData.create(processor, content);
+      if (data != null) {
+        extraData.add(data);
+        allValues.addAll(data.data);
       }
     }
 
@@ -222,11 +244,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     // Any value, except `null` is a signal that the text was transformed.
     // For the `CopyPasteFoldingProcessor` it means that folding data is not valid and cannot be applied.
     final Ref<Boolean> skipIndentation = new Ref<>(pastedTextWasChanged ? Boolean.FALSE : null);
-    for (Pair<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData) {
-      //noinspection unchecked
-      SlowOperations.allowSlowOperations(
-        () -> e.first.processTransferableData(project, editor, bounds, caretOffset, skipIndentation, e.second)
-      );
+    for (ProcessorAndData<?> data : extraData) {
+      SlowOperations.allowSlowOperations(() -> {
+        data.process(project, editor, bounds, caretOffset, skipIndentation);
+      });
     }
 
     boolean pastedTextContainsWhiteSpacesOnly =
