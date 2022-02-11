@@ -156,7 +156,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
 
   @Override
   protected synchronized void cleanup() {
-    myProgressPullingFuture.cancel(true);
+    if (myProgressPullingFuture != null) myProgressPullingFuture.cancel(true);
     int count = myFails.get();
     if (count != 0) {
        MavenLog.LOG.warn("Maven embedder download listener was failed: " + count + " times");
