@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
@@ -6,44 +6,20 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.readText
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.pathString
-import kotlin.reflect.KMutableProperty0
 import kotlin.streams.asSequence
 
-abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
-    private lateinit var codeInsightTestFixture: CodeInsightTestFixture
-
+abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase() {
     override fun testDataDirName() = "fixes"
     final override fun testDataDirectory(): File = super.testDataDirectory().resolve("before")
-
-    final override fun setUpFixtures() {
-        myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
-        codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
-        codeInsightTestFixture.setUp()
-    }
-
-    final override fun tearDownFixtures() {
-        runAll(
-            ThrowableRunnable { codeInsightTestFixture.tearDown() },
-            ThrowableRunnable {
-                @Suppress("UNCHECKED_CAST")
-                (this::codeInsightTestFixture as KMutableProperty0<CodeInsightTestFixture?>).set(null)
-            },
-            ThrowableRunnable { myTestFixture = null }
-        )
-    }
 
     open val afterDirectory get() = testDataDirectory().parentFile.resolve("after")
 

@@ -131,6 +131,30 @@ abstract class CompletionSession(
         NotPropertiesService.getNotProperties(position)
     )
 
+    protected val shadowedFilter by lazy {
+        ShadowedDeclarationsFilter.create(
+            bindingContext = bindingContext,
+            resolutionFacade = resolutionFacade,
+            context = nameExpression!!,
+            callTypeAndReceiver = callTypeAndReceiver,
+        )?.createNonImportedDeclarationsFilter<DeclarationDescriptor>(
+            importedDeclarations = referenceVariantsCollector!!.allCollected.imported,
+            allowExpectedDeclarations = allowExpectedDeclarations,
+        )
+    }
+
+    protected fun <T : DeclarationDescriptor> processWithShadowedFilter(descriptor: T, processor: (T) -> Unit) {
+        val shadowedFilter = shadowedFilter
+        val element = if (shadowedFilter != null) {
+            @Suppress("UNCHECKED_CAST")
+            shadowedFilter(listOf(descriptor)).singleOrNull()?.let { it as T }
+        } else {
+            descriptor
+        }
+
+        element?.let(processor)
+    }
+
     protected val callTypeAndReceiver =
         if (nameExpression == null) CallTypeAndReceiver.UNKNOWN else CallTypeAndReceiver.detect(nameExpression)
     protected val receiverTypes = nameExpression?.let { detectReceiverTypes(bindingContext, nameExpression, callTypeAndReceiver) }
@@ -397,23 +421,9 @@ abstract class CompletionSession(
         return callTypeAndReceiver.receiver == null
     }
 
-    protected fun processTopLevelCallables(processor: (CallableDescriptor) -> Unit) {
-        val shadowedFilter = ShadowedDeclarationsFilter.create(
-            bindingContext = bindingContext,
-            resolutionFacade = resolutionFacade,
-            context = nameExpression!!,
-            callTypeAndReceiver = callTypeAndReceiver,
-        )?.createNonImportedDeclarationsFilter<CallableDescriptor>(
-            importedDeclarations = referenceVariantsCollector!!.allCollected.imported,
-            allowExpectedDeclarations = allowExpectedDeclarations,
-        )
-
+    protected fun processTopLevelCallables(processor: (DeclarationDescriptor) -> Unit) {
         indicesHelper(true).processTopLevelCallables({ prefixMatcher.prefixMatches(it) }) {
-            if (shadowedFilter != null) {
-                shadowedFilter(listOf(it)).singleOrNull()?.let(processor)
-            } else {
-                processor(it)
-            }
+            processWithShadowedFilter(it, processor)
         }
     }
 
