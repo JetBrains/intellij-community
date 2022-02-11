@@ -752,7 +752,6 @@ private class NotificationComponent(val project: Project,
   }
 
   val myNotificationWrapper = NotificationWrapper(notification)
-  private val myBgComponents = ArrayList<Component>()
   private var myIsNew = false
   private var myHoverState = false
   private val myMoreButton: Component?
@@ -869,20 +868,20 @@ private class NotificationComponent(val project: Project,
       actionPanel.isOpaque = false
 
       if (notification.isSuggestionType) {
-        if (actionsSize == 1) {
+        if (actionsSize > 0) {
           val button = JButton(actions[0].templateText)
           button.isOpaque = false
           button.addActionListener {
             runAction(actions[0], it.source)
           }
           actionPanel.add(button)
-        }
-        else if (actionsSize > 1) {
-          val buttonActions = Array(actionsSize - 1) { i -> createAction(actions[i + 1]) }
-          val optionButton = NotificationOptionButton(createAction(actions[0]), buttonActions)
-          optionButton.background = BG_COLOR
-          actionPanel.add(optionButton)
-          myBgComponents.add(optionButton)
+
+          if (actionsSize == 2) {
+            actionPanel.add(createAction(actions[1]))
+          }
+          else if (actionsSize > 2) {
+            actionPanel.add(MoreAction(this, actions))
+          }
         }
       }
       else {
@@ -891,9 +890,7 @@ private class NotificationComponent(val project: Project,
         }
 
         for (action in actions) {
-          @Suppress("DialogTitleCapitalization")
-          actionPanel.add(
-            LinkLabel(action.templateText, action.templatePresentation.icon, { link, _action -> runAction(_action, link) }, action))
+          actionPanel.add(createAction(action))
         }
 
         if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
@@ -1015,12 +1012,8 @@ private class NotificationComponent(val project: Project,
     }
   }
 
-  private fun createAction(action: AnAction): Action {
-    return object : AbstractAction(action.templateText) {
-      override fun actionPerformed(e: ActionEvent) {
-        runAction(action, e.source)
-      }
-    }
+  private fun createAction(action: AnAction): JComponent {
+    return LinkLabel(action.templateText, action.templatePresentation.icon, { link, _action -> runAction(_action, link) }, action)
   }
 
   private fun doShowSettings() {
@@ -1163,9 +1156,6 @@ private class NotificationComponent(val project: Project,
 
   private fun setColor(color: Color) {
     myRoundColor = color
-    for (component in myBgComponents) {
-      component.background = color
-    }
     repaint()
   }
 
@@ -1211,6 +1201,24 @@ private class NotificationComponent(val project: Project,
   }
 }
 
+private class MoreAction(notificationComponent: NotificationComponent, actions: List<AnAction>) :
+  NotificationsManagerImpl.DropDownAction(null, null) {
+  val group = DefaultActionGroup()
+
+  init {
+    val size = actions.size
+    for (i in 1..size - 1) {
+      group.add(actions[i])
+    }
+
+    setListener(LinkListener { link, _ -> NotificationsManagerImpl.showPopup(link, group) }, null)
+
+    text = IdeBundle.message("notifications.action.more")
+
+    Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
+  }
+}
+
 private class MyDropDownAction(notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
   var collapseActionsDirection: Notification.CollapseActionsDirection = notificationComponent.myNotificationWrapper.notification!!.collapseDirection
 
@@ -1221,19 +1229,7 @@ private class MyDropDownAction(notificationComponent: NotificationComponent) : N
 
       for (action in layout.actions) {
         if (!action.isVisible) {
-          val notificationAction = action.linkData
-          val popupAction = object : DumbAwareAction() {
-            override fun update(e: AnActionEvent) {
-              notificationAction.update(e)
-            }
-
-            override fun actionPerformed(e: AnActionEvent) {
-              notificationComponent.setNew(false)
-              notificationAction.actionPerformed(e)
-            }
-          }
-          popupAction.copyFrom(notificationAction)
-          group.add(popupAction)
+          group.add(action.linkData)
         }
       }
 

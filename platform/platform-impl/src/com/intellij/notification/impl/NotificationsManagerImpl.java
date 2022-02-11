@@ -763,7 +763,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     int actionsSize = actions.size();
 
     if (ActionCenter.isEnabled() && notification.isSuggestionType()) {
-      if (actionsSize == 1) {
+      if (actionsSize > 0) {
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());
         button.setOpaque(false);
@@ -773,15 +773,21 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
           Notification.fire(notification, action, DataManager.getInstance().getDataContext(button));
         });
-      }
-      else if (actionsSize > 1) {
-        Action[] buttonActions = new Action[actionsSize - 1];
-        for (int i = 0; i < buttonActions.length; i++) {
-          buttonActions[i] = createAction(notification, actions.get(i + 1));
+
+        if (actionsSize == 2) {
+          actionPanel.addActionLink(createAction(notification, actions.get(1)));
         }
-        NotificationOptionButton button = new NotificationOptionButton(createAction(notification, actions.get(0)), buttonActions);
-        button.setBackground(background);
-        actionPanel.addAction(button);
+        else if (actionsSize > 2) {
+          DefaultActionGroup group = new DefaultActionGroup();
+          for (int i = 1; i < actionsSize; i++) {
+            group.add(actions.get(i));
+          }
+
+          DropDownAction dropDownAction =
+            new DropDownAction(IdeBundle.message("notifications.action.more"), (link, ignored) -> showPopup(link, group));
+          actionPanel.add(dropDownAction);
+          Notification.setDataProvider(notification, dropDownAction);
+        }
       }
     }
     else {
@@ -790,15 +796,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
 
       for (AnAction action : actions) {
-        Presentation presentation = action.getTemplatePresentation();
-        @SuppressWarnings("DialogTitleCapitalization") String text =
-          presentation.getText();  // action templates are unfit for the context :/
-        actionPanel.addActionLink(
-          new LinkLabel<>(text, presentation.getIcon(), (link, _action) -> {
-            NotificationCollector.getInstance()
-              .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
-            Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
-          }, action));
+        actionPanel.addActionLink(createAction(notification, action));
       }
 
       if (actionsSize > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
@@ -824,15 +822,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     hoverAdapter.addSource(actionPanel);
   }
 
-  private static @NotNull Action createAction(@NotNull Notification notification, @NotNull AnAction action) {
-    return new AbstractAction(action.getTemplateText()) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        NotificationCollector.getInstance()
-          .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
-        Notification.fire(notification, action, DataManager.getInstance().getDataContext((Component)e.getSource()));
-      }
-    };
+  private static @NotNull LinkLabel<AnAction> createAction(@NotNull Notification notification, @NotNull AnAction action) {
+    Presentation presentation = action.getTemplatePresentation();
+    @SuppressWarnings("DialogTitleCapitalization") String text =
+      presentation.getText();  // action templates are unfit for the context :/
+    return new LinkLabel<>(text, presentation.getIcon(), (link, _action) -> {
+      NotificationCollector.getInstance()
+        .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
+      Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
+    }, action);
   }
 
   private static void addDropDownAction(Notification notification, NotificationActionPanel actionPanel) {
