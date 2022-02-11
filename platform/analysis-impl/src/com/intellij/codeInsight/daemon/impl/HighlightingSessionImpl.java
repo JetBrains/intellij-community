@@ -72,7 +72,16 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @NotNull
   static HighlightingSession getFromCurrentIndicator(@NotNull PsiFile file) {
-    return GlobalInspectionContextBase.assertUnderDaemonProgress().getUserData(HIGHLIGHTING_SESSION).get(file);
+    DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
+    Map<PsiFile, HighlightingSession> map = indicator.getUserData(HIGHLIGHTING_SESSION);
+    if (map == null) {
+      throw new IllegalStateException("No HighlightingSession stored in "+indicator);
+    }
+    HighlightingSession session = map.get(file);
+    if (session == null) {
+      throw new IllegalStateException("No HighlightingSession found for " + file + " in " + indicator + " in map: " + map);
+    }
+    return session;
   }
 
   static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
@@ -88,9 +97,9 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @NotNull
   static HighlightingSession createHighlightingSession(@NotNull PsiFile psiFile,
-                                        @Nullable Editor editor,
-                                        @Nullable EditorColorsScheme editorColorsScheme,
-                                        @NotNull DaemonProgressIndicator progressIndicator) {
+                                                       @Nullable Editor editor,
+                                                       @Nullable EditorColorsScheme editorColorsScheme,
+                                                       @NotNull DaemonProgressIndicator progressIndicator) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ProperTextRange visibleRange = editor == null ? null : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     boolean canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
@@ -99,10 +108,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @NotNull
   static HighlightingSession createHighlightingSession(@NotNull PsiFile psiFile,
-                                                                @NotNull DaemonProgressIndicator progressIndicator,
-                                                                @Nullable EditorColorsScheme editorColorsScheme,
-                                                                @Nullable ProperTextRange visibleRange,
-                                                                boolean canChangeFileSilently) {
+                                                       @NotNull DaemonProgressIndicator progressIndicator,
+                                                       @Nullable EditorColorsScheme editorColorsScheme,
+                                                       @Nullable ProperTextRange visibleRange,
+                                                       boolean canChangeFileSilently) {
     // no assertIsDispatchThread() is necessary
     Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map == null) {
@@ -111,6 +120,16 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     HighlightingSessionImpl session = new HighlightingSessionImpl(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
     map.put(psiFile, session);
     return session;
+  }
+
+  public static void runInsideHighlightingSession(@NotNull PsiFile file,
+                                                  @NotNull DaemonProgressIndicator progressIndicator,
+                                                  @Nullable EditorColorsScheme editorColorsScheme,
+                                                  @NotNull ProperTextRange visibleRange,
+                                                  boolean canChangeFileSilently,
+                                                  @NotNull Runnable runnable) {
+    createHighlightingSession(file, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
+    runnable.run();
   }
 
   static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
@@ -179,5 +198,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   @Override
   public ProperTextRange getVisibleRange() {
     return myVisibleRange;
+  }
+
+  @Override
+  public String toString() {
+    return "HighlightingSessionImpl: myVisibleRange:"+myVisibleRange+"; myPsiFile: "+myPsiFile;
   }
 }
