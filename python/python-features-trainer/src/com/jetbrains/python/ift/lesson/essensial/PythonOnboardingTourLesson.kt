@@ -91,7 +91,7 @@ import javax.swing.JTree
 import javax.swing.JWindow
 import javax.swing.tree.TreePath
 
-class PythonOnboardingTour :
+class PythonOnboardingTourLesson :
   KLesson("python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name")) {
 
   private lateinit var openLearnTaskId: TaskContext.TaskId
