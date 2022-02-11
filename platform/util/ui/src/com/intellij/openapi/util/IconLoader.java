@@ -232,15 +232,12 @@ public final class IconLoader {
   }
 
   /**
-   * Might return null if icon was not found.
-   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, ClassLoader)}
+   * @deprecated Use {@link #findIcon(String, ClassLoader)}.
    */
+  @Deprecated(forRemoval = true)
   public static @Nullable Icon findIcon(@NonNls @NotNull String path) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    if (callerClass == null) {
-      return null;
-    }
-    return findIcon(path, callerClass);
+    return callerClass == null ? null : findIcon(path, callerClass.getClassLoader());
   }
 
   public static @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
