@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
@@ -802,7 +803,7 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
 
 private fun setBackgroundRecursively(component: Component, bg: Color) {
   UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
-    if (c !is ActionButton) {
+    if (c !is ActionButton && c !is Divider) {
       c.background = bg
     }
   })
