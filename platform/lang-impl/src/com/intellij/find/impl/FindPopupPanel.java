@@ -62,6 +62,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
 import com.intellij.ui.dsl.builder.SpacingConfiguration;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.popup.PopupState;
@@ -628,7 +629,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     Pair<FindPopupScopeUI.ScopeType, JComponent>[] scopeComponents = myScopeUI.getComponents();
 
     myScopeDetailsPanel = new JPanel(new CardLayout());
-    myScopeDetailsPanel.setBorder(JBUI.Borders.emptyBottom(UIUtil.isUnderDefaultMacTheme() ? 0 : 3));
 
     List<AnAction> scopeActions = new ArrayList<>(scopeComponents.length);
     for (Pair<FindPopupScopeUI.ScopeType, JComponent> scopeComponent : scopeComponents) {
@@ -798,9 +798,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     previewPanel.add(myUsagePreviewTitle, BorderLayout.NORTH);
     previewPanel.add(myCodePreviewComponent, BorderLayout.CENTER);
     myPreviewSplitter.setSecondComponent(previewPanel);
-    JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
-    scopesPanel.add(myScopeSelectionToolbar.getComponent());
-    scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
+    JPanel scopesPanel = new JPanel();
+    new RowBuilder(scopesPanel)
+      .gap(26)
+      .add(myScopeSelectionToolbar.getComponent())
+      .addResizable(myScopeDetailsPanel);
     setLayout(new MigLayout("flowx, ins 0, gap 0, fillx, hidemode 3"));
 
     myIsPinned.set(UISettings.getInstance().getPinFindInPath());
@@ -1640,6 +1642,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setBorder(JBUI.Borders.empty(3));
     return toolbar;
   }
 

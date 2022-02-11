@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +47,6 @@ public class FindPopupDirectoryChooser extends JPanel {
 
   @SuppressWarnings("WeakerAccess")
   public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
-    super(new BorderLayout());
-
     myHelper = panel.getHelper();
     myProject = panel.getProject();
     myFindPopupPanel = panel;
@@ -105,11 +104,10 @@ public class FindPopupDirectoryChooser extends JPanel {
     int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myFindPopupPanel);
 
-    add(myDirectoryComboBox, BorderLayout.CENTER);
-    JPanel buttonsPanel = new JPanel(new BorderLayout());
-    buttonsPanel.add(mySelectDirectoryButton, BorderLayout.CENTER);
-    buttonsPanel.add(FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent(), BorderLayout.EAST); //check if toolbar updates the button with no delays
-    add(buttonsPanel, BorderLayout.EAST);
+    RowBuilder builder = new RowBuilder(this);
+    builder
+      .addResizable(myDirectoryComboBox)
+      .add(mySelectDirectoryButton, FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent());
   }
 
   @SuppressWarnings("WeakerAccess")
