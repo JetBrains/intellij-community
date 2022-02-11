@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +34,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.customPasteProvider");
@@ -150,13 +153,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<>();
+    final List<Pair<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>> extraData = new ArrayList<>();
     final Collection<TextBlockTransferableData> allValues = new ArrayList<>();
 
     for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
       List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
       if (!data.isEmpty()) {
-        extraData.put(processor, data);
+        extraData.add(new Pair<>(processor, data));
         allValues.addAll(data);
       }
     }
@@ -219,10 +222,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     // Any value, except `null` is a signal that the text was transformed.
     // For the `CopyPasteFoldingProcessor` it means that folding data is not valid and cannot be applied.
     final Ref<Boolean> skipIndentation = new Ref<>(pastedTextWasChanged ? Boolean.FALSE : null);
-    for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
+    for (Pair<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData) {
       //noinspection unchecked
       SlowOperations.allowSlowOperations(
-        () -> e.getKey().processTransferableData(project, editor, bounds, caretOffset, skipIndentation, e.getValue())
+        () -> e.first.processTransferableData(project, editor, bounds, caretOffset, skipIndentation, e.second)
       );
     }
 
