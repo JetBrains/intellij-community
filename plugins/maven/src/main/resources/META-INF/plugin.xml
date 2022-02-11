@@ -617,7 +617,7 @@
             icon="AllIcons.Nodes.Folder"/>
     <action id="Maven.ShowIgnored"
             class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-            icon="AllIcons.Actions.ShowHiddens"/>
+            icon="AllIcons.Actions.ToggleVisibility"/>
     <action id="Maven.ShowBasicPhasesOnly"
             class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
             icon="AllIcons.General.Filter"/>

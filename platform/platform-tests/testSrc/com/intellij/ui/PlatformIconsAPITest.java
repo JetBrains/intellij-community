@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -162,6 +162,7 @@ public class PlatformIconsAPITest extends TestCase {
     "/actions/synchronizeScrolling.png",
     "/actions/syncPanels.png",
     "/actions/toggleSoftWrap.png",
+    "/actions/toggleVisibility.svg",
     "/actions/traceInto.png",
     "/actions/traceOver.png",
     "/actions/undo.png",

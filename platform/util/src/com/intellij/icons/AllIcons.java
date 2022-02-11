@@ -185,7 +185,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Show = load("actions/show.svg", 1300662213, 2);
     /** 16x16 */ public static final @NotNull Icon ShowAsTree = load("actions/showAsTree.svg", -1574590264, 2);
     /** 16x16 */ public static final @NotNull Icon ShowCode = load("actions/showCode.svg", -1165716144, 2);
-    /** 16x16 */ public static final @NotNull Icon ShowHiddens = load("actions/showHiddens.svg", -126304131, 2);
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("actions/showImportStatements.svg", -1715399838, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("actions/showReadAccess.svg", 44349734, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("actions/showWriteAccess.svg", 264206780, 2);
@@ -203,6 +202,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon SynchronizeScrolling = load("actions/synchronizeScrolling.svg", -519401023, 2);
     /** 16x16 */ public static final @NotNull Icon SyncPanels = load("actions/syncPanels.svg", 1101642732, 2);
     /** 16x16 */ public static final @NotNull Icon ToggleSoftWrap = load("actions/toggleSoftWrap.svg", -639118463, 2);
+    /** 16x16 */ public static final @NotNull Icon ToggleVisibility = load("actions/toggleVisibility.svg", 621859739, 2);
     /** 16x16 */ public static final @NotNull Icon TraceInto = load("actions/traceInto.svg", 838472230, 2);
     /** 16x16 */ public static final @NotNull Icon TraceOver = load("actions/traceOver.svg", 278186465, 2);
     /** 16x16 */ public static final @NotNull Icon Undo = load("actions/undo.svg", 1472205522, 2);
@@ -213,6 +213,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Words = load("actions/words.svg", 1127574249, 0);
     /** 16x16 */ public static final @NotNull Icon WordsHovered = load("actions/wordsHovered.svg", -1250126923, 0);
     /** 16x16 */ public static final @NotNull Icon WordsSelected = load("actions/wordsSelected.svg", -1338392888, 0);
+
+    /** @deprecated use {@link #ToggleVisibility} */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final @NotNull Icon ShowHiddens = ToggleVisibility;
 
     /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
     @SuppressWarnings("unused")
