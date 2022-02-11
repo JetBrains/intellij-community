@@ -1007,7 +1007,6 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
     MavenProject project = MavenProjectsManager.getInstance(myProject).findProject(projectPom);
     Assert.assertNotNull(project);
 
-    System.out.println(repoIds);
     Assert.assertTrue(repoIds.contains("mirror"));
     Assert.assertTrue(repoIds.contains("repo-pom1"));
     Assert.assertTrue(repoIds.contains("repo1"));
