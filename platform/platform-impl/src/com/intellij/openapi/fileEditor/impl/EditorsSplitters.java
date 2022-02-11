@@ -763,7 +763,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @deprecated Use {@link #getAllComposites()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @NotNull List<EditorWithProviderComposite> getEditorComposites() {
     return ContainerUtil.filterIsInstance(getAllComposites(), EditorWithProviderComposite.class);
   }
@@ -778,7 +777,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @deprecated Use {@link #getAllComposites(VirtualFile)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @NotNull List<EditorWithProviderComposite> findEditorComposites(@NotNull VirtualFile file) {
     return ContainerUtil.filterIsInstance(getAllComposites(file), EditorWithProviderComposite.class);
   }

@@ -99,7 +99,6 @@ public final class SystemInfo {
    * @deprecated macOS 10.14 is the minimum version.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
 
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");

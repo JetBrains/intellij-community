@@ -170,7 +170,6 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
    * @deprecated use {@link #getAllEditorsWithProviders()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public FileEditorProvider @NotNull [] getProviders() {
     return getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
   }
@@ -313,7 +312,6 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
    * @deprecated use {@link #getAllEditors()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public FileEditor @NotNull [] getEditors() {
     return getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
   }

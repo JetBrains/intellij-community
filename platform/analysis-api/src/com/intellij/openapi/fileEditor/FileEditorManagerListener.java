@@ -27,7 +27,6 @@ public interface FileEditorManagerListener extends EventListener {
    * @deprecated use {@link #fileOpenedSync(FileEditorManager, VirtualFile, List)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   default void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
                               @NotNull Pair<FileEditor[], FileEditorProvider[]> editors) {
   }

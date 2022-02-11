@@ -349,7 +349,6 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
    * @deprecated use this wrapper component with JBTextArea and its getEmptyText() instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
   private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {

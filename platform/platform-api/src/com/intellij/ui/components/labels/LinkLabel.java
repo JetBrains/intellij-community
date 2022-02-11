@@ -82,7 +82,6 @@ public class LinkLabel<T> extends JLabel {
    * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @Deprecated
   @NotNull
   public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {

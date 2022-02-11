@@ -151,7 +151,6 @@ public final class NetUtils {
    * @deprecated use {@link #copyStreamContent(ProgressIndicator, InputStream, OutputStream, long)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static int copyStreamContent(@Nullable ProgressIndicator indicator,
                                       @NotNull InputStream inputStream,
                                       @NotNull OutputStream outputStream,

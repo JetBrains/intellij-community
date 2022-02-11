@@ -21,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +70,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
    * @deprecated Override createHeader and remove implementation of this method at all
    */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @NotNull
   protected JPanel createTopLeftPanel() {
     return new JPanel(); // not used
@@ -81,7 +79,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
    * @deprecated Override createHeader and remove implementation of this method at all
    */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @NotNull
   protected JPanel createSettingsPanel() {
     return new JPanel(); // not used
