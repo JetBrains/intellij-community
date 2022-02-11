@@ -258,6 +258,9 @@ open class CodeVisionHost(val project: Project) {
       ProgressManager.checkCanceled()
       val results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
       val providerWhoWantToUpdate = mutableListOf<String>()
+
+      //todo add ability to update providers independently
+      var everyProviderReadyToUpdate = true
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
@@ -270,10 +273,18 @@ open class CodeVisionHost(val project: Project) {
           }
           return@forEach
         }
-        if(!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) return@forEach
+        if(!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])){
+          everyProviderReadyToUpdate = false
+          return@forEach
+        }
         providerWhoWantToUpdate.add(it.id)
         val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
         results.addAll(result)
+      }
+
+      if(!everyProviderReadyToUpdate){
+        editor.lensContextOrThrow.discardPending()
+        return@executeOnPooledThread
       }
 
       if(providerWhoWantToUpdate.isEmpty()) {
