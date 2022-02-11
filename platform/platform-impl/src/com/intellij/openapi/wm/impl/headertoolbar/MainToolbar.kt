@@ -75,7 +75,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       toolbar.targetComponent = null
       toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
       val comp = toolbar.component
-      comp.border = JBUI.Borders.emptyRight(8)
+      comp.border = JBUI.Borders.empty()
       comp.isOpaque = false
       comp
     }
