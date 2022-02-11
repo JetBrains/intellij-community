@@ -667,6 +667,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       this.icon = icon;
     }
 
+    @Override
+    public String toString() {
+      return name;  // called by `JBList#doCopyToClipboardAction`
+    }
+
     private static final Comparator<FsItem> COMPARATOR = (o1, o2) -> {
       if (o1.name == UPLINK) return -1;
       if (o2.name == UPLINK) return 1;
