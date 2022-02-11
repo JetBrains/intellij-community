@@ -4,6 +4,7 @@ package com.intellij.find;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -27,6 +28,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,6 +94,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final JLabel modeLabel = new JLabel(null, AllIcons.General.ChevronRight, SwingConstants.CENTER);
   private static final Color EDITOR_BACKGROUND = JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
+  @Nullable private final Shortcut findActionShortcut;
+  @Nullable private final Shortcut replaceActionShortcut;
+
   @NotNull
   public static Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
     return new Builder(project, component);
@@ -122,6 +127,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myMultilineEnabled = multilineEnabled;
     myAddSearchResultsToGlobalSearch = addSearchResultsToGlobalSearch;
     myUseSearchField = useSearchField;
+
+    ActionManager actionManager = ActionManager.getInstance();
+    findActionShortcut = ArrayUtil.getFirstElement(actionManager.getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts());
+    replaceActionShortcut = ArrayUtil.getFirstElement(actionManager.getAction(IdeActions.ACTION_REPLACE).getShortcutSet().getShortcuts());
 
     for (AnAction child : searchToolbar2Actions.getChildren(null)) {
       if (child instanceof Embeddable) {
@@ -345,6 +354,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     if (myCloseAction != null) {
       myCloseAction.run();
     }
+
+    if (modeLabel != null) {
+      HelpTooltip.dispose(modeLabel);
+    }
   }
 
   public void setRegularBackground() {
@@ -474,7 +487,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     updateReplaceComponent(replaceText);
     myReplaceFieldWrapper.setVisible(replaceMode);
     myReplaceToolbarWrapper.setVisible(replaceMode);
-    modeLabel.setIcon(replaceMode ? AllIcons.General.ChevronDown : AllIcons.General.ChevronRight);
+    if (ExperimentalUI.isNewUI()) {
+      modeLabel.setIcon(replaceMode ? AllIcons.General.ChevronDown : AllIcons.General.ChevronRight);
+
+      var shortcut = replaceMode ? findActionShortcut : replaceActionShortcut;
+      HelpTooltip.dispose(modeLabel);
+      new HelpTooltip().setTitle(FindBundle.message(replaceMode ? "find.tooltip.switch.to.find" : "find.tooltip.switch.to.replace")).
+        setShortcut(shortcut).installOn(modeLabel);
+    }
+
     if (needToResetReplaceFocus) myReplaceTextComponent.requestFocusInWindow();
     if (needToResetSearchFocus) mySearchTextComponent.requestFocusInWindow();
     updateBindings();
