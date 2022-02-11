@@ -8,9 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
@@ -69,7 +68,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     final List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> result =
       new ArrayList<>();
     for (int i = 0; i < length; i++) {
-      result.add(new ChangeClassSignatureFromUsageFix.TypeParameterInfoView(new TypeParameterInfo.Existing(i), null, null));
+      result.add(new ChangeClassSignatureFromUsageFix.TypeParameterInfoView(new Existing(i), null, null));
     }
     return result;
   }
@@ -167,10 +166,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       CommonRefactoringUtil.showErrorMessage(JavaRefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_CLASS_SIGNATURE, myClass.getProject());
       return;
     }
-    var provider = JavaSpecialRefactoringProvider.getInstance();
-    var processor = provider.getChangeClassSignatureProcessor(myClass.getProject(), myClass,
-                                                              myTypeParameterInfos.toArray(new TypeParameterInfo[0]));
-    invokeRefactoring(processor);
+    invokeRefactoring(JavaRefactoringFactory.getInstance(myProject)
+      .createChangeClassSignatureProcessor(myClass.getProject(), myClass, myTypeParameterInfos.toArray(new TypeParameterInfo[0])));
   }
 
   @NlsContexts.DialogMessage
@@ -178,7 +175,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     final Map<String, TypeParameterInfo> infos = new HashMap<>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
-      if (info instanceof TypeParameterInfo.New &&
+      if (info instanceof New &&
           !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getName(parameters))) {
         return JavaRefactoringBundle.message("error.wrong.name.input", info.getName(parameters));
       }
@@ -193,17 +190,17 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     LOG.assertTrue(myBoundValueTypeCodeFragments.size() == myTypeParameterInfos.size());
     for (int i = 0; i < myDefaultValueTypeCodeFragments.size(); i++) {
       TypeParameterInfo info = myTypeParameterInfos.get(i);
-      if (info instanceof TypeParameterInfo.Existing) continue;
-      String message = updateInfo(myDefaultValueTypeCodeFragments.get(i), (TypeParameterInfo.New)info, InfoUpdater.DEFAULT_VALUE);
+      if (info instanceof Existing) continue;
+      String message = updateInfo(myDefaultValueTypeCodeFragments.get(i), (New)info, InfoUpdater.DEFAULT_VALUE);
       if (message != null) return message;
-      message = updateInfo(myBoundValueTypeCodeFragments.get(i), (TypeParameterInfo.New)info, InfoUpdater.BOUND_VALUE);
+      message = updateInfo(myBoundValueTypeCodeFragments.get(i), (New)info, InfoUpdater.BOUND_VALUE);
       if (message != null) return message;
     }
     return null;
   }
 
   @NlsContexts.DialogMessage
-  private static String updateInfo(PsiTypeCodeFragment source, TypeParameterInfo.New info, InfoUpdater updater) {
+  private static String updateInfo(PsiTypeCodeFragment source, New info, InfoUpdater updater) {
     PsiType valueType;
     try {
       valueType = source.getType();
@@ -257,7 +254,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return myTypeParameterInfos.get(rowIndex) instanceof TypeParameterInfo.New;
+      return myTypeParameterInfos.get(rowIndex) instanceof New;
     }
 
     @Override
@@ -279,7 +276,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN:
-          ((TypeParameterInfo.New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
+          ((New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
           break;
         case BOUND_VALUE_COLUMN:
         case DEFAULT_VALUE_COLUMN:
@@ -292,7 +289,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     @Override
     public void addRow() {
       TableUtil.stopEditing(myTable);
-      myTypeParameterInfos.add(new TypeParameterInfo.New("", null, null));
+      myTypeParameterInfos.add(new New("", null, null));
       JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(myProject);
       PsiElement context = myClass.getLBrace() != null ? myClass.getLBrace() : myClass;
       myBoundValueTypeCodeFragments.add(CommonJavaRefactoringUtil.createTableCodeFragment(null, context, codeFragmentFactory, true));
@@ -338,13 +335,13 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private interface InfoUpdater {
-    void updateInfo(TypeParameterInfo.New info, PsiType type);
+    void updateInfo(New info, PsiType type);
 
     String getValueName();
 
     InfoUpdater DEFAULT_VALUE = new InfoUpdater() {
       @Override
-      public void updateInfo(TypeParameterInfo.New info, PsiType type) {
+      public void updateInfo(New info, PsiType type) {
         info.setDefaultValue(type);
       }
 
@@ -356,7 +353,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     InfoUpdater BOUND_VALUE = new InfoUpdater() {
       @Override
-      public void updateInfo(TypeParameterInfo.New info, PsiType type) {
+      public void updateInfo(New info, PsiType type) {
         info.setBoundValue(type);
       }
 

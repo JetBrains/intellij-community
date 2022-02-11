@@ -2,12 +2,9 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
@@ -68,8 +65,6 @@ public interface JavaSpecialRefactoringProvider {
                                                                        Set<PsiMethod> propagateParametersMethods,
                                                                        Set<PsiMethod> propagateExceptionsMethods,
                                                                        Runnable callback);
-
-  BaseRefactoringProcessor getChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature);
 
   LightMethodObjectExtractedData extractLightMethodObject(final Project project,
                                                           @Nullable PsiElement originalContext,

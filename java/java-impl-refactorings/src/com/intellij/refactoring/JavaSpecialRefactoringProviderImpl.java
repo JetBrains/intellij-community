@@ -2,20 +2,17 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor;
-import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
-import com.intellij.refactoring.changeSignature.*;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
-import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
-import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
@@ -95,11 +92,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
   @Override
   public void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException {
     MoveClassesOrPackagesUtil.moveDirectoryRecursively(dir, destination);
-  }
-
-  @Override
-  public BaseRefactoringProcessor getChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature) {
-    return new ChangeClassSignatureProcessor(project, aClass, newSignature);
   }
 
   @Override

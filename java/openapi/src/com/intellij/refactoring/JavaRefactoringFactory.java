@@ -4,6 +4,7 @@ package com.intellij.refactoring;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,4 +85,6 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
                                                      boolean exhaustive,
                                                      boolean cookObjects,
                                                      boolean cookToWildcards);
+  
+  public abstract ChangeClassSignatureRefactoring createChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature);
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.*;
+import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
@@ -148,5 +149,12 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
                                             boolean cookObjects,
                                             boolean cookToWildcards) {
     return new TypeCookRefactoringImpl(myProject, elements, dropObsoleteCasts, leaveObjectsRaw, preserveRawArrays, exhaustive, cookObjects, cookToWildcards);
+  }
+
+  @Override
+  public ChangeClassSignatureRefactoringImpl createChangeClassSignatureProcessor(Project project,
+                                                                           PsiClass aClass,
+                                                                           TypeParameterInfo[] newSignature) {
+    return new ChangeClassSignatureRefactoringImpl(project, aClass, newSignature);
   }
 }
