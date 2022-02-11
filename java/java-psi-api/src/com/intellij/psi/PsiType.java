@@ -73,7 +73,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} */
   @Deprecated
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public PsiArrayType createArrayType(PsiAnnotation @NotNull ... annotations) {
     return new PsiArrayType(this, annotations);
   }

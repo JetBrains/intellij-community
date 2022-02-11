@@ -50,7 +50,7 @@ public final class PluginManager {
    * @deprecated In a plugin code simply throw error or log using {@link Logger#error(Throwable)}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static void processException(@NotNull Throwable t) {
     try {
       Class<?> aClass = PluginManager.class.getClassLoader().loadClass("com.intellij.ide.plugins.StartupAbortedException");
@@ -88,7 +88,7 @@ public final class PluginManager {
    * @deprecated Use {@link #getPluginByClass}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
     return getPluginByClassNameAsNoAccessToClass(className);
   }
@@ -112,7 +112,7 @@ public final class PluginManager {
    * {@link DisabledPluginsState#disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull List<String> getDisabledPlugins() {
     Set<PluginId> list = DisabledPluginsState.disabledPlugins();
     return new AbstractList<String>() {

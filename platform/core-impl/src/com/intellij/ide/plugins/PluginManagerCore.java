@@ -291,7 +291,7 @@ public final class PluginManagerCore {
    * @deprecated Use {@link PluginManager#getPluginByClass}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
     PluginDescriptor result = getPluginDescriptorOrPlatformByClassName(className);
     PluginId id = result == null ? null : result.getPluginId();
@@ -302,7 +302,7 @@ public final class PluginManagerCore {
    * @deprecated Use {@link PluginManager#getPluginByClass}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
     PluginDescriptor result = getPluginDescriptorOrPlatformByClassName(className);
     return result == null ? null : result.getPluginId();
@@ -1173,7 +1173,7 @@ public final class PluginManagerCore {
 
   /** @deprecated Use {@link #enablePlugin(PluginId)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static boolean enablePlugin(@NotNull String id) {
     return enablePlugin(PluginId.getId(id));
   }
@@ -1181,7 +1181,7 @@ public final class PluginManagerCore {
   /** @deprecated Use {@link DisabledPluginsState#addDisablePluginListener} directly
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   public static void addDisablePluginListener(@NotNull Runnable listener) {
     DisabledPluginsState.addDisablePluginListener(listener);
   }

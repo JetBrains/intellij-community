@@ -49,7 +49,7 @@ public interface Condition<T> {
    * @deprecated use {@link Conditions#alwaysTrue()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   Condition<Object> TRUE = new Condition<Object>() {
     public boolean value(final Object object) {
       return true;
@@ -64,7 +64,7 @@ public interface Condition<T> {
    * @deprecated use {@link Conditions#alwaysFalse()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   Condition<Object> FALSE = new Condition<Object>() {
     public boolean value(final Object object) {
       return false;

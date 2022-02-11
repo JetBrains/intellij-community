@@ -62,7 +62,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    * @deprecated please don't use {@link PsiPrimitiveType} to represent fake types
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public PsiPrimitiveType(@NotNull String name, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myKind = null;
@@ -267,7 +267,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    * @deprecated please use {@link JvmPrimitiveTypeKind#getBoxedFqns}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static Collection<String> getAllBoxedTypeNames() {
     return JvmPrimitiveTypeKind.getBoxedFqns();
   }

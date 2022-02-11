@@ -222,7 +222,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
+    @ScheduledForRemoval
     public static final @NotNull Icon ShowViewer = load("actions/showViewer.png", 0, 0);
   }
 
@@ -1190,7 +1190,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2021.1 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
+    @ScheduledForRemoval
     public static final @NotNull Icon CreateNewProject = load("welcome/createNewProject.svg", 0, 0);
   }
 

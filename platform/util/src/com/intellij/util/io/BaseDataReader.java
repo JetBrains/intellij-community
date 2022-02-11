@@ -145,7 +145,7 @@ public abstract class BaseDataReader {
      * @deprecated use {@link #NON_BLOCKING} instead
      */
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @ApiStatus.ScheduledForRemoval
     SleepingPolicy SIMPLE = NON_BLOCKING;
   }
 

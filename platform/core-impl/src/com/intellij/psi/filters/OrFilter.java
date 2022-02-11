@@ -27,7 +27,7 @@ public class OrFilter implements ElementFilter {
 
   /** @deprecated use {@link #OrFilter(ElementFilter...)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public OrFilter() {
     myFilters = new SmartList<>();
   }
@@ -38,7 +38,7 @@ public class OrFilter implements ElementFilter {
 
   /** @deprecated use {@link #OrFilter(ElementFilter...)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public void addFilter(ElementFilter filter) {
     myFilters.add(filter);
   }

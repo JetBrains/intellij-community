@@ -133,12 +133,12 @@ public interface ProgressIndicator {
 
   /** @deprecated use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   default void startNonCancelableSection() {}
 
   /** @deprecated use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   default void finishNonCancelableSection() {}
 
   /**

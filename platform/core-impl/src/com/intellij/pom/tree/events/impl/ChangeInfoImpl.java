@@ -45,7 +45,7 @@ public class ChangeInfoImpl implements ChangeInfo {
    * @deprecated for API compatibility with Kotlin plugin
    */
   @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public TreeElement getOldChild() {
     return (TreeElement)myOldChild;

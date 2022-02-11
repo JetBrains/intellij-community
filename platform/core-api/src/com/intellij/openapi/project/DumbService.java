@@ -447,7 +447,7 @@ public abstract class DumbService {
    * @deprecated Obsolete, does nothing, just executes the passed runnable.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     runnable.run();
   }

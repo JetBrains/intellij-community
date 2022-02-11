@@ -80,7 +80,7 @@ public interface PluginDescriptor {
    * @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   default @Nullable String getDownloads() {
     return null;
   }

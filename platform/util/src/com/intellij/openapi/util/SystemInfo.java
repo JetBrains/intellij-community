@@ -187,68 +187,68 @@ public final class SystemInfo {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean IS_AT_LEAST_JAVA9 = JavaVersion.current().feature >= 9;
 
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isJavaVersionAtLeast(int major) {
     return JavaVersion.current().feature >= major;
   }
 
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
 
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
   /** @deprecated may be inaccurate; please use {@link CpuArch} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean is32Bit = CpuArch.CURRENT.width == 32;
 
   /** @deprecated may be inaccurate; please use {@link CpuArch} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
 
   /** @deprecated trivial and mostly outdated */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean isMacIntel64 = isMac && CpuArch.isIntel64();
 
   /** @deprecated always false */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean isAppleJvm = false;
 
   /** @deprecated always true (Java 8 requires macOS 10.9+) */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean isMacOSLeopard = isMac;
 
   /** @deprecated always true (Java 8 requires macOS 10.9+) */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean isMacOSMountainLion = isMac;
 
   /** @deprecated always true (Java 8 requires Windows Vista / Server 2008) */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean isWinVistaOrNewer = isWindows;
 
   /** @deprecated always true */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean areSymLinksSupported = isUnix || isWindows;
   //</editor-fold>
 }

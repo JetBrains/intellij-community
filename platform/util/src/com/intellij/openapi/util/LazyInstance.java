@@ -9,7 +9,7 @@ import java.lang.reflect.Constructor;
 /**
  * @deprecated Use {@link com.intellij.openapi.components.ComponentManager#instantiateClass}
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public abstract class LazyInstance<T> extends NotNullLazyValue<T> {
   protected abstract Class<T> getInstanceClass() throws ClassNotFoundException;

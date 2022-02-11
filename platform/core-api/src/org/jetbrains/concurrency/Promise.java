@@ -105,7 +105,7 @@ public interface Promise<T> {
    * @deprecated Use {@link #onError(java.util.function.Consumer)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   default Promise<T> rejected(@NotNull Consumer<? super Throwable> rejected) {
     return onError(it -> rejected.consume(it));
@@ -131,7 +131,7 @@ public interface Promise<T> {
    * @deprecated use {@link #onProcessed(java.util.function.Consumer)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   default Promise<T> processed(@NotNull Consumer<? super T> action) {
     return onProcessed(it -> action.consume(it));
