@@ -48,7 +48,10 @@ open class CodeVisionHost(val project: Project) {
 
   protected val codeVisionLifetime = project.createLifetime()
 
-  data class LensInvalidateSignal(val editor: Editor?, val providerId: String?)
+  /**
+   * Pass empty list to update ALL providers in editor
+   */
+  data class LensInvalidateSignal(val editor: Editor?, val providerIds: Collection<String> = emptyList())
 
   val invalidateProviderSignal: Signal<LensInvalidateSignal> = Signal()
 
@@ -73,7 +76,7 @@ open class CodeVisionHost(val project: Project) {
 
 
       invalidateProviderSignal.advise(enableCodeVisionLifetime) { invalidateSignal ->
-        if (invalidateSignal.editor == null && invalidateSignal.providerId == null)
+        if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
           viewService.setPerAnchorLimits(
             CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
 
@@ -185,43 +188,39 @@ open class CodeVisionHost(val project: Project) {
     mergingQueueFront.isPassThrough = false
     var calcRunning = false
 
-    fun recalculateLenses(single: String? = null) {
+    fun recalculateLenses(providersToRecalculate: Collection<String> = emptyList()) {
       if (!editorManager.selectedEditors.any { isAllowedFileEditor(it) && (it as TextEditor).editor == editor }) {
         recalculateWhenVisible = true
         return
       }
       recalculateWhenVisible = false
-      if (calcRunning && single != null)
-        return recalculateLenses(null)
+      if (calcRunning && providersToRecalculate.isNotEmpty())
+        return recalculateLenses(emptyList())
       calcRunning = true
       val lt = calculationLifetimes.next()
-      calculateFrontendLenses(lt, editor, single) { lenses ->
-        val newLenses = if (single != null) {
-          previousLenses.filter { it.second.providerId != single } + lenses
-        }
-        else {
-          lenses
-        }
+      calculateFrontendLenses(lt, editor, providersToRecalculate) { lenses, providersToUpdate ->
+        val newLenses = previousLenses.filter { !providersToUpdate.contains(it.second.providerId) } + lenses
+
         editor.lensContextOrThrow.setResults(newLenses)
         previousLenses = newLenses
         calcRunning = false
       }
     }
 
-    fun pokeEditor(providerId: String? = null) {
+    fun pokeEditor(providersToRecalculate: Collection<String> = emptyList()) {
       editor.lensContextOrThrow.notifyPendingLenses()
       val shouldRecalculateAll = mergingQueueFront.isEmpty.not()
       mergingQueueFront.cancelAllUpdates()
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
-          recalculateLenses(if (shouldRecalculateAll) null else providerId)
+          recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
         }
       })
     }
 
     invalidateProviderSignal.advise(editorLifetime) {
       if (it.editor == null || it.editor === editor) {
-        pokeEditor(it.providerId)
+        pokeEditor(it.providerIds)
       }
     }
 
@@ -248,47 +247,47 @@ open class CodeVisionHost(val project: Project) {
 
   private fun calculateFrontendLenses(calcLifetime: Lifetime,
                                       editor: Editor,
-                                      singleLensProvider: String? = null,
+                                      providersToRecalculate: Collection<String> = emptyList(),
                                       inTestSyncMode: Boolean = false,
-                                      consumer: (List<Pair<TextRange, CodeVisionEntry>>) -> Unit) {
+                                      consumer: (List<Pair<TextRange, CodeVisionEntry>>, List<String>) -> Unit) {
     val precalculatedUiThings = providers.associate {
-      if (singleLensProvider != null && singleLensProvider != it.id) return@associate it.id to null
+      if (providersToRecalculate.isNotEmpty() && !providersToRecalculate.contains(it.id)) return@associate it.id to null
       it.id to it.precomputeOnUiThread(editor)
     }
     executeOnPooledThread(calcLifetime, inTestSyncMode) {
       ProgressManager.checkCanceled()
       val results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
-      var shouldResetCodeVision = true
+      val providerWhoWantToUpdate = mutableListOf<String>()
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
-        if (singleLensProvider != null && singleLensProvider != it.id) return@forEach
+        if (providersToRecalculate.isNotEmpty() && !providersToRecalculate.contains(it.id)) return@forEach
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
         if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
           if (editor.lensContextOrThrow.hasProviderCodeVision(it.groupId)) {
-            shouldResetCodeVision = false
+            providerWhoWantToUpdate.add(it.id)
           }
           return@forEach
         }
         if(!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) return@forEach
-        shouldResetCodeVision = false
+        providerWhoWantToUpdate.add(it.id)
         val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
         results.addAll(result)
       }
 
-      if(shouldResetCodeVision) {
+      if(providerWhoWantToUpdate.isEmpty()) {
         editor.lensContextOrThrow.discardPending()
         return@executeOnPooledThread
       }
 
       if (!inTestSyncMode) {
         application.invokeLater {
-          calcLifetime.executeIfAlive { consumer(results) }
+          calcLifetime.executeIfAlive { consumer(results, providerWhoWantToUpdate) }
         }
       }
       else {
-        consumer(results)
+        consumer(results, providerWhoWantToUpdate)
       }
     }
   }
@@ -317,8 +316,8 @@ open class CodeVisionHost(val project: Project) {
 
   @TestOnly
   fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
-    calculateFrontendLenses(testRootDisposable.createLifetime(), editor, singleLensProvider = null, inTestSyncMode = true) {
-      editor.lensContextOrThrow.setResults(it)
+    calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
+      editor.lensContextOrThrow.setResults(lenses)
     }
   }
 

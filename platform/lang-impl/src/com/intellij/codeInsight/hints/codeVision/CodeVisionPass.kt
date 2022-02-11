@@ -59,7 +59,7 @@ class CodeVisionPass(
   private fun updateProviders() {
     val codeVisionHost = CodeVisionHost.getInstance(myProject)
     for (providerId in providerIdToLenses.keys) {
-      codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerId))
+      codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerIdToLenses.keys))
     }
   }
 }
