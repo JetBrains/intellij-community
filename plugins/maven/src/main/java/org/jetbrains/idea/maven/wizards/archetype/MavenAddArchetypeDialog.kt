@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
-import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
@@ -66,22 +66,22 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
       textField()
         .bindText(archetypeGroupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
+        .validationRequestor(AFTER_CHANGE(archetypeGroupIdProperty))
         .validationOnInput { validateGroupId() }
-        .validationOnApply { validateGroupId() }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.label")) {
       textField()
         .bindText(archetypeArtifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
+        .validationRequestor(AFTER_CHANGE(archetypeArtifactIdProperty))
         .validationOnInput { validateArtifactId() }
-        .validationOnApply { validateArtifactId() }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
       textField()
         .bindText(archetypeVersionProperty.trim())
         .columns(COLUMNS_MEDIUM)
+        .validationRequestor(AFTER_CHANGE(archetypeVersionProperty))
         .validationOnInput { validateVersion() }
-        .validationOnApply { validateVersion() }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
@@ -90,8 +90,8 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
         .bindText(catalogLocationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
+        .validationRequestor(AFTER_CHANGE(catalogLocationProperty))
         .validationOnInput { validateCatalogLocation() }
-        .validationOnApply { validateCatalogLocation() }
     }
   }
 

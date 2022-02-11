@@ -61,7 +61,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
     if (step !in stepsPanels) {
       val stepUi = steps[step] ?: return null
       val panel = panel {
-        validateAfterPropagation(stepUi.propertyGraph)
+        validationRequestor(AFTER_PROPAGATION(stepUi.propertyGraph))
         stepUi.setupUI(this)
       }
       panel.setMinimumWidthForAllRowLabels(JBUI.scale(90))

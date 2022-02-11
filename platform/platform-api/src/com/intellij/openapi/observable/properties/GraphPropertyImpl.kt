@@ -17,7 +17,7 @@ class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: ()
     propertyGraph.afterPropagation(listener = listener)
   }
 
-  override fun afterPropagation(parentDisposable: Disposable, listener: () -> Unit) {
+  override fun afterPropagation(parentDisposable: Disposable?, listener: () -> Unit) {
     propertyGraph.afterPropagation(parentDisposable, listener)
   }
 

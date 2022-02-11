@@ -27,6 +27,16 @@ interface ObservableProperty<T> : ReadOnlyProperty<Any?, T> {
    */
   fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable)
 
+  @JvmDefault
+  fun afterChange(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
+    if (parentDisposable == null) {
+      afterChange(listener)
+    }
+    else {
+      afterChange(listener, parentDisposable)
+    }
+  }
+
   /**
    * Value of Kotlin property can be delegated to ObservableProperty.
    *

@@ -32,7 +32,7 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
    * @see PropertyGraph.afterPropagation
    */
   @JvmDefault
-  fun afterPropagation(parentDisposable: Disposable, listener: () -> Unit) {
+  fun afterPropagation(parentDisposable: Disposable?, listener: () -> Unit) {
     afterPropagation(listener)
   }
 

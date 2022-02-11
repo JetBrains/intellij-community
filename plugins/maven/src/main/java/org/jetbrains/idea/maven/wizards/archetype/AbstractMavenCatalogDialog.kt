@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
-import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
@@ -49,12 +49,14 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
         .bindText(locationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
+        .validationRequestor(AFTER_CHANGE(locationProperty))
         .validationOnInput { validateCatalogLocation(location) }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
         .bindText(nameProperty.trim())
         .columns(COLUMNS_MEDIUM)
+        .validationRequestor(AFTER_CHANGE(nameProperty))
         .validationOnInput { validateName() }
     }
     onApply { onApply() }
