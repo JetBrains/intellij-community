@@ -65,6 +65,14 @@ public abstract class Rule {
   }
 
   /**
+   * @return the presentable name of the rule's sub-category (to be displayed under the category node in the Rule Settings tree),
+   * or {@code null} if there's none.
+   * */
+  public @Nullable String getSubCategory() {
+    return null;
+  }
+
+  /**
    * @return whether this rule is enabled by default
    */
   public boolean isEnabledByDefault() {
