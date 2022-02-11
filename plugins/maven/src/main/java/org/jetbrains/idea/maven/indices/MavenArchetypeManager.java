@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -19,6 +20,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.jetbrains.idea.maven.project.MavenEmbeddersManager.FOR_POST_PROCESSING;
@@ -63,7 +65,7 @@ public class MavenArchetypeManager {
 
   public Set<MavenArchetype> getArchetypes() {
     MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(myProject);
-    Set<MavenArchetype> result = new HashSet<>(getEmbedderWrapper().getArchetypes());
+    Set<MavenArchetype> result = new HashSet<>(getInnerArchetypes());
     result.addAll(loadUserArchetypes(getUserArchetypesFile()));
     if (!indicesManager.isInit()) {
       indicesManager.updateIndicesListSync();
@@ -90,15 +92,15 @@ public class MavenArchetypeManager {
   }
 
   public Collection<MavenArchetype> getInnerArchetypes() {
-    return getEmbedderWrapper().getArchetypes();
+    return executeWithMavenEmbedderWrapper(wrapper -> wrapper.getArchetypes());
   }
 
   public Collection<MavenArchetype> getInnerArchetypes(Path path) {
-    return getEmbedderWrapper().getInnerArchetypes(path);
+    return executeWithMavenEmbedderWrapper(wrapper -> wrapper.getInnerArchetypes(path));
   }
 
   public Collection<MavenArchetype> getRemoteArchetypes(String url) {
-    return getEmbedderWrapper().getRemoteArchetypes(url);
+    return executeWithMavenEmbedderWrapper(wrapper -> wrapper.getRemoteArchetypes(url));
   }
 
   /**
@@ -109,13 +111,21 @@ public class MavenArchetypeManager {
   @Nullable
   public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
                                                               @NotNull String version, @Nullable String url) {
-    MavenEmbedderWrapper embedderWrapper = getEmbedderWrapper();
-    return embedderWrapper.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, Collections.emptyList(), url);
+    return executeWithMavenEmbedderWrapper(
+      wrapper -> wrapper.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, Collections.emptyList(), url)
+    );
   }
 
   @NotNull
-  private MavenEmbedderWrapper getEmbedderWrapper() {
-    return MavenProjectsManager.getInstance(myProject).getEmbeddersManager().getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+  private <R> R executeWithMavenEmbedderWrapper(Function<MavenEmbedderWrapper, R> function) {
+    MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+    try {
+      return function.apply(mavenEmbedderWrapper);
+    }
+    finally {
+      manager.release(mavenEmbedderWrapper);
+    }
   }
 
   @NotNull

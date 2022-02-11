@@ -1576,13 +1576,15 @@ public class MavenUtil {
   public static Set<MavenRemoteRepository> getRemoteResolvedRepositories(@NotNull Project project) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
+    MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
+    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, EMPTY, EMPTY);
     try {
-      MavenEmbedderWrapper mavenEmbedderWrapper = projectsManager.getEmbeddersManager()
-        .getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, EMPTY, EMPTY);
-      Set<MavenRemoteRepository> resolvedRepositories = mavenEmbedderWrapper.resolveRepositories(repositories);
+      Set<MavenRemoteRepository> resolvedRepositories = embedderWrapper.resolveRepositories(repositories);
       return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
     } catch (Exception e) {
       MavenLog.LOG.warn("resolve remote repo error", e);
+    } finally {
+      embeddersManager.release(embedderWrapper);
     }
     return repositories;
   }
