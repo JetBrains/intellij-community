@@ -85,7 +85,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     TemplateState state = TemplateManagerImpl.getTemplateState(editor);
     if (state != null && !state.isFinished()) {
-      return;
+      state.gotoEnd();
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
