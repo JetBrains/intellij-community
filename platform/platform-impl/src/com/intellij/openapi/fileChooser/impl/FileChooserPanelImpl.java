@@ -27,7 +27,7 @@ import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -692,7 +692,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (o1.name == UPLINK) return -1;
       if (o2.name == UPLINK) return 1;
       var byType = Boolean.compare(o2.directory, o1.directory);
-      return byType != 0 ? byType : StringUtil.compare(o1.name, o2.name, !o1.cs);
+      if (byType != 0) return byType;
+      return (o1.cs ? NaturalComparator.CASE_SENSITIVE_INSTANCE : NaturalComparator.INSTANCE).compare(o1.name, o2.name);
     };
   }
 
