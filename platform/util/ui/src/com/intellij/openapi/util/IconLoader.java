@@ -447,6 +447,14 @@ public final class IconLoader {
     return ImageDataByPathLoader.findIcon(path, classLoader, iconCache);
   }
 
+  public static @Nullable Icon findResolvedIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
+    Icon icon = ImageDataByPathLoader.findIcon(path, classLoader, iconCache);
+    if (icon instanceof CachedImageIcon && ((CachedImageIcon)icon).getRealIcon() == CachedImageIcon.EMPTY_ICON) {
+      return null;
+    }
+    return icon;
+  }
+
   public static @Nullable Image toImage(@NotNull Icon icon) {
     return toImage(icon, null);
   }
