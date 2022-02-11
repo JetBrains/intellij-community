@@ -45,7 +45,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -220,8 +219,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    *
    * @deprecated Override {@link #execute(ExecutionEnvironment, RunProfileState)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
     throws ExecutionException {
@@ -620,8 +618,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger and this method must be replaced with
    * {@link #MULTIPROCESS_PARAM} constant.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   private static @NotNull String getMultiprocessDebugParameter() {
     if (Registry.get("python.debugger.use.dispatcher").asBoolean()) {
       return "--multiproc";

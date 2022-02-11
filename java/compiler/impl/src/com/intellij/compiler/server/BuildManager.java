@@ -10,7 +10,6 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.YourKitProfilerService;
 import com.intellij.compiler.cache.CompilerCacheConfigurator;
 import com.intellij.compiler.cache.CompilerCacheStartupActivity;
-import com.intellij.compiler.cache.git.GitRepositoryUtil;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
@@ -95,7 +94,6 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1602,8 +1600,7 @@ public final class BuildManager implements Disposable {
   /**
    * @deprecated use {@link #getBuildSystemDirectory(Project)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Path getBuildSystemDirectory() {
     return LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory();

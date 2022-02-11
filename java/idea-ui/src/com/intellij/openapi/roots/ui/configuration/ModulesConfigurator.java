@@ -44,7 +44,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,8 +82,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   /**
    * @deprecated use {@link ModuleManager} to access modules instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ModulesConfigurator(Project project) {
     this(project, ProjectStructureConfigurable.getInstance(project));
   }

@@ -98,8 +98,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory) throws ExecutionException {
     throw new AssertionError("Call createProcess(TerminalProcessOptions, JBTerminalWidget)");
   }
@@ -107,8 +106,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     return createProcess(directory);
   }
@@ -118,8 +116,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createTerminalWidget(Disposable, VirtualFile, boolean)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
     return createTerminalWidget(parent, currentWorkingDirectory, true);
@@ -128,8 +125,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link AbstractTerminalRunner#createTerminalWidget(Disposable, String, boolean)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                   @Nullable VirtualFile currentWorkingDirectory,
@@ -260,8 +256,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    * @deprecated use {@link #createTerminalWidget(Disposable, String, boolean)} instead
    * It will be private in future releases.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
                                      @Nullable String directory) {

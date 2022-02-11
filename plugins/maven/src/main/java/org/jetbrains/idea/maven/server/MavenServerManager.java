@@ -331,8 +331,7 @@ public final class MavenServerManager implements Disposable {
    * @deprecated use {@link MavenGeneralSettings.mavenHome} and {@link MavenUtil.getMavenVersion}
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String getCurrentMavenVersion() {
     return null;
   }

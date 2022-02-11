@@ -29,7 +29,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,8 +259,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
   /**
    * @deprecated use {@link #addPhysicalAnnotationIfAbsent(String, PsiNameValuePair[], PsiAnnotationOwner)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated(forRemoval = true)
   public static PsiAnnotation addPhysicalAnnotation(String fqn, PsiNameValuePair[] pairs, PsiModifierList modifierList) {
     return addPhysicalAnnotationTo(fqn, pairs, modifierList);
   }

@@ -15,7 +15,6 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +36,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   private final @Nullable ServerSocket myDebugServerSocket;
   private DebuggerProcessAcceptor myDebugProcessAcceptor;
   private final List<DebuggerProcessListener> myOtherDebuggerCloseListener = new ArrayList<>();
@@ -54,8 +52,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                               @NotNull final ServerSocket serverSocket,
                               final int timeoutInMillis,
@@ -115,8 +112,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   private static void sendDebuggerPort(@NotNull Socket socket, @NotNull ServerSocket serverSocket, @NotNull IPyDebugProcess processHandler)
     throws IOException {
     int port = processHandler.handleDebugPort(serverSocket.getLocalPort());
@@ -130,8 +126,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   @NotNull
   private static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
@@ -147,8 +142,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   private boolean useDispatcher() {
     return myDebugServerSocket != null;
   }

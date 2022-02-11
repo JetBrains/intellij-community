@@ -4,7 +4,6 @@ package com.intellij.codeInspection.blockingCallsDetection;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,8 +36,7 @@ public interface NonBlockingContextChecker {
   /**
    * @deprecated Override {@link #computeContextType(ElementContext)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   default boolean isContextNonBlockingFor(@NotNull PsiElement element) {
     return false;
   }

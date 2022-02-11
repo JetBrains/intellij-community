@@ -3,7 +3,6 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiParameter;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UParameter;
 
@@ -40,8 +39,7 @@ public interface RefParameter extends RefJavaElement {
   /**
    * @see RefParameter#getActualConstValue()
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   default String getActualValueIfSame() {
     throw new UnsupportedOperationException();
