@@ -5,12 +5,11 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementNavigationProvider;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
-import java.util.stream.Stream;
 
 public class DomGotoSuperHandler implements CodeInsightActionHandler {
   @Override
@@ -19,18 +18,18 @@ public class DomGotoSuperHandler implements CodeInsightActionHandler {
                      @NotNull PsiFile file) {
 
     var currentElement = DomUtil.getDomElement(editor, file);
-    if (currentElement == null) {
-      return;
+    while (currentElement != null) {
+      DomElementNavigationProvider provider = getDomElementNavigationProvider(currentElement);
+      if (provider != null) {
+        provider.navigate(currentElement, true);
+        return;
+      } else {
+        currentElement = currentElement.getParent();
+      }
     }
+  }
 
-    Stream.iterate(currentElement, Objects::nonNull, DomElement::getParent)
-      .flatMap(element -> {
-        return DomGotoActions.DOM_GOTO_SUPER.getExtensionList()
-          .stream()
-          .filter(p -> p.canNavigate(element))
-          .<Runnable>map(p -> () -> p.navigate(element, true));
-      })
-      .findFirst()
-      .ifPresent(Runnable::run);
+  private static DomElementNavigationProvider getDomElementNavigationProvider(DomElement element) {
+    return ContainerUtil.find(DomGotoActions.DOM_GOTO_SUPER.getExtensionList(), p -> p.canNavigate(element));
   }
 }
