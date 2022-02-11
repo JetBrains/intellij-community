@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.*;
@@ -8,8 +9,10 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
+import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,6 +73,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         if (tailRegion != null && tailRegion == headerRegion) return;
 
         boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
+        Color color = getIndentColor(editor, startOffset, selected);
 
         int lineHeight = editor.getLineHeight();
         Point start = editor.visualPositionToXY(lineStartPosition);
@@ -91,8 +95,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         if (start.y >= maxY) return;
 
         int targetX = Math.max(0, start.x + EditorPainter.getIndentGuideShift(editor));
-        EditorColorsScheme scheme = editor.getColorsScheme();
-        g.setColor(scheme.getColor(selected ? EditorColors.SELECTED_INDENT_GUIDE_COLOR : EditorColors.INDENT_GUIDE_COLOR));
+        g.setColor(color);
         // There is a possible case that indent line intersects soft wrap-introduced text. Example:
         //     this is a long line <soft-wrap>
         // that| is soft-wrapped
@@ -142,7 +145,24 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
 
     }
 
-    protected boolean isSelected(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
+  private static Color getIndentColor(Editor editor, int startOffset, boolean selected) {
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    List<RangeHighlighter> highlighters = ContainerUtil.filter(editor.getMarkupModel().getAllHighlighters(),
+                                                               x -> x.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer);
+    if (!highlighters.isEmpty()) {
+      DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighters.get(0).getLineMarkerRenderer();
+      assert renderer != null;
+      if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighters.get(0).getStartOffset(), false)) {
+        Color color = renderer.getColor();
+        if (color != null) {
+          return color;
+        }
+      }
+    }
+    return scheme.getColor(selected ? EditorColors.SELECTED_INDENT_GUIDE_COLOR : EditorColors.INDENT_GUIDE_COLOR);
+  }
+
+  protected boolean isSelected(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
         IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
         if (guide == null) return false;
         return isCaretOnGuide(editor, endOffset, off, indentColumn);
