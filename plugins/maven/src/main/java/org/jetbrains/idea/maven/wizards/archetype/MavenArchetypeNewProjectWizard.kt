@@ -172,28 +172,20 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       val isEmptyGroupId = archetypeItem.groupId.isEmpty()
       val isEmptyArtifactId = archetypeItem.artifactId.isEmpty()
       if (isEmptyGroupId && isEmptyArtifactId) {
-        val message = MavenWizardBundle.message("maven.new.project.wizard.archetype.error.empty")
-        Messages.showErrorDialog(archetypeVersionComboBox, message)
-        return error(message)
+        return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.error.empty"))
       }
       if (isEmptyGroupId) {
-        val message = MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.error.empty")
-        Messages.showErrorDialog(archetypeVersionComboBox, message)
-        return error(message)
+        return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.error.empty"))
       }
       if (isEmptyArtifactId) {
-        val message = MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.error.empty")
-        Messages.showErrorDialog(archetypeVersionComboBox, message)
-        return error(message)
+        return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.error.empty"))
       }
       return null
     }
 
     fun ValidationInfoBuilder.validateArchetypeVersion(): ValidationInfo? {
       if (archetypeVersion.isEmpty()) {
-        val message = MavenWizardBundle.message("maven.new.project.wizard.archetype.version.error.empty")
-        Messages.showErrorDialog(archetypeVersionComboBox, message)
-        return error(message)
+        return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.error.empty"))
       }
       return null
     }

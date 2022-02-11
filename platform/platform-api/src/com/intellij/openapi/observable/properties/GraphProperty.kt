@@ -28,6 +28,14 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
    */
   fun afterPropagation(listener: () -> Unit)
 
+  /**
+   * @see PropertyGraph.afterPropagation
+   */
+  @JvmDefault
+  fun afterPropagation(parentDisposable: Disposable, listener: () -> Unit) {
+    afterPropagation(listener)
+  }
+
   @JvmDefault
   @Deprecated("Use set instead")
   @ApiStatus.ScheduledForRemoval

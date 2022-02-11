@@ -395,11 +395,9 @@ public abstract class DialogWrapper {
     if (vi != null) {
       result.add(vi);
     }
-    for (Function0<ValidationInfo> callback : getValidateCallbacks()) {
-      ValidationInfo callbackInfo = callback.invoke();
-      if (callbackInfo != null) {
-        result.add(callbackInfo);
-      }
+    var dialogPanel = getDialogPanel();
+    if (dialogPanel != null) {
+      result.addAll(dialogPanel.validateAll());
     }
     return result;
   }
@@ -2141,8 +2139,7 @@ public abstract class DialogWrapper {
     abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter implements DoNotAskOption {}
   }
 
-  private List<Function0<ValidationInfo>> getValidateCallbacks() {
-    return centerPanel != null && centerPanel instanceof DialogPanel ?
-           ((DialogPanel) centerPanel).getValidateCallbacks() : Collections.emptyList();
+  private @Nullable DialogPanel getDialogPanel() {
+    return centerPanel instanceof DialogPanel ? ((DialogPanel)centerPanel) : null;
   }
 }

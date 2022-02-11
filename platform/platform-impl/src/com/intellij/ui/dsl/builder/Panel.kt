@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -174,6 +174,8 @@ interface Panel : CellBase<Panel> {
    * @param validationRequestor gets callback (component validator) that should be subscribed on custom event.
    */
   fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Panel
+
+  fun validationRequestor(validationRequestor: DialogValidationRequestor): Panel
 }
 
 @Deprecated("Use buttonsGroup(...) instead")

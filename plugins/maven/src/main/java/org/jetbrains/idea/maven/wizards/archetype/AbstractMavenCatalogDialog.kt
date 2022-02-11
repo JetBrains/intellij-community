@@ -50,14 +50,12 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateCatalogLocation(location) }
-        .validationOnApply { validateCatalogLocation(location) }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
         .bindText(nameProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateName() }
-        .validationOnApply { validateName() }
     }
     onApply { onApply() }
   }

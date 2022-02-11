@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.DialogValidationRequestor
+import com.intellij.openapi.ui.DialogValidation
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
@@ -14,14 +15,16 @@ internal class DialogPanelConfig {
   val context = Context()
 
   var preferredFocusedComponent: JComponent? = null
-  val validateCallbacks = mutableListOf<() -> ValidationInfo?>()
-  val componentValidateCallbacks = linkedMapOf<JComponent, () -> ValidationInfo?>()
-  val validationRequestors = mutableListOf<(() -> Unit) -> Unit>()
-  val componentValidationRequestors = linkedMapOf<JComponent, MutableList<(() -> Unit) -> Unit>>()
+
   val applyCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
   val resetCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
   val isModifiedCallbacks = linkedMapOf<JComponent?, MutableList<() -> Boolean>>()
 
+  val panelValidationRequestors = mutableListOf<DialogValidationRequestor>()
+  val componentValidationRequestors = linkedMapOf<JComponent, MutableList<DialogValidationRequestor>>()
+  val componentValidations = linkedMapOf<JComponent, MutableList<DialogValidation>>()
+  val panelValidationsOnApply = mutableListOf<DialogValidation>()
+  val componentValidationsOnApply = linkedMapOf<JComponent, MutableList<DialogValidation>>()
 }
 
 fun <T> MutableMap<JComponent?, MutableList<() -> T>>.register(component: JComponent?, callback: () -> T) {

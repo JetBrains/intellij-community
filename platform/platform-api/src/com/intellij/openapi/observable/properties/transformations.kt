@@ -48,6 +48,10 @@ private class GraphPropertyView<S, T>(
   override fun afterPropagation(listener: () -> Unit) =
     instance.afterPropagation(listener)
 
+  override fun afterPropagation(parentDisposable: Disposable, listener: () -> Unit) {
+    instance.afterPropagation(parentDisposable, listener)
+  }
+
   override fun reset() =
     instance.reset()
 

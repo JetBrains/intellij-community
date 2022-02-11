@@ -1,9 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.util.whenTextChanged
+import com.intellij.openapi.ui.DialogValidationRequestor
+import com.intellij.openapi.ui.DialogValidation
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
@@ -20,6 +24,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
 internal class CellImpl<T : JComponent>(
@@ -173,15 +178,25 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {
+    return validationRequestor(DialogValidationRequestor.create(validationRequestor))
+  }
+
+  override fun validationRequestor(validationRequestor: DialogValidationRequestor): CellImpl<T> {
     val origin = component.origin
     dialogPanelConfig.componentValidationRequestors.getOrPut(origin) { SmartList() }
       .add(validationRequestor)
     return this
   }
 
-  override fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+  override fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
-    dialogPanelConfig.validateCallbacks.add { callback(ValidationInfoBuilder(origin), component) }
+    return validationOnApply(DialogValidation.create { ValidationInfoBuilder(origin).validation(component) })
+  }
+
+  override fun validationOnApply(validation: DialogValidation): CellImpl<T> {
+    val origin = component.origin
+    dialogPanelConfig.componentValidationsOnApply.getOrPut(origin) { SmartList() }
+      .add(validation)
     return this
   }
 
@@ -189,22 +204,47 @@ internal class CellImpl<T : JComponent>(
     return validationOnApply { if (condition(it)) error(message) else null }
   }
 
-  override fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+  override fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
-    dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
+    return validationOnInput(DialogValidation.create { ValidationInfoBuilder(origin).validation(component) })
+  }
 
-    property?.let { property ->
-      if (dialogPanelConfig.validationRequestors.isNotEmpty()) return this
-      if (component.origin in dialogPanelConfig.componentValidationRequestors) return this
-      logger<Cell<*>>().warn("Please, install Cell.validationRequestor or Panel.validationRequestor", Throwable())
-      if (property is GraphProperty) {
-        validateAfterPropagation(property)
-      } else {
-        validateAfterChange(property)
-      }
-    }
+  override fun validationOnInput(validation: DialogValidation): CellImpl<T> {
+    val origin = component.origin
+    dialogPanelConfig.componentValidations.getOrPut(origin) { SmartList() }
+      .add(validation)
+
+    // Fallback in case if no validation requestors is defined
+    guessAndInstallValidationRequestor()
 
     return this
+  }
+
+  private fun guessAndInstallValidationRequestor() {
+    val stackTrace = Throwable()
+    val origin = component.origin
+    val componentValidationRequestors = dialogPanelConfig.componentValidationRequestors.getOrPut(origin) { SmartList() }
+    componentValidationRequestors.add(object : DialogValidationRequestor {
+      override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
+        if (dialogPanelConfig.panelValidationRequestors.isNotEmpty()) return
+        if (componentValidationRequestors.size > 1) return
+
+        logger<Cell<*>>().warn("Please, install Cell.validationRequestor or Panel.validationRequestor", stackTrace)
+        when (val property = property) {
+          null -> when (origin) {
+            is JTextComponent -> origin.whenTextChanged(parentDisposable) { validate() }
+          }
+          is GraphProperty -> when (parentDisposable) {
+            null -> property.afterPropagation { validate() }
+            else -> property.afterPropagation(parentDisposable) { validate() }
+          }
+          else -> when (parentDisposable) {
+            null -> property.afterChange { validate() }
+            else -> property.afterChange({ validate() }, parentDisposable)
+          }
+        }
+      }
+    })
   }
 
   override fun onApply(callback: () -> Unit): CellImpl<T> {

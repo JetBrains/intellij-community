@@ -3,6 +3,8 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogValidation
+import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.*
@@ -135,9 +137,20 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Cell<T>
 
   /**
+   * Registers custom [validationRequestor] for current [component].
+   * It allows showing validation waring/error on custom event. For example on component data change.
+   */
+  fun validationRequestor(validationRequestor: DialogValidationRequestor): Cell<T>
+
+  /**
    * Adds [component] validation
    */
-  fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+  fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  /**
+   * Adds [component] validation
+   */
+  fun validationOnApply(validation: DialogValidation): Cell<T>
 
   /**
    * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply]
@@ -147,7 +160,12 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * Adds [component] validation
    */
-  fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+  fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  /**
+   * Adds [component] validation
+   */
+  fun validationOnInput(validation: DialogValidation): Cell<T>
 
   /**
    * Registers [callback] that will be called for [component] from [DialogPanel.apply] method

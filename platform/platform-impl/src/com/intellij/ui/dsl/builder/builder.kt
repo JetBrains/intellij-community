@@ -29,11 +29,14 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
 
 private fun initPanel(dialogPanelConfig: DialogPanelConfig, panel: DialogPanel) {
   panel.preferredFocusedComponent = dialogPanelConfig.preferredFocusedComponent
-  panel.validateCallbacks = dialogPanelConfig.validateCallbacks
-  panel.componentValidateCallbacks = dialogPanelConfig.componentValidateCallbacks
-  panel.validationRequestors = dialogPanelConfig.validationRequestors
-  panel.customValidationRequestors = dialogPanelConfig.componentValidationRequestors
+
   panel.applyCallbacks = dialogPanelConfig.applyCallbacks
   panel.resetCallbacks = dialogPanelConfig.resetCallbacks
   panel.isModifiedCallbacks = dialogPanelConfig.isModifiedCallbacks
+
+  panel.panelValidationRequestors = dialogPanelConfig.panelValidationRequestors
+  panel.componentValidationRequestors = dialogPanelConfig.componentValidationRequestors
+  panel.componentValidations = dialogPanelConfig.componentValidations
+  panel.panelValidationsOnApply = dialogPanelConfig.panelValidationsOnApply
+  panel.componentValidationsOnApply = dialogPanelConfig.componentValidationsOnApply
 }

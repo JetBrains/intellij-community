@@ -64,7 +64,6 @@ abstract class AbstractNewProjectWizardMultiStepBase(
         validateAfterPropagation(stepUi.propertyGraph)
         stepUi.setupUI(this)
       }
-      panel.registerValidators(stepUi.context.disposable)
       panel.setMinimumWidthForAllRowLabels(JBUI.scale(90))
       stepsPanels[step] = panel
     }
