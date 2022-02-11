@@ -66,8 +66,10 @@ fun DataContext.runToolbarData(): RunToolbarData? {
   return this.getData(RunToolbarData.RUN_TOOLBAR_DATA_KEY)
 }
 
-fun AnActionEvent.mainState(): RunToolbarMainSlotState {
-  return this.dataContext.getData(RunToolbarData.RUN_TOOLBAR_MAIN_STATE) ?: RunToolbarMainSlotState.CONFIGURATION
+fun AnActionEvent.mainState(): RunToolbarMainSlotState? {
+  return this.dataContext.getData(RunToolbarData.RUN_TOOLBAR_MAIN_STATE) ?: this.project?.let {
+    if(RunToolbarSlotManager.getInstance(it).mainSlotData == this.runToolbarData()) RunToolbarMainSlotState.CONFIGURATION else null
+  }
 }
 
 internal fun DataContext.configuration(): RunnerAndConfigurationSettings? {
