@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -22,11 +22,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.BadgeIcon;
+import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +41,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
+  private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   public SettingsEntryPointAction() {
@@ -183,15 +183,15 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   private static @NotNull Icon getActionIcon() {
     if (ourShowPlatformUpdateIcon) {
       return ExperimentalUI.isNewUI()
-             ? new BadgeIcon(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.WARNING)
+             ? GEAR_ICON.getWarningIcon()
              : AllIcons.Ide.Notification.IdeUpdate;
     }
     if (ourShowPluginsUpdateIcon) {
       return ExperimentalUI.isNewUI()
-             ? new BadgeIcon(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.INFORMATION)
+             ? GEAR_ICON.getInfoIcon()
              : AllIcons.Ide.Notification.PluginUpdate;
     }
-    return AllIcons.General.GearPlain;
+    return GEAR_ICON.getOriginalIcon();
   }
 
   private static UISettingsListener mySettingsListener;
