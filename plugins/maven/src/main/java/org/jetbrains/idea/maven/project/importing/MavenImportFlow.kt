@@ -70,15 +70,17 @@ class MavenImportFlow {
 
     val projectsTree = loadOrCreateProjectTree(projectManager)
     MavenProjectsManager.applyStateToTree(projectsTree, projectManager)
-    val pomFiles = ArrayList(MavenProjectsManager.getInstance(context.project).projectsFiles)
+    val rootFiles = MavenProjectsManager.getInstance(context.project).projectsTree?.rootProjectsFiles
+    val pomFiles = HashSet<VirtualFile>()
+    rootFiles?.let { pomFiles.addAll(it.filterNotNull()) }
 
     val newPomFiles = when (context.paths) {
       is FilesList -> context.paths.poms
       is RootPath -> searchForMavenFiles(context.paths.path, context.indicator)
     }
-    pomFiles.addAll(newPomFiles)
+    pomFiles.addAll(newPomFiles.filterNotNull())
 
-    projectsTree.addManagedFilesWithProfiles(pomFiles, context.profiles)
+    projectsTree.addManagedFilesWithProfiles(pomFiles.toList(), context.profiles)
     val toResolve = HashSet<MavenProject>()
     val errorsSet = HashSet<MavenProject>()
     val d = Disposer.newDisposable("MavenImportFlow:readMavenFiles:treeListener")
@@ -115,7 +117,7 @@ class MavenImportFlow {
       projectsTree.ignoredFilesPatterns = curr
     }
 
-    projectsTree.update(pomFiles, true, context.generalSettings, context.indicator)
+    projectsTree.updateAll(true, context.generalSettings, context.indicator)
     Disposer.dispose(d)
     return MavenReadContext(context.project, projectsTree, toResolve, errorsSet, context)
   }
