@@ -136,6 +136,7 @@ private class GitToolbarWidget : ToolbarComboWidget(), Disposable {
         listPopup = JBPopupFactory.getInstance()
           .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
       }
+      listPopup.setRequestFocus(false)
       listPopup.showUnderneathOf(this)
     }
   }

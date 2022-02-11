@@ -118,7 +118,9 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
       }
     }
 
-    JBPopupFactory.getInstance().createListPopup(project, step, renderer).showUnderneathOf(this)
+    val popup = JBPopupFactory.getInstance().createListPopup(project, step, renderer)
+    popup.setRequestFocus(false)
+    popup.showUnderneathOf(this)
   }
 
   override fun removeNotify() {
