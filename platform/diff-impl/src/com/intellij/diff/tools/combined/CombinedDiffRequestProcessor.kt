@@ -17,6 +17,7 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
@@ -149,6 +150,8 @@ open class CombinedDiffRequestProcessor(project: Project?,
       fromDifferences && canGoToDifference() -> goToDifference()
       fromDifferences && canGoToBlock() -> {
         goToBlock()
+        context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE,
+                                        if (next) ScrollToPolicy.FIRST_CHANGE else ScrollToPolicy.LAST_CHANGE)
         combinedDiffViewer.selectDiffBlock(ScrollPolicy.DIFF_CHANGE)
       }
 
@@ -348,6 +351,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
         val diffSettings = getSettings(context.getUserData(DiffUserDataKeys.PLACE))
         val diffTools = DiffManagerEx.getInstance().diffTools
         request.putUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF, true)
+        context.getUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE)?.let { request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, it) }
 
         val frameDiffTool =
           if (viewer.unifiedDiff && UnifiedDiffTool.INSTANCE.canShow(context, request)) {
