@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.projectStructure.module
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -39,20 +40,29 @@ private fun PsiMethod.isMethodWithDeclarationInOtherClass(): Boolean {
 
 internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement, T>, classes: Set<PsiClass>): Set<T> {
     val overridden = HashSet<T>()
+    fun cleanupOnMatch(superMember: PsiElement, member: PsiElement): Boolean {
+        mappingToJava.remove(superMember)?.let { declaration ->
+            // Light methods points to same methods
+            // and no reason to keep searching those methods
+            // those originals are found
+            if (mappingToJava.remove(member) == null) {
+                mappingToJava.values.removeIf(superMember::equals)
+            }
+            overridden.add(declaration)
+            return true
+        }
+        return false
+    }
+
     for (aClass in classes) {
         aClass.forEachDeclaredMemberOverride { superMember, overridingMember ->
             ProgressManager.checkCanceled()
+            if ((overridingMember is KtNamedFunction) && (superMember is KtNamedFunction)) {
+                if (cleanupOnMatch(superMember, overridingMember)) return@forEachDeclaredMemberOverride mappingToJava.isNotEmpty()
+            }
             val possiblyFakeLightMethods = overridingMember.toPossiblyFakeLightMethods()
             possiblyFakeLightMethods.find { !it.isMethodWithDeclarationInOtherClass() }?.let {
-                mappingToJava.remove(superMember)?.let { declaration ->
-                    // Light methods points to same methods
-                    // and no reason to keep searching those methods
-                    // those originals are found
-                    if (mappingToJava.remove(it) == null) {
-                        mappingToJava.values.removeIf(superMember::equals)
-                    }
-                    overridden.add(declaration)
-                }
+                cleanupOnMatch(superMember, it)
             }
 
             mappingToJava.isNotEmpty()
