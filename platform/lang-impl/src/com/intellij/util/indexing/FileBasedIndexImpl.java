@@ -1341,7 +1341,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (isPendingDeletionFileAppearedInIndexableFilter(fileId, file)) {
         file = ((DeletedVirtualFileStub)file).getOriginalFile();
         content = new CachedFileContent(file);
-        isValid = true;
+        isValid = file.isValid();
+        dropNontrivialIndexedStates(fileId);
       }
 
       if (!isValid || isTooLarge(file)) {
