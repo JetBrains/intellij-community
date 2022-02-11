@@ -37,6 +37,7 @@ import git4idea.commands.*
 import git4idea.config.GitConfigUtil
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT
 import git4idea.history.GitCommitRequirements.DiffRenameLimit.NoRenames
 import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
@@ -127,7 +128,7 @@ object GitStashOperations {
     val stashCommits = mutableListOf<GitCommit>()
     GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()) + parentHashes.map { it.asString() },
                                         GitCommitRequirements(true, // untracked changes commit has no parents
-                                                              diffInMergeCommits = DIFF_TO_PARENTS),
+                                                              diffInMergeCommits = FIRST_PARENT), // only changes to the branch head are needed
                                         Consumer { stashCommits.add(it) })
     if (stashCommits.isEmpty()) throw VcsException(GitBundle.message("stash.load.changes.error", root.name, hash.asString()))
     return Pair(stashCommits.first().getChanges(0), // returning changes to the branch head
