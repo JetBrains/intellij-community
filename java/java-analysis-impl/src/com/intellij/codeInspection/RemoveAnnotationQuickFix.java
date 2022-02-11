@@ -9,13 +9,16 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 
 public class RemoveAnnotationQuickFix implements LocalQuickFix {
@@ -74,7 +77,13 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(physical)) {
       return;
     }
-    WriteAction.run(() -> physical.forEach(PsiAnnotation::delete));
+    WriteAction.run(() -> {
+      Set<PsiJavaFile> containingFiles = physical.stream().map(PsiAnnotation::getContainingFile)
+          .filter(PsiJavaFile.class::isInstance).map(PsiJavaFile.class::cast)
+          .collect(Collectors.toSet());
+      physical.forEach(PsiAnnotation::delete);
+      containingFiles.forEach(JavaCodeStyleManager.getInstance(project)::removeRedundantImports);
+    });
 
     if (qualifiedName != null) {
       for (PsiModifierListOwner owner : externalOwners) {
