@@ -57,7 +57,7 @@ public class FileDeleteAction extends FileChooserAction {
           return null;
         }
       });
-      panel.reload();
+      panel.reload(null);
     }
     catch (IOException ex) {
       Messages.showErrorDialog(panel.getComponent(), IoErrorText.message(ex), CommonBundle.getErrorTitle());

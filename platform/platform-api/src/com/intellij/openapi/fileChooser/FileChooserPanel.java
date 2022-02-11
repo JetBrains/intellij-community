@@ -23,7 +23,8 @@ public interface FileChooserPanel {
   @NotNull JComponent getComponent();
 
   void load(@Nullable Path path);
-  void reload();
+
+  void reload(@Nullable Path focusOn);
 
   boolean showPathBar();
   void showPathBar(boolean show);

@@ -174,7 +174,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
               UIUtil.invokeLaterIfNeeded(() -> {
                 synchronized (myLock) {
                   if (key == myWatchKey && myCurrentDirectory != null) {
-                    doLoad(myCurrentDirectory);
+                    reload(null);
                   }
                 }
               });
@@ -197,10 +197,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void openItemAtIndex(int idx, InputEvent e) {
     FsItem item = myModel.get(idx);
     if (item.directory) {
-      doLoad(item.path, item.name == FsItem.UPLINK ? UPPER_LEVEL : 0);
+      load(item.path, null, item.name == FsItem.UPLINK ? UPPER_LEVEL : 0);
     }
     else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
-      doLoad(item.path, INTO_ARCHIVE);
+      load(item.path, null, INTO_ARCHIVE);
     }
     else {
       myCallback.run();
@@ -246,7 +246,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   @Override
   public void load(@Nullable Path path) {
     if (path == null || path.isAbsolute()) {
-      doLoad(path);
+      load(path, null, 0);
     }
     else {
       throw new IllegalArgumentException("Not absolute: " + path);
@@ -254,9 +254,15 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   @Override
-  public void reload() {
+  public void reload(@Nullable Path focusOn) {
+    if (focusOn == null) {
+      FsItem value = myList.getSelectedValue();
+      if (value != null) {
+        focusOn = value.path;
+      }
+    }
     synchronized (myLock) {
-      doLoad(myCurrentDirectory);
+      load(myCurrentDirectory, focusOn, 0);
     }
   }
 
@@ -283,11 +289,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myShowHiddenFiles = show;
     synchronized (myLock) {
       if (myCurrentDirectory != null) {
+        var selection = myList.getSelectedValue();
         myModel.clear();
         for (int i = 1; i < myCurrentContent.size(); i++) {  // excluding `.`
           FsItem item = myCurrentContent.get(i);
           if (show || item.visible) myModel.add(item);
         }
+        myList.setSelectedValue(selection, true);
       }
     }
   }
@@ -330,14 +338,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
   }
 
-  private void doLoad(@Nullable Path path) {
-    doLoad(path, 0);
-  }
-
   private static final int UPPER_LEVEL = 1;
   private static final int INTO_ARCHIVE = 2;
 
-  private void doLoad(@Nullable Path path, int direction) {
+  private void load(@Nullable Path path, @Nullable Path focusOn, int direction) {
     synchronized (myLock) {
       myPath.setItem(path != null ? new PathWrapper(path) : null);
       myModel.clear();
@@ -354,7 +358,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       myCurrentTask = pair(id, ProcessIOExecutorService.INSTANCE.submit(() -> {
         var directory = directoryToLoad(path, direction == INTO_ARCHIVE);
         if (directory != null) {
-          var pathToSelect = childDir != null && childDir.getParent() == null && isJar(childDir.toUri()) ? parent(childDir) : childDir;
+          var pathToSelect = focusOn != null ? focusOn :
+                             childDir != null && childDir.getParent() == null && isJar(childDir.toUri()) ? parent(childDir) :
+                             childDir;
           loadDirectory(directory, pathToSelect, id);
         }
         else {

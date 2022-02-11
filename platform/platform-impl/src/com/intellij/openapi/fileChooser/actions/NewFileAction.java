@@ -55,14 +55,14 @@ public class NewFileAction extends FileChooserAction implements LightEditCompati
 
     while (true) {
       var input = MessagesService.getInstance().showInputDialog(null, panel.getComponent(), prompt, title, null, initial, validator, selection, null);
-      if (input == null) return;
+      if (input == null) break;
       var name = input.trim();
       initial = name;
       selection = null;
 
       var progress = UIBundle.message("file.chooser.creating.progress", name);
       try {
-        ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
+        var newFile = ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
           @Override
           protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
             indicator.setIndeterminate(true);
@@ -73,7 +73,7 @@ public class NewFileAction extends FileChooserAction implements LightEditCompati
             return newFile;
           }
         });
-        panel.reload();
+        panel.reload(newFile);
         break;
       }
       catch (IOException | InvalidPathException ex) {
