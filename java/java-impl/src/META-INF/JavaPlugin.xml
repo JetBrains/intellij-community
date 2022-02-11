@@ -1878,6 +1878,11 @@
                      groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BulkFileAttributesReadInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MultiplePathConstructions"
+                     key="inspection.multiple.path.constructions.description" bundle="messages.JavaBundle"
+                     groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.codeInspection.MultiplePathConstructionsInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
                       key="inspection.empty.method.display.name" bundle="messages.JavaBundle"/>
