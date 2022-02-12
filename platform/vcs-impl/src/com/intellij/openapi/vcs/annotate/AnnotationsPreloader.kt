@@ -52,8 +52,10 @@ internal class AnnotationsPreloader(private val project: Project) {
           annotationProvider.populateCache(file)
           LOG.debug { "Preloaded VCS annotations for ${file.name} in ${System.currentTimeMillis() - start} ms" }
 
-          runInEdt { refreshCodeAuthorInlayHints(project, file) }
-          CodeVisionHost.getInstance(project).invalidateProvider(CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
+          runInEdt {
+            refreshCodeAuthorInlayHints(project, file)
+            CodeVisionHost.getInstance(project).invalidateProvider(CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
+          }
         }
         catch (e: VcsException) {
           LOG.info(e)
