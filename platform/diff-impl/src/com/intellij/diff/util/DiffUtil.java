@@ -89,6 +89,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -193,10 +194,22 @@ public final class DiffUtil {
   }
 
   public static void setEditorHighlighter(@Nullable Project project, @NotNull EditorEx editor, @NotNull DocumentContent content) {
-    EditorHighlighter highlighter = createEditorHighlighter(project, content);
-    if (highlighter != null) editor.setHighlighter(highlighter);
+    Disposable disposable = ((EditorImpl)editor).getDisposable();
     if (project != null) {
-      new DiffEditorHighlighterUpdater(project, ((EditorImpl)editor).getDisposable(), editor, content);
+      DiffEditorHighlighterUpdater updater = new DiffEditorHighlighterUpdater(project, disposable, editor, content);
+      updater.updateHighlightersAsync();
+    }
+    else {
+      ReadAction
+        .nonBlocking(() -> {
+          CharSequence text = editor.getDocument().getImmutableCharSequence();
+          return initEditorHighlighter(project, content, text);
+        })
+        .finishOnUiThread(ModalityState.any(), result -> {
+          if (result != null) editor.setHighlighter(result);
+        })
+        .expireWith(disposable)
+        .submit(NonUrgentExecutor.getInstance());
     }
   }
 
