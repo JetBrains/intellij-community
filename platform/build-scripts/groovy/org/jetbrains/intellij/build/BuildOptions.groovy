@@ -56,7 +56,7 @@ final class BuildOptions {
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
   public static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   public static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
-  static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
+  public static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   public static final String GENERATE_JAR_ORDER_STEP = "jar_order"
   public static final String SOURCES_ARCHIVE_STEP = "sources_archive"
   public static final String SCRAMBLING_STEP = "scramble"
