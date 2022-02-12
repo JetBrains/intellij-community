@@ -261,6 +261,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
       MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
           fireActivated();
           listenForExternalChanges();
         }
@@ -277,8 +278,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private void initPreloadMavenServices() {
     // init maven tool window
     MavenProjectsNavigator.getInstance(myProject);
-    // init indices manager
-    MavenIndicesManager.getInstance(myProject);
     // add CompileManager before/after tasks
     MavenTasksManager.getInstance(myProject);
     // init maven shortcuts manager to subscribe to KeymapManagerListener

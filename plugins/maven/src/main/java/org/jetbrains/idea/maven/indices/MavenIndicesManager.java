@@ -125,12 +125,6 @@ public final class MavenIndicesManager implements Disposable {
 
     MavenRepositoryProvider.EP_NAME.addChangeListener(() -> scheduleUpdateIndicesList(null), this);
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    projectsManager.addManagerListener(new MavenProjectsManager.Listener() {
-      @Override
-      public void activated() {
-        scheduleUpdateIndicesList(null);
-      }
-    }, this);
 
     projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
