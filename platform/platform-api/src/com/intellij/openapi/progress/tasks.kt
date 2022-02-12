@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Experimental
 
 package com.intellij.openapi.progress
@@ -31,7 +31,7 @@ suspend fun <T> withBackgroundProgressIndicator(
 /**
  * Shows a background progress indicator, and runs the specified [action].
  * The action receives [ProgressSink] in the coroutine context, progress sink updates are reflected in the UI during the action.
- * The indicator is not showed immediately to avoid flickering,
+ * The indicator is not shown immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *
  * @param project in which frame the progress should be shown
