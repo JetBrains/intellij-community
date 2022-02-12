@@ -1,4 +1,3 @@
-**/build
 *.pyc
 .DS_Store
 .gradle
