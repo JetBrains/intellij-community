@@ -169,9 +169,6 @@ public class JpsBootstrapMain {
     systemProperties.putIfAbsent("file.encoding", "UTF-8"); // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true");
 
-    // This is required only for accommodating KotlinBinaries.ensureKotlinJpsPluginIsAddedToClassPath
-    systemProperties.put("java.system.class.loader", "org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader");
-
     List<String> args = new ArrayList<>();
     args.add("-ea");
     args.add("-Xmx" + buildTargetXmx);
