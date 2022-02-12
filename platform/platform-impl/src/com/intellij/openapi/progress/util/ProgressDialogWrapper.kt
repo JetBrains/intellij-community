@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
 import com.intellij.openapi.ui.DialogWrapper.PeerFactory
 import com.intellij.openapi.ui.DialogWrapperPeer
 import com.intellij.openapi.ui.DialogWrapperPeerFactory
+import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException
 import com.intellij.ui.PopupBorder
@@ -82,14 +83,16 @@ fun createDialogWrapper(
   writeAction: Boolean,
   project: Project?,
 ): DialogWrapper {
-  if (window.isShowing) {
-    return ProgressDialogWrapper(panel, cancelAction, peerFactory(window, !writeAction))
+  val dialog = if (window.isShowing) {
+    ProgressDialogWrapper(panel, cancelAction, peerFactory(window, !writeAction))
   }
   else {
-    return ProgressDialogWrapper(panel, cancelAction, peerFactory(project)).also {
+    ProgressDialogWrapper(panel, cancelAction, peerFactory(project)).also {
       it.superInitResizeListener()
     }
   }
+  setupProgressDialog(dialog, writeAction)
+  return dialog
 }
 
 private fun peerFactory(window: Window, lightPopup: Boolean): PeerFactory = PeerFactory { dialogWrapper ->
@@ -108,4 +111,16 @@ private fun peerFactory(window: Window, lightPopup: Boolean): PeerFactory = Peer
 
 private fun peerFactory(project: Project?): PeerFactory = PeerFactory { dialogWrapper ->
   DialogWrapperPeerFactory.getInstance().createPeer(dialogWrapper, project, false, IdeModalityType.IDE)
+}
+
+internal fun setupProgressDialog(dialog: DialogWrapper, writeAction: Boolean) {
+  dialog.setUndecorated(true)
+  val peer = dialog.peer
+  if (peer is DialogWrapperPeerImpl) {
+    peer.setAutoRequestFocus(false)
+    if (writeAction) {
+      dialog.isModal = false // display the dialog and continue with EDT execution, don't block it forever
+    }
+  }
+  dialog.pack()
 }

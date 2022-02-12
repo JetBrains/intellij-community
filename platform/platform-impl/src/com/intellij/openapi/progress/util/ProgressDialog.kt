@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperPeer
-import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException
 import com.intellij.openapi.util.Disposer
@@ -191,14 +190,6 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
     val popup = createDialog(myParentWindow)
     myPopup = popup
-    popup.setUndecorated(true)
-    if (popup.peer is DialogWrapperPeerImpl) {
-      (popup.peer as DialogWrapperPeerImpl).setAutoRequestFocus(false)
-      if (isWriteActionProgress()) {
-        popup.isModal = false // display the dialog and continue with EDT execution, don't block it forever
-      }
-    }
-    popup.pack()
 
     Disposer.register(popup.disposable) { myProgressWindow.exitModality() }
 
@@ -239,6 +230,12 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
         project = myProgressWindow.myProject,
       )
     }
+    return createDialogPrevious(window).also {
+      setupProgressDialog(it, isWriteActionProgress())
+    }
+  }
+
+  private fun createDialogPrevious(window: Window): MyDialogWrapper {
     if (System.getProperty("vintage.progress") != null || isWriteActionProgress()) {
       if (window.isShowing) {
         return object : MyDialogWrapper(window) {
