@@ -41,4 +41,6 @@ public enum MyBooleanEnum {
     @null TRUE
     @null FALSE
     private fun MyBooleanEnum() = UastEmptyExpression
+    public final fun values() : MyBooleanEnum[] = UastEmptyExpression
+    public final fun valueOf(@org.jetbrains.annotations.NotNull value: java.lang.String) : MyBooleanEnum = UastEmptyExpression
 }
