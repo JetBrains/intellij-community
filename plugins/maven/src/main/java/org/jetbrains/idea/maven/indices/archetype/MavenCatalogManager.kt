@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.indices.arhetype
+package org.jetbrains.idea.maven.indices.archetype
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State

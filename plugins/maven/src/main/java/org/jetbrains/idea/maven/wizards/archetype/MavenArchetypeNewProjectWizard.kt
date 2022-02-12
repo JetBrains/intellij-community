@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.*
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_ATTRIBUTES
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
@@ -14,19 +14,25 @@ import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.externalSystem.service.ui.completion.*
 import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.collectionModel
+import com.intellij.openapi.ui.naturalSorted
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes.*
+import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
+import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -37,8 +43,8 @@ import com.intellij.util.containers.ContainerUtil.putIfNotNull
 import com.intellij.util.text.nullize
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.MavenArchetypeManager
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
@@ -46,7 +52,8 @@ import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import java.awt.Component
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JList
 
 class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   override val id: String = javaClass.name

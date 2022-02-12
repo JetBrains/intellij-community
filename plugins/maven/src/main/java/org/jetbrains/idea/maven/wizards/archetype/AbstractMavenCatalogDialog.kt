@@ -13,7 +13,7 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
 abstract class AbstractMavenCatalogDialog(private val project: Project) : DialogWrapper(project, true) {
