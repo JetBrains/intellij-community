@@ -512,52 +512,41 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                     ENUM_VALUES.identifier -> metValues = true
                     ENUM_VALUE_OF.identifier -> metValueOf = true
                 }
-                // TODO: KTIJ-17444
                 TestCase.assertTrue(
                     "Missing nullness annotations on $mtd",
-                    mtd.uAnnotations.any { it.javaPsi?.isNullnessAnnotation == true }
+                    mtd.javaPsi.modifierList.annotations.any { it.isNullnessAnnotation }
                 )
             }
         }
-        // TODO: KTIJ-17414
-        TestCase.assertFalse("Expect to meet synthetic values() methods in an enum class", metValues)
-        TestCase.assertFalse("Expect to meet synthetic valueOf(String) methods in an enum class", metValueOf)
+        TestCase.assertTrue("Expect to meet synthetic values() methods in an enum class", metValues)
+        TestCase.assertTrue("Expect to meet synthetic valueOf(String) methods in an enum class", metValueOf)
 
         val testValueOf = uFile.findElementByTextFromPsi<UMethod>("testValueOf", strict = false)
         TestCase.assertNotNull("testValueOf should be successfully converted", testValueOf)
         val valueOfCall = testValueOf.findElementByText<UElement>("valueOf").uastParent as KotlinUFunctionCallExpression
         val resolvedValueOfCall = valueOfCall.resolve()
-        TestCase.assertNull("Unresolved MyEnum.valueOf(String)", resolvedValueOfCall)
-        // TODO: KTIJ-17414
-        TestCase.assertNull("Null return type of $resolvedValueOfCall", resolvedValueOfCall?.returnType)
-        // TODO: KTIJ-17444
-        /*
+        TestCase.assertNotNull("Unresolved MyEnum.valueOf(String)", resolvedValueOfCall)
+        TestCase.assertNotNull("Null return type of $resolvedValueOfCall", resolvedValueOfCall?.returnType)
         TestCase.assertTrue(
             "Missing nullness annotations on $resolvedValueOfCall",
             resolvedValueOfCall!!.annotations.any { it.isNullnessAnnotation }
         )
-        */
 
         val testValues = uFile.findElementByTextFromPsi<UMethod>("testValues", strict = false)
         TestCase.assertNotNull("testValues should be successfully converted", testValues)
         val valuesCall = testValues.findElementByText<UElement>("values").uastParent as KotlinUFunctionCallExpression
         val resolvedValuesCall = valuesCall.resolve()
-        TestCase.assertNull("Unresolved MyEnum.values()", resolvedValuesCall)
-        // TODO: KTIJ-17414
-        TestCase.assertNull("Null return type of $resolvedValuesCall", resolvedValuesCall?.returnType)
-        // TODO: KTIJ-17444
-        /*
+        TestCase.assertNotNull("Unresolved MyEnum.values()", resolvedValuesCall)
+        TestCase.assertNotNull("Null return type of $resolvedValuesCall", resolvedValuesCall?.returnType)
         TestCase.assertTrue(
             "Missing nullness annotations on $resolvedValuesCall",
             resolvedValuesCall!!.annotations.any { it.isNullnessAnnotation }
         )
-        */
     }
 
     private val PsiAnnotation.isNullnessAnnotation: Boolean
         get() {
-            val resolvedName = resolveAnnotationType()?.name ?: return false
-            return resolvedName.endsWith("NotNull") || resolvedName.endsWith("Nullable")
+            return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
         }
 
 }
