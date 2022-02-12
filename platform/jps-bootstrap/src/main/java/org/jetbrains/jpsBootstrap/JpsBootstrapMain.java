@@ -29,6 +29,7 @@ import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
 @SuppressWarnings({"SameParameterValue"})
 public class JpsBootstrapMain {
+  private static final String DEFAULT_BUILD_SCRIPT_XMX = "4g";
 
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE";
@@ -36,7 +37,7 @@ public class JpsBootstrapMain {
   private static final Option OPT_HELP = Option.builder("h").longOpt("help").build();
   private static final Option OPT_VERBOSE = Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").build();
   private static final Option OPT_SYSTEM_PROPERTY = Option.builder("D").hasArgs().valueSeparator('=').desc("Pass system property to the build script").build();
-  private static final Option OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: 4g").build();
+  private static final Option OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: " + DEFAULT_BUILD_SCRIPT_XMX).build();
   private static final Option OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").build();
   private static final List<Option> ALL_OPTIONS =
     Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX);
@@ -139,7 +140,7 @@ public class JpsBootstrapMain {
 
     mainArgsToRun = freeArgs.subList(2, freeArgs.size());
     javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET));
-    buildTargetXmx = cmdline.hasOption(OPT_BUILD_TARGET_XMX) ? cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) : "4g";
+    buildTargetXmx = cmdline.hasOption(OPT_BUILD_TARGET_XMX) ? cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) : DEFAULT_BUILD_SCRIPT_XMX;
   }
 
   private void main() throws Throwable {
