@@ -5,6 +5,7 @@ package com.intellij.execution.target
 
 import com.intellij.execution.Platform
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.annotations.ApiStatus
 
 data class PathMapping(val localPath: String, val targetPath: String)
 
@@ -33,18 +34,20 @@ fun TargetEnvironment.getTargetPaths(localPath: String): List<String> {
 private fun TargetEnvironment.collectPathMappings(): List<PathMapping> =
   uploadVolumes.values.map { PathMapping(localPath = it.localRoot.toString(), targetPath = it.targetRoot) }
 
-private fun findPathVariants(mappings: Iterable<PathMapping>,
-                             sourcePath: String,
-                             sourcePathFun: (PathMapping) -> String,
-                             sourceFileSeparator: Char,
-                             destPathFun: (PathMapping) -> String,
-                             destFileSeparator: Char): List<String> {
+@ApiStatus.Internal
+fun findPathVariants(mappings: Iterable<PathMapping>,
+                     sourcePath: String,
+                     sourcePathFun: (PathMapping) -> String,
+                     sourceFileSeparator: Char,
+                     destPathFun: (PathMapping) -> String,
+                     destFileSeparator: Char): List<String> {
   return mappings.mapNotNull { mapping ->
     val sourceBase = sourcePathFun(mapping)
-    if (FileUtil.isAncestor(sourceBase, sourcePath, false)) {
+    if (isAncestor(sourceBase, sourcePath, sourceFileSeparator)) {
       val destBase = destPathFun(mapping)
       FileUtil.getRelativePath(sourceBase, sourcePath, sourceFileSeparator)?.let { relativeSourcePath ->
-        joinTargetPaths(destBase, relativeSourcePath, fileSeparator = destFileSeparator)
+        val relativeDestPath = relativeSourcePath.replaceFileSeparator(sourceFileSeparator, destFileSeparator)
+        joinTargetPaths(destBase, relativeDestPath, fileSeparator = destFileSeparator)
       }
     }
     else {
@@ -52,6 +55,17 @@ private fun findPathVariants(mappings: Iterable<PathMapping>,
     }
   }
 }
+
+private fun isAncestor(ancestor: String, file: String, fileSeparator: Char): Boolean =
+  if (fileSeparator == '\\') {
+    FileUtil.isAncestor(FileUtil.toSystemIndependentName(ancestor), FileUtil.toSystemIndependentName(file), false)
+  }
+  else {
+    FileUtil.isAncestor(ancestor, file, false)
+  }
+
+private fun String.replaceFileSeparator(currentFileSeparator: Char, newFileSeparator: Char): String =
+  if (currentFileSeparator == newFileSeparator) this else replace(currentFileSeparator, newFileSeparator)
 
 fun joinTargetPaths(vararg paths: String, fileSeparator: Char): String {
   val iterator = paths.iterator()
