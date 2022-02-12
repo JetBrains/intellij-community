@@ -6,6 +6,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
+import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
@@ -28,7 +29,7 @@ class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
       if (element !is PsiMember || element is PsiTypeParameter) continue
       val hint = JavaTelescope.usagesHint(element, psiFile)
       if (hint == null) continue
-      lenses.add(Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, { it, _ ->
+      lenses.add(Pair(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element), ClickableTextCodeVisionEntry(hint, id, { it, _ ->
         JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.project)
         GotoDeclarationAction.startFindUsages(editor, element.project, element, if (it == null) null else RelativePoint(it))
       })))

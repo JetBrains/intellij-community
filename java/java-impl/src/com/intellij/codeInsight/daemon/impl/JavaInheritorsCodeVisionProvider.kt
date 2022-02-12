@@ -6,6 +6,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
+import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -29,7 +30,7 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
         val hint = if (isInterface) JavaBundle.message("code.vision.implementations.hint", inheritors)
         else JavaBundle.message("code.vision.inheritors.hint", inheritors)
         lenses.add(
-          Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent, _ ->
+          Pair(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element), ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent, _ ->
             val navigationHandler = MarkerType.SUBCLASSED_CLASS.navigationHandler
             JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(),
                                                                              JavaCodeVisionUsageCollector.CLASS_LOCATION)

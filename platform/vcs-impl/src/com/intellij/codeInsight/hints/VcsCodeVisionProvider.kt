@@ -36,12 +36,6 @@ import javax.swing.JComponent
 
 class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
-    private fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
-      val start = SyntaxTraverser.psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
-
-      return TextRange.create(start.startOffset, element.endOffset)
-    }
-
     const val id: String = "vcs.code.vision"
 
     // implemented not as inplace lambda to avoid capturing project/editor
@@ -78,7 +72,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
         val traverser = SyntaxTraverser.psiTraverser(file)
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
-            val textRange = getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+            val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
             val codeAuthorInfo = getCodeAuthorInfo(element.project, textRange, editor, aspect)
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
