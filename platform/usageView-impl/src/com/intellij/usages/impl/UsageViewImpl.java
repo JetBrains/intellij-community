@@ -2309,4 +2309,9 @@ public class UsageViewImpl implements UsageViewEx {
   private interface ExclusionHandlerEx<Node> extends ExclusionHandler<Node> {
     void excludeNodeSilently(@NotNull Node node);
   }
+
+  @Nullable
+  public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
+    return UsageViewUtil.getShowUsagesWithSettingsShortcut();
+  }
 }
