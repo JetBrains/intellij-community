@@ -33,7 +33,7 @@ public final class UsageLimitUtil {
       ApplicationManager.getApplication().invokeAndWait(() -> answer[0] = f.compute());
     }
     catch (Exception e) {
-      answer[0] = false;
+      answer[0] = true;
     }
 
     return answer[0];
