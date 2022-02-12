@@ -29,7 +29,7 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
         val hint = if (isInterface) JavaBundle.message("code.vision.implementations.hint", inheritors)
         else JavaBundle.message("code.vision.inheritors.hint", inheritors)
         lenses.add(
-          Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent ->
+          Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent, _ ->
             val navigationHandler = MarkerType.SUBCLASSED_CLASS.navigationHandler
             JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(),
                                                                              JavaCodeVisionUsageCollector.CLASS_LOCATION)
@@ -44,7 +44,7 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
           else JavaBundle.message("code.vision.overrides.hint", overrides)
 
           lenses.add(
-            Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent ->
+            Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent, e ->
               JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(),
                                                                                JavaCodeVisionUsageCollector.METHOD_LOCATION)
               val navigationHandler = MarkerType.OVERRIDDEN_METHOD.navigationHandler

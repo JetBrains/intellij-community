@@ -6,6 +6,7 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.Nls
 
 /**
  * @see CodeVisionProviderFactory
@@ -35,7 +36,9 @@ interface CodeVisionProvider<T> {
   fun shouldRecomputeForEditor(editor: Editor, uiData: T) = true
 
   /**
-   * Should return text ranges and applicable hints for them, invoked on background thread
+   * Should return text ranges and applicable hints for them, invoked on background thread.
+   *
+   * Note that this method is not executed under read action.
    */
   fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>>
 
@@ -44,7 +47,7 @@ interface CodeVisionProvider<T> {
    * [java.awt.event.MouseEvent] accessible with [codeVisionEntryMouseEventKey] data key from [CodeVisionEntry]
    */
   fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
-    if (entry is CodeVisionPredefinedActionEntry) entry.onClick()
+    if (entry is CodeVisionPredefinedActionEntry) entry.onClick(editor)
   }
 
   /**
@@ -55,6 +58,7 @@ interface CodeVisionProvider<T> {
   /**
    * User-visible name
    */
+  @get:Nls
   val name: String
 
   /**

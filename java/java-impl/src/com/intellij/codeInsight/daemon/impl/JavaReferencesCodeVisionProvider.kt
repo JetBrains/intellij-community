@@ -28,7 +28,7 @@ class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
       if (element !is PsiMember || element is PsiTypeParameter) continue
       val hint = JavaTelescope.usagesHint(element, psiFile)
       if (hint == null) continue
-      lenses.add(Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, {
+      lenses.add(Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, { it, _ ->
         JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.project)
         GotoDeclarationAction.startFindUsages(editor, element.project, element, if (it == null) null else RelativePoint(it))
       })))

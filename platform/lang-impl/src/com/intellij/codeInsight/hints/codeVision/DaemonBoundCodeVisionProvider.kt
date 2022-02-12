@@ -27,7 +27,7 @@ interface DaemonBoundCodeVisionProvider {
   fun computeForEditor(editor: Editor): List<Pair<TextRange, CodeVisionEntry>>
 
   fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
-    if (entry is CodeVisionPredefinedActionEntry) entry.onClick()
+    if (entry is CodeVisionPredefinedActionEntry) entry.onClick(editor)
   }
 
   /**

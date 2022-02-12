@@ -119,6 +119,10 @@ open class CodeVisionHost(val project: Project) {
     return editor.editorKind == EditorKind.MAIN_EDITOR || editor.editorKind == EditorKind.UNTYPED
   }
 
+  fun invalidateProvider(signal: LensInvalidateSignal) {
+    invalidateProviderSignal.fire(signal)
+  }
+
 
   fun getNumber(providerId: String): Int {
     if (lifeSettingModel.disabledCodeVisionProviderIds.contains(providerId)) return -1

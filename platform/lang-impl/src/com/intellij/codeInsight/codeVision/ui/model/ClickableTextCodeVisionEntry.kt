@@ -3,6 +3,7 @@ package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
 import com.intellij.codeInsight.codeVision.codeVisionEntryMouseEventKey
+import com.intellij.openapi.editor.Editor
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
@@ -11,7 +12,7 @@ import javax.swing.Icon
  */
 class ClickableTextCodeVisionEntry(text: String,
                                    providerId: String,
-                                   val onClick: (MouseEvent?) -> Unit,
+                                   val onClick: (MouseEvent?, Editor) -> Unit,
                                    icon: Icon? = null,
                                    longPresentation: String = text,
                                    tooltip: String = "",
@@ -19,8 +20,8 @@ class ClickableTextCodeVisionEntry(text: String,
   : TextCodeVisionEntry(text, providerId, icon,
                         longPresentation, tooltip,
                         extraActions), CodeVisionPredefinedActionEntry {
-  override fun onClick() {
+  override fun onClick(editor: Editor) {
     val mouseEvent = this.getUserData(codeVisionEntryMouseEventKey)
-    onClick.invoke(mouseEvent)
+    onClick.invoke(mouseEvent, editor)
   }
 }
