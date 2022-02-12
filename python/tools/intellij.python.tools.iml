@@ -19,5 +19,6 @@
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="RUNTIME" />
   </component>
 </module>
