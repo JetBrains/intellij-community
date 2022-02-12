@@ -7,6 +7,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 
 interface CodeVisionGroupSettingProvider {
   /**
@@ -17,9 +18,11 @@ interface CodeVisionGroupSettingProvider {
   /**
    * Name that is shown in settings
    */
+  @get:Nls
   val groupName: String
     get() = CodeVisionBundle.message("codeLens.${groupId}.name")
 
+  @get:Nls
   val description: String
     get() = CodeVisionBundle.message("codeLens.${groupId}.description")
 
