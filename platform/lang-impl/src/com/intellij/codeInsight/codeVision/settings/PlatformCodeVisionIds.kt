@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.codeVision.settings
 
 enum class PlatformCodeVisionIds(val key: String) {
-  USAGES("usages"),
-  INHERITORS("inheritors"),
+  USAGES("java.references"),
+  INHERITORS("java.inheritors"),
   PROBLEMS("problems")
 }
