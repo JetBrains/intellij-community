@@ -15,5 +15,6 @@
     <orderEntry type="library" scope="PROVIDED" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" exported="" />
     <orderEntry type="library" scope="PROVIDED" name="commons-compress" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="fixed.kotlin-jps-plugin-classpath" level="project" />
   </component>
 </module>
