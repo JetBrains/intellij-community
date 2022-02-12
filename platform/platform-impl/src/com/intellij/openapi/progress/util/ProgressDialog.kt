@@ -235,7 +235,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
           }
         },
         window = window,
-        lightPopup = !isWriteActionProgress(),
+        writeAction = isWriteActionProgress(),
         project = myProgressWindow.myProject,
       )
     }

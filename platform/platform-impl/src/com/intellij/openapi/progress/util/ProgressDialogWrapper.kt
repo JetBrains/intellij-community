@@ -79,11 +79,11 @@ fun createDialogWrapper(
   panel: JPanel,
   cancelAction: () -> Unit,
   window: Window,
-  lightPopup: Boolean,
+  writeAction: Boolean,
   project: Project?,
 ): DialogWrapper {
   if (window.isShowing) {
-    return ProgressDialogWrapper(panel, cancelAction, peerFactory(window, lightPopup))
+    return ProgressDialogWrapper(panel, cancelAction, peerFactory(window, !writeAction))
   }
   else {
     return ProgressDialogWrapper(panel, cancelAction, peerFactory(project)).also {
