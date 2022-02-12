@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -58,6 +59,13 @@ internal fun KtAnalysisSession.toPsiMethod(functionSymbol: KtFunctionLikeSymbol)
         null -> null
         is PsiMethod -> psi
         is KtClassOrObject -> {
+            // For synthetic members in enum classes, `psi` points to their containing enum class.
+            if (psi is KtClass && psi.isEnum()) {
+                val lc = psi.toLightClass() ?: return null
+                lc.methods.find { it.name == (functionSymbol as? KtFunctionSymbol)?.name?.identifier }?.let { return it }
+            }
+
+            // Default primary constructor
             psi.primaryConstructor?.getRepresentativeLightMethod()?.let { return it }
             val lc = psi.toLightClass() ?: return null
             lc.constructors.firstOrNull()?.let { return it }
