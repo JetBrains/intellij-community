@@ -11,6 +11,7 @@ import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.asJava.*
+import org.jetbrains.kotlin.backend.jvm.serialization.DisabledDescriptorMangler.signatureString
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstr
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
+import org.jetbrains.kotlin.resolve.calls.util.isFakePsiElement
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -238,6 +240,13 @@ internal fun resolveToPsiMethod(
         return resolveToPsiMethod(context, descriptor.underlyingConstructorDescriptor)
     }
 
+    // For synthetic members in enum classes, `source` points to their containing enum class.
+    if (source is KtClass && source.isEnum() && descriptor is SimpleFunctionDescriptor) {
+        val lightClass = source.toLightClass() ?: return null
+        lightClass.methods.find { it.name == descriptor.name.identifier }?.let { return it }
+    }
+
+    // Default primary constructor
     if (descriptor is ConstructorDescriptor && descriptor.isPrimary
         && source is KtClassOrObject && source.primaryConstructor == null
         && source.secondaryConstructors.isEmpty()
