@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +158,8 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighters.get(0).getStartOffset(), false)) {
           Color color = renderer.getColor();
           if (color != null) {
-            return color;
+            Color matched = scheme.getColor(EditorColors.MATCHED_BRACES_INDENT_GUIDE_COLOR);
+            return ObjectUtils.notNull(matched, color);
           }
         }
       }
