@@ -17,9 +17,5 @@
     <orderEntry type="library" scope="TEST" name="grpc-protobuf" level="project" />
     <orderEntry type="library" scope="TEST" name="grpc-stub" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-jr-objects" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
   </component>
 </module>

@@ -10,31 +10,11 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="Ant" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="library" exported="" name="jps-build-script-dependencies-bootstrap" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="commons-cli" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" exported="" />
     <orderEntry type="library" scope="PROVIDED" name="commons-compress" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="fixed.kotlin-jps-plugin-classpath" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model" />
-    <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" />
-    <orderEntry type="library" name="opentelemetry" level="project" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy-ant" level="project" />
-    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy-xml" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy-templates" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
-    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
-    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="library" name="jackson-jr-objects" level="project" />
-    <orderEntry type="module" module-name="intellij.groovy.constants.rt" />
-    <orderEntry type="module" module-name="intellij.groovy.jps" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy-json" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.config" />
-    <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />
   </component>
 </module>
