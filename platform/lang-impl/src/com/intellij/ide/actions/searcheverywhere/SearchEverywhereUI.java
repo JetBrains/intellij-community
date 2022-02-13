@@ -69,6 +69,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1049,6 +1050,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     private void fillUsages(Collection<Object> foundElements, Collection<? super Usage> usages, Collection<? super PsiElement> targets) {
+      usages.addAll(StreamEx.of(foundElements).select(UsageInfo2UsageAdapter.class).toList());
+
       ReadAction.run(() -> foundElements.stream()
         .map(o -> toPsi(o))
         .filter(Objects::nonNull)
