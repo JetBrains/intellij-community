@@ -50,9 +50,7 @@ final class LibraryLicensesListGenerator {
         usedLibraries.put(getLibraryName(item), module.name)
       }
     }
-
-    List<JpsLibrary> moduleLibraries = project.modules.collectMany { it.libraryCollection.libraries }
-    Map<String, String> libraryVersions = (project.libraryCollection.libraries + moduleLibraries)
+    Map<String, String> libraryVersions = (project.libraryCollection.libraries + project.modules.collectMany {it.libraryCollection.libraries})
       .collect { it.asTyped(JpsRepositoryLibraryType.INSTANCE) }
       .findAll { it != null}
       .collectEntries { [it.name, it.properties.data.version] }

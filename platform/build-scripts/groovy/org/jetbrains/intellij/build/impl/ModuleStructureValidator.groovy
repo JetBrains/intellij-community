@@ -120,7 +120,7 @@ final class ModuleStructureValidator {
   }
 
   private void validateXmlDescriptors() {
-    List<File> roots = new ArrayList<File>()
+    def roots = new ArrayList<File>()
     for (moduleName in moduleNames) {
       def module = buildContext.findModule(moduleName)
       for (root in module.sourceRoots) {
@@ -129,19 +129,19 @@ final class ModuleStructureValidator {
     }
 
     // Start validating from product xml descriptor
-    String productDescriptorName = "META-INF/${buildContext.productProperties.platformPrefix}Plugin.xml"
-    File productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
+    def productDescriptorName = "META-INF/${buildContext.productProperties.platformPrefix}Plugin.xml"
+    def productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
     if (productDescriptorFile == null) {
       errors.add("Can not find product descriptor $productDescriptorName".toString())
       return
     }
 
-    HashSet<File> allDescriptors = new HashSet<File>()
+    def allDescriptors = new HashSet<File>()
     validateXmlDescriptorsRec(productDescriptorFile, roots, allDescriptors)
     validateXmlRegistrations(allDescriptors)
   }
 
-  private void validateXmlDescriptorsRec(File descriptor, List<File> roots, HashSet<File> allDescriptors) {
+  private void validateXmlDescriptorsRec(File descriptor, ArrayList<File> roots, HashSet<File> allDescriptors) {
 
     allDescriptors.add(descriptor)
 
