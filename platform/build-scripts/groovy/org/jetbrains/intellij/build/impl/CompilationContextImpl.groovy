@@ -66,7 +66,7 @@ final class CompilationContextImpl implements CompilationContext {
     BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
 
     AntBuilder ant = new AntBuilder()
-    def messages = BuildMessagesImpl.create(ant.project)
+    BuildMessagesImpl messages = BuildMessagesImpl.create(ant.project)
     communityHome = toCanonicalPath(communityHome)
     if (["platform/build-scripts", "bin/idea.properties", "build.txt"].any { !new File(communityHome, it).exists() }) {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
@@ -81,7 +81,7 @@ final class CompilationContextImpl implements CompilationContext {
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
     projectHome = toCanonicalPath(projectHome)
-    def context = new CompilationContextImpl(ant, model, communityHome, projectHome, messages, oldToNewModuleName,
+    CompilationContextImpl context = new CompilationContextImpl(ant, model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     defineJavaSdk(context)
     context.prepareForBuild()

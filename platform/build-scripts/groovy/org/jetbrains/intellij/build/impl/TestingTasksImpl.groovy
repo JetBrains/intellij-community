@@ -26,7 +26,6 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.Test
 
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
@@ -581,7 +580,7 @@ class TestingTasksImpl extends TestingTasks {
                 def noTests = true 
                 UrlClassLoader loader = UrlClassLoader.build().files(files).get()
                 Class<?> aClazz = Class.forName(qName, false, loader)
-                Class<?> testAnnotation = Class.forName(Test.class.getName(), false, loader)
+                Class<?> testAnnotation = Class.forName("org.junit.Test", false, loader)
                 for (Method m : aClazz.getDeclaredMethods()) {
                   if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
                     def exitCode =
