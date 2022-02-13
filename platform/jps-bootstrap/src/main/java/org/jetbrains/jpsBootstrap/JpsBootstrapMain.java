@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -140,11 +141,12 @@ public class JpsBootstrapMain {
 
   private void main() throws Throwable {
     Path jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+    Path kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome);
 
-    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome);
+    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome);
     JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
-    loadClasses(module, model);
+    loadClasses(module, model, kotlincHome);
 
     List<File> moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module);
     verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::fileDebugInfo).collect(Collectors.joining("\n  ")));
@@ -192,7 +194,7 @@ public class JpsBootstrapMain {
     info("java argfile:\n" + Files.readString(javaArgsFileTarget));
   }
 
-  private void loadClasses(JpsModule module, JpsModel model) throws Throwable {
+  private void loadClasses(JpsModule module, JpsModel model, Path kotlincHome) throws Throwable {
     String fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
     boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
 
@@ -218,7 +220,7 @@ public class JpsBootstrapMain {
 
     Set<JpsModule> modulesSubset = JpsProjectUtils.getRuntimeModulesClasspath(module);
 
-    JpsBuild jpsBuild = new JpsBuild(communityHome, model, jpsBootstrapWorkDir);
+    JpsBuild jpsBuild = new JpsBuild(communityHome, model, jpsBootstrapWorkDir, kotlincHome);
     if (manifestJsonUrl != null) {
       jpsBuild.resolveProjectDependencies();
       info("Downloading project classes from " + manifestJsonUrl);
@@ -231,11 +233,12 @@ public class JpsBootstrapMain {
   private static String fileDebugInfo(File file) {
     try {
       if (file.exists()) {
-        if (file.isDirectory()) {
+        BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+        if (attributes.isDirectory()) {
           return file + " directory";
         }
         else {
-          long length = file.length();
+          long length = attributes.size();
           String sha256 = DigestUtils.sha256Hex(Files.readAllBytes(file.toPath()));
           return file + " file length " + length + " sha256 " + sha256;
         }
