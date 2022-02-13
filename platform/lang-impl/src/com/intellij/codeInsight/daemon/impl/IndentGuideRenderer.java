@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -147,15 +148,17 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
 
   private static Color getIndentColor(Editor editor, int startOffset, boolean selected) {
     EditorColorsScheme scheme = editor.getColorsScheme();
-    List<RangeHighlighter> highlighters = ContainerUtil.filter(editor.getMarkupModel().getAllHighlighters(),
-                                                               x -> x.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer);
-    if (!highlighters.isEmpty()) {
-      DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighters.get(0).getLineMarkerRenderer();
-      assert renderer != null;
-      if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighters.get(0).getStartOffset(), false)) {
-        Color color = renderer.getColor();
-        if (color != null) {
-          return color;
+    if (ExperimentalUI.isNewUI()) {
+      List<RangeHighlighter> highlighters = ContainerUtil.filter(editor.getMarkupModel().getAllHighlighters(),
+                                                                 x -> x.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer);
+      if (!highlighters.isEmpty()) {
+        DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighters.get(0).getLineMarkerRenderer();
+        assert renderer != null;
+        if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighters.get(0).getStartOffset(), false)) {
+          Color color = renderer.getColor();
+          if (color != null) {
+            return color;
+          }
         }
       }
     }
