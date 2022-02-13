@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.*;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -141,9 +142,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
     }
 
-    PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
-    for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
-      envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
+    if (TrustedProjects.isTrusted(myProject)) {
+      PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
+      for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
+        envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
+      }
     }
     return envs;
   }

@@ -16,10 +16,12 @@ public final class TerminalOptionsConfigurable implements SearchableConfigurable
   private static final String TERMINAL_SETTINGS_HELP_REFERENCE = "reference.settings.terminal";
 
   private TerminalSettingsPanel myPanel;
+  private final Project myProject;
   private final TerminalOptionsProvider myOptionsProvider;
   private final TerminalProjectOptionsProvider myProjectOptionsProvider;
 
   public TerminalOptionsConfigurable(@NotNull Project project) {
+    myProject = project;
     myOptionsProvider = TerminalOptionsProvider.getInstance();
     myProjectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project);
   }
@@ -44,7 +46,7 @@ public final class TerminalOptionsConfigurable implements SearchableConfigurable
   @Override
   public JComponent createComponent() {
     myPanel = new TerminalSettingsPanel();
-    return myPanel.createPanel(myOptionsProvider, myProjectOptionsProvider);
+    return myPanel.createPanel(myProject, myOptionsProvider, myProjectOptionsProvider);
   }
 
   @Override

@@ -4,11 +4,13 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextComponentAccessors;
@@ -68,12 +70,16 @@ public class TerminalSettingsPanel {
   private ComboBox<TerminalUiSettingsManager.CursorShape> myCursorShape;
   private JBCheckBox myUseOptionAsMetaKey;
 
+  private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
 
-  private final java.util.List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
+  private final List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
 
-  public JComponent createPanel(@NotNull TerminalOptionsProvider provider, @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
+  public JComponent createPanel(@NotNull Project project,
+                                @NotNull TerminalOptionsProvider provider,
+                                @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
+    myProject = project;
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
 
@@ -208,6 +214,7 @@ public class TerminalSettingsPanel {
     myConfigurables.forEach(c -> c.reset());
     myEnvVarField.setData(myProjectOptionsProvider.getEnvData());
     myCursorShape.setItem(myOptionsProvider.getCursorShape());
+    myEnvVarField.setEnabled(TrustedProjects.isTrusted(myProject));
   }
 
   public Color getDefaultValueColor() {
