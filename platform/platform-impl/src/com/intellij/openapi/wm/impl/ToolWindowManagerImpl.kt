@@ -183,10 +183,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
           val toolWindowManager = getInstance(project) as ToolWindowManagerImpl
 
-          val buttonManager = toolWindowManager.toolWindowPane?.buttonManager
-          if (buttonManager is ToolWindowPaneNewButtonManager) {
-            ApplicationManager.getApplication().invokeLater(buttonManager::refreshUi, project.disposed)
-          }
+          toolWindowManager.revalidateStripeButtons()
 
           val toolWindowId = toolWindowManager.activeToolWindowId ?: return
 
@@ -319,6 +316,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
         false
       }, ApplicationManager.getApplication())
+    }
+  }
+
+  private fun revalidateStripeButtons() {
+    if (buttonManager is ToolWindowPaneNewButtonManager) {
+      val refreshButtons = (buttonManager as ToolWindowPaneNewButtonManager)::refreshUi
+      ApplicationManager.getApplication().invokeLater(refreshButtons, project.disposed)
     }
   }
 
@@ -775,6 +779,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     if (moveFocusAfter) {
       activateEditorComponent()
     }
+    revalidateStripeButtons()
   }
 
   private fun executeHide(entry: ToolWindowEntry,
