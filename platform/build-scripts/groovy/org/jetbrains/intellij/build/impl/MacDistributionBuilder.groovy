@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.tasks.MacKt
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -140,15 +141,15 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       .resolve(baseName + ".mac.zip")
     String zipRoot = getZipRoot(context, customizer)
 
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.buildMacZip.invokeWithArguments(macZip,
-                                                zipRoot,
-                                                generateProductJson(context, null),
-                                                context.paths.distAllDir,
-                                                osSpecificDistDir,
-                                                context.getDistFiles(),
-                                                getExecutableFilePatterns(customizer),
-                                                publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED)
+    MacKt.buildMacZip(
+      macZip,
+      zipRoot,
+      generateProductJson(context, null),
+      context.paths.distAllDir,
+      osSpecificDistDir,
+      context.getDistFiles(),
+      getExecutableFilePatterns(customizer),
+      publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED)
     ProductInfoValidator.checkInArchive(context, macZip, "$zipRoot/Resources")
 
     if (publishArchive) {

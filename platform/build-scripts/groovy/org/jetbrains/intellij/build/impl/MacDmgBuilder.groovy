@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.tasks.SignKt
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -50,8 +51,7 @@ final class MacDmgBuilder {
     String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
     Path sitFile = (customizer.publishArchive ? context.paths.artifactDir : context.paths.tempDir).resolve(targetName + ".sit")
 
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, additionalDir, zipRoot)
+    SignKt.prepareMacZip(macZip, sitFile, productJson, additionalDir, zipRoot)
 
     boolean signMacArtifacts = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
     if (!signMacArtifacts && isMac()) {
@@ -63,7 +63,7 @@ final class MacDmgBuilder {
       ? null
       : Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath)
 
-    buildHelper.signMacApp.invokeWithArguments(
+    SignKt.signMacApp(
       macHostProperties.host, macHostProperties.userName, macHostProperties.password,
       macHostProperties.codesignString, context.fullBuildNumber,
       notarize, customizer.bundleIdentifier,

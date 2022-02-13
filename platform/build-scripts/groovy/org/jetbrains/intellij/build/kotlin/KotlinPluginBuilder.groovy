@@ -6,10 +6,10 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.tasks.ArchiveKt
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
@@ -186,8 +186,8 @@ final class KotlinPluginBuilder {
             throw new IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
           }
 
-          BuildHelper.getInstance(context).consumeDataByPrefix
-            .invokeWithArguments(jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
+          ArchiveKt.consumeDataByPrefix(
+            jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
               @Override
               void accept(String name, byte[] data) {
                 patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)

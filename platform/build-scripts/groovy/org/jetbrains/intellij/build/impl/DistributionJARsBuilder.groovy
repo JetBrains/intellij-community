@@ -22,6 +22,13 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.tasks.ArchiveKt
+import org.jetbrains.intellij.build.tasks.AsmKt
+import org.jetbrains.intellij.build.tasks.BrokenPluginsKt
+import org.jetbrains.intellij.build.tasks.JarBuilder
+import org.jetbrains.intellij.build.tasks.KeymapPluginKt
+import org.jetbrains.intellij.build.tasks.ReorderJarsKt
+import org.jetbrains.intellij.build.tasks.Source
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsElementReference
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -276,8 +283,9 @@ final class DistributionJARsBuilder {
             buildHelper.createTask(spanBuilder("write patched app info")) {
               Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
               String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-              byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
-                                                                         context.applicationInfo?.getAppInfoXml()) as byte[]
+              byte[] result = AsmKt.injectAppInfo(
+                moduleOutDir.resolve(relativePath),
+                context.applicationInfo?.getAppInfoXml()) as byte[]
               moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
               return null
             },
@@ -288,10 +296,10 @@ final class DistributionJARsBuilder {
             scramble(context)
           }
 
-          context.bootClassPathJarNames = (List<String>)buildHelper.generateClasspath
-            .invokeWithArguments(context.paths.distAllDir,
-                                 context.productProperties.productLayout.mainJarName,
-                                 antTargetFile)
+          context.bootClassPathJarNames = ReorderJarsKt.generateClasspath(
+            context.paths.distAllDir,
+            context.productProperties.productLayout.mainJarName,
+            antTargetFile)
           return result
         }
       }
@@ -375,8 +383,7 @@ final class DistributionJARsBuilder {
       new Supplier<List<DistributionFileEntry>>() {
         @Override
         List<DistributionFileEntry> get() {
-          List sources = new ArrayList<>()
-          BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
+          List<Source> sources = new ArrayList<>()
           List<DistributionFileEntry> result = new ArrayList<>()
           ProjectLibraryData libraryData = new ProjectLibraryData("Ant", "", ProjectLibraryData.PackMode.MERGED)
           buildHelper.copyDir(
@@ -394,7 +401,7 @@ final class DistributionJARsBuilder {
                   return true
                 }
 
-                sources.add(createZipSource.apply(file, new IntConsumer() {
+                sources.add(JarBuilder.createZipSource(file, new IntConsumer() {
                   @Override
                   void accept(int size) {
                     result.add(new ProjectLibraryEntry(antTargetFile, libraryData, file, size))
@@ -407,7 +414,8 @@ final class DistributionJARsBuilder {
 
           sources.sort(null)
           // path in class log - empty, do not reorder, doesn't matter
-          buildHelper.buildJars.accept(List.of(new Triple(antTargetFile, "", sources)), false)
+          List<Triple<Path, String, List<Source>>> list = List.of(new Triple(antTargetFile, "", sources))
+          JarBuilder.buildJars(list, false)
           return result
         }
       }
@@ -422,7 +430,7 @@ final class DistributionJARsBuilder {
 
     sources.add(context.paths.buildOutputDir.resolve("internal/internalUtilities.jar"))
 
-    BuildHelper.getInstance(context).packInternalUtilities.accept(
+    ArchiveKt.packInternalUtilities(
       context.paths.artifactDir.resolve("internalUtilities.zip"),
       sources
     )
@@ -442,7 +450,7 @@ final class DistributionJARsBuilder {
       new Runnable() {
         @Override
         void run() {
-          helper.brokenPluginsTask.invokeWithArguments(targetFile, buildString, context.options.isInDevelopmentMode)
+          BrokenPluginsKt.buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
           if (Files.exists(targetFile)) {
             context.addDistFile(Map.entry(targetFile, "bin"))
           }
@@ -910,8 +918,7 @@ final class DistributionJARsBuilder {
 
   private static ForkJoinTask<List<kotlin.Pair<Path, byte[]>>> buildKeymapPlugins(Path targetDir, BuildContext context) {
     Path keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
-    return (ForkJoinTask<List<kotlin.Pair<Path, byte[]>>>)BuildHelper.getInstance(context)
-      .buildKeymapPlugins.invokeWithArguments(context.buildNumber, targetDir, keymapDir)
+    return KeymapPluginKt.buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
   }
 
   private PluginRepositorySpec buildHelpPlugin(PluginLayout helpPlugin,

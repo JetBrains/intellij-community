@@ -7,6 +7,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.tasks.ArchiveKt
 
 import java.nio.file.Path
 
@@ -26,7 +27,7 @@ final class CrossPlatformDistributionBuilder {
     String zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
     Path targetFile = context.paths.artifactDir.resolve(zipFileName)
 
-    BuildHelper.getInstance(context).crossPlatformArchive.invokeWithArguments(
+    ArchiveKt.crossPlatformZip(
       distDirs.get(OsFamily.MACOS), distDirs.get(OsFamily.LINUX), distDirs.get(OsFamily.WINDOWS),
       targetFile,
       executableName,

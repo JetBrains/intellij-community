@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.images.ImageSvgPreCompiler
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.lang.invoke.MethodHandle
@@ -38,16 +39,9 @@ final class SVGPreBuilder {
       moduleOutputs.add(context.getModuleOutputDir(module))
     }
 
-    List<Path> classPathFiles = BuildHelper.buildClasspathForModule(context.findRequiredModule("intellij.platform.images.build"), context)
-    // don't use index - avoid saving to output (reproducible builds)
-    ClassLoader classLoader = BuildHelper.createClassLoader(classPathFiles)
-    MethodHandle handle = MethodHandles.lookup().findStatic(classLoader.loadClass("org.jetbrains.intellij.build.images.ImageSvgPreCompiler"),
-                                                            "optimize",
-                                                            MethodType.methodType(List.class,
-                                                                                  Path.class, Path.class, List.class))
     Path dbDir = context.paths.tempDir.resolve("icons")
-    List<Path> files = (List<Path>)handle.invokeWithArguments(dbDir, context.getProjectOutputDirectory().toPath().resolve("production"),
-                                                              moduleOutputs)
+    List<Path> files = ImageSvgPreCompiler.optimize(
+      dbDir, context.getProjectOutputDirectory().toPath().resolve("production"), moduleOutputs)
     for (Path file : files) {
       context.addDistFile(Map.entry(file, "bin/icons"))
     }
