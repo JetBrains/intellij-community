@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.ide.IdeBundle;
@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class TerminalOptionsConfigurable implements SearchableConfigurable, Disposable {
-  public static final String TERMINAL_SETTINGS_HELP_REFERENCE = "reference.settings.terminal";
+public final class TerminalOptionsConfigurable implements SearchableConfigurable, Disposable {
+  private static final String TERMINAL_SETTINGS_HELP_REFERENCE = "reference.settings.terminal";
 
   private TerminalSettingsPanel myPanel;
   private final TerminalOptionsProvider myOptionsProvider;
