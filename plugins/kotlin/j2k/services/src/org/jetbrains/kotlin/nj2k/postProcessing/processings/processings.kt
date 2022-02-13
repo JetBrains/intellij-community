@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
-import com.intellij.codeInsight.actions.OptimizeImportsProcessor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.core.util.range
+import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.JKPostProcessingTarget
 import org.jetbrains.kotlin.j2k.elements
@@ -69,14 +69,17 @@ class OptimizeImportsProcessing : FileBasedPostProcessing() {
                 else -> file.children.asList()
             }
         }
-        val needFormat = elements.any { element ->
+        val shouldOptimize = elements.any { element ->
             element is KtElement
                     && element !is KtImportDirective
                     && element !is KtImportList
                     && element !is KtPackageDirective
         }
-        if (needFormat) runUndoTransparentActionInEdt(inWriteAction = false) {
-            OptimizeImportsProcessor(file.project, file).run()
+        if (shouldOptimize) {
+            val importsReplacer = runReadAction { KotlinImportOptimizer().processFile(file) }
+            runUndoTransparentActionInEdt(inWriteAction = true) {
+                importsReplacer.run()
+            }
         }
     }
 }
