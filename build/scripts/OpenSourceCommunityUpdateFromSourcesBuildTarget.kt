@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 /**
  * Update locally installed distribution from compiled classes
  */
-object UpdateFromSourcesBuildTarget {
+object OpenSourceCommunityUpdateFromSourcesBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val options = BuildOptions()
