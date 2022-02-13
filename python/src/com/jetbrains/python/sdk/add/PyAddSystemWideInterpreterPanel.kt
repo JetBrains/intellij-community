@@ -22,10 +22,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.FormBuilder
+import com.intellij.ui.layout.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.target.ProjectSync
 import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.createSdkForTarget
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkView
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
@@ -47,6 +49,11 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.system.interpreter")
   protected val sdkComboBox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
   protected val permWarning = JBLabel(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv"))
+
+  /**
+   * Encapsulates the work with the files synchronization options.
+   */
+  private var projectSync: ProjectSync? = null
 
   init {
     layout = BorderLayout()
@@ -83,11 +90,19 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
   }
 
   protected open fun layoutComponents() {
-    val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
-      .addComponentToRightColumn(permWarning)
-      .panel
-    add(formPanel, BorderLayout.NORTH)
+    val panel = panel {
+      row(PySdkBundle.message("python.interpreter.label")) {
+        component(sdkComboBox).constraints(CCFlags.growX)
+      }
+      row(EMPTY_LABEL) {
+        component(permWarning).constraints(CCFlags.growY)
+      }
+      targetEnvironmentConfiguration?.let {
+        projectSync = PythonInterpreterTargetEnvironmentFactory.findProjectSync(project, it)
+          ?.also { projectSync -> projectSync.extendDialogPanelWithOptionalFields(this) }
+      }
+    }
+    add(panel, BorderLayout.NORTH)
   }
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
@@ -95,6 +110,8 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
   override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
 
   override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
+    applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
+
     if (targetEnvironmentConfiguration == null) {
       // this is the local machine case
       return when (val sdk = installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)) {
@@ -108,7 +125,15 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     }
   }
 
+  private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
+    if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
+  }
+
   override fun addChangeListener(listener: Runnable) {
     sdkComboBox.childComponent.addItemListener { listener.run() }
+  }
+
+  companion object {
+    private const val EMPTY_LABEL = ""
   }
 }
