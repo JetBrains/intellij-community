@@ -153,7 +153,7 @@ final class BuildTasksImpl extends BuildTasks {
           }
         }
       }
-      def libraryRootUrls = includedLibraries.collectMany {
+      List<String> libraryRootUrls = includedLibraries.collectMany {
         it.getRootUrls(JpsOrderRootType.SOURCES) as Collection<String>
       }
       buildContext.messages.debug(" include ${libraryRootUrls.size()} roots from ${includedLibraries.size()} libraries:")
