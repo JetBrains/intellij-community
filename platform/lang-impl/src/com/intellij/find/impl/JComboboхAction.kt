@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.DocumentAdapter
@@ -22,18 +23,22 @@ import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnAction(), CustomComponentAction {
-  private lateinit var combobox: ComboboxActionComponent
-  val saveMask: () -> Unit = { if (this::combobox.isInitialized) FindSettings.getInstance().fileMask = combobox.getNormalizedText() }
+  private val latestMaskProperty = AtomicProperty<String?>(FindSettings.getInstance().fileMask)
+  private var latestMask: String? by latestMaskProperty
+  val saveMask = { FindSettings.getInstance().fileMask = latestMask }
 
   override fun createCustomComponent(presentation: Presentation) =
-    ComboboxActionComponent(project) { onChanged() }.also { it.isEditable = true }.also { combobox = it }
+    ComboboxActionComponent(project, latestMaskProperty) { onChanged() }.also { it.isEditable = true }
 
   override fun actionPerformed(e: AnActionEvent) {}
 
-  class ComboboxActionComponent(val project: Project, val onChanged: () -> Unit) :
+  class ComboboxActionComponent(private val project: Project,
+                                private val mask: AtomicProperty<String?>,
+                                private val onChanged: () -> Unit) :
     ComboBox<String>(FindSettings.getInstance().recentFileMasks.reversed().toTypedArray()) {
     private val findModel = FindManager.getInstance(project).findInProjectModel
     private val rebuild = {
+      mask.set(getNormalizedText())
       findModel.fileFilter = getNormalizedText()
       onChanged()
     }
@@ -58,6 +63,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
 
           override fun focusLost(e: FocusEvent) {
             if (it.text.isEmpty()) {
+              (editor.editorComponent as JTextField).text = emptyText
               selectedIndex = 0
             }
           }
