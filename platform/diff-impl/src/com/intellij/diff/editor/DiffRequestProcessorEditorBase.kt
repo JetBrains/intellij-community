@@ -30,10 +30,6 @@ abstract class DiffRequestProcessorEditorBase(
     private val LOG = logger<DiffRequestProcessorEditorBase>()
   }
 
-  private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
-
-  private var disposed = false
-
   private val panel = MyPanel(component)
 
   init {
@@ -55,7 +51,7 @@ abstract class DiffRequestProcessorEditorBase(
     super.dispose()
   }
 
-  override fun isValid(): Boolean = !ourDisposable.isDisposed && !disposable.isDisposed
+  override fun isValid(): Boolean = !isDisposed && !disposable.isDisposed
   override fun getFile(): VirtualFile = file
   override fun getName(): String = DiffBundle.message("diff.file.editor.name")
 
@@ -65,7 +61,7 @@ abstract class DiffRequestProcessorEditorBase(
 
       addContainerListener(object : ContainerAdapter() {
         override fun componentRemoved(e: ContainerEvent?) {
-          if (disposed) return
+          if (isDisposed) return
           LOG.error("DiffRequestProcessor cannot be shown twice, see com.intellij.ide.actions.SplitAction.FORBID_TAB_SPLIT, file: $file")
         }
       })

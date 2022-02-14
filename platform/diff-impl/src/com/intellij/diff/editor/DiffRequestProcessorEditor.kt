@@ -14,7 +14,7 @@ open class DiffRequestProcessorEditor(
   val processor: DiffRequestProcessor
 ) : DiffRequestProcessorEditorBase(file,
                                    processor.component,
-                                   Disposer.newCheckedDisposable().also { Disposer.register(processor, it) },
+                                   processor,
                                    processor.context) {
 
   init {

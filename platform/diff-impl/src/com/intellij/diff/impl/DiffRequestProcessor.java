@@ -74,7 +74,7 @@ import java.util.Map;
 
 import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
 
-public abstract class DiffRequestProcessor implements Disposable {
+public abstract class DiffRequestProcessor implements CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
   private boolean myDisposed;
@@ -677,6 +677,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     return mySettings;
   }
 
+  @Override
   public boolean isDisposed() {
     return myDisposed;
   }
