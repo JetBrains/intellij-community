@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ApplicationManager
@@ -126,7 +127,9 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
     val localHistoryActionText = ActionsBundle.groupText("LocalHistory").dropMnemonic()
     task {
-      text(LessonsBundle.message("local.history.remove.code", strong(localHistoryActionText), action("EditorDelete")))
+      text(LessonsBundle.message("local.history.remove.code",
+                                 strong(localHistoryActionText),
+                                 action(IdeActions.ACTION_EDITOR_BACKSPACE)))
       stateCheck {
         editor.document.charsSequence.contains(textAfterDelete)
       }
