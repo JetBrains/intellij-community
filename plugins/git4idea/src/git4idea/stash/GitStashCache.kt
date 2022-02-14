@@ -54,13 +54,22 @@ class GitStashCache(val project: Project) : Disposable {
     }
   }
 
-  fun loadStashData(stashInfo: StashInfo): CompletableFuture<StashData>? {
+  fun loadStashData(stashInfo: StashInfo) = getFutureStashData(stashInfo, false)
+  fun getCachedData(stashInfo: StashInfo): StashData.Changes? {
+    return getFutureStashData(stashInfo, true)?.getNowSafely() as? StashData.Changes
+  }
+
+  private fun getFutureStashData(stashInfo: StashInfo, cached: Boolean): CompletableFuture<StashData>? {
     if (disposableFlag.isDisposed) return null
 
     val commitId = StashId(stashInfo.hash, stashInfo.parentHashes, stashInfo.root)
-    val future = cache.get(commitId)
-    if (future.isCancelled) return cache.synchronous().refresh(commitId)
-    return future
+    return if (cached) {
+      cache.getIfPresent(commitId)
+    }
+    else {
+      val future = cache.get(commitId)
+      if (future.isCancelled) cache.synchronous().refresh(commitId) else future
+    }
   }
 
   override fun dispose() {
@@ -75,6 +84,15 @@ class GitStashCache(val project: Project) : Disposable {
 
   companion object {
     private val LOG = Logger.getInstance(GitStashCache::class.java)
+
+    private fun <T> CompletableFuture<T>.getNowSafely(): T? {
+      return try {
+        getNow(null)
+      }
+      catch (e: Throwable) {
+        null
+      }
+    }
   }
 
   sealed class StashData {

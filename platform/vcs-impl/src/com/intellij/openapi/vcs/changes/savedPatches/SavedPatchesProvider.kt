@@ -26,6 +26,7 @@ interface SavedPatchesProvider<S> {
     val data: S
 
     fun loadChanges(): CompletableFuture<LoadingResult>?
+    fun cachedChanges(): Collection<ChangeObject>?
     fun getDiffPreviewTitle(changeName: String?): String
     fun createPainter(tree: ChangesTree, renderer: ChangesTreeCellRenderer, row: Int, selected: Boolean): Painter? = null
 

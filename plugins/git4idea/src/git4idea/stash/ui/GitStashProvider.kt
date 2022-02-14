@@ -129,23 +129,31 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
   }
 
   inner class StashObject(override val data: StashInfo) : SavedPatchesProvider.PatchObject<StashInfo> {
+    override fun cachedChanges(): Collection<SavedPatchesProvider.ChangeObject>? {
+      return stashCache.getCachedData(data)?.toChangeObjects()
+    }
+
     override fun loadChanges(): CompletableFuture<SavedPatchesProvider.LoadingResult>? {
       val loadStashData = stashCache.loadStashData(data)
       val processResults = loadStashData?.thenApply { stashData ->
         when (stashData) {
           is GitStashCache.StashData.Changes -> {
-            val stashChanges = stashData.changes.map { GitStashChange(it, null) }
-            val otherChanges = stashData.parentCommits.flatMap { parent ->
-              val tag: ChangesBrowserNode.Tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
-              parent.changes.map { GitStashChange(it, tag) }
-            }
-            SavedPatchesProvider.LoadingResult.Changes(stashChanges + otherChanges)
+            SavedPatchesProvider.LoadingResult.Changes(stashData.toChangeObjects())
           }
           is GitStashCache.StashData.Error -> SavedPatchesProvider.LoadingResult.Error(stashData.error)
         }
       }
       processResults?.propagateCancellationTo(loadStashData)
       return processResults
+    }
+
+    private fun GitStashCache.StashData.Changes.toChangeObjects(): List<GitStashChange> {
+      val stashChanges = changes.map { GitStashChange(it, null) }
+      val otherChanges = parentCommits.flatMap { parent ->
+        val tag: ChangesBrowserNode.Tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
+        parent.changes.map { GitStashChange(it, tag) }
+      }
+      return stashChanges + otherChanges
     }
 
     override fun getDiffPreviewTitle(changeName: String?): String {

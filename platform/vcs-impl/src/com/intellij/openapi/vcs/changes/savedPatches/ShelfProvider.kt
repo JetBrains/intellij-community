@@ -93,6 +93,8 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   }
 
   inner class ShelfObject(override val data: ShelvedChangeList) : SavedPatchesProvider.PatchObject<ShelvedChangeList> {
+    override fun cachedChanges(): Collection<SavedPatchesProvider.ChangeObject>? = data.getChangeObjects()
+
     override fun loadChanges(): CompletableFuture<SavedPatchesProvider.LoadingResult>? {
       val cachedChangeObjects = data.getChangeObjects()
       if (cachedChangeObjects != null) {
