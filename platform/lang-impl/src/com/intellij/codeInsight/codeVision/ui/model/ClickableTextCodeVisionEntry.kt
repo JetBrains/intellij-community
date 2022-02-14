@@ -12,7 +12,7 @@ import javax.swing.Icon
  */
 class ClickableTextCodeVisionEntry(text: String,
                                    providerId: String,
-                                   val onClick: (MouseEvent?, Editor) -> Unit,
+                                   val onClick: (MouseEvent, Editor) -> Unit,
                                    icon: Icon? = null,
                                    longPresentation: String = text,
                                    tooltip: String = "",
@@ -21,7 +21,7 @@ class ClickableTextCodeVisionEntry(text: String,
                         longPresentation, tooltip,
                         extraActions), CodeVisionPredefinedActionEntry {
   override fun onClick(editor: Editor) {
-    val mouseEvent = this.getUserData(codeVisionEntryMouseEventKey)
+    val mouseEvent = this.getUserData(codeVisionEntryMouseEventKey) ?: error("Mouse event lost")
     onClick.invoke(mouseEvent, editor)
   }
 }

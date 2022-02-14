@@ -9,6 +9,7 @@ import javax.swing.Icon
  * @property longPresentation The text in 'More' menu
  * @property tooltip Tooltip text
  * @property extraActions Extra actions for this lens
+ * extra actions available with right click on inlay
  */
 abstract class CodeVisionEntry(val providerId: String,
                                val icon: Icon?,
