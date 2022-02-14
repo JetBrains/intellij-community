@@ -13,13 +13,6 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   private val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
   private val notification = AtomicReference<Notification>()
 
-  private val expiredListener = Runnable {
-    val currentNotification = notification.get()
-    if (currentNotification != null && currentNotification.isExpired) {
-      notification.compareAndSet(currentNotification, null)
-    }
-  }
-
   fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project) =
     notify(title, content, project) { }
 
@@ -32,18 +25,22 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
       if (isVisible(oldNotification, project)) {
         return
       }
-      expire(oldNotification)
+      oldNotification.expire()
     }
 
-    val newNotification = Notification(group.displayId, title, content, type)
+    val newNotification = object : Notification(group.displayId, title, content, type) {
+      override fun expire() {
+        super.expire()
+        notification.compareAndSet(this, null)
+      }
+    }
     customizer.accept(newNotification)
-    newNotification.whenExpired(expiredListener)
 
     if (notification.compareAndSet(oldNotification, newNotification)) {
       newNotification.notify(project)
     }
     else {
-      expire(newNotification)
+      newNotification.expire()
     }
   }
 
@@ -57,12 +54,7 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   }
 
   fun clear() {
-    notification.getAndSet(null)?.let { expire(it) }
-  }
-
-  private fun expire(notification: Notification) {
-    notification.resetAllExpiredListeners()
-    notification.expire()
+    notification.getAndSet(null)?.expire()
   }
 
   //<editor-fold desc="Deprecated stuff.">
