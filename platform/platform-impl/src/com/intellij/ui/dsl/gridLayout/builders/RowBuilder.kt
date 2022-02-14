@@ -12,7 +12,7 @@ import javax.swing.JPanel
 /**
  * DON'T USE IT, for internal Jetbrains UI team only. Can be removed in any time
  *
- * This class is a temporary solution for building one row layput via [GridLayout] from JAVA classes.
+ * This class is a temporary solution for building one row layout via [GridLayout] from JAVA classes.
  * Useful when single BorderLayout is not enough or vertical alignment is needed, for example
  */
 @ApiStatus.Internal
