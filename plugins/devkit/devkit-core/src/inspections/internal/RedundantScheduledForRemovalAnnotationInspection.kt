@@ -40,26 +40,17 @@ class RedundantScheduledForRemovalAnnotationInspection : DevKitInspectionBase() 
           holder.registerProblem(forRemovalAnnotation, DevKitBundle.message("inspection.message.scheduled.for.removal.annotation.can.be.removed"), RemoveAnnotationQuickFix(forRemovalAnnotation, element))
         }
         else {
-          val fix = ReplaceAnnotationByForRemovalAttributeFix(forRemovalAnnotation, deprecatedAnnotation)
+          val fix = ReplaceAnnotationByForRemovalAttributeFix()
           holder.registerProblem(forRemovalAnnotation, DevKitBundle.message("inspection.message.scheduled.for.removal.annotation.can.be.replaced.by.attribute"), fix)
         }
       }
     }
   }
 
-  class ReplaceAnnotationByForRemovalAttributeFix(forRemovalAnnotation: PsiAnnotation, deprecatedAnnotation: PsiAnnotation) : LocalQuickFix {
-    private val forRemovalAnnotationPointer: SmartPsiElementPointer<PsiAnnotation>
-    private val deprecatedAnnotationPointer: SmartPsiElementPointer<PsiAnnotation>
-    
-    init {
-      val smartPointerManager = SmartPointerManager.getInstance(forRemovalAnnotation.project)
-      forRemovalAnnotationPointer = smartPointerManager.createSmartPsiElementPointer(forRemovalAnnotation)
-      deprecatedAnnotationPointer = smartPointerManager.createSmartPsiElementPointer(deprecatedAnnotation) 
-    }
-    
+  class ReplaceAnnotationByForRemovalAttributeFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val forRemovalAnnotation = forRemovalAnnotationPointer.element ?: return
-      val deprecatedAnnotation = deprecatedAnnotationPointer.element ?: return
+      val forRemovalAnnotation = descriptor.psiElement as? PsiAnnotation ?: return
+      val deprecatedAnnotation = forRemovalAnnotation.owner?.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) ?: return
       val javaFile = forRemovalAnnotation.containingFile as? PsiJavaFile
       forRemovalAnnotation.delete()
       val trueLiteral = JavaPsiFacade.getElementFactory(project).createExpressionFromText(PsiKeyword.TRUE, null)
