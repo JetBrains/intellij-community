@@ -25,22 +25,26 @@ import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
+import java.util.Collections
 
 class SubpackagesIndexService(private val project: Project): Disposable {
 
-    private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages", false)
+    private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages", true)
 
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
+            val packageTracker = KotlinPackageModificationListener.getInstance(project).packageTracker
             val dependencies = arrayOf(
                 ProjectRootModificationTracker.getInstance(project),
                 otherLanguagesModificationTracker(),
-                KotlinPackageModificationListener.getInstance(project).packageTracker
+                packageTracker
             )
             CachedValueProvider.Result(
-                SubpackagesIndex(KotlinExactPackagesIndex.getInstance().getAllKeys(project), dependencies),
+                SubpackagesIndex(KotlinPartialPackageNamesIndex.findAllFqNames(project),
+                                 dependencies,
+                                 packageTracker.modificationCount),
                 *dependencies,
             )
         },
@@ -78,102 +82,100 @@ class SubpackagesIndexService(private val project: Project): Disposable {
             }
         }
 
-    inner class SubpackagesIndex(allPackageFqNames: Collection<String>, val dependencies: Array<ModificationTracker>) {
+    inner class SubpackagesIndex(
+        allPackageFqNames: Collection<FqName>,
+        private val dependencies: Array<ModificationTracker>,
+        private val ptCount: Long
+    ) {
         // a map from any existing package (in kotlin) to a set of subpackages (not necessarily direct) containing files
         private val allPackageFqNames = hashSetOf<FqName>()
         private val fqNameByPrefix = MultiMap.createSet<FqName, FqName>()
-        private val ptCount = KotlinPackageModificationListener.getInstance(project).packageTracker.modificationCount
 
         init {
-            for (fqNameAsString in allPackageFqNames) {
-                val fqName = FqName(fqNameAsString)
-                this.allPackageFqNames.add(fqName)
-
-                var prefix = fqName
-                while (!prefix.isRoot) {
-                    prefix = prefix.parent()
+            this.allPackageFqNames.addAll(allPackageFqNames)
+            for (fqName in allPackageFqNames) {
+                for (prefix in generateSequence(fqName.parentOrNull(), FqName::parentOrNull)) {
                     fqNameByPrefix.putValue(prefix, fqName)
                 }
             }
         }
 
-        fun hasSubpackages(fqName: FqName, scope: GlobalSearchScope): Boolean {
-            val cachedPartialFqNames: MutableMap<FqName, Boolean>? = cachedPartialFqNames(scope)
-            cachedPartialFqNames?.get(fqName)?.takeIf { !it }?.let { return false }
+        /**
+         * Known set of partial fqNames of scope.
+         * Note: exact matching is a corner case of partial.
+         *
+         * Null when it is not possible to get and cache fqNames for the scope
+         */
+        private fun knownPartialFqNames(scope: GlobalSearchScope): Set<FqName>? {
+            if (!enableSubpackageCaching) return null
 
-            val fqNames = fqNameByPrefix[fqName]
+            val moduleSourceScope = scope.safeAs<ModuleSourceScope>() ?: return null
+            val map = moduleSourceScope.module.cacheByProvider(*dependencies, provider = ::knownPartialFqNamesProvider)
+            val scopeClass = moduleSourceScope.javaClass
+            val result = map.computeIfAbsent(scopeClass) {
+                KotlinPartialPackageNamesIndex.filterFqNames(allPackageFqNames, scope)
+            }
+            // result has to have at least `<root>` element, if it is empty it means nothing is indexed in a scope, no reasons to cache it
+            return result.ifEmpty {
+                map.remove(scopeClass)
+                null
+            }
+        }
 
-            val knownNotContains = fqNames.isKnownNotContains(fqName, scope)
-            if (knownNotContains) {
+        /**
+         * Return true if exists package with exact [fqName] OR there are some subpackages of [fqName]
+         */
+        fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames
+
+        /**
+         * Return true if package [fqName] exists or some subpackages of [fqName] exist in [scope]
+         */
+        fun packageExists(fqName: FqName, scope: GlobalSearchScope): Boolean {
+            if (!packageExists(fqName)) {
                 return false
             }
 
-            val any = fqNames.any { packageWithFilesFqName ->
-                ProgressManager.checkCanceled()
-                if (cachedPartialFqNames?.get(packageWithFilesFqName) == false) {
-                    // there are production sources, test sources in module, therefore we can 100% rely only on a negative value
-                    return@any false
-                }
-                val containsFilesWithExactPackage = PackageIndexUtil.containsFilesWithExactPackage(packageWithFilesFqName, scope, project)
-                if (!containsFilesWithExactPackage) {
-                    cachedPartialFqNames?.put(packageWithFilesFqName, containsFilesWithExactPackage)
-                }
-                containsFilesWithExactPackage
-            }
-            return any
+            return knownPartialFqNames(scope)?.let { fqName in it } ?: PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope)
         }
 
-        private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean {
-            return enableSubpackageCaching && !fqName.isRoot && (isEmpty() ||
-                    // fast check is reasonable when fqNames has more than 1 element
-                    size > 1 && run {
-                val partialFqName = KotlinPartialPackageNamesIndex.toPartialFqName(fqName)
-
-                val cachedPartialFqNames: MutableMap<FqName, Boolean>? = cachedPartialFqNames(scope)
-                cachedPartialFqNames?.get(partialFqName)?.let { return@run it }
-                val notContains = !PackageIndexUtil.containsFilesWithPartialPackage(partialFqName, scope)
-                cachedPartialFqNames?.put(partialFqName, notContains)
-                notContains
-            })
-        }
-
-        private fun cachedPartialFqNames(scope: GlobalSearchScope): MutableMap<FqName, Boolean>? {
-            if (!enableSubpackageCaching) return null
-            val module = scope.safeAs<ModuleSourceScope>()?.module ?: return null
-            return module.cacheByProvider(*dependencies, provider = ::cachedPartialFqNamesProvider)
-        }
-
-        fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
-
+        /**
+         * Return all direct subpackages of package [fqName].
+         *
+         * I.e. if there are packages `a.b`, `a.b.c`, `a.c`, `a.c.b` for `fqName` = `a` it returns
+         * `a.b` and `a.c`
+         *
+         * Follow the contract of [com.intellij.psi.PsiElementFinder#getSubPackages]
+         */
         fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
-            val cachedPartialFqNames: MutableMap<FqName, Boolean>? = cachedPartialFqNames(scope)
-            cachedPartialFqNames?.get(fqName)?.takeIf { !it }?.let { return emptyList() }
-            val fqNames = fqNameByPrefix[fqName]
-
-            if (fqNames.isKnownNotContains(fqName, scope)) {
+            if (!packageExists(fqName)) {
                 return emptyList()
             }
+            val fqNames = fqNameByPrefix[fqName].ifEmpty { return emptyList() }
 
-            val existingSubPackagesShortNames = HashSet<Name>()
-            val len = fqName.pathSegments().size
+            val knownPartialFqNames = knownPartialFqNames(scope)
+            knownPartialFqNames?.let {
+                if (fqName !in it) return emptyList()
+            }
+
+            val subPackagesNames = hashSetOf<Name>()
+            val len =  fqName.pathSegmentsSize()
             for (filesFqName in fqNames) {
                 ProgressManager.checkCanceled()
-                val candidateSubPackageShortName = filesFqName.pathSegments()[len]
-                if (candidateSubPackageShortName in existingSubPackagesShortNames || !nameFilter(candidateSubPackageShortName)) continue
 
-                if (cachedPartialFqNames?.get(filesFqName) == false) {
+                val subPackageName = filesFqName.pathSegments()[len]
+                if (subPackageName in subPackagesNames || !nameFilter(subPackageName)) continue
+
+                if (knownPartialFqNames?.contains(filesFqName) == false) {
                     continue
                 }
 
-                val existsInThisScope = PackageIndexUtil.containsFilesWithExactPackage(filesFqName, scope, project)
-                if (existsInThisScope) {
-                    existingSubPackagesShortNames.add(candidateSubPackageShortName)
-                } else {
-                    cachedPartialFqNames?.run { put(filesFqName, false) }
+                val containsFilesWithPartialPackage = PackageIndexUtil.containsFilesWithPartialPackage(filesFqName, scope)
+                if (containsFilesWithPartialPackage) {
+                    subPackagesNames.add(subPackageName)
                 }
             }
 
-            return existingSubPackagesShortNames.map { fqName.child(it) }
+            return subPackagesNames.map { fqName.child(it) }
         }
 
         override fun toString() = "SubpackagesIndex: PTC on creation $ptCount, all packages size ${allPackageFqNames.size}"
@@ -185,10 +187,10 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         }
     }
 }
+private fun FqName.pathSegmentsSize() = if (isRoot) 0 else asString().count { it == '.' } + 1
 
 // to avoid capture of extra field (esp. `dependencies`) into a provider lambda
-private fun cachedPartialFqNamesProvider() = Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
-
+private fun knownPartialFqNamesProvider() = Collections.synchronizedMap(mutableMapOf<Class<out ModuleSourceScope>, Set<FqName>>())
 
 private class OtherLanguagesModificationTracker(val project: Project): ModificationTracker {
     private val delegate = PsiModificationTracker.SERVICE.getInstance(project).forLanguages {
