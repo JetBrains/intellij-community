@@ -64,7 +64,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     Path storageFile = IndexInfrastructure.getStorageFile(myIndexId);
     myPersistentLog = new LogBasedIntIntIndex(new IntLog(storageFile.resolveSibling(storageFile.getFileName().toString() + ".log.index"),
                                                          true,
-                                                         new StorageLockContext(true, false, true)));
+                                                         new StorageLockContext(false, true)));
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(IndexInfrastructure.getStorageFile(myIndexId).resolveSibling("fileType.enum"));
     int cacheSize = extension.getCacheSize();
     myForwardIndexCache = new SLRUMap<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25)));

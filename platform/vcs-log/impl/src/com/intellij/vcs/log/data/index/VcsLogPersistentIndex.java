@@ -319,7 +319,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
       try {
         StorageId storageId = indexStorageId(projectName, logId);
-        StorageLockContext storageLockContext = new StorageLockContext(true);
+        StorageLockContext storageLockContext = new StorageLockContext();
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);

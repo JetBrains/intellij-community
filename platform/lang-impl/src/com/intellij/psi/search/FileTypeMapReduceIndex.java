@@ -78,7 +78,7 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> i
 
   @NotNull
   private static PersistentStringEnumerator createFileTypeNameEnumerator() throws IOException {
-    return new PersistentStringEnumerator(getFileTypeNameEnumeratorPath(),  128, true, new StorageLockContext(true));
+    return new PersistentStringEnumerator(getFileTypeNameEnumeratorPath(),  128, true, new StorageLockContext());
   }
 
   private static @NotNull Path getFileTypeNameEnumeratorPath() throws IOException {
