@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.*;
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter;
@@ -455,5 +456,14 @@ public final class GdkMethodUtil {
       }
     }
     return false;
+  }
+
+  public static PsiMethod createMacroMethod(@NotNull PsiMethod prototype) {
+    GrLightMethodBuilder syntheticMacro = new GrLightMethodBuilder(prototype.getManager(), prototype.getName());
+    syntheticMacro.setModifiers(new String[]{PsiModifier.STATIC});
+    syntheticMacro.addParameter(new GrLightParameter("code", new PsiEllipsisType(PsiType.getJavaLangObject(prototype.getManager(), prototype.getResolveScope())), prototype));
+    syntheticMacro.setNavigationElement(prototype);
+    syntheticMacro.setOriginInfo("Macro method");
+    return syntheticMacro;
   }
 }
