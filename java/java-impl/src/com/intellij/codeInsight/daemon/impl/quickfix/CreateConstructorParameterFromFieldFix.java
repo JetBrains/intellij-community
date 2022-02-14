@@ -32,6 +32,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -275,8 +276,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (containingClass == null) return false;
     final int minUsagesNumber = containingClass.findMethodsBySignature(fromText, false).length > 0 ? 0 : 1;
     final List<ParameterInfoImpl> parameterInfos =
-      ChangeMethodSignatureFromUsageFix.performChange(project, editor, file, constructor, minUsagesNumber, newParamInfos, true, true, (List<ParameterInfoImpl> p) -> {
-        final ParameterInfoImpl[] resultParams = p.toArray(new ParameterInfoImpl[0]);
+      ChangeMethodSignatureFromUsageFix.performChange(project, editor, file, constructor, minUsagesNumber, newParamInfos, true, true, (List<ParameterInfo> p) -> {
+        final ParameterInfo[] resultParams = p.toArray(new ParameterInfo[0]);
         doCreate(project, editor, parameters, constructorPointer, resultParams, usedFields, cleanupElements);
       } );
     return parameterInfos != null;
@@ -313,7 +314,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private static boolean doCreate(Project project, Editor editor, PsiParameter[] parameters, SmartPsiElementPointer constructorPointer,
-                                  ParameterInfoImpl[] parameterInfos, Map<PsiField, String> fields, List<? super SmartPsiElementPointer<PsiElement>> cleanupElements) {
+                                  ParameterInfo[] parameterInfos, Map<PsiField, String> fields, List<? super SmartPsiElementPointer<PsiElement>> cleanupElements) {
     PsiMethod constructor = (PsiMethod)constructorPointer.getElement();
     assert constructor != null;
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();
@@ -347,7 +348,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private static PsiParameter findParamByName(String newName,
                                               PsiType type,
                                               PsiParameter[] newParameters,
-                                              ParameterInfoImpl[] parameterInfos) {
+                                              ParameterInfo[] parameterInfos) {
     for (PsiParameter newParameter : newParameters) {
       if (Comparing.strEqual(newName, newParameter.getName())) {
         return newParameter;
@@ -356,7 +357,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     for (int i = 0; i < newParameters.length; i++) {
       if (parameterInfos[i].isNew()) {
         final PsiParameter parameter = newParameters[i];
-        final PsiType paramType = parameterInfos[i].getTypeWrapper().getType(parameter);
+        final PsiType paramType = ((ParameterInfoImpl)parameterInfos[i]).getTypeWrapper().getType(parameter);
         if (type.isAssignableFrom(paramType)){
           return parameter;
         }

@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -369,11 +369,10 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         paramIdx++;
       }
 
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      var processor = provider.getChangeSignatureProcessorWithCallback(
-        method.getProject(), method, false, null, method.getName(), method.getReturnType(),
-        psiParameters.toArray(new ParameterInfoImpl[0]), null
-      );
+      ParameterInfoImpl @NotNull [] parameterInfo = psiParameters.toArray(new ParameterInfoImpl[0]);
+      var processor = JavaRefactoringFactory.getInstance(method.getProject())
+        .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(), parameterInfo, null, null, null,
+                                        null);
       processor.run();
     }
 

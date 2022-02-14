@@ -13,7 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -74,17 +74,14 @@ public class MakeVoidQuickFix implements LocalQuickFix {
       return;
     }
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodsToModify)) return;
-    var provider = JavaSpecialRefactoringProvider.getInstance();
-    var csp = provider.getChangeSignatureProcessorWithCallback(project,
-                                                                     psiMethod,
-                                                                     false, null, psiMethod.getName(),
-                                                                     PsiType.VOID,
-                                                                     ParameterInfoImpl.fromMethod(psiMethod),
-                                                               infos -> {
-                                                                       for (final PsiMethod method : methodsToModify) {
-                                                                         replaceReturnStatements(method);
-                                                                       }
-                                                                     });
+    var csp = JavaRefactoringFactory.getInstance(project)
+      .createChangeSignatureProcessor(psiMethod, false, null, psiMethod.getName(), PsiType.VOID,
+                                      ParameterInfoImpl.fromMethod(psiMethod), null, null, null,
+                                      infos -> {
+                                        for (final PsiMethod method : methodsToModify) {
+                                          replaceReturnStatements(method);
+                                        }
+                                      });
     csp.run();
   }
 

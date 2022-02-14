@@ -5,8 +5,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author dsl
@@ -87,4 +93,16 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
                                                      boolean cookToWildcards);
   
   public abstract ChangeClassSignatureRefactoring createChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature);
+  
+  public abstract ChangeSignatureRefactoring createChangeSignatureProcessor(PsiMethod method,
+                                                                            boolean generateDelegate,
+                                                                            @Nullable // null means unchanged
+                                                                            @PsiModifier.ModifierConstant String newVisibility,
+                                                                            String newName,
+                                                                            PsiType newReturnType,
+                                                                            ParameterInfo @NotNull [] parameterInfo,
+                                                                            ThrownExceptionInfo[] thrownExceptions,
+                                                                            Set<PsiMethod> propagateParametersMethods,
+                                                                            Set<PsiMethod> propagateExceptionsMethods,
+                                                                            Consumer<? super List<ParameterInfo>> callback);
 }

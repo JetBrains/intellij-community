@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -51,11 +51,12 @@ class MakePublicStaticVoidFix extends InspectionGadgetsFix {
   protected void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
     if (method != null) {
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      var csp = provider.getChangeSignatureProcessorWithCallback(project, method, false, myNewVisibility, method.getName(), PsiType.VOID,
-                                                                 new ParameterInfoImpl[0], infos -> {
-          PsiUtil.setModifierProperty(method, PsiModifier.STATIC, myMakeStatic);
-        });
+      ParameterInfoImpl @NotNull [] parameterInfo = new ParameterInfoImpl[0];
+      var csp = JavaRefactoringFactory.getInstance(project)
+        .createChangeSignatureProcessor(method, false, myNewVisibility, method.getName(), PsiType.VOID, parameterInfo, null, null,
+                                        null, infos -> {
+            PsiUtil.setModifierProperty(method, PsiModifier.STATIC, myMakeStatic);
+          });
       csp.run();
     }
   }

@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.JavaElementKind;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,16 +62,9 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
 
   public static void removeReferences(PsiParameter parameter) {
     PsiMethod method = (PsiMethod) parameter.getDeclarationScope();
-    var provider = JavaSpecialRefactoringProvider.getInstance();
-    var processor = provider.getChangeSignatureProcessorWithCallback(
-      parameter.getProject(),
-      method,
-      false, null,
-      method.getName(),
-      method.getReturnType(),
-      ParameterInfoImpl.fromMethodExceptParameter(method, parameter),
-      null
-    );
+    var processor = JavaRefactoringFactory.getInstance(parameter.getProject())
+      .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(),
+                                      ParameterInfoImpl.fromMethodExceptParameter(method, parameter), null, null, null, null);
     processor.run();
   }
 

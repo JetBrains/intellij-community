@@ -15,7 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -90,10 +90,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[0]);
       String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      var processor = provider.getChangeSignatureProcessorWithCallback(
-        project, method, false, modifier, method.getName(), method.getReturnType(),
-        array, null);
+      var processor = JavaRefactoringFactory.getInstance(project)
+        .createChangeSignatureProcessor(method, false, modifier, method.getName(), method.getReturnType(), array, null, null, null, null);
       processor.run();
     }
     else {

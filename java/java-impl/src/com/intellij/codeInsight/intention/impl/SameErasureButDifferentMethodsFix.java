@@ -9,7 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.JavaClassSupers;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +52,8 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
       infos[i] = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(superParameterType);
     }
 
-    var provider = JavaSpecialRefactoringProvider.getInstance();
-    var processor = provider.getChangeSignatureProcessorWithCallback(project, method, false, null, method.getName(), method.getReturnType(), infos,
-                                                                     null);
+    var processor = JavaRefactoringFactory.getInstance(project)
+      .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(), infos, null, null, null, null);
 
     processor.run();
   }

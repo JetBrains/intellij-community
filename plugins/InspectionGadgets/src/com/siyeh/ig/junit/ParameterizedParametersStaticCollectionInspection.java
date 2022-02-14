@@ -12,7 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -68,15 +68,9 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
           method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
         });
         final PsiType type = (PsiType)infos[1];
-        var provider = JavaSpecialRefactoringProvider.getInstance();
-        var csp = provider.getChangeSignatureProcessorWithCallback(project,
-                                                                        method,
-                                                                        false,
-                                                                        PsiModifier.PUBLIC,
-                                                                        method.getName(),
-                                                                        type,
-                                                                        new ParameterInfoImpl[0],
-                                                                   null);
+        ParameterInfoImpl @NotNull [] parameterInfo = new ParameterInfoImpl[0];
+        var csp = JavaRefactoringFactory.getInstance(project)
+          .createChangeSignatureProcessor(method, false, PsiModifier.PUBLIC, method.getName(), type, parameterInfo, null, null, null, null);
         csp.run();
       }
 

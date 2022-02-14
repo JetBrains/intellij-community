@@ -17,7 +17,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.ArrayUtil;
@@ -149,16 +149,10 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
       dialog.show();
     }
     else {
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      var processor = provider.getChangeSignatureProcessorWithCallback(
-        psiMethod.getProject(),
-        psiMethod,
-        false, null,
-        psiMethod.getName(),
-        psiMethod.getReturnType(),
-        infos.toArray(new ParameterInfoImpl[0]),
-        null
-      );
+      ParameterInfoImpl @NotNull [] parameterInfo = infos.toArray(new ParameterInfoImpl[0]);
+      var processor = JavaRefactoringFactory.getInstance(psiMethod.getProject())
+        .createChangeSignatureProcessor(psiMethod, false, null, psiMethod.getName(), psiMethod.getReturnType(), parameterInfo, null, null,
+                                        null, null);
       processor.run();
     }
   }

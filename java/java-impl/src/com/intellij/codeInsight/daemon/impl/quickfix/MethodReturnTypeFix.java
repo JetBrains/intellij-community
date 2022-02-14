@@ -38,8 +38,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -332,13 +331,12 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final List<PsiMethod> affectedMethods = new ArrayList<>();
     for (PsiMethod targetMethod : methods) {
       affectedMethods.add(targetMethod);
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      var processor = provider.getChangeSignatureProcessor(project, targetMethod,
-                                                           false, null,
-                                                           myName,
-                                                           returnType,
-                                                           ParameterInfoImpl.fromMethod(targetMethod),
-                                                           null);
+      var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(targetMethod,
+                                                                         false, null,
+                                                                         myName,
+                                                                         returnType,
+                                                                         ParameterInfoImpl.fromMethod(targetMethod),
+                                                                         null, null, null, null);
       processor.run();
     }
 

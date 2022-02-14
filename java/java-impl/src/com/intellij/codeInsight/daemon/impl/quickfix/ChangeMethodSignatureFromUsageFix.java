@@ -29,9 +29,10 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
+import com.intellij.refactoring.ChangeSignatureRefactoring;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
@@ -188,7 +189,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                final ParameterInfoImpl[] newParametersInfo,
                                                final boolean changeAllUsages,
                                                final boolean allowDelegation,
-                                               @Nullable final Consumer<? super List<ParameterInfoImpl>> callback) {
+                                               @Nullable final Consumer<? super List<ParameterInfo>> callback) {
     if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
@@ -209,14 +210,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return null;
 
     if (ApplicationManager.getApplication().isUnitTestMode() || usagesFound[0] < minUsagesNumber) {
-      ChangeSignatureProcessorBase processor =
-        JavaSpecialRefactoringProvider.getInstance().getChangeSignatureProcessorWithCallback(project,
-                                                                                             method,
-                                                                                             false, null,
-                                                                                             method.getName(),
-                                                                                             method.getReturnType(),
-                                                                                             newParametersInfo,
-                                                                                             callback);
+      ChangeSignatureRefactoring processor =
+        JavaRefactoringFactory.getInstance(project)
+          .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(), newParametersInfo, null, null,
+                                          null, callback);
       processor.run();
       ApplicationManager.getApplication().runWriteAction(() -> UndoUtil.markPsiFileForUndo(file));
       return Arrays.asList(newParametersInfo);
