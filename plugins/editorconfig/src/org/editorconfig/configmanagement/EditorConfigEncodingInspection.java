@@ -11,6 +11,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -37,6 +38,9 @@ public class EditorConfigEncodingInspection extends LocalInspectionTool {
     Project project = manager.getProject();
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && Utils.isEnabled(CodeStyle.getSettings(project)) && virtualFile.isWritable()) {
+      if (isHardcodedCharsetOrFailed(virtualFile)) {
+        return null;
+      }
       EditorConfigEncodingCache encodingCache = EditorConfigEncodingCache.getInstance();
       if (encodingCache.isIgnored(virtualFile)) return null;
       CharsetData charsetData = encodingCache.getCharsetData(file.getProject(), file.getVirtualFile(), false);
@@ -58,6 +62,17 @@ public class EditorConfigEncodingInspection extends LocalInspectionTool {
       }
     }
     return null;
+  }
+
+  private static boolean isHardcodedCharsetOrFailed(@NotNull VirtualFile virtualFile) {
+    FileType fileType = virtualFile.getFileType();
+    try {
+      String charsetName = fileType.getCharset(virtualFile, virtualFile.contentsToByteArray());
+      return charsetName != null;
+    }
+    catch (IOException e) {
+      return true;
+    }
   }
 
   private static @NotNull PsiFile getMainPsi(@NotNull PsiFile psiFile) {

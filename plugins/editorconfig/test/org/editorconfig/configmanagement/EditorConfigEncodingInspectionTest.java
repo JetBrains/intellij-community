@@ -33,6 +33,13 @@ public class EditorConfigEncodingInspectionTest extends InspectionFixtureTestCas
     myFixture.checkHighlighting();
   }
 
+  public void testIgnoreHardcodedCharset() {
+    doWithEditorConfigDisabled(()->myFixture.configureByFile("test.xml"));
+    myFixture.copyFileToProject(".editorconfig");
+    myFixture.enableInspections(EditorConfigEncodingInspection.class);
+    myFixture.checkHighlighting();
+  }
+
   public void testIgnoreQuickFix() {
     doWithEditorConfigDisabled(()->myFixture.configureByFile("test.txt"));
     myFixture.copyFileToProject(".editorconfig");
