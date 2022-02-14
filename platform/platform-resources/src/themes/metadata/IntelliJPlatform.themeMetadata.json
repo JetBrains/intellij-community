@@ -1019,6 +1019,11 @@
       "description": "A background of a hovered row in an unfocused list if hover is allowed."
     },
     {
+      "key": "TabbedPane.tabSelectionArc",
+      "since": "2022.2",
+      "description": "Selection border corners radius of TabbedPane underline"
+    },
+    {
       "key": "Tree.hoverBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in a focused tree if hover is allowed."

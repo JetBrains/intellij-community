@@ -314,7 +314,8 @@
     },
 
     "TabbedPane": {
-      "tabHeight": 40
+      "tabHeight": 40,
+      "tabSelectionArc": 4
     },
 
     "ToolTip":{

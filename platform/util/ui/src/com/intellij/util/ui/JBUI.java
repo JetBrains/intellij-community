@@ -959,6 +959,7 @@ public final class JBUI {
       public static final Color FOCUS_COLOR = JBColor.namedColor("TabbedPane.focusColor", 0xDAE4ED);
       public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
       public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
+      public static final JBValue SELECTION_ARC = new JBValue.UIInteger("TabbedPane.tabSelectionArc", 0);
     }
 
     public static final class BigPopup {
