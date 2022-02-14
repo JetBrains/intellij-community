@@ -5201,6 +5201,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super(NULL_ATTRIBUTES);
     }
 
+    @SuppressWarnings("removal")
     @Override
     public void setAttributes(TextAttributes attributes) {}
 
