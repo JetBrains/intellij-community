@@ -840,17 +840,19 @@ private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
   private fun processHistoryChanged(latest: ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) {
     if (latest != null) {
       val (env, reason) = latest
-      val history = RunConfigurationStartHistory.getInstance(env.project)
       getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
         if (reason == RunState.SCHEDULED) {
-          history.register(conf, env.executor.id, reason)
+          RunConfigurationStartHistory.getInstance(env.project).register(conf, env.executor.id, reason)
         }
-          val runManager = RunManager.getInstance(env.project)
-          if (reason.isRunningState() && ExperimentalUI.isNewUI() && !runManager.isRunWidgetActive()) {
-            runManager.selectedConfiguration = conf
-          }
-      } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.runnerAndConfigurationSettings}"))
-      ActivityTracker.getInstance().inc()
+        val runManager = RunManager.getInstance(env.project)
+        if (reason.isRunningState() && ExperimentalUI.isNewUI() && !runManager.isRunWidgetActive()) {
+          runManager.selectedConfiguration = conf
+        }
+        ActivityTracker.getInstance().inc()
+      } ?: logger<RunToolbarWidget>().warn(
+        "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
+        "It won't be saved in the run history."
+      )
     }
   }
 
