@@ -266,7 +266,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     final PyClass cls = withType.getPyClass();
     final PyFunction enter = cls.findMethodByName(isAsync ? PyNames.AENTER : PyNames.ENTER, true, context);
     if (enter != null) {
-      final PyType enterType = enter.getCallType(withExpression, Collections.emptyMap(), context);
+      final PyType enterType = getContextSensitiveType(enter, context, withExpression);
       if (enterType != null) {
         return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
