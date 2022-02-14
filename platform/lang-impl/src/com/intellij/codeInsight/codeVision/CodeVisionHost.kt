@@ -192,17 +192,17 @@ open class CodeVisionHost(val project: Project) {
     mergingQueueFront.isPassThrough = false
     var calcRunning = false
 
-    fun recalculateLenses(providersToRecalculate: Collection<String> = emptyList()) {
+    fun recalculateLenses(groupToRecalculate: Collection<String> = emptyList()) {
       if (!editorManager.selectedEditors.any { isAllowedFileEditor(it) && (it as TextEditor).editor == editor }) {
         recalculateWhenVisible = true
         return
       }
       recalculateWhenVisible = false
-      if (calcRunning && providersToRecalculate.isNotEmpty())
+      if (calcRunning && groupToRecalculate.isNotEmpty())
         return recalculateLenses(emptyList())
       calcRunning = true
       val lt = calculationLifetimes.next()
-      calculateFrontendLenses(lt, editor, providersToRecalculate) { lenses, providersToUpdate ->
+      calculateFrontendLenses(lt, editor, groupToRecalculate) { lenses, providersToUpdate ->
         val newLenses = previousLenses.filter { !providersToUpdate.contains(it.second.providerId) } + lenses
 
         editor.lensContextOrThrow.setResults(newLenses)
@@ -251,11 +251,11 @@ open class CodeVisionHost(val project: Project) {
 
   private fun calculateFrontendLenses(calcLifetime: Lifetime,
                                       editor: Editor,
-                                      providersToRecalculate: Collection<String> = emptyList(),
+                                      groupsToRecalculate: Collection<String> = emptyList(),
                                       inTestSyncMode: Boolean = false,
                                       consumer: (List<Pair<TextRange, CodeVisionEntry>>, List<String>) -> Unit) {
     val precalculatedUiThings = providers.associate {
-      if (providersToRecalculate.isNotEmpty() && !providersToRecalculate.contains(it.id)) return@associate it.id to null
+      if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.groupId)) return@associate it.id to null
       it.id to it.precomputeOnUiThread(editor)
     }
     executeOnPooledThread(calcLifetime, inTestSyncMode) {
@@ -263,16 +263,15 @@ open class CodeVisionHost(val project: Project) {
       val results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
       val providerWhoWantToUpdate = mutableListOf<String>()
 
-      //todo add ability to update providers independently
       var everyProviderReadyToUpdate = true
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
-        if (providersToRecalculate.isNotEmpty() && !providersToRecalculate.contains(it.id)) return@forEach
+        if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.groupId)) return@forEach
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
         if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
-          if (editor.lensContextOrThrow.hasProviderCodeVision(it.groupId)) {
+          if (editor.lensContextOrThrow.hasProviderCodeVision(it.id)) {
             providerWhoWantToUpdate.add(it.id)
           }
           return@forEach
