@@ -4,6 +4,7 @@ package training.ui.views
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
@@ -44,6 +45,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   internal var scrollToNewMessages = true
 
   init {
+    Disposer.register(learnToolWindow.parentDisposable, lessonMessagePane)
     isFocusable = false
     background = UISettings.getInstance().backgroundColor
     layout = BoxLayout(this, BoxLayout.Y_AXIS)

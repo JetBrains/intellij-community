@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
@@ -123,6 +124,7 @@ internal object LessonExecutorUtil {
       .setDisposable(actionsRecorder)
       .createBalloon()
 
+    Disposer.register(balloon, messagesPane)
 
     balloon.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
