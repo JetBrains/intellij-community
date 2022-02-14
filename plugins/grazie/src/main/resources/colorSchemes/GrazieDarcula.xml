@@ -1,0 +1,21 @@
+<?xml version='1.0'?>
+<list>
+  <option name="GRAZIE_STYLE_ERROR">
+    <value>
+      <option name="EFFECT_COLOR" value="FF6464" />
+      <option name="EFFECT_TYPE" value="5" />
+    </value>
+  </option>
+  <option name="GRAZIE_STYLE_WARNING">
+    <value>
+      <option name="EFFECT_COLOR" value="8A8A00" />
+      <option name="EFFECT_TYPE" value="5" />
+    </value>
+  </option>
+  <option name="GRAZIE_STYLE_SUGGESTION">
+    <value>
+      <option name="EFFECT_COLOR" value="589DF6" />
+      <option name="EFFECT_TYPE" value="5" />
+    </value>
+  </option>
+</list>
