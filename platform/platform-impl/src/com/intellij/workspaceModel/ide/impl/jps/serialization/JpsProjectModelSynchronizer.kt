@@ -232,11 +232,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     ModuleManagerEx.getInstanceEx(project).unloadNewlyAddedModulesIfPossible(storage)
   }
 
-  // FIXME: 21.01.2021 This is a fix for OC-21192
-  // We do disable delayed loading of JPS model if modules.xml file missing (what happens because of bug if you open a project in 2020.3)
-  fun blockCidrDelayedUpdate(): Boolean {
-    if (!PlatformUtils.isCidr()) return false
-
+  // IDEA-288703
+  fun isModuleListMissing(): Boolean {
     val currentSerializers = prepareSerializers() as JpsProjectSerializersImpl
     if (currentSerializers.moduleSerializers.isNotEmpty()) return false
     return currentSerializers.moduleListSerializersByUrl.keys.all { !JpsPathUtil.urlToFile(it).exists() }
