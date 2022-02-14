@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -27,19 +26,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         val dataDisposable = Disposer.newDisposable()
         val dataProvider = dataContext.dataProviderRepository.getDataProvider(file.pullRequest, dataDisposable)
         when (file) {
-          is GHPRDiffVirtualFile -> {
-            GHPRDiffFileEditor(project, dataProvider.diffRequestModel, file).also { editor ->
-              DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor.context)
-            }
-          }
           is GHPRTimelineVirtualFile -> GHPRTimelineFileEditor(project, dataContext, dataProvider, file)
           else -> error("Unsupported file type")
         }.also {
           Disposer.register(it, dataDisposable)
         }
-      }
-      is GHNewPRDiffVirtualFile -> GHPRDiffFileEditor(project, dataContext.newPRDiffModel, file).also { editor ->
-        DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor.context)
       }
       else -> error("Unsupported file type")
     }
