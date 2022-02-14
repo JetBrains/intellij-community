@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class CodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
 
   private final JavaCodeStyleImportsPanel myImportsPanel;
