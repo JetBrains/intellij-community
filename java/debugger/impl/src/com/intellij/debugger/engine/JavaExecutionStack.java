@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -320,8 +321,8 @@ public class JavaExecutionStack extends XExecutionStack {
           if (AsyncStacksToggleAction.isAsyncStacksEnabled(
             (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
               topFrame instanceof JavaStackFrame) {
-            relatedStack =
-              AsyncStackTraceProvider.EP.computeSafeIfAny(p -> p.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext));
+            relatedStack = DebuggerUtilsImpl.computeSafeIfAny(AsyncStackTraceProvider.EP,
+                                                              p -> p.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext));
             if (relatedStack != null) {
               appendRelatedStack(relatedStack);
               return;

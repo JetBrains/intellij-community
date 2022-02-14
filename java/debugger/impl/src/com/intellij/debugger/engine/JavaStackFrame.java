@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -8,10 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -366,11 +363,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     Set<String> alreadyCollected = new HashSet<>(usedVars.first);
     usedVars.second.stream().map(TextWithImports::getText).forEach(alreadyCollected::add);
     Set<TextWithImports> extra = new HashSet<>();
-    FrameExtraVariablesProvider.EP_NAME.forEachExtensionSafe(provider -> {
-      if (provider.isAvailable(sourcePosition, evalContext)) {
-        extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
-      }
-    });
+    DebuggerUtilsImpl.forEachSafe(FrameExtraVariablesProvider.EP_NAME,
+                                  provider -> {
+                                    if (provider.isAvailable(sourcePosition, evalContext)) {
+                                      extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
+                                    }
+                                  });
     return extra;
   }
 
