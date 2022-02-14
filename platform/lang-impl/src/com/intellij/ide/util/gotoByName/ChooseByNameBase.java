@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -75,7 +75,10 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -367,10 +370,14 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     JPanel caption2Tools = new JPanel(new BorderLayout());
 
-    if (myModel.getPromptText() != null) {
-      JLabel label = new JLabel(myModel.getPromptText());
+    String promptText = myModel.getPromptText();
+    if (promptText != null) {
+      JLabel label = new JLabel(promptText);
       label.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
       caption2Tools.add(label, BorderLayout.WEST);
+    }
+
+    if (promptText != null || isCheckboxVisible()) {
       caption2Tools.add(hBox, BorderLayout.EAST);
     }
 
