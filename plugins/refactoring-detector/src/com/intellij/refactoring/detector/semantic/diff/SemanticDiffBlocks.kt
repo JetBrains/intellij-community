@@ -12,6 +12,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleColoredComponent
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JPanel
@@ -54,7 +56,12 @@ internal class SemanticCombinedDiffHeader(title: @NlsSafe String, viewer: DiffVi
   init {
     background = UIUtil.getListBackground()
     border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    addToCenter(SimpleColoredComponent().append(title))
+    addToCenter(
+      SimpleColoredComponent().append(title)
+        .apply {
+          border = JBEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
+          font = JBUI.Fonts.label(16f)
+        })
     val rightToolbarGroup = DefaultActionGroup()
     val myCloseAction = MyCloseAction(closeAction)
     viewer.editors.forEach { myCloseAction.registerCustomShortcutSet(it.component, null) }

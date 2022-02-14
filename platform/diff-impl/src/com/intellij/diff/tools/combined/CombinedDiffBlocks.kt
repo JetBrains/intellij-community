@@ -20,6 +20,7 @@ import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.FontUtil
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -85,6 +86,7 @@ private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder:
     val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
     toolbar.targetComponent = this
     toolbar.component.background = UIUtil.getListBackground()
+    toolbar.component.border = JBEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
     toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, false))
     toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, true))
 
@@ -118,6 +120,7 @@ private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder:
             append(FontUtil.spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }
           icon = FileTypeRegistry.getInstance().getFileTypeByFileName(path.name).icon
+          font = JBUI.Fonts.label(16f)
         }
       val component = OpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
         .apply {
