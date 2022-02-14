@@ -108,7 +108,9 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
         for (PsiElement element : toAnnotate) {
           PsiModifierListOwner owner = ObjectUtils.tryCast(element, PsiModifierListOwner.class);
           if (owner == null) continue;
-          annotationsManager.annotateExternally(owner, DEFAULT_UNTAINTED_ANNOTATION, owner.getContainingFile(), null);
+          try {
+            annotationsManager.annotateExternally(owner, DEFAULT_UNTAINTED_ANNOTATION, owner.getContainingFile(), null);
+          } catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
         }
       };
       CommandProcessor.getInstance().executeCommand(project, annotateCommand, title, null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
