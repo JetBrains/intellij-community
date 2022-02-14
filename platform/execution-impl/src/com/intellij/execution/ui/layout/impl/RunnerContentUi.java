@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.ShadowAction;
@@ -1419,6 +1420,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
     if (myMinimizeActionEnabled) {
       if (specialActions.isEmpty()) {
+        var separateWatchesInVariables = ActionManager.getInstance().getAction("XDebugger.SwitchWatchesInVariables");
+        if (separateWatchesInVariables instanceof ToggleAction) {
+          myViewActions.addAction(new ToggleSeparateWatches((ToggleAction)separateWatchesInVariables, true)).setAsSecondary(true);
+        }
         myViewActions.addAction(new Separator()).setAsSecondary(true);
         myViewActions.addAction(ActionManager.getInstance().getAction("Runner.ToggleTabLabels")).setAsSecondary(true);
         myViewActions.addAction(ActionManager.getInstance().getAction("Runner.RestoreLayout")).setAsSecondary(true);
@@ -2015,6 +2020,29 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myContentUi.toggleContentPopup(e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY));
+    }
+  }
+
+  private static class ToggleSeparateWatches extends DumbAwareToggleAction {
+
+    private final @NotNull ToggleAction delegate;
+    private final boolean myInverted;
+
+    private ToggleSeparateWatches(@NotNull ToggleAction delegate, boolean inverted) {
+      super(ExecutionBundle.messagePointer("show.separate.watches.action.name"));
+      this.delegate = delegate;
+      myInverted = inverted;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      boolean isSelected = delegate.isSelected(e);
+      return myInverted ? !isSelected : isSelected;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      delegate.setSelected(e, myInverted ? !state : state);
     }
   }
 
