@@ -70,7 +70,6 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.codehaus.plexus.util.ExceptionUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
-import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyVisitor;
@@ -79,6 +78,7 @@ import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
@@ -1200,6 +1200,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       Maven3ServerGlobals.getLogger().print(ExceptionUtils.getFullStackTrace(each));
       myConsoleWrapper.info("Validation error:", each);
 
+      Artifact problemTransferArtifact = getProblemTransferArtifact(each);
       if (each instanceof IllegalStateException && each.getCause() != null) {
         each = each.getCause();
       }
@@ -1231,15 +1232,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         collector.add(MavenProjectProblem.createStructureProblem(
           traceElement.getFileName() + ":" + traceElement.getLineNumber(), each.getMessage()));
       }
-      else if (each instanceof RepositoryException){
-        myConsoleWrapper.error("Maven server repository problem", each);
+      else if (problemTransferArtifact != null){
+        myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
         String message = getRootMessage(each);
-        if (message.contains("Blocked mirror for repositories:")) {
-          String errorMessage = message.substring(message.indexOf("Blocked mirror for repositories:"));
-          collector.add(MavenProjectProblem.createProblem(path, errorMessage, MavenProjectProblem.ProblemType.REPOSITORY_BLOCKED, true));
-        } else {
-          collector.add(MavenProjectProblem.createProblem(path, message, MavenProjectProblem.ProblemType.REPOSITORY, true));
-        }
+        MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
+        collector.add(MavenProjectProblem.createArtifactTransferProblem(path, message, true, mavenArtifact));
       }
       else {
         myConsoleWrapper.error("Maven server structure problem", each);
@@ -1283,6 +1280,18 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     Throwable rootCause = ExceptionUtils.getRootCause(each);
     String rootMessage = rootCause != null ? rootCause.getMessage() : "";
     return StringUtils.isNotEmpty(rootMessage) ? rootMessage : baseMessage;
+  }
+
+  @Nullable
+  private static Artifact getProblemTransferArtifact(Throwable each) throws RemoteException {
+    Throwable[] throwables = ExceptionUtils.getThrowables(each);
+    if (throwables == null) return null;
+    for (Throwable throwable : throwables) {
+      if (throwable instanceof ArtifactTransferException) {
+        return RepositoryUtils.toArtifact(((ArtifactTransferException)throwable).getArtifact());
+      }
+    }
+    return null;
   }
 
   @NotNull

@@ -65,7 +65,7 @@ object RepositoryBlockedSyncIssue {
       .append("\n")
 
     return object : BuildIssue {
-      override val title: String = title
+      override val title: String = message("maven.sync.quickfixes.repository.blocked.title")
       override val description: String = issueDescription.toString()
       override val quickFixes = quickFixes
       override fun getNavigatable(project: Project): Navigatable? = null

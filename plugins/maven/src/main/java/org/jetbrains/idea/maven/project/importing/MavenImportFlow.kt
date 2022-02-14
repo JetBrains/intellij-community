@@ -27,7 +27,6 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
-import java.nio.file.Path
 
 @IntellijInternalApi
 @ApiStatus.Internal
@@ -179,10 +178,11 @@ class MavenImportFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
-    val unresolvedPlugins = HashMap<MavenPlugin, Path?>()
+    val unresolvedPlugins = HashSet<MavenPlugin>()
     context.nativeProjectHolder.forEach {
-      unresolvedPlugins.putAll(resolver.resolvePlugins(context.project, it.first, it.second, embeddersManager, consoleToBeRemoved,
-                                                       context.initialContext.indicator, false))
+      unresolvedPlugins.addAll(resolver.resolvePlugins(it.first, it.second, embeddersManager, consoleToBeRemoved,
+                                                       context.initialContext.indicator, false,
+                                                       projectManager.forceUpdateSnapshots))
     }
     return MavenPluginResolvedContext(context.project, unresolvedPlugins, context)
   }

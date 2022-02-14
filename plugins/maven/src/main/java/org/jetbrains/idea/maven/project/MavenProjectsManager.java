@@ -122,6 +122,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
   private Module myDummyModule;
+  private transient boolean forceUpdateSnapshots = false;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getService(MavenProjectsManager.class);
@@ -517,6 +518,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         if (shouldScheduleProject(projectWithChanges)) {
           scheduleForNextImport(projectWithChanges);
         }
+      }
+
+      @Override
+      public void resolutionCompleted() {
+        forceUpdateSnapshots = false;
       }
 
       private boolean shouldScheduleProject(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
@@ -1083,7 +1089,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void schedulePluginsResolve(final MavenProject project, final NativeMavenProjectHolder nativeMavenProject) {
     runWhenFullyOpen(() -> myPluginsResolvingProcessor
-      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree)));
+      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree, forceUpdateSnapshots)));
   }
 
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
@@ -1386,6 +1392,14 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     for (Listener each : myManagerListeners) {
       each.projectImportCompleted();
     }
+  }
+
+  public void setForceUpdateSnapshots(boolean forceUpdateSnapshots) {
+    this.forceUpdateSnapshots = forceUpdateSnapshots;
+  }
+
+  public boolean getForceUpdateSnapshots() {
+    return forceUpdateSnapshots;
   }
 
   public interface Listener {

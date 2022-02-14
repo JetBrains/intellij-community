@@ -337,13 +337,13 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun showBuildIssue(keyPrefix: String, dependency: String, quickFix: BuildIssueQuickFix) = doIfImportInProcess {
+  private fun showBuildIssue(keyPrefix: String, dependency: String, errorMessage: String?) = doIfImportInProcess {
     hasErrors = true
     hasUnresolved = true
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
     val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
     startTask(mySyncId, umbrellaString)
-    val buildIssue = DownloadArtifactBuildIssue.getIssue(errorString, quickFix)
+    val buildIssue = DownloadArtifactBuildIssue.getIssue(errorString, errorMessage ?: errorString)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(umbrellaString, buildIssue, MessageEvent.Kind.ERROR))
     addText(mySyncId, errorString, false)
   }
@@ -517,8 +517,8 @@ class MavenSyncConsole(private val myProject: Project) {
       showError(keyPrefix, dependency)
     }
 
-    override fun showBuildIssue(dependency: String, quickFix: BuildIssueQuickFix) {
-      showBuildIssue(keyPrefix, dependency, quickFix)
+    override fun showArtifactBuildIssue(dependency: String, errorMessage: String?) {
+      showBuildIssue(keyPrefix, dependency, errorMessage)
     }
 
     override fun showBuildIssue(dependency: String, buildIssue: BuildIssue) {
@@ -559,7 +559,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
 interface ArtifactSyncListener {
   fun showError(dependency: String)
-  fun showBuildIssue(dependency: String, quickFix: BuildIssueQuickFix)
+  fun showArtifactBuildIssue(dependency: String, errorMessage: String?)
   fun showBuildIssue(dependency: String, buildIssue: BuildIssue)
   fun downloadStarted(dependency: String)
   fun downloadCompleted(dependency: String)

@@ -52,6 +52,18 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     });
   }
 
+  public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator, boolean forceUpdateSnapshots) {
+    boolean alwaysUpdateSnapshots =
+      forceUpdateSnapshots
+      ? forceUpdateSnapshots
+      : MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
+    setCustomization(console, indicator, null, false, alwaysUpdateSnapshots, null);
+    perform(() -> {
+      doCustomize();
+      return null;
+    });
+  }
+
   public void customizeForResolve(MavenWorkspaceMap workspaceMap,
                                   MavenConsole console,
                                   MavenProgressIndicator indicator,
