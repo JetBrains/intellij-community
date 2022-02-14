@@ -90,4 +90,8 @@ public final class StorageLockContext {
       throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage");
     }
   }
+
+  void assertUnderSegmentAllocationLock() {
+    myFilePageCache.assertUnderSegmentAllocationLock();
+  }
 }

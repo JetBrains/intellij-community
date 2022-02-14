@@ -28,6 +28,7 @@ public final class DirectBufferWrapper {
     myLength = length;
     myReadOnly = readOnly;
     myBuffer = DirectByteBufferAllocator.allocate(() -> create());
+    myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
   }
 
   private void markDirty() throws IOException {
@@ -144,6 +145,7 @@ public final class DirectBufferWrapper {
 
 
   private ByteBuffer create() throws IOException {
+
     ByteBuffer buffer = ByteBuffer.allocateDirect(myLength);
     return myFile.useChannel(ch -> {
       ch.read(buffer, myPosition);
@@ -152,6 +154,8 @@ public final class DirectBufferWrapper {
   }
 
   void release() throws IOException {
+    myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
+
     if (isDirty()) force();
     if (myBuffer != null) {
       ByteBufferUtil.cleanBuffer(myBuffer);
@@ -165,8 +169,7 @@ public final class DirectBufferWrapper {
   }
 
   void force() throws IOException {
-    StorageLockContext context = myFile.getStorageLockContext();
-    //context.checkReadAccess();
+    myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
     assert !myReadOnly;
     if (!isReleased() && isDirty()) {
