@@ -28,6 +28,8 @@ class PluginRepositoryAuthServiceTest {
   private val fooUrl = "https://foo.bar/foo?a=b&c=d"
   private val barUrl = "https://bar.baz/baz/zaz"
 
+  private val unescapedUrl = "https://buildserver.labs.intellij.net/guestAuth/repository/download/Documentation_Stardust/lastSuccessful/updatePlugins.xml?branch=master-internal &build=IU-221.3427.103"
+
   private val anyUrlInvalidContributor = object : PluginRepositoryAuthProvider {
     override fun canHandle(domain: String): Boolean = true
     override fun getAuthHeaders(url: String?): Map<String, String> = headers
@@ -57,6 +59,12 @@ class PluginRepositoryAuthServiceTest {
     val authService = PluginRepositoryAuthService()
     setupContributors(FakeUrlMatchingContributor(fooDomain), FakeUrlMatchingContributor(fooDomain))
     assertEquals(authService.getAllCustomHeaders(fooUrl), emptyMap())
+  }
+
+  @Test
+  fun nonEscapedUrlTest() {
+    val authService = PluginRepositoryAuthService()
+    authService.getAllCustomHeaders(unescapedUrl)
   }
 
   private fun setupContributors(vararg contributor: PluginRepositoryAuthProvider) {

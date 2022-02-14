@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.auth
 
+import com.google.common.net.UrlEscapers
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpRequests
@@ -59,7 +60,7 @@ class PluginRepositoryAuthService {
     return domain == lastKnownDomain || lastKnownDomain == null
   }
 
-  private fun getDomainFromUrl(url: String): String? = URI(url).host
+  private fun getDomainFromUrl(url: String): String? = URI(UrlEscapers.urlFragmentEscaper().escape(url)).host
 
   private fun updateCaches(@NotNull url: String, @NotNull contributor: PluginRepositoryAuthProvider) {
     contributorToDomainCache[contributor] = url
