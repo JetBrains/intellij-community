@@ -31,7 +31,7 @@ import java.util.Collections
 
 class SubpackagesIndexService(private val project: Project): Disposable {
 
-    private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages", true)
+    private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages", false)
 
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
