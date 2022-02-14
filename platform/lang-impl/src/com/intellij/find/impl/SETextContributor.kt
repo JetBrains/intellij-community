@@ -198,7 +198,7 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
     class SETextActivity : StartupActivity.DumbAware {
       override fun runActivity(project: Project) {
         RunOnceUtil.runOnceForApp(ADVANCED_OPTION_ID) {
-          AdvancedSettings.setBoolean(ADVANCED_OPTION_ID, PlatformUtils.isRider())
+          AdvancedSettings.setBoolean(ADVANCED_OPTION_ID, false)
         }
       }
     }
