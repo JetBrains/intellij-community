@@ -22,7 +22,7 @@ fun hasKotlinFilesInSources(module: Module): Boolean {
 fun Project.findAnyExternalKotlinCompilerVersion(): KotlinVersionVerbose? =
     ModuleManager.getInstance(this).modules.firstNotNullOfOrNull { it.findExternalKotlinCompilerVersion() }
 
-fun <T> Project.nonBlockingReadAction(smartMode: Boolean = false, task: () -> T): T =
+fun <T> Project.syncNonBlockingReadAction(smartMode: Boolean = false, task: () -> T): T =
     ReadAction.nonBlocking<T> {
         task()
     }

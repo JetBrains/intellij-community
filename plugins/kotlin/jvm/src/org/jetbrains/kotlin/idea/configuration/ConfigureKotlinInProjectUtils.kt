@@ -126,7 +126,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
     val projectScope = project.projectScope()
     // nothing to configure if there is no Kotlin files in entire project
-    val anyKotlinFileInProject = project.nonBlockingReadAction {
+    val anyKotlinFileInProject = project.syncNonBlockingReadAction {
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
@@ -137,7 +137,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
-            val kotlinFiles = project.nonBlockingReadAction {
+            val kotlinFiles = project.syncNonBlockingReadAction {
                 FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
             }
 
@@ -148,7 +148,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
             }
         } else {
             // filter modules with Kotlin facet AND have at least a single Kotlin file in them
-            project.nonBlockingReadAction {
+            project.syncNonBlockingReadAction {
                 modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
                     if (module.isDisposed) return@filterTo false
 
@@ -296,7 +296,7 @@ fun findApplicableConfigurator(module: Module): KotlinProjectConfigurator {
 }
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
-    return module.project.nonBlockingReadAction(smartMode = true) {
+    return module.project.syncNonBlockingReadAction(smartMode = true) {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
         getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
                 hasKotlinJsKjsmFile(module.project, LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
@@ -305,14 +305,14 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
 }
 
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
-    return module.project.nonBlockingReadAction {
+    return module.project.syncNonBlockingReadAction {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
         getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
     }
 }
 
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
-    return module.project.nonBlockingReadAction(smartMode = true) {
+    return module.project.syncNonBlockingReadAction(smartMode = true) {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
         hasKotlinJsKjsmFile(module.project, LibraryKindSearchScope(module, scope, JSLibraryKind))
     }
