@@ -817,7 +817,13 @@ private class NotificationComponent(val project: Project,
             singleSelectionHandler.add(newEditor, true)
           }
         }
-      }.setCopyable(true)
+      }
+
+      try {
+        title.setCopyable(true)
+      }
+      catch (_: Exception) {
+      }
 
       NotificationsManagerImpl.setTextAccessibleName(title, titleContent)
 
