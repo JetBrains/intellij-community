@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
@@ -231,10 +232,12 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       if (trimmedCmd.isEmpty()) return false
       val dataContext = createDataContext(project, localSession, workingDirectory)
 
-      return RunAnythingProvider.EP_NAME.extensionList
-        .asSequence()
-        .filter { checkForCLI(it, allowRunConfigurations) }
-        .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
+      return runReadAction {
+        RunAnythingProvider.EP_NAME.extensionList
+          .asSequence()
+          .filter { checkForCLI(it, allowRunConfigurations) }
+          .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
+      }
     }
 
     fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
