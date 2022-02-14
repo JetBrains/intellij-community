@@ -114,6 +114,10 @@ fun GitStashTracker.isNotEmpty(): Boolean {
   return stashes.values.any { (it is GitStashTracker.Stashes.Error) || (it is GitStashTracker.Stashes.Loaded && it.stashes.isNotEmpty()) }
 }
 
+fun GitStashTracker.allStashes(): List<StashInfo> {
+  return stashes.values.filterIsInstance<GitStashTracker.Stashes.Loaded>().flatMap { it.stashes }
+}
+
 fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
 fun isStashToolWindowEnabled(project: Project): Boolean {
   return stashToolWindowRegistryOption().asBoolean() &&

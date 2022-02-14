@@ -41,7 +41,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     project.service<GitStashTracker>().scheduleRefresh()
 
     disposable = Disposer.newDisposable("Git Stash Content Provider")
-    val savedPatchesUi = GitSavedPatchesUi()
+    val savedPatchesUi = GitSavedPatchesUi(disposable!!)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
         savedPatchesUi.updateLayout(isVertical(), isEditorDiffPreview())
@@ -53,9 +53,11 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     return savedPatchesUi
   }
 
-  private inner class GitSavedPatchesUi : SavedPatchesUi(project, listOf(GitStashProvider(project), ShelfProvider(project, disposable!!)),
-                                                         isVertical(), isEditorDiffPreview(),
-                                                         ::returnFocusToToolWindow, disposable!!) {
+  private inner class GitSavedPatchesUi(parent: Disposable) : SavedPatchesUi(project,
+                                                                             listOf(GitStashProvider(project, parent),
+                                                                                    ShelfProvider(project, parent)),
+                                                                             isVertical(), isEditorDiffPreview(),
+                                                                             ::returnFocusToToolWindow, parent) {
     init {
       tree.emptyText
         .appendLine("")

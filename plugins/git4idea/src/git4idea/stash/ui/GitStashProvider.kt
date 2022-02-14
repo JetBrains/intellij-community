@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nls
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
-class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
+class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesProvider<StashInfo>, Disposable {
   private val iconCache = LabelIconCache()
 
   private val stashTracker get() = project.service<GitStashTracker>()
@@ -53,6 +54,16 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
 
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_APPLY_ACTION)
   override val popAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_POP_ACTION)
+
+  init {
+    Disposer.register(parent, this)
+    stashTracker.addListener(object : GitStashTrackerListener {
+      override fun stashesUpdated() {
+        stashCache.preloadStashes()
+      }
+    }, this)
+    stashCache.preloadStashes()
+  }
 
   override fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit) {
     stashTracker.addListener(object : GitStashTrackerListener {
@@ -98,6 +109,10 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
   private fun TreeModelBuilder.insertErrorNode(error: VcsException, parent: ChangesBrowserNode<*>) {
     val errorNode = ChangesBrowserStringNode(error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)
     insertSubtreeRoot(errorNode, parent)
+  }
+
+  override fun dispose() {
+    stashCache.clear()
   }
 
   private data class MyTag(@Nls private val text: String, private val hash: Hash) : ChangesBrowserNode.Tag {

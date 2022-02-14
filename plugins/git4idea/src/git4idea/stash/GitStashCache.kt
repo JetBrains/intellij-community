@@ -4,17 +4,18 @@ package git4idea.stash
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.Hash
 import git4idea.GitCommit
 import git4idea.ui.StashInfo
@@ -25,17 +26,16 @@ import java.util.concurrent.TimeUnit
 class GitStashCache(val project: Project) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Stash Loader", 1)
-
   private val cache = Caffeine.newBuilder()
-    .maximumSize(100)
     .executor(executor)
     .buildAsync<StashId, StashData>(AsyncCacheLoader { stashId, executor ->
       BackgroundTaskUtil.submitTask(executor, this@GitStashCache, Computable { doLoadStashData(stashId) }).future
     })
 
+  private val stashTracker get() = project.service<GitStashTracker>()
+
   init {
     Disposer.register(this, disposableFlag)
-    LowMemoryWatcher.register(Runnable { cache.synchronous().invalidateAll() }, this)
   }
 
   private fun doLoadStashData(stashId: StashId): StashData {
@@ -60,16 +60,29 @@ class GitStashCache(val project: Project) : Disposable {
   }
 
   private fun getFutureStashData(stashInfo: StashInfo, cached: Boolean): CompletableFuture<StashData>? {
-    if (disposableFlag.isDisposed) return null
+    val id = stashInfo.stashId()
+    return if (cached) cache.getIfPresent(id) else loadFutureStashData(id)
+  }
 
-    val commitId = StashId(stashInfo.hash, stashInfo.parentHashes, stashInfo.root)
-    return if (cached) {
-      cache.getIfPresent(commitId)
-    }
-    else {
-      val future = cache.get(commitId)
-      if (future.isCancelled) cache.synchronous().refresh(commitId) else future
-    }
+  private fun loadFutureStashData(id: StashId): CompletableFuture<StashData>? {
+    if (disposableFlag.isDisposed) return null
+    val future = cache.get(id)
+    return if (future.isCancelled) cache.synchronous().refresh(id) else future
+  }
+
+  @RequiresEdt
+  internal fun preloadStashes() {
+    val currentStashes = stashTracker.allStashes().map { it.stashId() }.toSet()
+    val previousStashes = cache.synchronous().asMap().keys
+
+    cache.synchronous().invalidateAll(previousStashes - currentStashes)
+    currentStashes.forEach { loadFutureStashData(it) }
+  }
+
+  private fun StashInfo.stashId() = StashId(hash, parentHashes, root)
+
+  internal fun clear() {
+    cache.synchronous().invalidateAll()
   }
 
   override fun dispose() {
@@ -79,7 +92,7 @@ class GitStashCache(val project: Project) : Disposable {
     }
     finally {
     }
-    cache.synchronous().invalidateAll()
+    clear()
   }
 
   companion object {
