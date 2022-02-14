@@ -40,6 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.min
 
 private val LOG = logger<CombinedDiffRequestProcessor>()
 
@@ -242,7 +243,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
     }
   }
 
-  private fun loadVisibleContent(visibleBlockIds: Collection<CombinedBlockId>, blockToSelect: CombinedDiffBlock<*>?) {
+  internal fun loadVisibleContent(visibleBlockIds: Collection<CombinedBlockId>, blockToSelect: CombinedDiffBlock<*>?) {
     val combinedViewer = viewer ?: return
 
     runInEdt { showProgressBar(true) }
@@ -275,7 +276,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
     }
   }
 
-  private fun showProgressBar(enabled: Boolean) {
+  internal fun showProgressBar(enabled: Boolean) {
     (context as? DiffContextEx)?.showProgressBar(enabled)
   }
 
@@ -309,8 +310,10 @@ open class CombinedDiffRequestProcessor(project: Project?,
       if (request !is CombinedDiffRequest) return
       if (viewer !is CombinedDiffViewer) return
 
-      context.getUserData(COMBINED_DIFF_PROCESSOR)?.let { processor -> processor.installBlockListener(viewer) }
-      buildCombinedDiffChildViewers(viewer, request)
+      context.getUserData(COMBINED_DIFF_PROCESSOR)?.let { processor ->
+        processor.installBlockListener(viewer)
+        buildCombinedDiffChildViewers(viewer, processor, request)
+      }
     }
 
     companion object {
@@ -324,23 +327,51 @@ open class CombinedDiffRequestProcessor(project: Project?,
         return viewer.insertChildBlock(content, diffRequestData.position)
       }
 
-      fun buildCombinedDiffChildViewers(viewer: CombinedDiffViewer, request: CombinedDiffRequest) {
+      fun buildCombinedDiffChildViewers(viewer: CombinedDiffViewer, processor: CombinedDiffRequestProcessor, request: CombinedDiffRequest) {
         Alarm(viewer.component, viewer).addComponentRequest(
           Runnable {
+            val childCount = request.getChildRequestsSize()
+            val visibleBlockCount = min(viewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
+            val blocksOutsideViewportCount = childCount - visibleBlockCount
+            val buildVisibleBlockIds = buildBlocks(viewer, request, to = visibleBlockCount)
+
             BackgroundTaskUtil.executeOnPooledThread(viewer) {
-              for ((index, childRequest) in request.getChildRequests().withIndex()) {
-                ProgressManager.checkCanceled()
-                runInEdt {
-                  val content = buildLoadingBlockContent(childRequest.producer, childRequest.blockId)
-                  viewer.addChildBlock(content, index > 0)
-                }
+              if (buildVisibleBlockIds.isNotEmpty()) {
+                processor.loadVisibleContent(buildVisibleBlockIds, null)
               }
-              runInEdt {
-                viewer.notifyVisibleBlocksChanged(true)
+              if (blocksOutsideViewportCount > 0) {
+                runInEdt { processor.showProgressBar(true) }
+
+                buildBlocks(viewer, request, from = visibleBlockCount)
+
+                runInEdt { processor.showProgressBar(false) }
               }
             }
           }, 100
         )
+      }
+
+      private fun buildBlocks(viewer: CombinedDiffViewer,
+                              request: CombinedDiffRequest,
+                              from: Int = 0,
+                              to: Int = request.getChildRequestsSize()): List<CombinedBlockId> {
+        val childRequests = request.getChildRequests()
+        assert(from in childRequests.indices) { "$from should be in ${childRequests.indices}" }
+        assert(to in 0..childRequests.size) { "$to should be in ${0..childRequests.size}" }
+
+        val buildBlockIds = arrayListOf<CombinedBlockId>()
+
+        for (index in from until to) {
+          ProgressManager.checkCanceled()
+          val childRequest = childRequests[index]
+          runInEdt {
+            val content = buildLoadingBlockContent(childRequest.producer, childRequest.blockId)
+            buildBlockIds.add(content.blockId)
+            viewer.addChildBlock(content, index > 0)
+          }
+        }
+
+        return buildBlockIds
       }
 
       internal fun buildBlockContent(viewer: CombinedDiffViewer,

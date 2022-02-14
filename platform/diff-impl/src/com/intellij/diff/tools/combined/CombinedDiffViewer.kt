@@ -189,27 +189,15 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
     override fun stateChanged(e: ChangeEvent) {
       visibleBlocksUpdateQueue.queue(object : Update(e) {
-        override fun run() = notifyVisibleBlocksChanged(false)
+        override fun run() = notifyVisibleBlocksChanged()
         override fun canEat(update: Update?): Boolean = true
       })
     }
   }
 
-  internal fun notifyVisibleBlocksChanged(takeFirst: Boolean) {
+  private fun notifyVisibleBlocksChanged() {
     val viewRect = scrollPane.viewport.viewRect
-    var viewPortHeight = viewRect.height
-    val insideViewport: (CombinedDiffBlock<*>) -> Boolean = { it.component.bounds.intersects(viewRect) }
-
-    val (visibleBlocks, hiddenBlocks) =
-      if (takeFirst) {
-        getAllBlocks().partition {
-          viewPortHeight -= it.component.preferredSize.height
-          viewPortHeight > 0
-        }
-      }
-      else {
-        getAllBlocks().partition(insideViewport)
-      }
+    val (visibleBlocks, hiddenBlocks) = getAllBlocks().partition { it.component.bounds.intersects(viewRect) }
 
     if (visibleBlocks.isNotEmpty()) {
       blockListeners.multicaster.blocksHidden(hiddenBlocks)

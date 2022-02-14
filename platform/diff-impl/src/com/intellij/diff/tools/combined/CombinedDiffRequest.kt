@@ -24,6 +24,8 @@ class CombinedDiffRequest(private val title: @Nls String?, requests: List<ChildD
 
   fun getChildRequests() = _requests.toList()
 
+  fun getChildRequestsSize() = _requests.size
+
   fun addChild(childRequest: ChildDiffRequest, position: InsertPosition) {
     val above = position.above
     val existingIndex = _requests.indexOfFirst { request -> request.blockId == position.blockId }
