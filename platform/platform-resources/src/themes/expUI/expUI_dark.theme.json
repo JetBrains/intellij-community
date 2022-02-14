@@ -368,14 +368,17 @@
   },
 
   "icons": {
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBox.svg": "/themes/expUI/icons/dark/checkBoxTemp.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radio.svg": "/themes/expUI/icons/dark/radioTemp.svg",
+
     "ColorPalette": {
       "Checkbox.Background.Default.Dark": "Grey2",
       "Checkbox.Border.Default.Dark": "Grey5",
       "Checkbox.Foreground.Selected.Dark": "Grey14",
       "Checkbox.Background.Selected.Dark": "Blue6",
       "Checkbox.Border.Selected.Dark": "Blue6",
-      "Checkbox.Focus.Thin.Default.Dark": "Grey2",
-      "Checkbox.Focus.Thin.Selected.Dark": "Grey2",
+      "Checkbox.Focus.Thin.Default.Dark": "#101012",
+      "Checkbox.Focus.Thin.Selected.Dark": "#101012",
       "Checkbox.Focus.Wide.Dark": "Blue6",
       "Checkbox.Foreground.Disabled.Dark": "Grey5",
       "Checkbox.Border.Disabled.Dark": "Grey3",
