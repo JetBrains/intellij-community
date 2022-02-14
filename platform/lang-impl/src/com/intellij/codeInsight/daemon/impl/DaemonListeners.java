@@ -399,7 +399,7 @@ public final class DaemonListeners implements Disposable {
     if (document == null) {
       return true;
     }
-    if (project != null && project != myProject) {
+    if (project != null && (project != myProject || project.isDisposed())) {
       return false;
     }
     // cached is essential here since we do not want to create PSI file in alien project
