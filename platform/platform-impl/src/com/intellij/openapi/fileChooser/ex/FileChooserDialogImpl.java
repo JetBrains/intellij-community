@@ -591,15 +591,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       @Override
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
-          if (toFind == null || !toFind.exists()) return;
-
-          myUiUpdater.queue(new Update("treeFromPath.2") {
-            @Override
-            public void run() {
-              selectInTree(toFind.getFile(), text);
-            }
-          });
+          LookupFile toFind = myPathTextField.getFile();
+          if (toFind instanceof LocalFsFinder.VfsFile && toFind.exists()) {
+            myUiUpdater.queue(new Update("treeFromPath.2") {
+              @Override
+              public void run() {
+                selectInTree(((LocalFsFinder.VfsFile)toFind).getFile(), text);
+              }
+            });
+          }
         });
       }
     });
