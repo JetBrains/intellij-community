@@ -222,28 +222,34 @@ class DialogPanel : JBPanel<DialogPanel> {
       return result
     }
     set(value) {
-      panelValidationsOnApply = value.map(DialogValidation::create)
+      panelValidationsOnApply = value.map(::validation)
     }
 
   @Deprecated("Use registerValidators instead")
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
     get() = componentValidations.mapValues { validateCallback(it.value.first()) }
     set(value) {
-      componentValidations = value.mapValues { listOf(DialogValidation.create(it.value)) }
+      componentValidations = value.mapValues { listOf(validation(it.value)) }
     }
 
   @Deprecated("Use registerValidators instead")
   var customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>>
     get() = componentValidationRequestors.mapValues { it.value.map(::customValidationRequestor) }
     set(value) {
-      componentValidationRequestors = value.mapValues { it.value.map(DialogValidationRequestor::create) }
+      componentValidationRequestors = value.mapValues { it.value.map(::validationRequestor) }
     }
 
   private fun validateCallback(validator: DialogValidation): () -> ValidationInfo? {
     return validator::validate
   }
 
+  private fun validation(validate: () -> ValidationInfo?) =
+    DialogValidation { validate() }
+
   private fun customValidationRequestor(requestor: DialogValidationRequestor): (() -> Unit) -> Unit {
     return { validate: () -> Unit -> requestor.subscribe(parentDisposable, validate) }
   }
+
+  private fun validationRequestor(requestor: (() -> Unit) -> Unit) =
+    DialogValidationRequestor { _, it -> requestor(it) }
 }

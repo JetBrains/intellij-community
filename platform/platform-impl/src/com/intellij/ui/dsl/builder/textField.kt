@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
 import com.intellij.ui.layout.*
+import com.intellij.openapi.ui.DialogValidationRequestor
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
@@ -127,4 +128,10 @@ private fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>)
 private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
   return bindText({ prop.get().toString() },
                   { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
+}
+
+val WHEN_TEXT_CHANGED = DialogValidationRequestor.Builder<JTextComponent> { parameter ->
+  DialogValidationRequestor { parentDisposable, validate ->
+    parameter.whenTextChanged(parentDisposable) { validate() }
+  }
 }

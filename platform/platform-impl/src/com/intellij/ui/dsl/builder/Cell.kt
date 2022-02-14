@@ -137,9 +137,15 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   /**
    * Registers custom [validationRequestor] for current [component].
-   * It allows showing validation waring/error on custom event. For example on component data change.
+   * It allows showing validation waring/error on custom [component] event. For example on text change.
    */
   fun validationRequestor(validationRequestor: DialogValidationRequestor): Cell<T>
+
+  /**
+   * Registers custom [validationRequestor] for current [component].
+   * It allows showing validation waring/error on custom [component] event. For example on text change.
+   */
+  fun validationRequestor(validationRequestor: DialogValidationRequestor.Builder<T>): Cell<T>
 
   /**
    * Adds [component] validation

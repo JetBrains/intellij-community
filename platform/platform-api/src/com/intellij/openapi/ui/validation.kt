@@ -7,29 +7,27 @@ import com.intellij.openapi.Disposable
  * Describes validation requestor.
  * It can be validation requestor for any dialog data change.
  */
-interface DialogValidationRequestor {
+fun interface DialogValidationRequestor {
 
   /**
    * Subscribes on custom validation event.
    * @param parentDisposable is used to unsubscribe from validation events.
    * @param validate is callback which should be called on custom validation event.
    */
-  fun subscribe(parentDisposable: Disposable? = null, validate: () -> Unit)
+  fun subscribe(parentDisposable: Disposable?, validate: () -> Unit)
 
-  companion object {
-    fun create(requestor: (() -> Unit) -> Unit) =
-      object : DialogValidationRequestor {
-        override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
-          requestor(validate)
-        }
-      }
+  /**
+   * Defines validation requestor with parameter.
+   */
+  fun interface Builder<in T> {
+    operator fun invoke(parameter: T): DialogValidationRequestor
   }
 }
 
 /**
  * Describes validation function.
  */
-interface DialogValidation {
+fun interface DialogValidation {
 
   /**
    * Validates custom dialog data.
@@ -37,10 +35,10 @@ interface DialogValidation {
    */
   fun validate(): ValidationInfo?
 
-  companion object {
-    fun create(validate: () -> ValidationInfo?) =
-      object : DialogValidation {
-        override fun validate() = validate()
-      }
+  /**
+   * Defines validation with parameter.
+   */
+  fun interface Builder<in T> {
+    operator fun invoke(parameter: T): DialogValidation
   }
 }

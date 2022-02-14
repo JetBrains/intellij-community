@@ -49,14 +49,14 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
         .bindText(locationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_CHANGE(locationProperty))
+        .validationRequestor(AFTER_PROPERTY_CHANGE(locationProperty))
         .validationOnInput { validateCatalogLocation(location) }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
         .bindText(nameProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_CHANGE(nameProperty))
+        .validationRequestor(AFTER_PROPERTY_CHANGE(nameProperty))
         .validationOnInput { validateName() }
     }
     onApply { onApply() }

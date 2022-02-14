@@ -66,21 +66,21 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
       textField()
         .bindText(archetypeGroupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_CHANGE(archetypeGroupIdProperty))
+        .validationRequestor(AFTER_PROPERTY_CHANGE(archetypeGroupIdProperty))
         .validationOnInput { validateGroupId() }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.label")) {
       textField()
         .bindText(archetypeArtifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_CHANGE(archetypeArtifactIdProperty))
+        .validationRequestor(AFTER_PROPERTY_CHANGE(archetypeArtifactIdProperty))
         .validationOnInput { validateArtifactId() }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
       textField()
         .bindText(archetypeVersionProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_CHANGE(archetypeVersionProperty))
+        .validationRequestor(AFTER_PROPERTY_CHANGE(archetypeVersionProperty))
         .validationOnInput { validateVersion() }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
@@ -90,7 +90,7 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
         .bindText(catalogLocationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_CHANGE(catalogLocationProperty))
+        .validationRequestor(AFTER_PROPERTY_CHANGE(catalogLocationProperty))
         .validationOnInput { validateCatalogLocation() }
     }
   }

@@ -22,25 +22,20 @@ fun <C : JComponent> Cell<C>.visibleIf(property: ObservableProperty<Boolean>): C
   }
 }
 
-fun AFTER_PROPAGATION(graph: PropertyGraph): DialogValidationRequestor =
-  object : DialogValidationRequestor {
-    override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
-      graph.afterPropagation(parentDisposable, validate)
-    }
+val AFTER_GRAPH_PROPAGATION = DialogValidationRequestor.Builder<PropertyGraph> { graph ->
+  DialogValidationRequestor { parentDisposable, validate ->
+    graph.afterPropagation(parentDisposable, validate)
   }
+}
 
-fun AFTER_PROPAGATION(property: GraphProperty<*>): DialogValidationRequestor =
-  object : DialogValidationRequestor {
-    override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
-      property.afterPropagation(parentDisposable, validate)
-    }
+val AFTER_PROPERTY_PROPAGATION = DialogValidationRequestor.Builder<GraphProperty<*>> { property ->
+  DialogValidationRequestor { parentDisposable, validate ->
+    property.afterPropagation(parentDisposable, validate)
   }
+}
 
-fun AFTER_CHANGE(property: ObservableProperty<*>): DialogValidationRequestor =
-  object : DialogValidationRequestor {
-    override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
-      property.afterChange(parentDisposable) {
-        validate()
-      }
-    }
+val AFTER_PROPERTY_CHANGE = DialogValidationRequestor.Builder<ObservableProperty<*>> { property ->
+  DialogValidationRequestor { parentDisposable, validate ->
+    property.afterChange(parentDisposable) { validate() }
   }
+}

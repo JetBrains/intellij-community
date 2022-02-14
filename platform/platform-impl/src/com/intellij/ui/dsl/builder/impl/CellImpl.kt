@@ -5,10 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.util.whenTextChanged
-import com.intellij.openapi.ui.DialogValidation
-import com.intellij.openapi.ui.DialogValidationRequestor
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.*
@@ -174,7 +172,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {
-    return validationRequestor(DialogValidationRequestor.create(validationRequestor))
+    return validationRequestor(DialogValidationRequestor { _, it -> validationRequestor(it) })
   }
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor): CellImpl<T> {
@@ -184,9 +182,13 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun validationRequestor(validationRequestor: DialogValidationRequestor.Builder<T>): Cell<T> {
+    return validationRequestor(validationRequestor(component))
+  }
+
   override fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
-    return validationOnApply(DialogValidation.create { ValidationInfoBuilder(origin).validation(component) })
+    return validationOnApply(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
   }
 
   override fun validationOnApply(validation: DialogValidation): CellImpl<T> {
@@ -202,7 +204,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
-    return validationOnInput(DialogValidation.create { ValidationInfoBuilder(origin).validation(component) })
+    return validationOnInput(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
   }
 
   override fun validationOnInput(validation: DialogValidation): CellImpl<T> {
@@ -226,19 +228,15 @@ internal class CellImpl<T : JComponent>(
         if (componentValidationRequestors.size > 1) return
 
         logger<Cell<*>>().warn("Please, install Cell.validationRequestor or Panel.validationRequestor", stackTrace)
-        when (val property = property) {
+        val requestor = when (val property = property) {
           null -> when (origin) {
-            is JTextComponent -> origin.whenTextChanged(parentDisposable) { validate() }
+            is JTextComponent -> WHEN_TEXT_CHANGED(origin)
+            else -> null
           }
-          is GraphProperty -> when (parentDisposable) {
-            null -> property.afterPropagation { validate() }
-            else -> property.afterPropagation(parentDisposable) { validate() }
-          }
-          else -> when (parentDisposable) {
-            null -> property.afterChange { validate() }
-            else -> property.afterChange({ validate() }, parentDisposable)
-          }
+          is GraphProperty -> AFTER_PROPERTY_PROPAGATION(property)
+          else -> AFTER_PROPERTY_CHANGE(property)
         }
+        requestor?.subscribe(parentDisposable, validate)
       }
     })
   }

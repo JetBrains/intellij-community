@@ -465,7 +465,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): PanelImpl {
-    return validationRequestor(DialogValidationRequestor.create(validationRequestor))
+    return validationRequestor(DialogValidationRequestor { _, it -> validationRequestor(it) })
   }
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor): PanelImpl {
