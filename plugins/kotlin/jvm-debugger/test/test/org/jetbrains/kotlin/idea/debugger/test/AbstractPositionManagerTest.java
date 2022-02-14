@@ -52,7 +52,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.kotlin.idea.debugger.test.DebuggerTestUtils.DEBUGGER_TESTDATA_PATH_BASE;
-import static org.jetbrains.kotlin.idea.debugger.test.DebuggerTestUtils.DEBUGGER_TESTDATA_PATH_RELATIVE;
 
 public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsightFixtureTestCase {
     // Breakpoint is given as a line comment on a specific line, containing the regexp to match the name of the class where that line
@@ -108,7 +107,7 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
 
     @NotNull
     private static String getPath(@NotNull String fileName) {
-        return StringsKt.substringAfter(fileName, DEBUGGER_TESTDATA_PATH_RELATIVE, fileName);
+        return StringsKt.substringAfter(fileName, DEBUGGER_TESTDATA_PATH_BASE, fileName);
     }
 
     private void performTest() {
