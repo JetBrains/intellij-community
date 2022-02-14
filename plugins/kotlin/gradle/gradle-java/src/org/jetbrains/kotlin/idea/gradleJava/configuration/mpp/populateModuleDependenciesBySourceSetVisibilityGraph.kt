@@ -25,7 +25,6 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
 ): Unit = with(context) {
     val sourceSetVisibilityGraph = createSourceSetVisibilityGraph(mppModel).transitiveClosure
     for (sourceSet in sourceSetVisibilityGraph.nodes()) {
-        populateSourceSetInfos(context, sourceSetVisibilityGraph, sourceSet)
         if (shouldDelegateToOtherPlugin(sourceSet)) continue
 
 
@@ -196,33 +195,6 @@ private fun getPropagatedPlatformDependencies(
     }
 
     return emptySet()
-}
-
-
-// TODO: Move this maybe to another semantic part of KotlinMPPGradleProjectResolver?
-private fun KotlinMPPGradleProjectResolver.Companion.populateSourceSetInfos(
-    context: KotlinMppPopulateModuleDependenciesContext,
-    closedSourceSetGraph: Graph<KotlinSourceSet>,
-    sourceSet: KotlinSourceSet
-) = with(context) {
-    val isAndroid = shouldDelegateToOtherPlugin(sourceSet)
-    val fromDataNode = if (isAndroid) ideModule
-    else getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx) ?: return
-
-    val dependeeSourceSets = closedSourceSetGraph.successors(sourceSet)
-    val sourceSetInfos = if (isAndroid) {
-        ideModule.kotlinAndroidSourceSets?.filter {
-          (it.kotlinComponent as? KotlinCompilation)?.declaredSourceSets?.contains(sourceSet) ?: false
-        } ?: emptyList()
-    } else {
-        listOfNotNull(fromDataNode.kotlinSourceSetData?.sourceSetInfo)
-    }
-    for (sourceSetInfo in sourceSetInfos) {
-        if (sourceSetInfo.kotlinComponent is KotlinCompilation) {
-            val selfName = sourceSetInfo.kotlinComponent.fullName()
-            sourceSetInfo.addSourceSets(dependeeSourceSets, selfName, gradleModule, resolverCtx)
-        }
-    }
 }
 
 inline fun <reified T : Any> DataNode<*>.cast(): DataNode<T> {
