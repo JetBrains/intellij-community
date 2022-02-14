@@ -5,7 +5,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 
-class JavaCodeVisionContext : VcsCodeVisionLanguageContext {
+class JavaVcsCodeVisionContext : VcsCodeVisionLanguageContext {
   override fun isAccepted(element: PsiElement): Boolean {
     return element is PsiMethod || element is PsiClass
   }
