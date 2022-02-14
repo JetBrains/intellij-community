@@ -3,7 +3,7 @@ import java.io.*;
 
 class Foo {
   long isNewFile(File file) throws IOException {
-    while (file.isDire<caret>ctory()) {
+    if (file.isDirecto<caret>ry()) {
       System.out.println(file.isFile());
     }
     return file.lastModified();

@@ -3,8 +3,10 @@ import java.io.*;
 
 class Foo {
   long isNewFile(File file, long lastModified) {
-    if (file.isDirecto<caret>ry()) {
-      System.out.println(file.isFile());
+    System.out.println(file.isFile());
+    while (file.isDirectory()) {
+        System.out.println(file.i<caret>sFile());
+        System.out.println(file.length());
     }
     return file.lastModified();
   }
