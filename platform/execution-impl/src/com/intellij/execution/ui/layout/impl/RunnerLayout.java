@@ -293,6 +293,6 @@ public class RunnerLayout  {
   public static class General {
     public volatile boolean horizontalToolbar = false;
     public volatile Map<String, String> focusOnCondition = new HashMap<>();
-    public volatile boolean isTabLabelsHidden = false;
+    public volatile boolean isTabLabelsHidden = true;
   }
 }
