@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 
 class GitStashCache(val project: Project) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Stash Loader", 1)
 
   private val cache = Caffeine.newBuilder()
@@ -28,6 +29,7 @@ class GitStashCache(val project: Project) : Disposable {
     .buildAsync<StashId, StashData>(CacheLoader { stashId -> doLoadStashData(stashId) })
 
   init {
+    Disposer.register(this, disposableFlag)
     LowMemoryWatcher.register(Runnable { cache.synchronous().invalidateAll() }, this)
   }
 
@@ -48,7 +50,7 @@ class GitStashCache(val project: Project) : Disposable {
   }
 
   fun loadStashData(stashInfo: StashInfo): CompletableFuture<StashData>? {
-    if (Disposer.isDisposed(this)) return null
+    if (disposableFlag.isDisposed) return null
 
     val commitId = StashId(stashInfo.hash, stashInfo.parentHashes, stashInfo.root)
     val future = cache.get(commitId)
