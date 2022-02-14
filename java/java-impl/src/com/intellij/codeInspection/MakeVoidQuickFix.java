@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -80,8 +80,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
                                                                      false, null, psiMethod.getName(),
                                                                      PsiType.VOID,
                                                                      ParameterInfoImpl.fromMethod(psiMethod),
-                                                                     true,
-                                                                     infos -> {
+                                                               infos -> {
                                                                        for (final PsiMethod method : methodsToModify) {
                                                                          replaceReturnStatements(method);
                                                                        }

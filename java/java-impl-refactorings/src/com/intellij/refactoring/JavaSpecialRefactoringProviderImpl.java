@@ -47,14 +47,8 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
                                                                                        String newName,
                                                                                        PsiType newType,
                                                                                        ParameterInfoImpl @NotNull [] parameterInfo,
-                                                                                       boolean changeAllUsages,
                                                                                        Consumer<? super List<ParameterInfoImpl>> callback) {
     return new ChangeSignatureProcessor(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo) {
-      @Override
-      protected UsageInfo @NotNull [] findUsages() {
-        return changeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
-      }
-
       @Override
       protected void performRefactoring(UsageInfo @NotNull [] usages) {
         CommandProcessor.getInstance().setCurrentCommandName(getCommandName());

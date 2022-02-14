@@ -372,7 +372,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       var provider = JavaSpecialRefactoringProvider.getInstance();
       var processor = provider.getChangeSignatureProcessorWithCallback(
         method.getProject(), method, false, null, method.getName(), method.getReturnType(),
-        psiParameters.toArray(new ParameterInfoImpl[0]), true, null
+        psiParameters.toArray(new ParameterInfoImpl[0]), null
       );
       processor.run();
     }

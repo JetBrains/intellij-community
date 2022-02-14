@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -237,6 +237,11 @@ class JavaChangeSignatureUsageSearcher {
           if (RefactoringUtil.isMethodUsage(element)) {
             PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(element);
             if (list == null || !method.isVarArgs() && list.getExpressionCount() != parameterCount) continue;
+            if (method.isVarArgs() && 
+                ref instanceof PsiReferenceExpression && 
+                !((PsiReferenceExpression)ref).advancedResolve(true).isValidResult()) {
+              continue;
+            }
           }
         }
         if (RefactoringUtil.isMethodUsage(element)) {

@@ -50,7 +50,6 @@ public interface JavaSpecialRefactoringProvider {
                                                                        String newName,
                                                                        PsiType newType,
                                                                        ParameterInfoImpl @NotNull [] parameterInfo,
-                                                                       boolean changeAllUsages,
                                                                        Consumer<? super List<ParameterInfoImpl>> callback);
   @NotNull
   ChangeSignatureProcessorBase getChangeSignatureProcessorWithCallback(Project project,

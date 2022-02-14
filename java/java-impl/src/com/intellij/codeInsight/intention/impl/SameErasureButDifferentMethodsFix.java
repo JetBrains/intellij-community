@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -53,7 +53,8 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
     }
 
     var provider = JavaSpecialRefactoringProvider.getInstance();
-    var processor = provider.getChangeSignatureProcessorWithCallback(project, method, false, null, method.getName(), method.getReturnType(), infos, true, null);
+    var processor = provider.getChangeSignatureProcessorWithCallback(project, method, false, null, method.getName(), method.getReturnType(), infos,
+                                                                     null);
 
     processor.run();
   }
