@@ -1175,6 +1175,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addFullQualifier/userTypes/LocalClass.kt");
             }
 
+            @TestMetadata("NullableType.kt")
+            public void testNullableType() throws Exception {
+                runTest("testData/intentions/addFullQualifier/userTypes/NullableType.kt");
+            }
+
             @TestMetadata("SimpleClass.kt")
             public void testSimpleClass() throws Exception {
                 runTest("testData/intentions/addFullQualifier/userTypes/SimpleClass.kt");
