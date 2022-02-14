@@ -16,6 +16,18 @@ _collections_abc.MutableMapping.__setitem__
 _collections_abc.MutableMapping.pop
 _collections_abc.MutableMapping.setdefault
 
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing.BinaryIO.write
+typing.IO.__exit__
+typing.IO.read
+typing.IO.readline
+typing.IO.readlines
+typing.IO.seek
+typing.IO.truncate
+typing.IO.write
+typing.IO.writelines
+
 ast.Bytes.__new__
 ast.Ellipsis.__new__
 ast.ExtSlice.__new__
@@ -115,6 +127,10 @@ contextlib.AbstractContextManager.__exit__
 io.IncrementalNewlineDecoder.setstate
 typing.SupportsRound.__round__
 types.DynamicClassAttribute..*  # In the stub we pretend it's an alias for property, but it has positional-only differences
+# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
+os.path.join
 
 # These enums derive from (str, Enum). See comment in py3_common.txt
 pstats.SortKey.__new__
@@ -148,9 +164,7 @@ _imp.source_hash
 ast.Tuple.dims
 ast.main
 asyncio.AbstractEventLoop.connect_accepted_socket
-asyncio.BufferedProtocol.eof_received
 asyncio.events.AbstractEventLoop.connect_accepted_socket
-asyncio.protocols.BufferedProtocol.eof_received
 bdb.Breakpoint.clearBreakpoints
 distutils.dist.DistributionMetadata.set_classifiers
 distutils.dist.DistributionMetadata.set_keywords
@@ -162,9 +176,6 @@ multiprocessing.managers.SharedMemoryServer.public
 multiprocessing.managers.SharedMemoryServer.release_segment
 multiprocessing.managers.SharedMemoryServer.shutdown
 multiprocessing.managers.SharedMemoryServer.track_segment
-pstats.FunctionProfile
-pstats.Stats.get_stats_profile
-pstats.StatsProfile
 pyexpat.XMLParserType.SkippedEntityHandler
 pyexpat.XMLParserType.intern
 sched.Event.sequence

@@ -1,10 +1,8 @@
-# NOTE: These are incomplete!
-
 import queue
 import sys
 import threading
 from contextlib import AbstractContextManager
-from typing import Any, AnyStr, Callable, Generic, Iterable, Mapping, Sequence, Tuple, TypeVar
+from typing import Any, AnyStr, Callable, Generic, Iterable, Mapping, Sequence, TypeVar
 
 from .connection import Connection
 from .context import BaseContext
@@ -29,16 +27,15 @@ class Namespace:
 
 _Namespace = Namespace
 
-class Token(object):
+class Token:
     typeid: str | bytes | None
     address: tuple[str | bytes, int]
     id: str | bytes | int | None
     def __init__(self, typeid: bytes | str | None, address: tuple[str | bytes, int], id: str | bytes | int | None) -> None: ...
-    def __repr__(self) -> str: ...
     def __getstate__(self) -> tuple[str | bytes | None, tuple[str | bytes, int], str | bytes | int | None]: ...
     def __setstate__(self, state: tuple[str | bytes | None, tuple[str | bytes, int], str | bytes | int | None]) -> None: ...
 
-class BaseProxy(object):
+class BaseProxy:
     _address_to_local: dict[Any, Any]
     _mutex: Any
     def __init__(
@@ -52,7 +49,7 @@ class BaseProxy(object):
         manager_owned: bool = ...,
     ) -> None: ...
     def __deepcopy__(self, memo: Any | None) -> Any: ...
-    def _callmethod(self, methodname: str, args: Tuple[Any, ...] = ..., kwds: dict[Any, Any] = ...) -> None: ...
+    def _callmethod(self, methodname: str, args: tuple[Any, ...] = ..., kwds: dict[Any, Any] = ...) -> None: ...
     def _getvalue(self) -> Any: ...
     def __reduce__(self) -> tuple[Any, tuple[Any, Any, str, dict[Any, Any]]]: ...
 
@@ -116,6 +113,7 @@ class RemoteError(Exception): ...
 
 if sys.version_info >= (3, 8):
     class SharedMemoryServer(Server): ...
+
     class SharedMemoryManager(BaseManager):
         def get_server(self) -> SharedMemoryServer: ...
         def SharedMemory(self, size: int) -> _SharedMemory: ...

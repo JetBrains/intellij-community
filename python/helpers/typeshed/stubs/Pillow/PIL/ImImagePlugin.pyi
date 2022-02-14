@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
@@ -18,8 +19,8 @@ split: Any
 def number(s): ...
 
 class ImImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["IM"]]
+    format_description: ClassVar[str]
     @property
     def n_frames(self): ...
     @property

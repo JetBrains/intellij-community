@@ -82,6 +82,7 @@ class AliasedInsp(ORMEntityColumnsClauseRole, ORMFromClauseRole, sql_base.Memoiz
         _use_mapper_path,
         adapt_on_names,
         represents_outer_join,
+        nest_adapters: bool,  # added in 1.4.30
     ) -> None: ...
     @property
     def entity(self): ...

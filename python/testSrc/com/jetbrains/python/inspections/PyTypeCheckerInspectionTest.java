@@ -892,8 +892,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-35235
   public void testDistinguishTypingLiteralsFromTypeHintOrValue() {
     doTestByText("from typing_extensions import Literal\n" +
-                 "# no warning because `Literal[10]` as an expression has type `Any`\n" +
-                 "a = Literal[10]  # type: Literal[0]");
+                 "a = <warning descr=\"Expected type 'Literal[0]', got 'Type[int]' instead\">Literal[10]</warning>  # type: Literal[0]");
   }
 
   // PY-35235

@@ -37,7 +37,7 @@ class LXMLTreeBuilderForXML(TreeBuilder):
     def comment(self, content) -> None: ...
     def test_fragment_to_document(self, fragment): ...
 
-class LXMLTreeBuilder(HTMLTreeBuilder, LXMLTreeBuilderForXML):
+class LXMLTreeBuilder(HTMLTreeBuilder, LXMLTreeBuilderForXML):  # type: ignore # argument disparities between base classes
     NAME: Any
     ALTERNATE_NAMES: Any
     features: Any

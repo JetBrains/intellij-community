@@ -1,14 +1,14 @@
 import sys
-from typing import Iterable, Sequence, Tuple, TypeVar
+from typing import Iterable, Sequence, TypeVar
 
 _T = TypeVar("_T")
 _K = TypeVar("_K")
 _V = TypeVar("_V")
 
-__all__: list[str]
+__all__ = ["compiler_fixup", "customize_config_vars", "customize_compiler", "get_platform_osx"]
 
-_UNIVERSAL_CONFIG_VARS: Tuple[str, ...]  # undocumented
-_COMPILER_CONFIG_VARS: Tuple[str, ...]  # undocumented
+_UNIVERSAL_CONFIG_VARS: tuple[str, ...]  # undocumented
+_COMPILER_CONFIG_VARS: tuple[str, ...]  # undocumented
 _INITPRE: str  # undocumented
 
 def _find_executable(executable: str, path: str | None = ...) -> str | None: ...  # undocumented

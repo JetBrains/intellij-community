@@ -2,7 +2,7 @@ import datetime
 from _typeshed import SupportsItems
 from collections.abc import Callable, Iterable, Mapping
 from types import BuiltinFunctionType, FunctionType, ModuleType
-from typing import Any, ClassVar, NoReturn, Type, TypeVar
+from typing import Any, ClassVar, NoReturn, TypeVar
 
 from yaml.error import YAMLError as YAMLError
 from yaml.nodes import MappingNode as MappingNode, Node as Node, ScalarNode as ScalarNode, SequenceNode as SequenceNode
@@ -13,8 +13,8 @@ _R = TypeVar("_R", bound=BaseRepresenter)
 class RepresenterError(YAMLError): ...
 
 class BaseRepresenter:
-    yaml_representers: ClassVar[dict[Type[Any], Callable[[BaseRepresenter, Any], Node]]]
-    yaml_multi_representers: ClassVar[dict[Type[Any], Callable[[BaseRepresenter, Any], Node]]]
+    yaml_representers: ClassVar[dict[type[Any], Callable[[BaseRepresenter, Any], Node]]]
+    yaml_multi_representers: ClassVar[dict[type[Any], Callable[[BaseRepresenter, Any], Node]]]
     default_style: str | Any
     sort_keys: bool
     default_flow_style: bool
@@ -25,9 +25,9 @@ class BaseRepresenter:
     def represent(self, data) -> None: ...
     def represent_data(self, data) -> Node: ...
     @classmethod
-    def add_representer(cls: Type[_R], data_type: Type[_T], representer: Callable[[_R, _T], Node]) -> None: ...
+    def add_representer(cls: type[_R], data_type: type[_T], representer: Callable[[_R, _T], Node]) -> None: ...
     @classmethod
-    def add_multi_representer(cls: Type[_R], data_type: Type[_T], representer: Callable[[_R, _T], Node]) -> None: ...
+    def add_multi_representer(cls: type[_R], data_type: type[_T], representer: Callable[[_R, _T], Node]) -> None: ...
     def represent_scalar(self, tag: str, value, style: str | None = ...) -> ScalarNode: ...
     def represent_sequence(self, tag: str, sequence: Iterable[Any], flow_style: bool | None = ...) -> SequenceNode: ...
     def represent_mapping(

@@ -100,6 +100,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String ANNOTATED_EXT = "typing_extensions.Annotated";
   public static final String TYPE_ALIAS = "typing.TypeAlias";
   public static final String TYPE_ALIAS_EXT = "typing_extensions.TypeAlias";
+  private static final String SPECIAL_FORM = "typing._SpecialForm";
+  private static final String SPECIAL_FORM_EXT = "typing_extensions._SpecialForm";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -430,7 +432,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (PyNames.CLASS_GETITEM.equals(name)) return true;
     if (PyNames.GETITEM.equals(name)) {
       final PyClass cls = function.getContainingClass();
-      return cls != null && "typing._SpecialForm".equals(cls.getQualifiedName());
+      if (cls != null) {
+        final String qualifiedName = cls.getQualifiedName();
+        return SPECIAL_FORM.equals(qualifiedName) || SPECIAL_FORM_EXT.equals(qualifiedName);
+      }
     }
 
     return false;

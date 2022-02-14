@@ -90,6 +90,7 @@ class SubqueryLoader(PostLoader):
     join_depth: Any
     def __init__(self, parent, strategy_key) -> None: ...
     def init_class_attribute(self, mapper) -> None: ...
+
     class _SubqCollections:
         session: Any
         execution_options: Any
@@ -99,6 +100,7 @@ class SubqueryLoader(PostLoader):
         def __init__(self, context, subq) -> None: ...
         def get(self, key, default): ...
         def loader(self, state, dict_, row) -> None: ...
+
     def create_row_processor(self, context, query_entity, path, loadopt, mapper, result, adapter, populators): ...
 
 class JoinedLoader(AbstractRelationshipLoader):
@@ -122,6 +124,7 @@ class JoinedLoader(AbstractRelationshipLoader):
 
 class SelectInLoader(PostLoader, util.MemoizedSlots):
     logger: Any
+
     class query_info(NamedTuple):
         load_only_child: Any
         load_with_join: Any

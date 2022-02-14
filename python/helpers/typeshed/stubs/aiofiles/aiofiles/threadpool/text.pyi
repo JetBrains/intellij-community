@@ -1,5 +1,5 @@
 from _typeshed import StrOrBytesPath
-from typing import BinaryIO, Iterable, Tuple
+from typing import BinaryIO, Iterable
 
 from ..base import AsyncBase
 
@@ -31,7 +31,7 @@ class AsyncTextIOWrapper(AsyncBase[str]):
     @property
     def line_buffering(self) -> bool: ...
     @property
-    def newlines(self) -> str | Tuple[str, ...] | None: ...
+    def newlines(self) -> str | tuple[str, ...] | None: ...
     @property
     def name(self) -> StrOrBytesPath | int: ...
     @property

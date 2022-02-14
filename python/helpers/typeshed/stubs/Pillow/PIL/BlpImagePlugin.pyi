@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile, PyDecoder
 
@@ -18,8 +19,8 @@ def decode_dxt5(data): ...
 class BLPFormatError(NotImplementedError): ...
 
 class BlpImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["BLP"]]
+    format_description: ClassVar[str]
 
 class _BLPBaseDecoder(PyDecoder):
     magic: Any

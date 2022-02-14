@@ -274,7 +274,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAnext() {
-    doTest("Awaitable[int]",
+    doTest("Coroutine[Any, Any, int]",
            "async def asyncgen():\n" +
            "    yield 42\n" +
            "expr = asyncgen().__anext__()");
@@ -291,7 +291,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorAsend() {
-    doTest("Awaitable[int]",
+    doTest("Coroutine[Any, Any, int]",
            "async def asyncgen():\n" +
            "    yield 42\n" +
            "expr = asyncgen().asend(\"hello\")");
