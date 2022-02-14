@@ -2,12 +2,14 @@
 package org.jetbrains.intellij.build.impl;
 
 import jetbrains.buildServer.messages.serviceMessages.Message;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Map;
 
 /**
  * jps-bootstrap launchers main classes via this wrapper to correctly log exceptions
@@ -38,8 +40,10 @@ public class BuildScriptLauncher {
 
       if (TeamCityHelper.isIsUnderTeamCity()) {
         // Under TeamCity non-zero exit code will be displayed as a separate build error
-        // so logging FAILURE message is enough
         System.out.println(new Message(message, "FAILURE", null).asString());
+        // Make sure it fails the build, see
+        // https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Build+Problems
+        System.out.println(new ServiceMessage("buildProblem", Map.of("description", message)) {}.asString());
         System.exit(0);
       } else {
         System.err.println("\nFATAL: " + message);
