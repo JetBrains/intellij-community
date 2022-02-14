@@ -663,6 +663,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     DataContext context = DataManager.getInstance().getDataContext(this);
     for (AnAction action : actions) {
       ShortcutSet shortcut = null;
+      if (action instanceof DefaultActionGroup) {
+        updateBindings((DefaultActionGroup)action, shortcutHolder);
+      }
+
       if (action instanceof ContextAwareShortcutProvider) {
         shortcut = ((ContextAwareShortcutProvider)action).getShortcut(context);
       }
