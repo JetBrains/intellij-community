@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -42,35 +42,36 @@ public final class BackgroundTaskUtil {
   @RequiresEdt
   public static @NotNull ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
                                                              @Nullable Runnable onSlowAction) {
-    return executeAndTryWait(backgroundTask, onSlowAction, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
+    return executeAndTryWait(backgroundTask, onSlowAction,
+                             ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
   }
 
   /**
-    * Executor to perform <i>possibly</i> long operation on pooled thread.
-    * If computation was performed within given time frame,
-    * the computed callback will be executed synchronously (avoiding unnecessary <tt>invokeLater()</tt>).
-    * In this case, {@code onSlowAction} will not be executed at all.
-    * <ul>
-    * <li> If the computation is fast, execute callback synchronously.
-    * <li> If the computation is slow, execute <tt>onSlowAction</tt> synchronously. When the computation is completed, execute callback in EDT.
-    * </ul><p>
-    * It can be used to reduce blinking when background task might be completed fast.<br>
-    * A Simple approach:
-    * <pre>
-    * onSlowAction.run() // show "Loading..."
-    * executeOnPooledThread({
-    *   Runnable callback = backgroundTask(); // some background computations
-    *   invokeLater(callback); // apply changes
-    * });
-    * </pre>
-    * will lead to "Loading..." visible between current moment and execution of invokeLater() event.
-    * This period can be very short and looks like 'jumping' if background operation is fast.
-    */
+   * Executor to perform <i>possibly</i> long operation on pooled thread.
+   * If computation was performed within given time frame,
+   * the computed callback will be executed synchronously (avoiding unnecessary <tt>invokeLater()</tt>).
+   * In this case, {@code onSlowAction} will not be executed at all.
+   * <ul>
+   * <li> If the computation is fast, execute callback synchronously.
+   * <li> If the computation is slow, execute <tt>onSlowAction</tt> synchronously. When the computation is completed, execute callback in EDT.
+   * </ul><p>
+   * It can be used to reduce blinking when background task might be completed fast.<br>
+   * A Simple approach:
+   * <pre>
+   * onSlowAction.run() // show "Loading..."
+   * executeOnPooledThread({
+   *   Runnable callback = backgroundTask(); // some background computations
+   *   invokeLater(callback); // apply changes
+   * });
+   * </pre>
+   * will lead to "Loading..." visible between current moment and execution of invokeLater() event.
+   * This period can be very short and looks like 'jumping' if background operation is fast.
+   */
   @RequiresEdt
   public static @NotNull ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
-                                                    @Nullable Runnable onSlowAction,
-                                                    long waitMillis,
-                                                    boolean forceEDT) {
+                                                             @Nullable Runnable onSlowAction,
+                                                             long waitMillis,
+                                                             boolean forceEDT) {
     ModalityState modality = ModalityState.current();
 
     if (forceEDT) {
@@ -120,8 +121,7 @@ public final class BackgroundTaskUtil {
    * </ul>
    */
   @CalledInAny
-  public static @Nullable <T> T tryComputeFast(@NotNull Function<? super ProgressIndicator, ? extends T> backgroundTask,
-                                     long waitMillis) {
+  public static @Nullable <T> T tryComputeFast(@NotNull Function<? super ProgressIndicator, ? extends T> backgroundTask, long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
       backgroundTask,
       (result, indicator) -> {
@@ -159,9 +159,9 @@ public final class BackgroundTaskUtil {
    */
   @CalledInAny
   private static @NotNull <T> Pair<T, ProgressIndicator> computeInBackgroundAndTryWait(@NotNull Function<? super ProgressIndicator, ? extends T> task,
-                                                                              @NotNull PairConsumer<? super T, ? super ProgressIndicator> asyncCallback,
-                                                                              @NotNull ModalityState modality,
-                                                                              long waitMillis) {
+                                                                                       @NotNull PairConsumer<? super T, ? super ProgressIndicator> asyncCallback,
+                                                                                       @NotNull ModalityState modality,
+                                                                                       long waitMillis) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modality);
     indicator.start();
 
@@ -212,19 +212,22 @@ public final class BackgroundTaskUtil {
     }
 
     public void awaitCompletion() throws ExecutionException {
-      while(!future.isDone() && !Disposer.isDisposed(parent)) {
+      while (!future.isDone() && !Disposer.isDisposed(parent)) {
         try {
           if (future.get(1, TimeUnit.SECONDS) != null) {
             break;
           }
-        } catch (ExecutionException e) {
+        }
+        catch (ExecutionException e) {
           if (e.getCause() instanceof ControlFlowException) {
             break;
           }
           throw e;
-        } catch (TimeoutException e) {
+        }
+        catch (TimeoutException e) {
           // another
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
           if (e.getCause() instanceof ControlFlowException) {
             break;
           }
@@ -237,7 +240,7 @@ public final class BackgroundTaskUtil {
   /**
    * An alternative to plain {@link Application#executeOnPooledThread(Runnable)} which wraps the task in a process with a
    * {@link ProgressIndicator} which gets cancelled when the given disposable is disposed. <br/><br/>
-   *
+   * <p>
    * This allows to stop a lengthy background activity by calling {@link ProgressManager#checkCanceled()}
    * and avoid Already Disposed exceptions (in particular, because checkCanceled() is called in {@link ServiceManager#getService(Class)}.
    */
@@ -252,7 +255,7 @@ public final class BackgroundTaskUtil {
    */
   @CalledInAny
   public static @NotNull ProgressIndicator execute(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable runnable) {
-      return submitTask(executor, parent, runnable).indicator;
+    return submitTask(executor, parent, runnable).indicator;
   }
 
   @CalledInAny
@@ -292,7 +295,8 @@ public final class BackgroundTaskUtil {
 
     if (!registerIfParentNotDisposed(parent, disposable)) {
       indicator.cancel();
-    } else {
+    }
+    else {
       future.whenComplete((o, e) -> Disposer.dispose(disposable));
     }
 
