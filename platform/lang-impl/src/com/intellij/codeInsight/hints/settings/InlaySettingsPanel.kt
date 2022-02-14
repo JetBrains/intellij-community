@@ -209,7 +209,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun addPreview(previewText: String?, model: InlayProviderSettingsModel) {
     if (previewText != null) {
-      val editorTextField = createEditor(model.language, project) { editor ->
+      val editorTextField = createEditor(model.getCasePreviewLanguage(null) ?: model.language, project) { editor ->
         currentEditor = editor
         updateHints(editor, model)
       }

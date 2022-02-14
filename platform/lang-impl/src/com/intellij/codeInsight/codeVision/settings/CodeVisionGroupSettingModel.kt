@@ -17,8 +17,14 @@ abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : Inl
 
   override val previewText: String? = null
 
+  protected open val previewLanguage: Language? = null
+
   final override fun getCasePreview(case: ImmediateConfigurable.Case?): String? {
     return previewText
+  }
+
+  final override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language? {
+    return previewLanguage
   }
 
   final override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {

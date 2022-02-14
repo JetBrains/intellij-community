@@ -4,8 +4,10 @@ package com.intellij.codeInsight.codeVision.settings
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionBundle
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.lang.Language
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ResourceUtil
 import javax.swing.JComponent
 
 open class CodeVisionGroupDefaultSettingModel(override val name: String,
@@ -25,6 +27,12 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     }
   }
 
+  override val previewText: String?
+    get() = getCasePreview()
+
+  override val previewLanguage: Language?
+    get() = Language.findLanguageByID("JAVA")
+
   override fun isModified(): Boolean {
     return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)
             || positionComboBox.item != (settings.getPositionForGroup(name) ?: settings.defaultPosition))
@@ -38,5 +46,11 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
   override fun reset() {
     isEnabled = settings.isProviderEnabled(id) && settings.codeVisionEnabled
     positionComboBox.item = settings.getPositionForGroup(name) ?: CodeVisionAnchorKind.Default
+  }
+
+  private fun getCasePreview(): String? {
+    val path = "codeVisionProviders/" + id + "/preview." + previewLanguage?.associatedFileType?.defaultExtension
+    val stream = this.javaClass.classLoader.getResourceAsStream(path)
+    return if (stream != null) ResourceUtil.loadText(stream) else null
   }
 }

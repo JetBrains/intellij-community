@@ -62,6 +62,10 @@ class NewInlayProviderSettingsModel<T : Any>(
     return getCasePreview(providerWithSettings.language, providerWithSettings.provider, case)
   }
 
+  override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language {
+    return providerWithSettings.language
+  }
+
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
     val key = "inlay." + providerWithSettings.provider.key.id + "." + case.id
     return providerWithSettings.provider.getProperty(key)
