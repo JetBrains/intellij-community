@@ -92,6 +92,8 @@ public final class StorageLockContext {
   }
 
   void assertUnderSegmentAllocationLock() {
-    myFilePageCache.assertUnderSegmentAllocationLock();
+    if (IndexDebugProperties.DEBUG) {
+      myFilePageCache.assertUnderSegmentAllocationLock();
+    }
   }
 }
