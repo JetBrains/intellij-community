@@ -12,7 +12,7 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Processor
-import com.jetbrains.rd.util.reactive.adviseOnce
+import com.jetbrains.rd.util.reactive.adviseUntil
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -49,9 +49,11 @@ class CodeVisionPass(
       updateProviders()
     }
     else {
-      lensPopupActive.adviseOnce(myProject.createLifetime()) {
-        if (currentIndicator == null || currentIndicator.isCanceled) return@adviseOnce
+      lensPopupActive.adviseUntil(myProject.createLifetime()) {
+        if(it) return@adviseUntil false
+        if (currentIndicator == null || currentIndicator.isCanceled) return@adviseUntil true
         updateProviders()
+        true
       }
     }
   }
