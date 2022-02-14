@@ -9,34 +9,22 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
-import com.intellij.navigation.ItemPresentation;
 
-public class JsonObjectImpl extends JsonObjectMixin implements JsonObject {
+public class JsonParameterLiteralImpl extends JsonLiteralImpl implements JsonParameterLiteral {
 
-  public JsonObjectImpl(@NotNull ASTNode node) {
+  public JsonParameterLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
-    visitor.visitObject(this);
+    visitor.visitParameterLiteral(this);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<JsonProperty> getPropertyList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonProperty.class);
-  }
-
-  @Override
-  public @Nullable ItemPresentation getPresentation() {
-    return JsonPsiImplUtils.getPresentation(this);
   }
 
 }
