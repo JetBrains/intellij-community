@@ -209,7 +209,7 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
     assertSuggestedGradleVersionFor(bundledGradleApiVersion, "13")
     assertSuggestedGradleVersionFor(bundledGradleApiVersion, "14")
     assertSuggestedGradleVersionFor(bundledGradleApiVersion, "16")
-    assertSuggestedGradleVersionFor("7.2", "17")
+    assertSuggestedGradleVersionFor(bundledGradleApiVersion, "17")
 
     // com.intellij.util.lang.JavaVersion.MAX_ACCEPTED_VERSION - 1
     assertSuggestedGradleVersionFor(null, "24")
