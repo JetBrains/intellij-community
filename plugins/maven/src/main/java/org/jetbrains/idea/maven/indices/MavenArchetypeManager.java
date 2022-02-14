@@ -111,13 +111,25 @@ public class MavenArchetypeManager {
   @Nullable
   public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
                                                               @NotNull String version, @Nullable String url) {
-    return executeWithMavenEmbedderWrapper(
+    return executeWithMavenEmbedderWrapperNullable(
       wrapper -> wrapper.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, Collections.emptyList(), url)
     );
   }
 
   @NotNull
   private <R> R executeWithMavenEmbedderWrapper(Function<MavenEmbedderWrapper, R> function) {
+    MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+    try {
+      return function.apply(mavenEmbedderWrapper);
+    }
+    finally {
+      manager.release(mavenEmbedderWrapper);
+    }
+  }
+
+  @Nullable
+  private <R> R executeWithMavenEmbedderWrapperNullable(Function<MavenEmbedderWrapper, R> function) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
     MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
     try {
