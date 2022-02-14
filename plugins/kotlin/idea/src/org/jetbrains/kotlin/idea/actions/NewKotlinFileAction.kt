@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -47,7 +48,7 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
     KotlinBundle.message("action.new.file.text"),
     KotlinBundle.message("action.new.file.description"),
     KotlinFileType.INSTANCE.icon
-) {
+), DumbAware {
     override fun postProcess(createdElement: PsiFile, templateName: String?, customProperties: Map<String, String>?) {
         super.postProcess(createdElement, templateName, customProperties)
 

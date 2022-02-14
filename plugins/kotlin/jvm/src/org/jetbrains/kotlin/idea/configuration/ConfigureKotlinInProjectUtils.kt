@@ -17,12 +17,14 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
@@ -296,25 +298,29 @@ fun findApplicableConfigurator(module: Module): KotlinProjectConfigurator {
 }
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
-    return module.project.syncNonBlockingReadAction(smartMode = true) {
+    return module.project.syncNonBlockingReadAction {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
-                hasKotlinJsKjsmFile(module.project, LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
-                hasKotlinCommonRuntimeInScope(scope)
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
+                    hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
+                    hasKotlinCommonRuntimeInScope(scope)
+        })
     }
 }
 
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
     return module.project.syncNonBlockingReadAction {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
+        })
     }
 }
 
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
-    return module.project.syncNonBlockingReadAction(smartMode = true) {
+    return module.project.syncNonBlockingReadAction {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        hasKotlinJsKjsmFile(module.project, LibraryKindSearchScope(module, scope, JSLibraryKind))
+        hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind))
     }
 }
 
