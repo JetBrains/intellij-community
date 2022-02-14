@@ -146,7 +146,7 @@ public final class ExperimentalUI {
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
     paths.put("actions/moreHorizontal.svg", "/expui/general/moreHorizontal.svg");
     paths.put("actions/close.svg", "/expui/general/close.svg");
-    paths.put("general/hideToolWindow.svg", "/expui/general/close.svg");
+    paths.put("general/hideToolWindow.svg", "/expui/general/hide.svg");
     paths.put("actions/find.svg", "/expui/general/search.svg");
     paths.put("general/gearPlain.svg", "/expui/general/settings.svg");
     paths.put("general/chevron-down.svg", "expui/general/chevronDown.svg");
