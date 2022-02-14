@@ -479,7 +479,7 @@ public final class ConfigImportHelper {
             String name = path.getFileName().toString();
             if (nameMatchesPrefixStrictly(name, prefix, dotted)) {
               if (settings != null &&
-                  settings.shouldNotBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
+                  !settings.shouldBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
                 continue;
               }
               exactCandidates.add(path);
@@ -487,7 +487,7 @@ public final class ConfigImportHelper {
             else if (exactCandidates.isEmpty() && productPrefixOtherIde != null) {
               if (nameMatchesPrefixStrictly(name, productPrefixOtherIde, dotted)) {
                 if (settings != null &&
-                    settings.shouldNotBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
+                    !settings.shouldBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
                   continue;
                 }
                 otherPreferredCandidates.add(path);
