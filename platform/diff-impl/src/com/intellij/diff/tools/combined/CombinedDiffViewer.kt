@@ -167,6 +167,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
     val components = FrameDiffTool.ToolbarComponents()
     components.toolbarActions = createToolbarActions()
     components.diffInfo = diffInfo
+    components.needTopToolbarBorder = true
     return components
   }
 
