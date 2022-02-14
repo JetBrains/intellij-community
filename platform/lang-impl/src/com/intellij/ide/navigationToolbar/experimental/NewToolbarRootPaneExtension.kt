@@ -192,6 +192,9 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
   inner class CustomizeToolbarAction : DumbAwareAction(ActionsBundle.message("action.CustomizeToolbarAction.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       object : DialogWrapper(project, true) {
+        init {
+          title = ActionsBundle.message("action.CustomizeToolbarAction.dialog.title")
+        }
         var customizeWidget = object : CustomizableActionsPanel() {
           override fun patchActionsTreeCorrespondingToSchema(root: DefaultMutableTreeNode?) {
             val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
