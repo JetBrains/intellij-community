@@ -243,6 +243,11 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspection"
                      key="inspection.quick.fix.get.family.name.violation.display.name"/>
+    <localInspection language="UAST" shortName="ActionIsNotPreviewFriendly"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ActionIsNotPreviewFriendlyInspection"
+                     key="inspection.action.is.not.preview.friendly.display.name"/>
     <localInspection language="JAVA" shortName="PsiElementConcatenation"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
