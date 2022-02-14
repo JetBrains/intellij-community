@@ -235,6 +235,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             runTest("../idea/tests/testData/shortenRefsFir/types/ParameterTypeGenericTypes.kt");
         }
 
+        @TestMetadata("ParameterTypeGenericTypes_missingTypeArgumentError.kt")
+        public void testParameterTypeGenericTypes_missingTypeArgumentError() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/types/ParameterTypeGenericTypes_missingTypeArgumentError.kt");
+        }
+
         @TestMetadata("ParameterTypeImplicitImportBeatsStarImport.kt")
         public void testParameterTypeImplicitImportBeatsStarImport() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/types/ParameterTypeImplicitImportBeatsStarImport.kt");
