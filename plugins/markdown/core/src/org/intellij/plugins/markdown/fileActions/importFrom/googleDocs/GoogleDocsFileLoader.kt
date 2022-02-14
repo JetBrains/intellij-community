@@ -18,8 +18,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.createFile
 import com.intellij.util.io.exists
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.utils.GoogleCommonUtils
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -87,9 +87,9 @@ class GoogleDocsFileLoader {
   private fun handleResponseExceptions(e: GoogleJsonResponseException, project: Project) =
     when (e.statusCode) {
       404 -> {
-        MarkdownNotifier.showErrorNotification(
+        MarkdownNotifications.showError(
           project,
-          msg = MarkdownBundle.message("markdown.google.file.download.error.msg"),
+          message = MarkdownBundle.message("markdown.google.file.download.error.msg"),
           title = MarkdownBundle.message("markdown.google.file.download.error.title")
         )
 

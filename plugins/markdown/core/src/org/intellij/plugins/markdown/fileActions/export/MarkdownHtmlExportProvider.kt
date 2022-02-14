@@ -11,13 +11,13 @@ import com.intellij.ui.RecentsManager
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionsBaseDialog
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils.notifyAndRefreshIfExportSuccess
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils.validateTargetDir
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.intellij.plugins.markdown.ui.preview.jcef.HtmlExporter
 import org.intellij.plugins.markdown.ui.preview.jcef.HtmlResourceSavingSettings
@@ -50,10 +50,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
           notifyAndRefreshIfExportSuccess(File(path), project)
         }
         else {
-          MarkdownNotifier.showErrorNotification(
-            project,
-            MarkdownBundle.message("markdown.export.failure.msg", File(path).name)
-          )
+          MarkdownNotifications.showError(project, message = MarkdownBundle.message("markdown.export.failure.msg", File(path).name))
         }
       }
     }

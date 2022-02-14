@@ -23,10 +23,10 @@ import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
 import com.intellij.util.ModalityUiUtil
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
@@ -44,10 +44,7 @@ object MarkdownImportExportUtils {
 
     val previewEditor = MarkdownActionUtil.findMarkdownPreviewEditor(event)
     if (previewEditor == null) {
-      MarkdownNotifier.showErrorNotification(
-        project,
-        MarkdownBundle.message("markdown.export.validation.failure.msg", fileType)
-      )
+      MarkdownNotifications.showError(project, message = MarkdownBundle.message("markdown.export.validation.failure.msg", fileType))
       return null
     }
 
@@ -116,7 +113,7 @@ object MarkdownImportExportUtils {
       }
 
       override fun onThrowable(error: Throwable) {
-        MarkdownNotifier.showErrorNotification(project, "[${vFileToImport.name}] ${error.localizedMessage}")
+        MarkdownNotifications.showError(project, message = "[${vFileToImport.name}] ${error.localizedMessage}")
       }
 
       override fun onSuccess() {
@@ -124,7 +121,7 @@ object MarkdownImportExportUtils {
           OpenFileAction.openFile(createdFilePath, project)
         }
         else {
-          MarkdownNotifier.showErrorNotification(project, "[${vFileToImport.name}] ${output.stderrLines.joinToString("\n")}")
+          MarkdownNotifications.showError(project, message = "[${vFileToImport.name}] ${output.stderrLines.joinToString("\n")}")
         }
       }
     }.queue()
@@ -166,11 +163,7 @@ object MarkdownImportExportUtils {
   }
 
   fun notifyAndRefreshIfExportSuccess(file: File, project: Project) {
-    MarkdownNotifier.showInfoNotification(
-      project,
-      MarkdownBundle.message("markdown.export.success.msg", file.name)
-    )
-
+    MarkdownNotifications.showInfo(project, message = MarkdownBundle.message("markdown.export.success.msg", file.name))
     val dirToExport = file.parent
     refreshProjectDirectory(project, dirToExport)
   }
