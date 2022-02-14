@@ -106,8 +106,9 @@ public final class BuildRunner {
                                                     JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }
 
-    return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 targetIndex, buildRootIndex, ignoredFileIndex);
+    return new ProjectDescriptor(
+      jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
+    );
   }
 
   @NotNull

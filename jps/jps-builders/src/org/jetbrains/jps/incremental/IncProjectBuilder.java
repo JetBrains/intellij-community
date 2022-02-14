@@ -1205,13 +1205,16 @@ public final class IncProjectBuilder {
 
     final List<SourceToOutputMapping> mappings = new ArrayList<>();
     for (T target : targets) {
-      final SourceToOutputMapping srcToOut = pd.dataManager.getSourceToOutputMap(target);
-      mappings.add(srcToOut);
       pd.fsState.processFilesToRecompile(context, target, new FileProcessor<R, T>() {
+        private SourceToOutputMapping srcToOut;
         @Override
         public boolean apply(T target, File file, R root) throws IOException {
           final String src = FileUtil.toSystemIndependentName(file.getPath());
           if (affectedSources.add(src)) {
+            if (srcToOut == null) { // lazy init
+              srcToOut = pd.dataManager.getSourceToOutputMap(target);
+              mappings.add(srcToOut);
+            }
             final Collection<String> outs = srcToOut.getOutputs(src);
             if (outs != null) {
               // Temporary hack for KTIJ-197
