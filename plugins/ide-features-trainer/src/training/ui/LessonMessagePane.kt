@@ -297,6 +297,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       if (insertOffset != 0)
         insertText("\n", paragraphStyle)
       for (part in messageParts) {
+        part.updateTextAndSplit()
         val startOffset = insertOffset
         part.startOffset = startOffset
         when (part.type) {
