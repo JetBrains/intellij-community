@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
+import com.intellij.diff.merge.ConflictType;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ReadAction;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -69,9 +71,11 @@ public final class GitMergeUtil {
                                         @NotNull VirtualFile root,
                                         @NotNull FilePath path,
                                         boolean isReversed) throws VcsException {
-    byte[] originalContent = loadOriginalContent(project, root, path);
+    byte[] originalContent = loadRevisionCatchingErrors(project, root, path, ORIGINAL_REVISION_NUM);
     byte[] yoursContent = loadRevisionCatchingErrors(project, root, path, YOURS_REVISION_NUM);
     byte[] theirsContent = loadRevisionCatchingErrors(project, root, path, THEIRS_REVISION_NUM);
+
+    ConflictType conflictType = getConflictType(isReversed, originalContent != null, yoursContent != null, theirsContent != null);
 
     // TODO: can be done once for a root
     GitRevisionNumber yoursRevision = resolveHead(project, root);
@@ -85,8 +89,12 @@ public final class GitMergeUtil {
     FilePath yoursPath = getBlobPathInRevision(project, root, path, blobs.getSecond(), yoursRevision);
     FilePath theirsPath = getBlobPathInRevision(project, root, path, blobs.getThird(), theirsRevision);
 
-
-    if (originalRevision != null && hasMergeConflictMarkers(originalContent)) {
+    if (originalContent == null) {
+      // Unable to load original revision, read file content from disk (should have git-generated '>>>>>' marks)
+      // This could happen in case of 'Added-Added' conflicts.
+      originalContent = loadLocalFileContent(path);
+    }
+    else if (originalRevision != null && hasMergeConflictMarkers(originalContent)) {
       // If the 'recursive' or 'ort' merge strategies are used, BASE content might be a result of an incomplete automatic merge.
       // Such content causes poor results for an automatic merge by IDE.
       // Try to replace it with a better base version.
@@ -100,9 +108,9 @@ public final class GitMergeUtil {
 
     MergeData mergeData = new MergeData();
 
-    mergeData.ORIGINAL = originalContent;
-    mergeData.CURRENT = !isReversed ? yoursContent : theirsContent;
-    mergeData.LAST = isReversed ? yoursContent : theirsContent;
+    mergeData.ORIGINAL = notNullize(originalContent);
+    mergeData.CURRENT = notNullize(!isReversed ? yoursContent : theirsContent);
+    mergeData.LAST = notNullize(isReversed ? yoursContent : theirsContent);
 
     mergeData.ORIGINAL_REVISION_NUMBER = originalRevision;
     mergeData.CURRENT_REVISION_NUMBER = !isReversed ? yoursRevision : theirsRevision;
@@ -112,11 +120,13 @@ public final class GitMergeUtil {
     mergeData.CURRENT_FILE_PATH = !isReversed ? yoursPath : theirsPath;
     mergeData.LAST_FILE_PATH = isReversed ? yoursPath : theirsPath;
 
+    mergeData.CONFLICT_TYPE = conflictType;
+
     return mergeData;
   }
 
-
-  private static @Nullable GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
+  @Nullable
+  private static GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
                                                               @NotNull VirtualFile root,
                                                               @Nullable VcsRevisionNumber yoursRevision,
                                                               @Nullable VcsRevisionNumber theirsRevision) {
@@ -191,37 +201,49 @@ public final class GitMergeUtil {
     }
   }
 
-  private static byte @NotNull [] loadOriginalContent(@NotNull Project project,
-                                                      @NotNull VirtualFile root,
-                                                      @NotNull FilePath path) {
-    try {
-      return loadRevisionContent(project, root, path, ORIGINAL_REVISION_NUM);
-    }
-    catch (Exception ex) {
-      /// unable to load original revision, use the current instead
-      /// This could happen in case if rebasing.
-      try {
-        return ReadAction.compute(() -> {
-          VirtualFile file = path.getVirtualFile();
-          if (file == null || !file.isValid()) {
-            LOG.debug("File not found: " + path);
-            return ArrayUtilRt.EMPTY_BYTE_ARRAY;
-          }
+  @Nullable
+  private static ConflictType getConflictType(boolean isReversed,
+                                              boolean hasOriginal,
+                                              boolean hasYours,
+                                              boolean hasTheirs) {
+    if (hasOriginal && hasYours && hasTheirs) return ConflictType.DEFAULT;
 
-          return file.contentsToByteArray();
-        });
+    if (hasYours && hasTheirs) {
+      return ConflictType.ADDED_ADDED;
+    }
+    if (hasOriginal) {
+      if (hasYours) {
+        return !isReversed ? ConflictType.MODIFIED_DELETED : ConflictType.DELETED_MODIFIED;
       }
-      catch (IOException e) {
-        LOG.warn(e);
-        return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+      if (hasTheirs) {
+        return !isReversed ? ConflictType.DELETED_MODIFIED : ConflictType.MODIFIED_DELETED;
       }
+    }
+    return null;
+  }
+
+  private static byte @Nullable [] loadLocalFileContent(@NotNull FilePath path) {
+    try {
+      return ReadAction.compute(() -> {
+        VirtualFile file = path.getVirtualFile();
+        if (file == null || !file.isValid()) {
+          LOG.debug("File not found: " + path);
+          return null;
+        }
+
+        return file.contentsToByteArray();
+      });
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      return null;
     }
   }
 
-  private static byte @NotNull [] loadRevisionCatchingErrors(@NotNull Project project,
-                                                             @NotNull VirtualFile root,
-                                                             @NotNull FilePath path,
-                                                             int stageNum) throws VcsException {
+  private static byte @Nullable [] loadRevisionCatchingErrors(@NotNull Project project,
+                                                              @NotNull VirtualFile root,
+                                                              @NotNull FilePath path,
+                                                              int stageNum) throws VcsException {
     try {
       return loadRevisionContent(project, root, path, stageNum);
     }
@@ -232,7 +254,7 @@ public final class GitMergeUtil {
           || m.contains("is in the index, but not at stage ")
           || m.contains("bad revision")
           || m.startsWith("fatal: Not a valid object name")) {
-        return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+        return null; // assume missing side of 'Deleted-Modified', 'Deleted-Deleted', 'Added-Added' conflicts
       }
       else {
         throw e;
@@ -413,5 +435,9 @@ public final class GitMergeUtil {
   public static boolean isReverseRoot(@NotNull GitRepository repository) {
     if (Registry.is("git.do.not.swap.merge.conflict.sides")) return false;
     return repository.getState().equals(GitRepository.State.REBASING);
+  }
+
+  private static byte @NotNull [] notNullize(byte @Nullable [] array) {
+    return array != null ? array : ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 }

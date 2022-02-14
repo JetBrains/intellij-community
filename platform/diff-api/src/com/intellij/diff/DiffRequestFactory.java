@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff;
 
+import com.intellij.diff.merge.ConflictType;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.TextMergeRequest;
@@ -85,14 +86,42 @@ public abstract class DiffRequestFactory {
   public abstract MergeRequest createMergeRequest(@Nullable Project project,
                                                   @NotNull VirtualFile output,
                                                   @NotNull List<byte[]> byteContents,
+                                                  @Nullable ConflictType conflictType,
+                                                  @Nullable @NlsContexts.DialogTitle String title,
+                                                  @NotNull List<@NlsContexts.Label String> contentTitles,
+                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
+
+
+  @NotNull
+  public abstract MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
                                                   @Nullable @NlsContexts.DialogTitle String title,
                                                   @NotNull List<@NlsContexts.Label String> contentTitles)
     throws InvalidDiffRequestException;
 
   @NotNull
+  public abstract MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
+                                                  @Nullable ConflictType conflictType,
+                                                  @Nullable @NlsContexts.DialogTitle String title,
+                                                  @NotNull List<@NlsContexts.Label String> contentTitles)
+  throws InvalidDiffRequestException;
+
+  @NotNull
   public abstract TextMergeRequest createTextMergeRequest(@Nullable Project project,
                                                           @NotNull VirtualFile output,
                                                           @NotNull List<byte[]> byteContents,
+                                                          @Nullable @NlsContexts.DialogTitle String title,
+                                                          @NotNull List<@NlsContexts.Label String> contentTitles,
+                                                          @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
+
+  @NotNull
+  public abstract TextMergeRequest createTextMergeRequest(@Nullable Project project,
+                                                          @NotNull VirtualFile output,
+                                                          @NotNull List<byte[]> byteContents,
+                                                          @Nullable ConflictType conflictType,
                                                           @Nullable @NlsContexts.DialogTitle String title,
                                                           @NotNull List<@NlsContexts.Label String> contentTitles,
                                                           @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;

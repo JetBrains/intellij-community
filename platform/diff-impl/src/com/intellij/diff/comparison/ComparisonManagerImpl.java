@@ -104,6 +104,26 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     return ByLineRt.convertIntoMergeLineFragments(ranges);
   }
 
+  @Override
+  public String mergeLinesAdditions(@NotNull CharSequence text1,
+                                    @NotNull CharSequence text3,
+                                    @NotNull ComparisonPolicy policy,
+                                    @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    List<CharSequence> lineTexts1 = getLineContents(text1);
+    List<CharSequence> lineTexts3 = getLineContents(text3);
+    FairDiffIterable diff = ByLine.compare(lineTexts1, lineTexts3, policy, indicator);
+
+    StringBuilder base = new StringBuilder();
+    for (Range range : diff.iterateUnchanged()) {
+      for (int i = range.start1; i < range.end1; i++) {
+        if (!base.isEmpty()) base.append("\n");
+        base.append(lineTexts1.get(i));
+      }
+    }
+
+    return base.toString();
+  }
+
   @NotNull
   @Override
   public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,

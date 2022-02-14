@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.comparison.ByWord;
+import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
@@ -16,6 +17,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.DiffToolSubstitutor;
+import com.intellij.diff.merge.ConflictType;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -58,6 +60,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -116,6 +119,9 @@ import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
+import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
+import static com.intellij.util.ObjectUtils.notNull;
+
 public final class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
@@ -135,6 +141,12 @@ public final class DiffUtil {
 
   private static @Nullable Image iconToImage(@NotNull Icon icon) {
     return IconLoader.toImage(icon, null);
+  }
+
+  private static CharSequence getDocumentCharSequence(DocumentContent documentContent) {
+    return ReadAction.compute(() -> {
+      return documentContent.getDocument().getImmutableCharSequence();
+    });
   }
 
   //
@@ -879,6 +891,36 @@ public final class DiffUtil {
     if (smartProvider != null) return smartProvider;
 
     return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable);
+  }
+
+  public static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
+                                                                   @NotNull List<byte[]> byteContents,
+                                                                   @NotNull VirtualFile file,
+                                                                   @Nullable ConflictType conflictType) {
+    ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator());
+    return getDocumentContentsForViewer(project, byteContents, file, conflictType, indicator);
+  }
+
+  public static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
+                                                                   @NotNull List<byte[]> byteContents,
+                                                                   @NotNull VirtualFile file,
+                                                                   @Nullable ConflictType conflictType,
+                                                                   @NotNull ProgressIndicator indicator) {
+    DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
+    DocumentContent current = contentFactory.createDocumentFromBytes(project, notNull(byteContents.get(0), EMPTY_BYTE_ARRAY), file);
+    DocumentContent last = contentFactory.createDocumentFromBytes(project, notNull(byteContents.get(2), EMPTY_BYTE_ARRAY), file);
+    DocumentContent original;
+
+    if (conflictType == ConflictType.ADDED_ADDED) {
+      CharSequence currentContent = getDocumentCharSequence(current);
+      CharSequence lastContent = getDocumentCharSequence(last);
+      String newContent = ComparisonManager.getInstance().mergeLinesAdditions(currentContent, lastContent, ComparisonPolicy.IGNORE_WHITESPACES, indicator);
+      original = contentFactory.create(project, newContent, file);
+    }
+    else {
+      original = contentFactory.createDocumentFromBytes(project, notNull(byteContents.get(1), EMPTY_BYTE_ARRAY), file);
+    }
+    return Arrays.asList(current, original, last);
   }
 
   @Nullable

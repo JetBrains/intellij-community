@@ -442,7 +442,7 @@ open class MultipleFileMergeDialog(
           request = requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
         }
         else {
-          request = requestFactory.createMergeRequest(project, file, byteContents, title, contentTitles, callback)
+          request = requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
         }
 
         MergeUtils.putRevisionInfos(request, mergeData)

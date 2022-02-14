@@ -252,7 +252,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
                                              @NotNull UserDataHolder context,
                                              @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
     if (ChangesUtil.isTextConflictingChange(change)) { // three side diff
-      return createMergeRequest(project, change, context);
+      return createMergeRequest(project, indicator, change, context);
     }
 
     SimpleDiffRequest request = createSimpleRequest(project, change, context, indicator);
@@ -263,7 +263,9 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     return request;
   }
 
+  @SuppressWarnings("unchecked")
   private static @NotNull DiffRequest createMergeRequest(@Nullable Project project,
+                                                         @NotNull ProgressIndicator indicator,
                                                          @NotNull Change change,
                                                          @NotNull UserDataHolder context) throws DiffRequestProducerException {
     FilePath path = ChangesUtil.getFilePath(change);
@@ -291,17 +293,16 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
       String title = DiffRequestFactory.getInstance().getTitle(file);
       List<String> titles = Arrays.asList(beforeRevisionTitle, getBaseVersion(), afterRevisionTitle);
 
-      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-      List<DiffContent> contents = Arrays.asList(contentFactory.createFromBytes(project, mergeData.CURRENT, file),
-                                                 contentFactory.createFromBytes(project, mergeData.ORIGINAL, file),
-                                                 contentFactory.createFromBytes(project, mergeData.LAST, file));
+      List<? extends DiffContent> contents  =
+        DiffUtil.getDocumentContentsForViewer(project, Arrays.asList(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST), file,
+                                              mergeData.CONFLICT_TYPE, indicator);
 
-      SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
+      SimpleDiffRequest request = new SimpleDiffRequest(title, (List<DiffContent>)contents, titles);
       MergeUtils.putRevisionInfos(request, mergeData);
 
       return request;
     }
-    catch (VcsException | IOException e) {
+    catch (VcsException e) {
       LOG.info(e);
       throw new DiffRequestProducerException(e);
     }

@@ -59,6 +59,14 @@ public abstract class ComparisonManager {
                                                      @NotNull CharSequence text3,
                                                      @NotNull ComparisonPolicy policy,
                                                      @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+  /**
+   * Return the common parts of the two files, that can be used as an ad-hoc merge base content.
+   */
+  public abstract String mergeLinesAdditions(@NotNull CharSequence text1,
+                                             @NotNull CharSequence text3,
+                                             @NotNull ComparisonPolicy policy,
+                                             @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+
 
   /**
    * Compare two texts by-word
