@@ -37,11 +37,6 @@ internal class DeprecatedApiPanel {
       // .comment("<html>Cell <b>comment</b>")
     }
 
-    row {
-      textField()
-        .commentHtml("<html>Html cell <b>comment</b>")
-    }
-
     group("Deprecated Group", topGroupGap = true) {
       row { textField() }
     }

@@ -12,6 +12,7 @@ import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 
 @ApiStatus.Internal
@@ -40,6 +41,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   val component: T
 
+  /**
+   * Comment assigned to the cell
+   */
+  val comment: JEditorPane?
+
   fun focused(): Cell<T>
 
   fun applyToComponent(task: T.() -> Unit): Cell<T>
@@ -56,11 +62,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Changes [component] font to bold
    */
   fun bold(): Cell<T>
-
-  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun comment(@NlsContexts.DetailedDescription comment: String?,
-              maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Cell<T>
 
   /**
    * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS and Linux use smaller font).
@@ -79,11 +80,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun comment(@NlsContexts.DetailedDescription comment: String?,
               maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun commentHtml(@NlsContexts.DetailedDescription comment: String?,
-                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**
    * See doc for overloaded method

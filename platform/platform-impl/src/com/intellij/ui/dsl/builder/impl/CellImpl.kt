@@ -6,14 +6,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.whenTextChanged
-import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.ui.DialogValidation
+import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
-import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.text.JTextComponent
 
@@ -36,7 +38,7 @@ internal class CellImpl<T : JComponent>(
   override var component: T = component
     private set
 
-  var comment: JComponent? = null
+  override var comment: JEditorPane? = null
     private set
 
   var label: JLabel? = null
@@ -123,18 +125,9 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): Cell<T> {
-    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
-    return this
-  }
-
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
     this.comment = if (comment == null) null else createComment(comment, maxLineLength, action)
     return this
-  }
-
-  override fun commentHtml(@NlsContexts.DetailedDescription comment: String?, action: HyperlinkEventAction): Cell<T> {
-    return comment(if (comment == null) null else removeHtml(comment), MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
   override fun label(label: String, position: LabelPosition): CellImpl<T> {
