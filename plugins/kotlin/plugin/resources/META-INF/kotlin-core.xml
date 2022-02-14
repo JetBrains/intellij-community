@@ -493,6 +493,8 @@
     <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProvider"/>
     <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinRangesHintsProvider"/>
 
+    <vcs.codeVisionLanguageContext language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext" />
+
     <search.projectOptionsTopHitProvider implementation="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayHintsTopHitProvider"/>
   </extensions>
 
