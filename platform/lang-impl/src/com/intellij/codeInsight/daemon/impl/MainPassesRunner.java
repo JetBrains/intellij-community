@@ -143,6 +143,7 @@ public class MainPassesRunner {
           List<HighlightInfo> infos = ReadAction.nonBlocking(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator)).inSmartMode(project).executeSynchronously();
           result.computeIfAbsent(document, __ -> new ArrayList<>()).addAll(infos);
         });
+        break;
       }
       catch (ProcessCanceledException e) {
         Throwable cause = e.getCause();
