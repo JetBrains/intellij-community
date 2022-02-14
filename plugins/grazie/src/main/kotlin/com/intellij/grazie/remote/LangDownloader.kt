@@ -4,8 +4,10 @@ package com.intellij.grazie.remote
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
+import com.intellij.grazie.ide.notification.GrazieToastNotifications.MISSED_LANGUAGES_GROUP
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -47,6 +49,11 @@ internal object LangDownloader {
       )
     } catch (exception: Throwable) {
       thisLogger().error(exception)
+      val notification = MISSED_LANGUAGES_GROUP.createNotification(
+        msg("grazie.notification.missing-languages.download.failed.message", lang.nativeName),
+        NotificationType.ERROR
+      )
+      notification.notify(project)
       return null
     }
   }
