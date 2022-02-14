@@ -2,9 +2,13 @@
 
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.icons.AllIcons
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -27,8 +31,6 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import java.awt.event.MouseEvent
@@ -37,19 +39,6 @@ import javax.swing.JComponent
 class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
     const val id: String = "vcs.code.vision"
-
-    // implemented not as inplace lambda to avoid capturing project/editor
-    private fun handleClick(event: MouseEvent?, editor: Editor) {
-      if (event == null) return
-      val component = event.component as? JComponent ?: return
-      invokeAnnotateAction(event, component)
-      val project: Project? = editor.project
-      if (project == null) return
-      val document = editor.document
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
-      val language = psiFile.language
-      CodeVisionUsageCollector.VCS_CODE_AUTHOR_CLICKED.log(project, language)
-    }
   }
 
   override fun precomputeOnUiThread(editor: Editor) {
@@ -76,7 +65,8 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
             val codeAuthorInfo = getCodeAuthorInfo(element.project, textRange, editor, aspect)
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
-            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = ::handleClick, icon, text, text, emptyList()))
+            val clickHandler = CodeAuthorClickHandler(element, language)
+            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList()))
           }
         }
       }
@@ -96,6 +86,20 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     get() = CodeVisionAnchorKind.Default
   override val id: String
     get() = Companion.id
+}
+
+// implemented not as inplace lambda to avoid capturing project/editor
+private class CodeAuthorClickHandler(element: PsiElement, private val language: Language) : (MouseEvent?, Editor) -> Unit {
+  private val elementPointer = SmartPointerManager.createPointer(element)
+
+  override fun invoke(event: MouseEvent?, editor: Editor) {
+    event ?: return
+    val component = event.component as? JComponent ?: return
+    invokeAnnotateAction(event, component)
+    val element = elementPointer.element ?: return
+    val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
+    visionLanguageContext.handleClick(event, editor, element)
+  }
 }
 
 private fun invokeAnnotateAction(event: MouseEvent, contextComponent: JComponent) {
