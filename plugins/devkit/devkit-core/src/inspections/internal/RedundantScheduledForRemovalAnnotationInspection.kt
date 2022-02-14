@@ -40,14 +40,14 @@ class RedundantScheduledForRemovalAnnotationInspection : DevKitInspectionBase() 
           holder.registerProblem(forRemovalAnnotation, DevKitBundle.message("inspection.message.scheduled.for.removal.annotation.can.be.removed"), RemoveAnnotationQuickFix(forRemovalAnnotation, element))
         }
         else {
-          val fix = ReplaceAnnotationByForRemovalAttribute(forRemovalAnnotation, deprecatedAnnotation)
+          val fix = ReplaceAnnotationByForRemovalAttributeFix(forRemovalAnnotation, deprecatedAnnotation)
           holder.registerProblem(forRemovalAnnotation, DevKitBundle.message("inspection.message.scheduled.for.removal.annotation.can.be.replaced.by.attribute"), fix)
         }
       }
     }
   }
 
-  class ReplaceAnnotationByForRemovalAttribute(forRemovalAnnotation: PsiAnnotation, deprecatedAnnotation: PsiAnnotation) : LocalQuickFix {
+  class ReplaceAnnotationByForRemovalAttributeFix(forRemovalAnnotation: PsiAnnotation, deprecatedAnnotation: PsiAnnotation) : LocalQuickFix {
     private val forRemovalAnnotationPointer: SmartPsiElementPointer<PsiAnnotation>
     private val deprecatedAnnotationPointer: SmartPsiElementPointer<PsiAnnotation>
     
