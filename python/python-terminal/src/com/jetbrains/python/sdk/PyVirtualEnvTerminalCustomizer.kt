@@ -9,11 +9,14 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.io.exists
 import com.jetbrains.python.run.findActivateScript
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
+import java.nio.file.Path
 import javax.swing.JCheckBox
+import kotlin.io.path.pathString
 
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   override fun customizeCommandAndEnvironment(project: Project,
@@ -29,6 +32,12 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
       if (path != null && command.isNotEmpty()) {
         val shellPath = command[0]
+
+        if (shellPath == "powershell.exe") {
+          val powerShellActivator = Path.of(path).parent?.resolve("activate.ps1") ?: return command
+          return if (powerShellActivator.exists()) arrayOf("powershell.exe", "-NoExit", "-File", powerShellActivator.pathString) else command
+        }
+
         if (isShellIntegrationAvailable(shellPath)) { //fish shell works only for virtualenv and not for conda
           //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
           //TODO: fix conda for fish
