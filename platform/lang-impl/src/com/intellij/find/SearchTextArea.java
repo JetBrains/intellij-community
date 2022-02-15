@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -61,6 +62,14 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
+
+  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
+                                         IconManager.getInstance().getIcon("expui/general/closeSmall.svg", AllIcons.class) :
+                                         AllIcons.Actions.Close;
+
+  private static final Icon CLOSE_HOVERED_ICON = ExperimentalUI.isNewUI() ?
+                                         IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons.class) :
+                                         AllIcons.Actions.CloseHovered;
 
   private static final ActionButtonLook FIELD_INPLACE_LOOK = new IdeaActionButtonLook() {
     @Override
@@ -374,8 +383,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
   private class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
-      super(AllIcons.Actions.Close);
-      getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
+      super(CLOSE_ICON);
+      getTemplatePresentation().setHoveredIcon(CLOSE_HOVERED_ICON);
     }
 
     @Override
