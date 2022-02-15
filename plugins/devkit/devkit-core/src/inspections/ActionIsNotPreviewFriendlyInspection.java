@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uast.UastVisitorAdapter;
@@ -20,12 +21,13 @@ import java.util.Set;
 
 public class ActionIsNotPreviewFriendlyInspection extends DevKitInspectionBase {
 
-  public static final String[] PREVIEW_METHOD_NAMES = {
+  public static final String[] METHODS_TO_IGNORE_CLASS = {
     "generatePreview", "getFileModifierForPreview", "applyFixForPreview", "startInWriteAction"};
-  private static final Set<String> DEFAULT_PREVIEW_CLASSES = Set.of(
+  private static final Set<String> ALLOWED_METHOD_LOCATIONS = Set.of(
     LocalQuickFix.class.getName(),
     FileModifier.class.getName(),
-    LocalQuickFixOnPsiElement.class.getName()
+    LocalQuickFixOnPsiElement.class.getName(),
+    WriteActionAware.class.getName()
   );
   private static final Set<String> ALLOWED_FIELD_TYPES = Set.of(
     String.class.getName(),
@@ -69,12 +71,12 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitInspectionBase {
       }
 
       private boolean hasCustomPreviewStrategy(PsiClass psiClass) {
-        for (String methodName : PREVIEW_METHOD_NAMES) {
+        for (String methodName : METHODS_TO_IGNORE_CLASS) {
           for (PsiMethod method : psiClass.findMethodsByName(methodName, true)) {
             PsiClass containingClass = method.getContainingClass();
             if (containingClass != null) {
               String className = containingClass.getQualifiedName();
-              if (className != null && !DEFAULT_PREVIEW_CLASSES.contains(className)) return true;
+              if (className != null && !ALLOWED_METHOD_LOCATIONS.contains(className)) return true;
             }
           }
         }
