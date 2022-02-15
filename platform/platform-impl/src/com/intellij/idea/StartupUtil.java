@@ -157,6 +157,15 @@ public final class StartupUtil {
       System.exit(Main.NO_GRAPHICS);
     }
 
+    activity = activity.endAndStart("config path computing");
+    Path configPath = canonicalPath(PathManager.getConfigPath());
+    Path systemPath = canonicalPath(PathManager.getSystemPath());
+
+    activity = activity.endAndStart("system dirs locking");
+    // This needs to happen before UI initialization - if we're not going to show ui (in case another IDE instance is already running),
+    // we shouldn't initialize AWT toolkit. On macOS the latter might lead to unnecessary focus stealing and space switching.
+    lockSystemDirs(configPath, systemPath, args);
+
     activity = activity.endAndStart("LaF init scheduling");
     Thread busyThread = Thread.currentThread();
     // LookAndFeel type is not specified to avoid class loading
@@ -190,9 +199,6 @@ public final class StartupUtil {
       }
     }
 
-    activity = activity.endAndStart("config path computing");
-    Path configPath = canonicalPath(PathManager.getConfigPath());
-    Path systemPath = canonicalPath(PathManager.getSystemPath());
     activity = activity.endAndStart("config path existence check");
 
     // this check must be performed before system directories are locked
@@ -206,8 +212,6 @@ public final class StartupUtil {
       System.exit(Main.DIR_CHECK_FAILED);
     }
 
-    activity = activity.endAndStart("system dirs locking");
-    lockSystemDirs(configPath, systemPath, args);
     activity = activity.endAndStart("file logger configuration");
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();

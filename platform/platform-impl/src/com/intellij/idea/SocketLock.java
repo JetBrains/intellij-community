@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
-import java.awt.*;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.InetAddress;
@@ -28,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -246,15 +244,6 @@ public final class SocketLock {
       // backward compatibility: requires at least one path to match
       boolean result = paths.stream().anyMatch(stringList::contains);
       if (result) {
-        // update the property immediately - in some cases, allows to avoid a splash flickering
-        System.setProperty(CommandLineArgs.SPLASH, "false");
-        EventQueue.invokeLater(() -> {
-          Runnable hideSplashTask = SplashManager.getHideTask();
-          if (hideSplashTask != null) {
-            hideSplashTask.run();
-          }
-        });
-
         try {
           String token = readOneLine(mySystemPath.resolve(TOKEN_FILE));
           @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
