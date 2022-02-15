@@ -428,6 +428,17 @@ public final class CustomizationUtil {
   }
 
   @Nullable
+  public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionToolbarImpl toolbar) {
+    ActionGroup actionGroup = toolbar.getActionGroup();
+    String groupID = ActionManager.getInstance().getId(actionGroup instanceof CustomisedActionGroup
+                                                       ? ((CustomisedActionGroup)actionGroup).getOrigin() : actionGroup);
+    if (groupID == null) {
+      return null;
+    }
+    return installToolbarCustomizationHandler(actionGroup, groupID, toolbar.getComponent(), toolbar.getPlace());
+  }
+
+    @Nullable
   public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
                                                                 String groupID, JComponent component, String place) {
       if (groupID != null) {

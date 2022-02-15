@@ -173,9 +173,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons) {
-    this(place, actionGroup, horizontal, decorateButtons, actionGroup,
-         ActionManager.getInstance().getId(actionGroup instanceof CustomisedActionGroup
-                                           ? ((CustomisedActionGroup)actionGroup).getOrigin() : actionGroup));
+    this(place, actionGroup, horizontal, decorateButtons, null, null);
   }
 
 
@@ -183,8 +181,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons,
-                           ActionGroup popupActionGroup,
-                           String popupActionId) {
+                           @Nullable ActionGroup popupActionGroup,
+                           @Nullable String popupActionId) {
     super(null);
     if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
       LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
@@ -230,7 +228,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
 
-    myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), myPlace);
+    if (popupActionGroup == null) {
+      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+    } else {
+      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), place);
+    }
   }
 
   @Override
