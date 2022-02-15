@@ -8280,6 +8280,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToConcatenatedString/startsWithStringExpression.kt");
         }
 
+        @TestMetadata("stringTemplateInCurryBraces.kt")
+        public void testStringTemplateInCurryBraces() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/stringTemplateInCurryBraces.kt");
+        }
+
         @TestMetadata("tricky.kt")
         public void testTricky() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/tricky.kt");

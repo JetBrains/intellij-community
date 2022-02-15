@@ -24,22 +24,23 @@ class ConvertToConcatenatedStringIntention : SelfTargetingOffsetIndependentInten
         val quote = if (tripleQuoted) "\"\"\"" else "\""
         val entries = element.entries
 
-        val entryStringList = entries
+        val targetEntries = entries
             .filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
             .mapIndexed { index, entry ->
-                entry.toSeparateString(quote, convertExplicitly = (index == 0), isFinalEntry = (index == entries.lastIndex))
+                entry to entry.toSeparateString(quote, convertExplicitly = (index == 0), isFinalEntry = (index == entries.lastIndex))
             }
+
         val text = buildString {
-            entryStringList.forEachIndexed { index, entry ->
-                var toBeAppended = entry
-                val prevEntry = entryStringList.getOrNull(index - 1)
-                if (entry.startsWith(quote) && prevEntry?.endsWith(quote) == true) {
+            targetEntries.forEachIndexed { index, (entry, entryText) ->
+                var toBeAppended = entryText
+                val prevEntryText = targetEntries.getOrNull(index - 1)?.second
+                if (entryText.startsWith(quote) && prevEntryText?.endsWith(quote) == true && entry.isStringLiteral()) {
                     toBeAppended = toBeAppended.removePrefix(quote)
-                } else if (prevEntry != null) {
+                } else if (prevEntryText != null) {
                     append("+")
                 }
-                val nextEntry = entryStringList.getOrNull(index + 1)
-                if (entry.endsWith(quote) && nextEntry?.startsWith(quote) == true) {
+                val (nextEntry, nextEntryText) = targetEntries.getOrNull(index + 1) ?: (null to null)
+                if (entryText.endsWith(quote) && nextEntryText?.startsWith(quote) == true && nextEntry?.isStringLiteral() == true) {
                     toBeAppended = toBeAppended.removeSuffix(quote)
                 }
                 append(toBeAppended)
@@ -49,6 +50,8 @@ class ConvertToConcatenatedStringIntention : SelfTargetingOffsetIndependentInten
         val replacement = KtPsiFactory(element).createExpression(text)
         element.replace(replacement)
     }
+
+    private fun KtStringTemplateEntry.isStringLiteral() = expression == null || expression is KtStringTemplateExpression
 
     private fun isTripleQuoted(str: String) = str.startsWith("\"\"\"") && str.endsWith("\"\"\"")
 
