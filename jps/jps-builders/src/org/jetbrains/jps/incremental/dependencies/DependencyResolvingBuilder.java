@@ -56,7 +56,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
 
-  private static final Key<ArtifactRepositoryManager> MANAGER_KEY = Key.create("_artifact_repository_manager_");
+  private static final Key<ArtifactRepositoryManager> MANAGER_KEY = GlobalContextKey.create("_artifact_repository_manager_");
   private static final Key<Exception> RESOLVE_ERROR_KEY = Key.create("_artifact_repository_resolve_error_");
   public static final String RESOLUTION_PARALLELISM_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
 
@@ -281,7 +281,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return result;
   }
 
-  public static ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
+  public static synchronized ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
     ArtifactRepositoryManager manager = MANAGER_KEY.get(context);
     if (manager == null) {
 
