@@ -65,6 +65,7 @@ import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
+import javax.swing.event.PopupMenuEvent
 import javax.swing.text.JTextComponent
 import kotlin.streams.toList
 
@@ -762,6 +763,10 @@ private class NotificationComponent(val project: Project,
   private lateinit var myRemoveCallback: Consumer<Notification>
   private var myLafUpdater: Runnable? = null
 
+  private var myMorePopup: JBPopup? = null
+  var myMoreAwtPopup: JPopupMenu? = null
+  var myDropDownPopup: JPopupMenu? = null
+
   init {
     isOpaque = true
     background = BG_COLOR
@@ -955,8 +960,10 @@ private class NotificationComponent(val project: Project,
         override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
           myMorePopupVisible = true
           val popup = super.createAndShowActionGroupPopup(actionGroup, event)
+          myMorePopup = popup
           popup.addListener(object : JBPopupListener {
             override fun onClosed(event: LightweightWindowEvent) {
+              myMorePopup = null
               ApplicationManager.getApplication().invokeLater {
                 myMorePopupVisible = false
                 isVisible = myHoverState
@@ -1041,6 +1048,7 @@ private class NotificationComponent(val project: Project,
   }
 
   fun expire() {
+    closePopups()
     myNotificationWrapper.notification = null
     setNew(false)
 
@@ -1055,9 +1063,16 @@ private class NotificationComponent(val project: Project,
   }
 
   fun removeFromParent() {
+    closePopups()
     for (component in UIUtil.findComponentsOfType(this, JTextComponent::class.java)) {
       singleSelectionHandler.remove(component)
     }
+  }
+
+  private fun closePopups() {
+    myMorePopup?.cancel()
+    myMoreAwtPopup?.isVisible = false
+    myDropDownPopup?.isVisible = false
   }
 
   private fun createTextComponent(text: @Nls String): JEditorPane {
@@ -1208,7 +1223,7 @@ private class NotificationComponent(val project: Project,
   }
 }
 
-private class MoreAction(notificationComponent: NotificationComponent, actions: List<AnAction>) :
+private class MoreAction(val notificationComponent: NotificationComponent, actions: List<AnAction>) :
   NotificationsManagerImpl.DropDownAction(null, null) {
   val group = DefaultActionGroup()
 
@@ -1218,7 +1233,15 @@ private class MoreAction(notificationComponent: NotificationComponent, actions: 
       group.add(actions[i])
     }
 
-    setListener(LinkListener { link, _ -> NotificationsManagerImpl.showPopup(link, group) }, null)
+    setListener(LinkListener { link, _ ->
+      val popup = NotificationsManagerImpl.showPopup(link, group)
+      notificationComponent.myMoreAwtPopup = popup
+      popup?.addPopupMenuListener(object: PopupMenuListenerAdapter() {
+        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
+          notificationComponent.myMoreAwtPopup = null
+        }
+      })
+    }, null)
 
     text = IdeBundle.message("notifications.action.more")
 
@@ -1226,7 +1249,7 @@ private class MoreAction(notificationComponent: NotificationComponent, actions: 
   }
 }
 
-private class MyDropDownAction(notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
+private class MyDropDownAction(val notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
   var collapseActionsDirection: Notification.CollapseActionsDirection = notificationComponent.myNotificationWrapper.notification!!.collapseDirection
 
   init {
@@ -1240,7 +1263,13 @@ private class MyDropDownAction(notificationComponent: NotificationComponent) : N
         }
       }
 
-      NotificationsManagerImpl.showPopup(link, group)
+      val popup = NotificationsManagerImpl.showPopup(link, group)
+      notificationComponent.myDropDownPopup = popup
+      popup?.addPopupMenuListener(object: PopupMenuListenerAdapter() {
+        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
+          notificationComponent.myDropDownPopup = null
+        }
+      })
     }, null)
 
     text = notificationComponent.myNotificationWrapper.notification!!.dropDownText

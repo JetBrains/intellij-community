@@ -54,6 +54,7 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -785,7 +786,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           }
 
           DropDownAction dropDownAction =
-            new DropDownAction(IdeBundle.message("notifications.action.more"), (link, ignored) -> showPopup(link, group));
+            new DropDownAction(IdeBundle.message("notifications.action.more"), (link, ignored) -> showPopup(notification, link, group));
           actionPanel.addAction(dropDownAction);
           Notification.setDataProvider(notification, dropDownAction);
         }
@@ -843,7 +844,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           group.add(actionLink.getLinkData());
         }
       }
-      showPopup(link, group);
+      showPopup(notification, link, group);
     });
     Notification.setDataProvider(notification, action);
     action.setVisible(false);
@@ -1048,6 +1049,31 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return app.isUnitTestMode() || app.isCommandLine();
   }
 
+  private static class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
+    private final JPopupMenu myPopupMenu;
+    private boolean myHandleDispose = true;
+
+    private BalloonPopupSupport(@NotNull JPopupMenu popupMenu, @NotNull Balloon balloon) {
+      myPopupMenu = popupMenu;
+      popupMenu.addPopupMenuListener(this);
+      Disposer.register(balloon, this);
+    }
+
+    @Override
+    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+      myHandleDispose = false;
+      Disposer.dispose(this);
+    }
+
+    @Override
+    public void dispose() {
+      myPopupMenu.removePopupMenuListener(this);
+      if (myHandleDispose) {
+        myPopupMenu.setVisible(false);
+      }
+    }
+  }
+
   public static class DropDownAction extends LinkLabel<Void> {
     public DropDownAction(@NlsContexts.LinkLabel String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
@@ -1074,11 +1100,22 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  public static void showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
+  private static void showPopup(@NotNull Notification notification, @NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
+    JPopupMenu menu = showPopup(link, group);
+    Balloon balloon = notification.getBalloon();
+    if (menu != null && balloon != null) {
+      new BalloonPopupSupport(menu, balloon);
+    }
+  }
+
+  public static @Nullable JPopupMenu showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
     if (link.isShowing()) {
       ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-      menu.getComponent().show(link, JBUIScale.scale(-10), link.getHeight() + JBUIScale.scale(2));
+      JPopupMenu component = menu.getComponent();
+      component.show(link, JBUIScale.scale(-10), link.getHeight() + JBUIScale.scale(2));
+      return component;
     }
+    return null;
   }
 
   static final class MyNotificationListener implements Notifications {
