@@ -230,7 +230,7 @@ public class JavaExecutionStack extends XExecutionStack {
                 added++;
               }
               myDebugProcess.getManagerThread().schedule(
-                new AppendFrameCommand(suspendContext, iterator, container, added, firstFrameIndex, null));
+                new AppendFrameCommand(suspendContext, iterator, container, added, firstFrameIndex, null, 0, true));
             }
             catch (EvaluateException e) {
               container.errorOccurred(e.getMessage());
@@ -250,19 +250,25 @@ public class JavaExecutionStack extends XExecutionStack {
     private int myAdded;
     private final int mySkip;
     private final List<? extends StackFrameItem> myAsyncStack;
+    private int myAddedAsync;
+    private boolean mySeparator;
 
     AppendFrameCommand(SuspendContextImpl suspendContext,
-                       Iterator<StackFrameProxyImpl> stackFramesIterator,
+                       @Nullable Iterator<StackFrameProxyImpl> stackFramesIterator,
                        XStackFrameContainer container,
                        int added,
                        int skip,
-                       List<? extends StackFrameItem> asyncStack) {
+                       @Nullable List<? extends StackFrameItem> asyncStack,
+                       int addedAsync,
+                       boolean separator) {
       super(suspendContext);
       myStackFramesIterator = stackFramesIterator;
       myContainer = container;
       myAdded = added;
       mySkip = skip;
       myAsyncStack = asyncStack;
+      myAddedAsync = addedAsync;
+      mySeparator = separator;
     }
 
     @Override
@@ -270,16 +276,21 @@ public class JavaExecutionStack extends XExecutionStack {
       return myAdded <= StackFrameProxyImpl.FRAMES_BATCH_MAX ? Priority.NORMAL : Priority.LOW;
     }
 
-    private void addFrameIfNeeded(XStackFrame frame, boolean last) {
+    private boolean addFrameIfNeeded(XStackFrame frame, boolean last) {
       if (++myAdded > mySkip) {
         myContainer.addStackFrames(Collections.singletonList(frame), last);
+        return true;
       }
+      if (last) {
+        myContainer.addStackFrames(Collections.emptyList(), true);
+      }
+      return false;
     }
 
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       if (myContainer.isObsolete()) return;
-      if (myStackFramesIterator.hasNext()) {
+      if (myStackFramesIterator != null && myStackFramesIterator.hasNext()) {
         StackFrameProxyImpl frameProxy;
         CompletableFuture<List<XStackFrame>> framesAsync;
         boolean first = myAdded == 0;
@@ -312,7 +323,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
           // replace the rest with the related stack (if available)
           if (myAsyncStack != null) {
-            appendRelatedStack(myAsyncStack);
+            schedule(suspendContext, null, myAsyncStack, true);
             return;
           }
 
@@ -324,28 +335,36 @@ public class JavaExecutionStack extends XExecutionStack {
             relatedStack = DebuggerUtilsImpl.computeSafeIfAny(AsyncStackTraceProvider.EP,
                                                               p -> p.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext));
             if (relatedStack != null) {
-              appendRelatedStack(relatedStack);
+              schedule(suspendContext, null, relatedStack, true);
               return;
             }
             // append agent stack after the next frame
             relatedStack = AsyncStacksUtils.getAgentRelatedStack(frameProxy, suspendContext);
           }
 
-          myDebugProcess.getManagerThread().schedule(
-            new AppendFrameCommand(suspendContext, myStackFramesIterator, myContainer, myAdded, mySkip, relatedStack));
+          schedule(suspendContext, myStackFramesIterator, relatedStack, false);
         }).exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
+      }
+      else if (myAsyncStack != null && myAddedAsync < myAsyncStack.size()) {
+        appendRelatedStack(suspendContext, myAsyncStack.subList(myAddedAsync, myAsyncStack.size()));
       }
       else {
         myContainer.addStackFrames(Collections.emptyList(), true);
       }
     }
 
-    void appendRelatedStack(@NotNull List<? extends StackFrameItem> asyncStack) {
-      int i = 0;
-      boolean separator = true;
+    private void schedule(@NotNull SuspendContextImpl suspendContext,
+                          @Nullable Iterator<StackFrameProxyImpl> stackFramesIterator,
+                          @Nullable List<? extends StackFrameItem> asyncStackFrames,
+                          boolean separator) {
+      myDebugProcess.getManagerThread().schedule(
+        new AppendFrameCommand(suspendContext, stackFramesIterator, myContainer,
+                               myAdded, mySkip, asyncStackFrames, myAddedAsync, separator));
+    }
+
+    void appendRelatedStack(@NotNull SuspendContextImpl suspendContext, List<? extends StackFrameItem> asyncStack) {
       for (StackFrameItem stackFrame : asyncStack) {
-        if (myContainer.isObsolete()) return;
-        if (i > AsyncStacksUtils.getMaxStackLength()) {
+        if (myAddedAsync > AsyncStacksUtils.getMaxStackLength()) {
           addFrameIfNeeded(new XStackFrame() {
             @Override
             public void customizePresentation(@NotNull ColoredTextContainer component) {
@@ -355,19 +374,21 @@ public class JavaExecutionStack extends XExecutionStack {
           }, true);
           return;
         }
-        i++;
+        myAddedAsync++;
         if (stackFrame == null) {
-          separator = true;
+          mySeparator = true;
           continue;
         }
         XStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
         if (newFrame != null && showFrame(newFrame)) {
-          StackFrameItem.setWithSeparator(newFrame, separator);
-          addFrameIfNeeded(newFrame, false);
-          separator = false;
+          StackFrameItem.setWithSeparator(newFrame, mySeparator);
+          if (addFrameIfNeeded(newFrame, false)) {
+            mySeparator = false;
+          }
         }
+        schedule(suspendContext, null, myAsyncStack, mySeparator);
+        return;
       }
-      myContainer.addStackFrames(Collections.emptyList(), true);
     }
   }
 
