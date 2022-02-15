@@ -18,7 +18,6 @@ import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +29,6 @@ import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,18 +102,20 @@ public final class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public void notifyByBalloon(Project project,
-                              String toolWindowId,
-                              MessageType messageType,
-                              @Nls String title, @Nls String fullMessage, @Nls String description,
-                              Icon icon, HyperlinkListener listener) {
+  public boolean notifyByBalloon(Project project,
+                                 String toolWindowId,
+                                 MessageType messageType,
+                                 @Nls String fullMessage,
+                                 Icon icon,
+                                 HyperlinkListener listener) {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (toolWindowManager.canShowNotification(toolWindowId)) {
       //noinspection SSBasedInspection
-      toolWindowManager.notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, icon, listener);
+      toolWindowManager.notifyByBalloon(toolWindowId, messageType, fullMessage, icon, listener);
+      return true;
     }
     else {
-      Messages.showErrorDialog(project, UIUtil.toHtml(description), title);
+      return false;
     }
   }
 

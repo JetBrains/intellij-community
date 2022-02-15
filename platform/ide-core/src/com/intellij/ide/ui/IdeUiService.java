@@ -73,13 +73,13 @@ public class IdeUiService {
 
   }
 
-  public void notifyByBalloon(Project project,
-                              String toolWindowId,
-                              MessageType messageType,
-                              @Nls String title, @Nls String fullMessage, @Nls String description,
-                              Icon icon,
-                              HyperlinkListener listener) {
-
+  public boolean notifyByBalloon(Project project,
+                                 String toolWindowId,
+                                 MessageType messageType,
+                                 @Nls String fullMessage,
+                                 Icon icon,
+                                 HyperlinkListener listener) {
+    return false;
   }
 
   public URLConnection openHttpConnection(String url) throws IOException {
