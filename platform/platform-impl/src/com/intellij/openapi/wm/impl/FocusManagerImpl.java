@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
   // this logger is for low-level focus-related requests (performed by JDK and our custom low-level mechanisms)
-  public static final Logger FOCUS_REQUESTS_LOG = Logger.getInstance("Focus requests");
+  public static final Logger FOCUS_REQUESTS_LOG = Logger.getInstance("jb.focus.requests");
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
