@@ -182,14 +182,14 @@ public final class BackgroundTaskUtil {
     return Pair.create(result, indicator);
   }
 
-  public static class BackgroundTask {
+  public static class BackgroundTask<T> {
     private final @NotNull Disposable parent;
     private final @NotNull ProgressIndicator indicator;
-    private final @NotNull CompletableFuture<?> future;
+    private final @NotNull CompletableFuture<T> future;
 
     public BackgroundTask(@NotNull Disposable parent,
                           @NotNull ProgressIndicator indicator,
-                          @NotNull CompletableFuture<?> future) {
+                          @NotNull CompletableFuture<T> future) {
       this.parent = parent;
       this.indicator = indicator;
       this.future = future;
@@ -203,7 +203,7 @@ public final class BackgroundTaskUtil {
       return indicator;
     }
 
-    public @NotNull CompletableFuture<?> getFuture() {
+    public @NotNull CompletableFuture<T> getFuture() {
       return future;
     }
 
@@ -259,7 +259,7 @@ public final class BackgroundTaskUtil {
   }
 
   @CalledInAny
-  public static @NotNull BackgroundTask submitTask(@NotNull Disposable parent, @NotNull Runnable runnable) {
+  public static @NotNull BackgroundTask<?> submitTask(@NotNull Disposable parent, @NotNull Runnable runnable) {
     return submitTask(AppExecutorUtil.getAppExecutorService(), parent, runnable);
   }
 
@@ -268,13 +268,30 @@ public final class BackgroundTaskUtil {
    * to track execution {@link CompletableFuture}.
    */
   @CalledInAny
-  public static @NotNull BackgroundTask submitTask(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable runnable) {
+  public static @NotNull BackgroundTask<?> submitTask(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable task) {
     ProgressIndicator indicator = new EmptyProgressIndicator();
     indicator.start();
-
-    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(runnable, indicator),
+    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(task, indicator),
                                                              executor);
+    return createBackgroundTask(future, task.toString(), indicator, parent);
+  }
 
+  @CalledInAny
+  public static @NotNull <T> BackgroundTask<T> submitTask(@NotNull Executor executor,
+                                                          @NotNull Disposable parent,
+                                                          @NotNull Computable<? extends T> task) {
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    indicator.start();
+    CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> ProgressManager.getInstance().runProcess(task, indicator),
+                                                                executor);
+    return createBackgroundTask(future, task.toString(), indicator, parent);
+  }
+
+  @NotNull
+  private static <T> BackgroundTask<T> createBackgroundTask(@NotNull CompletableFuture<T> future,
+                                                            @NotNull String taskName,
+                                                            @NotNull ProgressIndicator indicator,
+                                                            @NotNull Disposable parent) {
     Disposable disposable = () -> {
       if (indicator.isRunning()) indicator.cancel();
       try {
@@ -291,7 +308,7 @@ public final class BackgroundTaskUtil {
       catch (CancellationException ignored) {
       }
       catch (InterruptedException | TimeoutException e) {
-        LOG.debug("Couldn't await background process on disposal: " + runnable);
+        LOG.debug("Couldn't await background process on disposal: " + taskName);
       }
     };
 
@@ -302,7 +319,7 @@ public final class BackgroundTaskUtil {
       future.whenComplete((o, e) -> Disposer.dispose(disposable));
     }
 
-    return new BackgroundTask(parent, indicator, future);
+    return new BackgroundTask<>(parent, indicator, future);
   }
 
   @CalledInAny
