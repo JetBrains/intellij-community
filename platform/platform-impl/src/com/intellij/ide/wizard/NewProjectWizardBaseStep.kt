@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
@@ -98,11 +99,15 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
         val uiPathProperty = pathProperty.toUiPathProperty()
-        textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
+        val comment = textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
           .bindText(uiPathProperty)
           .horizontalAlign(HorizontalAlign.FILL)
           .validationOnApply { validateLocation() }
           .validationOnInput { validateLocation() }
+          .comment(getComment(), 100)
+          .comment!!
+        nameProperty.afterChange { comment.text = getComment() }
+        pathProperty.afterChange { comment.text = getComment() }
       }.bottomGap(BottomGap.SMALL)
 
       onApply {
@@ -111,6 +116,9 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       }
     }
   }
+
+  private fun getComment() = UIBundle.message("label.project.wizard.new.project.path.description",
+                                              StringUtil.shortenPathWithEllipsis(Path.of(path, name).toString(), 60))
 
   override fun setupProject(project: Project) {
     if (context.isCreatingNewProject) {
