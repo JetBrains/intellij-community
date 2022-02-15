@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -35,6 +36,19 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   init {
     Disposer.register(parent, this)
+    project.messageBus.connect(this).subscribe(ShelveChangesManager.SHELF_TOPIC, ChangeListener {
+      preloadChanges()
+    })
+    preloadChanges()
+  }
+
+  private fun preloadChanges() {
+    BackgroundTaskUtil.submitTask(executor, this) {
+      for (list in shelveManager.allLists) {
+        ProgressManager.checkCanceled()
+        list.loadChangesIfNeeded(project)
+      }
+    }
   }
 
   override fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit) {
