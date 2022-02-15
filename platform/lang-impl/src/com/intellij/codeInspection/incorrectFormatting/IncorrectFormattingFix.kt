@@ -63,10 +63,10 @@ abstract class ReconfigureQuickFix(@Nls val family: String, val reconfigure: Inc
 
 object ShowDetailedReportIntention : ReconfigureQuickFix(
   LangBundle.message("inspection.incorrect.formatting.fix.show.details"),
-  { showDetailedWarnings = true }
+  { reportPerFile = false }
 )
 
 object HideDetailedReportIntention : ReconfigureQuickFix(
   LangBundle.message("inspection.incorrect.formatting.fix.hide.details"),
-  { showDetailedWarnings = false }
+  { reportPerFile = true }
 )

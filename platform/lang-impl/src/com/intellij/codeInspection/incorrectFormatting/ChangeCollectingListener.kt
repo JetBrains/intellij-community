@@ -4,10 +4,11 @@ package com.intellij.codeInspection.incorrectFormatting
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType.WARNING
+import com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LangBundle
 import com.intellij.lang.VirtualFormattingListener
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
@@ -31,7 +32,7 @@ class ChangeCollectingListener(val file: PsiFile, val originalText: String) : Vi
 sealed class FormattingChange(val file: PsiFile, val range: TextRange) {
   fun toProblemDescriptor(manager: InspectionManager, isOnTheFly: Boolean): ProblemDescriptor? {
     val fixes = fixes() ?: return null
-    return manager.createProblemDescriptor(file, range, message(), WARNING, isOnTheFly, *fixes)
+    return manager.createProblemDescriptor(file, range, message(), WEAK_WARNING, isOnTheFly, *fixes)
   }
 
   @Nls
@@ -50,6 +51,9 @@ class ReplaceChange(file: PsiFile, range: TextRange, val replacement: String) : 
   else {
     LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.incorrect.whitespace")
   }
+
+  fun isIndentChange(document: Document): Boolean =
+    range.startOffset == 0 || document.text[range.startOffset] == '\n' || document.text[range.startOffset] == '\r'
 
   override fun fixes(): Array<LocalQuickFix>? {
     val original = range.substring(file.text)
