@@ -68,6 +68,7 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractKotlinIdeAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
@@ -1017,6 +1018,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractSessionsInvalidationTest> {
             model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractKotlinIdeAnnotationsResolverTest> {
+            model("annotationsResolver", pattern = KT_WITHOUT_DOTS)
         }
     }
 
