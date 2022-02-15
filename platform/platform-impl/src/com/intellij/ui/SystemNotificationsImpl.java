@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
@@ -27,10 +28,10 @@ public final class SystemNotificationsImpl extends SystemNotifications {
     }
   }
 
-  private static Notifier getPlatformNotifier() {
+  private static @Nullable Notifier getPlatformNotifier() {
     try {
       if (SystemInfo.isMac) {
-        return MountainLionNotifications.getInstance();
+        return MacOsNotifications.getInstance();
       }
       else if (SystemInfo.isXWindow) {
         return LibNotifyWrapper.getInstance();
@@ -40,13 +41,7 @@ public final class SystemNotificationsImpl extends SystemNotifications {
       }
     }
     catch (Throwable t) {
-      Logger logger = Logger.getInstance(SystemNotifications.class);
-      if (logger.isDebugEnabled()) {
-        logger.debug(t);
-      }
-      else {
-        logger.info(t.getMessage());
-      }
+      Logger.getInstance(SystemNotificationsImpl.class).infoWithDebug(t);
     }
 
     return null;

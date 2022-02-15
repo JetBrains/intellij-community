@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -15,21 +15,18 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 import static com.intellij.ui.mac.foundation.Foundation.nsString;
 
-/**
- * @author Dennis.Ushakov
- */
-final class MountainLionNotifications implements SystemNotificationsImpl.Notifier {
-  private static MountainLionNotifications ourInstance;
+final class MacOsNotifications implements SystemNotificationsImpl.Notifier {
+  private static MacOsNotifications ourInstance;
 
-  public static synchronized MountainLionNotifications getInstance() {
+  static synchronized @NotNull MacOsNotifications getInstance() {
     if (ourInstance == null && JnaLoader.isLoaded()) {
-      ourInstance = new MountainLionNotifications();
+      ourInstance = new MacOsNotifications();
     }
     return ourInstance;
   }
 
-  private MountainLionNotifications() {
-    final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+  private MacOsNotifications() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
       public void applicationActivated(@NotNull IdeFrame ideFrame) {
@@ -46,15 +43,15 @@ final class MountainLionNotifications implements SystemNotificationsImpl.Notifie
 
   @Override
   public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
-    final ID notification = invoke(Foundation.getObjcClass("NSUserNotification"), "new");
+    ID notification = invoke(Foundation.getObjcClass("NSUserNotification"), "new");
     invoke(notification, "setTitle:", nsString(StringUtil.stripHtml(title, true).replace("%", "%%")));
     invoke(notification, "setInformativeText:", nsString(StringUtil.stripHtml(description, true).replace("%", "%%")));
-    final ID center = invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
+    ID center = invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
     invoke(center, "deliverNotification:", notification);
   }
 
   private static void cleanupDeliveredNotifications() {
-    final ID center = invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
+    ID center = invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
     invoke(center, "removeAllDeliveredNotifications");
   }
 }
