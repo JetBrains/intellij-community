@@ -18,13 +18,12 @@ internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : Fi
 
     (tree.model as DefaultTreeModel).reload()
 
-    TreeUtil.expandAll(tree)
-
     if (filter.isNullOrBlank()) {
       TreeUtil.collapseAll(tree, 0)
       expansionMonitor.restore()
     }
     else {
+      TreeUtil.expandAll(tree)
       expansionMonitor.unfreeze()
     }
   }
