@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,9 @@ public class SetVariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElem
     PsiType type = myTypePointer.getType();
     if (type == null) return;
     PsiVariable variable = (PsiVariable)startElement;
+    if (!(variable instanceof PsiReceiverParameter)) {
+      JavaSharedImplUtil.normalizeBrackets(variable);
+    }
     PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement == null) return;
     PsiTypeElement typeElementByExplicitType = JavaPsiFacade.getElementFactory(project).createTypeElement(type);
