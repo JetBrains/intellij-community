@@ -344,7 +344,7 @@
       <add-to-group group-id="ChangesViewPopupMenu" anchor="first"/>
     </group>
 
-    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
+    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.Stash"/>
 
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
