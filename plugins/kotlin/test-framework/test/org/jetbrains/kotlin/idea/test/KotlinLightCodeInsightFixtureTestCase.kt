@@ -290,6 +290,11 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         return configureByFile(relativePath)
     }
 
+    fun JavaCodeInsightTestFixture.configureByFiles(vararg file: File): List<PsiFile> {
+        val relativePaths = file.map { it.toRelativeString(testDataDirectory) }.toTypedArray()
+        return configureByFiles(*relativePaths).toList()
+    }
+
     fun JavaCodeInsightTestFixture.checkResultByFile(file: File) {
         val relativePath = file.toRelativeString(testDataDirectory)
         checkResultByFile(relativePath)
