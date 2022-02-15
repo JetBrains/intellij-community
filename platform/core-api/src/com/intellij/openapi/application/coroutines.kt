@@ -124,14 +124,14 @@ private class SmartRunnable<T>(action: (ctx: CoroutineContext) -> T, continuatio
   }
 }
 
+/**
+ * The code [without][ModalityState.any] context modality state must only perform pure UI operations,
+ * it must not access any PSI, VFS, project model, or indexes.
+ */
 fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
 
 /**
- * Please don't use unless you know what you are doing.
- * The code in this context can only perform pure UI operations,
- * it must not access any PSI, VFS, project model, or indexes.
- *
- * @return a special coroutine dispatcher that's equivalent to using no modality state at all in `invokeLater`.
+ * @return UI dispatcher which dispatches within the [context modality state][asContextElement].
  */
 @Suppress("unused") // unused receiver
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
