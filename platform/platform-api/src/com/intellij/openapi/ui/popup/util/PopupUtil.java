@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
@@ -225,5 +226,11 @@ public final class PopupUtil {
     Insets borderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled();
     Insets inputInsets = JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets().getUnscaled();
     return JBUI.insets(top, borderInsets.left + inputInsets.left, bottom, borderInsets.right + inputInsets.right);
+  }
+
+  public static void applyNewUIBackground(@Nullable Component component) {
+    if (component != null && ExperimentalUI.isNewUI()) {
+      component.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
   }
 }

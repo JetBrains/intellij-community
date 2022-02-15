@@ -867,7 +867,7 @@ public final class JBUI {
       }
 
       @NotNull
-      public static Insets headerInsets() {
+      public static JBInsets headerInsets() {
         return insets("Popup.Header.insets", insets(12, 10, 10, 10));
       }
 

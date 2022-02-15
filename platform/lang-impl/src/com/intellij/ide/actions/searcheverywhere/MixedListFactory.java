@@ -3,9 +3,9 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -88,8 +88,8 @@ class MixedListFactory extends SEResultsListFactory {
           }
         }
 
-        if (ExperimentalUI.isNewUI() && !isSelected && component.getBackground() == UIUtil.getListBackground()) {
-          component.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+        if (!isSelected && component.getBackground() == UIUtil.getListBackground()) {
+          PopupUtil.applyNewUIBackground(component);
         }
 
         AppUIUtil.targetToDevice(component, list);

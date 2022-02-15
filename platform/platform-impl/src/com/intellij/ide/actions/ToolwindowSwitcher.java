@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -91,6 +92,10 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
         toolWindowManager.activateToolWindow(selectedValue.getId(), null, true, ToolWindowEventSource.ToolWindowSwitcher);
       }).createPopup();
 
+    if (ExperimentalUI.isNewUI()) {
+      UIUtil.setBackgroundRecursively(popup.getContent(), JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
+
     Disposer.register(popup, () -> popup = null);
     if (point == null) {
       popup.showCenteredInCurrentWindow(project);
@@ -132,7 +137,7 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
       myPanel = new BorderLayoutPanel() {
         @Override
         public void paintComponent(Graphics g) {
-          Color bg = UIUtil.getListBackground(false, false);
+          Color bg = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground(false, false);
           g.setColor(bg);
           g.fillRect(0,0, getWidth(), getHeight());
           if (!getBackground().equals(bg)) {
@@ -153,7 +158,9 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-      UIUtil.setBackgroundRecursively(myPanel, UIUtil.getListBackground(isSelected, true));
+      Color background = isSelected || !ExperimentalUI.isNewUI() ? UIUtil.getListBackground(isSelected, true) :
+                         JBUI.CurrentTheme.Popup.BACKGROUND;
+      UIUtil.setBackgroundRecursively(myPanel, background);
       myTextLabel.clear();
       myTextLabel.append(value.getStripeTitle());
       Icon icon = value.getIcon();
@@ -162,7 +169,7 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
       }
       myTextLabel.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
       myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
-      myTextLabel.setBackground(UIUtil.getListBackground(isSelected, true));
+      myTextLabel.setBackground(background);
       String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
       KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
       if (shortcut != null) {
