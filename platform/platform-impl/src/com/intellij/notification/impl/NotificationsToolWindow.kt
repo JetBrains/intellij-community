@@ -575,9 +575,10 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     if (mySuggestionType) {
       component.setDoNotAskHandler { forProject ->
-        component.myNotificationWrapper.notification!!.setDoNotAsFor(if (forProject) myProject else null)
-        myRemoveCallback.accept(component.myNotificationWrapper.notification!!)
-        component.myNotificationWrapper.notification!!.hideBalloon()
+        component.myNotificationWrapper.notification!!
+          .setDoNotAskFor(if (forProject) myProject else null)
+          .also { myRemoveCallback.accept(it) }
+          .hideBalloon()
       }
 
       component.setRemoveCallback(myRemoveCallback)

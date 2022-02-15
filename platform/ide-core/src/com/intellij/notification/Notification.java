@@ -15,10 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
@@ -73,16 +70,15 @@ public class Notification {
   private @Nullable AnAction myContextHelpAction;
   private @Nullable List<@NotNull Runnable> myWhenExpired;
   private @Nullable Boolean myImportant;
-
-  private final AtomicBoolean myExpired = new AtomicBoolean(false);
-  private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
-  private final long myTimestamp = System.currentTimeMillis();
-
   private boolean mySuggestionType;
   private boolean myImportantSuggestion;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
   private String myRemindLaterHandlerId;
+
+  private final AtomicBoolean myExpired = new AtomicBoolean(false);
+  private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
+  private final long myTimestamp = System.currentTimeMillis();
 
   /** See {@link #Notification(String, String, String, NotificationType)} */
   public Notification(@NotNull String groupId, @NotNull @NotificationContent String content, @NotNull NotificationType type) {
@@ -154,6 +150,7 @@ public class Notification {
     return myGroupId;
   }
 
+  @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
     if (mySuggestionType) {
       if (myDoNotAskId == null) {
@@ -176,18 +173,23 @@ public class Notification {
     return true;
   }
 
-  public void setDoNotAsFor(@Nullable Project project) {
+  @ApiStatus.Internal
+  public Notification setDoNotAskFor(@Nullable Project project) {
     PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
     manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
+    return this;
   }
 
+  @ApiStatus.Internal
   public @Nullable String getRemindLaterHandlerId() {
     return myRemindLaterHandlerId;
   }
 
-  public void setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
+  @ApiStatus.Internal
+  public Notification setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
     myRemindLaterHandlerId = remindLaterHandlerId;
+    return this;
   }
 
   public boolean hasTitle() {
