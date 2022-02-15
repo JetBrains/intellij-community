@@ -117,6 +117,7 @@ public final class ExperimentalUI {
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
     paths.put("nodes/Module.svg", "/expui/nodes/module.svg");
+    paths.put("nodes/moduleGroup.svg", "/expui/nodes/moduleGroup.svg");
     paths.put("nodes/ppLib.svg", "/expui/nodes/library.svg");
     paths.put("modules/excludeRoot.svg", "/expui/nodes/excludeRoot.svg");
     paths.put("modules/sourceRoot.svg", "/expui/nodes/sourceRoot.svg");
