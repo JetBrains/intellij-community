@@ -575,6 +575,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     val defFontSize: Float
       get() = UISettingsState.defFontSize
 
+    @Deprecated("Use {@link #restoreFontSize(Float, Float?)} instead")
+    @JvmStatic
+    fun restoreFontSize(readSize: Int, readScale: Float?): Int {
+      return restoreFontSize(readSize.toFloat(), readScale).toInt();
+    }
+
     @JvmStatic
     fun restoreFontSize(readSize: Float, readScale: Float?): Float {
       var size = readSize

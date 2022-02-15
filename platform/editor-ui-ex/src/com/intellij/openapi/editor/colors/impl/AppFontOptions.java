@@ -37,7 +37,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   public AppFontOptions() {
     Application app = ApplicationManager.getApplication();
     if (!app.isHeadlessEnvironment() || app.isUnitTestMode()) {
-      myFontPreferences.register(FontPreferences.DEFAULT_FONT_NAME, UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
+      myFontPreferences.register(FontPreferences.DEFAULT_FONT_NAME, UISettings.restoreFontSize((float)FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
     }
   }
 
