@@ -17,7 +17,7 @@ class CodeVisionBundle : DynamicBundle(BUNDLE) {
       @PropertyKey(resourceBundle = BUNDLE) key: String,
       vararg params: Any
     ): String {
-      return INSTANCE.getMessage(key, *params)
+      return INSTANCE.messageOrNull(key, *params) ?: ""
     }
 
     fun messagePointer(
