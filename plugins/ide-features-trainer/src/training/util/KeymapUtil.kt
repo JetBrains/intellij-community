@@ -61,6 +61,10 @@ object KeymapUtil {
     var key = specificKeyString(keyCode)
               ?: if (SystemInfo.isMac) MacKeymapUtil.getKeyText(keyCode) else KeyEvent.getKeyText(keyCode)
 
+    if (key.contains(' ')) {
+      key = key.replace(' ', '\u00A0')
+    }
+
     if (key.length == 1) getStringForMacSymbol(key[0])?.let {
       key = key + "\u00A0" + it
     }
