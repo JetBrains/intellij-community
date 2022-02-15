@@ -56,6 +56,11 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
                 if (prevSibling is KtNameReferenceExpression || prevSibling is KtDotQualifiedExpression) return false
             }
 
+            val file = referenceExpression.containingKtFile
+            val identifier = referenceExpression.getIdentifier()?.text
+            val fqName = resultDescriptor.importableFqName
+            if (file.importDirectives.any { it.aliasName == identifier && it.importedFqName == fqName }) return false
+
             return true
         }
 

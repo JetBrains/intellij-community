@@ -943,6 +943,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addFullQualifier/callExpressions/FunctionWithReceiver.kt");
             }
 
+            @TestMetadata("ImportedWithAlias.kt")
+            public void testImportedWithAlias() throws Exception {
+                runTest("testData/intentions/addFullQualifier/callExpressions/ImportedWithAlias.kt");
+            }
+
             @TestMetadata("LocalClass.kt")
             public void testLocalClass() throws Exception {
                 runTest("testData/intentions/addFullQualifier/callExpressions/LocalClass.kt");
