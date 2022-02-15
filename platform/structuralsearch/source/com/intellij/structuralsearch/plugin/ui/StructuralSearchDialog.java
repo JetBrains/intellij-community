@@ -84,8 +84,8 @@ import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
+import com.intellij.util.ui.GridBagConstraintHolder;
 import com.intellij.util.ui.TextTransferable;
-import net.miginfocom.swing.MigLayout;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -162,7 +162,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private EditorTextField mySearchCriteriaEdit;
   private EditorTextField myReplaceCriteriaEdit;
   private OnePixelSplitter mySearchEditorPanel;
-  private MigLayout myCenterPanelLayout;
+  private GridBagLayout myCenterPanelLayout;
 
   private FilterPanel myFilterPanel;
   private LinkComboBox myTargetComboBox;
@@ -381,12 +381,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   @Override
   protected JComponent createCenterPanel() {
-    final var searchPanel = new JPanel(new MigLayout("fill, ins 0, hidemode 3", "[grow 0]0[grow 0]0[grow 0]0[grow 0][]", "[grow 100]0[grow 0]"));
+    final var searchPanel = new JPanel(new GridBagLayout());
+    final var searchConstraints = new GridBagConstraintHolder();
 
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     mySearchCriteriaEdit = createEditor(false);
-    searchPanel.add(mySearchCriteriaEdit, "grow, span, wrap");
+    searchPanel.add(mySearchCriteriaEdit, searchConstraints.width(5).fillXY().growXY().get());
     mySearchEditorPanel.setFirstComponent(searchPanel);
     myComponentsWithEditorBackground.add(searchPanel);
 
@@ -424,10 +425,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         initValidation();
     });
 
-    searchPanel.add(searchTargetLabel, "grow 0, gap 8 4 8 11");
-    searchPanel.add(myTargetComboBox, "grow 0, gapright 10");
-    searchPanel.add(injected, "grow 0, gapright 10");
-    searchPanel.add(matchCase, "grow 0");
+    searchPanel.add(searchTargetLabel, searchConstraints.newLine().noFill().noGrow().width(1).insetsTLB(10).get());
+    searchPanel.add(myTargetComboBox, searchConstraints.get());
+    searchPanel.add(injected, searchConstraints.get());
+    searchPanel.add(matchCase, searchConstraints.get());
 
     myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
     myFilterPanel.setConstraintChangedCallback(() -> initValidation());
@@ -447,12 +448,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myReplacePanel = createReplacePanel();
     myReplacePanel.setVisible(myReplace);
 
-    myCenterPanelLayout = new MigLayout("fill, ins 0, hidemode 2");
-    updateCenterPanelRowConstraints();
+    myCenterPanelLayout = new GridBagLayout();
+    final var centerConstraint = new GridBagConstraintHolder();
     final JPanel centerPanel = new JPanel(myCenterPanelLayout);
-    centerPanel.add(wrapper, "grow, span, wrap");
-    centerPanel.add(myReplacePanel, "grow, span, wrap");
-    centerPanel.add(myScopePanel, "grow 100 0, gap 8 8 6 3");
+    centerPanel.add(wrapper, centerConstraint.fillXY().growXY().get());
+    centerPanel.add(myReplacePanel, centerConstraint.newLine().fillXY().growXY().get());
+    centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(12, 16, 4, 12).get());
 
     updateColors();
     return centerPanel;
@@ -496,17 +497,19 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myReplaceCriteriaEdit = createEditor(true);
     replaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
 
-    final JPanel wrapper = new JPanel(new MigLayout("ins 0, fill, hidemode 3", "[grow 0]0[grow 0]0[grow 0][]", "[grow 100]8[grow 0]8"));
+    final JPanel wrapper = new JPanel(new GridBagLayout());
+    final var wrapperConstraint = new GridBagConstraintHolder();
     myComponentsWithEditorBackground.add(wrapper);
     myComponentsWithEditorBorder.add(wrapper);
-    wrapper.add(replaceEditorPanel, "grow 100, span, wrap");
-    wrapper.add(shortenFqn, "grow 0, gapleft 8, gapright 10");
-    wrapper.add(staticImport, "gapright 10");
-    wrapper.add(reformat, "");
+    wrapper.add(replaceEditorPanel, wrapperConstraint.width(4).fillXY().growXY().get());
+    wrapper.add(shortenFqn, wrapperConstraint.newLine().width(1).noFill().noGrow().insetsTLB(10).get());
+    wrapper.add(staticImport, wrapperConstraint.get());
+    wrapper.add(reformat, wrapperConstraint.get());
 
-    final JPanel replacePanel = new JPanel(new MigLayout("ins 0, fill", "", "[grow 0]4[grow 100]"));
-    replacePanel.add(replacementTemplateLabel, "gap 22 0 5 5, wrap");
-    replacePanel.add(wrapper, "grow 100");
+    final JPanel replacePanel = new JPanel(new GridBagLayout());
+    final var replaceConstraint = new GridBagConstraintHolder();
+    replacePanel.add(replacementTemplateLabel, replaceConstraint.fillX().growX().insets(16, 10, 14, 0).get());
+    replacePanel.add(wrapper, replaceConstraint.newLine().fillXY().growXY().noInsets().get());
     return replacePanel;
   }
 
@@ -684,9 +687,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
 
-    final JPanel northPanel = new JPanel(new MigLayout("ins 4 0 3 0, fill", "[]0[grow 0]"));
-    northPanel.add(historyToolbar.getComponent());
-    northPanel.add(myOptionsToolbar.getComponent());
+    final JPanel northPanel = new JPanel(new GridBagLayout());
+    final var northConstraint = new GridBagConstraintHolder();
+    northPanel.add(historyToolbar.getComponent(), northConstraint.insetsTLB(6).get());
+    northPanel.add(myOptionsToolbar.getComponent(), northConstraint.growX().anchorEnd().insets(6, 0, 6, 6).get());
     return northPanel;
   }
 
@@ -1203,10 +1207,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     return "find.structuredSearch";
   }
 
-  private void updateCenterPanelRowConstraints() {
-    myCenterPanelLayout.setRowConstraints(myReplace ? "[grow 100]14[grow 100]0[grow 0]" : "[grow 100]0[grow 0]");
-  }
-
   private void updateColors() {
     final var scheme = EditorColorsManager.getInstance().getGlobalScheme();
     myComponentsWithEditorBackground.forEach(component -> {
@@ -1261,7 +1261,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       myReplace = !myReplace;
       setTitle(getDefaultTitle());
       myReplacePanel.setVisible(myReplace);
-      updateCenterPanelRowConstraints();
       setUseLastConfiguration(true);
       loadConfiguration(myConfiguration);
       final Dimension size =
