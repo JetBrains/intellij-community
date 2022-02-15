@@ -470,9 +470,6 @@ public final class StartupUtil {
 
         //noinspection SpellCheckingInspection
         System.setProperty("sun.awt.noerasebackground", "true");
-        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
-          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-        }
 
         Activity activity = activityQueue.startChild("awt toolkit creating");
         Toolkit.getDefaultToolkit();
