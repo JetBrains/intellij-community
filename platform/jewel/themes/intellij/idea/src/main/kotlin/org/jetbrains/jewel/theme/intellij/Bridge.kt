@@ -116,7 +116,7 @@ suspend fun retrieveFont(
         color = color,
         fontSize = size.sp,
         fontWeight = FontWeight.Normal,
-        fontFamily = FontFamily(Typeface(toSkikoTypeface()!!)),
+        fontFamily = FontFamily(Typeface(toSkikoTypeface() ?: org.jetbrains.skia.Typeface.makeDefault())),
         // todo textDecoration might be defined in the awt theme
         lineHeight = lineHeight
     )

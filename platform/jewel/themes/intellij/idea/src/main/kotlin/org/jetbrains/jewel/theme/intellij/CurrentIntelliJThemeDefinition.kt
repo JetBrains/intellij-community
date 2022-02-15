@@ -1,10 +1,19 @@
 package org.jetbrains.jewel.theme.intellij
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Typeface
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.skiko.toSkikoTypeface
+import javax.swing.UIManager
 
 @Suppress("FunctionName")
 fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
@@ -66,7 +75,7 @@ fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         textField = textFieldPalette,
         separator = IntelliJPalette.Separator(
             color = retrieveColor("Separator.foreground"),
-            background = retrieveColor("Separator.background")
+            background = retrieveColorOrNull("Separator.background") ?: Color.Gray
         ),
         scrollbar = IntelliJPalette.Scrollbar(
             thumbHoverColor = retrieveColor("ScrollBar.foreground"),
