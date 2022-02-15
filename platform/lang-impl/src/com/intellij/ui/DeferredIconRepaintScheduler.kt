@@ -44,14 +44,15 @@ class DeferredIconRepaintScheduler {
       return list
     }
 
-    val tree = SwingUtilities.getAncestorOfClass(JTree::class.java, c)
-    if (tree != null) {
-      return tree
-    }
-
+    // check table first to process com.intellij.ui.treeStructure.treetable.TreeTable correctly
     val table = SwingUtilities.getAncestorOfClass(JTable::class.java, c)
     if (table != null) {
       return table
+    }
+
+    val tree = SwingUtilities.getAncestorOfClass(JTree::class.java, c)
+    if (tree != null) {
+      return tree
     }
 
     val box = SwingUtilities.getAncestorOfClass(JComboBox::class.java, c)
