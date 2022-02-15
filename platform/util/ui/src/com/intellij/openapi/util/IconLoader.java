@@ -709,7 +709,7 @@ public final class IconLoader {
   @ApiStatus.Internal
   public static class CachedImageIcon extends ScaleContextSupport implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     @SuppressWarnings("UndesirableClassUsage")
-    private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+    public static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
       @Override
       public @NonNls String toString() {
         return "Empty icon " + super.toString();
@@ -967,7 +967,8 @@ public final class IconLoader {
       return resolver == null ? null : resolver.getURL();
     }
 
-    private @Nullable Image loadImage(@NotNull ScaleContext scaleContext, boolean isDark) {
+    @Nullable
+    public Image loadImage(@NotNull ScaleContext scaleContext, boolean isDark) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
       ImageDataLoader resolver = this.resolver;
