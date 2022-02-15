@@ -68,10 +68,10 @@ public class Notification {
   private @NotNull @NotificationContent String myContent;
   private @Nullable NotificationListener myListener;
   private @Nullable @LinkLabel String myDropDownText;
-  private @Nullable List<AnAction> myActions;
+  private @Nullable List<@NotNull AnAction> myActions;
   private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
   private @Nullable AnAction myContextHelpAction;
-  private @Nullable List<Runnable> myWhenExpired;
+  private @Nullable List<@NotNull Runnable> myWhenExpired;
   private @Nullable Boolean myImportant;
 
   private final AtomicBoolean myExpired = new AtomicBoolean(false);
@@ -238,9 +238,7 @@ public class Notification {
     return myListener;
   }
 
-  /**
-   * @deprecated Please use {@link #addAction(AnAction)} instead.
-   */
+  /** @deprecated please use {@link #addAction(AnAction)} instead */
   @Deprecated
   public @NotNull Notification setListener(@NotNull NotificationListener listener) {
     myListener = listener;
@@ -293,15 +291,13 @@ public class Notification {
     return myActions != null ? myActions : Collections.emptyList();
   }
 
-  /**
-   * @see NotificationAction
-   */
+  /** @see NotificationAction */
   public @NotNull Notification addAction(@NotNull AnAction action) {
     (myActions != null ? myActions : (myActions = new ArrayList<>())).add(action);
     return this;
   }
 
-  public @NotNull Notification addActions(@NotNull Collection<? extends AnAction> actions) {
+  public @NotNull Notification addActions(@NotNull Collection<? extends @NotNull AnAction> actions) {
     (myActions != null ? myActions : (myActions = new ArrayList<>())).addAll(actions);
     return this;
   }
@@ -336,18 +332,9 @@ public class Notification {
     }
   }
 
-  public Notification whenExpired(@Nullable Runnable whenExpired) {
-    if (myWhenExpired == null) {
-      myWhenExpired = new ArrayList<>();
-    }
-    if (whenExpired != null) {
-      myWhenExpired.add(whenExpired);
-    }
+  public Notification whenExpired(@NotNull Runnable whenExpired) {
+    (myWhenExpired != null ? myWhenExpired : (myWhenExpired = new ArrayList<>())).add(whenExpired);
     return this;
-  }
-
-  public void resetAllExpiredListeners() {
-    myWhenExpired = null;
   }
 
   public void hideBalloon() {
