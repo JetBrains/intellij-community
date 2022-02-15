@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Key
@@ -38,6 +39,7 @@ import git4idea.stash.isNotEmpty
 import git4idea.ui.StashInfo
 import git4idea.ui.StashInfo.Companion.subject
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
 class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
@@ -128,7 +130,8 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
 
   inner class StashObject(override val data: StashInfo) : SavedPatchesProvider.PatchObject<StashInfo> {
     override fun loadChanges(): CompletableFuture<SavedPatchesProvider.LoadingResult>? {
-      return stashCache.loadStashData(data)?.thenApply { stashData ->
+      val loadStashData = stashCache.loadStashData(data)
+      val processResults = loadStashData?.thenApply { stashData ->
         when (stashData) {
           is GitStashCache.StashData.Changes -> {
             val stashChanges = stashData.changes.map { GitStashChange(it, null) }
@@ -141,6 +144,8 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
           is GitStashCache.StashData.Error -> SavedPatchesProvider.LoadingResult.Error(stashData.error)
         }
       }
+      processResults?.propagateCancellationTo(loadStashData)
+      return processResults
     }
 
     override fun getDiffPreviewTitle(changeName: String?): String {
@@ -187,5 +192,13 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
   companion object {
     private const val GIT_STASH_APPLY_ACTION = "Git.Stash.Apply"
     private const val GIT_STASH_POP_ACTION = "Git.Stash.Pop"
+
+    fun CompletableFuture<*>.propagateCancellationTo(future: CompletableFuture<*>) {
+      whenComplete { _, t ->
+        if (t is CancellationException || t is ProcessCanceledException) {
+          future.cancel(false)
+        }
+      }
+    }
   }
 }
