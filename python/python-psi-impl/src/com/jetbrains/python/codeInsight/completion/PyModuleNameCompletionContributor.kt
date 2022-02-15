@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.completion
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
@@ -14,6 +15,7 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
+import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher.NOT_IMPORTED_MODULE_WEIGHT
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -54,7 +56,7 @@ class PyModuleNameCompletionContributor : CompletionContributor(), DumbAware {
     getCompletionVariants(parameters.position.parent, parameters.originalFile, otherVariants).asSequence()
       .filterIsInstance<LookupElement>()
       .filterNot { it.lookupString.startsWith('_') }
-      .forEach { result.addElement(it) }
+      .forEach { result.addElement(PrioritizedLookupElement.withPriority(it, NOT_IMPORTED_MODULE_WEIGHT.toDouble())) }
   }
 
   private fun getCompletionVariants(element: PsiElement, file: PsiElement, otherVariants: Set<String>): List<Any> {
