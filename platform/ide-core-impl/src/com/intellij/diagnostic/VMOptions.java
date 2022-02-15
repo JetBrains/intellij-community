@@ -264,7 +264,7 @@ public final class VMOptions {
 
   @ApiStatus.Internal
   public static @Nullable Path getUserOptionsFile() {
-    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+    String vmOptionsFile = vmOptionsFile();  // Android Studio: multiple paths in jb.vmOptionsFile
     if (vmOptionsFile == null) {
       // launchers should specify a path to a VM options file used to configure a JVM
       return null;
@@ -339,7 +339,7 @@ public final class VMOptions {
         return Files.readString(newFile, getFileCharset());
       }
 
-      String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+      String vmOptionsFile = vmOptionsFile();  // Android Studio: multiple paths in jb.vmOptionsFile
       if (vmOptionsFile != null) {
         return Files.readString(Path.of(vmOptionsFile), getFileCharset());
       }
@@ -349,6 +349,21 @@ public final class VMOptions {
     }
 
     return null;
+  }
+
+  /**
+   * If the {@code jb.vmOptionsFile} property value contains a comma-separated list, returns the last item of that list;
+   * otherwise, returns the whole value of {@code jb.vmOptionsFile}.
+   * <p>
+   * This is a temporary workaround until WindowsLauncher is updated to supply a single file in {@code jb.vmOptionsFile}.
+   */
+  private static String vmOptionsFile() {
+    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+    if (vmOptionsFile == null) {
+      return null;
+    }
+    String[] files = vmOptionsFile.split(",");
+    return files[files.length - 1];
   }
 
   /** @deprecated please see {@link #read()} for details */
