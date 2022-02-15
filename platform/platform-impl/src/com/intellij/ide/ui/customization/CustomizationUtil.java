@@ -444,11 +444,9 @@ public final class CustomizationUtil {
   }
 
   @Nullable
-  public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionToolbarImpl toolbar) {
-    ActionGroup actionGroup = toolbar.getActionGroup();
-    String groupID = ActionManager.getInstance().getId(actionGroup instanceof CustomisedActionGroup
-                                                       ? ((CustomisedActionGroup)actionGroup).getOrigin() : actionGroup);
-    if (groupID != null) {
+  public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
+                                                                String groupID, JComponent component, String place) {
+      if (groupID != null) {
       final String groupName = getGroupName(actionGroup, groupID);
       if (groupName == null) return null;
 
@@ -501,7 +499,7 @@ public final class CustomizationUtil {
                                  };
                                  dialogWrapper.show();
                                }));
-      return PopupHandler.installPopupMenu(toolbar.getComponent(), customizationGroup, toolbar.getPlace(), new PopupMenuListenerAdapter() {
+      return PopupHandler.installPopupMenu(component, customizationGroup, place, new PopupMenuListenerAdapter() {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
           JBPopupMenu menu = ObjectUtils.tryCast(e.getSource(), JBPopupMenu.class);
