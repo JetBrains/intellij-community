@@ -8407,6 +8407,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("noStackOverflowOnStarProjection.kt")
+        public void testNoStackOverflowOnStarProjection() throws Exception {
+            runTest("testData/quickfix/makeUpperBoundNonNullable/noStackOverflowOnStarProjection.kt");
+        }
+
         @TestMetadata("typeMismatchAny1.kt")
         public void testTypeMismatchAny1() throws Exception {
             runTest("testData/quickfix/makeUpperBoundNonNullable/typeMismatchAny1.kt");

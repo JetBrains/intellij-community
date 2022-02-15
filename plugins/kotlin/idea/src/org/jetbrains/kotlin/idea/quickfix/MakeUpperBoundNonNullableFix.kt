@@ -155,7 +155,9 @@ open class MakeUpperBoundNonNullableFix(
             }
 
             for ((actualProjection, expectedProjection) in actual.arguments.zip(expected.arguments)) {
-                result.addAll(extractPotentiallyFixableTypesForExpectedType(actualProjection.type, expectedProjection.type))
+                if (!actualProjection.isStarProjection && !expectedProjection.isStarProjection) {
+                    result.addAll(extractPotentiallyFixableTypesForExpectedType(actualProjection.type, expectedProjection.type))
+                }
             }
 
             return result
