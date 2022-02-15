@@ -19,14 +19,11 @@ internal class ModalityStateElement(
   companion object : CoroutineContext.Key<ModalityStateElement>
 }
 
-internal fun CoroutineContext.contextModality(): ModalityState {
+@VisibleForTesting
+@Internal
+fun CoroutineContext.contextModality(): ModalityState {
   return this[ModalityStateElement]?.modalityState
          ?: ModalityState.any()
-}
-
-@VisibleForTesting
-suspend fun contextModality(): ModalityState {
-  return coroutineContext.contextModality()
 }
 
 @Internal
