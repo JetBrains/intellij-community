@@ -10,6 +10,8 @@
     <editorFactoryMouseMotionListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
 
     <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
+    <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
+                 description="Explicitly sets the number of seconds until the project creation feedback notification is displayed."/>
   </extensions>
 
   <actions>
