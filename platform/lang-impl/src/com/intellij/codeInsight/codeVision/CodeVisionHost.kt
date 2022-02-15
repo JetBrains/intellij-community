@@ -57,6 +57,8 @@ open class CodeVisionHost(val project: Project) {
 
   private val defaultSortedProvidersList = mutableListOf<String>()
 
+  @Suppress("MemberVisibilityCanBePrivate")
+  // Uses in Rider
   protected val lifeSettingModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
 
   var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
@@ -79,7 +81,14 @@ open class CodeVisionHost(val project: Project) {
         if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
           viewService.setPerAnchorLimits(
             CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+      }
 
+      lifeSettingModel.visibleMetricsAboveDeclarationCount.advise(codeVisionLifetime) {
+        invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
+      }
+
+      lifeSettingModel.visibleMetricsNextToDeclarationCount.advise(codeVisionLifetime) {
+        invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
       }
 
       rearrangeProviders()
