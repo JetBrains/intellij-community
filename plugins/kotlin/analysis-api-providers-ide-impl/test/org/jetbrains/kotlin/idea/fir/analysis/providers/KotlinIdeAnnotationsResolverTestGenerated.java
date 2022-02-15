@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.analysis.providers;
 
@@ -18,7 +18,46 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/annotationsResolver")
-public abstract class KotlinIdeAnnotationsResolverTestGenerated extends AbstractKotlinIdeAnnotationsResolverTest {
+public class KotlinIdeAnnotationsResolverTestGenerated extends AbstractKotlinIdeAnnotationsResolverTest {
+    private void runTest(String testDataFilePath) throws Exception {
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("annotations_in_brackets_syntax.kt")
+    public void testAnnotations_in_brackets_syntax() throws Exception {
+        runTest("testData/annotationsResolver/annotations_in_brackets_syntax.kt");
+    }
+
+    @TestMetadata("different_package_fqname.kt")
+    public void testDifferent_package_fqname() throws Exception {
+        runTest("testData/annotationsResolver/different_package_fqname.kt");
+    }
+
+    @TestMetadata("different_package_short_name_full_import.kt")
+    public void testDifferent_package_short_name_full_import() throws Exception {
+        runTest("testData/annotationsResolver/different_package_short_name_full_import.kt");
+    }
+
+    @TestMetadata("different_package_short_name_no_import.kt")
+    public void testDifferent_package_short_name_no_import() throws Exception {
+        runTest("testData/annotationsResolver/different_package_short_name_no_import.kt");
+    }
+
+    @TestMetadata("different_package_short_name_star_import.kt")
+    public void testDifferent_package_short_name_star_import() throws Exception {
+        runTest("testData/annotationsResolver/different_package_short_name_star_import.kt");
+    }
+
+    @TestMetadata("same_package_fqname.kt")
+    public void testSame_package_fqname() throws Exception {
+        runTest("testData/annotationsResolver/same_package_fqname.kt");
+    }
+
+    @TestMetadata("same_package_short_name.kt")
+    public void testSame_package_short_name() throws Exception {
+        runTest("testData/annotationsResolver/same_package_short_name.kt");
+    }
+
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/annotationsResolver/ambiguity")
     public static class Ambiguity extends AbstractKotlinIdeAnnotationsResolverTest {
@@ -52,49 +91,6 @@ public abstract class KotlinIdeAnnotationsResolverTestGenerated extends Abstract
         @TestMetadata("star_import_beats_package_import.kt")
         public void testStar_import_beats_package_import() throws Exception {
             runTest("testData/annotationsResolver/priority/star_import_beats_package_import.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/annotationsResolver")
-    public static class Uncategorized extends AbstractKotlinIdeAnnotationsResolverTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("annotations_in_brackets_syntax.kt")
-        public void testAnnotations_in_brackets_syntax() throws Exception {
-            runTest("testData/annotationsResolver/annotations_in_brackets_syntax.kt");
-        }
-
-        @TestMetadata("different_package_fqname.kt")
-        public void testDifferent_package_fqname() throws Exception {
-            runTest("testData/annotationsResolver/different_package_fqname.kt");
-        }
-
-        @TestMetadata("different_package_short_name_full_import.kt")
-        public void testDifferent_package_short_name_full_import() throws Exception {
-            runTest("testData/annotationsResolver/different_package_short_name_full_import.kt");
-        }
-
-        @TestMetadata("different_package_short_name_no_import.kt")
-        public void testDifferent_package_short_name_no_import() throws Exception {
-            runTest("testData/annotationsResolver/different_package_short_name_no_import.kt");
-        }
-
-        @TestMetadata("different_package_short_name_star_import.kt")
-        public void testDifferent_package_short_name_star_import() throws Exception {
-            runTest("testData/annotationsResolver/different_package_short_name_star_import.kt");
-        }
-
-        @TestMetadata("same_package_fqname.kt")
-        public void testSame_package_fqname() throws Exception {
-            runTest("testData/annotationsResolver/same_package_fqname.kt");
-        }
-
-        @TestMetadata("same_package_short_name.kt")
-        public void testSame_package_short_name() throws Exception {
-            runTest("testData/annotationsResolver/same_package_short_name.kt");
         }
     }
 }
