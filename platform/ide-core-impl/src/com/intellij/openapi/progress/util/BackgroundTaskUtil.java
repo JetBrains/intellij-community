@@ -288,6 +288,8 @@ public final class BackgroundTaskUtil {
           LOG.error(e);
         }
       }
+      catch (CancellationException ignored) {
+      }
       catch (InterruptedException | TimeoutException e) {
         LOG.debug("Couldn't await background process on disposal: " + runnable);
       }
