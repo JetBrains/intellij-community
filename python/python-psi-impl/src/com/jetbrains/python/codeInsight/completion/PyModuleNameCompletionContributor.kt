@@ -56,6 +56,7 @@ class PyModuleNameCompletionContributor : CompletionContributor(), DumbAware {
     getCompletionVariants(parameters.position.parent, parameters.originalFile, otherVariants).asSequence()
       .filterIsInstance<LookupElement>()
       .filterNot { it.lookupString.startsWith('_') }
+      .filter { result.prefixMatcher.isStartMatch(it) }
       .forEach { result.addElement(PrioritizedLookupElement.withPriority(it, NOT_IMPORTED_MODULE_WEIGHT.toDouble())) }
   }
 

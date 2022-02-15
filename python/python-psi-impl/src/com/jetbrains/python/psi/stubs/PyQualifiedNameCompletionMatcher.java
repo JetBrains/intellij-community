@@ -172,7 +172,7 @@ public class PyQualifiedNameCompletionMatcher {
 
     private boolean qualifierMatches(@NotNull QualifiedName qualifier) {
       String firstComponent = Objects.requireNonNullElse(qualifier.getFirstComponent(), "");
-      if (!myQualifierFirstComponentMatcher.prefixMatches(firstComponent)) return false;
+      if (!myQualifierFirstComponentMatcher.isStartMatch(firstComponent)) return false;
       String remainder = qualifier.getComponentCount() == 0 ? "" : qualifier.removeHead(1).toString();
       if (!myQualifierRemainderMatcher.prefixMatches(remainder)) return false;
       return true;
