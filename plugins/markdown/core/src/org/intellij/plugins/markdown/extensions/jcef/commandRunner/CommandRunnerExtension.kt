@@ -11,8 +11,7 @@ import com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -23,6 +22,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.AppUIUtil
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
@@ -83,25 +84,36 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
 
   fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
+    processLine(rawCodeLine, !insideFence)?.let { hash ->
+      return getHtmlForLineRunner(insideFence, hash)
+    }
+    return ""
+  }
+
+  private fun processLine(rawCodeLine: String, allowRunConfigurations: Boolean): String? {
     try {
       val project = panel.project
       val file = panel.virtualFile
       if (project != null && file != null && file.parent != null
-          && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations = !insideFence)
+          && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations)
       ) {
         val hash = MarkdownUtil.md5(rawCodeLine, "")
         hash2Cmd[hash] = rawCodeLine
-        val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
-        return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
-               "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
-               "</a>"
+        return hash
       }
-      else return ""
+      else return null
     }
     catch (e: Exception) {
       LOG.warn(e)
-      return ""
+      return null
     }
+  }
+
+  private fun getHtmlForLineRunner(insideFence: Boolean, hash: String): String {
+    val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
+    return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
+           "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
+           "</a>"
   }
 
   fun processCodeBlock(codeFenceRawContent: String, language: String): String {
@@ -114,11 +126,14 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
       val hash = MarkdownUtil.md5(codeFenceRawContent, "")
       hash2Cmd[hash] = codeFenceRawContent
+      val lines = codeFenceRawContent.trimEnd().lines()
+      val firstLineHash = if (lines.size > 1) processLine(lines[0], false) else null
+      val firstLineData = if (firstLineHash.isNullOrBlank()) "" else "data-firstLine='$firstLineHash'"
       val cssClass = "run-icon hidden code-block"
-
       return "<a class='${cssClass}' href='#' role='button' " +
              "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
              "data-commandtype='block'" +
+             firstLineData +
              ">" +
              "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_BLOCK_ICON)}'>" +
              "</a>"
@@ -138,32 +153,74 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       LOG.error("Command index $cmdHash not found. Please attach .md file to error report. commandCache = ${hash2Cmd}")
       return
     }
+    executeLineCommand(command, executorId)
+  }
+
+  private fun executeLineCommand(command: String, executorId: String) {
     val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
     val project = panel.project
     val virtualFile = panel.virtualFile
-    if (project !=null && virtualFile != null) {
+    if (project != null && virtualFile != null) {
       execute(project, virtualFile.parent.canonicalPath, true, command, executor)
     }
   }
 
-  private fun runBlock(encodedLine: String) {
-    val executorId = encodedLine.substringBefore(":")
-    val cmdHash: String = encodedLine.substringAfter(":")
-    val command = hash2Cmd[cmdHash]
-    if (command == null) {
-      LOG.error("Command hash $cmdHash not found. Please attach .md file to error report.\n${hash2Cmd}")
-      return
-    }
+  private fun executeBlock(command: String, executorId: String) {
     val runner = MarkdownRunner.EP_NAME.extensionList.first()
     val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
     val project = panel.project
     val virtualFile = panel.virtualFile
     if (project != null && virtualFile != null) {
+      TrustedProjectUtil.executeIfTrusted(project) {
+        runner.run(command, project, virtualFile.parent.canonicalPath, executor)
+      }
+    }
+  }
+
+  private fun runBlock(encodedLine: String) {
+    val args = encodedLine.split(":")
+    val executorId = args[0]
+    val cmdHash: String = args[1]
+    val command = hash2Cmd[cmdHash]
+    val firstLineCommand = hash2Cmd[args[2]]
+    if (command == null) {
+      LOG.error("Command hash $cmdHash not found. Please attach .md file to error report.\n${hash2Cmd}")
+      return
+    }
+    if (firstLineCommand == null) {
       ApplicationManager.getApplication().invokeLater {
-        TrustedProjectUtil.executeIfTrusted(project) {
-          runner.run(command, project, virtualFile.parent.canonicalPath, executor)
+        executeBlock(command, executorId)
+      }
+      return
+    }
+    val x = args[3].toInt()
+    val y = args[4].toInt()
+
+    val actionManager = ActionManager.getInstance()
+    val actionGroup = DefaultActionGroup()
+
+    val runBlockAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.block") },
+                                           AllIcons.RunConfigurations.TestState.Run_run) {
+      override fun actionPerformed(e: AnActionEvent) {
+        ApplicationManager.getApplication().invokeLater {
+          executeBlock(command, executorId)
         }
       }
+    }
+    val runLineAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.line") },
+                                           AllIcons.RunConfigurations.TestState.Run) {
+      override fun actionPerformed(e: AnActionEvent) {
+        ApplicationManager.getApplication().invokeLater {
+          executeLineCommand(firstLineCommand, executorId)
+        }
+      }
+    }
+
+    actionGroup.add(runBlockAction)
+    actionGroup.add(runLineAction)
+    AppUIUtil.invokeOnEdt {
+      actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup)
+        .component.show(panel.component, x, y)
     }
   }
 
