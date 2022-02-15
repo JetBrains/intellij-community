@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;
 import com.intellij.ui.win.WinPathChooserDialog;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     else if (useNativeWinChooser(descriptor)) {
       return new WinPathChooserDialog(descriptor, parent, project);
     }
-    else if (useNewChooser()) {
+    else if (useNewChooser(descriptor)) {
       return new NewFileChooserDialogImpl(descriptor, parent, project);
     }
     else if (parent != null) {
@@ -69,7 +70,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     if (chooser != null) {
       return chooser;
     }
-    else if (useNewChooser()) {
+    else if (useNewChooser(descriptor)) {
       return new NewFileChooserDialogImpl(descriptor, parent, project);
     }
     else if (parent != null) {
@@ -80,8 +81,9 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     }
   }
 
-  private static boolean useNewChooser() {
-    return Registry.is("ide.ui.new.chooser");
+  private static boolean useNewChooser(FileChooserDescriptor descriptor) {
+    return Registry.is("ide.ui.new.file.chooser") &&
+           ContainerUtil.and(descriptor.getRoots(), f -> f.isInLocalFileSystem());
   }
 
   private static boolean useNativeWinChooser(FileChooserDescriptor descriptor) {
