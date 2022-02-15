@@ -39,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
@@ -135,9 +136,9 @@ public abstract class StubIndexEx extends StubIndex {
         throw new AssertionError("raw index data access is not available for StubIndex");
       }
     }
-
-    PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) ->
-      myStubProcessingHelper.processStubsInFile(project, file, list, processor, scope, requiredClass);
+    Predicate<Psi> keyFilter = getAdditionalPsiKeyFilter(indexKey, key);
+    PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
+      project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass);
 
     if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : GlobalSearchScope.everythingScope(project),
                                                      file -> processInMemoryStubs(indexKey, key, project, stubProcessor, file))) {
@@ -201,6 +202,17 @@ public abstract class StubIndexEx extends StubIndex {
       wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key);
     }
     return true;
+  }
+
+  @Nullable
+  private static <Key, Psi extends PsiElement> Predicate<Psi> getAdditionalPsiKeyFilter(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                                        @NotNull Key key) {
+    if (!(key instanceof CharSequence)) return null;
+    StubIndexExtension<?, ?> indexExtension = StubIndexExtension.EP_NAME.findFirstSafe(o -> o.getKey().equals(indexKey));
+    if (!(indexExtension instanceof CharSequenceHashStubIndexExtension)) return null;
+    //noinspection unchecked
+    CharSequenceHashStubIndexExtension<Psi> extension = (CharSequenceHashStubIndexExtension<Psi>)indexExtension;
+    return o -> extension.doesKeyMatchPsi((CharSequence)key, o);
   }
 
   private static <Key, Psi extends PsiElement> boolean processInMemoryStubs(StubIndexKey<Key, Psi> indexKey,
