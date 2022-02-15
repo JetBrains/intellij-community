@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
@@ -184,6 +184,11 @@ fun AppUIExecutor.withConstraint(constraint: ContextConstraint, parentDisposable
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
  * Contains: [ContinuationInterceptor].
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(
+  message = "Do not use: coroutine cancellation must not be handled by a dispatcher. " +
+            "Use Dispatchers.Main and ModalityState.asContextElement() if needed",
+)
 fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor {
   return (this as AppUIExecutorImpl).asCoroutineDispatcher()
 }
