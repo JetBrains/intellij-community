@@ -50,6 +50,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInf
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
+import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 import org.jetbrains.plugins.gradle.model.*
@@ -814,9 +817,25 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 info.additionalVisible = sourceSet.additionalVisibleSourceSets.map { additionalVisibleSourceSetName ->
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, additionalVisibleSourceSetName)
                 }.toSet()
-                //TODO(auskov): target flours are lost here
+
+                // More precise computation of KotlinPlatform is required in the case of projects
+                // with enabled HMPP and Android + JVM targets.
+                // Early, for common source set in such project the K2MetadataCompilerArguments instance
+                // was creating, since `sourceSet.actualPlatforms.platforms` contains more then 1 KotlinPlatform.
+                val platformKinds = sourceSet.actualPlatforms.platforms
+                    .map { IdePlatformKindTooling.getTooling(it).kind }
+                    .toSet()
+                val compilerArgumentsPlatform = platformKinds.singleOrNull()?.let {
+                    when (it) {
+                        is JvmIdePlatformKind -> KotlinPlatform.JVM
+                        is JsIdePlatformKind -> KotlinPlatform.JS
+                        is NativeIdePlatformKind -> KotlinPlatform.NATIVE
+                        else -> KotlinPlatform.COMMON
+                    }
+                } ?: KotlinPlatform.COMMON
+
                 info.lazyCompilerArguments = lazy {
-                    createCompilerArguments(emptyList(), sourceSet.actualPlatforms.singleOrNull() ?: KotlinPlatform.COMMON).also {
+                    createCompilerArguments(emptyList(), compilerArgumentsPlatform).also {
                         it.multiPlatform = true
                         it.languageVersion = languageSettings.languageVersion
                         it.apiVersion = languageSettings.apiVersion
