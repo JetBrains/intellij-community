@@ -81,14 +81,15 @@ class ShelfProvider(private val project: Project) : SavedPatchesProvider<Shelved
         return CompletableFuture.completedFuture(SavedPatchesProvider.LoadingResult.Changes(cachedChangeObjects))
       }
       return CompletableFuture.supplyAsync {
-        data.loadChangesIfNeededOrThrow(project)
-        data.getChangeObjects()!!
-      }.thenApply<SavedPatchesProvider.LoadingResult> { shelvedChanges ->
-        SavedPatchesProvider.LoadingResult.Changes(shelvedChanges)
-      }.exceptionally { throwable ->
-        when (throwable) {
-          is VcsException -> SavedPatchesProvider.LoadingResult.Error(throwable)
-          else -> SavedPatchesProvider.LoadingResult.Error(VcsException(throwable))
+        try {
+          data.loadChangesIfNeededOrThrow(project)
+          return@supplyAsync SavedPatchesProvider.LoadingResult.Changes(data.getChangeObjects()!!)
+        }
+        catch (throwable: Throwable) {
+          return@supplyAsync when (throwable) {
+            is VcsException -> SavedPatchesProvider.LoadingResult.Error(throwable)
+            else -> SavedPatchesProvider.LoadingResult.Error(VcsException(throwable))
+          }
         }
       }
     }
