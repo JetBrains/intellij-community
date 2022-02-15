@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.QualifiedNameMatcher;
 import org.jetbrains.annotations.Nullable;
@@ -164,6 +165,12 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   // PY-47941
   public void testAttributeReExportedWithAlias() {
     assertContainsElements(doBasicCompletion(), "pytest.mark", "pytest.param");
+  }
+
+  // PY-47254
+  public void testAlreadyImportedModulesNotSuggestedTwice() {
+    List<String> variants = doBasicCompletion();
+    assertEquals(1, ContainerUtil.count(variants, "foo"::equals));
   }
 
   @Nullable
