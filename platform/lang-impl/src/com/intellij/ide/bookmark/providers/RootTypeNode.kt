@@ -5,10 +5,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.computeDirectoryChildren
 import com.intellij.ide.projectView.PresentationData
-import com.intellij.ide.scratch.ScratchFileService
+import com.intellij.ide.scratch.ScratchTreeStructureProvider
 import com.intellij.ide.scratch.ScratchesNamedScope
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class RootTypeNode(project: Project, bookmark: RootTypeBookmark) : BookmarkNode<RootTypeBookmark>(project, bookmark) {
@@ -16,16 +15,11 @@ internal class RootTypeNode(project: Project, bookmark: RootTypeBookmark) : Book
   override fun canRepresent(element: Any?) = virtualFile?.equals(element) ?: false
   override fun contains(file: VirtualFile) = value?.type?.containsFile(file) ?: false
 
-  override fun getVirtualFile(): VirtualFile? = value
-    ?.let { ScratchFileService.getInstance().getRootPath(it.type) }
-    ?.let { LocalFileSystem.getInstance().findFileByPath(it) }
-
+  override fun getVirtualFile(): VirtualFile? = value?.let { ScratchTreeStructureProvider.getVirtualFile(it.type) }
   override fun getChildren() = computeDirectoryChildren()
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(wrapIcon(AllIcons.Nodes.Folder))
-    presentation.presentableText = value?.type?.displayName
-    presentation.locationString = ScratchesNamedScope.scratchesAndConsoles()
-    presentation.tooltip = bookmarkDescription
+    addTextTo(presentation, value?.type?.displayName ?: "", ScratchesNamedScope.scratchesAndConsoles())
   }
 }

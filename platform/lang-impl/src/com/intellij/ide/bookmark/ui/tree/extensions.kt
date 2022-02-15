@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ProjectViewNode
@@ -8,13 +9,18 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
+import com.intellij.ide.scratch.ScratchFileService
+import com.intellij.ide.scratch.ScratchTreeStructureProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore.findFileSystemItem
+import javax.swing.Icon
 
 internal val Any.asAbstractTreeNode
   get() = this as? AbstractTreeNode<*>
@@ -27,6 +33,22 @@ internal val AbstractTreeNode<*>.parentRootNode: RootNode?
 
 internal val AbstractTreeNode<*>.parentFolderNode: FolderNode?
   get() = this as? FolderNode ?: parent?.parentFolderNode
+
+internal fun ProjectViewNode<*>.findFileIcon() = findIcon(findFileSystemItem(project, virtualFile), 0)
+
+internal fun ProjectViewNode<*>.computeExternalLocation(file: VirtualFile): @NlsSafe String? {
+  return computeScratchPresentation(file)?.first ?: FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
+}
+
+internal fun ProjectViewNode<*>.computeScratchPresentation(file: VirtualFile): Pair<@NlsSafe String, Icon?>? {
+  val type = ScratchFileService.findRootType(file) ?: return null
+  val root = ScratchTreeStructureProvider.getVirtualFile(type) ?: return null
+  return when (root) {
+    file -> type.displayName?.let { it to AllIcons.Nodes.Folder }
+    file.parent -> type.substituteName(project, file)?.let { it to type.substituteIcon(project, file) }
+    else -> null
+  }
+}
 
 fun ProjectViewNode<*>.computeDirectoryChildren(): Collection<AbstractTreeNode<*>> {
   val directory = findFileSystemItem(project, virtualFile) as? PsiDirectory ?: return emptyList()
@@ -55,7 +77,8 @@ private class ExternalFolderNode(directory: PsiDirectory, settings: ViewSettings
 
   override fun update(presentation: PresentationData) {
     val file = virtualFile ?: return
-    presentation.setIcon(findIcon(findFileSystemItem(project, file), 0))
-    presentation.presentableText = file.presentableName
+    val scratch = computeScratchPresentation(file)
+    presentation.setIcon(scratch?.second ?: findFileIcon())
+    presentation.presentableText = scratch?.first ?: file.presentableName
   }
 }
