@@ -24,6 +24,9 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.util.text.StringUtil.compareVersionNumbers;
 
 public final class MavenModelUtil {
+  public static final String TEST_SUFFIX = ".test";
+  public static final String MAIN_SUFFIX = ".main";
+
   private static final Map<String, LanguageLevel> MAVEN_IDEA_PLUGIN_LEVELS = ImmutableMap.of(
     "JDK_1_3", LanguageLevel.JDK_1_3,
     "JDK_1_4", LanguageLevel.JDK_1_4,
@@ -174,5 +177,24 @@ public final class MavenModelUtil {
 
   public static boolean isMainOrTestSubmodule(@NotNull String moduleName) {
     return moduleName.length() > 5 && moduleName.endsWith(".main") || moduleName.endsWith(".test");
+  }
+
+  public static boolean isMainModule(@NotNull String moduleName) {
+    return moduleName.contains(MAIN_SUFFIX);
+  }
+
+  public static boolean isTestModule(@NotNull String moduleName) {
+    return moduleName.contains(TEST_SUFFIX);
+  }
+
+  @NotNull
+  public static String getParentModuleName(@NotNull String moduleName) {
+    if (isMainModule(moduleName)) {
+      return StringUtil.trimEnd(moduleName, MAIN_SUFFIX);
+    }
+    if (isTestModule(moduleName)) {
+      return StringUtil.trimEnd(moduleName, TEST_SUFFIX);
+    }
+    return moduleName;
   }
 }

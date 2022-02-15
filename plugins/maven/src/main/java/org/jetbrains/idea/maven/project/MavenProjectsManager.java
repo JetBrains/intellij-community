@@ -699,7 +699,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenProject mavenProject = getMavenProject(module);
     String moduleName = module.getName();
     if (mavenProject == null && MavenModelUtil.isMainOrTestSubmodule(moduleName)) {
-      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(moduleName.substring(0, moduleName.length() - 5));
+      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(MavenModelUtil.getParentModuleName(moduleName));
       mavenProject = parentModule != null ? getMavenProject(parentModule) : null;
     }
     return mavenProject;
