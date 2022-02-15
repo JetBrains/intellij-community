@@ -24,13 +24,13 @@ class DeferredIconRepaintScheduler {
   }
 
   @RequiresEdt
-  fun scheduleRepaint(request: RepaintRequest, iconWidth: Int, iconHeight: Int) {
+  fun scheduleRepaint(request: RepaintRequest, iconWidth: Int, iconHeight: Int, alwaysSchedule: Boolean) {
     val actualTarget = request.getActualTarget()
     if (actualTarget == null) {
       return
     }
     val component = request.component
-    if (component == actualTarget) {
+    if (!alwaysSchedule && component == actualTarget) {
       component.repaint(request.x, request.y, iconWidth, iconHeight)
     }
     else {
