@@ -215,7 +215,7 @@
 
     "Menu": {
       "separatorColor": "Grey4",
-      "borderColor": "Grey2"
+      "borderColor": "Grey4"
     },
 
     "Notification": {
@@ -238,7 +238,7 @@
     "Popup": {
       "borderWidth": 1,
       "paintBorder": true,
-      "borderColor": "#393B40B3",
+      "borderColor": "Grey3",
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey8",
@@ -284,7 +284,8 @@
       },
       "Advertiser": {
         "foreground": "Grey8",
-        "background": "Grey3"
+        "background": "Grey3",
+        "borderInsets": "6,20,6,20"
       }
     },
 
@@ -315,7 +316,10 @@
 
     "TabbedPane": {
       "tabHeight": 40,
-      "tabSelectionArc": 4
+      "tabSelectionArc": 4,
+      "hoverColor": "Grey4",
+      "contentAreaColor": "Grey1",
+      "focusColor": "Blue2"
     },
 
     "ToolTip":{
@@ -369,7 +373,9 @@
 
   "icons": {
     "/com/intellij/ide/ui/laf/icons/darcula/checkBox.svg": "/themes/expUI/icons/dark/checkBoxTemp.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxFocused.svg": "/themes/expUI/icons/dark/checkBoxFocusedTemp.svg",
     "/com/intellij/ide/ui/laf/icons/darcula/radio.svg": "/themes/expUI/icons/dark/radioTemp.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radioFocused.svg": "/themes/expUI/icons/dark/radioFocusedTemp.svg",
 
     "ColorPalette": {
       "Checkbox.Background.Default.Dark": "Grey2",

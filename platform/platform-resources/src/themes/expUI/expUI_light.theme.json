@@ -291,7 +291,10 @@
     "SearchEverywhere": {
       "Tab.selectedBackground": "Blue13",
       "SearchField.background": "Grey13",
-      "Advertiser.foreground": "Grey7"
+      "Advertiser": {
+        "foreground": "Grey7",
+        "borderInsets": "6,20,6,20"
+      }
     },
 
     "SearchMatch": {
@@ -321,7 +324,10 @@
 
     "TabbedPane": {
       "tabHeight": 40,
-      "tabSelectionArc": 4
+      "tabSelectionArc": 4,
+      "hoverColor": "Grey11",
+      "contentAreaColor": "Grey11",
+      "focusColor": "Blue13"
     },
 
     "ToolTip":{
