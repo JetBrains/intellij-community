@@ -1,0 +1,17 @@
+<idea-plugin implementation-detail="false">
+    <id>org.jetbrains.jewel</id>
+    <name>Jewel Font Preloader</name>
+    <vendor>JetBrains</vendor>
+
+    <dependencies>
+        <plugin id="org.jetbrains.compose.desktop.ide"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="org.jetbrains.jewel.theme.intellij.ProjectLifecycle"/>
+
+        <toolWindow id="JewelDemo" anchor="bottom" secondary="false"
+                    canCloseContents="true"
+                    factoryClass="org.jetbrains.jewel.theme.intellij.JewelDemoToolWindow"/>
+    </extensions>
+</idea-plugin>

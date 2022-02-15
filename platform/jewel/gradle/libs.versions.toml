@@ -1,0 +1,20 @@
+[versions]
+composeDesktop = "1.1.0-alpha03"
+coroutines = "1.5.2"
+ideaGradlePlugin = "1.3.0"
+jna = "5.10.0"
+kotlin = "1.6.10"
+kotlinxSerialization = "1.3.1"
+
+[libraries]
+jna = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+
+[plugins]
+composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }
+ideaGradlePlugin = { id = "org.jetbrains.intellij", version.ref = "ideaGradlePlugin" }
+kotlinJs = { id = "org.jetbrains.kotlin.js", version.ref = "kotlin" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
