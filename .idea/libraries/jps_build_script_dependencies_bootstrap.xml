@@ -4,6 +4,7 @@
       <exclude>
         <dependency maven-id="org.apache.commons:commons-compress" />
         <dependency maven-id="com.jetbrains.intellij.platform:build-scripts-downloader" />
+        <dependency maven-id="org.jetbrains.teamcity:serviceMessages" />
       </exclude>
     </properties>
     <CLASSES>
@@ -109,7 +110,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/test-framework-core/221.4520/test-framework-core-221.4520.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/boot/221.4520/boot-221.4520.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/tools/tests-bootstrap/221.4520/tests-bootstrap-221.4520.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/teamcity/serviceMessages/2019.1.4/serviceMessages-2019.1.4.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/junit/junit/4.12/junit-4.12.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/log4j-over-slf4j/1.7.32/log4j-over-slf4j-1.7.32.jar!/" />
