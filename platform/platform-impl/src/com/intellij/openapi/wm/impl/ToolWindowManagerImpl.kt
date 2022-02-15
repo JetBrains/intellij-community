@@ -447,6 +447,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     toolWindowSetInitializer.initUi(toolWindowPane)
   }
 
+  @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")
   override fun initToolWindow(bean: ToolWindowEP) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     initToolWindow(bean, bean.pluginDescriptor)
@@ -521,14 +522,19 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     frame = null
   }
 
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   override fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
     dispatcher.addListener(listener)
   }
 
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR,
+              replaceWith = ReplaceWith("project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)",
+                                                    "com.intellij.openapi.wm.ex.ToolWindowManagerListener"))
   override fun addToolWindowManagerListener(listener: ToolWindowManagerListener, parentDisposable: Disposable) {
     project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)
   }
 
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   override fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
     dispatcher.removeListener(listener)
   }
@@ -1030,6 +1036,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     return entry
   }
 
+  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
   @Suppress("OverridingDeprecatedMember")
   override fun unregisterToolWindow(id: String) {
     doUnregisterToolWindow(id)
@@ -1240,9 +1247,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     val entry = idToEntry.get(options.toolWindowId)!!
-    val existing = entry.balloon
-    if (existing != null) {
-      Disposer.dispose(existing)
+    entry.balloon?.let {
+      Disposer.dispose(it)
     }
 
     val stripe = buttonManager.getStripeFor(entry.readOnlyWindowInfo.anchor)
@@ -1264,7 +1270,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     val balloon = createBalloon(options, entry)
     val button = stripe.getButtonFor(options.toolWindowId)?.getComponent()
-    LOG.assertTrue(button != null, ("Button was not found, popup won't be shown. $options"))
+    LOG.assertTrue(button != null, "Button was not found, popup won't be shown. $options")
     if (button == null) {
       return
     }
