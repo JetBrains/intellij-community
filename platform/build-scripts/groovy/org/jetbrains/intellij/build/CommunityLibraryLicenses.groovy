@@ -821,6 +821,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.sam-with-receiver-compiler-plugin"),
     jetbrainsLibrary("kotlinc.symbol-light-classes"),
     jetbrainsLibrary("kotlinx-collections-immutable-jvm"),
+    jetbrainsLibrary("kotlinx.kotlinx-serialization-compiler-plugin-for-compilation"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),
     jetbrainsLibrary("org.jetbrains.kotlin:backend.native.mobile"),
     jetbrainsLibrary("rd-core"),
