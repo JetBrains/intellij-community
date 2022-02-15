@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.io.FileUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.FastUtilHashingStrategies;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -22,7 +22,7 @@ final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputCon
   private final Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new HashMap<>();
   private final Map<String, CompiledClass> myClasses = new HashMap<>();
   private final Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new HashMap<>();
-  private final Int2ObjectMap<String> myOutputToBuilderNameMap = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
+  private final Object2ObjectMap<File, String> myOutputToBuilderNameMap = Object2ObjectMaps.synchronize(new Object2ObjectOpenCustomHashMap<>(FastUtilHashingStrategies.FILE_HASH_STRATEGY));
   private volatile String myCurrentBuilderName;
   
   ChunkBuildOutputConsumerImpl(CompileContext context) {
@@ -77,7 +77,7 @@ final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputCon
   public void registerOutputFile(@NotNull BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException {
     final String currentBuilder = myCurrentBuilderName;
     if (currentBuilder != null) {
-      final String previousBuilder = myOutputToBuilderNameMap.put(FileUtil.fileHashCode(outputFile), currentBuilder);
+      final String previousBuilder = myOutputToBuilderNameMap.put(outputFile, currentBuilder);
       if (previousBuilder != null && !previousBuilder.equals(currentBuilder)) {
         final String source = sourcePaths.isEmpty()? null : sourcePaths.iterator().next();
         myContext.processMessage(new CompilerMessage(
