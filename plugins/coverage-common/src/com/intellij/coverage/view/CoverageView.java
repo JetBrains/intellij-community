@@ -39,6 +39,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -82,6 +84,19 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new TreeTable(myModel);
+    myTable.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        setBackground(UIUtil.getTableBackground(isSelected, myTable.hasFocus()));
+        return component;
+      }
+    });
     setUpShowRootNode();
 
     addEmptyCoverageText(project, suitesBundle);
