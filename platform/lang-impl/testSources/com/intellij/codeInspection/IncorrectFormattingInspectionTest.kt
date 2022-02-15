@@ -12,15 +12,20 @@ class IncorrectFormattingInspectionTest : BasePlatformTestCase() {
   fun testBodyNormal() = doTest()
   fun testBodyGlobalWarning() = doTest()
 
-  fun testBodyWrongIndents() = doTest(showDetailedWarnings = true)
-  fun testBodyExtraSpace() = doTest(showDetailedWarnings = true)
-  fun testBodyExtraLine() = doTest(showDetailedWarnings = true)
+  fun testBodyWrongIndents() = doTest(reportPerFile = false)
+  fun testBodyExtraSpace() = doTest(reportPerFile = false)
+  fun testBodyExtraLine() = doTest(reportPerFile = false)
 
   fun testInvalidFile() = doTest()
 
-  private fun doTest(showDetailedWarnings: Boolean = false, extension: String = "xml") {
-    myFixture.enableInspections(IncorrectFormattingInspection(showDetailedWarnings))
+  private fun doTest(reportPerFile: Boolean = true, extension: String = "xml") {
+    myFixture.enableInspections(IncorrectFormattingInspection(reportPerFile, silentMode = false))
     myFixture.testHighlighting(true, false, true, "${getTestName(true)}.$extension")
+  }
+
+  fun testBodyExtraSpaceSilent() {
+    myFixture.enableInspections(IncorrectFormattingInspection(false, silentMode = true))
+    myFixture.testHighlighting(true, false, true, "${getTestName(true)}.xml")
   }
 
   override fun getTestDataPath() =

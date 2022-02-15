@@ -21,9 +21,10 @@ val INSPECTION_KEY = Key.create<IncorrectFormattingInspection>(IncorrectFormatti
 var notificationShown = AtomicBoolean(false)
 
 class IncorrectFormattingInspection(
-  @JvmField var silentMode: Boolean = true,
-  @JvmField var reportPerFile: Boolean = false,
-  @JvmField var forceForKotlin: Boolean = false
+  @JvmField var reportPerFile: Boolean = false,        // generate only one warning per file
+  @JvmField var silentMode: Boolean = true,            // show ads notification instead of real problems
+  @JvmField var suppressNotification: Boolean = false, // don't show notification anymore
+  @JvmField var forceForKotlin: Boolean = false        // process kotlin files normally even in silent mode, compatibility
 ) : LocalInspectionTool() {
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
@@ -32,18 +33,17 @@ class IncorrectFormattingInspection(
     if (!file.isWritable) return null
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
 
-
-    // TODO process kotlin files in compatible manner
-    //if (isKotlinInspectionEnabled(file.project)) {
-    //  return inScopeOf(file, document, manager, isOnTheFly) {
-    //    getAllReports(false, reportPerFile)
-    //      .takeIf { it.isNotEmpty() }
-    //      ?.toTypedArray()
-    //  }
-    //}
+    // Backward compatibility for those who used ReformatInspection from kotlin before
+    if (forceForKotlin && file.language.id == "kotlin") {
+        return inScopeOf(file, document, manager, isOnTheFly) {
+          getAllReports(false, reportPerFile)
+            .takeIf { it.isNotEmpty() }
+            ?.toTypedArray()
+        }
+    }
 
     // Fast check
-    if (silentMode && notificationShown.get()) return null
+    if (silentMode && (notificationShown.get() || suppressNotification)) return null
 
     return inScopeOf(file, document, manager, isOnTheFly) {
       getAllReports(silentMode, reportPerFile)
@@ -57,7 +57,6 @@ class IncorrectFormattingInspection(
     init {
       addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.silent.mode"), "silentMode")
       addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.report.per.file"), "reportPerFile")
-      addCheckbox("forceForKotlin", "forceForKotlin")
     }
   }
 
@@ -66,16 +65,6 @@ class IncorrectFormattingInspection(
   override fun isEnabledByDefault() = true
 
 }
-
-//val kotlinInspectionKey: HighlightDisplayKey? by lazy { HighlightDisplayKey.findById("Reformat") }
-//private fun isKotlinInspectionEnabled(project: Project) =
-//  InspectionProjectProfileManager
-//    .getInstance(project)
-//    .currentProfile
-//    .isToolEnabled(kotlinInspectionKey)
-
-
-//private val incorrectFormattingInspectionShortName: String by lazy { IncorrectFormattingInspection().shortName }
 
 private fun <R> inScopeOf(file: PsiFile, document: Document, manager: InspectionManager, isOnTheFly: Boolean, body: CheckingScope.() -> R) =
   CheckingScope(file, document, manager, isOnTheFly).body()

@@ -53,6 +53,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
               .getInstance(file.project)
               .currentProfile
               .modifyToolSettings(INSPECTION_KEY, file) { inspection ->
+                inspection.suppressNotification = true
               }
           }
         )
