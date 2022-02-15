@@ -26,6 +26,7 @@ final class DevBuildServerBootstrap {
     jarUrls.add(classDir.resolve("intellij.platform.buildScripts.downloader").toString());
     jarUrls.add(classDir.resolve("intellij.idea.community.build").toString());
     jarUrls.add(classDir.resolve("intellij.idea.community.build.tasks").toString());
+    jarUrls.add(classDir.resolve("intellij.idea.ultimate.build.dependencies").toString());
 
     Path projectDir = Path.of(System.getProperty("ideaProjectHome", ".")).toAbsolutePath();
     jarUrls.add(projectDir.resolve("community/lib/ant/lib/") + "/*");
