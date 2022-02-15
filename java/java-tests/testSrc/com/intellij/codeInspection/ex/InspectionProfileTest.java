@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -788,6 +789,27 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                          "  <inspection_tool class=\"SubstringZero\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
                                                          "</profile>");
     assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("StringOperationCanBeSimplified"), null));
+  }
+
+  public void testMergedReformatInspection() throws Exception {
+    InspectionProfileImpl profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                                                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                         "  <inspection_tool class=\"Reformat\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                                                         "</profile>");
+    InspectionToolWrapper toolWrapper = profile.getInspectionTool("IncorrectFormatting", getProject()); //call to initialize inspections
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("IncorrectFormatting"), null));
+    IncorrectFormattingInspection tool = (IncorrectFormattingInspection)toolWrapper.getTool();
+    assertTrue("Should be enabled for kotlin", tool.forceForKotlin);
+  }
+  
+  public void testMergedReformatInspectionDisabled() throws Exception {
+    InspectionProfileImpl profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                                                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                         "</profile>");
+    InspectionToolWrapper toolWrapper = profile.getInspectionTool("IncorrectFormatting", getProject());
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("IncorrectFormatting"), null));
+    IncorrectFormattingInspection tool = (IncorrectFormattingInspection)toolWrapper.getTool();
+    assertFalse("Should be disabled for kotlin", tool.forceForKotlin);
   }
 
   public void testSecondMergedRedundantStringOperationsInspections() throws Exception {

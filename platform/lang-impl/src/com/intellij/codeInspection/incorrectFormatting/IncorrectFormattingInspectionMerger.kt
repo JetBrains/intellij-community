@@ -6,9 +6,13 @@ import org.jdom.Element
 
 class IncorrectFormattingInspectionMerger : InspectionElementsMergerBase() {
 
-  override fun getMergedToolName() = "IncorrectFormatting"
+  override fun getMergedToolName(): String {
+    return "IncorrectFormatting"
+  }
 
-  override fun getSourceToolNames() = arrayOf("ReformatInspection")
+  override fun getSourceToolNames(): Array<String> {
+    return arrayOf("Reformat")
+  }
 
   override fun transformElement(sourceToolName: String, sourceElement: Element, toolElement: Element): Element {
     if (sourceElement.getAttributeValue("enabled", "false").toBoolean()) {
