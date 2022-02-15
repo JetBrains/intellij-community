@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.*;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
@@ -13,6 +14,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.DynamicPlugins;
 import com.intellij.internal.statistic.IntentionsCollector;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -29,6 +31,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -53,6 +56,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
@@ -530,44 +535,78 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     final ScopeHighlighter highlighter = new ScopeHighlighter(that.myEditor);
     final ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
 
+    JList<?> list = that.myPopup instanceof ListPopupImpl ? ((ListPopupImpl)that.myPopup).getList() : null;
+
+    var selectionListener = new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        final Object source = e.getSource();
+        highlighter.dropHighlight();
+        injectionHighlighter.dropHighlight();
+
+        if (source instanceof DataProvider) {
+          final Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)source);
+          if (selectedItem instanceof IntentionActionWithTextCaching) {
+            IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
+            if (list != null) {
+              updatePreviewPopup(that, action, list.getSelectedIndex());
+            }
+            highlightOnHover(selectedItem);
+          }
+        }
+      }
+
+      private void highlightOnHover(Object selectedItem) {
+        if (!(selectedItem instanceof IntentionActionWithTextCaching)) return;
+
+        IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
+        if (action instanceof SuppressIntentionActionFromFix) {
+          if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+            final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
+            final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+            if (container != null) {
+              injectionHighlighter.highlight(container, Collections.singletonList(container));
+            }
+          }
+          else {
+            final PsiElement at = that.myFile.findElementAt(that.myEditor.getCaretModel().getOffset());
+            final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+            if (container != null) {
+              highlighter.highlight(container, Collections.singletonList(container));
+            }
+          }
+        }
+        else if (action instanceof CustomizableIntentionAction) {
+          var ranges = ((CustomizableIntentionAction)action).getRangesToHighlight(that.myEditor, that.myFile);
+          for (var range : ranges) {
+            TextRange rangeInFile = range.getRangeInFile();
+            PsiFile file = range.getContainingFile();
+            if (injectedFile != null && file.getViewProvider() == injectedFile.getViewProvider()) {
+              injectionHighlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey());
+            }
+            else if (!InjectedLanguageManager.getInstance(that.myProject).isInjectedFragment(file)) {
+              highlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey());
+            }
+          }
+        }
+      }
+    };
+    that.myPopup.addListSelectionListener(selectionListener);
+
     that.myPopup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
+        if (list != null) {
+          selectionListener.highlightOnHover(list.getSelectedValue());
+        }
+      }
+
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         highlighter.dropHighlight();
         injectionHighlighter.dropHighlight();
         that.myPreviewPopupUpdateProcessor.hide();
         that.myPopupShown = false;
-      }
-    });
-    that.myPopup.addListSelectionListener(e -> {
-      final Object source = e.getSource();
-      highlighter.dropHighlight();
-      injectionHighlighter.dropHighlight();
-
-      if (source instanceof DataProvider) {
-        final Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)source);
-        if (selectedItem instanceof IntentionActionWithTextCaching) {
-          IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
-          if (that.myPopup instanceof ListPopupImpl) {
-            updatePreviewPopup(that, action, ((ListPopupImpl)that.myPopup).getList().getSelectedIndex());
-          }
-          if (action instanceof SuppressIntentionActionFromFix) {
-            if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
-              final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
-              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-              if (container != null) {
-                injectionHighlighter.highlight(container, Collections.singletonList(container));
-              }
-            }
-            else {
-              final PsiElement at = that.myFile.findElementAt(that.myEditor.getCaretModel().getOffset());
-              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-              if (container != null) {
-                highlighter.highlight(container, Collections.singletonList(container));
-              }
-            }
-          }
-        }
       }
     });
 

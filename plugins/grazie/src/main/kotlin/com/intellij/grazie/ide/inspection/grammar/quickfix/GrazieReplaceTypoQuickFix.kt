@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
+import com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
@@ -16,6 +17,7 @@ import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextProblem
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -41,6 +43,7 @@ object GrazieReplaceTypoQuickFix {
     private val replacement: String,
     private val underlineRanges: List<SmartPsiFileRange>,
     private val replacementRange: SmartPsiFileRange,
+    private val toHighlight: SmartPsiFileRange,
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
     override fun getName(): String {
@@ -80,6 +83,12 @@ object GrazieReplaceTypoQuickFix {
       if (other is GrazieCustomFixWrapper) return -1
       return super.compareTo(other)
     }
+
+    override fun getRangesToHighlight(editor: Editor, _file: PsiFile): List<RangeToHighlight> {
+      val range = toHighlight.range ?: return listOf()
+      val file = toHighlight.containingFile ?: return listOf()
+      return listOf(RangeToHighlight(file, TextRange.create(range), EditorColors.SEARCH_RESULT_ATTRIBUTES))
+    }
   }
 
   @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
@@ -96,6 +105,7 @@ object GrazieReplaceTypoQuickFix {
     val spm = SmartPointerManager.getInstance(file.project)
     @Suppress("HardCodedStringLiteral") val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
+    val toHighlight = spm.createSmartPsiFileRangePointer(file, problem.text.textRangeToFile(makeNonEmpty(problem.replacementRange, file)))
     problem.corrections.forEachIndexed { index, suggestion ->
       val commonPrefix = commonPrefixLength(suggestion, replacedText)
       val commonSuffix =
@@ -104,9 +114,21 @@ object GrazieReplaceTypoQuickFix {
       val replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
       result.add(ChangeToVariantAction(
         problem.rule, index, familyName, suggestion, replacement, underlineRanges,
-        spm.createSmartPsiFileRangePointer(file, problem.text.textRangeToFile(localRange))))
+        spm.createSmartPsiFileRangePointer(file, problem.text.textRangeToFile(localRange)),
+        toHighlight,
+      ))
     }
     return result
+  }
+
+  private fun makeNonEmpty(range: TextRange, file: PsiFile): TextRange {
+    var start = range.startOffset
+    var end = range.endOffset
+    if (start == end) {
+      if (end < file.textLength) end++
+      else if (start > 0) start--
+    }
+    return TextRange(start, end)
   }
 
   fun familyName(problem: TextProblem): @IntentionFamilyName String =
