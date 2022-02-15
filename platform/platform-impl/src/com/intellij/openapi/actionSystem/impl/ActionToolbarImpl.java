@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
@@ -172,6 +173,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons) {
+    this(place, actionGroup, horizontal, decorateButtons, actionGroup,
+         ActionManager.getInstance().getId(actionGroup instanceof CustomisedActionGroup
+                                           ? ((CustomisedActionGroup)actionGroup).getOrigin() : actionGroup));
+  }
+
+
+  public ActionToolbarImpl(@NotNull String place,
+                           @NotNull ActionGroup actionGroup,
+                           boolean horizontal,
+                           boolean decorateButtons,
+                           ActionGroup popupActionGroup,
+                           String popupActionId) {
     super(null);
     if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
       LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
@@ -216,8 +229,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
-    myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
 
+    myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), myPlace);
   }
 
   @Override
