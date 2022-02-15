@@ -26,8 +26,11 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
   }
 
   override fun validate(project: Project, file: VirtualFile): String? {
+    val detected = PandocExecutableDetector.detect(project)
+
     return when {
-      PandocExecutableDetector.detect().isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
+      detected == null -> MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
+      detected.isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
       else -> null
     }
   }
