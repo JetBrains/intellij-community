@@ -8,14 +8,9 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.uast.UastVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UField;
-import org.jetbrains.uast.UastContextKt;
-import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
+import org.jetbrains.uast.*;
 
 import java.util.Set;
 
@@ -38,13 +33,26 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitInspectionBase {
 
   @Override
   public @NotNull PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new UastVisitorAdapter(new AbstractUastNonRecursiveVisitor() {
+    UastLanguagePlugin plugin = UastFacade.INSTANCE.findPlugin(holder.getFile());
+    if (plugin == null) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    return new PsiElementVisitor() {
       @Override
-      public boolean visitClass(@NotNull UClass node) {
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof PsiNameIdentifierOwner) {
+          UElement uElement = plugin.convertElementWithParent(element, UClass.class);
+          if (uElement instanceof UClass) {
+            visitClass((UClass)uElement);
+          }
+        }
+      }
+
+      public void visitClass(@NotNull UClass node) {
         PsiClass psiClass = node.getJavaPsi();
-        if (psiClass.isInterface()) return true;
-        if (!InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getName())) return true;
-        if (hasCustomPreviewStrategy(psiClass)) return true;
+        if (psiClass.isInterface()) return;
+        if (!InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getName())) return;
+        if (hasCustomPreviewStrategy(psiClass)) return;
         // PSI mirror of FileModifier#getFileModifierForPreview implementation
         for (PsiField field : psiClass.getFields()) {
           if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
@@ -67,7 +75,6 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitInspectionBase {
                                    DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"));
           }
         }
-        return true;
       }
 
       private boolean hasCustomPreviewStrategy(PsiClass psiClass) {
@@ -82,6 +89,6 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitInspectionBase {
         }
         return false;
       }
-    }, true);
+    };
   }
 }
