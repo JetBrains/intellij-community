@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.google.common.base.Predicate;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -106,14 +107,20 @@ public final class PyExtractSuperclassHelper {
    * If class explicitly extends object we shall move it even in Py3K
    */
   private static boolean isObjectParentDeclaredExplicitly(@NotNull final PyClass clazz) {
-    return Arrays.stream(clazz.getSuperClassExpressions()).anyMatch(o -> PyNames.OBJECT.equals(o.getName()));
+    return ContainerUtil.exists(clazz.getSuperClassExpressions(), o -> PyNames.OBJECT.equals(o.getName()));
   }
 
+  private static boolean isRefactoredClassInBackedFile(VirtualFile targetFile, PyClass pyClass) {
+    VirtualFile file = pyClass.getContainingFile().getVirtualFile();
+    return file instanceof BackedVirtualFile &&
+           Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);
+  }
+  
   private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManager.getApplication().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source
-    if (Comparing.equal(file, clazz.getContainingFile().getVirtualFile())) {
+    if (Comparing.equal(file, clazz.getContainingFile().getVirtualFile()) || isRefactoredClassInBackedFile(file, clazz)) {
       return (PyClass)clazz.getParent().addBefore(newClass, clazz);
     }
 
