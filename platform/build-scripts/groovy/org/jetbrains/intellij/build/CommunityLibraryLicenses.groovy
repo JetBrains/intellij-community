@@ -757,7 +757,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-go-exp"),
     jetbrainsLibrary("completion-ranking-java"),
     jetbrainsLibrary("completion-ranking-java-exp"),
-    jetbrainsLibrary("completion-ranking-java-exp-no-pos"),
+    jetbrainsLibrary("completion-ranking-java-exp2"),
     jetbrainsLibrary("completion-ranking-js-exp"),
     jetbrainsLibrary("completion-ranking-kotlin"),
     jetbrainsLibrary("completion-ranking-kotlin-exp"),
