@@ -16,11 +16,9 @@ import javax.swing.text.JTextComponent
 class DialogPanel : JBPanel<DialogPanel> {
   var preferredFocusedComponent: JComponent? = null
 
-  var panelValidationRequestors: List<DialogValidationRequestor> = emptyList()
-  var componentValidationRequestors: Map<JComponent, List<DialogValidationRequestor>> = emptyMap()
-  var componentValidations: Map<JComponent, List<DialogValidation>> = emptyMap()
-  var panelValidationsOnApply: List<DialogValidation> = emptyList()
-  var componentValidationsOnApply: Map<JComponent, List<DialogValidation>> = emptyMap()
+  var validationRequestors: Map<JComponent, List<DialogValidationRequestor>> = emptyMap()
+  var validations: Map<JComponent, List<DialogValidation>> = emptyMap()
+  var validationsOnApply: Map<JComponent, List<DialogValidation>> = emptyMap()
 
   var applyCallbacks: Map<JComponent?, List<() -> Unit>> = emptyMap()
   var resetCallbacks: Map<JComponent?, List<() -> Unit>> = emptyMap()
@@ -50,7 +48,7 @@ class DialogPanel : JBPanel<DialogPanel> {
     this.parentDisposable = parentDisposable
     registerValidatorsForIntegratedPanels(integratedPanels.keys)
 
-    for (component in componentValidationRequestors.keys + componentValidationsOnApply.keys) {
+    for (component in validationRequestors.keys + validationsOnApply.keys) {
       val validator = ComponentValidator(parentDisposable)
       registerValidators(component, validator)
       registerValidationRequestors(component, validator, parentDisposable)
@@ -61,12 +59,12 @@ class DialogPanel : JBPanel<DialogPanel> {
   private fun registerValidators(component: JComponent, validator: ComponentValidator) {
     validator.withValidator(object : Supplier<ValidationInfo?> {
       override fun get(): ValidationInfo? {
-        applyValidators(componentValidations[component])?.let { validationInfo ->
+        applyValidators(validations[component])?.let { validationInfo ->
           fireValidationStatusChanged(component, validationInfo)
           return validationInfo
         }
         if (applyValidationRequestor.isActive) {
-          applyValidators(componentValidationsOnApply[component])?.let { validationInfo ->
+          applyValidators(validationsOnApply[component])?.let { validationInfo ->
             fireValidationStatusChanged(component, validationInfo)
             return validationInfo
           }
@@ -82,7 +80,7 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   private fun registerValidationRequestors(component: JComponent, validator: ComponentValidator, parentDisposable: Disposable) {
-    val validationRequestors = panelValidationRequestors + (componentValidationRequestors[component] ?: emptyList())
+    val validationRequestors = validationRequestors[component] ?: emptyList()
     if (validationRequestors.isEmpty() && component is JTextComponent) {
       validator.andRegisterOnDocumentListener(component)
     }
@@ -113,7 +111,7 @@ class DialogPanel : JBPanel<DialogPanel> {
 
   fun validateAll(): List<ValidationInfo> {
     applyValidationRequestor.validateAll()
-    val panelValidationInfo = panelValidationsOnApply.mapNotNull { it.validate() }
+    val panelValidationInfo = _validateCallbacks.mapNotNull { it.validate() }
     val integratedPanelValidationInfo = integratedPanels.keys.flatMap { it.validateAll() }
     return componentValidationStatus.values + panelValidationInfo + integratedPanelValidationInfo
   }
@@ -215,28 +213,30 @@ class DialogPanel : JBPanel<DialogPanel> {
   var validateCallbacks: List<() -> ValidationInfo?>
     get() {
       val result = mutableListOf<() -> ValidationInfo?>()
-      result.addAll(componentValidations.values.flatten().map(::validateCallback))
-      result.addAll(panelValidationsOnApply.map(::validateCallback))
-      result.addAll(componentValidationsOnApply.values.flatten().map(::validateCallback))
+      result.addAll(validations.values.flatten().map(::validateCallback))
+      result.addAll(_validateCallbacks.map(::validateCallback))
+      result.addAll(validationsOnApply.values.flatten().map(::validateCallback))
       result.addAll(integratedPanels.keys.flatMap { it.validateCallbacks })
       return result
     }
     set(value) {
-      panelValidationsOnApply = value.map(::validation)
+      _validateCallbacks = value.map(::validation)
     }
+
+  private var _validateCallbacks: List<DialogValidation> = emptyList()
 
   @Deprecated("Use registerValidators instead")
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
-    get() = componentValidations.mapValues { validateCallback(it.value.first()) }
+    get() = validations.mapValues { validateCallback(it.value.first()) }
     set(value) {
-      componentValidations = value.mapValues { listOf(validation(it.value)) }
+      validations = value.mapValues { listOf(validation(it.value)) }
     }
 
   @Deprecated("Use registerValidators instead")
   var customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>>
-    get() = componentValidationRequestors.mapValues { it.value.map(::customValidationRequestor) }
+    get() = validationRequestors.mapValues { it.value.map(::customValidationRequestor) }
     set(value) {
-      componentValidationRequestors = value.mapValues { it.value.map(::validationRequestor) }
+      validationRequestors = value.mapValues { it.value.map(::validationRequestor) }
     }
 
   private fun validateCallback(validator: DialogValidation): () -> ValidationInfo? {

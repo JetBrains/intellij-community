@@ -167,13 +167,6 @@ interface Panel : CellBase<Panel> {
    */
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
 
-  /**
-   * Registers custom validation requestor for all components.
-   * @param validationRequestor gets callback (component validator) that should be subscribed on custom event.
-   */
-  fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Panel
-
-  fun validationRequestor(validationRequestor: DialogValidationRequestor): Panel
 }
 
 @Deprecated("Use buttonsGroup(...) instead")

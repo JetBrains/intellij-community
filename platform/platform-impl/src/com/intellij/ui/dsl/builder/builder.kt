@@ -34,9 +34,7 @@ private fun initPanel(dialogPanelConfig: DialogPanelConfig, panel: DialogPanel) 
   panel.resetCallbacks = dialogPanelConfig.resetCallbacks
   panel.isModifiedCallbacks = dialogPanelConfig.isModifiedCallbacks
 
-  panel.panelValidationRequestors = dialogPanelConfig.panelValidationRequestors
-  panel.componentValidationRequestors = dialogPanelConfig.componentValidationRequestors
-  panel.componentValidations = dialogPanelConfig.componentValidations
-  panel.panelValidationsOnApply = dialogPanelConfig.panelValidationsOnApply
-  panel.componentValidationsOnApply = dialogPanelConfig.componentValidationsOnApply
+  panel.validationRequestors = dialogPanelConfig.validationRequestors
+  panel.validations = dialogPanelConfig.validations
+  panel.validationsOnApply = dialogPanelConfig.validationsOnApply
 }

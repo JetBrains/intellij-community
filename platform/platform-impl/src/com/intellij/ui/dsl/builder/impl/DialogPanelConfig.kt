@@ -20,11 +20,9 @@ internal class DialogPanelConfig {
   val resetCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
   val isModifiedCallbacks = linkedMapOf<JComponent?, MutableList<() -> Boolean>>()
 
-  val panelValidationRequestors = mutableListOf<DialogValidationRequestor>()
-  val componentValidationRequestors = linkedMapOf<JComponent, MutableList<DialogValidationRequestor>>()
-  val componentValidations = linkedMapOf<JComponent, MutableList<DialogValidation>>()
-  val panelValidationsOnApply = mutableListOf<DialogValidation>()
-  val componentValidationsOnApply = linkedMapOf<JComponent, MutableList<DialogValidation>>()
+  val validationRequestors = linkedMapOf<JComponent, MutableList<DialogValidationRequestor>>()
+  val validations = linkedMapOf<JComponent, MutableList<DialogValidation>>()
+  val validationsOnApply = linkedMapOf<JComponent, MutableList<DialogValidation>>()
 }
 
 fun <T> MutableMap<JComponent?, MutableList<() -> T>>.register(component: JComponent?, callback: () -> T) {

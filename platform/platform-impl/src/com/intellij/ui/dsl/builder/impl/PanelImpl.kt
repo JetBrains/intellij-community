@@ -463,15 +463,6 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
     }
   }
-
-  override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): PanelImpl {
-    return validationRequestor(DialogValidationRequestor { _, it -> validationRequestor(it) })
-  }
-
-  override fun validationRequestor(validationRequestor: DialogValidationRequestor): PanelImpl {
-    dialogPanelConfig.panelValidationRequestors.add(validationRequestor)
-    return this
-  }
 }
 
 internal data class PanelContext(

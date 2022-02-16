@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.validation.*
@@ -177,7 +176,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor): CellImpl<T> {
     val origin = component.origin
-    dialogPanelConfig.componentValidationRequestors.getOrPut(origin) { SmartList() }
+    dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
       .add(validationRequestor)
     return this
   }
@@ -193,7 +192,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationOnApply(validation: DialogValidation): CellImpl<T> {
     val origin = component.origin
-    dialogPanelConfig.componentValidationsOnApply.getOrPut(origin) { SmartList() }
+    dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
       .add(validation)
     return this
   }
@@ -209,7 +208,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationOnInput(validation: DialogValidation): CellImpl<T> {
     val origin = component.origin
-    dialogPanelConfig.componentValidations.getOrPut(origin) { SmartList() }
+    dialogPanelConfig.validations.getOrPut(origin) { SmartList() }
       .add(validation)
 
     // Fallback in case if no validation requestors is defined
@@ -221,22 +220,23 @@ internal class CellImpl<T : JComponent>(
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
     val origin = component.origin
-    val componentValidationRequestors = dialogPanelConfig.componentValidationRequestors.getOrPut(origin) { SmartList() }
-    componentValidationRequestors.add(object : DialogValidationRequestor {
+    val validationRequestors = dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
+    validationRequestors.add(object : DialogValidationRequestor {
       override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
-        if (dialogPanelConfig.panelValidationRequestors.isNotEmpty()) return
-        if (componentValidationRequestors.size > 1) return
+        if (validationRequestors.size > 1) return
 
-        logger<Cell<*>>().warn("Please, install Cell.validationRequestor or Panel.validationRequestor", stackTrace)
-        val requestor = when (val property = property) {
-          null -> when (origin) {
-            is JTextComponent -> WHEN_TEXT_CHANGED(origin)
-            else -> null
-          }
-          is GraphProperty -> AFTER_PROPERTY_PROPAGATION(property)
-          else -> AFTER_PROPERTY_CHANGE(property)
+        val property = property
+        val requestor = when {
+          property != null -> AFTER_PROPERTY_CHANGE(property)
+          origin is JTextComponent -> WHEN_TEXT_CHANGED(origin)
+          else -> null
         }
-        requestor?.subscribe(parentDisposable, validate)
+        if (requestor != null) {
+          requestor.subscribe(parentDisposable, validate)
+        }
+        else {
+          logger<Cell<*>>().warn("Please, install Cell.validationRequestor", stackTrace)
+        }
       }
     })
   }
