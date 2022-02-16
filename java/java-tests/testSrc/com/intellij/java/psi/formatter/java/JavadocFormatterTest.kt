@@ -1666,4 +1666,126 @@ public class Test {
         """.trimIndent()
       )
   }
+
+  fun testJavadoc() {
+      doTextTest(
+        """
+        /**
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         *
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+  fun testSnippet() {
+      doTextTest(
+        """
+        /** {@snippet:
+          *   void foo() {
+          *       int x;     
+          *   }
+          * }
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * {@snippet:
+         *   void foo() {
+         *       int x;
+         *   }
+         * }
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+  fun testSnippetInBeginning() {
+      doTextTest(
+        """
+        /** {@snippet:
+          *   void foo() {
+          *       int x;     
+          *   }
+          * }
+          *    should
+          *       be 
+          *     on first column
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * {@snippet:
+         *   void foo() {
+         *       int x;
+         *   }
+         * }
+         * should
+         * be
+         * on first column
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+  fun testSnippet2() {
+      doTextTest(
+        """
+        /** {@snippet:
+          *   void foo() {
+          *       int x;     
+          *   }
+          * }
+          *    should
+          *       be 
+          *     on first column
+          *  {@snippet:
+          *   void bar() {
+          *       int y;     
+          *   }
+          *  }
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * {@snippet:
+         *   void foo() {
+         *       int x;
+         *   }
+         * }
+         * should
+         * be
+         * on first column
+         * {@snippet:
+         *   void bar() {
+         *       int y;
+         *   }
+         * }
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
 }

@@ -38,10 +38,12 @@ public class JDParser {
   private final JavaCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings myCommonSettings;
 
+  private final static String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
   private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
   private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
   private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
   private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
+  private final static Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
 
   private final static String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
 
@@ -277,6 +279,8 @@ public class JDParser {
     int firstLineToKeepIndents = -1;
     int minIndentWhitespaces = Integer.MAX_VALUE;
     boolean isInMultilineTodo = false;
+    boolean isInSnippet = false;
+    int snippetBraceBalance = 0;
 
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
@@ -313,13 +317,18 @@ public class JDParser {
           markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
           continue;
         }
-        if (preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo) token = token.trim();
+        if (preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo && snippetBraceBalance == 0) token = token.trim();
 
         list.add(token);
 
         if (markers != null) {
+          if (snippetBraceBalance == 0) {
+            if (lineHasUnclosedSnippetTag(token)) snippetBraceBalance = 1;
+          } else {
+            snippetBraceBalance += getLineSnippetTagBraceBalance(token);
+          }
           if (lineHasUnclosedPreTag(token)) preCount++;
-          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0 || isInMultilineTodo);
+          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0 || isInMultilineTodo || snippetBraceBalance != 0);
           if (lineHasClosingPreTag(token)) preCount--;
         }
 
@@ -707,6 +716,32 @@ public class JDParser {
 
   private static boolean lineHasUnclosedPreTag(@NotNull String line) {
     return getOccurenceCount(line, PRE_TAG_START_PATTERN) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
+  }
+
+  private static int getLineSnippetTagBraceBalance(@NotNull String line) {
+    int balance = 0;
+    for (int i = 0; i < line.length(); i++) {
+      var ch = line.charAt(i);
+      if (ch == '}') {
+        balance--;
+      } else if (ch == '{') {
+        balance++;
+      }
+    }
+    return balance;
+  }
+
+  private static boolean lineHasUnclosedSnippetTag(@NotNull String line) {
+    var matcher = SNIPPET_START_PATTERN.matcher(line);
+    var hasResult = false;
+    var lastEnd = -1;
+    do {
+      hasResult = matcher.find();
+      if (hasResult) {
+        lastEnd = matcher.end();
+      }
+    } while (hasResult);
+    return lastEnd == line.length();
   }
 
   private static boolean lineHasClosingPreTag(@NotNull String line) {
