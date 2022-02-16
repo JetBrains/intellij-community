@@ -161,7 +161,7 @@ public final class CachedIntentions {
     DataContext dataContext = Utils.wrapDataContext(EditorUtil.getEditorDataContext(myEditor));
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
-      false, new DefaultActionGroup(myGuttersRaw), presentationFactory,
+      new DefaultActionGroup(myGuttersRaw), presentationFactory,
       dataContext, ActionPlaces.INTENTION_MENU);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;

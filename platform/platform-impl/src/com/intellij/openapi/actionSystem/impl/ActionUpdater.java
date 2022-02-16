@@ -59,7 +59,6 @@ final class ActionUpdater {
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
 
-  private final boolean myModalContext;
   private final PresentationFactory myPresentationFactory;
   private final DataContext myDataContext;
   private final String myPlace;
@@ -85,17 +84,15 @@ final class ActionUpdater {
   private int myEDTCallsCount;
   private long myEDTWaitNanos;
 
-  ActionUpdater(boolean isInModalContext,
-                @NotNull PresentationFactory presentationFactory,
+  ActionUpdater(@NotNull PresentationFactory presentationFactory,
                 @NotNull DataContext dataContext,
                 @NotNull String place,
                 boolean isContextMenuAction,
                 boolean isToolbarAction) {
-    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, null, null);
+    this(presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, null, null);
   }
 
-  ActionUpdater(boolean isInModalContext,
-                @NotNull PresentationFactory presentationFactory,
+  ActionUpdater(@NotNull PresentationFactory presentationFactory,
                 @NotNull DataContext dataContext,
                 @NotNull String place,
                 boolean isContextMenuAction,
@@ -103,7 +100,6 @@ final class ActionUpdater {
                 @Nullable Function<AnActionEvent, AnActionEvent> eventTransform,
                 @Nullable Consumer<Runnable> laterInvocator) {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
-    myModalContext = isInModalContext;
     myPresentationFactory = presentationFactory;
     myDataContext = dataContext;
     myPlace = place;
@@ -129,7 +125,7 @@ final class ActionUpdater {
     if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
     boolean wasPopup = action instanceof ActionGroup && ((ActionGroup)action).isPopup(myPlace);
     presentation.setPopupGroup(action instanceof ActionGroup && (presentation.isPopupGroup() || wasPopup));
-    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(presentation));
+    Supplier<Boolean> doUpdate = () -> doUpdate(action, createActionEvent(presentation));
     boolean success = callAction(action, Op.update, doUpdate);
     if (success) assertActionGroupPopupStateIsNotChanged(action, myPlace, wasPopup, presentation);
     return success ? presentation : null;
@@ -581,7 +577,7 @@ final class ActionUpdater {
   UpdateSession asFastUpdateSession(@Nullable Consumer<? super String> missedKeys,
                                     @Nullable Consumer<Runnable> laterInvocator) {
     DataContext frozenContext = Utils.freezeDataContext(myDataContext, missedKeys);
-    ActionUpdater updater = new ActionUpdater(myModalContext, myPresentationFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
+    ActionUpdater updater = new ActionUpdater(myPresentationFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
                                               myEventTransform, Objects.requireNonNull(ObjectUtils.coalesce(laterInvocator, myLaterInvocator)));
     updater.myPreCacheSlowDataKeys = false;
     return updater.asUpdateSession();
@@ -641,10 +637,10 @@ final class ActionUpdater {
   }
 
   // returns false if exception was thrown and handled
-  static boolean doUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e) {
+  static boolean doUpdate(@NotNull AnAction action, @NotNull AnActionEvent e) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
     try {
-      return !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, false);
+      return !ActionUtil.performDumbAwareUpdate(action, e, false);
     }
     catch (Throwable ex) {
       handleException(Op.update, action, e, ex);

@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
@@ -1178,8 +1177,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (forced) myForcedUpdateRequested = true;
 
     DataContext dataContext = Utils.wrapDataContext(getDataContext());
-    ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
-                                              dataContext, myPlace, false, true);
+    ActionUpdater updater = new ActionUpdater(myPresentationFactory, dataContext, myPlace, false, true);
     if (Utils.isAsyncDataContext(dataContext)) {
       CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
       myLastUpdate = null;

@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
@@ -40,7 +39,10 @@ import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
@@ -510,14 +512,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
                                  @NotNull ActionManager actionManager) {
     ActionGroup mainActionGroup = getMainMenuActionGroup();
     if (mainActionGroup == null) return;
-    boolean inModalContext = LaterInvocator.isInModalContext();
     // the only code that does not reuse ActionUpdater (do not repeat that anywhere else)
     AnAction[] children = mainActionGroup.getChildren(null);
     for (AnAction action : children) {
       if (!(action instanceof ActionGroup)) continue;
       Presentation presentation = myPresentationFactory.getPresentation(action);
       AnActionEvent e = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, actionManager, 0);
-      ActionUtil.performDumbAwareUpdate(inModalContext, action, e, false);
+      ActionUtil.performDumbAwareUpdate(action, e, false);
       if (presentation.isVisible()) {
         newVisibleActions.add(action);
       }

@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -1647,7 +1646,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           inputEvent == null ? 0 : inputEvent.getModifiersEx()
         );
 
-        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
+        ActionUtil.performDumbAwareUpdate(action, event, false);
         if (!event.getPresentation().isEnabled()) {
           result.setRejected();
           return;
