@@ -145,6 +145,14 @@ public class TextWithMnemonicTest {
   }
 
   @Test
+  public void parseUnderscoreAndAmpersand() {
+    TextWithMnemonic test = TextWithMnemonic.parse("_Hello & Goodbye");
+    assertEquals("Hello & Goodbye", test.getText());
+    assertEquals("_Hello & Goodbye", test.toString());
+    assertMnemonic(test, 0, KeyEvent.VK_H, 'H');
+  }
+
+  @Test
   public void parseJapanese() {
     TextWithMnemonic hello = TextWithMnemonic.parse("hello(&H)");
     assertEquals("hello(_H)", hello.toString());
@@ -222,7 +230,8 @@ public class TextWithMnemonicTest {
   }
 
   private static void assertMnemonic(@NotNull TextWithMnemonic wrapper, int expectedIndex, int expectedCode, char expectedChar) {
-    assertEquals(expectedChar, wrapper.getMnemonicChar());
+    // Convert chars to string for better message
+    assertEquals(String.valueOf(expectedChar), String.valueOf(wrapper.getMnemonicChar()));
     assertEquals(expectedCode, wrapper.getMnemonicCode());
     assertEquals(expectedIndex, wrapper.getMnemonicIndex());
   }
