@@ -49,7 +49,7 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBa
     // PSI mirror of FileModifier#getFileModifierForPreview implementation
     for (PsiField field : psiClass.getFields()) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-      if (field.hasAnnotation(FileModifier.SafeFieldForPreview.class.getName())) continue;
+      if (field.hasAnnotation(FileModifier.SafeFieldForPreview.class.getCanonicalName())) continue;
       PsiType type = field.getType().getDeepComponentType();
       if (type instanceof PsiPrimitiveType) continue;
       if (type instanceof PsiClassType) {
