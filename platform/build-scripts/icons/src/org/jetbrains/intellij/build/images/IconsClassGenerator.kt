@@ -12,7 +12,7 @@ import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.lang.Murmur3_32Hash
-import com.intellij.util.readXmlAsModel
+import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties

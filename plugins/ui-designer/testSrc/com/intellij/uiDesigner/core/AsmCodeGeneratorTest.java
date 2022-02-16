@@ -28,6 +28,7 @@ import com.intellij.util.*;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
+import com.intellij.util.xml.dom.XmlDomReader;
 import com.sun.tools.javac.Main;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;

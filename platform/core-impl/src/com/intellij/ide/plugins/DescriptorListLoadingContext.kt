@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.XmlInterner
+import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus

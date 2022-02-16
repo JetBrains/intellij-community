@@ -10,7 +10,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.NoOpXmlInterner
+import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write

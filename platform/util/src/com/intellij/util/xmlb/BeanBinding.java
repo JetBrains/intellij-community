@@ -7,7 +7,7 @@ import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.PropertyCollector;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;

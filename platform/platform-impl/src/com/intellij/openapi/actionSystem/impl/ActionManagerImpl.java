@@ -52,7 +52,7 @@ import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
