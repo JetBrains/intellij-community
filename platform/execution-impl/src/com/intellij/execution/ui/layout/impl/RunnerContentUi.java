@@ -1422,6 +1422,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       if (specialActions.isEmpty()) {
         var separateWatchesInVariables = ActionManager.getInstance().getAction("XDebugger.SwitchWatchesInVariables");
         if (separateWatchesInVariables instanceof ToggleAction) {
+          myViewActions.addAction(new Separator()).setAsSecondary(true);
           myViewActions.addAction(new ToggleSeparateWatches((ToggleAction)separateWatchesInVariables, true)).setAsSecondary(true);
         }
         myViewActions.addAction(new Separator()).setAsSecondary(true);
