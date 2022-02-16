@@ -38,6 +38,10 @@ class RedundantScheduledForRemovalInspectionTest : LightJavaCodeInsightFixtureTe
     myFixture.checkResultByFile("RemoveScheduledForRemoval_after.java")
   }
 
+  fun `test do not higlight if version is specified`() {
+    myFixture.testHighlighting("ScheduledForRemovalWithVersion.java")
+  }
+
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return JAVA_9
   }

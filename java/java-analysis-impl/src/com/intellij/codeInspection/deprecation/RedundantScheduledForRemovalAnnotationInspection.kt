@@ -29,6 +29,7 @@ class RedundantScheduledForRemovalAnnotationInspection : LocalInspectionTool() {
 
       private fun visitAnnotatedElement(element: PsiModifierListOwner) {
         val forRemovalAnnotation = element.getAnnotation(ApiStatus.ScheduledForRemoval::class.java.canonicalName) ?: return
+        if (forRemovalAnnotation.hasAttribute("inVersion")) return
         val deprecatedAnnotation = element.getAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) ?: return
         val forRemovalAttribute = deprecatedAnnotation.findAttribute("forRemoval")?.attributeValue
         val alreadyHasAttribute = (forRemovalAttribute as? JvmAnnotationConstantValue)?.constantValue == true
