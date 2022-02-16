@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Class must be accessed from EDT only
+ * The class must be accessed only from EDT.
  */
 public abstract class AppIcon {
   private static final Logger LOG = Logger.getInstance(AppIcon.class);
@@ -54,7 +54,8 @@ public abstract class AppIcon {
     if (ourIcon == null) {
       if (GraphicsEnvironment.isHeadless() || GraphicsUtil.isProjectorEnvironment()) {
         ourIcon = new EmptyIcon();
-      } else if (SystemInfoRt.isMac) {
+      }
+      else if (SystemInfoRt.isMac) {
         ourIcon = new MacAppIcon();
       }
       else if (SystemInfoRt.isXWindow) {
@@ -82,13 +83,13 @@ public abstract class AppIcon {
   public abstract void requestAttention(@Nullable Project project, boolean critical);
 
   /**
-   * This method requests OS to activate the specified application window. This might cause the window to steal focus from another
-   * (currently active) application, which is generally not considered acceptable. So it should be used only in special cases, when we know
-   * that the user definitely expects such behaviour. In most cases, requesting focus in the target window via standard AWT mechanism and
-   * {@link #requestAttention(Project, boolean)} should be used instead, to request user attention but not switch the focus to it
-   * automatically.
+   * This method requests the OS to activate the specified application window.
+   * This might cause the window to steal focus from another (currently active) application, which is generally not considered acceptable.
+   * So it should be used only in special cases, when we know that the user definitely expects such behaviour.
+   * In most cases, requesting focus in the target window via the standard AWT mechanism and {@link #requestAttention(Project, boolean)}
+   * should be used instead, to request user attention but not switch the focus to it automatically.
    * <p>
-   * This method might resort to requesting user attention to target window, if focus stealing is not supported by OS
+   * This method might resort to requesting user attention to a target window if focus stealing is not supported by the OS
    * (this is the case on Windows, where focus stealing can only be enabled using {@link WinFocusStealer}).
    */
   public void requestFocus(IdeFrame frame) {
@@ -669,7 +670,7 @@ public abstract class AppIcon {
     protected void requestFocus(@Nullable Window window) {
       if (window != null) {
         try {
-          // This is required for the focus stealing mechanism to work reliably,
+          // This is required for the focus stealing mechanism to work reliably;
           // see WinFocusStealer.setFocusStealingEnabled javadoc for details
           Thread.sleep(Registry.intValue("win.request.focus.delay.ms"));
         }
