@@ -6,11 +6,14 @@ import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.InlineIconButton
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
+import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ClickListener
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalBox
@@ -35,6 +38,7 @@ import java.awt.Cursor
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.*
+import kotlin.properties.Delegates
 
 object GHPRReviewThreadComponent {
 
@@ -61,40 +65,72 @@ object GHPRReviewThreadComponent {
     val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover,
                                         tooltip = GithubBundle.message("pull.request.timeline.review.thread.expand"))
 
-    val panel = JPanel(VerticalLayout(4)).apply {
+    val contentPanel = RoundedPanel(VerticalLayout(4), 8).apply {
       isOpaque = false
       add(createFileName(thread, selectInToolWindowHelper, collapseButton, expandButton))
     }
 
-    object : CollapseController(thread, panel, collapseButton, expandButton) {
-      override fun createThreadsPanel(): JComponent = JPanel(VerticalLayout(12)).apply {
-        isOpaque = false
+    val commentPanel = JPanel(VerticalLayout(4)).apply {
+      isOpaque = false
+    }
 
-        add(diffComponentFactory.createComponent(thread.diffHunk, thread.startLine))
+    object : CollapseController(thread, contentPanel, commentPanel, collapseButton, expandButton) {
 
-        add(GHPRReviewThreadCommentsPanel.create(thread,
-                                                 GHPRReviewCommentComponent.factory(
-                                                   project, reviewDataProvider, avatarIconsProvider, thread, false
-                                                 )
-          ))
-
-        if (reviewDataProvider.canComment()) {
-          add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
+      override fun createDiffAndCommentsPanels(): Pair<JComponent, JComponent> {
+        val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine).apply {
+          border = IdeBorderFactory.createBorder(SideBorder.TOP)
         }
+
+        val commentsComponent = JPanel(VerticalLayout(12)).apply {
+          isOpaque = false
+          val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, reviewDataProvider, avatarIconsProvider, thread, false)
+          add(GHPRReviewThreadCommentsPanel.create(thread, reviewCommentComponent))
+
+          if (reviewDataProvider.canComment()) {
+            add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
+          }
+        }
+        return diffComponent to commentsComponent
       }
     }
 
 
-    return panel
+    return JPanel(VerticalLayout(4)).apply {
+      isOpaque = false
+      add(contentPanel)
+      add(commentPanel)
+    }
   }
 
   private abstract class CollapseController(private val thread: GHPRReviewThreadModel,
-                                            private val panel: JPanel,
+                                            private val contentPanel: JPanel,
+                                            private val commentPanel: JPanel,
                                             private val collapseButton: InlineIconButton,
                                             private val expandButton: InlineIconButton) {
 
     private val collapseModel = SingleValueModel(true)
-    private var threadsPanel: JComponent? = null
+    private var childPanels by Delegates.observable<Pair<JComponent, JComponent>?>(null) { _, oldValue, newValue ->
+      var revalidate = false
+      if (oldValue != null) {
+        contentPanel.remove(oldValue.first)
+        commentPanel.remove(oldValue.second)
+        revalidate = true
+      }
+      if (newValue != null) {
+        contentPanel.add(newValue.first)
+        commentPanel.add(newValue.second)
+      }
+      if (revalidate) {
+        contentPanel.revalidate()
+        commentPanel.revalidate()
+      }
+      else {
+        contentPanel.validate()
+        commentPanel.validate()
+      }
+      contentPanel.repaint()
+      commentPanel.repaint()
+    }
 
     init {
       collapseButton.actionListener = ActionListener { collapseModel.value = true }
@@ -106,27 +142,19 @@ object GHPRReviewThreadComponent {
     private fun update() {
       val shouldBeVisible = !thread.isResolved || !collapseModel.value
       if (shouldBeVisible) {
-        if (threadsPanel == null) {
-          threadsPanel = createThreadsPanel()
-          panel.add(threadsPanel!!)
-          panel.validate()
-          panel.repaint()
+        if (childPanels == null) {
+          childPanels = createDiffAndCommentsPanels()
         }
       }
       else {
-        if (threadsPanel != null) {
-          panel.remove(threadsPanel!!)
-          panel.validate()
-          panel.repaint()
-        }
-        threadsPanel = null
+        childPanels = null
       }
 
       collapseButton.isVisible = thread.isResolved && !collapseModel.value
       expandButton.isVisible = thread.isResolved && collapseModel.value
     }
 
-    protected abstract fun createThreadsPanel(): JComponent
+    abstract fun createDiffAndCommentsPanels(): Pair<JComponent, JComponent>
   }
 
   private fun createFileName(thread: GHPRReviewThreadModel,
@@ -164,6 +192,8 @@ object GHPRReviewThreadComponent {
     }
 
     return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("${JBUIScale.scale(5)}", "0").fill().noGrid())).apply {
+      border = JBUI.Borders.empty(10)
+
       add(nameLabel)
 
       if (!path.isBlank()) add(JLabel(path).apply {
