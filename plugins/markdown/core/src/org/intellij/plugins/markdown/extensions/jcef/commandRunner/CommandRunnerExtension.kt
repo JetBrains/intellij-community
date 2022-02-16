@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppUIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
@@ -161,7 +162,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     val project = panel.project
     val virtualFile = panel.virtualFile
     if (project != null && virtualFile != null) {
-      execute(project, virtualFile.parent.canonicalPath, true, command, executor)
+      execute(project, virtualFile.parent.canonicalPath, true, command, executor, RunnerPlace.PREVIEW)
     }
   }
 
@@ -172,6 +173,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     val virtualFile = panel.virtualFile
     if (project != null && virtualFile != null) {
       TrustedProjectUtil.executeIfTrusted(project) {
+        RUNNER_EXECUTED.log(project,  RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass.name)
         runner.run(command, project, virtualFile.parent.canonicalPath, executor)
       }
     }
@@ -297,12 +299,13 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       }
     }
 
-    fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
+    fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor, place: RunnerPlace): Boolean {
       val dataContext = createDataContext(project, localSession, workingDirectory, executor)
       val trimmedCmd = command.trim()
       for (provider in RunAnythingProvider.EP_NAME.extensionList) {
         val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
         return TrustedProjectUtil.executeIfTrusted(project) {
+          RUNNER_EXECUTED.log(project, place, RunnerType.LINE, provider.javaClass.name)
           provider.execute(dataContext, value)
         }
       }
@@ -333,4 +336,12 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
     private val LOG = logger<CommandRunnerExtension>()
   }
+}
+
+enum class RunnerPlace {
+  EDITOR, PREVIEW
+}
+
+enum class RunnerType {
+  BLOCK, LINE
 }

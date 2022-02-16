@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
@@ -48,7 +49,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
     val runAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
       AllIcons.RunConfigurations.TestState.Run) {
       override fun actionPerformed(e: AnActionEvent) {
-        execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance())
+        execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance(), RunnerPlace.EDITOR)
       }
     }
     return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(runAction)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
@@ -67,6 +68,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
       override fun actionPerformed(event: AnActionEvent) {
         val project = event.getRequiredData(CommonDataKeys.PROJECT)
         TrustedProjectUtil.executeIfTrusted(project) {
+          RUNNER_EXECUTED.log(project, RunnerPlace.EDITOR, RunnerType.BLOCK, runner.javaClass.name)
           runner.run(text, project, dir, DefaultRunExecutor.getRunExecutorInstance())
         }
       }

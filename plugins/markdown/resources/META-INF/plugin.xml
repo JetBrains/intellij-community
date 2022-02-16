@@ -308,6 +308,7 @@ Includes the following features:</p>
                  description="A multiplier used in translation of awt scroll event to the browser one"/>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
+    <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
   </extensions>
 
   <applicationListeners>
