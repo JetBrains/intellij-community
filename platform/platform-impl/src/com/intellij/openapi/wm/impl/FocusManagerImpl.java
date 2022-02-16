@@ -11,7 +11,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -20,7 +23,6 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
@@ -33,7 +35,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
@@ -44,9 +45,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
   private final IdeEventQueue myQueue;
-
-  private final EdtAlarm myFocusedComponentAlarm;
-  private final EdtAlarm myForcedFocusRequestsAlarm;
 
   private final Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<>();
 
@@ -59,9 +57,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   public FocusManagerImpl() {
     myQueue = IdeEventQueue.getInstance();
-
-    myFocusedComponentAlarm = new EdtAlarm();
-    myForcedFocusRequestsAlarm = new EdtAlarm();
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
@@ -154,8 +149,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @DirtyUI
   @Override
   public void dispose() {
-    myForcedFocusRequestsAlarm.cancelAllRequests();
-    myFocusedComponentAlarm.cancelAllRequests();
     for (FurtherRequestor requestor : myValidFurtherRequestors) {
       Disposer.dispose(requestor);
     }
@@ -304,22 +297,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     @Override
     public void dispose() {
       myDisposed = true;
-    }
-  }
-
-  static final class EdtAlarm {
-    private final Set<EdtRunnable> myRequests = new HashSet<>();
-
-    public void cancelAllRequests() {
-      for (EdtRunnable each : myRequests) {
-        each.expire();
-      }
-      myRequests.clear();
-    }
-
-    public void addRequest(@NotNull EdtRunnable runnable, int delay) {
-      myRequests.add(runnable);
-      EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay, TimeUnit.MILLISECONDS);
     }
   }
 
