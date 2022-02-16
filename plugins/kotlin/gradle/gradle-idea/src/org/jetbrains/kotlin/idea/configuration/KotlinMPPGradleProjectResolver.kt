@@ -45,6 +45,9 @@ import org.jetbrains.kotlin.idea.configuration.utils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
+import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import org.jetbrains.kotlin.util.firstNotNullResult
 import org.jetbrains.plugins.gradle.model.*
@@ -791,10 +794,24 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet).map { dependsOnSourceSet ->
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
                 }
-                //TODO(auskov): target flours are lost here
-                info.compilerArguments = createCompilerArguments(
-                    emptyList(), sourceSet.actualPlatforms.singleOrNull() ?: KotlinPlatform.COMMON
-                ).also {
+
+                // More precise computation of KotlinPlatform is required in the case of projects
+                // with enabled HMPP and Android + JVM targets.
+                // Early, for common source set in such project the K2MetadataCompilerArguments instance
+                // was creating, since `sourceSet.actualPlatforms.platforms` contains more then 1 KotlinPlatform.
+                val platformKinds = sourceSet.actualPlatforms.platforms
+                    .map { IdePlatformKindTooling.getTooling(it).kind }
+                    .toSet()
+                val compilerArgumentsPlatform = platformKinds.singleOrNull()?.let {
+                    when (it) {
+                        is JvmIdePlatformKind -> KotlinPlatform.JVM
+                        is JsIdePlatformKind -> KotlinPlatform.JS
+                        is NativeIdePlatformKind -> KotlinPlatform.NATIVE
+                        else -> KotlinPlatform.COMMON
+                    }
+                } ?: KotlinPlatform.COMMON
+
+                info.compilerArguments = createCompilerArguments(emptyList(), compilerArgumentsPlatform).also {
                     it.multiPlatform = true
                     it.languageVersion = languageSettings.languageVersion
                     it.apiVersion = languageSettings.apiVersion
