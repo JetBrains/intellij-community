@@ -13,16 +13,14 @@ import java.util.Objects;
 
 public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayoutModificationAction {
 
-  private final RunnerContentUi myUi;
   private final Content myContent;
   private final ContentLayoutStateSettings myLayoutSettings;
 
   public RestoreViewAction(@NotNull RunnerContentUi ui, @NotNull Content content) {
-    this(ui, content, new DefaultContentStateSettings(ui, content));
+    this(content, new DefaultContentStateSettings(ui, content));
   }
 
-  public RestoreViewAction(@NotNull RunnerContentUi ui, @NotNull Content content, ContentLayoutStateSettings layoutSettings) {
-    myUi = ui;
+  public RestoreViewAction(@NotNull Content content, ContentLayoutStateSettings layoutSettings) {
     myContent = content;
     myLayoutSettings = layoutSettings;
   }
@@ -41,9 +39,7 @@ public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayo
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(myLayoutSettings.getDisplayName());
-    if (isSelected(e)) {
-      e.getPresentation().setEnabled(myUi.getContentManager().getContents().length > 1);
-    }
+    e.getPresentation().setEnabled(myLayoutSettings.isEnabled());
   }
 
   public @NotNull Content getContent() {
@@ -84,6 +80,11 @@ public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayo
     @Override
     public @NotNull String getDisplayName() {
       return myContent.getDisplayName();
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return !isSelected() || myUi.getContentManager().getContents().length > 1;
     }
   }
 }

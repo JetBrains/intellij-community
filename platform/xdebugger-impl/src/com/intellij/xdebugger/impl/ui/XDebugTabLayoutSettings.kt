@@ -43,7 +43,7 @@ class XDebugTabLayoutSettings(
     myContentUI = runnerContentUi
     return mutableListOf(
       ViewLayoutModeActionGroup(content, threadsAndFramesOptions),
-      RestoreViewAction(runnerContentUi, content, variablesLayoutSettings)
+      RestoreViewAction(content, variablesLayoutSettings)
     )
   }
 
@@ -123,6 +123,14 @@ class XDebugTabLayoutSettings(
     }
 
     override fun getDisplayName(): String = XDebuggerBundle.message("xdebugger.threads.tab.layout.settings.title")
+
+    override fun isHideOptionVisible(): Boolean {
+      if (super.isHideOptionVisible()) {
+        return true
+      }
+
+      return variablesLayoutSettings.isSelected
+    }
   }
 
   inner class XDebugVariablesLayoutSettings(
@@ -144,6 +152,10 @@ class XDebugTabLayoutSettings(
     override fun getDisplayName(): String = XDebuggerBundle.message("debugger.session.tab.variables.title")
     override fun restore() {
       isSelected = true
+    }
+
+    override fun isEnabled(): Boolean {
+      return !isSelected || (content.manager?.contents?.size ?: 0) > 1 || !threadsAndFramesOptions.isHidden
     }
   }
 }

@@ -93,15 +93,7 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
 
     @Override
     public boolean isEnabled() {
-      if (isSelected()) {
-        return true;
-      }
-
-      ContentManager contentManager = myContent.getManager();
-      if (contentManager == null) {
-        return false;
-      }
-      return contentManager.getContents().length > 1;
+      return myOptions.isHideOptionVisible();
     }
 
     @Override
