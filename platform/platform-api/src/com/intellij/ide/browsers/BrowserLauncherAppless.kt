@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.GraphicsUtil
 import java.awt.Desktop
 import java.awt.GraphicsEnvironment
 import java.io.File
@@ -222,9 +223,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   protected open fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
 }
 
-// AWT-replacing Projector is not affected by that bug, detect it by GE class name to avoid direct dependency on Projector
 private fun isAffectedByDesktopBug(): Boolean =
-  Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || "PGraphicsEnvironment" != GraphicsEnvironment.getLocalGraphicsEnvironment()?.javaClass?.simpleName)
+  Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || !GraphicsUtil.isProjectorEnvironment())
 
 private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
   !isAffectedByDesktopBug() && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)

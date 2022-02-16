@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -52,8 +52,7 @@ public abstract class AppIcon {
   @NotNull
   public static AppIcon getInstance() {
     if (ourIcon == null) {
-      if (GraphicsEnvironment.isHeadless() || GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName().equals("PGraphicsEnvironment")) {
-        // PGraphicsEnvironment indicates a Projector-replaces-AWT environment, in which case any OS-specific AppIcons are not applicable
+      if (GraphicsEnvironment.isHeadless() || GraphicsUtil.isProjectorEnvironment()) {
         ourIcon = new EmptyIcon();
       } else if (SystemInfoRt.isMac) {
         ourIcon = new MacAppIcon();
