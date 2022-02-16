@@ -1332,7 +1332,7 @@ public final class MavenProjectsTree {
 
     public void update(MavenProject project, MavenProjectChanges changes) {
       deletedProjects.remove(project);
-      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));
+      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));//
     }
 
     public void deleted(MavenProject project) {

@@ -858,12 +858,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void scheduleUpdateAllProjects(boolean forceImportAndResolve) {
-    doScheduleUpdateProjects(null, false, forceImportAndResolve);
+    doScheduleUpdateProjects(List.of(), false, forceImportAndResolve);
   }
 
   @ApiStatus.Internal
   public AsyncPromise<Void> forceUpdateProjects() {
-    return (AsyncPromise<Void>)doScheduleUpdateProjects(null, true, true);
+    return (AsyncPromise<Void>)doScheduleUpdateProjects(List.of(), true, true);
   }
 
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
@@ -879,12 +879,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
     }
-    doScheduleUpdateProjects(null, true, true);
+    doScheduleUpdateProjects(List.of(), true, true);
   }
 
-  private Promise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
-                                                      final boolean forceUpdate,
-                                                      final boolean forceImportAndResolve) {
+  private Promise<Void> doScheduleUpdateProjects(@NotNull final Collection<MavenProject> projects,
+                                                 final boolean forceUpdate,
+                                                 final boolean forceImportAndResolve) {
     if (MavenUtil.isLinearImportEnabled()){
       return MavenImportingManager.getInstance(myProject)
         .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(), getGeneralSettings()).then(it -> null);
@@ -893,7 +893,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-      if (projects == null) {
+      if (projects.isEmpty()) {
         myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
       }
       else {
@@ -1420,7 +1420,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
     @Override
     public void markDirtyAllExternalProjects(@NotNull Project project) {
-      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(null, true, false));
+      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(List.of(), true, false));
     }
 
     @Override
