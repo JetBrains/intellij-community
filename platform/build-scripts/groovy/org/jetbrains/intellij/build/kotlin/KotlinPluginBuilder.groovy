@@ -110,7 +110,7 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
-    "kotlin-script-runtime",
+    "kotlinc.kotlin-script-runtime",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
