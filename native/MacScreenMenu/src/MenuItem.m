@@ -65,6 +65,7 @@ NSString* JavaStringToNSString(JNIEnv *env, jstring jstr) {
 - (id) initWithPeer:(jobject)peer asSeparator: (BOOL) asSeparator{
     self = [super initWithPeer:peer];
     if (self) {
+        isAttached = false;
         if (asSeparator) {
             nsMenuItem = (NSMenuItem*)[NSMenuItem separatorItem]; // creates autorelease
             [nsMenuItem retain];
@@ -80,6 +81,7 @@ NSString* JavaStringToNSString(JNIEnv *env, jstring jstr) {
 - (id) initWithNSObject:(NSMenuItem *)menuItem javaPeer:(jobject)peer{
     self = [super initWithPeer:peer];
     if (self) {
+        isAttached = true;
         nsMenuItem = menuItem; // must be already retained (when found by title)
     }
     return self;
@@ -252,13 +254,15 @@ NSUInteger JavaModifiersToNsKeyModifiers(jint javaModifiers, BOOL isExtMods)
 }
 
 - (void) dealloc {
-    if ([nsMenuItem.view isKindOfClass:CustomMenuItemView.class]) {
-        ((CustomMenuItemView *)nsMenuItem.view)->owner = nil;
-    }
-    nsMenuItem.view = nil;
+    if (!isAttached) {
+        if ([nsMenuItem.view isKindOfClass:CustomMenuItemView.class]) {
+            ((CustomMenuItemView *)nsMenuItem.view)->owner = nil;
+        }
+        nsMenuItem.view = nil;
 
-    [nsMenuItem setAction:NULL];
-    [nsMenuItem setTarget:nil];
+        [nsMenuItem setAction:NULL];
+        [nsMenuItem setTarget:nil];
+    }
     [nsMenuItem release];
     nsMenuItem = nil;
     [super dealloc];

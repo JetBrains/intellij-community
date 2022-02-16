@@ -385,7 +385,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     for (String title: bundle.getResourceBundle().keySet()) {
       String localizedTitle = bundle.getMessage(title);
       MenuItem item = appMenu.findItemByTitle(title);
-      if (item != null) item.setLabel(localizedTitle);
+      if (item != null) {
+        item.setLabel(localizedTitle);
+        item.dispose(); // must always dispose java-wrapper for native NSMenuItem after usage
+      }
     }
 
     //
