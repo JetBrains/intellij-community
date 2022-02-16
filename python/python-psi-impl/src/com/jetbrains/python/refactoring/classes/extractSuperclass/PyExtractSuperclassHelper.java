@@ -32,6 +32,7 @@ import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMembersUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,8 @@ public final class PyExtractSuperclassHelper {
   private PyExtractSuperclassHelper() {
   }
 
-  static void extractSuperclass(final PyClass clazz,
+  @ApiStatus.Internal
+  public static void extractSuperclass(final PyClass clazz,
                                 @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
                                 final String superBaseName,
                                 final String targetFile) {
