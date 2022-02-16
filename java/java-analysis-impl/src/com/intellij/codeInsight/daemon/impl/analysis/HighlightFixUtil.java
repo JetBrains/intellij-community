@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -449,13 +449,15 @@ public final class HighlightFixUtil {
             PsiExpression rExpression = assignment.getRExpression();
             if (rExpression != null) {
               PsiType type = rExpression.getType();
-              if (type instanceof PsiPrimitiveType && variable.getInitializer() != null) {
+              if (type instanceof PsiPrimitiveType && !PsiType.VOID.equals(type) && variable.getInitializer() != null) {
                 type = ((PsiPrimitiveType)type).getBoxedType(variable);
               }
               if (type != null) {
                 type = GenericsUtil.getVariableTypeByExpressionType(type);
-                IntentionAction fix = QUICK_FIX_FACTORY.createSetVariableTypeFix(variable, type);
-                QuickFixAction.registerQuickFixAction(info, fix);
+                if (PsiTypesUtil.isDenotableType(type, variable) && !PsiType.VOID.equals(type)) {
+                  IntentionAction fix = QUICK_FIX_FACTORY.createSetVariableTypeFix(variable, type);
+                  QuickFixAction.registerQuickFixAction(info, fix);
+                }
                 return false;
               }
             }
