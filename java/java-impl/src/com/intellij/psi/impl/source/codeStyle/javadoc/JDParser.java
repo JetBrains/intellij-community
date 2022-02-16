@@ -827,12 +827,13 @@ public class JDParser {
       sb.append('\n');
     }
     else {
+      int snippetBraceBalance = 0;
       boolean insidePreTag = false;
       for (int i = 0; i < list.size(); i++) {
         String line = list.get(i);
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(continuationPrefix);
-        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i)) {
+        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i) && snippetBraceBalance == 0) {
           sb.append(P_START_TAG);
         }
         else {
@@ -844,6 +845,12 @@ public class JDParser {
           }
           else if (lineHasClosingPreTag(line)) {
             insidePreTag = false;
+          }
+
+          if (snippetBraceBalance == 0) {
+            if (lineHasUnclosedSnippetTag(line)) snippetBraceBalance = 1;
+          } else {
+            snippetBraceBalance += getLineSnippetTagBraceBalance(line);
           }
         }
         sb.append('\n');

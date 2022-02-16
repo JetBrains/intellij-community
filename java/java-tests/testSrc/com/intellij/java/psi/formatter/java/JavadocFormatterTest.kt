@@ -1788,4 +1788,34 @@ public class Test {
         """.trimIndent()
       )
   }
+
+
+  fun testSnippetWithEmptyLine() {
+    doTextTest(
+      """
+        /** {@snippet:
+          *   void foo() {
+          *   
+          *       int x;     
+          *   }
+          * }
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+      """
+        /**
+         * {@snippet:
+         *   void foo() {
+         *
+         *       int x;
+         *   }
+         * }
+         */
+        public class Main {
+        }
+        """.trimIndent()
+    )
+  }
 }
