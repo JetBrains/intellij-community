@@ -21,7 +21,14 @@ class TypesReachingDefinitionsInstance : ReachingDefinitionsDfaInstance() {
       newMap
     }
     is FunctionalBlockBeginInstruction -> m.withNewClosureContext(m)
-    is FunctionalBlockEndInstruction -> m.withMerged(m.topClosureState).withoutClosureContext()
+    is FunctionalBlockEndInstruction -> {
+      val topState = m.topClosureState
+      if (topState == null) {
+        m
+      } else {
+        m.withMerged(topState).withoutClosureContext()
+      }
+    }
     else -> super.`fun`(m, instruction)
   }
 }

@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
+import java.util.*
 
 
 internal class InitialTypeProvider(private val start: GrControlFlowOwner, private val reverseMapping : Array<VariableDescriptor>) {
@@ -20,7 +21,7 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
       try {
         if (isCompileStatic(start)) return null
         if (descriptorId >= reverseMapping.size) {
-          thisLogger().warn("Unrecognized variable at index $descriptorId\n${start.text}")
+          thisLogger().error("Unrecognized variable at index $descriptorId", IllegalStateException(), start.text, Arrays.toString(start.controlFlow), Arrays.toString(reverseMapping))
         } else {
           val field = reverseMapping[descriptorId].castSafelyTo<ResolvedVariableDescriptor>()?.variable?.castSafelyTo<GrField>() ?: return null
           val fieldType = field.typeGroovy
