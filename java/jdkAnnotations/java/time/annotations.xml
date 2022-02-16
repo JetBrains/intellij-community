@@ -22,9 +22,51 @@
       <val val="&quot;_,_,_-&gt;new&quot;"/>
     </annotation>
   </item>
+  <item name='java.time.LocalDate java.time.LocalDate of(int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate of(int, int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="12"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate of(int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
   <item name='java.time.LocalDate java.time.LocalDate of(int, java.time.Month, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val val="&quot;_,_,_ -&gt; new&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate of(int, java.time.Month, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate of(int, java.time.Month, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate ofYearDay(int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate ofYearDay(int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="366"/>
     </annotation>
   </item>
   <item name='java.time.LocalDateTime int getDayOfMonth()'>
@@ -83,11 +125,77 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="12"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
   <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;_,_,_,_,_,_-&gt;new&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="12"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int) 5'>
+      <annotation name='org.jetbrains.annotations.Range'>
+          <val name="from" val="0"/>
+          <val name="to" val="59"/>
+      </annotation>
   </item>
   <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -95,22 +203,160 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="12"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int) 5'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int) 6'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
   <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int)'>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int, int)'>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int) 5'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.time.LocalDateTime java.time.LocalDateTime parse(java.lang.CharSequence)'>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int, int) 5'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int, int, int) 6'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime ofEpochSecond(long, int, java.time.ZoneOffset) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime parse(java.lang.CharSequence)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.time.LocalDateTime java.time.LocalDateTime parse(java.lang.CharSequence, java.time.format.DateTimeFormatter)'>
@@ -140,7 +386,73 @@
             <val name="to" val="59"/>
         </annotation>
     </item>
-    <item name='java.time.Month int getValue()'>
+    <item name='java.time.LocalTime java.time.LocalTime of(int, int) 0'>
+        <annotation name='org.jetbrains.annotations.Range'>
+            <val name="from" val="0"/>
+            <val name="to" val="23"/>
+        </annotation>
+    </item>
+  <item name='java.time.LocalTime java.time.LocalTime of(int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime of(int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime of(int, int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime of(int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime of(int, int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime of(int, int, int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime of(int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime of(int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime ofNanoOfDay(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="86399999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime ofSecondOfDay(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="86399"/>
+    </annotation>
+  </item>
+  <item name='java.time.Month int getValue()'>
         <annotation name='org.jetbrains.annotations.Range'>
             <val name="from" val="1"/>
             <val name="to" val="12"/>
@@ -255,4 +567,46 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime of(int, int, int, int, int, int, int, java.time.ZoneId) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-999999999"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime of(int, int, int, int, int, int, int, java.time.ZoneId) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="12"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime of(int, int, int, int, int, int, int, java.time.ZoneId) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime of(int, int, int, int, int, int, int, java.time.ZoneId) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime of(int, int, int, int, int, int, int, java.time.ZoneId) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime of(int, int, int, int, int, int, int, java.time.ZoneId) 5'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime of(int, int, int, int, int, int, int, java.time.ZoneId) 6'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="999999999"/>
+    </annotation>
+  </item>
 </root>
