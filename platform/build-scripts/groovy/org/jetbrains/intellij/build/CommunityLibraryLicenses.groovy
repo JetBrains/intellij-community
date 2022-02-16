@@ -781,7 +781,6 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("io.ktor.network.jvm"),
     jetbrainsLibrary("jetbrains.markdown.jvm"),
     jetbrainsLibrary("jetbrains.research.refactorinsight.kotlin.impl"),
-    jetbrainsLibrary("jps-build-script-dependencies-bootstrap"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-test"),
