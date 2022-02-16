@@ -42,6 +42,9 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
-    <orderEntry type="library" name="jps-build-script-dependencies-bootstrap" level="project" />
+    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
   </component>
 </module>
