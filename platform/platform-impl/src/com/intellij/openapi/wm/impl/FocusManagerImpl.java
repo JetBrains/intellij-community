@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -112,15 +113,21 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @DirtyUI
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null) {
-      // this branch is needed to request focus to detached project windows (editor or tool window)
-      logFocusRequest(c, project, false);
-      c.requestFocus();
+    // if focus transfer is requested to the active project's window, we call 'requestFocus' to allow focusing detached project windows
+    // (editor or tool windows), otherwise we call 'requestFocusInWindow' to avoid unexpected project switching
+    Project activeProject = ProjectUtil.getProjectForWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
+    if (activeProject != null) {
+      if (project == null) {
+        project = ProjectUtil.getProjectForComponent(c);
+      }
+      if (project == activeProject) {
+        logFocusRequest(c, project, false);
+        c.requestFocus();
+        return ActionCallback.DONE;
+      }
     }
-    else {
-      logFocusRequest(c, project, true);
-      c.requestFocusInWindow();
-    }
+    logFocusRequest(c, project, true);
+    c.requestFocusInWindow();
     return ActionCallback.DONE;
   }
 

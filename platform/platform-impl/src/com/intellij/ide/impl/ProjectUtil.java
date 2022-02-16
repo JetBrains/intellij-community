@@ -35,6 +35,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.*;
@@ -831,5 +832,21 @@ public final class ProjectUtil extends ProjectUtilCore {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       WriteAction.run(() -> Disposer.dispose(project));
     });
+  }
+
+  public static @Nullable Project getProjectForWindow(@Nullable Window window) {
+    if (window != null) {
+      while (window.getOwner() != null) {
+        window = window.getOwner();
+      }
+      if (window instanceof IdeFrame) {
+        return ((IdeFrame)window).getProject();
+      }
+    }
+    return null;
+  }
+
+  public static @Nullable Project getProjectForComponent(@Nullable Component component) {
+    return getProjectForWindow(ComponentUtil.getWindow(component));
   }
 }

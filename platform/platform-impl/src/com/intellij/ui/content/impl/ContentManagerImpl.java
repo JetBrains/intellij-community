@@ -516,7 +516,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     mySelectionHistory.remove(content);
     mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
-      return getFocusManager().requestFocus(getComponent(), true).doWhenProcessed(() -> requestFocus(content, forcedFocus));
+      return getFocusManager().requestFocusInProject(getComponent(), myProject).doWhenProcessed(() -> requestFocus(content, forcedFocus));
     }
 
     if (!checkSelectionChangeShouldBeProcessed(content, implicit)) {
