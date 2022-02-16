@@ -99,7 +99,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       setFont(new FontUIResource(font.getName(), font.getStyle(), font.getSize()));
     }
 
-    XDebuggerFrameListMouseListener.DEFAULT.installListeners(this);
+    new XDebuggerFrameListMouseListener().installListeners(this);
 
     new AnAction() {
       @Override
@@ -384,9 +384,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       }
       var leftPadding = this.getIpad().left;
       var iconWidth = myPopFrameIcon.getIconWidth();
-      var iconHeight = myPopFrameIcon.getIconHeight();
-      var topPadding = ((int)bounds.getHeight() - iconHeight) / 2;
-      return new Rectangle(leftPadding, topPadding, iconWidth, iconHeight).contains(p);
+      return new Rectangle(leftPadding, 0, iconWidth, bounds.height).contains(p);
     }
 
     Color getFrameBgColor(XStackFrame stackFrame) {
@@ -456,6 +454,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     private static final Key<Integer> HOVER_INDEX = Key.create("XDEBUGGER_HOVER_INDEX");
     private static final Key<Rectangle> HOVER_BOUNDS = Key.create("XDEBUGGER_HOVER_BOUNDS");
     private static final Key<Boolean> CAN_DROP_FRAME = Key.create("XDEBUGGER_CAN_DROP_FRAME");
+    private static final Key<Boolean> SHOULD_SHOW_HELP_TOOLTIP = Key.create("XDEBUGGER_SHOULD_SHOW_HELP_TOOLTIP");
 
     /**
      * Installs listeners to the {@link XDebuggerFramesList}.
@@ -465,9 +464,21 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
      *
      * @param list
      */
-    public void installListeners(XDebuggerFramesList list) {
+    private void installListeners(@NotNull XDebuggerFramesList list) {
       list.addMouseListener(this);
       addTo(list);
+
+      var helpTooltip = new HelpTooltip()
+        .setTitle(XDebuggerBundle.message("debugger.frame.list.help.title"))
+        .setDescription(XDebuggerBundle.message("debugger.frame.list.help.description"));
+      Shortcut[] shortcuts = CommonShortcuts.getDelete().getShortcuts();
+      if (shortcuts.length > 0) {
+        helpTooltip.setShortcut(shortcuts[0]);
+      }
+      helpTooltip.installOn(list);
+      HelpTooltip.setMasterPopupOpenCondition(list, () -> {
+        return ClientProperty.isTrue(list, SHOULD_SHOW_HELP_TOOLTIP);
+      });
     }
 
     public static @Nullable Point getMouseLocation(@NotNull Component component) {
@@ -489,10 +500,12 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     private static void updateHover(@NotNull Component component, @Nullable Point point) {
       if (!(component instanceof XDebuggerFramesList)) return;
       var list = ((XDebuggerFramesList)component);
+      var oldHoverIndex = getHoveredIndex(component);
       ClientProperty.put(list, HOVER_POSITION, null);
       ClientProperty.put(list, HOVER_BOUNDS, null);
       ClientProperty.put(list, HOVER_INDEX, -1);
       ClientProperty.put(list, CAN_DROP_FRAME, false);
+      ClientProperty.put(list, SHOULD_SHOW_HELP_TOOLTIP, false);
       boolean resetHoverActions = true;
 
       if (point != null) {
@@ -500,6 +513,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         var index = list.locationToIndex(point);
         var bounds = list.getCellBounds(index, index);
         var pointInCellBounds = bounds == null ? point : new Point(point.x - bounds.x, point.y - bounds.y);
+        if (oldHoverIndex != index) {
+          HelpTooltip.hide(list);
+        }
         if (bounds != null) {
           ClientProperty.put(list, HOVER_POSITION, pointInCellBounds);
           ClientProperty.put(list, HOVER_BOUNDS, bounds);
@@ -516,15 +532,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
           boolean isHovered = renderer.isIconHovered(pointInCellBounds, bounds);
           if (isHovered) {
             list.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            HelpTooltip tooltip = new HelpTooltip()
-              .setTitle(XDebuggerBundle.message("debugger.frame.list.help.title"))
-              .setDescription(XDebuggerBundle.message("debugger.frame.list.help.description"));
-            Shortcut[] shortcuts = CommonShortcuts.getDelete().getShortcuts();
-            if (shortcuts.length > 0) {
-              tooltip.setShortcut(shortcuts[0]);
-            }
-            tooltip.installOn(list);
-
+            ClientProperty.put(list, SHOULD_SHOW_HELP_TOOLTIP, true);
             resetHoverActions = false;
           }
         }
@@ -532,7 +540,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
 
       if (resetHoverActions) {
         list.setCursor(Cursor.getDefaultCursor());
-        HelpTooltip.dispose(list);
+        HelpTooltip.hide(list);
       }
 
       component.repaint();
@@ -629,8 +637,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         ComponentUtil.findComponentsOfType(component, XDebuggerFrameListRenderer.class)
       );
     }
-
-    public static final XDebuggerFrameListMouseListener DEFAULT = new XDebuggerFrameListMouseListener();
   }
 
   private static class XDebuggerPopFrameIcon extends JBScalableIcon {
