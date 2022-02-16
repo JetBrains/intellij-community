@@ -30,7 +30,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   /**
-   * @deprecated use {@link MavenIndicesManager#scheduleUpdateIndicesList(com.intellij.util.Consumer)}
+   * @deprecated use {@link MavenIndicesManager#scheduleUpdateIndicesList(Consumer)}
    */
   @Deprecated(forRemoval = true)
   public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
@@ -38,7 +38,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   /**
-   * @deprecated use {@link #org.jetbrains.idea.maven.indices.MavenIndicesManager#getIndex()}
+   * @deprecated use {@link MavenIndicesManager#getIndex()}
    */
   @Deprecated(forRemoval = true)
   public List<MavenIndex> getIndices() {
@@ -46,7 +46,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   /**
-   * @deprecated use {@link #org.jetbrains.idea.maven.indices.MavenIndicesManager#scheduleUpdate(List)}
+   * @deprecated use {@link MavenIndicesManager#scheduleUpdateContent(List)}
    */
   @Deprecated(forRemoval = true)
   public void scheduleUpdate(List<MavenIndex> indices) {

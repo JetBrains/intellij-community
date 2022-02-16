@@ -37,7 +37,7 @@ public interface SafeDeleteProcessorDelegate {
    * @param allElementsToDelete  all elements selected for deletion.
    * @param result               list of {@link UsageInfo} to store found usages
    * @return                     {@code null} if element should not be searched in text occurrences/comments though corresponding settings were enabled, otherwise
-   *                             bean with the information how to detect if an element is inside all elements to delete (e.g. {@link SafeDeleteProcessor#getDefaultInsideDeletedCondition(com.intellij.psi.PsiElement[])}) 
+   *                             bean with the information how to detect if an element is inside all elements to delete (e.g. {@link SafeDeleteProcessor#getDefaultInsideDeletedCondition(PsiElement[])})
    *                             and current element.
    */
   @Nullable

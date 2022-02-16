@@ -425,7 +425,7 @@ public final class PyExtractMethodUtil {
       final String name = parameter.getName();
       final String newName = map.get(name);
       if (name != null && newName != null && !name.equals(newName)) {
-        final Map<PsiElement, String> allRenames = new java.util.HashMap<>();
+        final Map<PsiElement, String> allRenames = new HashMap<>();
         allRenames.put(parameter, newName);
         final UsageInfo[] usages = RenameUtil.findUsages(parameter, newName, false, false, allRenames);
         try {

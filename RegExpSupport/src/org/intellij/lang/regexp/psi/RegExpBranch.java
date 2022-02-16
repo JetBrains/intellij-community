@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public interface RegExpBranch extends RegExpElement {
     /**
      * Returns the atoms making up the branch.
-     * @see org.intellij.lang.regexp.psi.RegExpAtom 
+     * @see RegExpAtom
      */
     RegExpAtom @NotNull [] getAtoms();
 }

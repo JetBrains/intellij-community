@@ -469,7 +469,7 @@ public final class MavenModuleImporter {
   }
 
   /**
-   * @deprecated use {@link MavenModelUtil#getSourceLanguageLevel(org.jetbrains.idea.maven.project.MavenProject)}
+   * @deprecated use {@link MavenModelUtil#getSourceLanguageLevel(MavenProject)}
    */
   @Deprecated
   public static @NotNull LanguageLevel getLanguageLevel(MavenProject mavenProject) {
@@ -477,7 +477,7 @@ public final class MavenModuleImporter {
   }
 
   /**
-   * @deprecated use {@link org.jetbrains.idea.maven.importing.MavenModelUtil#getDefaultLevel(MavenProject)}
+   * @deprecated use {@link MavenModelUtil#getDefaultLevel(MavenProject)}
    */
   @Deprecated
   @NotNull

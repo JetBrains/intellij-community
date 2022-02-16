@@ -20,7 +20,7 @@ public interface EditorTabColorProvider {
    * @param project current IDE project.
    * @param file a file you need to highlight.
    * @return background color to highlight editor tab.
-   * @see EditorTabPresentationUtil#getEditorTabBackgroundColor(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+   * @see EditorTabPresentationUtil#getEditorTabBackgroundColor(Project, VirtualFile)
    */
   @Nullable
   Color getEditorTabColor(@NotNull Project project, @NotNull VirtualFile file);
@@ -30,7 +30,7 @@ public interface EditorTabColorProvider {
    * @param project current IDE project.
    * @param file a file you need to highlight.
    * @return background color to highlight file row in trees and lists.
-   * @see EditorTabPresentationUtil#getFileBackgroundColor(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+   * @see EditorTabPresentationUtil#getFileBackgroundColor(Project, VirtualFile)
    */
   @Nullable
   default Color getProjectViewColor(@NotNull Project project, @NotNull VirtualFile file) {

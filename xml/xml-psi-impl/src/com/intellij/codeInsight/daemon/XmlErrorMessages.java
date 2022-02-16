@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 /**
- * @deprecated use {@link com.intellij.xml.psi.XmlPsiBundle} instead. Some of the message keys needs to be updated.
- *             See @link {@link XmlErrorMessages#keyMappings}}
+ * @deprecated use {@link XmlPsiBundle} instead. Some message keys needs to be updated.
+ *             See {@link XmlErrorMessages#keyMappings}
  */
 @Deprecated(forRemoval = true)
 public class XmlErrorMessages {
@@ -26,7 +26,7 @@ public class XmlErrorMessages {
   );
 
   /**
-   * @deprecated use {@link com.intellij.xml.psi.XmlPsiBundle#message} instead
+   * @deprecated use {@link XmlPsiBundle#message} instead
    */
   @Deprecated
   public static @Nls String message(@NotNull String key, Object @NotNull ... params) {

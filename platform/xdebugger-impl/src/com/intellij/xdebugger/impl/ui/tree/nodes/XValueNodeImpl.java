@@ -223,7 +223,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   /** always compute evaluate expression from the base value container to avoid recalculation for watches
-   * @see com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl#getValueContainer()
+   * @see WatchNodeImpl#getValueContainer()
    */
   @NotNull
   public final Promise<XExpression> calculateEvaluationExpression() {
