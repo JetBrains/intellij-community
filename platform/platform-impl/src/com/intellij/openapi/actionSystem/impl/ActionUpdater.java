@@ -176,20 +176,23 @@ final class ActionUpdater {
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-
-    long start0 = System.nanoTime();
     if (isEDT || !shallEDT) {
-      try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
+      long start = System.nanoTime();
+      try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
         return call.get();
       }
       finally {
-        long elapsed = TimeoutUtil.getDurationMillis(start0);
+        long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 1000) {
-          LOG.warn(elapsed + " ms to call on BGT " + operationName);
+          LOG.warn(elapsed + (isEDT ? " ms to call on EDT " : " ms to call on BGT ") + operationName);
         }
       }
     }
+    return computeOnEdt(operationName, call);
+  }
 
+  <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call) {
+    long start0 = System.nanoTime();
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     ConcurrentList<String> warns = ContainerUtil.createConcurrentList();
     Supplier<? extends T> supplier = () -> {
@@ -206,7 +209,7 @@ final class ActionUpdater {
       myInEDTActionOperation = operationName;
       try {
         return ProgressManager.getInstance().runProcess(() -> {
-          try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
+          try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
             return call.get();
           }
         }, ProgressWrapper.wrap(progress));
@@ -215,7 +218,7 @@ final class ActionUpdater {
         myInEDTActionOperation = null;
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          warns.add(elapsed + " ms to call on EDT " + operationName + " - speed it up and/or implement UpdateInBackground.");
+          warns.add(elapsed + " ms to call on EDT " + operationName + ". See `UpdateInBackground`.");
         }
       }
     };
@@ -748,6 +751,11 @@ final class ActionUpdater {
       T existing = updater.myUserDataHolder.getUserData(key);
       return existing != null ? existing :
              updater.myUserDataHolder.putUserDataIfAbsent(key, provider.get());
+    }
+
+    @Override
+    public <T> @NotNull T computeOnEdt(@NotNull String operationName, @NotNull Supplier<T> supplier) {
+      return updater.computeOnEdt(operationName, supplier);
     }
   }
 }
