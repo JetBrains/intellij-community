@@ -57,6 +57,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The action-handler that does the code generation.
@@ -98,7 +99,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
         LOG.debug("Displaying member chooser dialog");
 
-        final MemberChooser<PsiElementClassMember> chooser =
+        final MemberChooser<PsiElementClassMember<?>> chooser =
           new MemberChooser<>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
             @Override
             protected @NotNull String getHelpId() {
@@ -124,7 +125,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
           chooser.show();
         }
         if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
-            Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(chooser.getSelectedElements());
+            Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(sortSelectedElements(dialogMembers, chooser));
 
             final TemplateResource template = header.getSelectedTemplate();
             ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
@@ -150,7 +151,17 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         LOG.debug("+++ doExecuteAction - END +++");
     }
 
-    private static PsiElementClassMember[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember[] dialogMembers) {
+  @Nullable
+  private static ArrayList<PsiElementClassMember<?>> sortSelectedElements(PsiElementClassMember<?>[] dialogMembers, 
+                                                                          MemberChooser<PsiElementClassMember<?>> chooser) {
+    List<PsiElementClassMember<?>> selectedElements = chooser.getSelectedElements();
+    if (selectedElements == null) {
+      return null;
+    }
+    return Arrays.stream(dialogMembers).filter(selectedElements::contains).collect(Collectors.toCollection(ArrayList::new));
+  }
+
+  private static PsiElementClassMember[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember[] dialogMembers) {
         return Arrays.stream(dialogMembers)
           .filter(member -> member.getElement().getContainingClass() == clazz)
           .toArray(PsiElementClassMember[]::new);
