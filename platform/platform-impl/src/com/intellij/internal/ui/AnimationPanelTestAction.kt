@@ -490,7 +490,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
             label.text = value.toString().split("_").joinToString(" ") {
               it.toLowerCase().capitalize()
             }
-          }).bindItem(options::type)
+          }).bindItem(options::type.toNullableBinding())
         }
         row {
           link("Change color") {

@@ -132,45 +132,6 @@ internal fun warn(message: String) {
 }
 
 @ApiStatus.Internal
-inline fun <reified T : Any> KMutableProperty0<T>.toBindingInternal(): PropertyBinding<T> {
-  return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
-}
-
-@ApiStatus.Internal
-fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
-  /*
-  // looks like this code is not needed. Should be removed together with propType paramater after dogfooding
-  if (prop is CallableReference) {
-    val name = prop.name
-    val receiver = (prop as CallableReference).boundReceiver
-    if (receiver != null) {
-      val baseName = name.removePrefix("is")
-      val nameCapitalized = StringUtil.capitalize(baseName)
-      val getterName = if (name.startsWith("is")) name else "get$nameCapitalized"
-      val setterName = "set$nameCapitalized"
-      val receiverClass = receiver::class.java
-
-      try {
-        val getter = receiverClass.getMethod(getterName)
-        val setter = receiverClass.getMethod(setterName, propType)
-        return PropertyBinding({ getter.invoke(receiver) as T }, { setter.invoke(receiver, it) })
-      }
-      catch (e: Exception) {
-        // ignore
-      }
-
-      try {
-        val field = receiverClass.getDeclaredField(name)
-        field.isAccessible = true
-        return PropertyBinding({ field.get(receiver) as T }, { field.set(receiver, it) })
-      }
-      catch (e: Exception) {
-        // ignore
-      }
-    }
-  }
-  */
-  prop.getter.isAccessible = true
-  prop.setter.isAccessible = true
-  return PropertyBinding(prop.getter, prop.setter)
+fun <T> KMutableProperty0<T>.toBindingInternal(): PropertyBinding<T> {
+  return PropertyBinding({ get() }, { set(it) })
 }

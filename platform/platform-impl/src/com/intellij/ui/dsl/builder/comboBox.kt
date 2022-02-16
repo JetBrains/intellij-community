@@ -26,8 +26,11 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: ObservableMutableProperty<T>
   return applyToComponent { bind(property) }
 }
 
-inline fun <reified T : Any, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T>): Cell<C> {
-  return bindItem(prop.toBindingInternal().toNullable())
+/**
+ * For binding to non-nullable property use [toNullableBinding]
+ */
+fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T?>): Cell<C> {
+  return bindItem(prop.toBindingInternal())
 }
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit): Cell<C> {

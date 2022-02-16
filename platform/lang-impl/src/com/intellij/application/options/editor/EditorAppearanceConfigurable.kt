@@ -127,7 +127,7 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
           indent {
             row(IdeBundle.message("combobox.label.visual.formatting.layer.scheme")) {
               comboBox(service.getSchemes())
-                .bindItem(service::scheme)
+                .bindItem(service::scheme.toNullableBinding())
             }
           }
         }

@@ -328,7 +328,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 AntialiasingType.values()
             comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
               .label(message("label.text.antialiasing.scope.ide"))
-              .bindItem(settings::ideAAType)
+              .bindItem(settings::ideAAType.toNullableBinding())
               .shouldUpdateLaF()
               .accessibleName(message("label.text.antialiasing.scope.ide"))
               .onApply {
@@ -347,7 +347,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 AntialiasingType.values()
             comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
               .label(message("label.text.antialiasing.scope.editor"))
-              .bindItem(settings::editorAAType)
+              .bindItem(settings::editorAAType.toNullableBinding())
               .shouldUpdateLaF()
               .accessibleName(message("label.text.antialiasing.scope.editor"))
           }
