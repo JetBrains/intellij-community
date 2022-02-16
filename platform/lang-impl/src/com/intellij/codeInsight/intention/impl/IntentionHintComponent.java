@@ -76,7 +76,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class IntentionHintComponent implements Disposable, ScrollAwareHint {
-  public interface Popup extends Disposable {
+  private interface Popup extends Disposable {
     boolean isVisible();
 
     void show(@NotNull IntentionHintComponent bulb, @Nullable RelativePoint positionHint);
@@ -242,12 +242,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   @NotNull
-  public static IntentionHintComponent showIntentionHint(@NotNull Project project,
-                                                         @NotNull PsiFile file,
-                                                         @NotNull Editor editor,
-                                                         boolean showExpanded,
-                                                         @NotNull Icon icon,
-                                                         @NotNull IntentionHintComponent.Popup popup) {
+  private static IntentionHintComponent showIntentionHint(@NotNull Project project,
+                                                          @NotNull PsiFile file,
+                                                          @NotNull Editor editor,
+                                                          boolean showExpanded,
+                                                          @NotNull Icon icon,
+                                                          @NotNull IntentionHintComponent.Popup popup) {
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, icon, popup);
