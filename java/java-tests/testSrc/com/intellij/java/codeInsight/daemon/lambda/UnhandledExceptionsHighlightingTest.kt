@@ -15,11 +15,11 @@ import com.intellij.testFramework.registerExtension
 class UnhandledExceptionsHighlightingTest : LightDaemonAnalyzerTestCase() {
 
   fun testCapturedWildcardInReturn() {
-    doTest(false)
+    doTest()
   }
 
   fun testIgnoreExceptionThrownInAnonymous() {
-    doTest(false)
+    doTest()
   }
 
   fun testCustomHandler() {
@@ -28,13 +28,13 @@ class UnhandledExceptionsHighlightingTest : LightDaemonAnalyzerTestCase() {
     }
     ApplicationManager.getApplication()
       .registerExtension<CustomExceptionHandler>(CustomExceptionHandler.KEY, trueHandler, testRootDisposable)
-    doTest(false)
+    doTest()
   }
 
-  private fun doTest(warnings: Boolean) {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().project).languageLevel = LanguageLevel.JDK_1_8
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), testRootDisposable)
-    doTest("""/codeInsight/daemonCodeAnalyzer/exceptionHighlighting/${getTestName(false)}.java""", warnings, false)
+  private fun doTest() {
+    LanguageLevelProjectExtension.getInstance(javaFacade.project).languageLevel = LanguageLevel.JDK_1_8
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, module, testRootDisposable)
+    doTest("""/codeInsight/daemonCodeAnalyzer/exceptionHighlighting/${getTestName(false)}.java""", false, false)
   }
 
 }
