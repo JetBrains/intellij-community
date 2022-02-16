@@ -1141,7 +1141,7 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/inspectionsLocal/useExpressionBody")
+    @TestMetadata("testData/intentions/useExpressionBody")
     public static class UseExpressionBody extends AbstractHLIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -1149,41 +1149,41 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
 
         @TestMetadata("if.kt")
         public void testIf() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/if.kt");
+            runTest("testData/intentions/useExpressionBody/if.kt");
         }
 
         @TestMetadata("leftBrace.kt")
         public void testLeftBrace() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/leftBrace.kt");
+            runTest("testData/intentions/useExpressionBody/leftBrace.kt");
         }
 
         @TestMetadata("multiLine.kt")
         public void testMultiLine() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/multiLine.kt");
+            runTest("testData/intentions/useExpressionBody/multiLine.kt");
         }
 
         @TestMetadata("oneLine.kt")
         public void testOneLine() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/oneLine.kt");
+            runTest("testData/intentions/useExpressionBody/oneLine.kt");
         }
 
         @TestMetadata("veryVeryLong.kt")
         public void testVeryVeryLong() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/veryVeryLong.kt");
+            runTest("testData/intentions/useExpressionBody/veryVeryLong.kt");
         }
 
         @TestMetadata("when.kt")
         public void testWhen() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/when.kt");
+            runTest("testData/intentions/useExpressionBody/when.kt");
         }
 
         @TestMetadata("whenWithEarlyReturn.kt")
         public void testWhenWithEarlyReturn() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/whenWithEarlyReturn.kt");
+            runTest("testData/intentions/useExpressionBody/whenWithEarlyReturn.kt");
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody")
+        @TestMetadata("testData/intentions/useExpressionBody/convertToExpressionBody")
         public static class ConvertToExpressionBody extends AbstractHLIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -1191,206 +1191,206 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
 
             @TestMetadata("anonymousObjectExpression.kt")
             public void testAnonymousObjectExpression() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/anonymousObjectExpression.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/anonymousObjectExpression.kt");
             }
 
             @TestMetadata("assignPlus.kt")
             public void testAssignPlus() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/assignPlus.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/assignPlus.kt");
             }
 
             @TestMetadata("assignment.kt")
             public void testAssignment() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/assignment.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/assignment.kt");
             }
 
             @TestMetadata("constructorWithEmptyBody.kt")
             public void testConstructorWithEmptyBody() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/constructorWithEmptyBody.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/constructorWithEmptyBody.kt");
             }
 
             @TestMetadata("declaration.kt")
             public void testDeclaration() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/declaration.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/declaration.kt");
             }
 
             @TestMetadata("elvisIfElseUnit.kt")
             public void testElvisIfElseUnit() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/elvisIfElseUnit.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/elvisIfElseUnit.kt");
             }
 
             @TestMetadata("elvisIfUnit.kt")
             public void testElvisIfUnit() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/elvisIfUnit.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/elvisIfUnit.kt");
             }
 
             @TestMetadata("elvisWhenUnitNonExhaustive.kt")
             public void testElvisWhenUnitNonExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/elvisWhenUnitNonExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/elvisWhenUnitNonExhaustive.kt");
             }
 
             @TestMetadata("emptyList.kt")
             public void testEmptyList() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/emptyList.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/emptyList.kt");
             }
 
             @TestMetadata("expressionWithReturns1.kt")
             public void testExpressionWithReturns1() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/expressionWithReturns1.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/expressionWithReturns1.kt");
             }
 
             @TestMetadata("expressionWithReturns2.kt")
             public void testExpressionWithReturns2() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/expressionWithReturns2.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/expressionWithReturns2.kt");
             }
 
             @TestMetadata("funWithEmptyBody.kt")
             public void testFunWithEmptyBody() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithEmptyBody.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithEmptyBody.kt");
             }
 
             @TestMetadata("funWithEmptyBody2.kt")
             public void testFunWithEmptyBody2() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithEmptyBody2.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithEmptyBody2.kt");
             }
 
             @TestMetadata("funWithImplicitUnitTypeWithThrow.kt")
             public void testFunWithImplicitUnitTypeWithThrow() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithImplicitUnitTypeWithThrow.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithImplicitUnitTypeWithThrow.kt");
             }
 
             @TestMetadata("funWithNoBlock.kt")
             public void testFunWithNoBlock() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithNoBlock.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithNoBlock.kt");
             }
 
             @TestMetadata("funWithNothingType.kt")
             public void testFunWithNothingType() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithNothingType.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithNothingType.kt");
             }
 
             @TestMetadata("funWithReturn.kt")
             public void testFunWithReturn() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithReturn.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithReturn.kt");
             }
 
             @TestMetadata("funWithUnitType.kt")
             public void testFunWithUnitType() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithUnitType.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithUnitType.kt");
             }
 
             @TestMetadata("funWithUnitType2.kt")
             public void testFunWithUnitType2() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithUnitType2.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithUnitType2.kt");
             }
 
             @TestMetadata("funWithUnitTypeWithThrow.kt")
             public void testFunWithUnitTypeWithThrow() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/funWithUnitTypeWithThrow.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/funWithUnitTypeWithThrow.kt");
             }
 
             @TestMetadata("functionLiteral.kt")
             public void testFunctionLiteral() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/functionLiteral.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/functionLiteral.kt");
             }
 
             @TestMetadata("getWithReturn.kt")
             public void testGetWithReturn() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/getWithReturn.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/getWithReturn.kt");
             }
 
             @TestMetadata("ifElseUnit.kt")
             public void testIfElseUnit() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/ifElseUnit.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/ifElseUnit.kt");
             }
 
             @TestMetadata("ifUnit.kt")
             public void testIfUnit() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/ifUnit.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/ifUnit.kt");
             }
 
             @TestMetadata("ifWhenUnitExhaustive.kt")
             public void testIfWhenUnitExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/ifWhenUnitExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/ifWhenUnitExhaustive.kt");
             }
 
             @TestMetadata("ifWhenUnitNonExhaustive.kt")
             public void testIfWhenUnitNonExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/ifWhenUnitNonExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/ifWhenUnitNonExhaustive.kt");
             }
 
             @TestMetadata("lambdaIfUnit.kt")
             public void testLambdaIfUnit() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/lambdaIfUnit.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/lambdaIfUnit.kt");
             }
 
             @TestMetadata("lambdaWhenUnitNonExhaustive.kt")
             public void testLambdaWhenUnitNonExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/lambdaWhenUnitNonExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/lambdaWhenUnitNonExhaustive.kt");
             }
 
             @TestMetadata("multipleStatements.kt")
             public void testMultipleStatements() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/multipleStatements.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/multipleStatements.kt");
             }
 
             @TestMetadata("overridePublicFun.kt")
             public void testOverridePublicFun() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/overridePublicFun.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/overridePublicFun.kt");
             }
 
             @TestMetadata("returnFromLambda.kt")
             public void testReturnFromLambda() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/returnFromLambda.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/returnFromLambda.kt");
             }
 
             @TestMetadata("returnFromLambda2.kt")
             public void testReturnFromLambda2() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/returnFromLambda2.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/returnFromLambda2.kt");
             }
 
             @TestMetadata("returnWithNoValue.kt")
             public void testReturnWithNoValue() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/returnWithNoValue.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/returnWithNoValue.kt");
             }
 
             @TestMetadata("whenIfUnitExhaustive.kt")
             public void testWhenIfUnitExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/whenIfUnitExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/whenIfUnitExhaustive.kt");
             }
 
             @TestMetadata("whenIfUnitNonExhaustive.kt")
             public void testWhenIfUnitNonExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/whenIfUnitNonExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/whenIfUnitNonExhaustive.kt");
             }
 
             @TestMetadata("whenUnitExhaustive.kt")
             public void testWhenUnitExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/whenUnitExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/whenUnitExhaustive.kt");
             }
 
             @TestMetadata("whenUnitNonExhaustive.kt")
             public void testWhenUnitNonExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/whenUnitNonExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/whenUnitNonExhaustive.kt");
             }
 
             @TestMetadata("whenUnitWithElse.kt")
             public void testWhenUnitWithElse() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/whenUnitWithElse.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/whenUnitWithElse.kt");
             }
 
             @TestMetadata("whenWhenNonExhaustive.kt")
             public void testWhenWhenNonExhaustive() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/whenWhenNonExhaustive.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/whenWhenNonExhaustive.kt");
             }
 
             @TestMetadata("while.kt")
             public void testWhile() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/while.kt");
+                runTest("testData/intentions/useExpressionBody/convertToExpressionBody/while.kt");
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments")
+            @TestMetadata("testData/intentions/useExpressionBody/convertToExpressionBody/keepComments")
             public static class KeepComments extends AbstractHLIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -1398,22 +1398,22 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
 
                 @TestMetadata("1.kt")
                 public void test1() throws Exception {
-                    runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments/1.kt");
+                    runTest("testData/intentions/useExpressionBody/convertToExpressionBody/keepComments/1.kt");
                 }
 
                 @TestMetadata("2.kt")
                 public void test2() throws Exception {
-                    runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments/2.kt");
+                    runTest("testData/intentions/useExpressionBody/convertToExpressionBody/keepComments/2.kt");
                 }
 
                 @TestMetadata("3.kt")
                 public void test3() throws Exception {
-                    runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments/3.kt");
+                    runTest("testData/intentions/useExpressionBody/convertToExpressionBody/keepComments/3.kt");
                 }
 
                 @TestMetadata("4.kt")
                 public void test4() throws Exception {
-                    runTest("../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments/4.kt");
+                    runTest("testData/intentions/useExpressionBody/convertToExpressionBody/keepComments/4.kt");
                 }
             }
         }
