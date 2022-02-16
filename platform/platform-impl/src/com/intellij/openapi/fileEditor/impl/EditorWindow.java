@@ -40,7 +40,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
@@ -1107,12 +1107,11 @@ public final class EditorWindow {
     if (index == -1) return;
     ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file))
       .expireWhen(this::isDisposed)
-      .coalesceBy(this)
       .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> {
         int index1 = findFileEditorIndex(file);
         if (index1 != -1) setTitleAt(index1, title);
       })
-      .submit(AppExecutorUtil.getAppExecutorService());
+      .submit(NonUrgentExecutor.getInstance());
     setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips() ? getManager().getFileTooltipText(file) : null);
   }
 
