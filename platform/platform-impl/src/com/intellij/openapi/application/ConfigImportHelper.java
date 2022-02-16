@@ -341,7 +341,7 @@ public final class ConfigImportHelper {
 
   private static boolean shouldAskForConfig() {
     String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    if ("force-not".equals(showImportDialog) || "default-production".equals(showImportDialog) || "never".equals(showImportDialog)) {
+    if ("default-production".equals(showImportDialog) || "never".equals(showImportDialog)) {
       return false;
     }
     return PluginManagerCore.isRunningFromSources() ||
