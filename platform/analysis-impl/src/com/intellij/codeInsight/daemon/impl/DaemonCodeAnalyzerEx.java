@@ -79,6 +79,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
                               CommonProcessors.alwaysFalse());
   }
+  public abstract boolean hasIntentionHint();
 
   @NotNull
   public abstract List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,

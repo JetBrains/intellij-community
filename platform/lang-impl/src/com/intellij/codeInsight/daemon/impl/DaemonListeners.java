@@ -90,12 +90,9 @@ import java.util.List;
 
 public final class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance(DaemonListeners.class);
-
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
-
   private boolean myEscPressed;
-
   private volatile boolean cutOperationJustHappened;
   private final DaemonCodeAnalyzer.DaemonListener myDaemonEventPublisher;
   private List<Editor> myActiveEditors = Collections.emptyList();
@@ -146,22 +143,21 @@ public final class DaemonListeners implements Disposable {
       }
     }, this);
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      eventMulticaster.addCaretListener(new CaretListener() {
-        @Override
-        public void caretPositionChanged(@NotNull CaretEvent e) {
-          Editor editor = e.getEditor();
-          if (UIUtil.isShowing(editor.getContentComponent()) &&
-              worthBothering(editor.getDocument(), editor.getProject())) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              if (!myProject.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
-                IntentionsUI.getInstance(myProject).invalidate();
-              }
-            }, ModalityState.current(), myProject.getDisposed());
-          }
+    eventMulticaster.addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        myEscPressed = false; // clear "Escape was pressed" flag on each caret change
+
+        Editor editor = e.getEditor();
+        if (UIUtil.isShowing(editor.getContentComponent()) && worthBothering(editor.getDocument(), editor.getProject())) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!myProject.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
+              IntentionsUI.getInstance(myProject).invalidate();
+            }
+          }, ModalityState.current(), myProject.getDisposed());
         }
-      }, this);
-    }
+      }
+    }, this);
 
     connection.subscribe(EditorTrackerListener.TOPIC, activeEditors -> {
       if (myActiveEditors.equals(activeEditors)) {
@@ -399,7 +395,10 @@ public final class DaemonListeners implements Disposable {
     if (document == null) {
       return true;
     }
-    if (project != null && (project != myProject || project.isDisposed())) {
+    if (project != null && project != myProject) {
+      return false;
+    }
+    if (myProject.isDisposed()) {
       return false;
     }
     // cached is essential here since we do not want to create PSI file in alien project
@@ -495,7 +494,6 @@ public final class DaemonListeners implements Disposable {
       }
 
       if (myEscPressed) {
-        myEscPressed = false;
         if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
           if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument)) {
@@ -656,5 +654,9 @@ public final class DaemonListeners implements Disposable {
 
     LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
     return info != null && info.getClass().getClassLoader() == pluginClassLoader;
+  }
+
+  boolean isEscapeJustPressed() {
+    return myEscPressed;
   }
 }

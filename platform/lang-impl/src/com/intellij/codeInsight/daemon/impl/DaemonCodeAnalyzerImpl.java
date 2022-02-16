@@ -793,6 +793,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return ((IntentionsUIImpl)IntentionsUI.getInstance(myProject)).getLastIntentionHint();
   }
 
+  @Override
+  public boolean hasIntentionHint() {
+    return getLastIntentionHint() != null;
+  }
+
   @NotNull
   @Override
   public Element getState() {

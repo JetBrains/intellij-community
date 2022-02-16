@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -61,6 +62,8 @@ public class EscapeHandler extends EditorActionHandler {
     if (project != null) {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
       if (highlightManager != null && highlightManager.hasHideByEscapeHighlighters(editor)) return true;
+      // Escape can be used to get rid of light bulb
+      if (DaemonCodeAnalyzerEx.getInstanceEx(project).hasIntentionHint()) return true;
     }
 
     return myOriginalHandler.isEnabled(editor, caret, dataContext);
