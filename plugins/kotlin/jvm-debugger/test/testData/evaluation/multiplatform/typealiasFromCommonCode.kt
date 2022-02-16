@@ -10,7 +10,7 @@ val value = ExpectTypeAlias()
 class JvmTypeAlias
 actual typealias ExpectTypeAlias = JvmTypeAlias
 
-fun main(){
+fun main() {
     // EXPRESSION: value
     // RESULT: instance of JvmTypeAlias(id=ID): LJvmTypeAlias;
     //Breakpoint!
