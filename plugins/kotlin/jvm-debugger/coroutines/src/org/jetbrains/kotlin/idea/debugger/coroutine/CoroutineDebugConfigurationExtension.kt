@@ -1,49 +1,37 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
+import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.configurations.DebuggingRunnerData
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
-import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.XDebuggerManagerListener
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 
-interface DebuggerListener : XDebuggerManagerListener {
-    fun registerDebuggerConnection(
-        configuration: RunConfigurationBase<*>,
-        params: JavaParameters?,
+class CoroutineDebugConfigurationExtension : RunConfigurationExtension() {
+    override fun <T : RunConfigurationBase<*>> updateJavaParameters(
+        configuration: T,
+        params: JavaParameters,
         runnerSettings: RunnerSettings?
-    ): DebuggerConnection?
-}
-
-class CoroutineDebuggerListener(val project: Project) : DebuggerListener {
-    companion object {
-        val log by logger
-    }
-
-    override fun registerDebuggerConnection(
-        configuration: RunConfigurationBase<*>,
-        params: JavaParameters?,
-        runnerSettings: RunnerSettings?
-    ): DebuggerConnection? {
+    ) {
         val coroutineDebugIsDisabledInSettings = KotlinDebuggerSettings.getInstance().debugDisableCoroutineAgent
-        val coroutineDebugIsDisabledInParameters = params != null && params.isKotlinxCoroutinesDebugDisabled()
+        val coroutineDebugIsDisabledInParameters = params.isKotlinxCoroutinesDebugDisabled()
         if (!coroutineDebugIsDisabledInSettings &&
             !coroutineDebugIsDisabledInParameters &&
-            runnerSettings is DebuggingRunnerData)
+            runnerSettings is DebuggingRunnerData
+        )
         {
-            return DebuggerConnection(
-                project,
+            DebuggerConnection(
+                configuration.project,
                 configuration,
                 params,
                 argumentsShouldBeModified(configuration)
             )
         }
-        return null
     }
+
+    override fun isApplicableFor(configuration: RunConfigurationBase<*>) =
+        true
 }
 
 private const val KOTLINX_COROUTINES_DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
