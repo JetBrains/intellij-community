@@ -92,8 +92,20 @@ public class JpsBootstrapMain {
       showUsagesAndExit();
     }
 
-    moduleNameToRun = freeArgs.get(0);
-    classNameToRun = freeArgs.get(1);
+    String projectHomeFromCommandline = null;
+
+    // Temporary measures to migrate from 2 arguments to 3
+    if (freeArgs.size() == 2) {
+      moduleNameToRun = freeArgs.get(0);
+      classNameToRun = freeArgs.get(1);
+      mainArgsToRun = Collections.emptyList();
+    }
+    else {
+      projectHomeFromCommandline = freeArgs.get(0);
+      moduleNameToRun = freeArgs.get(1);
+      classNameToRun = freeArgs.get(2);
+      mainArgsToRun = freeArgs.subList(3, freeArgs.size());
+    }
 
     additionalSystemProperties = cmdline.getOptionProperties("D");
 
@@ -118,7 +130,9 @@ public class JpsBootstrapMain {
     Path ultimateHome = communityHome.getParent();
     Path ultimateCheckFile = ultimateHome.resolve("intellij.idea.ultimate.main.iml");
 
-    if (Files.exists(riderCheckFile)) {
+    if (projectHomeFromCommandline != null) {
+      projectHome = Path.of(projectHomeFromCommandline).normalize();
+    } else if (Files.exists(riderCheckFile)) {
       projectHome = riderHome;
     }
     else if (Files.exists(ultimateCheckFile)) {
@@ -129,12 +143,11 @@ public class JpsBootstrapMain {
       projectHome = communityHome;
     }
 
-    jpsBootstrapWorkDir = communityHome.resolve("out").resolve("jps-bootstrap");
+    jpsBootstrapWorkDir = projectHome.resolve("build").resolve("jps-bootstrap-work");
 
     info("Working directory: " + jpsBootstrapWorkDir);
     Files.createDirectories(jpsBootstrapWorkDir);
 
-    mainArgsToRun = freeArgs.subList(2, freeArgs.size());
     javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET));
     buildTargetXmx = cmdline.hasOption(OPT_BUILD_TARGET_XMX) ? cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) : DEFAULT_BUILD_SCRIPT_XMX;
   }

@@ -5,7 +5,7 @@ set -eu
 
 JPS_BOOTSTRAP_DIR="$(cd "$(dirname "$0")"; pwd)"
 JPS_BOOTSTRAP_COMMUNITY_HOME="$(cd "$JPS_BOOTSTRAP_DIR/../.."; pwd)"
-JPS_BOOTSTRAP_WORK_DIR="$JPS_BOOTSTRAP_COMMUNITY_HOME/out/jps-bootstrap"
+JPS_BOOTSTRAP_PREPARE_DIR="$JPS_BOOTSTRAP_COMMUNITY_HOME/out/jps-bootstrap"
 
 SCRIPT_VERSION=jps-bootstrap-cmd-v1
 
@@ -58,15 +58,15 @@ else
 fi
 
 JVM_URL="$ZULU_BASE/$ZULU_PREFIX-$ZULU_ARCH.tar.gz"
-JVM_TARGET_DIR="$JPS_BOOTSTRAP_WORK_DIR/jvm/$ZULU_PREFIX-$ZULU_ARCH-$SCRIPT_VERSION"
+JVM_TARGET_DIR="$JPS_BOOTSTRAP_PREPARE_DIR/jvm/$ZULU_PREFIX-$ZULU_ARCH-$SCRIPT_VERSION"
 
-mkdir -p "$JPS_BOOTSTRAP_WORK_DIR/jvm"
+mkdir -p "$JPS_BOOTSTRAP_PREPARE_DIR/jvm"
 
 if [ -e "$JVM_TARGET_DIR/.flag" ] && [ -n "$(ls "$JVM_TARGET_DIR")" ] && [ "x$(cat "$JVM_TARGET_DIR/.flag")" = "x${JVM_URL}" ]; then
     # Everything is up-to-date in $JVM_TARGET_DIR, do nothing
     true
 else
-  JVM_TEMP_FILE=$(mktemp "$JPS_BOOTSTRAP_WORK_DIR/jvm.tar.gz.XXXXXXXXX")
+  JVM_TEMP_FILE=$(mktemp "$JPS_BOOTSTRAP_PREPARE_DIR/jvm.tar.gz.XXXXXXXXX")
   trap 'echo "Removing $JVM_TEMP_FILE"; rm -f "$JVM_TEMP_FILE"; trap - EXIT' EXIT INT HUP
 
   warn "Downloading $JVM_URL to $JVM_TEMP_FILE"
@@ -105,15 +105,15 @@ fi
 set -x
 
 # Download and compile jps-bootstrap
-"$JAVA_HOME/bin/java" -ea -Daether.connector.resumeDownloads=false -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_WORK_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
+"$JAVA_HOME/bin/java" -ea -Daether.connector.resumeDownloads=false -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_PREPARE_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
 
-_java_args_file="$JPS_BOOTSTRAP_WORK_DIR/java.args.$$.txt"
+_java_args_file="$JPS_BOOTSTRAP_PREPARE_DIR/java.args.$$.txt"
 # shellcheck disable=SC2064
 trap "rm -f '$_java_args_file'" EXIT INT HUP
 
 # Run jps-bootstrap and produce java args file to run actual user class
 export JPS_BOOTSTRAP_COMMUNITY_HOME
-"$JAVA_HOME/bin/java" -ea -Xmx4g -Djava.awt.headless=true -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=$_java_args_file" "$@"
+"$JAVA_HOME/bin/java" -ea -Xmx4g -Djava.awt.headless=true -classpath "$JPS_BOOTSTRAP_PREPARE_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=$_java_args_file" "$@"
 
 # Run user class via wrapper from platform to correctly capture and report exception to TeamCity build log
 "$JAVA_HOME/bin/java" "@$_java_args_file"
