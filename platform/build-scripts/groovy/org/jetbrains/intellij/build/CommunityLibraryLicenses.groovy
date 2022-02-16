@@ -755,6 +755,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-jps-common"),
     jetbrainsLibrary("kotlinc.kotlin-jps-plugin-classpath"),
     jetbrainsLibrary("kotlinc.kotlin-reflect"),
+    jetbrainsLibrary("kotlinc.kotlin-script-runtime"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler"),
     jetbrainsLibrary("kotlinc.kotlin-stdlib"),
     jetbrainsLibrary("kotlinc.kotlinx-serialization-compiler-plugin"),

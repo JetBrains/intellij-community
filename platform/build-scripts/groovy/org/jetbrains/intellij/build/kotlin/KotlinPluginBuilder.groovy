@@ -110,7 +110,7 @@ class KotlinPluginBuilder {
     "kotlinc.sam-with-receiver-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
-    "kotlin-script-runtime",
+    "kotlinc.kotlin-script-runtime",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
