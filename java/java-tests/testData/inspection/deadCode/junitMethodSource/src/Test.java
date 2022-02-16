@@ -13,8 +13,4 @@ public class Test {
   static Stream<String> testMethod() {
     return Stream.of("foo", "bar");
   }
-
-  //public static void main(String[] args) {
-  //  new Test().testMethod("aaa");
-  //}
 }
