@@ -30,6 +30,9 @@ internal object LangDownloader {
 
       GrazieDynamic.addDynClassLoader(classLoader)
 
+      // force reloading available language classes
+      GrazieConfig.update { it.copy() }
+
       // drop caches, restart highlighting
       GrazieConfig.stateChanged(GrazieConfig.get(), GrazieConfig.get())
       return true
