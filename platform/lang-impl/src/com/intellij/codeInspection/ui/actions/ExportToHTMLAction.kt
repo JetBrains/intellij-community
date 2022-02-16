@@ -9,9 +9,11 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import java.nio.file.Path
+import java.util.function.Supplier
 import javax.swing.JPanel
 
-class ExportToHTMLAction : InspectionResultsExportActionProvider(InspectionsBundle.messagePointer("inspection.action.export.html.title"),
+@Suppress("ComponentNotRegistered")
+class ExportToHTMLAction : InspectionResultsExportActionProvider(Supplier { "HTML" },
                                                                  InspectionsBundle.messagePointer("inspection.action.export.html.description"),
                                                                  AllIcons.FileTypes.Html) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.html.progress.title")
