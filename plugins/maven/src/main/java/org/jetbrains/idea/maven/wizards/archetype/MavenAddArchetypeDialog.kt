@@ -6,8 +6,10 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
+import com.intellij.openapi.ui.validation.CHECK_ARTIFACT_ID_FORMAT
+import com.intellij.openapi.ui.validation.CHECK_GROUP_ID_FORMAT
+import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
@@ -33,55 +35,24 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
     return MavenArchetype(archetypeGroupId, archetypeArtifactId, archetypeVersion, catalogLocation, null)
   }
 
-  private fun ValidationInfoBuilder.validateCatalogLocation(): ValidationInfo? {
-    if (catalogLocation.isEmpty()) {
-      return null
-    }
-    return validateCatalogLocation(catalogLocation)
-  }
-
-  private fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? {
-    if (archetypeGroupId.isEmpty()) {
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.error.empty"))
-    }
-    return null
-  }
-
-  private fun ValidationInfoBuilder.validateArtifactId(): ValidationInfo? {
-    if (archetypeArtifactId.isEmpty()) {
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.error.empty"))
-    }
-    return null
-  }
-
-  private fun ValidationInfoBuilder.validateVersion(): ValidationInfo? {
-    if (archetypeVersion.isEmpty()) {
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.error.empty"))
-    }
-    return null
-  }
-
   override fun createCenterPanel() = panel {
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.label")) {
       textField()
         .bindText(archetypeGroupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_PROPERTY_CHANGE(archetypeGroupIdProperty))
-        .validationOnInput { validateGroupId() }
+        .textValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID_FORMAT)
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.label")) {
       textField()
         .bindText(archetypeArtifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_PROPERTY_CHANGE(archetypeArtifactIdProperty))
-        .validationOnInput { validateArtifactId() }
+        .textValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID_FORMAT)
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
       textField()
         .bindText(archetypeVersionProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_PROPERTY_CHANGE(archetypeVersionProperty))
-        .validationOnInput { validateVersion() }
+        .textValidation(CHECK_NON_EMPTY)
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
@@ -90,8 +61,7 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
         .bindText(catalogLocationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
-        .validationRequestor(AFTER_PROPERTY_CHANGE(catalogLocationProperty))
-        .validationOnInput { validateCatalogLocation() }
+        .textValidation(CHECK_MAVEN_CATALOG)
     }
   }
 

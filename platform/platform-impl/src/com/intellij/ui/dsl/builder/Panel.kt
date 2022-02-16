@@ -2,7 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign

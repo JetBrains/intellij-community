@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Font
@@ -181,24 +182,26 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun validationRequestor(validationRequestor: DialogValidationRequestor.Builder<T>): Cell<T> {
+  override fun validationRequestor(validationRequestor: DialogValidationRequestor.WithParameter<T>): CellImpl<T> {
     return validationRequestor(validationRequestor(component))
   }
 
-  override fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
-    val origin = component.origin
-    return validationOnApply(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
-  }
-
-  override fun validationOnApply(validation: DialogValidation): CellImpl<T> {
-    val origin = component.origin
-    dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
-      .add(validation)
+  override fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+    validationOnInput(validation)
+    validationOnApply(validation)
     return this
   }
 
-  override fun errorOnApply(message: String, condition: (T) -> Boolean): CellImpl<T> {
-    return validationOnApply { if (condition(it)) error(message) else null }
+  override fun validation(vararg validations: DialogValidation): CellImpl<T> {
+    validationOnInput(*validations)
+    validationOnApply(*validations)
+    return this
+  }
+
+  override fun validation(vararg validations: DialogValidation.WithParameter<T>): CellImpl<T> {
+    validationOnInput(*validations)
+    validationOnApply(*validations)
+    return this
   }
 
   override fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
@@ -206,10 +209,10 @@ internal class CellImpl<T : JComponent>(
     return validationOnInput(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
   }
 
-  override fun validationOnInput(validation: DialogValidation): CellImpl<T> {
+  override fun validationOnInput(vararg validations: DialogValidation): CellImpl<T> {
     val origin = component.origin
-    dialogPanelConfig.validations.getOrPut(origin) { SmartList() }
-      .add(validation)
+    dialogPanelConfig.validationsOnInput.getOrPut(origin) { SmartList() }
+      .addAll(validations.map { it.forComponentIfNeeded(origin) })
 
     // Fallback in case if no validation requestors is defined
     guessAndInstallValidationRequestor()
@@ -217,10 +220,36 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun validationOnInput(vararg validations: DialogValidation.WithParameter<T>): CellImpl<T> {
+    return validationOnInput(*validations.map2Array { it(component) })
+  }
+
+  override fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+    val origin = component.origin
+    return validationOnApply(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
+  }
+
+  override fun validationOnApply(vararg validations: DialogValidation): CellImpl<T> {
+    val origin = component.origin
+    dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
+      .addAll(validations.map { it.forComponentIfNeeded(origin) })
+    return this
+  }
+
+  override fun validationOnApply(vararg validations: DialogValidation.WithParameter<T>): CellImpl<T> {
+    return validationOnApply(*validations.map2Array { it(component) })
+  }
+
+  override fun errorOnApply(message: String, condition: (T) -> Boolean): CellImpl<T> {
+    return validationOnApply { if (condition(it)) error(message) else null }
+  }
+
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
     val origin = component.origin
     val validationRequestors = dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
+    if (validationRequestors.isNotEmpty()) return
+
     validationRequestors.add(object : DialogValidationRequestor {
       override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
         if (validationRequestors.size > 1) return
@@ -288,6 +317,9 @@ internal class CellImpl<T : JComponent>(
         this.property = property
       }
     }
+
+    private fun DialogValidation.forComponentIfNeeded(component: JComponent) =
+      transformResult { if (this.component == null) forComponent(component) else this }
   }
 }
 

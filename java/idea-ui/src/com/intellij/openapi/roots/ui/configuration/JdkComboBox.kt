@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.validation.AFTER_PROPERTY_CHANGE
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.ui.dsl.builder.Cell
@@ -83,6 +84,7 @@ fun Row.sdkComboBox(
   )
 
   return cell(comboBox)
+    .validationRequestor(AFTER_PROPERTY_CHANGE(sdkProperty))
     .validationOnApply { validateSdk(sdkProperty, sdksModel) }
     .onApply { context.projectJdk = sdkProperty.get() }
 }

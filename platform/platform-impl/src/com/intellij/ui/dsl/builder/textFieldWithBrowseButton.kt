@@ -5,6 +5,8 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.validation.DialogValidation
+import com.intellij.openapi.ui.validation.forTextFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import org.jetbrains.annotations.ApiStatus
@@ -40,3 +42,6 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.text(text: String): Cell<T> {
 private fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
   return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop)
 }
+
+fun <T : TextFieldWithBrowseButton> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+  validation(*validations.map { it.forTextFieldWithBrowseButton() }.toTypedArray())

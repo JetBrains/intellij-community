@@ -35,6 +35,6 @@ private fun initPanel(dialogPanelConfig: DialogPanelConfig, panel: DialogPanel) 
   panel.isModifiedCallbacks = dialogPanelConfig.isModifiedCallbacks
 
   panel.validationRequestors = dialogPanelConfig.validationRequestors
-  panel.validations = dialogPanelConfig.validations
+  panel.validationsOnInput = dialogPanelConfig.validationsOnInput
   panel.validationsOnApply = dialogPanelConfig.validationsOnApply
 }

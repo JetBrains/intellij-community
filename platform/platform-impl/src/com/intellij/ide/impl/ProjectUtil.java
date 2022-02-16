@@ -473,7 +473,7 @@ public final class ProjectUtil extends ProjectUtilCore {
     return path.contains("://") || path.contains("\\\\");
   }
 
-  public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {
+  public static @Nullable Project findProject(@NotNull Path file) {
     Project[] openProjects = getOpenProjects();
     if (openProjects.length == 0) {
       return null;
@@ -481,11 +481,18 @@ public final class ProjectUtil extends ProjectUtilCore {
 
     for (Project project : openProjects) {
       if (isSameProject(file, project)) {
-        focusProjectWindow(project, false);
         return project;
       }
     }
     return null;
+  }
+
+  public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {
+    var project = findProject(file);
+    if (project != null) {
+      focusProjectWindow(project, false);
+    }
+    return project;
   }
 
   /**

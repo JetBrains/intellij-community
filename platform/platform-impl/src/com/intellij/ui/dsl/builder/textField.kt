@@ -6,6 +6,8 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.whenTextChanged
+import com.intellij.openapi.ui.validation.DialogValidation
+import com.intellij.openapi.ui.validation.forTextComponent
 import com.intellij.ui.dsl.ValidationException
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.builder.impl.toMutableProperty
@@ -13,7 +15,7 @@ import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
 import com.intellij.ui.layout.*
-import com.intellij.openapi.ui.DialogValidationRequestor
+import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
@@ -130,8 +132,5 @@ private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>)
                   { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
 }
 
-val WHEN_TEXT_CHANGED = DialogValidationRequestor.Builder<JTextComponent> { parameter ->
-  DialogValidationRequestor { parentDisposable, validate ->
-    parameter.whenTextChanged(parentDisposable) { validate() }
-  }
-}
+fun <T : JTextComponent> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+  validation(*validations.map2Array { it.forTextComponent() })

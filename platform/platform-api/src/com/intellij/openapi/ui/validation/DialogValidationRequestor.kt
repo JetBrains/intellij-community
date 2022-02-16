@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.ui
+package com.intellij.openapi.ui.validation
 
 import com.intellij.openapi.Disposable
 
@@ -19,26 +19,7 @@ fun interface DialogValidationRequestor {
   /**
    * Defines validation requestor with parameter.
    */
-  fun interface Builder<in T> {
+  fun interface WithParameter<in T> {
     operator fun invoke(parameter: T): DialogValidationRequestor
-  }
-}
-
-/**
- * Describes validation function.
- */
-fun interface DialogValidation {
-
-  /**
-   * Validates custom dialog data.
-   * @return null if custom dialog data is correct.
-   */
-  fun validate(): ValidationInfo?
-
-  /**
-   * Defines validation with parameter.
-   */
-  fun interface Builder<in T> {
-    operator fun invoke(parameter: T): DialogValidation
   }
 }
