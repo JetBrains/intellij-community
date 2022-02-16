@@ -184,6 +184,7 @@ class MavenImportFlow {
                                                        context.initialContext.indicator, false,
                                                        projectManager.forceUpdateSnapshots))
     }
+    projectManager.forceUpdateSnapshots = false;
     return MavenPluginResolvedContext(context.project, unresolvedPlugins, context)
   }
 
