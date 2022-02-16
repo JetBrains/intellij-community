@@ -21,6 +21,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
         StreamType streamType = constructorModel.myStreamType;
         PsiType expectedType = ExpectedTypeUtils.findExpectedType(newExpression, false);
         if (expectedType == null) return;
+        if (isFileNotFoundHandled(newExpression)) return;
         boolean canUseBaseType = TypeConversionUtil.isAssignable(expectedType, streamType.baseType(newExpression));
         if (!canUseBaseType) return;
         boolean isInfoLevel = PsiUtil.isLanguageLevel10OrHigher(holder.getFile());
@@ -53,6 +55,23 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
         holder.registerProblem(newExpression, JavaBundle.message(streamType.myErrorText), highlightType, fix);
       }
     };
+  }
+
+  private static boolean isFileNotFoundHandled(@NotNull PsiExpression context) {
+    PsiClassType fileNotFoundType = TypeUtils.getType("java.io.FileNotFoundException", context);
+    PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(context, PsiTryStatement.class, true, PsiMethod.class, PsiLambdaExpression.class);
+    while (tryStatement != null) {
+      PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+      for (PsiCatchSection catchSection : catchSections) {
+        PsiParameter catchParameter = catchSection.getParameter();
+        if (catchParameter != null && TypeConversionUtil.isAssignable(catchParameter.getType(), fileNotFoundType)) {
+          PsiClassType ioException = TypeUtils.getType("java.io.IOException", context);
+          return !TypeConversionUtil.isAssignable(catchParameter.getType(), ioException);
+        }
+      }
+      tryStatement = PsiTreeUtil.getParentOfType(tryStatement, PsiTryStatement.class, true, PsiMethod.class, PsiLambdaExpression.class);
+    }
+    return false;
   }
 
   private static @Nullable PsiExpression getOnlyArgument(@NotNull PsiCallExpression expression) {
