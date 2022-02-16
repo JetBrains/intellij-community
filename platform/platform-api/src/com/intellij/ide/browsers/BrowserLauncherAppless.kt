@@ -11,6 +11,7 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -64,6 +65,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   protected open fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC)
     val url = signUrl(_url.trim { it <= ' ' })
     LOG.debug { "opening [$url]" }
 
@@ -144,6 +146,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   protected open fun signUrl(url: String): String = url
 
   override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC)
     val effectiveBrowser = getEffectiveBrowser(browser)
     // if browser is not passed, UrlOpener should be not used for non-http(s) urls
     if (effectiveBrowser == null || (browser == null && !url.startsWith(URLUtil.HTTP_PROTOCOL))) {
@@ -160,6 +163,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
                                project: Project?,
                                openInNewWindow: Boolean,
                                additionalParameters: Array<String>): Boolean {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC)
     if (url != null && url.startsWith("jar:")) return false
 
     val byName = browserPath == null && browser != null
