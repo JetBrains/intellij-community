@@ -18,6 +18,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
@@ -33,6 +34,7 @@ import org.jetbrains.uast.UastContextKt;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
@@ -44,7 +46,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
 
   protected MarkAsSafeFix(@NotNull PsiElement element, @NotNull String name) {
     super(element);
-    this.myName = name;
+    myName = name;
   }
 
   @Override
@@ -92,6 +94,12 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     PsiElement sourcePsi = uExpression.getSourcePsi();
     if (sourcePsi == null) return IntentionPreviewInfo.EMPTY;
     PsiFile file = sourcePsi.getContainingFile();
+    Set<PsiFile> filesToAnnotate = ContainerUtil.map2Set(toAnnotate, e -> e.getContainingFile());
+    if (ContainerUtil.exists(filesToAnnotate, f -> f != file)) {
+      String fileNames = StringUtil.join(filesToAnnotate, f -> f.getName(), ", ");
+      String message = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.preview.multiple.files", fileNames);
+      return new IntentionPreviewInfo.Html(message);
+    }
     if (ContainerUtil.exists(toAnnotate, e -> e.getContainingFile() != file)) return IntentionPreviewInfo.EMPTY;
     annotateInCode(project, toAnnotate);
     return IntentionPreviewInfo.DIFF;
@@ -113,13 +121,19 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
   private static @Nullable AnnotationPlace getPlace(Project project, @NotNull Collection<PsiElement> toAnnotate) {
     ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     return toAnnotate.stream().reduce(null,
-                                      (acc, e) -> acc == AnnotationPlace.NOWHERE ? acc : annotationsManager.chooseAnnotationsPlaceNoUi(e),
+                                      (acc, e) -> acc == AnnotationPlace.NOWHERE
+                                                  ? acc
+                                                  : join(acc, annotationsManager.chooseAnnotationsPlaceNoUi(e)),
                                       MarkAsSafeFix::join);
   }
 
   private static AnnotationPlace join(@Nullable AnnotationPlace acc, @Nullable AnnotationPlace place) {
     if (place == acc) return place;
     if (acc == null || place == AnnotationPlace.NOWHERE) return place;
+    if (place == AnnotationPlace.EXTERNAL && acc == AnnotationPlace.IN_CODE ||
+        place == AnnotationPlace.IN_CODE && acc == AnnotationPlace.EXTERNAL) {
+      return AnnotationPlace.EXTERNAL;
+    }
     return AnnotationPlace.NEED_ASK_USER;
   }
 
