@@ -21,6 +21,7 @@ import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 val LOG = Logger.getInstance(InspectionResultsExportActionBase::class.java)
 
@@ -83,9 +84,9 @@ abstract class InspectionResultsExportActionBase(text: Supplier<String?>,
   open fun onExportSuccessful() {}
 
   /**
-   * Inserts components in [ExportDialog] to allow settings customization.
+   * Additional configuration to be added in [ExportDialog].
    */
-  open fun Panel.additionalSettings() {}
+  open fun additionalSettings(): JPanel? = null
 
   inner class ExportDialog(val view: InspectionResultsView) : DialogWrapper(view.project, true) {
     val locationProperty = propertyGraph.property("")
@@ -122,7 +123,9 @@ abstract class InspectionResultsExportActionBase(text: Supplier<String?>,
               else null
             }
         }
-        additionalSettings()
+        additionalSettings()?.let {
+          row { cell(it) }
+        }
       }
     }
   }
