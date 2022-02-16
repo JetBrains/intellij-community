@@ -48,6 +48,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
 import com.jetbrains.python.ift.PythonLessonsUtil
+import com.jetbrains.python.sdk.pythonSdk
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
@@ -98,6 +99,8 @@ class PythonOnboardingTourLesson :
   private var hideToolStripesPreference = false
   private var showNavigationBarPreference = true
 
+  private var usedInterpreterAtStart: String = "undefined"
+
   val sample: LessonSample = parseLessonSample("""
     def find_average(values)<caret id=3/>:
         result = 0
@@ -111,6 +114,7 @@ class PythonOnboardingTourLesson :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
+      usedInterpreterAtStart = project.pythonSdk?.versionString ?: "none"
       useDelay = true
       configurations().forEach { runManager().removeConfiguration(it) }
 
@@ -165,6 +169,7 @@ class PythonOnboardingTourLesson :
       "pycharm_onboarding_tour",
       module.primaryLanguage,
       lessonEndInfo,
+      usedInterpreterAtStart,
     )
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null

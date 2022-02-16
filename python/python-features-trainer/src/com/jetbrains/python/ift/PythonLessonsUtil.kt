@@ -49,7 +49,8 @@ object PythonLessonsUtil {
                                              reportTitle: String,
                                              feedbackReportId: String,
                                              primaryLanguage: LangSupport?,
-                                             lessonEndInfo: LessonEndInfo) {
+                                             lessonEndInfo: LessonEndInfo,
+                                             usedInterpreterAtStart: String) {
     if (primaryLanguage == null) {
       thisLogger().error("Onboarding lesson has no language support for some magical reason")
       return
@@ -70,17 +71,19 @@ object PythonLessonsUtil {
     }
 
     val usedInterpreter = project.pythonSdk?.versionString ?: "none"
+    val startInterpreter = if (usedInterpreterAtStart == usedInterpreter) "same" else usedInterpreterAtStart
 
     primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData(reportTitle, lessonEndInfo) {
       override val feedbackReportId = feedbackReportId
 
-      override val additionalFeedbackFormatVersion: Int = 0
+      override val additionalFeedbackFormatVersion: Int = 1
 
       val interpreters: List<String>? by lazy {
         if (interpreterVersions.isDone) interpreterVersions.get() else null
       }
       override val addAdditionalSystemData: JsonObjectBuilder.() -> Unit = {
         put("current_interpreter", usedInterpreter)
+        put("start_interpreter", startInterpreter)
         put("found_interpreters", buildJsonArray {
           for (i in interpreters ?: emptyList()) {
             add(JsonPrimitive(i))
@@ -96,6 +99,9 @@ object PythonLessonsUtil {
         }
         row(PythonLessonsBundle.message("python.onboarding.feedback.system.used.interpreter")) {
           label(usedInterpreter)
+        }
+        row(PythonLessonsBundle.message("python.onboarding.feedback.system.start.interpreter")) {
+          label(startInterpreter)
         }
       }
 
