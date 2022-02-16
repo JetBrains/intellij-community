@@ -192,10 +192,9 @@ internal class CheckerRunner(val text: TextContent) {
   }
 
   private fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
-    val contentRangesInFile = text.rangesInFile
     return problem.highlightRanges.asSequence()
       .map { text.textRangeToFile(it) }
-      .flatMap { range -> contentRangesInFile.asSequence().mapNotNull { it.intersection(range) } }
+      .flatMap { range -> text.intersection(range) }
       .filterNot { it.isEmpty }
       .toList()
   }
