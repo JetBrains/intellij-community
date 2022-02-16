@@ -52,8 +52,8 @@ class XDebugTabLayoutSettings(
     variablesLayoutSettings.restore()
   }
 
-  private fun onThreadsSettingsChanged() {
-    if (threadsAndFramesOptions.isHidden) {
+  private fun onThreadsSettingsChanged(isHidden: Boolean) {
+    if (isHidden) {
       if (!variablesLayoutSettings.isSelected) {
         hideContent()
       }
@@ -107,7 +107,7 @@ class XDebugTabLayoutSettings(
         debugTab.getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)?.mainComponent?.isVisible = true
       }
 
-      onThreadsSettingsChanged()
+      onThreadsSettingsChanged(false)
     }
 
     override fun getDefaultOptionKey(): String = Registry.stringValue("debugger.default.selected.view.key")
@@ -119,7 +119,7 @@ class XDebugTabLayoutSettings(
       XDebugThreadsFramesViewChangeCollector.framesViewSelected(HIDE_OPTION_KEY)
       debugTab.getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)?.mainComponent?.isVisible = false
 
-      onThreadsSettingsChanged()
+      onThreadsSettingsChanged(true)
     }
 
     override fun getDisplayName(): String = XDebuggerBundle.message("xdebugger.threads.tab.layout.settings.title")
