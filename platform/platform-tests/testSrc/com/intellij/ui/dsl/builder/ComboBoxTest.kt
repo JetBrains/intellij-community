@@ -16,7 +16,7 @@ class ComboBoxTest {
     panel {
       row {
         val comboBox = comboBox(items)
-          .bindItem(::property)
+          .bindItem(::property.toNullableBinding())
         assertEquals(comboBox.component.selectedItem, property)
       }
     }
