@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.inspections
+package com.intellij.java.codeInspection
 
+import com.intellij.JavaTestUtil
+import com.intellij.codeInspection.deprecation.RedundantScheduledForRemovalAnnotationInspection
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.internal.RedundantScheduledForRemovalAnnotationInspection
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/redundantScheduledForRemoval")
+@TestDataPath("\$CONTENT_ROOT/testData/inspection/redundantScheduledForRemoval")
 class RedundantScheduledForRemovalInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getBasePath() = "${DevkitJavaTestsUtil.TESTDATA_PATH}inspections/redundantScheduledForRemoval"
+  override fun getTestDataPath(): String = "${JavaTestUtil.getJavaTestDataPath()}/inspection/redundantScheduledForRemoval"
 
   override fun setUp() {
     super.setUp()
