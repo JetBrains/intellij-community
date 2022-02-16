@@ -706,7 +706,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       setIcon(value.icon);
       setText(value.name);
       setForeground(selected ? UIUtil.getListSelectionForeground(focused) : UIUtil.getListForeground());
-      setEnabled(value.selectable);
+      setEnabled(value.selectable || FsItem.UPLINK.equals(value.name));
     }
   }
 
