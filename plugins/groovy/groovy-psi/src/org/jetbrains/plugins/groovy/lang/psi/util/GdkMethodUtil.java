@@ -499,7 +499,7 @@ public final class GdkMethodUtil {
     return syntheticMacro;
   }
 
-  public static boolean isMacro(@NotNull OriginInfoAwareElement method) {
-    return MACRO_ORIGIN_INFO.equals(method.getOriginInfo());
+  public static boolean isMacro(@NotNull PsiMethod method) {
+    return method instanceof OriginInfoAwareElement && MACRO_ORIGIN_INFO.equals(((OriginInfoAwareElement)method).getOriginInfo());
   }
 }
