@@ -149,7 +149,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
       }
     });
-    new ListSpeedSearch<>(myList, rec -> rec.name);
+    new ListSpeedSearch<>(myList);
 
     var scrollPane = ScrollPaneFactory.createScrollPane(myList);
     var pathInsets = myPath.getInsets();
@@ -198,7 +198,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void openItemAtIndex(int idx, InputEvent e) {
     FsItem item = myModel.get(idx);
     if (item.directory) {
-      load(item.path, null, item.name == FsItem.UPLINK ? UPPER_LEVEL : 0);
+      load(item.path, null, FsItem.UPLINK.equals(item.name) ? UPPER_LEVEL : 0);
     }
     else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
       load(item.path, null, INTO_ARCHIVE);
@@ -229,7 +229,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
     else {
       var items = myList.getSelectedValuesList();
-      if (items.size() == 1 && items.get(0).name == FsItem.UPLINK) {
+      if (items.size() == 1 && FsItem.UPLINK.equals(items.get(0).name)) {
         items = List.of(myCurrentContent.get(0));  // substituting selected uplink with `.`
       }
       return items.stream()
@@ -310,7 +310,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   public @NotNull List<Path> selectedPaths() {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myList
            ? myList.getSelectedValuesList().stream()
-             .filter(r -> r.name != FsItem.UPLINK && r.path != null && r.path.getParent() != null)
+             .filter(r -> !FsItem.UPLINK.equals(r.name) && r.path != null && r.path.getParent() != null)
              .map(r -> r.path)
              .collect(Collectors.toList())
            : List.of();
@@ -685,12 +685,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     @Override
     public String toString() {
-      return name;  // called by `JBList#doCopyToClipboardAction`
+      return name;  // called by `JBList#doCopyToClipboardAction` and `ListSpeedSearch`
     }
 
     private static final Comparator<FsItem> COMPARATOR = (o1, o2) -> {
-      if (o1.name == UPLINK) return -1;
-      if (o2.name == UPLINK) return 1;
+      if (UPLINK.equals(o1.name)) return -1;
+      if (UPLINK.equals(o2.name)) return 1;
       var byType = Boolean.compare(o2.directory, o1.directory);
       if (byType != 0) return byType;
       return (o1.cs ? NaturalComparator.CASE_SENSITIVE_INSTANCE : NaturalComparator.INSTANCE).compare(o1.name, o2.name);
