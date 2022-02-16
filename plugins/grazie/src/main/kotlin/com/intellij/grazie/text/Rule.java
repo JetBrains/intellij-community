@@ -85,7 +85,7 @@ public abstract class Rule {
    * @return a non-empty list consisting of presentable names of the rule's categories:
    * the nodes it should be placed into in the Rule settings tree, starting from the language node
    */
-  public final List<String> getCategories() {
+  public List<String> getCategories() {
     return categories;
   }
 
