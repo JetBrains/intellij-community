@@ -128,6 +128,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
         }
         populateContentRoots(gradleModule, ideModule, resolverCtx)
+        populateExternalSystemRunTasks(gradleModule, ideModule, resolverCtx)
     }
 
     override fun populateModuleCompileOutputSettings(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
@@ -291,6 +292,33 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
         }
 
+        private fun populateExternalSystemRunTasks(
+            gradleModule: IdeaModule,
+            mainModuleNode: DataNode<ModuleData>,
+            resolverCtx: ProjectResolverContext
+        ) {
+            val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
+            val sourceSetToRunTasks = calculateRunTasks(mppModel, gradleModule, resolverCtx)
+            val allKotlinSourceSets =
+                ExternalSystemApiUtil.findAllRecursively(mainModuleNode, KotlinSourceSetData.KEY).mapNotNull { it?.data?.sourceSetInfo } +
+                        ExternalSystemApiUtil.find(mainModuleNode, KotlinAndroidSourceSetData.KEY)?.data?.sourceSetInfos.orEmpty()
+
+            val allKotlinSourceSetsDataWithRunTasks = allKotlinSourceSets
+                .associateWith {
+                    when (val component = it.kotlinComponent) {
+                        is KotlinCompilation -> component
+                            .declaredSourceSets
+                            .firstNotNullResult { sourceSetToRunTasks[it] }
+                            .orEmpty()
+                        is KotlinSourceSet -> sourceSetToRunTasks[component]
+                            .orEmpty()
+                        //TODO(chernyshevj) KotlinComponent: interface -> sealed interface
+                        else -> error("Unsupported KotlinComponent: $component")
+                    }
+                }
+            allKotlinSourceSetsDataWithRunTasks.forEach { (sourceSetInfo, runTasks) -> sourceSetInfo.externalSystemRunTasks = runTasks }
+        }
+
         private fun populateSourceSetInfos(
             gradleModule: IdeaModule,
             mainModuleNode: DataNode<ModuleData>,
@@ -315,8 +343,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             } else null
 
             val sourceSetMap = projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS)!!
-
-            val sourceSetToRunTasks = calculateRunTasks(mppModel, gradleModule, resolverCtx)
 
             val sourceSetToCompilationData = LinkedHashMap<String, MutableSet<GradleSourceSetData>>()
             for (target in mppModel.targets) {
@@ -371,8 +397,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                         gradleModule,
                         resolverCtx
                     ) ?: continue
-                    kotlinSourceSet.externalSystemRunTasks =
-                        compilation.declaredSourceSets.firstNotNullResult { sourceSetToRunTasks[it] } ?: emptyList()
 
                     /*if (compilation.platform == KotlinPlatform.JVM || compilation.platform == KotlinPlatform.ANDROID) {
                         compilationData.targetCompatibility = (kotlinSourceSet.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget
@@ -457,7 +481,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 }
 
                 val kotlinSourceSet = createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
-                kotlinSourceSet.externalSystemRunTasks = sourceSetToRunTasks[sourceSet] ?: emptyList()
 
                 val sourceSetDataNode =
                     (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
@@ -650,9 +673,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             gradlePath: String
         ): String? {
             return ((if (gradlePath.startsWith(":")) "$rootName." else "")
-                + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-            .filter { s: String -> s.isNotEmpty() }
-            .collect(Collectors.joining(".")))
+                    + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
+                .filter { s: String -> s.isNotEmpty() }
+                .collect(Collectors.joining(".")))
         }
 
         private fun getInternalModuleName(
