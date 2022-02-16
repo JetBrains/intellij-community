@@ -3,11 +3,11 @@ package com.intellij.codeInspection.ui.actions
 
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ui.InspectionResultsView
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorBundle
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -23,21 +23,20 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-val LOG = Logger.getInstance(InspectionResultsExportActionBase::class.java)
+val LOG = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
 
 /**
- * Abstract base for actions shown in the inspections results export popup.
+ * Extension point to add actions in the inspections results export popup.
  */
-abstract class InspectionResultsExportActionBase(text: Supplier<String?>,
-                                                 description: Supplier<String?>,
-                                                 icon: Icon?) : InspectionViewActionBase(text, description, icon) {
+abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
+                                                     description: Supplier<String?>,
+                                                     icon: Icon?) : InspectionViewActionBase(text, description, icon) {
+
+  companion object {
+    val EP_NAME: ExtensionPointName<InspectionResultsExportActionProvider> = ExtensionPointName.create("com.intellij.inspectionResultsExportActionProvider")
+  }
 
   val propertyGraph = PropertyGraph()
-
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.isVisible = ActionPlaces.isPopupPlace(e.place)
-  }
 
   abstract val progressTitle: @ProgressTitle String
 

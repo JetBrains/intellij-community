@@ -11,9 +11,9 @@ import com.intellij.ui.dsl.builder.panel
 import java.nio.file.Path
 import javax.swing.JPanel
 
-class ExportToHTMLAction : InspectionResultsExportActionBase(InspectionsBundle.messagePointer("inspection.action.export.html.title"),
-                                                             InspectionsBundle.messagePointer("inspection.action.export.html.description"),
-                                                             AllIcons.FileTypes.Html) {
+class ExportToHTMLAction : InspectionResultsExportActionProvider(InspectionsBundle.messagePointer("inspection.action.export.html.title"),
+                                                                 InspectionsBundle.messagePointer("inspection.action.export.html.description"),
+                                                                 AllIcons.FileTypes.Html) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.html.progress.title")
 
   val openProperty = propertyGraph.property(false)

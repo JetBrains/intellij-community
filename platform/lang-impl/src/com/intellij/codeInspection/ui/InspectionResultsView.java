@@ -12,8 +12,10 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.OccurenceNavigator;
@@ -212,7 +214,10 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(myGlobalInspectionContext.createToggleAutoscrollAction());
-    specialGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("InspectionToolWindow.Toolbar"));
+    final var exportActions = new DefaultActionGroup(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.ToolbarDecorator.Export);
+    exportActions.addAll(InspectionResultsExportActionProvider.Companion.getEP_NAME().getExtensionList());
+    exportActions.setPopup(true);
+    specialGroup.add(exportActions);
     specialGroup.add(new InvokeQuickFixAction(this));
     return createToolbar(specialGroup);
   }

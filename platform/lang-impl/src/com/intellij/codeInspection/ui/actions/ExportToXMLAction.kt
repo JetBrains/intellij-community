@@ -15,9 +15,9 @@ import com.intellij.util.containers.MultiMap
 import java.io.IOException
 import java.nio.file.Path
 
-class ExportToXMLAction : InspectionResultsExportActionBase(InspectionsBundle.messagePointer("inspection.action.export.xml.title"),
-                                                            InspectionsBundle.messagePointer("inspection.action.export.xml.description"),
-                                                            AllIcons.FileTypes.Xml) {
+class ExportToXMLAction : InspectionResultsExportActionProvider(InspectionsBundle.messagePointer("inspection.action.export.xml.title"),
+                                                                InspectionsBundle.messagePointer("inspection.action.export.xml.description"),
+                                                                AllIcons.FileTypes.Xml) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.xml.progress.title")
 
   override fun writeResults(view: InspectionResultsView, outputPath: Path) {

@@ -1509,6 +1509,10 @@
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
 
     <lang.formatter.restriction implementation="com.intellij.lang.InvalidPsiAutoFormatRestriction"/>
+
+    <!--  Inspection results -->
+    <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
+    <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
