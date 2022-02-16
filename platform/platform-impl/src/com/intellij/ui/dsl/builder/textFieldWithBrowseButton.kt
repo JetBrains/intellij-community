@@ -16,10 +16,6 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.columns(columns: Int): Cell<T> {
   return this
 }
 
-fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
-  return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, binding)
-}
-
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
@@ -40,4 +36,8 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(getter: () -> String, sette
 fun <T : TextFieldWithBrowseButton> Cell<T>.text(text: String): Cell<T> {
   component.text = text
   return this
+}
+
+private fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
+  return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, binding)
 }

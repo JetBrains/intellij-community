@@ -62,7 +62,7 @@ fun Cell.radioButton(ui: CheckboxDescriptor): CellBuilder<JRadioButton> {
 
 fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
   val result = checkBox(ui.name)
-    .bindSelected(ui.binding)
+    .bindSelected(ui.binding.get, ui.binding.set)
   ui.comment?.let { result.comment(it) }
   return result
 }
@@ -71,7 +71,7 @@ fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBChe
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.radioButton(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBRadioButton> {
   val result = radioButton(ui.name)
-    .bindSelected(ui.binding)
+    .bindSelected(ui.binding.get, ui.binding.set)
   ui.comment?.let { result.comment(it) }
   return result
 }

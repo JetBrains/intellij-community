@@ -36,10 +36,6 @@ const val COLUMNS_MEDIUM = 25
 
 const val COLUMNS_LARGE = 36
 
-fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
-  return bind(JTextComponent::getText, JTextComponent::setText, binding)
-}
-
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
@@ -55,11 +51,6 @@ fun <T : JTextComponent> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell
 
 fun <T : JTextComponent> Cell<T>.bindText(getter: () -> String, setter: (String) -> Unit): Cell<T> {
   return bindText(PropertyBinding(getter, setter))
-}
-
-fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cell<T> {
-  return bindText({ binding.get().toString() },
-                  { value -> catchValidationException { binding.set(component.getValidatedIntValue(value)) } })
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
@@ -127,4 +118,13 @@ private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
       }
     }
   }
+}
+
+private fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
+  return bind(JTextComponent::getText, JTextComponent::setText, binding)
+}
+
+private fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cell<T> {
+  return bindText({ binding.get().toString() },
+                  { value -> catchValidationException { binding.set(component.getValidatedIntValue(value)) } })
 }

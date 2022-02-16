@@ -15,10 +15,6 @@ import java.awt.event.ActionListener
 import javax.swing.AbstractButton
 import kotlin.reflect.KMutableProperty0
 
-fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>): Cell<T> {
-  return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
-}
-
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 fun <T : JBCheckBox> Cell<T>.bindSelected(property: GraphProperty<Boolean>) = bindSelected(property)
@@ -52,3 +48,7 @@ fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEv
 
 val Cell<AbstractButton>.selected
   get() = component.selected
+
+private fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>): Cell<T> {
+  return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
+}

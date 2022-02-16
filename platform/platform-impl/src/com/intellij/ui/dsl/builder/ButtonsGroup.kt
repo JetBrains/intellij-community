@@ -15,13 +15,9 @@ interface ButtonsGroup {
 }
 
 inline fun <reified T : Any> ButtonsGroup.bind(noinline getter: () -> T, noinline setter: (T) -> Unit): ButtonsGroup {
-  return bind(PropertyBinding(getter, setter))
+  return bind(PropertyBinding(getter, setter), T::class.java)
 }
 
 inline fun <reified T : Any> ButtonsGroup.bind(prop: KMutableProperty0<T>): ButtonsGroup {
-  return bind(prop.toBindingInternal())
-}
-
-inline fun <reified T : Any> ButtonsGroup.bind(binding: PropertyBinding<T>): ButtonsGroup {
-  return bind(binding, T::class.java)
+  return bind(prop.toBindingInternal(), T::class.java)
 }

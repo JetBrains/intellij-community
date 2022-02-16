@@ -499,7 +499,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         }
         row {
           checkBox("Enable high precision timer").bindSelected(
-            PropertyBinding(JBAnimatorHelper::isAvailable, JBAnimatorHelper::setAvailable)
+            JBAnimatorHelper::isAvailable, JBAnimatorHelper::setAvailable
           )
         }.visible(SystemInfoRt.isWindows)
         row {

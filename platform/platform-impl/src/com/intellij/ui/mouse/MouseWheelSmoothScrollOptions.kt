@@ -89,7 +89,7 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
                   JBAnimatorHelper.requestHighPrecisionTimer(myBezierPainter.animator)
                 }
               }
-            }.bindSelected(PropertyBinding(JBAnimatorHelper::isAvailable, JBAnimatorHelper::setAvailable))
+            }.bindSelected(JBAnimatorHelper::isAvailable, JBAnimatorHelper::setAvailable)
             contextHelp(IdeBundle.message("checkbox.smooth.scrolling.enable.high.precision.timer.help"))
             rowComment(IdeBundle.message("checkbox.smooth.scrolling.enable.high.precision.timer.comments"))
           }
