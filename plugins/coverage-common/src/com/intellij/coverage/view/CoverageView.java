@@ -12,7 +12,9 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -84,6 +86,15 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new TreeTable(myModel);
+    myTable.setTreeCellRenderer(new NodeRenderer() {
+      @Override
+      protected @NotNull SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation,
+                                                                      Color color,
+                                                                      @NotNull Object node) {
+        if (mySelected) color = null;
+        return super.getSimpleTextAttributes(presentation, color, node);
+      }
+    });
     myTable.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
       @Override
       public Component getTableCellRendererComponent(JTable table,
