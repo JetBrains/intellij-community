@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
@@ -44,6 +45,7 @@ import com.intellij.ui.docking.DockManager
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -100,6 +102,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     @JvmStatic
     fun getExecutorByContent(content: Content): Executor? = content.getUserData(EXECUTOR_KEY)
+
+    @JvmStatic
+    fun getLiveIndicator(icon: Icon?): Icon = when (ExperimentalUI.isNewUI()) {
+      true -> IconManager.getInstance().withIconBadge(icon ?: EmptyIcon.ICON_13, JBUI.CurrentTheme.IconBadge.SUCCESS)
+      else -> ExecutionUtil.getLiveIndicator(icon)
+    }
   }
 
   // must be called on EDT
@@ -270,12 +278,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       val processAdapter = object : ProcessAdapter() {
         override fun startNotified(event: ProcessEvent) {
           UIUtil.invokeLaterIfNeeded {
-            content.icon = ExecutionUtil.getLiveIndicator(descriptor.icon)
+            content.icon = getLiveIndicator(descriptor.icon)
             var icon = toolWindowIdToBaseIcon[toolWindowId]
             if (ExperimentalUI.isNewUI() && icon is ScalableIcon) {
               icon = IconLoader.loadCustomVersionOrScale(icon, 20f)
             }
-            toolWindow!!.setIcon(ExecutionUtil.getLiveIndicator(icon))
+            toolWindow!!.setIcon(getLiveIndicator(icon))
           }
         }
 
@@ -530,7 +538,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   private fun setToolWindowIcon(alive: Boolean, toolWindow: ToolWindow) {
     val base = toolWindowIdToBaseIcon.get(toolWindow.id)
-    toolWindow.setIcon(if (alive) ExecutionUtil.getLiveIndicator(base) else ObjectUtils.notNull(base, EmptyIcon.ICON_13))
+    toolWindow.setIcon(if (alive) getLiveIndicator(base) else ObjectUtils.notNull(base, EmptyIcon.ICON_13))
   }
 
   private inner class CloseListener(content: Content, private val myExecutor: Executor) : BaseContentCloseListener(content, project) {
