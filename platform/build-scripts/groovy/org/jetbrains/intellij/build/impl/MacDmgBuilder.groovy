@@ -59,6 +59,13 @@ final class MacDmgBuilder {
       return
     }
 
+    if (macHostProperties.host == null ||
+        macHostProperties.userName == null ||
+        macHostProperties.password == null ||
+        macHostProperties.codesignString == null) {
+      throw new IllegalStateException("Build step '${BuildOptions.MAC_SIGN_STEP}' is enabled, but machost properties were not provided. Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
+    }
+
     Path dmgImage = context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)
       ? null
       : Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath)
