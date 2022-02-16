@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,19 +30,21 @@ public final class SystemNotificationsImpl extends SystemNotifications {
   }
 
   private static @Nullable Notifier getPlatformNotifier() {
-    try {
-      if (SystemInfo.isMac) {
-        return MacOsNotifications.getInstance();
+    if (!GraphicsUtil.isProjectorEnvironment()) {
+      try {
+        if (SystemInfo.isMac) {
+          return MacOsNotifications.getInstance();
+        }
+        else if (SystemInfo.isXWindow) {
+          return LibNotifyWrapper.getInstance();
+        }
+        else if (SystemInfo.isWin10OrNewer) {
+          return SystemTrayNotifications.getWin10Instance();
+        }
       }
-      else if (SystemInfo.isXWindow) {
-        return LibNotifyWrapper.getInstance();
+      catch (Throwable t) {
+        Logger.getInstance(SystemNotificationsImpl.class).infoWithDebug(t);
       }
-      else if (SystemInfo.isWin10OrNewer) {
-        return SystemTrayNotifications.getWin10Instance();
-      }
-    }
-    catch (Throwable t) {
-      Logger.getInstance(SystemNotificationsImpl.class).infoWithDebug(t);
     }
 
     return null;
