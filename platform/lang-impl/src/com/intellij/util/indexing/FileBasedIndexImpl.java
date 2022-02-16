@@ -2085,6 +2085,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private static boolean isWritingIndexValuesSeparatedFromCounting() {
-    return Registry.is("indexing.separate.applying.values.from.counting");
+    return ourWritingIndexValuesSeparatedFromCounting;
   }
+
+  static void setupWritingIndexValuesSeparatedFromCounting() {
+    ourWritingIndexValuesSeparatedFromCounting = Registry.is("indexing.separate.applying.values.from.counting");
+  }
+
+  private static volatile boolean ourWritingIndexValuesSeparatedFromCounting;
 }
