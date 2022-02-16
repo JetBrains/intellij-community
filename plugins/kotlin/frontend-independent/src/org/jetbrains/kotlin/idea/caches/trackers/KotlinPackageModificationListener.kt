@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -85,7 +86,10 @@ class KotlinPackageModificationListener(project: Project): Disposable {
                         changesByElement.affectedChildren.any child@ { affectedChild ->
                             if (affectedChild.packageDirectiveChange()) return@child true
                             val oldChildNode = changesByElement.getChangeByChild(affectedChild).safeAs<ChangeInfoImpl>()?.oldChildNode
-                            if (oldChildNode?.packageDirectiveChange() == true) return@child true
+                            // if oldChildNode is null and new child is Kotlin file - it means file was not exist
+                            if (oldChildNode == null && changedElement.elementType == KtFileElementType.INSTANCE ||
+                                oldChildNode?.packageDirectiveChange() == true
+                            ) return@child true
 
                             affectedChild.psi.findPackageDirectiveFqName()?.let { return@child true }
                             oldChildNode?.psi?.findPackageDirectiveFqName() != null
