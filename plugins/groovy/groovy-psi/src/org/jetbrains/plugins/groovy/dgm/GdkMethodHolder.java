@@ -59,9 +59,6 @@ public final class GdkMethodHolder {
   }
 
   private  MultiMap<String, PsiMethod> onlyMacro(MultiMap<String, PsiMethod> methodsByName) {
-    if (this.myClassName.contains("Ginq")) {
-      int x = 1;
-    }
     MultiMap<String, PsiMethod> map = new MultiMap<>();
     loop: for (Map.Entry<String, Collection<PsiMethod>> entry : methodsByName.entrySet()) {
       for (PsiMethod candidate : entry.getValue()) {
