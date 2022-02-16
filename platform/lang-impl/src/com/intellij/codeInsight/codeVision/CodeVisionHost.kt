@@ -8,9 +8,12 @@ import com.intellij.openapi.rd.createLifetime
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.reactive.Signal
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -142,7 +145,7 @@ open class CodeVisionHost(val project: Project) {
   open fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
     //todo intellij statistic
     if (entry.providerId == settingsLensProviderId) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, InlaySettingsConfigurable::class.java)
+      openCodeVisionSettings()
       return
     }
     val frontendProvider = providers.firstOrNull { it.id == entry.providerId }
@@ -334,6 +337,12 @@ open class CodeVisionHost(val project: Project) {
     }
 
     return indicator
+  }
+
+  private fun openCodeVisionSettings(){
+    InlayHintsConfigurable.showSettingsDialogForLanguage(project, Language.ANY){
+      return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
+    }
   }
 
 
