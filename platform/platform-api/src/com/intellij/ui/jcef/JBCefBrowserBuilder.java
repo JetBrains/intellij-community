@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import org.cef.browser.CefBrowser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,9 +112,18 @@ public class JBCefBrowserBuilder {
   }
 
   /**
-   * Creates the browser with the set parameters.
+   * @deprecated use {@link JBCefBrowserBuilder#build()} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public @NotNull JBCefBrowser createBrowser() {
+    return build();
+  }
+
+  /**
+   * Creates and returns the browser with the set parameters.
+   */
+  public @NotNull JBCefBrowser build() {
     return JBCefBrowser.create(this);
   }
 }
