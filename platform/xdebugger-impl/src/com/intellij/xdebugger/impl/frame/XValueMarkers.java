@@ -6,10 +6,15 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class XValueMarkers<V extends XValue, M> {
   private final XValueMarkerProvider<V, M> myProvider;
@@ -17,7 +22,7 @@ public final class XValueMarkers<V extends XValue, M> {
 
   private XValueMarkers(@NotNull XValueMarkerProvider<V, M> provider) {
     myProvider = provider;
-    myMarkers = new HashMap<>();
+    myMarkers = Collections.synchronizedMap(new HashMap<>());
   }
 
   public static <V extends XValue, M> XValueMarkers<V, M> createValueMarkers(@NotNull XValueMarkerProvider<V, M> provider) {
@@ -45,25 +50,52 @@ public final class XValueMarkers<V extends XValue, M> {
     return myProvider.canMark(valueClass.cast(value));
   }
 
+  @Deprecated
   public void markValue(@NotNull XValue value, @NotNull ValueMarkup markup) {
-    // remove the existing label if any
-    myMarkers.entrySet().stream()
-      .filter(entry -> markup.getText().equals(entry.getValue().getText()))
-      .findFirst()
-      .ifPresent(entry -> myMarkers.remove(entry.getKey()));
-
-    //noinspection unchecked
-    M m = myProvider.markValue((V)value);
-    myMarkers.put(m, markup);
+    try {
+      markValueAsync(value, markup).blockingGet(5, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
+  public Promise<Object> markValueAsync(@NotNull XValue value, @NotNull ValueMarkup markup) {
+    synchronized (myMarkers) {
+      // remove the existing label if any
+      myMarkers.entrySet().stream()
+        .filter(entry -> markup.getText().equals(entry.getValue().getText()))
+        .findFirst()
+        .ifPresent(entry -> myMarkers.remove(entry.getKey()));
+    }
+
+    //noinspection unchecked
+    Promise<M> promise = myProvider.markValueAsync((V)value);
+    return promise.then(m -> {
+      myMarkers.put(m, markup);
+      return null;
+    });
+  }
+
+  @Deprecated
   public void unmarkValue(@NotNull XValue value) {
+    try {
+      unmarkValueAsync(value).blockingGet(5, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public Promise<Object> unmarkValueAsync(@NotNull XValue value) {
     //noinspection unchecked
     final V v = (V)value;
     M m = myProvider.getMarker(v);
     if (m != null) {
-      myProvider.unmarkValue(v, m);
-      myMarkers.remove(m);
+      return myProvider.unmarkValueAsync(v, m)
+        .onSuccess(__ -> myMarkers.remove(m));
+    } else {
+      return Promises.resolvedPromise();
     }
   }
 
