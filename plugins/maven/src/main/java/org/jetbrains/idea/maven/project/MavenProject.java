@@ -1251,9 +1251,8 @@ public class MavenProject {
       boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
 
       result.dependencies = repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies);
-
       result.plugins = repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins);
-
+      result.properties = !Comparing.equal(myProperties, other.myProperties);
       return result;
     }
 

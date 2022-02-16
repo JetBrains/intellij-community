@@ -25,6 +25,7 @@ public class MavenProjectChanges {
   public boolean sources;
   public boolean dependencies;
   public boolean plugins;
+  public boolean properties;
 
   private static MavenProjectChanges createAllChanges() {
     MavenProjectChanges result = new MavenProjectChanges();
@@ -33,6 +34,7 @@ public class MavenProjectChanges {
     result.sources = true;
     result.dependencies = true;
     result.plugins = true;
+    result.properties = true;
     return result;
   }
 
@@ -51,10 +53,11 @@ public class MavenProjectChanges {
     result.sources = sources || other.sources;
     result.dependencies = dependencies || other.dependencies;
     result.plugins = plugins || other.plugins;
+    result.properties = properties || other.properties;
     return result;
   }
 
   public boolean hasChanges() {
-    return packaging || output || sources || dependencies || plugins;
+    return packaging || output || sources || dependencies || plugins || properties;
   }
 }
