@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports fields in LocalQuickFix implementations that prevent intention preview action to function properly.
+Reports fields in LocalQuickFix implementations that prevent intention preview action from functioning properly.
 <p>
   Intention preview is an IntelliJ platform feature that displays how quick-fix or intention action
   will change the current file when applied. To implement this, <code>LocalQuickFix.generatePreview()</code>
@@ -24,6 +24,10 @@ Reports fields in LocalQuickFix implementations that prevent intention preview a
     rebinding it to the non-physical file copy which is supplied as a parameter. Use
     <code>PsiTreeUtil.findSameElementInCopy()</code> to find the corresponding PSI elements inside the
     supplied non-physical copy.
+  </li>
+  <li>
+    Instead of storing PSI references in fields, try to extract all the necessary information from
+    <code>ProblemDescriptor.getPsiElement()</code>.
   </li>
   <li>
     You may override <code>generatePreview()</code> method and provide completely custom preview behavior.
