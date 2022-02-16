@@ -25,6 +25,7 @@ class StyleProblemSeverities: SeveritiesProvider() {
     private val icon: Icon
   ): HighlightInfoTypeImpl(severity, attributesKey), HighlightInfoType.Iconable {
     override fun getIcon(): Icon = icon
+    override fun isApplicableToInspections() = false
   }
 
   companion object {
