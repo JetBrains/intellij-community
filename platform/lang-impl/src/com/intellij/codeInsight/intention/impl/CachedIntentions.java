@@ -39,11 +39,11 @@ import java.util.function.Predicate;
 public final class CachedIntentions {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
 
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myIntentions = new CopyOnWriteArraySet<>();
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myErrorFixes = new CopyOnWriteArraySet<>();
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myInspectionFixes = new CopyOnWriteArraySet<>();
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myGutters = new CopyOnWriteArraySet<>();
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myNotifications = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myIntentions = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myErrorFixes = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myInspectionFixes = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myGutters = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myNotifications = new CopyOnWriteArraySet<>();
   private int myOffset;
   private HighlightInfoType myHighlightInfoType;
 
@@ -181,20 +181,24 @@ public final class CachedIntentions {
 
   private boolean addActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                @NotNull Set<? super IntentionActionWithTextCaching> cachedActions) {
-    List<IntentionActionWithTextCaching> actions =
-      ContainerUtil.map(newDescriptors, descriptor -> wrapAction(descriptor, myFile, myFile, myEditor));
-    return cachedActions.addAll(actions);
+    boolean changed = false;
+    for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
+      changed |= cachedActions.add(wrapAction(descriptor, myFile, myFile, myEditor));
+    }
+    return changed;
   }
 
   private boolean wrapActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
-                                @NotNull CopyOnWriteArraySet<IntentionActionWithTextCaching> cachedActions,
+                                @NotNull Set<? super IntentionActionWithTextCaching> cachedActions,
                                 boolean shouldCallIsAvailable) {
     if (cachedActions.isEmpty() && newDescriptors.isEmpty()) return false;
+    boolean changed = false;
     if (myEditor == null) {
       LOG.assertTrue(!shouldCallIsAvailable);
-      List<IntentionActionWithTextCaching> actions =
-        ContainerUtil.map(newDescriptors, descriptor -> wrapAction(descriptor, myFile, myFile, null));
-      return cachedActions.addAll(actions);
+      for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
+        changed |= cachedActions.add(wrapAction(descriptor, myFile, myFile, null));
+      }
+      return changed;
     }
     final int caretOffset = myEditor.getCaretModel().getOffset();
     final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
@@ -240,11 +244,10 @@ public final class CachedIntentions {
 
     if (cachedActions.equals(wrappedNew)) {
       return false;
-    } else {
-      cachedActions.clear();
-      cachedActions.addAll(wrappedNew);
-      return true;
     }
+    cachedActions.clear();
+    cachedActions.addAll(wrappedNew);
+    return true;
   }
 
   @NotNull
@@ -291,7 +294,7 @@ public final class CachedIntentions {
 
   private void removeActionFromCached(@NotNull IntentionActionWithTextCaching action) {
     // remove from the action from the list after invocation to make it appear unavailable sooner.
-    // (the highlighting will process the whole file and remove the no more available action from the list automatically - but it's may be too long)
+    // (the highlighting will process the whole file and remove the no more available action from the list automatically - but it may be too long)
     myErrorFixes.remove(action);
     myGutters.remove(action);
     myInspectionFixes.remove(action);

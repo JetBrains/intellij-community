@@ -138,7 +138,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return getAction();
   }
 
-  public boolean isShowSubmenu() {
+  boolean isShowSubmenu() {
     IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
     if (action instanceof CustomizableIntentionAction) {
       return ((CustomizableIntentionAction)myAction).isShowSubmenu();
