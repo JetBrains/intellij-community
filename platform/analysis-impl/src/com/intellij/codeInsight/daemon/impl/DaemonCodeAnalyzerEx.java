@@ -43,7 +43,6 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                           int endOffset,
                                           @NotNull Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
@@ -58,20 +57,14 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   static boolean processHighlightsOverlappingOutside(@NotNull Document document,
                                                      @NotNull Project project,
-                                                     @Nullable("null means all") HighlightSeverity minSeverity,
                                                      int startOffset,
                                                      int endOffset,
                                                      @NotNull Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-
-    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOutside(startOffset, endOffset, marker -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
-      if (info == null) return true;
-      return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-             || info.getHighlighter() == null
-             || processor.process(info);
+      return info == null || info.getHighlighter() == null || processor.process(info);
     });
   }
 
