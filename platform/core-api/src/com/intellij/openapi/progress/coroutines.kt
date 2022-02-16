@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
@@ -136,12 +136,20 @@ fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T
   }
 }
 
-@Deprecated(message = "Method was renamed", replaceWith = ReplaceWith("runBlockingCancellable(action)"))
+@Deprecated(
+  message = "Method was renamed",
+  replaceWith = ReplaceWith("runBlockingCancellable(action)"),
+  level = DeprecationLevel.ERROR,
+)
 fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(action)
 }
 
-@Deprecated(message = "Method was renamed", replaceWith = ReplaceWith("runBlockingCancellable(indicator, action)"))
+@Deprecated(
+  message = "Method was renamed",
+  replaceWith = ReplaceWith("runBlockingCancellable(indicator, action)"),
+  level = DeprecationLevel.ERROR,
+)
 fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(indicator, action)
 }
