@@ -28,6 +28,27 @@ fun getGradleTasks(project: Project): Map<String, MultiMap<String, GradleTaskDat
   }
 }
 
+// Android Studio: workaround for IDEA-288709
+fun getAllGradleTestDataTasks(project: Project): Set<String> {
+  return CachedValuesManager.getManager(project).getCachedValue(project) {
+    CachedValueProvider.Result.create(findGradleTestDataTasks(project), ExternalProjectsDataStorage.getInstance(project))
+  }
+}
+
+private fun findGradleTestDataTasks(project: Project): Set<String> {
+  val projects = getModuleDataWithinProject(project)
+  val projectTestDataTasks = mutableSetOf<String>()
+  for ((_, modulesNodes) in projects.entrySet()) {
+    val modulesTaskData = modulesNodes.map { testData ->
+      ExternalSystemApiUtil.getChildren(testData, ProjectKeys.TEST)
+        .filter { it.data.testTaskName.isNotEmpty() }
+        .map { it.data.testTaskName }
+    }.flatten()
+    projectTestDataTasks.addAll(modulesTaskData)
+  }
+  return projectTestDataTasks
+}
+
 /**
  * @return `external module path (path to the directory) -> {gradle module path -> {[tasks of this module]}}`
  */
@@ -70,7 +91,8 @@ private fun getGradleTaskNodesMap(project: Project): Map<String, MultiMap<String
 private data class ProjectTaskData(val externalProjectPath: String, val modulesTaskData: List<ModuleTaskData>)
 private data class ModuleTaskData(val externalModulePath: String, val gradlePath: String, val tasks: List<DataNode<TaskData>>)
 
-private fun findGradleTasks(project: Project): List<ProjectTaskData> {
+// Android Studio: workaround for IDEA-288709
+private fun getModuleDataWithinProject(project: Project): MultiMap<String, DataNode<ModuleData>> {
   val projectDataManager = ProjectDataManager.getInstance()
   val projects = MultiMap.createOrderedSet<String, DataNode<ModuleData>>()
   for (settings in GradleSettings.getInstance(project).linkedProjectsSettings) {
@@ -85,6 +107,12 @@ private fun findGradleTasks(project: Project): List<ProjectTaskData> {
       projects.putValue(projectPath, moduleNode)
     }
   }
+  return projects
+}
+
+// Android Studio: workaround for IDEA-288709
+private fun findGradleTasks(project: Project): List<ProjectTaskData> {
+  val projects = getModuleDataWithinProject(project)
   val projectTasksData = ArrayList<ProjectTaskData>()
   for ((externalProjectPath, modulesNodes) in projects.entrySet()) {
     val modulesTaskData = modulesNodes.map(::getModuleTasks)

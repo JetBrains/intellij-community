@@ -40,6 +40,11 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
       .filter { matcher in getPossibleTaskNames(it, modulePath) }
   }
 
+  // Android Studio: workaround for IDEA-288709
+  override fun findGradleTestDataTasks(): Set<String> {
+    return org.jetbrains.plugins.gradle.util.getAllGradleTestDataTasks(project)
+  }
+
   override fun isMatchedTask(task: GradleTaskData, modulePath: String, matcher: String): Boolean {
     return matcher in getPossibleTaskNames(task, modulePath)
   }

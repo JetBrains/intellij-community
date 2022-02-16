@@ -275,6 +275,8 @@ public class GradleTestsExecutionConsoleManager
       final String arguments = taskTask.getArguments();
       isApplicable = arguments != null && StringUtil.contains(arguments, GradleConstants.TESTS_ARG_NAME);
 
+      isApplicable = isApplicable || taskTask.getTasksToExecute().contains("--tests");  // Android Studio: workaround for IDEA-288709
+
       isApplicable = isApplicable || ContainerUtil.find(taskTask.getTasksToExecute(), taskToExecute -> {
         String projectPath = taskTask.getExternalProjectPath();
         File file = new File(projectPath);
@@ -290,6 +292,14 @@ public class GradleTestsExecutionConsoleManager
                 "verification".equals(taskData.getGroup())
                );
       }) != null;
+
+      // Android Studio: workaround for IDEA-288709
+      isApplicable = isApplicable || ContainerUtil.exists(taskTask.getTasksToExecute(), taskToExecute -> {
+        String projectPath = taskTask.getExternalProjectPath();
+        var tasksIndices = GradleTasksIndices.getInstance(taskTask.getIdeProject());
+        var testDataTasks = tasksIndices.findGradleTestDataTasks();
+        return testDataTasks.contains(taskToExecute);
+      });
 
       if (isApplicable) {
         taskTask.putUserData(RUN_TASK_AS_TEST, true);

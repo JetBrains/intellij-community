@@ -18,6 +18,8 @@ interface GradleTasksIndices {
    */
   fun findTasks(modulePath: String, matcher: String): List<GradleTaskData>
 
+  fun findGradleTestDataTasks(): Set<String>  // Android Studio: workaround for IDEA-288709
+
   /**
    * Checks that [task] can be determined by [matcher] in Gradle module that defined by [modulePath].
    */
