@@ -183,6 +183,9 @@ public final class FSRecords {
       markAsDeletedRecursively(subRecord);
     }
 
+    if (PersistentFS.isDirectory(getFlags(id))) {
+      ourTreeAccessor.deleteDirectoryRecord(id);
+    }
     ourRecordAccessor.addToFreeRecordsList(id);
   }
 

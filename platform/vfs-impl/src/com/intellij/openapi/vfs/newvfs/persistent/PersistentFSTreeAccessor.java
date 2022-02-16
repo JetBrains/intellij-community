@@ -183,6 +183,12 @@ final class PersistentFSTreeAccessor {
     }
   }
 
+  void deleteDirectoryRecord(int id) throws IOException {
+    if (myFsRootDataLoader != null) {
+      myFsRootDataLoader.deleteDirectoryRecord(getRootsStoragePath(), id);
+    }
+  }
+
   void deleteRootRecord(int fileId) throws IOException {
     myFSConnection.markDirty();
 
