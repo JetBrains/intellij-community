@@ -288,6 +288,12 @@ bool LocateJVM()
     return true;
   }
 
+  // Android Studio: bundled under "jre"
+  if (FindValidJVM(GetAdjacentDir("jre").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
+  {
+    return true;
+  }
+
   if (FindJVMInEnvVar("JAVA_HOME", result))
   {
     return result;
