@@ -11,7 +11,7 @@ import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 
 class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync")) {
   override fun actionPerformed(e: AnActionEvent) {
-    ShowSettingsUtil.getInstance().showSettingsDialog(null, SettingsSyncConfigurable::class.java)
+    ShowSettingsUtil.getInstance().showSettingsDialog(e.project, SettingsSyncConfigurable::class.java)
   }
 
   override fun update(e: AnActionEvent) {
