@@ -11,7 +11,9 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.CaptionPanel
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.border.CustomLineBorder
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.SingleAlarm
 import com.intellij.xdebugger.XDebugSession
@@ -26,7 +28,6 @@ import com.sun.jdi.request.EventRequest
 import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebuggerContentInfo
 import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebuggerContentInfo.Companion.XCOROUTINE_POPUP_ACTION_GROUP
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
-import org.jetbrains.kotlin.idea.debugger.coroutine.VersionedImplementationProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
@@ -38,8 +39,6 @@ import javax.swing.JPanel
 
 class XCoroutineView(val project: Project, val session: XDebugSession) :
     Disposable, XDebugSessionListenerProvider, CreateContentParamsProvider {
-    private val versionedImplementationProvider = VersionedImplementationProvider()
-
     private val mainPanel = JPanel(BorderLayout())
     private val someCombobox = ComboBox<String>()
     val panel = XDebuggerTreePanel(project, session.debugProcess.editorsProvider, this, null, XCOROUTINE_POPUP_ACTION_GROUP, null)
@@ -56,7 +55,7 @@ class XCoroutineView(val project: Project, val session: XDebugSession) :
     }
 
     init {
-        someCombobox.renderer = versionedImplementationProvider.comboboxListCellRenderer()
+        someCombobox.renderer = createRenderer()
         someCombobox.addItem(null)
         val myToolbar = createToolbar()
         val myThreadsPanel = Wrapper()
@@ -67,6 +66,15 @@ class XCoroutineView(val project: Project, val session: XDebugSession) :
         selectedNodeListener = XDebuggerTreeSelectedNodeListener(session, panel.tree)
         selectedNodeListener?.installOn()
     }
+
+    private fun createRenderer(): SimpleListCellRenderer<in String> =
+        SimpleListCellRenderer.create { label: JBLabel, value: String?, index: Int ->
+            if (value != null) {
+                label.text = value
+            } else if (index >= 0) {
+                label.text = KotlinDebuggerCoroutinesBundle.message("coroutine.dump.threads.loading")
+            }
+        }
 
     private fun createToolbar(): ActionToolbarImpl {
         val framesGroup = DefaultActionGroup()
