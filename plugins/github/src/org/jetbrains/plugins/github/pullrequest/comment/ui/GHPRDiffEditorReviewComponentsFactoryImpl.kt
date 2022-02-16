@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.codereview.comment.wrapComponentUsingRoundedPanel
+import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
+import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.diff.util.Side
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -29,7 +30,7 @@ internal constructor(private val project: Project,
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
     GHPRReviewThreadComponent.create(project, thread, reviewDataProvider, avatarIconsProvider, currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
-    }.let(::wrapComponentUsingRoundedPanel)
+    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHCommentTextFieldModel(project) {
@@ -104,5 +105,5 @@ internal constructor(private val project: Project,
       hideCallback()
     }.apply {
       border = JBUI.Borders.empty(8)
-    }.let(::wrapComponentUsingRoundedPanel)
+    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
 }
