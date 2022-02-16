@@ -54,7 +54,6 @@ class PyAddExistingSdkPanel(project: Project?,
   override var newProjectPath: String? = newProjectPath
     set(value) {
       field = value
-      sdkChooserCombo.setNewProjectPath(value)
       updateRemotePathIfNeeded()
     }
 
@@ -70,7 +69,7 @@ class PyAddExistingSdkPanel(project: Project?,
   init {
     layout = BorderLayout()
     val sdksForNewProject = existingSdks.filter { it.associatedModulePath == null }
-    sdkChooserCombo = PythonSdkChooserCombo(project, module, sdksForNewProject, newProjectPath) {
+    sdkChooserCombo = PythonSdkChooserCombo(project, module, sdksForNewProject) {
       it != null && it == preferredSdk
     }.apply {
       if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
