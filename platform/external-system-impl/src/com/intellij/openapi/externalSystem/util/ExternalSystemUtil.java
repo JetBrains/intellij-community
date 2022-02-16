@@ -497,7 +497,7 @@ public final class ExternalSystemUtil {
 
       private void handExecutionResult(@NotNull ExternalSystemTaskActivator externalSystemTaskActivator,
                                        @NotNull BuildEventDispatcher eventDispatcher,
-                                       @NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
+                                       @NotNull Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
         if (project.isDisposed()) return;
 
         try {
@@ -533,6 +533,15 @@ public final class ExternalSystemUtil {
           if (callback != null) {
             callback.onFailure(resolveProjectTask.getId(), message, extractDetails(error));
           }
+        } catch (Throwable t) {
+          ExternalSystemTaskId id = resolveProjectTask.getId();
+          String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
+                                                      externalSystemId.getReadableName(), projectName);
+          com.intellij.build.events.FailureResult failureResult =
+            createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
+          finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
+                                                                     BuildBundle.message("build.status.failed"), failureResult));
+
         }
         finally {
           if (!isPreviewMode) {
@@ -658,7 +667,7 @@ public final class ExternalSystemUtil {
 
   @ApiStatus.Internal
   public static @NotNull FailureResultImpl createFailureResult(@NotNull @Nls(capitalization = Sentence) String title,
-                                                               @NotNull Exception exception,
+                                                               @NotNull Throwable exception,
                                                                @NotNull ProjectSystemId externalSystemId,
                                                                @NotNull Project project,
                                                                @NotNull DataContext dataContext) {
@@ -671,7 +680,7 @@ public final class ExternalSystemUtil {
     return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
   }
 
-  private static @NotNull FailureResultImpl createFailureResult(@NotNull Exception exception,
+  private static @NotNull FailureResultImpl createFailureResult(@NotNull Throwable exception,
                                                                 @NotNull ProjectSystemId externalSystemId,
                                                                 @NotNull Project project,
                                                                 @NotNull ExternalSystemNotificationManager notificationManager,
