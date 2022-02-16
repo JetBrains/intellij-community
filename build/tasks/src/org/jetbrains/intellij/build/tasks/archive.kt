@@ -167,7 +167,10 @@ fun crossPlatformZip(macDistDir: Path,
         p != "build.txt" &&
         !(p.startsWith("bin/") && p.endsWith(".exe.vmoptions")) &&
         !(p.startsWith("bin/$executableName") && p.endsWith(".exe")) &&
-        !winExcludes.contains(p)
+        !winExcludes.contains(p) &&
+        // do not copy common files
+        !Files.exists(macDistDir.resolve(p)) &&
+        !Files.exists(linuxDistDir.resolve(p))
       }, entryCustomizer = entryCustomizer)
     }
   }
