@@ -115,6 +115,33 @@ object KotlinPartialPackageNamesIndex: FileBasedIndexExtension<FqName, Void>() {
         return keys
     }
 
+    /**
+     * @param fqName
+     * @return top-level (after root) name from `fqName`. E.g. if [fqName] is `a.b.c` it returns `a`
+     */
+    fun toTopLevelFqName(fqName: FqName): FqName =
+        if (fqName.isRoot) {
+            fqName
+        } else {
+            val asString = fqName.asString()
+            // so far we use only the most top segment frm fqName if it is not a root
+            // i.e. only `foo` from `foo.bar.zoo`
+            val dotIndex = asString.indexOf('.')
+            FqName(if (dotIndex > 0) asString.substring(0, dotIndex) else asString)
+        }
+
+    fun findAllFqNames(scope: GlobalSearchScope): Set<FqName> {
+        val keys = hashSetOf<FqName>()
+        val fileBasedIndex = FileBasedIndex.getInstance()
+        fileBasedIndex.processAllKeys(name, Processors.cancelableCollectProcessor(keys), scope, null)
+
+        val valueProcessor = FileBasedIndex.ValueProcessor<Void> { _, _ -> false }
+        keys.apply {
+            removeIf { fileBasedIndex.processValues(name, it, null, valueProcessor, scope) }
+        }
+        return keys
+    }
+
     fun filterFqNames(keys: Set<FqName>, scope: GlobalSearchScope): Set<FqName> {
         // in fact, processAllKeys returns all keys for project despite provided scope
         // therefore it is faster to reuse already existed `keys` to avoid extra call to indices

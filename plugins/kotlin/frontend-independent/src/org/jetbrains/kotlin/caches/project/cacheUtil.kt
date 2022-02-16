@@ -17,10 +17,6 @@ fun <T> Module.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*>
     return cacheByClass(classForKey, ProjectRootModificationTracker.getInstance(project), provider = provider)
 }
 
-fun <T> Module.cacheByProvider(vararg dependencies: Any, provider: () -> T): T {
-    return CachedValuesManager.getManager(project).cache(this, dependencies, provider::class.java, provider)
-}
-
 /**
  * Note that it uses lambda's class for caching (essentially, anonymous class), which means that all invocations will be cached
  * by the one and the same key.
