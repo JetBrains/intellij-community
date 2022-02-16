@@ -8,9 +8,9 @@ import com.intellij.openapi.rd.createLifetime
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.reactive.Signal
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
+import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
-import com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -42,6 +41,8 @@ import java.util.concurrent.CompletableFuture
 open class CodeVisionHost(val project: Project) {
   companion object {
     private val logger = getLogger<CodeVisionHost>()
+
+    @JvmStatic
     fun getInstance(project: Project): CodeVisionHost = project.getService(CodeVisionHost::class.java)
 
     const val defaultVisibleLenses = 5
@@ -115,6 +116,16 @@ open class CodeVisionHost(val project: Project) {
                      }
                    })
     }
+  }
+
+  fun collectPlaceholders(editor: Editor): List<Pair<TextRange, CodeVisionEntry>> {
+    return providers
+      .flatMap { provider ->
+        provider.collectPlaceholders(editor)
+          .associateWith {
+            PlaceholderCodeVisionEntry(provider.id)
+          }.toList()
+      }
   }
 
   protected fun rearrangeProviders() {

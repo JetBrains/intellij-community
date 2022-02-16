@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.codeInsight.codeVision.CodeVisionHost;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
@@ -9,6 +10,7 @@ import com.intellij.codeInsight.documentation.render.DocRenderPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.hints.HintsBuffer;
 import com.intellij.codeInsight.hints.InlayHintsPassFactory;
+import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -64,6 +66,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                                        : null;
 
     HintsBuffer buffer = psiFile != null ? InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor) : null;
+    var placeholders = CodeVisionHost.getInstance(myProject).collectPlaceholders(editor);
 
     return () -> {
       baseResult.run();
@@ -85,6 +88,10 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
       if (buffer != null) {
         InlayHintsPassFactory.Companion.applyPlaceholders(psiFile, editor, buffer);
+      }
+
+      if (!placeholders.isEmpty()) {
+        CodeVisionPassFactory.applyPlaceholders(editor, placeholders);
       }
 
       if (psiFile != null && psiFile.isValid()) {

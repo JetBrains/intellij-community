@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.util.application
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import java.awt.event.MouseEvent
@@ -76,6 +77,33 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       }
       return@runReadAction lenses
     }
+  }
+
+  override fun collectPlaceholders(editor: Editor): List<TextRange> {
+
+    application.assertReadAccessAllowed()
+
+    val project = editor.project ?: return emptyList()
+    val document = editor.document
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return emptyList()
+    val language = file.language
+
+    val ranges = ArrayList<TextRange>()
+
+    try {
+      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
+      val traverser = SyntaxTraverser.psiTraverser(file)
+      for (element in traverser.preOrderDfsTraversal()) {
+        if (visionLanguageContext.isAccepted(element)) {
+          ranges.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element))
+        }
+      }
+    }
+    catch (e: Exception) {
+      e.printStackTrace()
+      throw e
+    }
+    return ranges
   }
 
   override val name: String
