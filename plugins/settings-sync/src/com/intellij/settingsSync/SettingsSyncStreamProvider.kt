@@ -5,6 +5,7 @@ import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.*
 import java.io.InputStream
@@ -40,8 +41,15 @@ internal class SettingsSyncStreamProvider(private val application: Application,
   }
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-    consumer(appConfig.resolve(fileSpec).inputStreamIfExists())
-    return true
+    val path = appConfig.resolve(fileSpec)
+    try {
+      consumer(path.inputStreamIfExists())
+      return true
+    }
+    catch (e: Throwable) {
+      LOG.error("Couldn't read $fileSpec", e, Attachment(fileSpec, path.readText()))
+      return false
+    }
   }
 
   override fun processChildren(path: String,
