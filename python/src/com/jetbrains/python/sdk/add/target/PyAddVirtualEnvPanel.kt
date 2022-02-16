@@ -25,6 +25,7 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.*
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -113,10 +114,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
       interpreterCombobox.childComponent.addActionListener(ActionListener { updateComponentsVisibility() })
 
-      targetEnvironmentConfiguration?.let {
-        projectSync = PythonInterpreterTargetEnvironmentFactory.findProjectSync(project, it)
-          ?.also { projectSync -> projectSync.extendDialogPanelWithOptionalFields(this) }
-      }
+      projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
     }
 
     // workarounds the issue with cropping the focus highlighting

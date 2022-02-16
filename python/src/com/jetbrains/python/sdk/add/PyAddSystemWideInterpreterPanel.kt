@@ -25,7 +25,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.target.ProjectSync
 import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.createSdkForTarget
@@ -97,10 +97,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
       row(EMPTY_LABEL) {
         component(permWarning).constraints(CCFlags.growY)
       }
-      targetEnvironmentConfiguration?.let {
-        projectSync = PythonInterpreterTargetEnvironmentFactory.findProjectSync(project, it)
-          ?.also { projectSync -> projectSync.extendDialogPanelWithOptionalFields(this) }
-      }
+      projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
     }
     add(panel, BorderLayout.NORTH)
   }
