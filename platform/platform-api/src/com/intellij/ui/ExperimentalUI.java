@@ -160,6 +160,17 @@ public final class ExperimentalUI {
     paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
     paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
     paths.put("general/filter.svg", "expui/general/filter.svg");
+    paths.put("vcs/changelist.svg", "expui/vcs/changelist.svg");
+    paths.put("icons/outgoing.svg", "expui/vcs/changesPush@12x12.svg");
+    paths.put("icons/incoming.svg", "expui/vcs/changesUpdate@12x12.svg");
+    paths.put("actions/commit.svg", "expui/vcs/commit.svg");
+    paths.put("actions/diff.svg", "expui/vcs/diff.svg");
+    paths.put("icons/currentBranchLabel.svg", "expui/vcs/label.svg");
+    paths.put("vcs/push.svg", "expui/vcs/push.svg");
+    paths.put("actions/rollback.png", "expui/vcs/revert.svg");
+    paths.put("vcs/shelve.svg", "expui/vcs/stash.svg");
+    paths.put("vcs/shelveSilent.svg", "expui/vcs/stash.svg");
+    paths.put("actions/checkOut.svg", "expui/vcs/update.svg");
     paths.put("vcs/branch.svg", "expui/toolwindow/vcs.svg");
     paths.put("icons/Docker.svg", "expui/fileTypes/docker.svg");
     paths.put("icons/DockerFile_1.svg", "expui/fileTypes/docker.svg");
