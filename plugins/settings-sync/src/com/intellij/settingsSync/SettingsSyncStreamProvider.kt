@@ -62,10 +62,17 @@ internal class SettingsSyncStreamProvider(private val application: Application,
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     val file = rootConfig.resolve(adjustedSpec)
-    try {
-      file.delete()
+    val deleted = deleteOrLogError(file)
+    if (deleted) {
       val snapshot = SettingsSnapshot(setOf(FileState.Deleted(adjustedSpec)))
       application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
+    }
+    return deleted
+  }
+
+  private fun deleteOrLogError(file: Path): Boolean {
+    try {
+      file.delete()
       return true
     }
     catch (e: Exception) {
