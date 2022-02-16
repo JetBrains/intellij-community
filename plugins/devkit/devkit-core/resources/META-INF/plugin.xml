@@ -400,11 +400,10 @@
     <lang.documentationProvider language="JSON"
                                 order="first"
                                 implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
-    <notificationGroup id="IntelliJ API Annotations" displayType="BALLOON"/>
-    <notificationGroup id="Plugin DevKit Deployment" displayType="BALLOON"/>
-    <notificationGroup id="DevKit Errors" displayType="BALLOON"/>
-    <notificationGroup id="Update from Sources" displayType="BALLOON"/>
-    <notificationGroup id="testdata" displayType="BALLOON"/>
+    <notificationGroup id="Plugin DevKit Deployment" displayType="BALLOON" bundle="messages.DevKitBundle" key="notification.group.devkit.deployment"/>
+    <notificationGroup id="DevKit Errors" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Update from Sources" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="testdata" displayType="BALLOON" bundle="messages.DevKitBundle" key="notification.group.testdata"/>
     <notificationGroup id="Migrate DevKit plugin to Gradle" displayType="STICKY_BALLOON" bundle="messages.DevKitBundle" key="convert.devkit.to.gradle.notification"/>
 
     <!-- Threading Model Helper -->

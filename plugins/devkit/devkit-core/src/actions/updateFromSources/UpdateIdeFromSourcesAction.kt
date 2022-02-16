@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -53,7 +53,7 @@ import java.util.*
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 
 private val notificationGroup by lazy {
-  NotificationGroup(displayId = "Update from Sources", displayType = NotificationDisplayType.STICKY_BALLOON)
+  NotificationGroupManager.getInstance().getNotificationGroup("Update from Sources")
 }
 
 internal open class UpdateIdeFromSourcesAction
