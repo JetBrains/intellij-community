@@ -219,6 +219,11 @@ final class BuildOptions {
   String bundledRuntimePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
+   * Enables fastdebug runtime
+   */
+  boolean runtimeDebug = System.getProperty("intellij.build.bundled.jre.debug", "false").toBoolean()
+
+  /**
    * Specifies an algorithm to build distribution checksums.
    */
   String hashAlgorithm = "SHA-384"
