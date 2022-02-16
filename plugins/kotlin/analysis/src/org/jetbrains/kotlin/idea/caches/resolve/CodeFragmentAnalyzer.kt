@@ -24,12 +24,14 @@ import org.jetbrains.kotlin.resolve.scopes.utils.addImportingScopes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors
+import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 import javax.inject.Inject
 
 class CodeFragmentAnalyzer(
     private val resolveSession: ResolveSession,
     private val qualifierResolver: QualifiedExpressionResolver,
-    private val typeResolver: TypeResolver
+    private val typeResolver: TypeResolver,
+    private val expressionTypingServices: ExpressionTypingServices
 ) {
     @set:Inject // component dependency cycle
     lateinit var resolveElementCache: ResolveElementCache
@@ -46,7 +48,13 @@ class CodeFragmentAnalyzer(
         when (val contentElement = codeFragment.getContentElement()) {
             is KtExpression -> {
                 val expectedType = codeFragment.getUserData(EXPECTED_TYPE_KEY) ?: TypeUtils.NO_EXPECTED_TYPE
-                contentElement.analyzeInContext(scope, trace = bindingTrace, dataFlowInfo = dataFlowInfo, expectedType = expectedType)
+                contentElement.analyzeInContext(
+                    scope,
+                    trace = bindingTrace,
+                    dataFlowInfo = dataFlowInfo,
+                    expectedType = expectedType,
+                    expressionTypingServices = expressionTypingServices
+                )
                 analyzeControlFlow(resolveSession, contentElement, bindingTrace)
             }
 
