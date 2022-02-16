@@ -22,9 +22,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.hover.HoverListener;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.render.RenderingUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBScalableIcon;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -280,8 +282,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
 
   private class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
     private final FileColorManager myColorsManager;
-    private final XDebuggerPopFrameIcon myPopFrameIcon =
-      new XDebuggerPopFrameIcon(AllIcons.Actions.InlineDropFrame, AllIcons.Actions.InlineDropFrameSelected, 16, 16);
+    private final XDebuggerPopFrameIcon myPopFrameIcon = JBUIScale.scaleIcon(
+      new XDebuggerPopFrameIcon(AllIcons.Actions.InlineDropFrame, AllIcons.Actions.InlineDropFrameSelected, 16, 16)
+    );
 
     XDebuggerFrameListRenderer(@NotNull Project project) {
       myColorsManager = FileColorManager.getInstance(project);
@@ -630,7 +633,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     public static final XDebuggerFrameListMouseListener DEFAULT = new XDebuggerFrameListMouseListener();
   }
 
-  private static class XDebuggerPopFrameIcon implements Icon {
+  private static class XDebuggerPopFrameIcon extends JBScalableIcon {
 
     private final @NotNull Icon myIcon;
     private final @Nullable Icon mySelectedIcon;
@@ -670,7 +673,8 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
           ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         }
         g.setColor(background);
-        g.fillRoundRect(x, y, getIconWidth(), getIconHeight(), 5, 5);
+        int arc = (int)Math.ceil(scaleVal(5));
+        g.fillRoundRect(x, y, getIconWidth(), getIconHeight(), arc, arc);
       }
       var icon = (!isSelected() || mySelectedIcon == null) ? myIcon : mySelectedIcon;
       icon.paintIcon(c, g, x + (getIconWidth() - icon.getIconWidth()) / 2, y + (getIconHeight() - icon.getIconHeight()) / 2);
@@ -678,12 +682,12 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
 
     @Override
     public int getIconWidth() {
-      return myIconWidth;
+      return (int)Math.ceil(scaleVal(myIconWidth));
     }
 
     @Override
     public int getIconHeight() {
-      return myIconHeight;
+      return (int)Math.ceil(scaleVal(myIconHeight));
     }
   }
 
