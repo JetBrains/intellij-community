@@ -759,6 +759,10 @@ public final class ExceptionUtil {
                                            @Nullable PsiElement topElement) {
     if (element == null || element.getParent() == topElement || element.getParent() == null) return HandlePlace.UNHANDLED;
 
+    for (CustomExceptionHandler exceptionHandler : CustomExceptionHandler.KEY.getExtensionList()) {
+      if (exceptionHandler.isHandled(element, exceptionType, topElement)) return HandlePlace.UNKNOWN;
+    }
+
     final PsiElement parent = element.getParent();
 
     if (parent instanceof PsiMethod) {
@@ -822,10 +826,6 @@ public final class ExceptionUtil {
       if (aClass != null && !(aClass instanceof PsiAnonymousClass) && !((PsiField)parent).hasModifierProperty(PsiModifier.STATIC)) {
         // exceptions thrown in field initializers should be thrown in all class constructors
         return HandlePlace.fromBoolean(areAllConstructorsThrow(aClass, exceptionType));
-      }
-    } else {
-      for (CustomExceptionHandler exceptionHandler : CustomExceptionHandler.KEY.getExtensionList()) {
-        if (exceptionHandler.isHandled(element, exceptionType, topElement)) return HandlePlace.UNKNOWN;
       }
     }
     return getHandlePlace(parent, exceptionType, topElement);
