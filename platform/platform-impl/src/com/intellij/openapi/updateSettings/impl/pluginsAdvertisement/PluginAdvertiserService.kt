@@ -24,7 +24,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Consumer
 
 open class PluginAdvertiserService {
 
@@ -204,10 +203,10 @@ open class PluginAdvertiserService {
 
     ProgressManager.checkCanceled()
 
-    notificationManager.notify("", notificationMessage, project, Consumer {
+    notificationManager.notify("", notificationMessage, project) {
       it.setSuggestionType(true)
         .addActions(notificationActions as Collection<AnAction>)
-    })
+    }
   }
 
   private fun createIgnoreUnknownFeaturesAction(project: Project,
