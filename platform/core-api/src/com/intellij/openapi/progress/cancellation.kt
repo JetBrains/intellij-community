@@ -109,7 +109,10 @@ fun <X> executeWithJobAndCompleteIt(
     return result
   }
   catch (e: Throwable) {
-    job.completeExceptionally(e)
+    val ce = CancellationException().apply {
+      initCause(e)
+    }
+    job.cancel(ce)
     throw e
   }
 }
