@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
@@ -40,7 +42,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-class CoroutineView(project: Project, private val session: XDebugSession) :
+class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
     Disposable, XDebugSessionListenerProvider, CreateContentParamsProvider {
     companion object {
         private const val VIEW_CLEAR_DELAY_MS = 100
@@ -49,19 +51,19 @@ class CoroutineView(project: Project, private val session: XDebugSession) :
     }
 
     val alarm = SingleAlarm({ resetRoot() }, VIEW_CLEAR_DELAY_MS, this)
+    private val debugProcess = javaDebugProcess.debuggerSession.process
+    private val renderer = SimpleColoredTextIconPresentationRenderer()
+    private val mainPanel = JPanel(BorderLayout())
+    private var treeState: XDebuggerTreeState? = null
+    private var restorer: XDebuggerTreeRestorer? = null
     private val panel = XDebuggerTreePanel(
         project,
-        session.debugProcess.editorsProvider,
+        javaDebugProcess.editorsProvider,
         this,
         null,
         XCOROUTINE_POPUP_ACTION_GROUP,
         null
     )
-    private val renderer = SimpleColoredTextIconPresentationRenderer()
-    private val mainPanel = JPanel(BorderLayout())
-    private var treeState: XDebuggerTreeState? = null
-    private var restorer: XDebuggerTreeRestorer? = null
-    private var selectedNodeListener: XDebuggerTreeSelectedNodeListener? = null
 
     init {
         val combobox = ComboBox<String>()
@@ -73,8 +75,7 @@ class CoroutineView(project: Project, private val session: XDebugSession) :
         threadsPanel.add(toolbar.component, BorderLayout.EAST)
         threadsPanel.add(combobox, BorderLayout.CENTER)
         mainPanel.add(panel.mainPanel, BorderLayout.CENTER)
-        selectedNodeListener = XDebuggerTreeSelectedNodeListener(session, panel.tree)
-        selectedNodeListener?.installOn()
+        installClickAndKeyListeners(panel.tree)
     }
 
     fun saveState() {
@@ -146,8 +147,8 @@ class CoroutineView(project: Project, private val session: XDebugSession) :
                 return
             }
 
-            session.invokeInSuspendContext(suspendContext) {
-                val debugProbesProxy = CoroutineDebugProbesProxy(it)
+            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+                val debugProbesProxy = CoroutineDebugProbesProxy(suspendContext)
                 val coroutineCache = debugProbesProxy.dumpCoroutines()
                 if (!coroutineCache.isOk()) {
                     val errorNode = ErrorNode("coroutine.view.fetching.error")
@@ -158,7 +159,7 @@ class CoroutineView(project: Project, private val session: XDebugSession) :
                 val children = XValueChildrenList()
                 val groups = coroutineCache.cache.groupBy { it.descriptor.dispatcher }
                 for (dispatcher in groups.keys) {
-                    children.add(CoroutineContainer(it, dispatcher ?: EMPTY_DISPATCHER_NAME, groups[dispatcher]))
+                    children.add(CoroutineContainer(suspendContext, dispatcher ?: EMPTY_DISPATCHER_NAME, groups[dispatcher]))
                 }
 
                 if (children.size() > 0) {
@@ -199,9 +200,9 @@ class CoroutineView(project: Project, private val session: XDebugSession) :
         private val suspendContext: SuspendContextImpl
     ) : RendererContainer(renderer.render(infoData)) {
         override fun computeChildren(node: XCompositeNode) {
-            session.invokeInSuspendContext(suspendContext) {
+            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
                 val children = XValueChildrenList()
-                val doubleFrameList = CoroutineFrameBuilder.build(infoData, it)
+                val doubleFrameList = CoroutineFrameBuilder.build(infoData, suspendContext)
                 doubleFrameList?.frames?.forEach {
                     children.add(CoroutineFrameValue(it))
                 }
@@ -257,17 +258,19 @@ class CoroutineView(project: Project, private val session: XDebugSession) :
 
     private fun applyRenderer(node: XValueNode, presentation: SimpleColoredTextIcon): Unit =
         node.setPresentation(presentation.icon, presentation.valuePresentation(), presentation.hasChildren)
+
+    private fun installClickAndKeyListeners(tree: XDebuggerTree): Unit =
+        CoroutineSelectedNodeListener(debugProcess, tree).install()
 }
 
-private fun XDebugSession.invokeInSuspendContext(suspendContext: SuspendContextImpl, command: (SuspendContextImpl) -> Unit) {
-    (debugProcess as JavaDebugProcess).debuggerSession.process.managerThread.invoke(
-        object : SuspendContextCommandImpl(suspendContext) {
-            override fun getPriority() =
-                PrioritizedTask.Priority.NORMAL
+private fun DebugProcessImpl.invokeInSuspendContext(
+    suspendContext: SuspendContextImpl,
+    command: (SuspendContextImpl) -> Unit
+): Unit =
+    managerThread.invoke(object : SuspendContextCommandImpl(suspendContext) {
+        override fun getPriority() =
+            PrioritizedTask.Priority.NORMAL
 
-            override fun contextAction(suspendContext: SuspendContextImpl) {
-                command(suspendContext)
-            }
-        }
-    )
-}
+        override fun contextAction(suspendContext: SuspendContextImpl): Unit =
+            command(suspendContext)
+    })

@@ -90,7 +90,8 @@ class DebuggerConnection(
 
     private fun registerXCoroutinesPanel(session: XDebugSession): Disposable? {
         val ui = session.ui ?: return null
-        val coroutineThreadView = CoroutineView(project, session as XDebugSessionImpl)
+        val javaDebugProcess = session.debugProcess as? JavaDebugProcess ?: return null
+        val coroutineThreadView = CoroutineView(project, javaDebugProcess)
         val framesContent: Content = createContent(ui, coroutineThreadView)
         framesContent.isCloseable = false
         ui.addContent(framesContent, 0, PlaceInGrid.right, true)
