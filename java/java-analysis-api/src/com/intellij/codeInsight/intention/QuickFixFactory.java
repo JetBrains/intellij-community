@@ -610,4 +610,14 @@ public abstract class QuickFixFactory {
    */
   public abstract @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
                                                                                         @IntentionName String message);
+
+
+  /**
+   * Creates a fix that qualify a reference expression with a qualifier having given text
+   *
+   * @param expression    reference expression to qualify
+   * @param qualifierText qualifier text
+   * @return a new fix
+   */
+  public abstract @NotNull IntentionAction createQualifyWithFix(@NotNull PsiReferenceExpression expression, @NotNull String qualifierText);
 }

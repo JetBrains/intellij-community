@@ -1168,4 +1168,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       return myMessage;
     }
   }
+
+  @Override
+  public @NotNull IntentionAction createQualifyWithFix(@NotNull PsiReferenceExpression expression, @NotNull String qualifierText) {
+    return new QualifyWith(expression, qualifierText);
+  }
 }

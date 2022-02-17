@@ -427,6 +427,7 @@ public final class HighlightMethodUtil {
           highlightInfo = createIncompatibleCallHighlightInfo(holder, list, candidateInfo);
 
           if (highlightInfo != null) {
+            registerQualifyWithFixes(resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, list, highlightInfo);
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(highlightInfo, candidateInfo, methodCall);
             registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidateInfo, resolvedMethod, highlightInfo);
@@ -979,6 +980,33 @@ public final class HighlightMethodUtil {
 
     RemoveRedundantArgumentsFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     registerChangeParameterClassFix(methodCall, list, highlightInfo, fixRange);
+  }
+
+  private static void registerQualifyWithFixes(CandidateInfo @NotNull [] methodCandidates,
+                                               @NotNull PsiMethodCallExpression methodCall,
+                                               @NotNull PsiExpressionList exprList,
+                                               @Nullable HighlightInfo highlightInfo) {
+    for (CandidateInfo methodCandidate : methodCandidates) {
+      PsiMethod method = (PsiMethod)methodCandidate.getElement();
+      if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
+        PsiClass aClass = method.getContainingClass();
+        if (aClass == null) continue;
+        String className = aClass.getName();
+        if (className == null) continue;
+        final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(methodCall, null);
+        boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
+        if (staticParentElement == null || isMethodStatic) {
+          if (isMethodStatic || PsiTreeUtil.isContextAncestor(aClass, methodCall, false)) {
+            String qualifierText = className;
+            if (!isMethodStatic) {
+              qualifierText += ".this";
+            }
+            IntentionAction fix = QUICK_FIX_FACTORY.createQualifyWithFix(methodCall.getMethodExpression(), qualifierText);
+            QuickFixAction.registerQuickFixAction(highlightInfo, getFixRange(methodCall), fix);
+          }
+        }
+      }
+    }
   }
 
   private static void registerMethodAccessLevelIntentions(CandidateInfo @NotNull [] methodCandidates,
