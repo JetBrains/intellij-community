@@ -137,7 +137,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         rebuild();
 
         if (contentManager.isEmpty() && window.isToHideOnEmptyContent()) {
-          window.getToolWindowManager().hideToolWindow(window.getId(), false, true, true, null);
+          window.getToolWindowManager().hideToolWindow(window.getId(), false, true, false, null);
         }
       }
 
