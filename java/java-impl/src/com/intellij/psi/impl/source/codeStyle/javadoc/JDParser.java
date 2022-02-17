@@ -303,7 +303,7 @@ public class JDParser {
       if ("\n".equals(token)) {
         if (!first) {
           list.add("");
-          if (markers != null) markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0 || isInMultilineTodo);
+          if (markers != null) markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo);
         }
         first = false;
       }
@@ -314,7 +314,7 @@ public class JDParser {
         }
         if (p2nl && isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
           list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
-          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
+          markers.add(preCount > 0 || firstLineToKeepIndents >= 0);
           continue;
         }
         if (preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo && snippetBraceBalance == 0) token = token.trim();
@@ -328,7 +328,7 @@ public class JDParser {
             snippetBraceBalance += getLineSnippetTagBraceBalance(token);
           }
           if (lineHasUnclosedPreTag(token)) preCount++;
-          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0 || isInMultilineTodo || snippetBraceBalance != 0);
+          markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo || snippetBraceBalance != 0);
           if (lineHasClosingPreTag(token)) preCount--;
         }
 

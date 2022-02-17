@@ -38,7 +38,7 @@ public final class RowsDnDSupport {
     DnDSupport.createBuilder(component)
       .setBeanProvider(info -> {
         final Point p = info.getPoint();
-        return new DnDDragStartBean(new RowDragInfo(component, Integer.valueOf(getRow(component, p))));
+        return new DnDDragStartBean(new RowDragInfo(component, getRow(component, p)));
       })
       .setTargetChecker(new DnDTargetChecker() {
         @Override

@@ -71,7 +71,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
         Element templateElement = JDOMUtil.load(meta);
         String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
         if (unencoded != null) {
-          myEscaped = !Boolean.valueOf(unencoded);
+          myEscaped = !Boolean.parseBoolean(unencoded);
         }
 
         myModuleDescriptions = RootDescription.readRoots(templateElement);

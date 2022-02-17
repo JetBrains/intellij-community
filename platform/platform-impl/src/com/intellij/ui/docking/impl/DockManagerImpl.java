@@ -715,7 +715,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       DockContainer container = ((DockContainerFactory.Persistent)factory).loadContainerFrom(eachContent);
       String withNorthPanelStr = windowElement.getAttributeValue("withNorthPanel", Boolean.toString(true));
-      boolean withNorthPanel = Boolean.valueOf(withNorthPanelStr);
+      boolean withNorthPanel = Boolean.parseBoolean(withNorthPanelStr);
       DockWindow window = createWindowFor(null, windowElement.getAttributeValue("id"), container, true);
       if (withNorthPanel) {
         window.setupNorthPanel();

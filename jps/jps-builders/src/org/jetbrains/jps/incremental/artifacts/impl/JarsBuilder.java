@@ -61,7 +61,7 @@ public final class JarsBuilder {
     if (buildDateInSeconds == null) {
       buildDateInSeconds = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS);
     }
-    buildDateInMillis = buildDateInSeconds != null ? Long.valueOf(buildDateInSeconds) * 1000 : null;
+    buildDateInMillis = buildDateInSeconds != null ? Long.parseLong(buildDateInSeconds) * 1000 : null;
   }
 
   public boolean buildJars() throws IOException, ProjectBuildException {

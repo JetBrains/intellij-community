@@ -151,11 +151,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
       final Element debugServerProcess = element.getChild(DEBUG_SERVER_PROCESS_NAME);
       if (debugServerProcess != null) {
-        isDebugServerProcess = Boolean.valueOf(debugServerProcess.getText());
+        isDebugServerProcess = Boolean.parseBoolean(debugServerProcess.getText());
       }
       final Element reattachProcess = element.getChild(REATTACH_DEBUG_PROCESS_NAME);
       if (reattachProcess != null) {
-        isReattachDebugProcess = Boolean.valueOf(reattachProcess.getText());
+        isReattachDebugProcess = Boolean.parseBoolean(reattachProcess.getText());
       }
     }
     ExternalSystemRunConfigurationExtensionManager.readExternal(this, element);

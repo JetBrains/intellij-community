@@ -101,7 +101,7 @@ public final class ExternalJavacProcess {
       }
 
       if (args.length > 3) {
-        keepRunning = Boolean.valueOf(args[3]);
+        keepRunning = Boolean.parseBoolean(args[3]);
       }
     }
     else {

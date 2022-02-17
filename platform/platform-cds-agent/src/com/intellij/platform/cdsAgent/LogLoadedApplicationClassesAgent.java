@@ -64,7 +64,7 @@ public final class LogLoadedApplicationClassesAgent {
     log("");
 
     String targetFileName = System.getenv().get(TARGET_FILE);
-    boolean useAppCDS = Boolean.valueOf(System.getenv().getOrDefault(USE_APP_CDS, "true"));
+    boolean useAppCDS = Boolean.parseBoolean(System.getenv().getOrDefault(USE_APP_CDS, "true"));
 
     if (targetFileName == null) {
       log("Failed to find " + TARGET_FILE + " parameter to -javaagentpath");
