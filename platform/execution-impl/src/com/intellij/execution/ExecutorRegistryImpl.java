@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
-import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunContextAction;
-import com.intellij.execution.actions.RunNewConfigurationContextAction;
+import com.intellij.execution.actions.*;
 import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.compound.SettingsAndEffectiveTarget;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -329,7 +326,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         text = myExecutor.getStartActionText(configuration.getName());
       }
       else {
-        if (Registry.is("run.current.file.item.in.run.configurations.combobox")) {
+        if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
           Pair<Boolean, String> enabledStatusAndText = getEnabledStatusAndTextForRunCurrentFileAction(e);
           enabled = enabledStatusAndText.first;
           //noinspection HardCodedStringLiteral
@@ -475,7 +472,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       if (selectedConfiguration != null) {
         run(project, selectedConfiguration.getConfiguration(), selectedConfiguration, e.getDataContext());
       }
-      else if (Registry.is("run.current.file.item.in.run.configurations.combobox")) {
+      else if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
         runCurrentFile(e);
       }
     }

@@ -43,6 +43,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
+  public static boolean hasRunCurrentFileItem(@NotNull Project project) {
+    return !RunManager.getInstance(project).isRunWidgetActive() && Registry.is("run.current.file.item.in.run.configurations.combobox");
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
@@ -96,7 +100,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
     }
     else {
-      if (Registry.is("run.current.file.item.in.run.configurations.combobox")) {
+      if (project != null && hasRunCurrentFileItem(project)) {
         presentation.setText(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.selected"));
         presentation.setIcon(null);
         return;
@@ -325,8 +329,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(e.getProject() != null &&
-                                               Registry.is("run.current.file.item.in.run.configurations.combobox"));
+      e.getPresentation().setEnabledAndVisible(e.getProject() != null && hasRunCurrentFileItem(e.getProject()));
     }
 
     @Override
