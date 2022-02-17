@@ -343,7 +343,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         } else {
           myPopFrameIcon.setBackground(null);
         }
-        myPopFrameIcon.setSelected(selected);
+        myPopFrameIcon.setSelected(selected && hasFocus);
       }
     }
 
