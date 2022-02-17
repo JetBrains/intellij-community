@@ -25,8 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 
-class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
-                                 private val reviewService: GHPRReviewService,
+class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                                  private val pullRequestId: GHPRIdentifier,
                                  private val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
@@ -71,9 +70,6 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
     return future.dropReviews().notifyReviews()
   }
 
-  override fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String) =
-    commentService.getCommentMarkdownBody(progressIndicator, reviewId)
-
   override fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String> =
     reviewService.updateReviewBody(progressIndicator, reviewId, newText).successOnEdt {
       messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewUpdated(reviewId, newText)
@@ -90,9 +86,6 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
   }
 
   override fun canComment() = reviewService.canComment()
-
-  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String) =
-    commentService.getCommentMarkdownBody(progressIndicator, commentId)
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           reviewId: String,

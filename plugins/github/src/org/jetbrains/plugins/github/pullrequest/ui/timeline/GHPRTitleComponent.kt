@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import java.util.concurrent.CompletableFuture
+import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -33,33 +33,26 @@ internal object GHPRTitleComponent {
     val titlePane = HtmlEditorPane().apply {
       font = font.deriveFont((font.size * 1.5).toFloat())
     }
+    val editButton = GHTextActions.createEditButton()
 
     model.addAndInvokeListener {
       icon.icon = GHUIUtil.getPullRequestStateIcon(model.value.state, model.value.isDraft)
       titlePane.setBody(getTitleBody(model.value.title, model.value.number.toString()))
     }
 
-    if (model.value.viewerCanUpdate) {
-      val panelHandle = object : GHEditableHtmlPaneHandle(project,
-                                                          titlePane,
-                                                          { CompletableFuture.completedFuture(model.value.title) },
-                                                          { newText ->
-                                                            detailsDataProvider.updateDetails(EmptyProgressIndicator(), title = newText)
-                                                              .successOnEdt {
-                                                                titlePane.setBody(getTitleBody(newText, model.value.number.toString()))
-                                                              }
-                                                          }) {
-        override fun wrapEditorPane(editorPane: HtmlEditorPane): JComponent {
-          val editButton = GHTextActions.createEditButton(this)
-          return layout(icon, editorPane, editButton)
-        }
-      }
+    val fieldPanel = layout(icon, titlePane, editButton)
 
-      return panelHandle.panel
+    val paneHandle = GHEditableHtmlPaneHandle(project, fieldPanel, { model.value.title }) { newText ->
+      detailsDataProvider.updateDetails(EmptyProgressIndicator(), title = newText)
+        .successOnEdt { titlePane.setBody(getTitleBody(newText, model.value.number.toString())) }
     }
-    else {
-      return layout(icon, titlePane)
+
+    editButton.actionListener = ActionListener {
+      paneHandle.showAndFocusEditor()
     }
+
+    editButton.isVisible = model.value.viewerCanUpdate
+    return paneHandle.panel
   }
 
   fun create(detailsModel: GHPRDetailsModel): JComponent {
@@ -87,11 +80,11 @@ internal object GHPRTitleComponent {
       .toString()
   }
 
-  private fun layout(icon: JLabel, title: HtmlEditorPane, editButton: JComponent? = null): NonOpaquePanel {
+  private fun layout(icon: JLabel, title: JComponent, editButton: JComponent? = null): NonOpaquePanel {
     return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("0", "0").fill())).apply {
       add(icon, CC().gapRight("${JBUIScale.scale(4)}"))
       add(title, CC().push())
-      if (editButton != null) add(editButton, CC().gapLeft("${JBUIScale.scale(12)}"))
+      if (editButton != null) add(editButton, CC().gapLeft("${JBUIScale.scale(12)}").hideMode(3))
     }
   }
 }

@@ -100,13 +100,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val actionsPanel: JPanel?
     if (details is GHPullRequest) {
       val textPane = HtmlEditorPane(details.body.convertToHtml(project))
-      val panelHandle = GHEditableHtmlPaneHandle(project,
-                                                 textPane,
-                                                 { detailsDataProvider.getDescriptionMarkdownBody(EmptyProgressIndicator()) },
-                                                 { newText ->
-                                                   detailsDataProvider.updateDetails(EmptyProgressIndicator(), description = newText)
-                                                     .successOnEdt { textPane.setBody(it.body.convertToHtml(project)) }
-                                                 })
+      val panelHandle = GHEditableHtmlPaneHandle(project, textPane, details::body) { newText ->
+        detailsDataProvider.updateDetails(EmptyProgressIndicator(), description = newText)
+          .successOnEdt { textPane.setBody(it.body.convertToHtml(project)) }
+      }
       contentPanel = panelHandle.panel
       actionsPanel = if (details.viewerCanUpdate) NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
         add(GHTextActions.createEditButton(panelHandle))
@@ -127,13 +124,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
   private fun createComponent(comment: GHIssueComment): Item {
     val textPane = HtmlEditorPane(comment.body.convertToHtml(project))
-    val panelHandle = GHEditableHtmlPaneHandle(project,
-                                               textPane,
-                                               { commentsDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
-                                               { newText ->
-                                                 commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
-                                                   .successOnEdt { textPane.setBody(it.convertToHtml(project)) }
-                                               })
+    val panelHandle = GHEditableHtmlPaneHandle(project, textPane, comment::body) { newText ->
+      commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
+        .successOnEdt { textPane.setBody(it.convertToHtml(project)) }
+    }
     val actionsPanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
       if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
       if (comment.viewerCanDelete) add(GHTextActions.createDeleteButton {
@@ -154,13 +148,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     if (review.body.isNotEmpty()) {
       val textPane = HtmlEditorPane(review.body.convertToHtml(project))
       panelHandle =
-        GHEditableHtmlPaneHandle(project,
-                                 textPane,
-                                 { reviewDataProvider.getReviewMarkdownBody(EmptyProgressIndicator(), review.id) },
-                                 { newText ->
-                                   reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText)
-                                     .successOnEdt { textPane.setBody(it.convertToHtml(project)) }
-                                 })
+        GHEditableHtmlPaneHandle(project, textPane, review::body, { newText ->
+          reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText)
+            .successOnEdt { textPane.setBody(it.convertToHtml(project)) }
+        })
     }
     else {
       panelHandle = null

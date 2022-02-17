@@ -63,10 +63,9 @@ object GHPRReviewCommentComponent {
 
     Controller(project, thread, comment, titlePane, pendingLabel, resolvedLabel, textPane, showResolvedMarker)
 
-    val editablePaneHandle = GHEditableHtmlPaneHandle(project,
-                                                      textPane,
-                                                      { reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
-                                                      { reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it) })
+    val editablePaneHandle = GHEditableHtmlPaneHandle(project, textPane, comment::body) {
+      reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
+    }
 
     val editButton = GHTextActions.createEditButton(editablePaneHandle).apply {
       isVisible = comment.canBeUpdated

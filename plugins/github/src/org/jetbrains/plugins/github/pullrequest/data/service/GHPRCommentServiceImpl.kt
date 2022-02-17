@@ -28,11 +28,6 @@ class GHPRCommentServiceImpl(private val progressManager: ProgressManager,
     }.logError(LOG, "Error occurred while adding PR comment")
   }
 
-  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> =
-    progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.Comment.getCommentBody(repository.serverPath, commentId))
-    }.logError(LOG, "Error occurred while loading comment source")
-
   override fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String) =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(GHGQLRequests.Comment.updateComment(repository.serverPath, commentId, text))
