@@ -13,9 +13,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import java.awt.event.MouseEvent
 
 class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
-  companion object{
+  companion object {
     const val ID = "java.inheritors"
   }
 
@@ -29,13 +30,9 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
         val isInterface: Boolean = element.isInterface
         val hint = if (isInterface) JavaBundle.message("code.vision.implementations.hint", inheritors)
         else JavaBundle.message("code.vision.inheritors.hint", inheritors)
-        lenses.add(
-          Pair(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element), ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent, _ ->
-            val navigationHandler = MarkerType.SUBCLASSED_CLASS.navigationHandler
-            JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(),
-                                                                             JavaCodeVisionUsageCollector.CLASS_LOCATION)
-            navigationHandler.navigate(mouseEvent, element.nameIdentifier)
-          })))
+        val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+        val handler = ClickHandler(element, JavaCodeVisionUsageCollector.CLASS_LOCATION, MarkerType.SUBCLASSED_CLASS)
+        lenses.add(range to ClickableTextCodeVisionEntry(hint, id, onClick = handler))
       }
       if (element is PsiMethod) {
         val overrides = JavaTelescope.collectOverridingMethods(element)
@@ -43,14 +40,9 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
           val isAbstractMethod = isAbstractMethod(element)
           val hint = if (isAbstractMethod) JavaBundle.message("code.vision.implementations.hint", overrides)
           else JavaBundle.message("code.vision.overrides.hint", overrides)
-
-          lenses.add(
-            Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent, e ->
-              JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(),
-                                                                               JavaCodeVisionUsageCollector.METHOD_LOCATION)
-              val navigationHandler = MarkerType.OVERRIDDEN_METHOD.navigationHandler
-              navigationHandler.navigate(mouseEvent, element.nameIdentifier)
-            })))
+          val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+          val handler = ClickHandler(element, JavaCodeVisionUsageCollector.METHOD_LOCATION, MarkerType.OVERRIDDEN_METHOD)
+          lenses.add(range to ClickableTextCodeVisionEntry(hint, id, onClick = handler))
         }
       }
     }
@@ -82,4 +74,19 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
            PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)
   }
 
+  private class ClickHandler(
+    element: PsiNameIdentifierOwner,
+    private val location: String,
+    private val markerType: MarkerType,
+  ) : (MouseEvent?, Editor) -> Unit {
+    private val elementPointer = SmartPointerManager.createPointer(element)
+
+    override fun invoke(event: MouseEvent?, editor: Editor) {
+      event ?: return
+      val element = elementPointer.element ?: return
+      val navigationHandler = markerType.navigationHandler
+      JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.project, location)
+      navigationHandler.navigate(event, element.nameIdentifier)
+    }
+  }
 }

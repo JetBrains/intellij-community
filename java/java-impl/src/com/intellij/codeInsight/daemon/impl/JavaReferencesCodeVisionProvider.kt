@@ -11,11 +11,9 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.*
 import com.intellij.ui.awt.RelativePoint
+import java.awt.event.MouseEvent
 
 class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
   companion object{
@@ -29,12 +27,23 @@ class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
       if (element !is PsiMember || element is PsiTypeParameter) continue
       val hint = JavaTelescope.usagesHint(element, psiFile)
       if (hint == null) continue
-      lenses.add(Pair(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element), ClickableTextCodeVisionEntry(hint, id, { it, _ ->
-        JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.project)
-        GotoDeclarationAction.startFindUsages(editor, element.project, element, if (it == null) null else RelativePoint(it))
-      })))
+      val handler = ClickHandler(element)
+      val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+      lenses.add(range to ClickableTextCodeVisionEntry(hint, id, handler))
     }
     return lenses
+  }
+
+  private class ClickHandler(
+    element: PsiElement,
+  ) : (MouseEvent?, Editor) -> Unit {
+    private val elementPointer = SmartPointerManager.createPointer(element)
+
+    override fun invoke(event: MouseEvent?, editor: Editor) {
+      val element = elementPointer.element ?: return
+      JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.project)
+      GotoDeclarationAction.startFindUsages(editor, element.project, element, if (event == null) null else RelativePoint(event))
+    }
   }
 
 
