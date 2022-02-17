@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
  * Reload context that describes modifications in settings files
  * @see [ExternalSystemProjectAware.settingsFiles] for details
  */
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface ExternalSystemSettingsFilesReloadContext {
 
   /**
