@@ -43,9 +43,9 @@ private fun ComboBox<*>.updateTooltip() {
 }
 
 internal fun ComboBox<Sdk>.withAddInterpreterLink(project: Project?, module: Module?): JPanel {
-  val interpreterList = PyConfigurableInterpreterList.getInstance(project)
-  val oldSelectedSdk = selectedItem as Sdk
   return withActionLink(PyBundle.message("active.sdk.dialog.link.add.interpreter.text")) { dropDownLink ->
+    val interpreterList = PyConfigurableInterpreterList.getInstance(project)
+    val oldSelectedSdk = selectedItem as Sdk?
     PyActiveSdkConfigurable.createAddInterpreterPopup(
       project ?: ProjectManager.getInstance().defaultProject,
       module,
