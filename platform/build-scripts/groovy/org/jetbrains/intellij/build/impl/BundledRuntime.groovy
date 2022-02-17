@@ -263,7 +263,7 @@ final class BundledRuntime {
     if (!context.options.runtimeDebug) {
       return ''
     }
-    if (!context.options.isTestBuild || !context.options.isInDevelopmentMode) {
+    if (!context.options.isTestBuild && !context.options.isInDevelopmentMode) {
       context.messages.error("Either test or development mode is required to use fastdebug runtime build")
     }
     context.messages.info("Fastdebug runtime build is requested")
