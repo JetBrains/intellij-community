@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.asJava.classes
 
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest
+import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest15
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.fir.findUsages.doTestWithFIRFlagsByPath
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
-abstract class AbstractFirLightFacadeClassTest : AbstractUltraLightFacadeClassTest() {
+abstract class AbstractFirLightFacadeClassTest : AbstractUltraLightFacadeClassTest15() {
 
     override fun isFirPlugin(): Boolean = true
 
