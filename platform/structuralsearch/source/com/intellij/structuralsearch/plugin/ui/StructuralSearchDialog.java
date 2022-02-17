@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -46,10 +45,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
@@ -158,6 +154,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private final boolean myEditConfigOnly;
 
   // components
+  private final int COMMON_SIDE_INSET = 10;
   private final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
   private ActionToolbarImpl myOptionsToolbar;
   private EditorTextField mySearchCriteriaEdit;
@@ -382,59 +379,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   @Override
   protected JComponent createCenterPanel() {
-    final var searchPanel = new JPanel(new GridBagLayout());
-    final var searchConstraints = new GridBagConstraintHolder();
-
-    mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
-    mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    mySearchCriteriaEdit = createEditor(false);
-    searchPanel.add(mySearchCriteriaEdit, searchConstraints.width(5).fillXY().growXY().get());
-    mySearchEditorPanel.setFirstComponent(searchPanel);
-    myComponentsWithEditorBackground.add(searchPanel);
-
-    mySearchWrapper = new JPanel(new BorderLayout()); // needed for border
-    mySearchWrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
-
-    myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
-    myTargetComboBox.setItemConsumer(item -> {
-      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-      for (String name : matchOptions.getVariableConstraintNames()) {
-        matchOptions.getVariableConstraint(name).setPartOfSearchResults(name.equals(item));
-      }
-      initValidation();
-    });
-    final String text = SSRBundle.message("search.target.label");
-    final JLabel searchTargetLabel = new JLabel(text);
-    searchTargetLabel.setLabelFor(myTargetComboBox);
-    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonicCode());
-
-    final JBCheckBox injected = new JBCheckBox(SSRBundle.message("search.in.injected.checkbox"));
-    injected.setOpaque(false);
-    injected.setSelected(myConfiguration.getMatchOptions().isSearchInjectedCode());
-    injected.setVisible(!myEditConfigOnly);
-    injected.addActionListener(e -> {
-      myConfiguration.getMatchOptions().setSearchInjectedCode(injected.isSelected());
-      initValidation();
-    });
-
-    final JBCheckBox matchCase = new JBCheckBox(FindBundle.message("find.popup.case.sensitive"));
-    matchCase.setOpaque(false);
-    matchCase.setSelected(myConfiguration.getMatchOptions().isCaseSensitiveMatch());
-    matchCase.addActionListener(e -> {
-      myConfiguration.getMatchOptions().setCaseSensitiveMatch(matchCase.isSelected());
-        initValidation();
-    });
-
-    searchPanel.add(searchTargetLabel, searchConstraints.newLine().noFill().noGrow().width(1).insetsTLB(10).get());
-    searchPanel.add(myTargetComboBox, searchConstraints.get());
-    searchPanel.add(injected, searchConstraints.get());
-    searchPanel.add(matchCase, searchConstraints.get());
-
-    myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
-    myFilterPanel.setConstraintChangedCallback(() -> initValidation());
-    myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
-    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
-    myComponentsWithEditorBackground.add(myFilterPanel.getTable());
+    final var searchPanel = createSearchPanel();
 
     myScopePanel = new ScopePanel(getProject(), myDisposable);
     if (!myEditConfigOnly) {
@@ -451,102 +396,26 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final GridBagLayout centerPanelLayout = new GridBagLayout();
     final var centerConstraint = new GridBagConstraintHolder();
     final JPanel centerPanel = new JPanel(centerPanelLayout);
-    centerPanel.add(mySearchWrapper, centerConstraint.fillXY().growXY().get());
+    centerPanel.add(searchPanel, centerConstraint.newLine().fillXY().growXY().get());
     centerPanel.add(myReplacePanel, centerConstraint.newLine().fillXY().growXY().get());
-    centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(12, 16, 4, 12).get());
+    centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(12, COMMON_SIDE_INSET, 4, 12).get());
 
     updateColors();
-    return centerPanel;
+
+    final var existingTemplates = new ExistingTemplatesComponent(getProject());
+    final var splitter = new OnePixelSplitter();
+    final JComponent panel = existingTemplates.getTemplatesPanel();
+    panel.setBorder(JBUI.Borders.empty());
+    splitter.setFirstComponent(panel);
+    splitter.setSecondComponent(centerPanel);
+    return splitter;
   }
 
-  private @NotNull JComponent createReplacePanel() {
-    final JBLabel replacementTemplateLabel = new JBLabel(SSRBundle.message("replacement.template.label"));
+  private JPanel createSearchPanel() {
+    // 'Search template:' label
+    final JBLabel searchTemplateLabel = new JBLabel(SSRBundle.message("search.template"));
 
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-    final TriConsumer<JBCheckBox, Boolean, Boolean> initReplaceCheckbox = (checkBox, enabledAndVisible, selected) -> {
-      checkBox.setOpaque(false);
-      checkBox.setEnabled(enabledAndVisible); checkBox.setVisible(enabledAndVisible);
-      checkBox.setSelected(selected);
-    };
-
-    final JBCheckBox shortenFqn = new JBCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
-    initReplaceCheckbox.accept(shortenFqn,
-                               profile != null && profile.supportsShortenFQNames(),
-                               myReplace && myConfiguration.getReplaceOptions().isToShortenFQN());
-    shortenFqn.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToShortenFQN(shortenFqn.isSelected());
-    });
-
-    final JBCheckBox staticImport = new JBCheckBox(SSRBundle.message("use.static.import.checkbox"));
-    initReplaceCheckbox.accept(staticImport,
-                               profile != null && profile.supportsUseStaticImports(),
-                               myReplace && myConfiguration.getReplaceOptions().isToUseStaticImport());
-    staticImport.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToUseStaticImport(staticImport.isSelected());
-    });
-
-    final JBCheckBox reformat = new JBCheckBox(SSRBundle.message("reformat.checkbox"));
-    reformat.setOpaque(false);
-    reformat.setSelected(myReplace && myConfiguration.getReplaceOptions().isToReformatAccordingToStyle());
-    reformat.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(reformat.isSelected());
-    });
-
-    final OnePixelSplitter replaceEditorPanel = new OnePixelSplitter(false, 1.0f);
-    replaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    myReplaceCriteriaEdit = createEditor(true);
-    replaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
-
-    myReplaceWrapper = new JPanel(new GridBagLayout());
-    final var wrapperConstraint = new GridBagConstraintHolder();
-    myComponentsWithEditorBackground.add(myReplaceWrapper);
-    myReplaceWrapper.add(replaceEditorPanel, wrapperConstraint.width(4).fillXY().growXY().get());
-    myReplaceWrapper.add(shortenFqn, wrapperConstraint.newLine().width(1).noFill().noGrow().insetsTLB(10).get());
-    myReplaceWrapper.add(staticImport, wrapperConstraint.get());
-    myReplaceWrapper.add(reformat, wrapperConstraint.get());
-
-    final JPanel replacePanel = new JPanel(new GridBagLayout());
-    final var replaceConstraint = new GridBagConstraintHolder();
-    replacePanel.add(replacementTemplateLabel, replaceConstraint.fillX().growX().insets(16, 10, 14, 0).get());
-    replacePanel.add(myReplaceWrapper, replaceConstraint.newLine().fillXY().growXY().noInsets().get());
-    return replacePanel;
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createNorthPanel() {
-    final DumbAwareAction historyAction = new DumbAwareAction() {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!ConfigurationManager.getInstance(getProject()).getHistoryConfigurations().isEmpty());
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        final Object source = e.getInputEvent().getSource();
-        if (!(source instanceof Component)) return;
-        JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
-          .setRenderer(new ConfigurationCellRenderer())
-          .setItemChosenCallback(c -> {
-            if (c instanceof ReplaceConfiguration && !myReplace) {
-              mySwitchAction.actionPerformed(
-                AnActionEvent.createFromAnAction(mySwitchAction, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
-            }
-            loadConfiguration(c);
-          })
-          .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-          .createPopup()
-          .showUnderneathOf((Component)source);
-      }
-    };
-    ActionUtil.copyFrom(historyAction, "ShowSearchHistory");
-    final ToolbarLabel searchTemplateLabel = new ToolbarLabel(SSRBundle.message("search.template"));
-    final DefaultActionGroup historyActionGroup = new DefaultActionGroup(historyAction, searchTemplateLabel);
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionToolbar historyToolbar = actionManager.createActionToolbar("StructuralSearchDialog", historyActionGroup, true);
-    historyToolbar.setTargetComponent(null);
-
+    // File type chooser
     myFileType = UIUtil.detectFileType(mySearchContext);
     myDialect = myFileType.getLanguage();
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
@@ -587,6 +456,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
       initValidation();
     });
+
+    // Other actions
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
     templateActionGroup.add(
       new DumbAwareAction(SSRBundle.message("save.template.text.button")) {
@@ -617,24 +488,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     templateActionGroup.addAll(
       new CopyConfigurationAction(),
       new PasteConfigurationAction(),
-      new DumbAwareAction(SSRBundle.message("copy.existing.template.button")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          final SelectTemplateDialog dialog = new SelectTemplateDialog(getProject(), myFilterPanel, false, myReplace);
-          if (!dialog.showAndGet()) {
-            return;
-          }
-          final Configuration[] configurations = dialog.getSelectedConfigurations();
-          if (configurations.length == 1) {
-            final MatchOptions source = myConfiguration.getMatchOptions();
-            final MatchOptions sink = configurations[0].getMatchOptions();
-            sink.setSearchInjectedCode(source.isSearchInjectedCode());
-            sink.setRecursiveSearch(source.isRecursiveSearch());
-            sink.setCaseSensitiveMatch(source.isCaseSensitiveMatch());
-            loadConfiguration(configurations[0]);
-          }
-        }
-      },
       Separator.getInstance(),
       mySwitchAction
     );
@@ -644,6 +497,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     presentation.setIcon(AllIcons.General.Settings);
     presentation.setText(SSRBundle.message("tools.button"));
 
+    // Filter action
     final Icon filterModifiedIcon = ExecutionUtil.getLiveIndicator(AllIcons.General.Filter);
     final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
                                                             SSRBundle.message("filter.button.description"),
@@ -666,7 +520,14 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         setFilterPanelVisible(state);
       }
     };
-    @SuppressWarnings("DialogTitleCapitalization") final DumbAwareToggleAction pinAction =
+
+    // Filter panel
+    myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
+    myFilterPanel.setConstraintChangedCallback(() -> initValidation());
+    myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
+
+    // Pin action
+    final DumbAwareToggleAction pinAction =
       new DumbAwareToggleAction(SSRBundle.message("pin.button"), SSRBundle.message("pin.button.description"), AllIcons.General.Pin_tab) {
 
         @Override
@@ -679,18 +540,126 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
           myPinned = state;
         }
       };
+
     final DefaultActionGroup optionsActionGroup =
       new DefaultActionGroup(myFileTypeChooser, filterAction, pinAction, templateActionGroup);
+    final ActionManager actionManager = ActionManager.getInstance();
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
 
-    final JPanel northPanel = new JPanel(new GridBagLayout());
+    // Search editor panel, 1st splitter element
+    final var searchEditorPanel = new JPanel(new GridBagLayout());
+    final var searchConstraint = new GridBagConstraintHolder();
+
+    // Search panel options
+    myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
+    myTargetComboBox.setItemConsumer(item -> {
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      for (String name : matchOptions.getVariableConstraintNames()) {
+        matchOptions.getVariableConstraint(name).setPartOfSearchResults(name.equals(item));
+      }
+      initValidation();
+    });
+    final String text = SSRBundle.message("search.target.label");
+    final JLabel searchTargetLabel = new JLabel(text);
+    searchTargetLabel.setLabelFor(myTargetComboBox);
+    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonicCode());
+
+    final JBCheckBox injected = new JBCheckBox(SSRBundle.message("search.in.injected.checkbox"));
+    injected.setOpaque(false);
+    injected.setSelected(myConfiguration.getMatchOptions().isSearchInjectedCode());
+    injected.setVisible(!myEditConfigOnly);
+    injected.addActionListener(e -> {
+      myConfiguration.getMatchOptions().setSearchInjectedCode(injected.isSelected());
+      initValidation();
+    });
+
+    final JBCheckBox matchCase = new JBCheckBox(FindBundle.message("find.popup.case.sensitive"));
+    matchCase.setOpaque(false);
+    matchCase.setSelected(myConfiguration.getMatchOptions().isCaseSensitiveMatch());
+    matchCase.addActionListener(e -> {
+      myConfiguration.getMatchOptions().setCaseSensitiveMatch(matchCase.isSelected());
+      initValidation();
+    });
+
+    // Splitter
+    mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
+    mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+    mySearchCriteriaEdit = createEditor(false);
+    mySearchEditorPanel.setFirstComponent(searchEditorPanel);
+    myComponentsWithEditorBackground.add(searchEditorPanel);
+
+    // Wrapper
+    mySearchWrapper = new JPanel(new BorderLayout()); // needed for border
+    mySearchWrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
+
+    searchEditorPanel.add(mySearchCriteriaEdit, searchConstraint.width(5).fillXY().growXY().get());
+    searchEditorPanel.add(searchTargetLabel, searchConstraint.newLine().noFill().noGrow().width(1).insets(10, COMMON_SIDE_INSET, 10, 0).get());
+    searchEditorPanel.add(myTargetComboBox, searchConstraint.get());
+    searchEditorPanel.add(injected, searchConstraint.get());
+    searchEditorPanel.add(matchCase, searchConstraint.insets(10, COMMON_SIDE_INSET, 10, COMMON_SIDE_INSET).get());
+
+    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+    myComponentsWithEditorBackground.add(myFilterPanel.getTable());
+
+    final JPanel searchPanel = new JPanel(new GridBagLayout());
     final var northConstraint = new GridBagConstraintHolder();
-    northPanel.add(historyToolbar.getComponent(), northConstraint.insetsTLB(6).get());
-    northPanel.add(myOptionsToolbar.getComponent(), northConstraint.growX().anchorEnd().insets(6, 0, 6, 6).get());
-    return northPanel;
+    searchPanel.add(searchTemplateLabel, northConstraint.insets(6, COMMON_SIDE_INSET, 6, 0).get());
+    searchPanel.add(myOptionsToolbar.getComponent(), northConstraint.growX().anchorEnd().insets(6, 0, 6, COMMON_SIDE_INSET).get());
+    searchPanel.add(mySearchWrapper, northConstraint.newLine().fillXY().growXY().width(2).insets(0, 0, 0, 0).get());
+    return searchPanel;
+  }
+
+  private @NotNull JComponent createReplacePanel() {
+    final JBLabel replacementTemplateLabel = new JBLabel(SSRBundle.message("replacement.template.label"));
+
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    final TriConsumer<JBCheckBox, Boolean, Boolean> initReplaceCheckbox = (checkBox, enabledAndVisible, selected) -> {
+      checkBox.setOpaque(false);
+      checkBox.setEnabled(enabledAndVisible); checkBox.setVisible(enabledAndVisible);
+      checkBox.setSelected(selected);
+    };
+
+    final JBCheckBox shortenFqn = new JBCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
+    initReplaceCheckbox.accept(shortenFqn,
+                               profile != null && profile.supportsShortenFQNames(),
+                               myReplace && myConfiguration.getReplaceOptions().isToShortenFQN());
+    shortenFqn.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToShortenFQN(shortenFqn.isSelected());
+    });
+
+    final JBCheckBox staticImport = new JBCheckBox(SSRBundle.message("use.static.import.checkbox"));
+    initReplaceCheckbox.accept(staticImport,
+                               profile != null && profile.supportsUseStaticImports(),
+                               myReplace && myConfiguration.getReplaceOptions().isToUseStaticImport());
+    staticImport.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToUseStaticImport(staticImport.isSelected());
+    });
+
+    final JBCheckBox reformat = new JBCheckBox(SSRBundle.message("reformat.checkbox"));
+    reformat.setOpaque(false);
+    reformat.setSelected(myReplace && myConfiguration.getReplaceOptions().isToReformatAccordingToStyle());
+    reformat.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(reformat.isSelected());
+    });
+
+    myReplaceCriteriaEdit = createEditor(true);
+    myReplaceWrapper = new JPanel(new GridBagLayout());
+    final var wrapperConstraint = new GridBagConstraintHolder();
+    myComponentsWithEditorBackground.add(myReplaceWrapper);
+
+    myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.width(4).fillXY().growXY().get());
+    myReplaceWrapper.add(shortenFqn, wrapperConstraint.newLine().width(1).noFill().noGrow().insetsTLB(10).get());
+    myReplaceWrapper.add(staticImport, wrapperConstraint.get());
+    myReplaceWrapper.add(reformat, wrapperConstraint.get());
+
+    final JPanel replacePanel = new JPanel(new GridBagLayout());
+    final var replaceConstraint = new GridBagConstraintHolder();
+    replacePanel.add(replacementTemplateLabel, replaceConstraint.fillX().growX().insets(16, COMMON_SIDE_INSET, 14, 0).get());
+    replacePanel.add(myReplaceWrapper, replaceConstraint.newLine().fillXY().growXY().noInsets().get());
+    return replacePanel;
   }
 
   @Nullable

@@ -48,7 +48,7 @@ public final class ExistingTemplatesComponent {
   private final Project project;
   private final SmartList<Runnable> queuedActions = new SmartList<>();
 
-  private ExistingTemplatesComponent(Project project) {
+  ExistingTemplatesComponent(Project project) {
     this.project = project;
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
     patternTreeModel = new DefaultTreeModel(root);
