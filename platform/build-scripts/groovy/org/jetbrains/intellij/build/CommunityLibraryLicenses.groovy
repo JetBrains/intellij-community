@@ -607,8 +607,6 @@ final class CommunityLibraryLicenses {
     new LibraryLicense(name: "pockets", attachedTo: "intellij.python", version: "0.9.1",
                        url: "https://pockets.readthedocs.org/",
                        licenseUrl: "https://github.com/RobRuana/pockets/blob/master/LICENSE").newBsd(),
-    new LibraryLicense(name: "protobuf-java-util", libraryName: "google.protobuf.java.util",
-                       url: "https://developers.google.com/protocol-buffers").newBsd(),
     new LibraryLicense(name: "Protocol Buffers", libraryName: "protobuf", url: "https://developers.google.com/protocol-buffers",
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE").newBsd(),
     new LibraryLicense(name: "Protocol Buffers", libraryName: "protobuf-java6", url: "https://developers.google.com/protocol-buffers",
