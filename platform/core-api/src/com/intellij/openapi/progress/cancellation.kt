@@ -3,11 +3,14 @@
 
 package com.intellij.openapi.progress
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.coroutineContext
+
+private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress")
 
 fun <X> withJob(job: Job, action: () -> X): X = Cancellation.withJob(job, ThrowableComputable(action))
 
@@ -21,38 +24,58 @@ suspend fun <X> withJob(action: (currentJob: Job) -> X): X {
 /**
  * Ensures that the current thread has an [associated job][Cancellation.currentJob].
  *
- * If there is a global indicator, then the new job is created,
+ * If there is a [global indicator][ProgressManager.getGlobalProgressIndicator], then the new job is created,
  * and it becomes a "child" of the global progress indicator
- * (the cancellation of the indicator is propagated to the job).
- * If there is already an associated job, then it's used as a parent.
- * If there is no job, or indicator, then the new orphan job is created.
+ * (the cancellation of the indicator is cancels the job).
+ * Otherwise, if there is already an associated job, then it's used as is.
+ * Otherwise, when the current thread does not have an associated job or indicator, then the [IllegalStateException] is thrown.
  *
  * This method is designed as a bridge to run the code, which is relying on the newer [Cancellation] mechanism,
  * from the code, which is run under older progress indicators.
+ * This method is expected to continue working when the progress indicator is replaced with a current job.
  *
- * @throws CancellationException if a global indicator or a current job is cancelled
+ * @throws ProcessCanceledException if there was a global indicator and it was cancelled
+ * @throws CancellationException if there was a current job it was cancelled
  */
+@Internal
 fun <T> ensureCurrentJob(action: (Job) -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
     return ensureCurrentJob(indicator, action)
   }
-  val currentJob = Job(parent = Cancellation.currentJob())
-  return executeWithJobAndCompleteIt(currentJob) {
-    action(currentJob)
+  val currentJob = Cancellation.currentJob()
+  if (currentJob != null) {
+    return action(currentJob)
+  }
+  LOG.error("There is no ProgressIndicator or Job in this thread, the current job is not cancellable.")
+  val orphanJob = Job(parent = null)
+  return executeWithJobAndCompleteIt(orphanJob) {
+    action(orphanJob)
   }
 }
 
-private fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (Job) -> T): T {
+/**
+ * @throws ProcessCanceledException if [indicator] is cancelled,
+ * or a child coroutine is started and failed
+ */
+internal fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (currentJob: Job) -> T): T {
   val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
-  return executeWithJobAndCompleteIt(currentJob) {
-    val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
-    try {
+  val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
+  return try {
+    executeWithJobAndCompleteIt(currentJob) {
       action(currentJob)
     }
-    finally {
-      indicatorWatcher.cancel()
+  }
+  catch (ce: CancellationException) {
+    val cause = ce.cause
+    when {
+      cause is ProcessCanceledException -> throw cause
+      cause != null -> throw ProcessCanceledException(cause) // some child failure
+      else -> throw ce // manually thrown CE
     }
+  }
+  finally {
+    indicatorWatcher.cancel()
   }
 }
 
