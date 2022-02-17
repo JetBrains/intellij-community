@@ -272,11 +272,13 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   @Deprecated("Use buttonsGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun buttonGroup(title: String?, indent: Boolean, init: Panel.() -> Unit) {
     buttonsGroup(title, indent, init)
   }
 
   @Deprecated("Use buttonsGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, indent: Boolean, init: Panel.() -> Unit) {
     buttonsGroup(title, indent, init)
       .bind(MutableProperty(binding.get, binding.set), type)
