@@ -42,8 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.*;
 
@@ -101,16 +101,19 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
 
     new XDebuggerFrameListMouseListener().installListeners(this);
 
-    new AnAction() {
+    final ResetFrameAction resetFrameAction = new ResetFrameAction();
+    resetFrameAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), this);
+    addMouseListener(new MouseAdapter() {
       @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        var handler = findDropFrameHandler(XDebuggerFramesList.this);
-        var selectedFrame = getSelectedFrame();
-        if (selectedFrame != null && handler != null && handler.canDrop(selectedFrame)) {
-          handler.drop(selectedFrame);
+      public void mousePressed(MouseEvent e) {
+        var list = ObjectUtils.tryCast(e.getComponent(), XDebuggerFramesList.class);
+        if (list != null && XDebuggerFrameListMouseListener.getResetIconHovered(list)) {
+          ActionManager.getInstance().tryToExecute(
+            resetFrameAction, e, list, "XDebuggerFramesList", true
+          );
         }
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getDelete(), this);
+    });
   }
 
   @Override
@@ -290,21 +293,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       myColorsManager = FileColorManager.getInstance(project);
     }
 
-    public void onMouseEvent(@NotNull MouseEvent e, int index) {
-      // we should drop frame before any other activities, like XDebuggerSession#setCurrentStackFrame, run
-      if (e.getID() == MouseEvent.MOUSE_PRESSED && index >= 0) {
-        var bounds = getCellBounds(index, index);
-        if (bounds != null && isIconHovered(e.getPoint(), bounds)) {
-          var value = getModel().getElementAt(index);
-          var handler = findDropFrameHandler(XDebuggerFramesList.this);
-          if (value instanceof XStackFrame && handler != null && handler.canDrop((XStackFrame)value)) {
-            handler.drop((XStackFrame)value);
-            e.consume();
-          }
-        }
-      }
-    }
-
     @Override
     protected void customizeCellRenderer(@NotNull final JList list,
                                          final Object value,
@@ -449,12 +437,12 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
    * @see XDropFrameHandler#canDrop(XStackFrame)
    * @see #findDropFrameHandler(XDebuggerFramesList)
    */
-  private static final class XDebuggerFrameListMouseListener extends HoverListener implements MouseListener {
+  private static final class XDebuggerFrameListMouseListener extends HoverListener {
     private static final Key<Point> HOVER_POSITION = Key.create("XDEBUGGER_HOVER_POSITION");
     private static final Key<Integer> HOVER_INDEX = Key.create("XDEBUGGER_HOVER_INDEX");
     private static final Key<Rectangle> HOVER_BOUNDS = Key.create("XDEBUGGER_HOVER_BOUNDS");
     private static final Key<Boolean> CAN_DROP_FRAME = Key.create("XDEBUGGER_CAN_DROP_FRAME");
-    private static final Key<Boolean> SHOULD_SHOW_HELP_TOOLTIP = Key.create("XDEBUGGER_SHOULD_SHOW_HELP_TOOLTIP");
+    private static final Key<Boolean> RESET_ICON_HOVERED = Key.create("XDEBUGGER_RESET_ICON_HOVERERD");
 
     /**
      * Installs listeners to the {@link XDebuggerFramesList}.
@@ -465,7 +453,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
      * @param list
      */
     private void installListeners(@NotNull XDebuggerFramesList list) {
-      list.addMouseListener(this);
       addTo(list);
 
       var helpTooltip = new HelpTooltip()
@@ -477,7 +464,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       }
       helpTooltip.installOn(list);
       HelpTooltip.setMasterPopupOpenCondition(list, () -> {
-        return ClientProperty.isTrue(list, SHOULD_SHOW_HELP_TOOLTIP);
+        return ClientProperty.isTrue(list, RESET_ICON_HOVERED);
       });
     }
 
@@ -497,6 +484,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       return ClientProperty.isTrue(component, CAN_DROP_FRAME);
     }
 
+    public static boolean getResetIconHovered(@NotNull Component component) {
+      return ClientProperty.isTrue(component, RESET_ICON_HOVERED);
+    }
+
     private static void updateHover(@NotNull Component component, @Nullable Point point) {
       if (!(component instanceof XDebuggerFramesList)) return;
       var list = ((XDebuggerFramesList)component);
@@ -505,7 +496,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       ClientProperty.put(list, HOVER_BOUNDS, null);
       ClientProperty.put(list, HOVER_INDEX, -1);
       ClientProperty.put(list, CAN_DROP_FRAME, false);
-      ClientProperty.put(list, SHOULD_SHOW_HELP_TOOLTIP, false);
+      ClientProperty.put(list, RESET_ICON_HOVERED, false);
       boolean resetHoverActions = true;
 
       if (point != null) {
@@ -532,7 +523,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
           boolean isHovered = renderer.isIconHovered(pointInCellBounds, bounds);
           if (isHovered) {
             list.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            ClientProperty.put(list, SHOULD_SHOW_HELP_TOOLTIP, true);
+            ClientProperty.put(list, RESET_ICON_HOVERED, true);
             resetHoverActions = false;
           }
         }
@@ -559,63 +550,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     @Override
     public void mouseExited(@NotNull Component component) {
       updateHover(component, null);
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-      onMouseButton(e);
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-      onMouseButton(e);
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-      onMouseButton(e);
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-    }
-
-    private static void onMouseButton(MouseEvent e) {
-      var source = e.getComponent();
-      if (!(source instanceof JList)) {
-        return;
-      }
-      var list = (JList)source;
-      if (e.getButton() == MouseEvent.BUTTON1) {
-        var targetRenderer = getFrameListRenderer(list, e.getPoint());
-        var index = list.locationToIndex(e.getPoint());
-        if (targetRenderer != null) {
-          var bounds = list.getCellBounds(index, index);
-          var p = e.getPoint();
-          if (bounds.contains(p.x, p.y)) {
-            p.translate(-bounds.x, -bounds.y);
-            var event = new MouseEvent(targetRenderer,
-                                       e.getID(),
-                                       e.getWhen(),
-                                       e.getModifiers(),
-                                       p.x, p.y,
-                                       e.getXOnScreen(),
-                                       e.getYOnScreen(),
-                                       e.getClickCount(),
-                                       e.isPopupTrigger(),
-                                       e.getButton()
-            );
-            targetRenderer.onMouseEvent(event, index);
-            if (event.isConsumed()) {
-              e.consume();
-            }
-          }
-        }
-      }
     }
 
     private static @Nullable XDebuggerFrameListRenderer getFrameListRenderer(@NotNull JList list, @NotNull Point mouseLocation) {
@@ -703,5 +637,35 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       return null;
     }
     return session.getDebugProcess().getDropFrameHandler();
+  }
+
+  private static class ResetFrameAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      var inputEvent = e.getInputEvent();
+      var list = e.getData(FRAMES_LIST);
+      if (inputEvent == null || list == null) {
+        return;
+      }
+      var index = -1;
+      var event = ObjectUtils.tryCast(inputEvent, MouseEvent.class);
+      if (event != null) {
+        if (UIUtil.isActionClick(event, MouseEvent.MOUSE_PRESSED) && XDebuggerFrameListMouseListener.getResetIconHovered(list)) {
+          index = XDebuggerFrameListMouseListener.getHoveredIndex(list);
+        }
+      }
+      else {
+        index = list.getSelectedIndex();
+      }
+      var model = list.getModel();
+      if (index >= 0 && index < model.getSize()) {
+        var handler = findDropFrameHandler(list);
+        var frame = ObjectUtils.tryCast(model.getElementAt(index), XStackFrame.class);
+        if (frame != null && handler != null && handler.canDrop(frame)) {
+          handler.drop(frame);
+          inputEvent.consume();
+        }
+      }
+    }
   }
 }
