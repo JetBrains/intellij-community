@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.inspection.style
+package com.intellij.grazie.ide
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeImpl
@@ -10,16 +10,17 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider
 import javax.swing.Icon
 
-class StyleProblemSeverities: SeveritiesProvider() {
+class TextProblemSeverities: SeveritiesProvider() {
   override fun getSeveritiesHighlightInfoTypes(): MutableList<HighlightInfoType> {
     return mutableListOf(
-      StyleHighlightInfoType(STYLE_ERROR, StyleProblemTextAttributes.STYLE_ERROR, GrazieIcons.StyleError),
-      StyleHighlightInfoType(STYLE_WARNING, StyleProblemTextAttributes.STYLE_WARNING, GrazieIcons.StyleWarning),
-      StyleHighlightInfoType(STYLE_SUGGESTION, StyleProblemTextAttributes.STYLE_SUGGESTION, GrazieIcons.StyleSuggestion)
+      TextHighlightInfoType(STYLE_ERROR, STYLE_ERROR_ATTRIBUTES, GrazieIcons.StyleError),
+      TextHighlightInfoType(STYLE_WARNING, STYLE_WARNING_ATTRIBUTES, GrazieIcons.StyleWarning),
+      TextHighlightInfoType(STYLE_SUGGESTION, STYLE_SUGGESTION_ATTRIBUTES, GrazieIcons.StyleSuggestion),
+      TextHighlightInfoType(GRAMMAR_ERROR, GRAMMAR_ERROR_ATTRIBUTES, GrazieIcons.GrammarError)
     )
   }
 
-  private class StyleHighlightInfoType(
+  private class TextHighlightInfoType(
     severity: HighlightSeverity,
     attributesKey: TextAttributesKey,
     private val icon: Icon
@@ -48,5 +49,27 @@ class StyleProblemSeverities: SeveritiesProvider() {
 
     @JvmField
     val STYLE_SUGGESTION = createStyleSeverity("STYLE_SUGGESTION", 3)
+
+    @JvmField
+    val GRAMMAR_ERROR = HighlightSeverity(
+      "GRAMMAR_ERROR",
+      SpellCheckerSeveritiesProvider.TYPO.myVal + 1,
+      GrazieBundle.messagePointer("grammar.error.severity.name"),
+      GrazieBundle.messagePointer("grammar.error.severity.name.capitalized"),
+      @Suppress("InvalidBundleOrProperty")
+      GrazieBundle.messagePointer("grammar.error.severity.count")
+    )
+
+    @JvmField
+    val STYLE_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_ERROR")
+
+    @JvmField
+    val STYLE_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_WARNING")
+
+    @JvmField
+    val STYLE_SUGGESTION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_SUGGESTION")
+
+    @JvmField
+    val GRAMMAR_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_GRAMMAR_ERROR")
   }
 }

@@ -62,8 +62,8 @@
     <additionalTextAttributes scheme="Default" file="colorSchemes/GrazieDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GrazieDarcula.xml"/>
 
-    <severitiesProvider implementation="com.intellij.grazie.ide.inspection.style.StyleProblemSeverities"/>
-    <trafficLightRendererContributor implementation="com.intellij.grazie.ide.inspection.style.StyleProblemsTrafficLightRendererContributor"/>
+    <severitiesProvider implementation="com.intellij.grazie.ide.TextProblemSeverities"/>
+    <trafficLightRendererContributor implementation="com.intellij.grazie.ide.StyleProblemsTrafficLightRendererContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

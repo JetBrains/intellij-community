@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.inspection.style
+package com.intellij.grazie.ide
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
@@ -21,9 +21,9 @@ internal class StyleProblemsTrafficLightRendererContributor: TrafficLightRendere
   private class StyleProblemTrafficLightRenderer(project: Project, document: Document): TrafficLightRenderer(project, document) {
     override fun getErrorCounts(): IntArray {
       val errors = super.getErrorCounts()
-      val errorIndex = severityRegistrar.findSeverityIndex(StyleProblemSeverities.STYLE_ERROR)
-      val warningIndex = severityRegistrar.findSeverityIndex(StyleProblemSeverities.STYLE_WARNING)
-      val suggestionIndex = severityRegistrar.findSeverityIndex(StyleProblemSeverities.STYLE_SUGGESTION)
+      val errorIndex = severityRegistrar.findSeverityIndex(TextProblemSeverities.STYLE_ERROR)
+      val warningIndex = severityRegistrar.findSeverityIndex(TextProblemSeverities.STYLE_WARNING)
+      val suggestionIndex = severityRegistrar.findSeverityIndex(TextProblemSeverities.STYLE_SUGGESTION)
       if (errors[warningIndex] != 0) {
         errors[warningIndex] += errors[suggestionIndex]
         errors[suggestionIndex] = 0
