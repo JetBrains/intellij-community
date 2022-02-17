@@ -212,7 +212,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
   }
 
-  public void testExportInferredAnnotations() {
+  @SuppressWarnings("unused")
+  public void _testExportInferredAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
 
