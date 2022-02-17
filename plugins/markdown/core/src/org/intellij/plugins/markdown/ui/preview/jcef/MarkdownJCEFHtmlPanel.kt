@@ -195,7 +195,7 @@ class MarkdownJCEFHtmlPanel(
     val vertical = JBCefApp.normalizeScaledSize(verticalUnits)
     cefBrowser.executeJavaScript(
       // language=JavaScript
-      "window.scrollBy($horizontal, $vertical)",
+      "window.scrollController?.scrollBy($horizontal, $vertical)",
       null,
       0
     )
