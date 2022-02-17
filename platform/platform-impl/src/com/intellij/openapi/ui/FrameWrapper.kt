@@ -338,6 +338,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     override fun getProject() = parent.project
 
+    override fun notifyProjectActivation() = parent.notifyProjectActivation()
+
     override fun setFrameTitle(title: String) {
       frameTitle = title
       updateTitle()
@@ -414,6 +416,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
 
     override fun getProject(): Project? = parent.project
+
+    override fun notifyProjectActivation() = parent.notifyProjectActivation()
 
     init {
       glassPane = IdeGlassPaneImpl(getRootPane())

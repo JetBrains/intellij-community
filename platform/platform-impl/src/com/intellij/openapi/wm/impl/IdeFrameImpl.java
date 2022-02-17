@@ -221,4 +221,10 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   public BalloonLayout getBalloonLayout() {
     return myFrameHelper == null ? null : myFrameHelper.getHelper().getBalloonLayout();
   }
+
+  @Override
+  public void notifyProjectActivation() {
+    ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper(this);
+    if (helper != null) helper.notifyProjectActivation();
+  }
 }
