@@ -305,7 +305,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Nullable
   static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
-    try (DataInputStream stream = INDEXED_STAMP.readAttribute(file)) {
+    try (DataInputStream stream = INDEXED_STAMP.readFileAttribute(file)) {
       if (stream == null || stream.available() <= 0) {
         return null;
       }
