@@ -769,6 +769,9 @@
       <option name="ignoreLazyOperators" value="true" />
       <option name="ignoreObscureOperators" value="true" />
     </inspection_tool>
+    <inspection_tool class="ReplaceNullCheck" enabled="true" level="INFORMATION" enabled_by_default="true">
+      <option name="noWarningReplacementBigger" value="false" />
+    </inspection_tool>
     <inspection_tool class="ReservedWordUsedAsNameJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Restricted_Python_calls" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ReturnFromFinallyBlockJS" enabled="false" level="WARNING" enabled_by_default="false" />
