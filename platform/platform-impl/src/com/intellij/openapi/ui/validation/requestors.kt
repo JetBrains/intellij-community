@@ -4,13 +4,21 @@ package com.intellij.openapi.ui.validation
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.whenStateChanged
 import com.intellij.openapi.observable.util.whenTextChanged
+import java.awt.ItemSelectable
 import javax.swing.text.JTextComponent
 
 
 val WHEN_TEXT_CHANGED = DialogValidationRequestor.WithParameter<JTextComponent> { textComponent ->
   DialogValidationRequestor { parentDisposable, validate ->
     textComponent.whenTextChanged(parentDisposable) { validate() }
+  }
+}
+
+val WHEN_STATE_CHANGED = DialogValidationRequestor.WithParameter<ItemSelectable> { component ->
+  DialogValidationRequestor { parentDisposable, validate ->
+    component.whenStateChanged(parentDisposable) { validate() }
   }
 }
 

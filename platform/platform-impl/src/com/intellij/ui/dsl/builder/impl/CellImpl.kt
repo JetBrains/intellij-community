@@ -19,6 +19,7 @@ import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Font
+import java.awt.ItemSelectable
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JLabel
@@ -233,6 +234,10 @@ internal class CellImpl<T : JComponent>(
     val origin = component.origin
     dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
+
+    // Fallback in case if no validation requestors is defined
+    guessAndInstallValidationRequestor()
+
     return this
   }
 
@@ -258,6 +263,7 @@ internal class CellImpl<T : JComponent>(
         val requestor = when {
           property != null -> AFTER_PROPERTY_CHANGE(property)
           origin is JTextComponent -> WHEN_TEXT_CHANGED(origin)
+          origin is ItemSelectable -> WHEN_STATE_CHANGED(origin)
           else -> null
         }
         if (requestor != null) {
