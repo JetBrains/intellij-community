@@ -5,7 +5,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.isFile
@@ -13,6 +12,7 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.resolveMavenArtifactInMavenRepo
+import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -116,11 +116,11 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
     }
 
     override val kotlinc: File by lazy {
-        val stdlibFile = PathManager.getJarPathForClass(KotlinVersion::class.java)?.let { File(it) }
+        val compilerForIdeArtifactFile = PathManager.getJarPathForClass(KtElement::class.java)?.let { File(it) }
             ?: error("Can't find kotlin-stdlib.jar in Maven Local")
 
         // IDEA should have downloaded the library as a part of dependency resolution in the 'kotlin.util.compiler-dependencies' module
-        val packedDist = generateSequence(stdlibFile) { it.parentFile }
+        val packedDist = generateSequence(compilerForIdeArtifactFile) { it.parentFile }
             .map { resolveMavenArtifactInMavenRepo(it, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
             .firstOrNull { it.exists() }
             ?: error(
