@@ -7,11 +7,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
+import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.network.CefRequest
+import org.intellij.lang.annotations.Language
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
@@ -64,11 +66,10 @@ class MarkdownJCEFHtmlPanel(
       "<link rel=\"stylesheet\" href=\"${PreviewStaticServer.getStaticUrl(resourceProvider, it)}\"/>"
     }
 
-  private val contentSecurityPolicy get() =
-    PreviewStaticServer.createCSP(
-      scripts.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) },
-      styles.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
-    )
+  private val contentSecurityPolicy get() = PreviewStaticServer.createCSP(
+    scripts.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) },
+    styles.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
+  )
 
   private fun buildIndexContent(): String {
     // language=HTML
@@ -118,35 +119,34 @@ class MarkdownJCEFHtmlPanel(
 
   private fun updateDom(renderClosure: String, initialScrollOffset: Int) {
     previousRenderClosure = renderClosure
-    val scrollCode = if (firstUpdate) {
-      "window.scrollController.scrollTo($initialScrollOffset, true);"
+    // language=JavaScript
+    val scrollCode = when {
+      firstUpdate -> "window.scrollController?.scrollTo($initialScrollOffset, true);"
+      else -> ""
     }
-    else ""
-    val code =
-      // language=JavaScript
-      """
-        (function() {
-          const action = () => {
-            console.time("incremental-dom-patch");
-            const render = $previousRenderClosure;
-            // noinspection JSCheckFunctionSignatures
-            IncrementalDOM.patch(document.body, () => render());
-            $scrollCode
-            if (IncrementalDOM.notifications.afterPatchListeners) {
-              IncrementalDOM.notifications.afterPatchListeners.forEach(listener => listener());
-            }
-            console.timeEnd("incremental-dom-patch");
-          };
-          if (document.readyState === "loading" || document.readyState === "uninitialized") {
-            document.addEventListener("DOMContentLoaded", () => action(), { once: true });
+    // language=JavaScript
+    val code = """
+      (function() {
+        const action = () => {
+          console.time("incremental-dom-patch");
+          const render = $previousRenderClosure;
+          // noinspection JSCheckFunctionSignatures
+          IncrementalDOM.patch(document.body, () => render());
+          $scrollCode
+          if (IncrementalDOM.notifications.afterPatchListeners) {
+            IncrementalDOM.notifications.afterPatchListeners.forEach(listener => listener());
           }
-          else {
-            action();
-          }
-        })();
-      """
+          console.timeEnd("incremental-dom-patch");
+        };
+        if (document.readyState === "loading" || document.readyState === "uninitialized") {
+          document.addEventListener("DOMContentLoaded", () => action(), { once: true });
+        } else {
+          action();
+        }
+      })();
+    """
     delayedContent = code
-    cefBrowser.executeJavaScript(code, null, 0)
+    executeJavaScript(code)
   }
 
   override fun setHtml(html: String, initialScrollOffset: Int, documentPath: Path?) {
@@ -182,23 +182,13 @@ class MarkdownJCEFHtmlPanel(
   }
 
   override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
-    cefBrowser.executeJavaScript(
-      // language=JavaScript
-      "if (window.scrollController) { window.scrollController.scrollTo($offset, $smooth); }",
-      null,
-      0
-    )
+    executeJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
   }
 
   override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {
     val horizontal = JBCefApp.normalizeScaledSize(horizontalUnits)
     val vertical = JBCefApp.normalizeScaledSize(verticalUnits)
-    cefBrowser.executeJavaScript(
-      // language=JavaScript
-      "window.scrollController?.scrollBy($horizontal, $vertical)",
-      null,
-      0
-    )
+    executeJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
   }
 
   private inner class MyAggregatingResourceProvider : ResourceProvider {
@@ -266,5 +256,9 @@ class MarkdownJCEFHtmlPanel(
     private val baseStyles = emptyList<String>()
 
     private fun isOffScreenRendering(): Boolean = Registry.`is`("ide.browser.jcef.markdownView.osr.enabled")
+
+    private fun JBCefBrowser.executeJavaScript(@Language("JavaScript") code: String) {
+      cefBrowser.executeJavaScript(code, null, 0)
+    }
   }
 }
