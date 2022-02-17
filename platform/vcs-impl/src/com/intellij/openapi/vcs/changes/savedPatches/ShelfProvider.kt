@@ -103,7 +103,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
                                                DateFormatUtil.formatTime(shelf.data.DATE))
     }
 
-    override fun getTextPresentation(): String = shelf.toString()
+    override fun getTextPresentation(): String = shelf.data.toString()
   }
 
   inner class ShelfObject(override val data: ShelvedChangeList) : SavedPatchesProvider.PatchObject<ShelvedChangeList> {
