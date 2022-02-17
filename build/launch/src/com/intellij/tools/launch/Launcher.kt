@@ -1,6 +1,7 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
