@@ -78,7 +78,7 @@ class LessonManager {
     stopLesson()
     currentLesson = cLesson
     learnPanel.reinitMe(cLesson)
-    if (cLesson.existedFile == null) {
+    if (cLesson.sampleFilePath == null) {
       clearEditor(editor)
     }
     learnPanel.scrollToTheStart()

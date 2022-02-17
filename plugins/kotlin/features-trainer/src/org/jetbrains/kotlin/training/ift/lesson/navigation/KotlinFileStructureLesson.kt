@@ -5,6 +5,6 @@ import com.intellij.openapi.editor.LogicalPosition
 import training.learn.lesson.general.navigation.FileStructureLesson
 
 class KotlinFileStructureLesson : FileStructureLesson() {
-    override val existedFile: String = "src/FileStructureDemo.kt"
+    override val sampleFilePath: String = "src/FileStructureDemo.kt"
     override val methodToFindPosition: LogicalPosition = LogicalPosition(73, 8)
 }
