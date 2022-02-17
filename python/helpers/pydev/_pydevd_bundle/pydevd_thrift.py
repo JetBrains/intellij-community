@@ -11,7 +11,8 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, NUMPY_NUMERIC_TYPES
+    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, NUMPY_NUMERIC_TYPES, \
+    GET_FRAME_RETURN_GROUP
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_pandas_container, is_string, pandas_to_str, \
@@ -21,6 +22,7 @@ from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
+from _pydevd_bundle.pydevd_frame_type_handler import get_vars_handler, DO_NOT_PROCESS_VARS, THRIFT_COMMUNICATION_VARS_HANDLER
 
 try:
     import types
@@ -222,44 +224,36 @@ get_type = _TYPE_RESOLVE_HANDLER.get_type
 
 _str_from_providers = _TYPE_RESOLVE_HANDLER.str_from_providers
 
-
-def frame_vars_to_struct(frame_f_locals, hidden_ns=None, user_type_renderers={}):
-    """Returns frame variables as the list of `DebugValue` structures
-    """
-    values = []
-
+def get_sorted_keys(frame_f_locals):
     keys = dict_keys(frame_f_locals)
     if hasattr(keys, 'sort'):
         keys.sort()  # Python 3.0 does not have it
     else:
         keys = sorted(keys)  # Jython 2.1 does not have it
+    return keys
 
-    return_values = []
+
+def frame_vars_to_struct(frame_f_locals, group_type, hidden_ns=None, user_type_renderers={}):
+    """Returns frame variables as the list of `DebugValue` structures
+    """
+    keys = get_sorted_keys(frame_f_locals)
+
+    type_handler = get_vars_handler(var_to_struct,
+                                    handler_type=THRIFT_COMMUNICATION_VARS_HANDLER,
+                                    group_type=group_type)
 
     for k in keys:
         try:
             v = frame_f_locals[k]
-            eval_full_val = should_evaluate_full_value(v)
+            eval_full_val = should_evaluate_full_value(v, group_type)
 
-            if k == RETURN_VALUES_DICT:
-                for name, val in dict_iter_items(v):
-                    value = var_to_struct(val, name)
-                    value.isRetVal = True
-                    return_values.append(value)
-            else:
-                if hidden_ns is not None and k in hidden_ns:
-                    value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val, user_type_renderers=user_type_renderers)
-                    value.isIPythonHidden = True
-                    values.append(value)
-                else:
-                    value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val, user_type_renderers=user_type_renderers)
-                    values.append(value)
+            type_handler.handle(k, v, hidden_ns, eval_full_val, user_type_renderers=user_type_renderers)
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
 
     # Show return values as the first entry.
-    return return_values + values
+    return type_handler.get_list()
 
 
 def _get_default_var_string_representation(v, _type, typeName, format):
@@ -306,6 +300,11 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
         v = val.result
     else:
         v = val
+
+    if name in DO_NOT_PROCESS_VARS:
+        debug_value.name = name
+        debug_value.value = val
+        return debug_value
 
     _type, typeName, resolver = get_type(v)
     type_qualifier = getattr(_type, "__module__", "")

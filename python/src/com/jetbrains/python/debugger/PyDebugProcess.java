@@ -813,12 +813,23 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     synchronized (myFrameCacheObject) {
       //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
       if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
-        XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
+        XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), ProcessDebugger.GROUP_TYPE.DEFAULT);
         myStackFrameCache.put(frame.getThreadFrameId(), values);
       }
       showFailedTestInfoIfNecessary(frame);
     }
     return applyNewValue(getFrameFromCache(frame), frame.getThreadFrameId());
+  }
+
+  @Override
+  @NotNull
+  public  XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    XValueChildrenList values =  myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), groupType);
+    if (values != null) {
+      PyDebugValue.getAsyncValues(frame, this, values);
+    }
+    return values;
   }
 
   private void showFailedTestInfoIfNecessary(@NotNull PyStackFrame frame) throws PyDebuggerException {

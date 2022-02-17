@@ -13,6 +13,10 @@ DJANGO_SUSPEND = 2
 JINJA2_SUSPEND = 3
 JUPYTER_SUSPEND = 4
 
+GET_FRAME_NORMAL_GROUP = 0
+GET_FRAME_SPECIAL_GROUP = 1
+GET_FRAME_RETURN_GROUP = 2
+
 
 class DebugInfoHolder:
     # we have to put it here because it can be set through the command line (so, the

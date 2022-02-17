@@ -20,6 +20,8 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
+import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
@@ -35,13 +37,6 @@ public class PyStackFrame extends XStackFrame {
   private static final Logger LOG = Logger.getInstance(PyStackFrame.class);
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
-  public static final String DOUBLE_UNDERSCORE = "__";
-  @NotNull @NonNls public static final Set<String> HIDE_TYPES = Set.of("function", "type", "classobj", "module");
-  @NotNull @NonNls public static final Set<String> HIDE_MODULES = Set.of("typing");
-  public static final int DUNDER_VALUES_IND = 0;
-  public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
-  public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;
-  public static final int NUMBER_OF_GROUPS = IPYTHON_VALUES_IND + 1;
   @NotNull @NonNls public static final Set<String> COMPREHENSION_NAMES = Set.of("<genexpr>", "<listcomp>", "<dictcomp>",
                                                                                          "<setcomp>");
   private final Project myProject;
@@ -139,9 +134,7 @@ public class PyStackFrame extends XStackFrame {
     }
     final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
     final XValueChildrenList filteredChildren = new XValueChildrenList();
-    final HashMap<String, XValue> returnedValues = new HashMap<>();
-    final ArrayList<Map<String, XValue>> specialValuesGroups = new ArrayList<>();
-    IntStream.range(0, NUMBER_OF_GROUPS).mapToObj(i -> new HashMap<String, XValue>()).forEach(specialValuesGroups::add);
+    boolean isReturnEmpty = true;
     boolean isSpecialEmpty = true;
 
     for (int i = 0; i < children.size(); i++) {
@@ -152,26 +145,14 @@ public class PyStackFrame extends XStackFrame {
 
         restoreValueDescriptor(pyValue);
 
-        if (pyValue.isReturnedVal() && debuggerSettings.isWatchReturnValues()) {
-          returnedValues.put(name, value);
+        if (name.equals(ProtocolParser.DUMMY_RET_VAL) && debuggerSettings.isWatchReturnValues()) {
+          isReturnEmpty = false;
         }
         else if (!debuggerSettings.isSimplifiedView()) {
           filteredChildren.add(name, value);
         }
         else {
-          int groupIndex = -1;
-          if (name.startsWith(DOUBLE_UNDERSCORE) && (name.endsWith(DOUBLE_UNDERSCORE)) && name.length() > 4 &&
-              !name.equals("__exception__")) {
-            groupIndex = DUNDER_VALUES_IND;
-          }
-          else if (pyValue.isIPythonHidden()) {
-            groupIndex = IPYTHON_VALUES_IND;
-          }
-          else if (HIDE_TYPES.contains(pyValue.getType()) || HIDE_MODULES.contains(pyValue.getTypeQualifier())) {
-            groupIndex = SPECIAL_TYPES_IND;
-          }
-          if (groupIndex > -1) {
-            specialValuesGroups.get(groupIndex).put(name, value);
+          if (name.equals(ProtocolParser.DUMMY_SPECIAL_VAR) || name.equals(ProtocolParser.DUMMY_IPYTHON_HIDDEN)) {
             isSpecialEmpty = false;
           }
           else {
@@ -180,22 +161,15 @@ public class PyStackFrame extends XStackFrame {
         }
       }
     }
-    node.addChildren(filteredChildren, returnedValues.isEmpty() && isSpecialEmpty);
-    if (!returnedValues.isEmpty()) {
-      addGroupValues(PyBundle.message("debugger.stack.frame.return.values"), AllIcons.Debugger.WatchLastReturnValue, node, returnedValues, "()");
+    node.addChildren(filteredChildren, isReturnEmpty && isSpecialEmpty);
+    if (!isReturnEmpty) {
+      addGroupValues(PyBundle.message("debugger.stack.frame.return.values"),
+                     AllIcons.Debugger.WatchLastReturnValue, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.RETURN, "()");
     }
     if (!isSpecialEmpty) {
-      final Map<String, XValue> specialElements = mergeSpecialGroupElementsOrdered(specialValuesGroups);
-      addGroupValues(PyBundle.message("debugger.stack.frame.special.variables"), PythonIcons.Python.Debug.SpecialVar, node, specialElements, null);
+      addGroupValues(PyBundle.message("debugger.stack.frame.special.variables"),
+                     PythonIcons.Python.Debug.SpecialVar, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.SPECIAL, null);
     }
-  }
-
-  private static Map<String, XValue> mergeSpecialGroupElementsOrdered(List<Map<String, XValue>> specialValuesGroups) {
-    final LinkedHashMap<String, XValue> result = new LinkedHashMap<>();
-    for (Map<String, XValue> group : specialValuesGroups) {
-      result.putAll(group);
-    }
-    return result;
   }
 
   public String getThreadId() {

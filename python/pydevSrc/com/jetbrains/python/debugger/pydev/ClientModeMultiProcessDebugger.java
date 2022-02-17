@@ -186,8 +186,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException {
-    return debugger(threadId).loadFrame(threadId, frameId);
+  public XValueChildrenList loadFrame(String threadId, String frameId, GROUP_TYPE groupType) throws PyDebuggerException {
+    return debugger(threadId).loadFrame(threadId, frameId, groupType);
   }
 
   @Override
