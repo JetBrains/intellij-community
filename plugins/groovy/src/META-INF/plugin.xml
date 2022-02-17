@@ -44,6 +44,7 @@
     <extensionPoint name="membersContributor" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="importContributor" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor"/>
     <extensionPoint name="astTransformationSupport" dynamic="true" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationSupport"/>
+    <extensionPoint name="macroTransformationSupport" dynamic="true" interface="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport"/>
     <extensionPoint name="renameHelper" dynamic="true" interface="org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper"/>
     <extensionPoint name="closureMissingMethodContributor" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
@@ -207,6 +208,8 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureOwnerDelegateTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression"
+                    implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator"/>
 
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultNewExpressionTypeCalculator" order="last"/>
@@ -231,6 +234,7 @@
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultSwitchExpressionTypeCalculator"/>
 
+    <elementFilter implementation="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroElementFilter"/>
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>
@@ -344,6 +348,7 @@
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory"/>
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory"/>
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory"/>
+    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroHighlightingPassFactory"/>
 
     <registryKey key="groovy.document.based.formatting" defaultValue="false"
                  description="Enables Document based formatting instead of PSI based"/>
