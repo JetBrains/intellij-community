@@ -40,7 +40,7 @@ final class KotlinBinaries {
     def kotlinPluginLibPath = "$compilerHome/lib"
     def kotlincLibPath = "$compilerHome/kotlinc/lib"
     if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-reflect.jar", "kotlin-common.jar"].each { String jarPath ->
+      ["jps/kotlin-jps-plugin.jar", "kotlin-common.jar"].each { String jarPath ->
         def completePath = "$kotlinPluginLibPath/$jarPath"
         if (!addToJpsClassPathIfExists(ant, completePath)) {
           throw new IllegalStateException("KotlinBinaries: '$completePath' doesn't exist")
@@ -56,7 +56,7 @@ final class KotlinBinaries {
           BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$jarFileName", ant)
         }
       }
-      ["kotlin-stdlib.jar"].each { String jarPath ->
+      ["kotlin-stdlib.jar", "kotlin-reflect.jar"].each { String jarPath ->
         def completePath = "$kotlincLibPath/$jarPath"
         if (!addToJpsClassPathIfExists(ant, completePath)) {
           throw new IllegalStateException("KotlinBinaries: '$completePath' doesn't exist")
