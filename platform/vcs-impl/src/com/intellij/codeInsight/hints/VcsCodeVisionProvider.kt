@@ -91,7 +91,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     val ranges = ArrayList<TextRange>()
 
     try {
-      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
+      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return emptyList()
       val traverser = SyntaxTraverser.psiTraverser(file)
       for (element in traverser.preOrderDfsTraversal()) {
         if (visionLanguageContext.isAccepted(element)) {
