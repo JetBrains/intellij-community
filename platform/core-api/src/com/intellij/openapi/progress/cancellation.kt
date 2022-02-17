@@ -58,7 +58,13 @@ private fun cancelWithIndicator(job: CompletableJob, indicator: ProgressIndicato
     while (!indicator.isCanceled) {
       delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
     }
-    job.completeExceptionally(ProcessCanceledException())
+    try {
+      indicator.checkCanceled()
+      error("A cancelled indicator must throw PCE")
+    }
+    catch (pce: ProcessCanceledException) {
+      job.completeExceptionally(pce)
+    }
   }
 }
 
