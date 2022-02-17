@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.GenerateToStringClassFilter;
@@ -57,7 +58,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * The action-handler that does the code generation.
@@ -125,7 +125,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
           chooser.show();
         }
         if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
-            Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(sortSelectedElements(dialogMembers, chooser));
+            Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(sortedSelection(dialogMembers, chooser));
 
             final TemplateResource template = header.getSelectedTemplate();
             ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
@@ -152,13 +152,13 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     }
 
   @Nullable
-  private static ArrayList<PsiElementClassMember<?>> sortSelectedElements(PsiElementClassMember<?>[] dialogMembers, 
-                                                                          MemberChooser<PsiElementClassMember<?>> chooser) {
+  private static List<PsiElementClassMember<?>> sortedSelection(PsiElementClassMember<?>[] dialogMembers,
+                                                                MemberChooser<PsiElementClassMember<?>> chooser) {
     List<PsiElementClassMember<?>> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null) {
       return null;
     }
-    return Arrays.stream(dialogMembers).filter(selectedElements::contains).collect(Collectors.toCollection(ArrayList::new));
+    return ContainerUtil.filter(dialogMembers, selectedElements::contains);
   }
 
   private static PsiElementClassMember[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember[] dialogMembers) {
