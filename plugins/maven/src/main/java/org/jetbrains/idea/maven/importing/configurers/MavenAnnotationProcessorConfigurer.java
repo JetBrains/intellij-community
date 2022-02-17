@@ -49,7 +49,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       return;
     }
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk !=null) {
+    if (sdk != null) {
       String versionString = sdk.getVersionString();
       LanguageLevel languageLevel = LanguageLevel.parse(versionString);
       if (languageLevel != null && languageLevel.isLessThan(LanguageLevel.JDK_1_6)) return;

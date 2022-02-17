@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
@@ -38,6 +39,7 @@ public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsPro
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     myResolver.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);
+    MavenServerManager.getInstance().shutdown(false);
     if (myOnCompletion != null) myOnCompletion.run();
   }
 }

@@ -49,20 +49,19 @@ public class MavenLeakDetector {
     }
   }
 
-  private void removeHook(Thread thread) throws RemoteException {
+  private static void removeHook(Thread thread) throws RemoteException {
     Runtime.getRuntime().removeShutdownHook(thread);
     Maven3ServerGlobals.getLogger().print(String.format("ShutdownHook[%s] was removed to avoid memory leak", thread));
   }
 
-  private Map<Thread, Thread> getShutdownHooks() {
+  private static Map<Thread, Thread> getShutdownHooks() {
     Class clazz;
     try {
       clazz = Class.forName("java.lang.ApplicationShutdownHooks");
+      return ReflectionUtilRt.getField(clazz, null, Map.class, "hooks");
     }
-    catch (ClassNotFoundException e) {
-      // we can ignore this one
+    catch (Exception e) {
       return Collections.emptyMap();
     }
-    return ReflectionUtilRt.getField(clazz, null, Map.class, "hooks");
   }
 }
