@@ -136,7 +136,7 @@ public abstract class StubIndexEx extends StubIndex {
         throw new AssertionError("raw index data access is not available for StubIndex");
       }
     }
-    Predicate<Psi> keyFilter = getAdditionalPsiKeyFilter(indexKey, key);
+    Predicate<? super Psi> keyFilter = StubIndexKeyDescriptorCache.INSTANCE.getKeyPsiMatcher(indexKey, key);
     PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
       project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass);
 
@@ -202,17 +202,6 @@ public abstract class StubIndexEx extends StubIndex {
       wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key);
     }
     return true;
-  }
-
-  @Nullable
-  private static <Key, Psi extends PsiElement> Predicate<Psi> getAdditionalPsiKeyFilter(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                                        @NotNull Key key) {
-    if (!(key instanceof CharSequence)) return null;
-    StubIndexExtension<?, ?> indexExtension = StubIndexExtension.EP_NAME.findFirstSafe(o -> o.getKey().equals(indexKey));
-    if (!(indexExtension instanceof CharSequenceHashStubIndexExtension)) return null;
-    //noinspection unchecked
-    CharSequenceHashStubIndexExtension<Psi> extension = (CharSequenceHashStubIndexExtension<Psi>)indexExtension;
-    return o -> extension.doesKeyMatchPsi((CharSequence)key, o);
   }
 
   private static <Key, Psi extends PsiElement> boolean processInMemoryStubs(StubIndexKey<Key, Psi> indexKey,
