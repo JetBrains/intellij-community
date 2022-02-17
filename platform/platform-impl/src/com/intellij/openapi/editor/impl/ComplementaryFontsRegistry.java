@@ -373,7 +373,7 @@ public final class ComplementaryFontsRegistry {
 
     @Override
     public int hashCode() {
-      int result = (mySize != +0.0f ? Float.floatToIntBits(mySize) : 0);
+      int result = (mySize != 0.0f ? Float.floatToIntBits(mySize) : 0);
       result = 31 * result + (myUseLigatures ? 1 : 0);
       result = 31 * result + (myContext != null ? myContext.hashCode() : 0);
       return result;
