@@ -49,7 +49,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     /**
      * @deprecated do not use
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
     }

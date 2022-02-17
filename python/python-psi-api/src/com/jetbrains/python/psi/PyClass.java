@@ -304,7 +304,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    *
    * @deprecated Use {@link #getMetaClassType(boolean, TypeEvalContext)} with inherited=false.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   PyType getMetaClassType(@NotNull TypeEvalContext context);
 

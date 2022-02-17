@@ -28,7 +28,7 @@ public class XmlErrorMessages {
   /**
    * @deprecated use {@link XmlPsiBundle#message} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nls String message(@NotNull String key, Object @NotNull ... params) {
     return XmlPsiBundle.message(keyMappings.getOrDefault(key, key), params);
   }

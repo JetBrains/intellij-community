@@ -39,7 +39,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   /**
    * @deprecated use {@link com.jetbrains.python.psi.PyPsiFacade#createClassByQName(String, PsiElement)} or skeleton may be found
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static PyClass findClass(@NotNull String qName, Project project, GlobalSearchScope scope) {
     int pos = qName.lastIndexOf(".");
@@ -55,7 +55,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   /**
    * @deprecated use {@link com.jetbrains.python.psi.PyPsiFacade#createClassByQName(String, PsiElement)} or skeleton may be found
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static PyClass findClass(@Nullable String qName, Project project) {
     if (qName == null) {
