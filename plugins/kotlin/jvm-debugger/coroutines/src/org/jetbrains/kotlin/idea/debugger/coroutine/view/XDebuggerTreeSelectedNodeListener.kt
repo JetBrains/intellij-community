@@ -6,6 +6,8 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.JavaExecutionStack
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.ui.DoubleClickListener
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -13,7 +15,6 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.invokeLater
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.suspendContextImpl
 import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
 import org.jetbrains.kotlin.idea.decompiler.classFile.isKotlinInternalCompiledFile
@@ -48,7 +49,7 @@ class XDebuggerTreeSelectedNodeListener(val session: XDebugSession, val tree: XD
             val node = selectedNodes[0]
             val valueContainer = node.valueContainer
             val suspendContext = session.suspendContextImpl()
-            if (valueContainer is XCoroutineView.CoroutineFrameValue) {
+            if (valueContainer is CoroutineView.CoroutineFrameValue) {
                 val frameItem = valueContainer.frameItem
                 val frame = frameItem.createFrame(debugProcess) ?: return false
 
@@ -72,9 +73,9 @@ class XDebuggerTreeSelectedNodeListener(val session: XDebugSession, val tree: XD
         val fileToNavigate = stackFrame.sourcePosition?.file ?: return
         val isKotlinInternalCompiledFile = isKotlinInternalCompiledFile(fileToNavigate)
         if (!isKotlinInternalCompiledFile) {
-            invokeLater(tree) {
+            ApplicationManager.getApplication().invokeLater({
                 session.setCurrentStackFrame(executionStack, stackFrame, false)
-            }
+            }, ModalityState.stateForComponent(tree))
         }
     }
 }
