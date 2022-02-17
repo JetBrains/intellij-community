@@ -221,14 +221,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun actionButton(action: AnAction, actionPlace: String): Cell<ActionButton> {
-    val component = ActionButton(action, action.templatePresentation, actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    val component = ActionButton(action, action.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     return cell(component)
   }
 
   override fun actionsButton(vararg actions: AnAction, actionPlace: String, icon: Icon): Cell<ActionButton> {
     val actionGroup = PopupActionGroup(arrayOf(*actions))
     actionGroup.templatePresentation.icon = icon
-    return cell(ActionButton(actionGroup, actionGroup.templatePresentation, actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
+    return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
