@@ -15,7 +15,7 @@ import java.awt.*;
 public class IntentionsUIImpl extends IntentionsUI {
   private volatile IntentionHintComponent myLastIntentionHint;
 
-  IntentionsUIImpl(@NotNull Project project) {
+  public IntentionsUIImpl(@NotNull Project project) {
     super(project);
   }
 
