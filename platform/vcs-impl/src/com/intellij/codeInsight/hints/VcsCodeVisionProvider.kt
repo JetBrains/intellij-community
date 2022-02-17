@@ -70,7 +70,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
             val clickHandler = CodeAuthorClickHandler(element, language)
-            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList()))
+            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList()).apply { this.showInMorePopup = false })
           }
         }
       }

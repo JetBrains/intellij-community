@@ -37,6 +37,7 @@ class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvi
     // ranges may be slightly outdated, so we have to unsure that they fit the document
     val lenses = cached.codeVisionEntries.map {
       val range = it.first
+      it.second.showInMorePopup = false
       if (document.textLength <= range.endOffset) {
         TextRange(range.startOffset, document.textLength) to it.second
       }

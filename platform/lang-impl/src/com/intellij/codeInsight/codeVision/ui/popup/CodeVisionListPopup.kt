@@ -23,7 +23,7 @@ class CodeVisionListPopup private constructor(project: Project, aStep: ListPopup
                                                           CodeVisionBundle.message("LensListPopup.tooltip.settings"))
 
     fun createLensList(model: RangeCodeVisionModel, project: Project): CodeVisionListPopup {
-      val lst: ArrayList<CodeVisionEntry> = ArrayList(model.sortedLenses())
+      val lst: ArrayList<CodeVisionEntry> = ArrayList(model.sortedLensesMorePopup())
       lst.add(settingButton)
 
       val hotkey = KeymapUtil.getShortcutsText(KeymapManager.getInstance()!!.activeKeymap.getShortcuts("CodeLens.ShowMore"))
