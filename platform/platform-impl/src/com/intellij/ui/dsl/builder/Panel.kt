@@ -18,6 +18,7 @@ import javax.swing.JLabel
  */
 val EMPTY_LABEL = String()
 
+@ApiStatus.NonExtendable
 interface Panel : CellBase<Panel> {
 
   override fun visible(isVisible: Boolean): Panel

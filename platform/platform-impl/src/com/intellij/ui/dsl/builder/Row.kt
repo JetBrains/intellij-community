@@ -86,6 +86,7 @@ enum class BottomGap {
   MEDIUM
 }
 
+@ApiStatus.NonExtendable
 @LayoutDslMarker
 interface Row {
 
