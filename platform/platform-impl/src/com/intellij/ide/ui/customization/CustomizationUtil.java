@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -30,6 +29,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
@@ -45,7 +45,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -136,6 +135,7 @@ public final class CustomizationUtil {
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
     //noinspection HardCodedStringLiteral
+    @SuppressWarnings("DialogTitleCapitalization")
     Group rootGroup = new Group("root", null, null);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();
@@ -143,7 +143,7 @@ public final class CustomizationUtil {
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
     final List<ActionUrl> actions = new ArrayList<>();
-    TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), node -> {
+    TreeUtil.treeNodeTraverser((TreeNode)tree.getModel().getRoot()).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
       Object userObject = treeNode.getUserObject();
       if (treeNode.isLeaf() && !(userObject instanceof Group)) {
@@ -345,7 +345,11 @@ public final class CustomizationUtil {
       AnAction action = ActionManager.getInstance().getAction(actionId);
       var t = action != null ? action.getTemplatePresentation().getText() : null;
       text = StringUtil.isNotEmpty(t) ? t : actionId;
-      icon = (Icon)((Pair<?, ?>)obj).second;
+      Icon actionIcon = (Icon)((Pair<?, ?>)obj).second;
+      if (actionIcon == null && action != null) {
+        actionIcon = action.getTemplatePresentation().getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
+      }
+      icon = actionIcon;
     }
     else if (obj instanceof Separator) {
       text = "-------------";
@@ -446,6 +450,7 @@ public final class CustomizationUtil {
                                      setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
                                      init();
                                      setSize(600, 600);
+                                     setOKButtonText(ActionsBundle.message("apply.toolbar.customization"));
                                    }
 
                                    @Override
@@ -464,19 +469,20 @@ public final class CustomizationUtil {
                                    }
 
                                    @Override
-                                   protected @NotNull Action getOKAction() {
-                                     return new AbstractAction(ActionsBundle.message("apply.toolbar.customization")) {
-                                       @Override
-                                       public void actionPerformed(ActionEvent e) {
-                                         try {
-                                           panel.apply();
-                                         }
-                                         catch (ConfigurationException ex) {
-                                           LOG.error(ex);
-                                         }
-                                         close(0);
-                                       }
-                                     };
+                                   protected void doOKAction() {
+                                     try {
+                                       panel.apply();
+                                     }
+                                     catch (ConfigurationException ex) {
+                                       LOG.error(ex);
+                                     }
+                                     close(OK_EXIT_CODE);
+                                   }
+
+                                   @Override
+                                   public void doCancelAction() {
+                                     panel.reset();
+                                     super.doCancelAction();
                                    }
                                  };
                                  dialogWrapper.show();
@@ -524,15 +530,7 @@ public final class CustomizationUtil {
       }, new DumbAwareAction(IdeBundle.messagePointer("button.restore.defaults")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          fillTreeFromActions((DefaultMutableTreeNode)myActionsTree.getModel().getRoot(),
-                              (ActionGroup)ActionManager.getInstance().getAction(myGroupID));
-          TreeUtil.ensureSelection(myActionsTree);
-          try {
-            apply();
-          }
-          catch (ConfigurationException ex) {
-            LOG.error(ex);
-          }
+          resetToDefaults();
         }
       }){
         {
@@ -548,9 +546,8 @@ public final class CustomizationUtil {
     }
 
     @Override
-    public void reset() {
-      super.reset();
-      new DefaultTreeExpander(myActionsTree).expandAll();
+    protected boolean needExpandAll() {
+      return true;
     }
 
     @Override

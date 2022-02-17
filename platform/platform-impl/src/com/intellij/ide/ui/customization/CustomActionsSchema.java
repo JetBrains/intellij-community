@@ -1,13 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsCategory;
@@ -18,15 +15,13 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
@@ -47,6 +42,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"), category = SettingsCategory.UI)
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
+  /**
+   * Original icon should be saved in template presentation when one customizes action icon
+   */
+  @NonNls public static final Key<Icon> PROP_ORIGINAL_ICON = Key.create("originalIcon");
 
   @NonNls private static final String ACTIONS_SCHEMA = "custom_actions_schema";
   @NonNls private static final String ACTIVE = "active";
@@ -385,7 +384,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public void removeIconCustomization(String actionId) {
-    myIconCustomizations.remove(actionId);
+    myIconCustomizations.put(actionId, null);
   }
 
   public void addIconCustomization(String actionId, String iconPath) {
@@ -409,12 +408,12 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
   }
 
-  private void initActionIcons() {
+  void initActionIcons() {
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : myIconCustomizations.keySet()) {
       AnAction anAction = actionManager.getAction(actionId);
       if (anAction != null) {
-        Icon icon = AllIcons.Toolbar.Unknown;
+        Icon icon = null;
         final String iconPath = myIconCustomizations.get(actionId);
         if (iconPath != null) {
           final File f = new File(FileUtil.toSystemDependentName(iconPath));
@@ -429,9 +428,17 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
               icon = new JBImageIcon(image);
           }
         }
-        anAction.getTemplatePresentation().setIcon(icon);
-        anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));
-        anAction.setDefaultIcon(false);
+        Presentation template = anAction.getTemplatePresentation();
+        if (template.getClientProperty(PROP_ORIGINAL_ICON) == null && anAction.isDefaultIcon()) {
+          ObjectUtils.consumeIfNotNull(template.getIcon(), i -> template.putClientProperty(PROP_ORIGINAL_ICON, i));
+        }
+        if (icon == null && myIconCustomizations.containsKey(actionId)) {
+          icon = template.getClientProperty(PROP_ORIGINAL_ICON);
+        }
+        template.setIcon(icon);
+        template.setDisabledIcon(icon != null ? IconLoader.getDisabledIcon(icon) : null);
+        anAction.setDefaultIcon(iconPath == null);
+        PresentationFactory.updatePresentation(anAction);
       }
     }
     ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(null);
