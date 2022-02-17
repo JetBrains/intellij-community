@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.lang.UrlClassLoader
 import org.codehaus.stax2.XMLStreamReader2
 

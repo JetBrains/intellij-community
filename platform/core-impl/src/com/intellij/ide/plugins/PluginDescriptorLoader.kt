@@ -10,7 +10,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.Decompressor

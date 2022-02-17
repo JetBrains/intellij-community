@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("StaxFactory")
-package com.intellij.openapi.util
+package com.intellij.util.xml.dom
 
 import com.fasterxml.aalto.`in`.ByteSourceBootstrapper
 import com.fasterxml.aalto.`in`.CharSourceBootstrapper

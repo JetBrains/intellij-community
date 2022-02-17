@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.xml.dom.StaxFactory;
 import com.intellij.xml.util.XmlStringUtil;
 import org.codehaus.stax2.XMLStreamReader2;
 import org.jdom.*;

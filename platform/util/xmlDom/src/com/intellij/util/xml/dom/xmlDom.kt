@@ -5,7 +5,7 @@ package com.intellij.util.xml.dom
 
 import com.fasterxml.aalto.WFCException
 import com.fasterxml.aalto.impl.ErrorConsts
-import com.intellij.openapi.util.createXmlStreamReader
+import com.intellij.util.xml.dom.createXmlStreamReader
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
