@@ -87,6 +87,7 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
  */
+@Internal
 suspend fun <T> runUnderIndicator(action: () -> T): T {
   val ctx = coroutineContext
   return runUnderIndicator(ctx.job, ctx.progressSink, action)
