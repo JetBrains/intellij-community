@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
@@ -230,7 +230,7 @@ public abstract class DumbService {
    * Queues a task to be executed in "dumb mode", where access to indices is forbidden. Tasks are executed sequentially
    * in background unless {@link #completeJustSubmittedTasks()} is called in the same dispatch thread activity.
    * <p>
-   * Tasks can specify custom "equality" policy via their constructor.
+   * Tasks can specify custom "equality" policy via @{link {@link DumbModeTask#tryMergeWith(DumbModeTask)}}.
    * Calling this method has no effect if an "equal" task is already enqueued (but not yet running).
    *
    * Alternatively one may call a short-cut {@link DumbModeTask#queue(Project)} instead.
