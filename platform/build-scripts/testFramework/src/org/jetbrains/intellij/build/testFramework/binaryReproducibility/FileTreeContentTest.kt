@@ -47,7 +47,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
         path1.unpackingDir().also { Decompressor.Tar(path1).extract(it) },
         path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) }
       ) ?: AssertionError("No difference in $relativePath content. Timestamp or ordering issue?")
-      "zip" -> assertTheSameContent(
+      "zip", "ijx" -> assertTheSameContent(
         path1.unpackingDir().also { Decompressor.Zip(path1).extract(it) },
         path2.unpackingDir().also { Decompressor.Zip(path2).extract(it) }
       ) ?: AssertionError("No difference in $relativePath content. Timestamp or ordering issue?")
@@ -89,7 +89,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
 
   private fun Path.writeContent(target: Path) {
     when (extension) {
-      "jar", "zip", "tar.gz", "gz", "tar" -> error("$this is expected to be already unpacked")
+      "jar", "zip", "tar.gz", "gz", "tar", "ijx" -> error("$this is expected to be already unpacked")
       "class" -> target.writeText(process("javap", "-verbose", "$this"))
       else -> copyTo(target, overwrite = true)
     }
