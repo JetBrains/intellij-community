@@ -96,7 +96,7 @@
 
       "selectionBackground": "Blue2",
       "lightSelectionBackground": "Blue2",
-      "hoverBackground": "Blue1",
+      "hoverBackground": "Grey3",
       "selectionForeground": "Grey12",
       "selectionInactiveForeground": "Grey12",
       "selectionInactiveBackground": "Grey4",
@@ -147,7 +147,7 @@
       "selectedStartBorderColor": "Grey5",
       "selectedEndBorderColor": "Grey5",
       "selectedButtonColor": "Grey3",
-      "focusedSelectedButtonColor": "Blue6"
+      "focusedSelectedButtonColor": "Blue3"
     },
 
     "ComboBox": {
@@ -299,14 +299,12 @@
       "Widget": {
         "foreground": "Grey9",
         "hoverForeground": "Grey12",
-        "hoverBackground": "Grey3",
         "pressedBackground": "Grey4",
         "widgetInsets": "6,8,6,8"
       },
       "Breadcrumbs": {
         "foreground": "Grey9",
         "hoverForeground": "Grey12",
-        "hoverBackground": "Grey3",
         "itemInsets": "0,0,0,0",
         "chevronInset": "0",
         "floatingToolbarInsets": "8,12,8,12",
@@ -321,6 +319,8 @@
       "contentAreaColor": "Grey1",
       "focusColor": "Blue2"
     },
+
+    "ToolbarComboWidget.borderInsets": "3,8,3,4",
 
     "ToolTip":{
       "background": "Grey2",
@@ -339,7 +339,6 @@
         "font.size.offset": 0
       },
       "HeaderTab": {
-        "hoverBackground": "Grey3",
         "hoverInactiveBackground": "Grey3",
         "leftRightInsets": "0,12,0,12"
       },
@@ -355,12 +354,10 @@
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
-        "hoverBackground": "Grey3",
         "pressedBackground": "Grey3"
       },
       "Dropdown": {
         "borderInsets": "12,6,12,6",
-        "hoverBackground": "Grey3",
         "pressedBackground": "Grey3"
       },
       "background": "Grey2"
@@ -368,7 +365,16 @@
 
     "Tree.rowHeight": "24",
 
-    "TitlePane.Button.preferredSize": "36,40"
+    "TitlePane.Button.preferredSize": "36,40",
+
+    "VersionControl": {
+      "Log.Commit": {
+        "currentBranchBackground": "#1c2433",
+        "unmatchedForeground": "Grey7",
+        "hoveredBackground": "#FFFFFFED"
+      },
+      "FileHistory.Commit.selectedBranchBackground": "#1c2433"
+    }
   },
 
   "icons": {

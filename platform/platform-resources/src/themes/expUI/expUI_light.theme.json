@@ -148,7 +148,7 @@
       "selectedStartBorderColor": "Grey9",
       "selectedEndBorderColor": "Grey9",
       "selectedButtonColor": "Grey13",
-      "focusedSelectedButtonColor": "Blue6"
+      "focusedSelectedButtonColor": "Blue13"
     },
 
     "ComboBox": {
@@ -303,6 +303,7 @@
     },
 
     "StatusBar": {
+      "background": "Grey12",
       "Widget": {
         "foreground": "Grey5",
         "hoverForeground": "Grey1",
@@ -330,6 +331,11 @@
       "focusColor": "Blue13"
     },
 
+    "ToolbarComboWidget": {
+      "borderInsets": "3,8,3,4",
+      "hoverBackground": "Grey1"
+    },
+
     "ToolTip":{
       "background": "Grey2",
       "foreground": "Grey13",
@@ -343,6 +349,7 @@
     },
 
     "ToolWindow": {
+      "background": "Grey12",
       "Header": {
         "inactiveBackground": "Grey12",
         "font.size.offset": 0
@@ -353,6 +360,7 @@
         "leftRightInsets": "0,12,0,12"
       },
       "Button": {
+        "hoverBackground": "Grey11",
         "DragAndDrop" : {
           "stripeBackground" : "Grey12",
           "buttonDropBackground": "Blue13"
@@ -389,7 +397,16 @@
 
     "Tree.rowHeight": "24",
 
-    "MenuBar.borderColor": "Grey3"
+    "MenuBar.borderColor": "Grey3",
+
+    "VersionControl": {
+      "Log.Commit": {
+        "currentBranchBackground": "#e8eefa",
+        "unmatchedForeground": "Grey6",
+        "hoveredBackground": "#000000F1"
+      },
+      "FileHistory.Commit.selectedBranchBackground": "Blue13"
+    }
   },
 
   "icons": {
