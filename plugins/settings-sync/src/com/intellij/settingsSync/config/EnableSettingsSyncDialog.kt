@@ -9,20 +9,29 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
-internal class EnableSettingsSyncDialog(parent: JComponent, val settingsFound: Boolean) : DialogWrapper(parent, false) {
+internal class EnableSettingsSyncDialog
+  private constructor(parent: JComponent, private val remoteSettingsFound: Boolean) : DialogWrapper(parent, false) {
 
   private lateinit var configPanel: DialogPanel
-  private var isConfirmed = false
+  private var dialogResult: Result? = null
 
   init {
     title = message("title.settings.sync")
     init()
   }
 
-  companion object Result {
-    const val ENABLE_SYNC = 0
-    const val PUSH_LOCAL = 100
-    const val GET_FROM_SERVER = 101
+  enum class Result {
+    ENABLE_SYNC,
+    PUSH_LOCAL,
+    GET_FROM_SERVER
+  }
+
+  companion object {
+    fun showAndGetResult(parent: JComponent, remoteSettingsFound: Boolean) : Result? {
+      val dialog = EnableSettingsSyncDialog(parent, remoteSettingsFound)
+      dialog.show()
+      return dialog.getResult()
+    }
   }
 
   override fun createCenterPanel(): JComponent {
@@ -32,36 +41,36 @@ internal class EnableSettingsSyncDialog(parent: JComponent, val settingsFound: B
   }
 
   private fun getHeader(): @Nls String {
-    return (if (settingsFound) message("enable.dialog.settings.found") + " " else "") + message("enable.dialog.select.what.to.sync")
+    return (if (remoteSettingsFound) message("enable.dialog.settings.found") + " " else "") + message("enable.dialog.select.what.to.sync")
   }
 
   override fun createActions(): Array<Action> =
-    if (settingsFound) arrayOf(cancelAction, SyncLocalSettingsAction(), GetSettingsFromAccountAction())
+    if (remoteSettingsFound) arrayOf(cancelAction, SyncLocalSettingsAction(), GetSettingsFromAccountAction())
     else arrayOf(cancelAction, EnableSyncAction())
 
   inner class EnableSyncAction : AbstractAction(message("enable.dialog.enable.sync.action")) {
     override fun actionPerformed(e: ActionEvent?) {
-      applyAndClose(ENABLE_SYNC)
+      applyAndClose(Result.ENABLE_SYNC)
     }
   }
 
   inner class SyncLocalSettingsAction : AbstractAction(message("enable.dialog.sync.local.settings")) {
     override fun actionPerformed(e: ActionEvent?) {
-      applyAndClose(PUSH_LOCAL)
+      applyAndClose(Result.PUSH_LOCAL)
     }
   }
 
   inner class GetSettingsFromAccountAction : AbstractAction(message("enable.dialog.get.settings.from.account")) {
     override fun actionPerformed(e: ActionEvent?) {
-      applyAndClose(GET_FROM_SERVER)
+      applyAndClose(Result.GET_FROM_SERVER)
     }
   }
 
-  private fun applyAndClose(exitCode: Int) {
+  private fun applyAndClose(result: Result) {
     configPanel.apply()
-    isConfirmed = true
-    close(exitCode, true)
+    dialogResult = result
+    close(0, true)
   }
 
-  fun isConfirmed() : Boolean = this.isConfirmed
+  fun getResult(): Result? = dialogResult
 }

@@ -124,7 +124,9 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       ServerState.FileNotExists, ServerState.UpdateNeeded -> showEnableSyncDialog(false)
       ServerState.UpToDate -> showEnableSyncDialog(true)
       is ServerState.Error -> {
-        showError(enableButton.component, message("notification.title.update.error"), state.message)
+        if (state != SettingsSyncEnabler.State.CANCELLED) {
+          showError(enableButton.component, message("notification.title.update.error"), state.message)
+        }
       }
     }
   }
@@ -143,15 +145,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     }
   }
 
-  private fun showEnableSyncDialog(settingsFound: Boolean) {
-    val dialog = EnableSettingsSyncDialog(configPanel, settingsFound)
-    dialog.show()
-    if (dialog.isConfirmed()) {
+  private fun showEnableSyncDialog(remoteSettingsFound: Boolean) {
+    EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)?.let {
       reset()
-      when (dialog.exitCode) {
-        EnableSettingsSyncDialog.ENABLE_SYNC -> SettingsSyncSettings.getInstance().syncEnabled = true
-        EnableSettingsSyncDialog.GET_FROM_SERVER -> syncEnabler.getSettingsFromServer()
-        EnableSettingsSyncDialog.PUSH_LOCAL -> {
+      when (it) {
+        EnableSettingsSyncDialog.Result.ENABLE_SYNC -> SettingsSyncSettings.getInstance().syncEnabled = true
+        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> syncEnabler.getSettingsFromServer()
+        EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
           syncEnabler.pushSettingsToServer()
           SettingsSyncSettings.getInstance().syncEnabled = true
         }
