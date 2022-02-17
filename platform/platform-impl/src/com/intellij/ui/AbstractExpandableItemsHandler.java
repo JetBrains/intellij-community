@@ -366,6 +366,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     Rectangle screen = ScreenUtil.getScreenRectangle(location);
 
+    // exclude case when myComponent touches screen boundary with its right edge, and popup would be displayed on adjacent screen
+    if (location.x == screen.x) return null;
+
     int borderWidth = isPaintBorder() ? 1 : 0;
     int width = Math.min(screen.width + screen.x - location.x - borderWidth, cellMaxX - visMaxX);
     int height = cellBounds.height;
