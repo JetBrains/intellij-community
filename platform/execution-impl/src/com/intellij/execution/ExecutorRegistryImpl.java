@@ -394,9 +394,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       RunCurrentFileInfo cache = psiFile.getUserData(CURRENT_FILE_RUN_CONFIGS_KEY);
 
       if (cache == null || cache.myPsiModCount != psiModCount) {
-        // The 'Run current file' feature doesnt depend on the caret position in the file, that's why ConfigurationContext is created like this.
+        // The 'Run current file' feature doesn't depend on the caret position in the file, that's why ConfigurationContext is created like this.
         ConfigurationContext configurationContext = new ConfigurationContext(psiFile);
-        List<ConfigurationFromContext> configurationsFromContext = configurationContext.getConfigurationsFromContext();
+
+        // The 'Run current file' feature doesn't reuse existing run configurations (by design).
+        List<ConfigurationFromContext> configurationsFromContext = configurationContext.createConfigurationsFromContext();
 
         List<RunnerAndConfigurationSettings> runConfigs =
           configurationsFromContext != null

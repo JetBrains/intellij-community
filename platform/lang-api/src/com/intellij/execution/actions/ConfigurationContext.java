@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -409,9 +409,17 @@ public class ConfigurationContext {
   @Nullable
   public List<ConfigurationFromContext> getConfigurationsFromContext() {
     if (myConfigurationsFromContext == null) {
-      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true);
+      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, true);
     }
     return myConfigurationsFromContext;
+  }
+
+  /**
+   * The same as {@link #getConfigurationsFromContext()} but this method doesn't search among existing run configurations
+   */
+  public @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
+    // At the moment of writing, caching is not needed here, the result is cached outside.
+    return PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, false);
   }
 
   private static final class ExistingConfiguration {
