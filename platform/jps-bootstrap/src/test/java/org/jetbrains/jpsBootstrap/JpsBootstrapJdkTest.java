@@ -2,6 +2,8 @@
 package org.jetbrains.jpsBootstrap;
 
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +14,7 @@ import java.util.Arrays;
 public class JpsBootstrapJdkTest {
   @Test
   public void allJdkVariantsCouldBeDownloaded() throws Exception {
-    Path communityRoot = TestUtil.getCommunityRootFromWorkingDirectory();
+    BuildDependenciesCommunityRoot communityRoot = BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory();
 
     for (JpsBootstrapJdk.OS os : JpsBootstrapJdk.OS.values()) {
       for (CpuArch arch : Arrays.asList(CpuArch.X86_64, CpuArch.ARM64)) {

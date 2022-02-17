@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import jetbrains.buildServer.messages.serviceMessages.PublishArtifacts;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
@@ -35,7 +36,7 @@ public class JpsBuild {
   private final File myDataStorageRoot;
   private final Path myJpsLogDir;
 
-  public JpsBuild(Path communityRoot, JpsModel model, Path jpsBootstrapWorkDir, Path kotlincHome) throws Exception {
+  public JpsBuild(BuildDependenciesCommunityRoot communityRoot, JpsModel model, Path jpsBootstrapWorkDir, Path kotlincHome) throws Exception {
     myModel = model;
     myModuleNames = myModel.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
     myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data").toFile();
@@ -44,7 +45,7 @@ public class JpsBuild {
 
     // Set IDEA home path to something or JPS can't instantiate ClasspathBoostrap.java for Groovy JPS
     // which calls PathManager.getLibPath() (it should not)
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, communityRoot.toString());
+    System.setProperty(PathManager.PROPERTY_HOME_PATH, communityRoot.getCommunityRoot().toString());
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");

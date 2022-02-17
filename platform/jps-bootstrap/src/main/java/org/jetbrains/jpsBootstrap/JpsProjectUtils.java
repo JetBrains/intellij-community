@@ -27,7 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static org.jetbrains.jpsBootstrap.BuildDependenciesDownloader.info;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.info;
 
 @SuppressWarnings("SameParameterValue")
 public class JpsProjectUtils {

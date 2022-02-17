@@ -12,6 +12,7 @@ import org.apache.commons.cli.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -65,7 +66,7 @@ public class JpsBootstrapMain {
   }
 
   private final Path projectHome;
-  private final Path communityHome;
+  private final BuildDependenciesCommunityRoot communityHome;
   private final String moduleNameToRun;
   private final String classNameToRun;
   private final String buildTargetXmx;
@@ -92,20 +93,10 @@ public class JpsBootstrapMain {
       showUsagesAndExit();
     }
 
-    String projectHomeFromCommandline = null;
-
-    // Temporary measures to migrate from 2 arguments to 3
-    if (freeArgs.size() == 2) {
-      moduleNameToRun = freeArgs.get(0);
-      classNameToRun = freeArgs.get(1);
-      mainArgsToRun = Collections.emptyList();
-    }
-    else {
-      projectHomeFromCommandline = freeArgs.get(0);
-      moduleNameToRun = freeArgs.get(1);
-      classNameToRun = freeArgs.get(2);
-      mainArgsToRun = freeArgs.subList(3, freeArgs.size());
-    }
+    projectHome = Path.of(freeArgs.get(0)).normalize();
+    moduleNameToRun = freeArgs.get(1);
+    classNameToRun = freeArgs.get(2);
+    mainArgsToRun = freeArgs.subList(3, freeArgs.size());
 
     additionalSystemProperties = cmdline.getOptionProperties("D");
 
@@ -117,32 +108,7 @@ public class JpsBootstrapMain {
       throw new IllegalStateException("Please set " + COMMUNITY_HOME_ENV + " environment variable");
     }
 
-    communityHome = Path.of(communityHomeString);
-
-    Path communityCheckFile = communityHome.resolve("intellij.idea.community.main.iml");
-    if (!Files.exists(communityCheckFile)) {
-      throw new IllegalStateException(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
-    }
-
-    Path riderHome = communityHome.getParent().getParent().resolve("Frontend");
-    Path riderCheckFile = riderHome.resolve("Rider.iml");
-
-    Path ultimateHome = communityHome.getParent();
-    Path ultimateCheckFile = ultimateHome.resolve("intellij.idea.ultimate.main.iml");
-
-    if (projectHomeFromCommandline != null) {
-      projectHome = Path.of(projectHomeFromCommandline).normalize();
-    } else if (Files.exists(riderCheckFile)) {
-      projectHome = riderHome;
-    }
-    else if (Files.exists(ultimateCheckFile)) {
-      projectHome = ultimateHome;
-    }
-    else {
-      warn("Ultimate repository is not detected by checking '" + ultimateCheckFile + "', using only community project");
-      projectHome = communityHome;
-    }
-
+    communityHome = new BuildDependenciesCommunityRoot(Path.of(communityHomeString));
     jpsBootstrapWorkDir = projectHome.resolve("build").resolve("jps-bootstrap-work");
 
     info("Working directory: " + jpsBootstrapWorkDir);
