@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
@@ -32,8 +33,8 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import icons.PythonIcons
 import java.awt.BorderLayout
-import java.awt.event.ActionListener
 import java.util.function.Supplier
+import javax.swing.ButtonGroup
 
 /**
  * Panel with a control that allows to add either new or selecting existing virtualenv.
@@ -74,10 +75,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   init {
     layout = BorderLayout()
-    val newVirtualenvItem: NewPySdkComboBoxItem? =
-      if (allowAddNewVirtualenv && isMutableTarget) NewPySdkComboBoxItem("<New Virtualenv>") else null
-    interpreterCombobox = PySdkPathChoosingComboBox(newPySdkComboBoxItem = newVirtualenvItem,
-                                                    targetEnvironmentConfiguration = targetEnvironmentConfiguration)
+    interpreterCombobox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
     locationField = TextFieldWithBrowseButton().apply {
       val targetEnvironmentConfiguration = targetEnvironmentConfiguration
       if (targetEnvironmentConfiguration == null) {
@@ -97,7 +95,32 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     baseInterpreterCombobox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
     inheritSitePackagesCheckBox = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
     val panel = panel {
-      row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) { interpreterCombobox() }
+      val addEnvironmentModeChangedListener: (() -> Unit) -> Unit
+      val isNewEnvironmentMode: () -> Boolean
+      if (allowAddNewVirtualenv && isMutableTarget) {
+        val existingEnvironmentRadioButton = JBRadioButton(PyBundle.message("sdk.create.venv.existing.option.label"), false)
+        val newEnvironmentRadioButton = JBRadioButton(PyBundle.message("sdk.create.venv.new.option.label"), true)
+        val buttonGroup = ButtonGroup()
+        buttonGroup.add(existingEnvironmentRadioButton)
+        buttonGroup.add(newEnvironmentRadioButton)
+        row {
+          cell(isFullWidth = true) {
+            label(PyBundle.message("sdk.create.venv.environment.label"))
+            component(existingEnvironmentRadioButton).withLeftGap()
+            component(newEnvironmentRadioButton).withLargeLeftGap()
+          }
+        }
+        isNewEnvironmentMode = { newEnvironmentRadioButton.isSelected }
+        addEnvironmentModeChangedListener = { environmentModeChangeListener ->
+          existingEnvironmentRadioButton.addActionListener { environmentModeChangeListener() }
+          newEnvironmentRadioButton.addActionListener { environmentModeChangeListener() }
+        }
+      }
+      else {
+        isNewEnvironmentMode = { false }
+        addEnvironmentModeChangedListener = {}
+      }
+      val interpreterRow = row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) { interpreterCombobox() }
       val rowsForNewVirtualenvCase = listOf(
         row(PyBundle.message("sdk.create.venv.dialog.location.label")) { locationField() },
         row(PyBundle.message("sdk.create.venv.dialog.base.interpreter.label")) { baseInterpreterCombobox() },
@@ -106,15 +129,15 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
       // add listeners
       fun updateComponentsVisibility() {
-        val newVirtualenvIsSelected = interpreterCombobox.selectedItem is NewPySdkComboBoxItem
-        rowsForNewVirtualenvCase.forEach { it.visible = newVirtualenvIsSelected }
+        interpreterRow.visible = !isNewEnvironmentMode()
+        rowsForNewVirtualenvCase.forEach { it.visible = isNewEnvironmentMode() }
       }
 
-      updateComponentsVisibility()
-
-      interpreterCombobox.childComponent.addActionListener(ActionListener { updateComponentsVisibility() })
+      addEnvironmentModeChangedListener { updateComponentsVisibility() }
 
       projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
+
+      updateComponentsVisibility()
     }
 
     // workarounds the issue with cropping the focus highlighting
