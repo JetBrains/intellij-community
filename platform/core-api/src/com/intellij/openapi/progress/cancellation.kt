@@ -54,7 +54,7 @@ private fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (Job) -> 
 }
 
 private fun cancelWithIndicator(job: CompletableJob, indicator: ProgressIndicator): Job {
-  return CoroutineScope(job).launch(Dispatchers.IO + CoroutineName("indicator watcher")) {
+  return CoroutineScope(Dispatchers.IO).launch(CoroutineName("indicator watcher")) {
     while (!indicator.isCanceled) {
       delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
     }
