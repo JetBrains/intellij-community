@@ -17,10 +17,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -147,7 +144,7 @@ public final class UITheme {
                                                @NotNull Function<? super String, String> iconsMapper)
     throws IllegalStateException {
     if (provider != null) {
-      theme.providerClassLoader = provider;
+      theme.setProviderClassLoader(provider);
     }
 
     initializeNamedColors(theme);
@@ -404,8 +401,18 @@ public final class UITheme {
     return selectionColorPatcher;
   }
 
+  @ApiStatus.Internal
   public @NotNull ClassLoader getProviderClassLoader() {
+    if (providerClassLoader == null) {
+      throw new RuntimeException("The theme classloader has already been detached");
+    }
+
     return providerClassLoader;
+  }
+
+  @ApiStatus.Internal
+  public void setProviderClassLoader(@Nullable ClassLoader providerClassLoader) {
+    this.providerClassLoader = providerClassLoader;
   }
 
   private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {

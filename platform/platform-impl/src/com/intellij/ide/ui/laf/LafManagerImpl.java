@@ -248,6 +248,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private void addThemeAndDynamicPluginListeners() {
     UIThemeProvider.EP_NAME.addExtensionPointListener(new UiThemeEpListener(), this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+
+      private UIThemeBasedLookAndFeelInfo myLafInfoToUnload = null;
+
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         isUpdatingPlugin = isUpdate;
@@ -257,6 +260,22 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         else {
           themeIdBeforePluginUpdate = null;
         }
+
+        for (UIManager.LookAndFeelInfo lafInfo : lafList.getValue()) {
+          if (lafInfo instanceof UIThemeBasedLookAndFeelInfo) {
+            UIThemeBasedLookAndFeelInfo themeBasedLafInfo = (UIThemeBasedLookAndFeelInfo)lafInfo;
+            if (themeBasedLafInfo.getTheme().getProviderClassLoader() == pluginDescriptor.getPluginClassLoader()) {
+              myLafInfoToUnload = themeBasedLafInfo;
+              break; // todo theme can occur twice for no obvious reason
+            }
+          }
+        }
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        myLafInfoToUnload.uninstallTheme();
+        myLafInfoToUnload = null;
       }
 
       @Override
