@@ -233,6 +233,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createIncreaseLanguageLevelFix(@NotNull LanguageLevel level);
 
   @NotNull
+  public abstract IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level);
+
+  @NotNull
   public abstract IntentionAction createChangeParameterClassFix(@NotNull PsiClass aClass, @NotNull PsiClassType type);
 
   @NotNull
