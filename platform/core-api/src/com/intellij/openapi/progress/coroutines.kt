@@ -4,7 +4,6 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.Computable
-import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -40,6 +39,9 @@ suspend fun checkCanceled() {
  *   }
  * }, progress);
  * ```
+ *
+ * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
+ * @throws CancellationException if [current job][Cancellation.currentJob] is cancelled
  * @see runUnderIndicator
  * @see runBlocking
  */
@@ -48,30 +50,24 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
   if (indicator != null) {
     return runBlockingCancellable(indicator, action)
   }
-  val currentJob = Cancellation.currentJob()
-  if (currentJob != null) {
-    // make runBlocking Job a child of the current one to propagate cancellation
-    return runBlocking(context = currentJob, block = action)
+  return ensureCurrentJob { currentJob ->
+    val context = currentJob +
+                  CoroutineName("job run blocking")
+    runBlocking(context) {
+      action()
+    }
   }
-  // we are not under indicator => just run the action, since nobody will cancel it anyway
-  return runBlocking(block = action)
 }
 
+@Internal
 fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  // we are under indicator => the Job must be canceled when indicator is canceled
-  return runBlocking(ProgressIndicatorSink(indicator).asContextElement() + CoroutineName("indicator run blocking")) {
-    val indicatorWatchJob = launch(Dispatchers.IO + CoroutineName("indicator watcher")) {
-      while (true) {
-        if (indicator.isCanceled) {
-          // will throw PCE which will cancel the runBlocking Job and thrown further in the caller of runBlockingCancellable
-          indicator.checkCanceled()
-        }
-        delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
-      }
+  return ensureCurrentJob(indicator) { currentJob ->
+    val context = currentJob +
+                  CoroutineName("indicator run blocking") +
+                  ProgressIndicatorSink(indicator).asContextElement()
+    runBlocking(context) {
+      action()
     }
-    val result = action()
-    indicatorWatchJob.cancel()
-    result
   }
 }
 

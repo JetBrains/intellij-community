@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.util.concurrent.Future
 
 class ProgressCoroutineTest {
 
@@ -22,43 +20,6 @@ class ProgressCoroutineTest {
     @RegisterExtension
     @JvmField
     val applicationExtension = ApplicationExtension()
-  }
-
-  private fun backgroundActivity(indicator: ProgressIndicator, action: () -> Unit): Future<*> {
-    return AppExecutorUtil.getAppExecutorService().submit {
-      ProgressManager.getInstance().runProcess(action, indicator)
-    }
-  }
-
-  @Test
-  fun `suspending action job is a child of current job`() {
-    val job = Job()
-    withJob(job) {
-      runBlockingCancellable {
-        assertJobIsChildOf(job = coroutineContext.job, parent = job)
-      }
-    }
-  }
-
-  @Test
-  fun `indicator cancellation cancels job`() {
-    val lock = Semaphore(1)
-    val indicator = EmptyProgressIndicator()
-    val future = backgroundActivity(indicator) {  // some blocking code under indicator
-      assertThrows<ProcessCanceledException> {
-        runBlockingCancellable {                     // want to switch to coroutine world from under the blocking code
-          ensureActive()
-          lock.up()
-          while (true) {    // never-ending suspending action
-            ensureActive()  // not actually needed since delay() checks for cancellation
-            delay(500)
-          }
-        }
-      }
-    }
-    lock.timeoutWaitUp()
-    indicator.cancel()
-    future.timeoutGet()
   }
 
   @Test
@@ -94,38 +55,6 @@ class ProgressCoroutineTest {
         deferred.await()
       }
     }
-  }
-
-  @Test
-  fun `indicator text via progress sink`() {
-    suspend fun xx() = progressSink()?.fraction(0.42)
-    val indicator = object : EmptyProgressIndicator() {
-      var myText: String? = null
-      var myText2: String? = null
-      var myFraction: Double? = null
-
-      override fun setText(text: String) {
-        myText = text
-      }
-
-      override fun setText2(text: String) {
-        myText2 = text
-      }
-
-      override fun setFraction(fraction: Double) {
-        myFraction = fraction
-      }
-    }
-    backgroundActivity(indicator) {
-      runBlockingCancellable {
-        progressSink?.text("Hello")
-        progressSink?.details("World")
-        xx()
-      }
-    }.timeoutGet()
-    assertEquals(indicator.myText, "Hello")
-    assertEquals(indicator.myText2, "World")
-    assertEquals(indicator.myFraction, 0.42)
   }
 
   @Test
