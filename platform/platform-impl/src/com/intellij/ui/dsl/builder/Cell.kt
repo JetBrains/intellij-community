@@ -110,11 +110,14 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun accessibleDescription(@Nls description: String): Cell<T>
 
   /**
-   * Binds component value that is provided by [componentGet] and [componentSet] methods to specified [binding] property.
+   * Binds component value that is provided by [componentGet] and [componentSet] methods to specified [prop] property.
    * The property is applied only when [DialogPanel.apply] is invoked. Methods [DialogPanel.isModified] and [DialogPanel.reset]
    * are also supported automatically for bound properties.
    * This method is rarely used directly, see [Cell] extension methods named like "bindXXX" for specific components
    */
+  fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): Cell<T>
+
+  @Deprecated("Use overloaded method")
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
   /**

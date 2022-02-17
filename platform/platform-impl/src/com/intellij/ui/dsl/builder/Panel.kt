@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.JLabel
-import kotlin.reflect.KMutableProperty0
 
 /**
  * Empty label parameter for [Panel.row] method in case label is omitted.
@@ -186,14 +184,6 @@ inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), title, indent, init)
-}
-
-@Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval
-inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, title: @NlsContexts.BorderTitle String? = null,
-                                               indent: Boolean = title != null,
-                                               crossinline init: Panel.() -> Unit) {
-  buttonGroup(prop.toBindingInternal(), title, indent, init)
 }
 
 @Deprecated("Use buttonsGroup(...) instead")

@@ -66,13 +66,13 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         comboBox(
           model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
           renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
-        ).bindItem(settings::splitLayout.toNullableBinding())
+        ).bindItem(settings::splitLayout.toNullableProperty())
       }
       row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
         comboBox(
           model = DefaultComboBoxModel(arrayOf(false, true)),
           renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
-        ).bindItem(settings::isVerticalSplit.toNullableBinding())
+        ).bindItem(settings::isVerticalSplit.toNullableProperty())
       }.bottomGap(BottomGap.SMALL)
       row {
         checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
@@ -116,7 +116,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
     return row(MarkdownBundle.message("markdown.settings.preview.providers.label")) {
       val providers = MarkdownHtmlPanelProvider.getProviders().map { it.providerInfo }
       comboBox(model = DefaultComboBoxModel(providers.toTypedArray()))
-        .bindItem(settings::previewPanelProviderInfo.toNullableBinding())
+        .bindItem(settings::previewPanelProviderInfo.toNullableProperty())
     }
   }
 

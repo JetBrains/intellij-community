@@ -6,7 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
-import com.intellij.ui.dsl.builder.impl.toBindingInternal
+import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
@@ -34,11 +34,11 @@ fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: ObservableMutableProper
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(prop: KMutableProperty0<Boolean>): Cell<T> {
-  return bindSelected(prop.toBindingInternal())
+  return bindSelected(prop.toMutableProperty())
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(getter: () -> Boolean, setter: (Boolean) -> Unit): Cell<T> {
-  return bindSelected(PropertyBinding(getter, setter))
+  return bindSelected(MutableProperty.of(getter, setter))
 }
 
 fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): Cell<T> {
@@ -49,6 +49,6 @@ fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEv
 val Cell<AbstractButton>.selected
   get() = component.selected
 
-private fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>): Cell<T> {
-  return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
+private fun <T : AbstractButton> Cell<T>.bindSelected(prop: MutableProperty<Boolean>): Cell<T> {
+  return bind(AbstractButton::isSelected, AbstractButton::setSelected, prop)
 }

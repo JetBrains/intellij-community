@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.ui.dsl.builder.impl.toBindingInternal
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JSlider
@@ -14,11 +13,11 @@ fun Cell<JSlider>.labelTable(map: Map<Int, JComponent>): Cell<JSlider> {
 }
 
 fun Cell<JSlider>.bindValue(prop: KMutableProperty0<Int>): Cell<JSlider> {
-  return bindValue(prop.toBindingInternal())
+  return bindValue(prop.toMutableProperty())
 }
 
 fun Cell<JSlider>.bindValue(getter: () -> Int, setter: (Int) -> Unit): Cell<JSlider> {
-  return bindValue(PropertyBinding(getter, setter))
+  return bindValue(MutableProperty.of(getter, setter))
 }
 
 fun Cell<JSlider>.showValueHint(): Cell<JSlider> {
@@ -29,6 +28,6 @@ fun Cell<JSlider>.showValueHint(): Cell<JSlider> {
   return this
 }
 
-private fun Cell<JSlider>.bindValue(binding: PropertyBinding<Int>): Cell<JSlider> {
-  return bind(JSlider::getValue, JSlider::setValue, binding)
+private fun Cell<JSlider>.bindValue(prop: MutableProperty<Int>): Cell<JSlider> {
+  return bind(JSlider::getValue, JSlider::setValue, prop)
 }

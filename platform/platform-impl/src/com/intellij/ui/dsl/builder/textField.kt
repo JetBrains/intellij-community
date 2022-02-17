@@ -3,16 +3,16 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.ui.dsl.ValidationException
+import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
 import com.intellij.ui.layout.*
-import com.intellij.openapi.observable.util.lockOrSkip
-import com.intellij.openapi.observable.util.transform
-import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
-import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
@@ -46,11 +46,11 @@ fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<St
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
-  return bindText(prop.toBindingInternal())
+  return bindText(prop.toMutableProperty())
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(getter: () -> String, setter: (String) -> Unit): Cell<T> {
-  return bindText(PropertyBinding(getter, setter))
+  return bindText(MutableProperty.of(getter, setter))
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
@@ -65,11 +65,11 @@ fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
-  return bindIntText(prop.toBindingInternal())
+  return bindIntText(prop.toMutableProperty())
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) -> Unit): Cell<T> {
-  return bindIntText(PropertyBinding(getter, setter))
+  return bindIntText(MutableProperty.of(getter, setter))
 }
 
 fun <T : JTextComponent> Cell<T>.text(text: String): Cell<T> {
@@ -120,11 +120,11 @@ private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
   }
 }
 
-private fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
-  return bind(JTextComponent::getText, JTextComponent::setText, binding)
+private fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
+  return bind(JTextComponent::getText, JTextComponent::setText, prop)
 }
 
-private fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cell<T> {
-  return bindText({ binding.get().toString() },
-                  { value -> catchValidationException { binding.set(component.getValidatedIntValue(value)) } })
+private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
+  return bindText({ prop.get().toString() },
+                  { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
 }

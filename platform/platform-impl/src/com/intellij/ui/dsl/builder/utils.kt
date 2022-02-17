@@ -3,10 +3,8 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.layout.*
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
-import kotlin.reflect.KMutableProperty0
 
 /**
  * Component properties for UI DSL
@@ -60,18 +58,4 @@ fun interface HyperlinkEventAction {
   @JvmDefault
   fun hyperlinkExited(e: HyperlinkEvent) {
   }
-}
-
-/**
- * Converts property to nullable binding. Use this method if there is no chance null is set into resulting [PropertyBinding],
- * otherwise NPE will be thrown. See also safe overloaded [toNullableBinding] method with default value.
- *
- * Useful for [Cell<ComboBox>.bindItem(prop: KMutableProperty0<T?>)] if the ComboBox is not empty and the property is non-nullable
- */
-fun <T> KMutableProperty0<T>.toNullableBinding(): PropertyBinding<T?> {
-  return PropertyBinding({ get() }, { set(it!!) })
-}
-
-fun <T> KMutableProperty0<T>.toNullableBinding(defaultValue: T): PropertyBinding<T?> {
-  return PropertyBinding({ get() }, { set(it ?: defaultValue) })
 }

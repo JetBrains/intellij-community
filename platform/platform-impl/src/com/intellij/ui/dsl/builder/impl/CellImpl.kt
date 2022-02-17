@@ -11,10 +11,8 @@ import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.LabelPosition
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -161,13 +159,18 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
-    componentSet(component, binding.get())
+  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): CellImpl<T> {
+    componentSet(component, prop.get())
 
-    onApply { if (shouldSaveOnApply()) binding.set(componentGet(component)) }
-    onReset { componentSet(component, binding.get()) }
-    onIsModified { shouldSaveOnApply() && componentGet(component) != binding.get() }
+    onApply { if (shouldSaveOnApply()) prop.set(componentGet(component)) }
+    onReset { componentSet(component, prop.get()) }
+    onIsModified { shouldSaveOnApply() && componentGet(component) != prop.get() }
     return this
+  }
+
+  @Deprecated("Use overloaded method")
+  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
+    return bind(componentGet, componentSet, MutableProperty.of(binding.get, binding.set))
   }
 
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {

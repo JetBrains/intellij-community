@@ -7,20 +7,15 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.jvm.isAccessible
 
 /**
  * Internal component properties for UI DSL
@@ -129,9 +124,4 @@ internal fun warn(message: String) {
   else {
     LOG.warn(message)
   }
-}
-
-@ApiStatus.Internal
-fun <T> KMutableProperty0<T>.toBindingInternal(): PropertyBinding<T> {
-  return PropertyBinding({ get() }, { set(it) })
 }

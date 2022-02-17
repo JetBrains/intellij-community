@@ -40,6 +40,7 @@ import kotlin.reflect.KMutableProperty0
 @DslMarker
 annotation class CellMarker
 
+@Deprecated("Use MutableProperty and Kotlin UI DSL 2")
 data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
 @PublishedApi

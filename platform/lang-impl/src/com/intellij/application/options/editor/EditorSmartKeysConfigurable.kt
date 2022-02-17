@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toNullableBinding
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
@@ -179,7 +179,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
               else -> ""
             })
           }
-        ).bindItem(codeInsightSettings::REFORMAT_ON_PASTE.toNullableBinding())
+        ).bindItem(codeInsightSettings::REFORMAT_ON_PASTE.toNullableProperty())
       }
       for (configurable in configurables) {
         appendDslConfigurable(configurable)

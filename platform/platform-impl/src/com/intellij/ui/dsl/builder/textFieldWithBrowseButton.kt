@@ -6,8 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
-import com.intellij.ui.dsl.builder.impl.toBindingInternal
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 
@@ -26,11 +25,11 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: ObservableMutable
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
-  return bindText(prop.toBindingInternal())
+  return bindText(prop.toMutableProperty())
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(getter: () -> String, setter: (String) -> Unit): Cell<T> {
-  return bindText(PropertyBinding(getter, setter))
+  return bindText(MutableProperty.of(getter, setter))
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.text(text: String): Cell<T> {
@@ -38,6 +37,6 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.text(text: String): Cell<T> {
   return this
 }
 
-private fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
-  return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, binding)
+private fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
+  return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop)
 }

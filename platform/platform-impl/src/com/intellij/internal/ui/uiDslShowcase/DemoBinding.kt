@@ -50,7 +50,7 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
     }
     row("comboBox:") {
       comboBox(Color.values().toList())
-        .bindItem(model::comboBoxColor.toNullableBinding())
+        .bindItem(model::comboBoxColor.toNullableProperty())
     }
     row("slider:") {
       slider(0, 100, 10, 50)
