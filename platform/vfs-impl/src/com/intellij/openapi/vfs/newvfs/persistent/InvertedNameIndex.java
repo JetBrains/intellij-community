@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
@@ -20,7 +21,8 @@ final class InvertedNameIndex {
 
   private static final Int2IntMap ourSingleData = new Int2IntOpenHashMap();
   private static final Int2ObjectMap<int[]> ourMultiData = new Int2ObjectOpenHashMap<>();
-  private static int ourModCount = -1;
+  private static long ourModCount = -1;
+  private static final AtomicLong ourNamesModCount = new AtomicLong();
 
   private static final ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
 
@@ -114,7 +116,11 @@ final class InvertedNameIndex {
     }
   }
 
-  private static int getModCount() {
-    return FSRecords.getLocalModCount();
+  static void incModCount() {
+    ourNamesModCount.incrementAndGet();
+  }
+
+  private static long getModCount() {
+    return ourNamesModCount.get();
   }
 }

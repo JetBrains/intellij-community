@@ -172,6 +172,7 @@ public final class FSRecords {
 
   static void deleteRecordRecursively(int id) {
     writeAndHandleErrors(() -> {
+      InvertedNameIndex.incModCount();
       incModCount(id);
       markAsDeletedRecursively(id);
     });
@@ -613,6 +614,7 @@ public final class FSRecords {
    */
   static int setName(int fileId, @NotNull String name) {
     return writeAndHandleErrors(() -> {
+      InvertedNameIndex.incModCount();
       incModCount(fileId);
       int nameId = ourConnection.getNames().enumerate(name);
       ourConnection.getRecords().setNameId(fileId, nameId);
