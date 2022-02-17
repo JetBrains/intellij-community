@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.testFramework.binaryReproducibility
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Decompressor
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -54,26 +53,26 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
       ) ?: AssertionError("No difference in $relativePath content. Timestamp or ordering issue?")
       "jar" -> assertTheSameContent(path1.unpackJar(), path2.unpackJar()) ?: AssertionError("No difference in $relativePath content")
       else -> {
-        saveDiff(relativePath, path1.content(), path2.content())
+        saveDiff(relativePath, path1, path2)
         error
       }
     }
   }
 
-  private fun saveDiff(relativePath: Path, content1: String, content2: String) {
-    fun String.saveIn(subdir: String): Path {
+  private fun saveDiff(relativePath: Path, file1: Path, file2: Path) {
+    fun fileIn(subdir: String): Path {
       val textFileName = relativePath.name.removeSuffix(".txt") + ".txt"
       val target = diffDir.resolve(subdir)
         .resolve(relativePath)
         .resolveSibling(textFileName)
       target.parent.createDirectories()
-      target.writeText(this@saveIn)
       return target
     }
-
-    val a = content1.saveIn("a")
-    val b = content2.saveIn("b")
-    diff(a, b).saveIn("diff")
+    val a = fileIn("a")
+    val b = fileIn("b")
+    file1.writeContent(a)
+    file2.writeContent(b)
+    fileIn("diff").writeText(diff(a, b))
   }
 
   private fun Path.checksum(): String = inputStream().buffered().use { input ->
@@ -88,17 +87,13 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     Base64.getEncoder().encodeToString(digest.digest())
   }
 
-  private fun Path.content(): String =
+  private fun Path.writeContent(target: Path) {
     when (extension) {
       "jar", "zip", "tar.gz", "gz", "tar" -> error("$this is expected to be already unpacked")
-      "class" -> process("javap", "-verbose", "$this")
-      else -> try {
-        Files.readString(this)
-      }
-      catch (io: IOException) {
-        "unable to read text: ${io.message}"
-      }
+      "class" -> target.writeText(process("javap", "-verbose", "$this"))
+      else -> copyTo(target, overwrite = true)
     }
+  }
 
   private fun Path.unpackingDir(): Path {
     val unpackingDir = tempDir
