@@ -1261,12 +1261,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     val anchor = entry.readOnlyWindowInfo.anchor
     val position = Ref(Balloon.Position.below)
-    when {
-      ToolWindowAnchor.TOP == anchor -> position.set(Balloon.Position.below)
-      ToolWindowAnchor.BOTTOM == anchor -> position.set(Balloon.Position.above)
-      ToolWindowAnchor.LEFT == anchor -> position.set(Balloon.Position.atRight)
-      ToolWindowAnchor.RIGHT == anchor -> position.set(Balloon.Position.atLeft)
+    when(anchor) {
+      ToolWindowAnchor.TOP -> position.set(Balloon.Position.below)
+      ToolWindowAnchor.BOTTOM -> position.set(Balloon.Position.above)
+      ToolWindowAnchor.LEFT -> position.set(Balloon.Position.atRight)
+      ToolWindowAnchor.RIGHT -> position.set(Balloon.Position.atLeft)
     }
+
+    toolWindowAvailable(entry.toolWindow)
 
     val balloon = createBalloon(options, entry)
     val button = stripe.getButtonFor(options.toolWindowId)?.getComponent()
@@ -1287,11 +1289,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
       else {
         tracker = object : PositionTracker<Balloon>(button) {
-          override fun recalculateLocation(`object`: Balloon): RelativePoint? {
+          override fun recalculateLocation(b: Balloon): RelativePoint? {
             val otherEntry = idToEntry.get(options.toolWindowId) ?: return null
             val stripeButton = otherEntry.stripeButton
             if (stripeButton == null || otherEntry.readOnlyWindowInfo.anchor != anchor) {
-              `object`.hide()
+              b.hide()
               return null
             }
             val component = stripeButton.getComponent()
@@ -1371,14 +1373,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   private fun createPositionTracker(component: Component, anchor: ToolWindowAnchor): PositionTracker<Balloon> {
     return object : PositionTracker<Balloon>(component) {
-      override fun recalculateLocation(`object`: Balloon): RelativePoint {
+      override fun recalculateLocation(balloon: Balloon): RelativePoint {
         val bounds = component.bounds
         val target = StartupUiUtil.getCenterPoint(bounds, Dimension(1, 1))
-        when {
-          ToolWindowAnchor.TOP == anchor -> target.y = 0
-          ToolWindowAnchor.BOTTOM == anchor -> target.y = bounds.height - 3
-          ToolWindowAnchor.LEFT == anchor -> target.x = 0
-          ToolWindowAnchor.RIGHT == anchor -> target.x = bounds.width
+        when(anchor) {
+          ToolWindowAnchor.TOP -> target.y = 0
+          ToolWindowAnchor.BOTTOM -> target.y = bounds.height - 3
+          ToolWindowAnchor.LEFT -> target.x = 0
+          ToolWindowAnchor.RIGHT -> target.x = bounds.width
         }
         return RelativePoint(component, target)
       }
