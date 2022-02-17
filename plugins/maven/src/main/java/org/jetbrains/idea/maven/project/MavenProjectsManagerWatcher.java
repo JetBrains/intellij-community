@@ -20,6 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
@@ -78,42 +82,41 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
-    scheduleUpdateAll(false, true);
+    scheduleUpdateAll(new MavenImportSpec(false, true, true));
   }
 
   @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    scheduleUpdateAll(false, true);
+    scheduleUpdateAll(new MavenImportSpec(false, true, true));
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAll(false, true);
+    scheduleUpdateAll(new MavenImportSpec(false, true, true));
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
-    scheduleUpdateAll(false, false);
+    scheduleUpdateAll(new MavenImportSpec(false, false, false));
   }
 
   /**
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
    */
-  public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
+  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-    scheduleReadingTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
+    Runnable onCompletion = createScheduleImportAction(spec, promise);
+    scheduleReadingTask(new MavenProjectsProcessorReadingTask(spec, myProjectsTree, myGeneralSettings, onCompletion));
     return promise;
   }
 
   public Promise<Void> scheduleUpdate(List<VirtualFile> filesToUpdate,
                                       List<VirtualFile> filesToDelete,
-                                      boolean force,
-                                      final boolean forceImportAndResolve) {
+                                      MavenImportSpec spec) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
+    Runnable onCompletion = createScheduleImportAction(spec, promise);
     if (LOG.isDebugEnabled()) {
       String withForceOptionMessage = force ? " with force option" : "";
       LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
@@ -121,7 +124,7 @@ public class MavenProjectsManagerWatcher {
     }
 
     scheduleReadingTask(new MavenProjectsProcessorReadingTask(
-      filesToUpdate, filesToDelete, force, myProjectsTree, myGeneralSettings, onCompletion));
+      filesToUpdate, filesToDelete, spec.isForceReading(), myProjectsTree, myGeneralSettings, onCompletion));
     return promise;
   }
 
@@ -133,16 +136,18 @@ public class MavenProjectsManagerWatcher {
   }
 
   @NotNull
-  private Runnable createScheduleImportAction(final boolean forceImportAndResolve, final AsyncPromise<Void> promise) {
+  private Runnable createScheduleImportAction(MavenImportSpec spec, final AsyncPromise<Void> promise) {
     return () -> {
       if (myProject.isDisposed()) {
         promise.setError("Project disposed");
         return;
       }
 
-      if (forceImportAndResolve) {
+      if (spec.isForceResolve()) {
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        projectsManager.scheduleImportAndResolve().onSuccess(modules -> promise.setResult(null));
+        projectsManager.scheduleImportAndResolve(spec)
+          .onSuccess(modules -> promise.setResult(null))
+          .onError(t -> promise.setError(t));
       }
       else {
         promise.setResult(null);
@@ -169,7 +174,7 @@ public class MavenProjectsManagerWatcher {
       }
 
       if (!deletedFiles.isEmpty() || !newFiles.isEmpty()) {
-        scheduleUpdate(newFiles, deletedFiles, false, false);
+        scheduleUpdate(newFiles, deletedFiles, new MavenImportSpec(false, false, true));
       }
     }
   }

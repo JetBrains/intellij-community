@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
@@ -157,7 +158,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myState = state;
     if (isInitialized()) {
       applyStateToTree();
-      scheduleUpdateAllProjects(false);
+      scheduleUpdateAllProjects(new MavenImportSpec(false, false, false));
     }
   }
 
@@ -257,7 +258,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
           fireActivated();
           listenForExternalChanges();
         }
-        scheduleUpdateAllProjects(isNew);
+        scheduleUpdateAllProjects(new MavenImportSpec(false, isNew, false));
       });
     }
     finally {
@@ -817,41 +818,45 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree;
   }
 
-  private void scheduleUpdateAllProjects(boolean forceImportAndResolve) {
-    doScheduleUpdateProjects(null, false, forceImportAndResolve);
+  private void scheduleUpdateAllProjects(MavenImportSpec spec) {
+    doScheduleUpdateProjects(List.of(), spec);
   }
+
 
   @ApiStatus.Internal
   public AsyncPromise<Void> forceUpdateProjects() {
-    return doScheduleUpdateProjects(null, true, true);
+    return (AsyncPromise<Void>)doScheduleUpdateProjects(List.of(), MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    return doScheduleUpdateProjects(projects, true, true);
+    return doScheduleUpdateProjects(projects, MavenImportSpec.EXPLICIT_IMPORT);
   }
 
+
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
+    forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec.EXPLICIT_IMPORT);
+  }
+
+  public void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
     }
-    doScheduleUpdateProjects(null, true, true);
+    doScheduleUpdateProjects(List.of(), spec);
   }
 
   private AsyncPromise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
-                                                      final boolean forceUpdate,
-                                                      final boolean forceImportAndResolve) {
+                                                      final MavenImportSpec spec) {
     MavenDistributionsCache.getInstance(myProject).cleanCaches();
     MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-      if (projects == null) {
-        myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
+      if (projects == null || projects.isEmpty()) {
+        myWatcher.scheduleUpdateAll(spec).processed(promise);
       }
       else {
         myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects),
                                  Collections.emptyList(),
-                                 forceUpdate,
-                                 forceImportAndResolve).processed(promise);
+                                 spec).processed(promise);
       }
     });
     return promise;
@@ -861,9 +866,14 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
    */
+
   public Promise<List<Module>> scheduleImportAndResolve() {
+    return scheduleImportAndResolve(MavenImportSpec.EXPLICIT_IMPORT);
+  }
+
+  public Promise<List<Module>> scheduleImportAndResolve(MavenImportSpec spec) {
     MavenSyncConsole console = getSyncConsole();
-    console.startImport(myProgressListener);
+    console.startImport(myProgressListener, spec);
     fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
@@ -1370,7 +1380,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
     @Override
     public void markDirtyAllExternalProjects(@NotNull Project project) {
-      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(null, true, false));
+      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(List.of(),new MavenImportSpec(true, false, false)));
     }
 
     @Override
@@ -1378,7 +1388,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       runWhenFullyOpen(module.getProject(), (manager) -> {
         MavenProject mavenProject = manager.findProject(module);
         if (mavenProject != null) {
-          manager.doScheduleUpdateProjects(Collections.singletonList(mavenProject), true, false);
+          manager.doScheduleUpdateProjects(Collections.singletonList(mavenProject), new MavenImportSpec(true, false, false));
         }
       });
     }
