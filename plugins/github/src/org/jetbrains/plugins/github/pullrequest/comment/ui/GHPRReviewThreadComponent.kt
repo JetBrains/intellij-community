@@ -293,7 +293,7 @@ object GHPRReviewThreadComponent {
 
     return HorizontalBox().apply {
       isOpaque = false
-      border = JBUI.Borders.empty(6, 28, 6, 0)
+      border = JBUI.Borders.empty(6, 34, 6, 0)
 
       add(toggleReplyLink)
       add(Box.createHorizontalStrut(JBUIScale.scale(8)))
