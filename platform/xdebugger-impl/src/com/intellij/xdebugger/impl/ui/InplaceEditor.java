@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -15,8 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class InplaceEditor implements AWTEventListener {
+  public static final Key<Boolean> IGNORE_MOUSE_EVENT = Key.create("InplaceEditor.Ignore.Mouse.Event");
   private static final Logger LOG = Logger.getInstance(InplaceEditor.class);
   private JComponent myInplaceEditorComponent;
   private final List<Runnable> myRemoveActions = new ArrayList<>();
@@ -228,6 +231,12 @@ public abstract class InplaceEditor implements AWTEventListener {
     }
 
     final Component sourceComponent = mouseEvent.getComponent();
+
+    Boolean property = ClientProperty.get(sourceComponent, IGNORE_MOUSE_EVENT);
+    if (property != null && property.equals(true)) {
+      return;
+    }
+
     final Point originalPoint = mouseEvent.getPoint();
 
     final Editor editor = getEditor();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -566,7 +566,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public boolean shouldShowTextValue() {
-    return myValueDescriptor.isString();
+    if (myValueDescriptor.isValueReady()) {
+      return myValueDescriptor.isString();
+    }
+    return false;
   }
 
   @Nullable
