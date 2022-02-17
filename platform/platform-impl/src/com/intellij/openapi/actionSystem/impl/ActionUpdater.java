@@ -171,7 +171,7 @@ final class ActionUpdater {
     }
     if (myPreCacheSlowDataKeys && !isEDT &&
         (shallEDT || Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false))) {
-      ApplicationManagerEx.getApplicationEx().tryRunReadAction(this::ensureSlowDataKeysPreCached);
+      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(operationName));
     }
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
@@ -184,7 +184,7 @@ final class ActionUpdater {
       finally {
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 1000) {
-          LOG.warn(elapsed + (isEDT ? " ms to call on EDT " : " ms to call on BGT ") + operationName);
+          LOG.warn(elapsedReport(elapsed, isEDT, operationName));
         }
       }
     }
@@ -218,7 +218,7 @@ final class ActionUpdater {
         myInEDTActionOperation = null;
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          warns.add(elapsed + " ms to call on EDT " + operationName + ". See `UpdateInBackground`.");
+          warns.add(elapsedReport(elapsed, true, operationName) + ". Use `UpdateInBackground`.");
         }
       }
     };
@@ -304,7 +304,7 @@ final class ActionUpdater {
       if (myLaterInvocator == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
         boolean noFqn = group.getClass() == DefaultActionGroup.class;
         LOG.warn(edtWaitMillis + " ms total to grab EDT " + myEDTCallsCount + " times at '" + myPlace + "' to expand " +
-                 group.getClass().getSimpleName() + (noFqn ? "" : " (" + group.getClass().getName() + ")") + " - use UpdateInBackground.");
+                 group.getClass().getSimpleName() + (noFqn ? "" : " (" + group.getClass().getName() + ")") + ". Use `UpdateInBackground`.");
       }
     });
 
@@ -321,7 +321,7 @@ final class ActionUpdater {
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
       if (Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false)) {
-        ensureSlowDataKeysPreCached();
+        ensureSlowDataKeysPreCached("expandActionGroupAsync");
       }
       if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
@@ -393,17 +393,18 @@ final class ActionUpdater {
   private void waitTheTestDelay() {
     if (myTestDelayMillis <= 0) return;
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     while (true) {
       progress.checkCanceled();
-      if (System.currentTimeMillis() - start > myTestDelayMillis) break;
+      if (TimeoutUtil.getDurationMillis(start) > myTestDelayMillis) break;
       TimeoutUtil.sleep(1);
     }
   }
 
-  private void ensureSlowDataKeysPreCached() {
+  private void ensureSlowDataKeysPreCached(@NotNull String targetOperationName) {
     if (!myPreCacheSlowDataKeys) return;
-    long start = System.currentTimeMillis();
+    String operationName = "ensureSlowDataKeysPreCached for " + targetOperationName;
+    long start = System.nanoTime();
     for (DataKey<?> key : DataKey.allKeys()) {
       try {
         myDataContext.getData(key);
@@ -416,9 +417,12 @@ final class ActionUpdater {
       }
     }
     myPreCacheSlowDataKeys = false;
-    long time = System.currentTimeMillis() - start;
-    if (time > 500) {
-      LOG.debug("ensureSlowDataKeysPreCached() took: " + time + " ms");
+    long elapsed = TimeoutUtil.getDurationMillis(start);
+    if (elapsed > 3000) {
+      LOG.warn(elapsedReport(elapsed, false, operationName));
+    }
+    else if (elapsed > 500 && LOG.isDebugEnabled()) {
+      LOG.debug(elapsedReport(elapsed, false, operationName));
     }
   }
 
@@ -611,6 +615,10 @@ final class ActionUpdater {
       .unique()
       .traverse(TreeTraversal.LEAVES_DFS)
       .filter(o -> !isDumb || o.isDumbAware());
+  }
+
+  private static @NotNull String elapsedReport(long elapsed, boolean isEDT, @NotNull String operationName) {
+    return elapsed + (isEDT ? " ms to call on EDT " : " ms to call on BGT ") + operationName;
   }
 
   private static void handleException(@NotNull Op op, @NotNull AnAction action, @Nullable AnActionEvent event, @NotNull Throwable ex) {
