@@ -633,7 +633,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     copyMenu.removeAll();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isCopyFromMenuAvailable() {
     return false;
   }

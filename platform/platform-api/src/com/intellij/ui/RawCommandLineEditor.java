@@ -54,7 +54,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
   /**
    * @deprecated Won't be used anymore as dialog is replaced with lightweight popup
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String getDialogCaption() {
     return myDialogCaption;
   }

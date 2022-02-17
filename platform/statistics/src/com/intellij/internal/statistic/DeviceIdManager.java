@@ -30,7 +30,7 @@ public final class DeviceIdManager {
   /**
    * @deprecated Use {@link DeviceIdManager#getOrGenerateId(DeviceIdToken, String)} with purpose specific id
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String getOrGenerateId() {
     try {
       return getOrGenerateId(null, UNDEFINED);

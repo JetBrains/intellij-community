@@ -141,7 +141,7 @@ public final class FUCounterUsageLogger {
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
    * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void logEvent(@Nullable Project project,
                        @NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId) {

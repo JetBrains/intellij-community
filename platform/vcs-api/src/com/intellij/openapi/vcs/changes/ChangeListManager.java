@@ -248,7 +248,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract boolean isFreezedWithNotification(@NlsContexts.DialogTitle @Nullable String modalTitle);
 
-  @Deprecated // used in TeamCity
+  @Deprecated(forRemoval = true)
   public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
 
 }

@@ -170,6 +170,7 @@ public abstract class DumbService {
    * @deprecated This method provides no guarantees and should be avoided, please use {@link #runReadActionInSmartMode} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public void repeatUntilPassesInSmartMode(final @NotNull Runnable r) {
     while (true) {
       waitForSmartMode();

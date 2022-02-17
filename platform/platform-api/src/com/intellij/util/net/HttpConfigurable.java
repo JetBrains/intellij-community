@@ -152,7 +152,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /** @deprecated use {@link #initializeComponent()} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void initComponent() {
     initializeComponent();
   }
@@ -356,13 +356,13 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void readExternal(Element element) throws InvalidDataException {
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
   /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void writeExternal(Element element) throws WriteExternalException {
     com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
     if (USE_PROXY_PAC && USE_HTTP_PROXY && !ApplicationManager.getApplication().isDisposed()) {
@@ -638,15 +638,15 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link HttpRequests#CONNECTION_TIMEOUT} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
 
   /** @deprecated use {@link HttpRequests#READ_TIMEOUT} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
 
   /** @deprecated use {@link HttpRequests#REDIRECT_LIMIT} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
   //</editor-fold>
 }

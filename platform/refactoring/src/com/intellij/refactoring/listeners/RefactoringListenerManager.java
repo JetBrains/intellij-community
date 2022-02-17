@@ -23,7 +23,7 @@ public abstract class RefactoringListenerManager {
    *
    * @deprecated use {@code com.intellij.refactoring.elementListenerProvider} extension point
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addListenerProvider(RefactoringElementListenerProvider provider);
 
   /**
@@ -31,7 +31,7 @@ public abstract class RefactoringListenerManager {
    *
    * @deprecated use {@code com.intellij.refactoring.elementListenerProvider} extension point
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeListenerProvider(RefactoringElementListenerProvider provider);
 
   public static RefactoringListenerManager getInstance(Project project) {

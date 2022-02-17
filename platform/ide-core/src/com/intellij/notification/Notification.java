@@ -423,19 +423,19 @@ public class Notification {
   }
 
   /** @deprecated use {@link #addActions(Collection)} or {@link #addAction} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final void addActions(@NotNull List<? extends AnAction> actions) {
     addActions((Collection<? extends AnAction>)actions);
   }
 
   /** @deprecated use {@link #getCollapseDirection} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public CollapseActionsDirection getCollapseActionsDirection() {
     return myCollapseDirection;
   }
 
   /** @deprecated use {@link #setCollapseDirection} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setCollapseActionsDirection(CollapseActionsDirection collapseDirection) {
     myCollapseDirection = collapseDirection;
   }

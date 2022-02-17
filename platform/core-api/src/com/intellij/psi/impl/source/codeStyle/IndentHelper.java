@@ -27,6 +27,7 @@ public abstract class IndentHelper {
    * @deprecated Use {@link #getIndent(PsiFile, ASTNode, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public final int getIndent(Project project, FileType fileType, ASTNode element, boolean includeNonSpace) {
     return getIndent(getFile(element), element, includeNonSpace);
   }

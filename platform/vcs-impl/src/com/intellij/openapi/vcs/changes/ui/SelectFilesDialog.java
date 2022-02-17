@@ -49,7 +49,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   }
 
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
                                        @Nullable @NlsContexts.Label String prompt,

@@ -250,7 +250,7 @@ public final class PluginManagerMain {
   }
 
   /** @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly. */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
     @Override
     default boolean isDisabled(@NotNull PluginId pluginId) {

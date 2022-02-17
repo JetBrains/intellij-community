@@ -1560,7 +1560,7 @@ public final class UIUtil {
     painter.paint(g, startX, endX, lineY);
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void applyRenderingHints(@NotNull Graphics g) {
     GraphicsUtil.applyRenderingHints((Graphics2D)g);
   }

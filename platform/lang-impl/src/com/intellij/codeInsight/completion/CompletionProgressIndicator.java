@@ -891,7 +891,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   /**
    * @deprecated intended for Rider
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void setAutopopupTriggerTime(int timeSpan) {
     ourShowPopupGroupingTime = timeSpan;
     ourShowPopupAfterFirstItemGroupingTime = timeSpan;

@@ -171,7 +171,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
     return myChanges;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<ShelvedChange> getChanges(Project project) {
     loadChangesIfNeeded(project);
     return getChanges();

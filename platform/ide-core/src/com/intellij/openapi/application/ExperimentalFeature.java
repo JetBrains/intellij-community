@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls;
  * @author Konstantin Bulenkov
  * @deprecated Please use the registry to enable/disable experimental features
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class ExperimentalFeature {
   @Attribute("id")
   public String id;

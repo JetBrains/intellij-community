@@ -250,6 +250,7 @@ public final class JDOMUtil {
    * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
     return loadDocumentUsingStaX(reader);
   }
@@ -384,6 +385,7 @@ public final class JDOMUtil {
    * @deprecated Use {@link #write(Element, Path)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void write(@NotNull Element element, @NotNull File file) throws IOException {
     FileUtilRt.createParentDirs(file);
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {

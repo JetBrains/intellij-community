@@ -35,7 +35,7 @@ final class PreferredProducerFind {
   }
 
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static List<RuntimeConfigurationProducer> findPreferredProducers(final Location location, final ConfigurationContext context, final boolean strict) {
     if (location == null) {
       return null;

@@ -218,6 +218,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).withGroupId(groupID).run()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   protected WriteCommandAction(@Nullable Project project,
                                @Nullable @Command String commandName,
                                @Nullable String groupID,

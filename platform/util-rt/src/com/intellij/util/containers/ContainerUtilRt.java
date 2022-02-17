@@ -80,6 +80,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Iterable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {

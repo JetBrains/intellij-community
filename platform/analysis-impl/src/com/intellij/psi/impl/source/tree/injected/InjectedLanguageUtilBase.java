@@ -100,7 +100,7 @@ public class InjectedLanguageUtilBase {
     /**
      * @deprecated Use textAttributesKeys
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public final TextAttributes attributes;
     public final TextAttributesKey @NotNull [] textAttributesKeys;
 
@@ -139,7 +139,7 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#enumerate(PsiElement, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
     PsiUtilCore.ensureValid(containingFile);
@@ -149,7 +149,7 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#enumerateEx(PsiElement, PsiFile, boolean, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean enumerate(@NotNull PsiElement host,
                                   @NotNull PsiFile containingFile,
                                   boolean probeUp,

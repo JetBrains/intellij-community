@@ -675,6 +675,7 @@ public final class ReflectionUtil {
    */
   @ApiStatus.Internal
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull Object getUnsafe() {
     return unsafe;
   }

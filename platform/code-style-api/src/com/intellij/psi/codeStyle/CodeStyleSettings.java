@@ -211,7 +211,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Deprecated(forRemoval = true)
   public String PARAMETER_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_PREFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String LOCAL_VARIABLE_NAME_PREFIX = "";
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#FIELD_NAME_SUFFIX} */
@@ -224,11 +224,11 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Deprecated(forRemoval = true)
   public String PARAMETER_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_SUFFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String LOCAL_VARIABLE_NAME_SUFFIX = "";
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PREFER_LONGER_NAMES} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean PREFER_LONGER_NAMES = true;
 
 //----------------- 'final' modifier settings -------
@@ -241,7 +241,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
 //----------------- visibility -----------------------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#VISIBILITY} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String VISIBILITY = "public";
 
 //----------------- generate parentheses around method arguments ----------
@@ -265,13 +265,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private final List<String> myRepeatAnnotations = new ArrayList<>();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getRepeatAnnotations()} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<String> getRepeatAnnotations() {
     return myRepeatAnnotations;
   }
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setRepeatAnnotations(List)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setRepeatAnnotations(List<String> repeatAnnotations) {
     myRepeatAnnotations.clear();
     myRepeatAnnotations.addAll(repeatAnnotations);
@@ -456,7 +456,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /**
    * @deprecated  Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#ENABLE_JAVADOC_FORMATTING}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean ENABLE_JAVADOC_FORMATTING = true;
 
   /**

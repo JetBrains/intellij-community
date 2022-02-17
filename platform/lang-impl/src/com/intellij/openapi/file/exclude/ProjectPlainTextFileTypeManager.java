@@ -14,7 +14,7 @@ import java.util.Collection;
  * @author Rustam Vishnyakov
  * @deprecated use {@link OverrideFileTypeManager} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @State(name = "ProjectPlainTextFileTypeManager")
 public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   public static ProjectPlainTextFileTypeManager getInstance(@NotNull Project project) {

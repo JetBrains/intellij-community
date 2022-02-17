@@ -445,7 +445,7 @@ public final class DebuggerUIUtil {
   /**
    * @deprecated avoid, {@link XValue#calculateEvaluationExpression()} may produce side effects
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
     Promise<XExpression> promise = value.calculateEvaluationExpression();
     try {

@@ -33,6 +33,7 @@ public interface Condition<T> {
    * @deprecated use {@link Conditions#notNull()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval  
   Condition<Object> NOT_NULL = new Condition<Object>() {
     public boolean value(final Object object) {
       return object != null;

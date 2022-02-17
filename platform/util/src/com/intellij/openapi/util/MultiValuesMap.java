@@ -28,6 +28,7 @@ public class MultiValuesMap<K, V>{
    * @deprecated Use {@link MultiMap#createSet()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public MultiValuesMap() {
     this(false);
   }

@@ -16,7 +16,7 @@ public interface PresentableChange {
   /**
    * @deprecated Use {@link #getTag()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   default Object getPopupTag() {
     return null;

@@ -123,7 +123,7 @@ public class CompletionData {
   /**
    * @deprecated {@link CompletionUtil#findReferencePrefix} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
     return CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
@@ -132,7 +132,7 @@ public class CompletionData {
   /**
    * @deprecated Use {@link CompletionUtil} methods instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
 
@@ -153,7 +153,7 @@ public class CompletionData {
   /**
    * @deprecated Use {@link CompletionUtil} methods instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
     return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);
   }

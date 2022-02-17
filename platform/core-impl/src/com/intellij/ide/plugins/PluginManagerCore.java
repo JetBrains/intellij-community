@@ -1160,6 +1160,7 @@ public final class PluginManagerCore {
    * @deprecated Use {@link #isDisabled(PluginId)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isDisabled(@NotNull String pluginId) {
     return isDisabled(PluginId.getId(pluginId));
   }

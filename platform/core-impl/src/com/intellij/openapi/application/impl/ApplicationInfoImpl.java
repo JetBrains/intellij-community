@@ -919,6 +919,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   /** @deprecated Use {@link ApplicationManagerEx#isInStressTest} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isInStressTest() {
     return ApplicationManagerEx.isInStressTest();
   }
