@@ -135,18 +135,20 @@ private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder:
 
 data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus) : CombinedBlockId
 
-private class CombinedSimpleDiffBlock(initialContent: JComponent, path: FilePath, status: FileStatus, withBorder: Boolean) :
+private class CombinedSimpleDiffBlock(initialContent: JComponent, path: FilePath, status: FileStatus, notFirstBlock: Boolean) :
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
   CombinedDiffBlock<CombinedPathBlockId>, CombinedDiffGlobalBlockHeaderProvider {
 
   override val id = CombinedPathBlockId(path, status)
 
-  override val globalHeader = CombinedSimpleDiffHeader(id, false)
-  override val header = CombinedSimpleDiffHeader(id, withBorder)
+  override val header = CombinedSimpleDiffHeader(id, notFirstBlock)
+  override val globalHeader = if (notFirstBlock) CombinedSimpleDiffHeader(id, false) else header
   override val body = Wrapper(initialContent)
 
   init {
-    add(header)
+    if (notFirstBlock) {
+      add(header)
+    }
     add(body)
   }
 

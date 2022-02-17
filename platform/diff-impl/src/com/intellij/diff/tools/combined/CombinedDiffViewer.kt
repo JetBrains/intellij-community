@@ -50,6 +50,7 @@ import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
+import kotlin.math.max
 
 class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffViewer, DataProvider {
   private val project = context.project
@@ -211,14 +212,18 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
   private fun updateGlobalBlockHeader(visibleBlocks: List<CombinedDiffBlock<*>>, viewRect: Rectangle) {
     val firstVisibleBlock = visibleBlocks.first()
-    val globalHeader = (firstVisibleBlock as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader ?: return
     val blockOnTop = firstVisibleBlock.component.bounds.y == viewRect.y
+    val previousBlockPosition = max((diffBlocksPositions[firstVisibleBlock.id] ?: -1) - 1, 0)
+    val firstBlock = diffBlocks.values.first()
+    val firstBlockComponent = firstBlock.component
+    val firstBlockHeader = firstBlock.header
+    val previousBlockHeader = (getBlockId(previousBlockPosition)?.let { diffBlocks[it] } as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader
+    val firstVisibleBlockHeader = (firstVisibleBlock as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader
 
-    if (blockOnTop || diffBlocks.values.first().header.bounds.y == viewRect.y) {
-      scrollPane.setColumnHeaderView(null)
-    }
-    else {
-      scrollPane.setColumnHeaderView(globalHeader)
+    when {
+      blockOnTop -> scrollPane.setColumnHeaderView(previousBlockHeader)
+      firstBlockComponent.bounds.y == viewRect.y -> scrollPane.setColumnHeaderView(firstBlockHeader)
+      else -> scrollPane.setColumnHeaderView(firstVisibleBlockHeader)
     }
   }
 
