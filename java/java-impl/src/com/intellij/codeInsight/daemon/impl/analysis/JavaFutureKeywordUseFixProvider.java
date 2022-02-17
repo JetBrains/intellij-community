@@ -5,10 +5,9 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +20,7 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
     PsiElement parent = typeElement.getParent();
     if (PsiKeyword.VAR.equals(ref.getReferenceName())) {
       registerSetVariableTypeFix(parent, registrar);
+      registerLambdaParametersFix(parent, registrar);
       registerVarLanguageLevelFix(ref, parent, registrar);
     }
     if (PsiKeyword.RECORD.equals(ref.getReferenceName())) {
@@ -62,6 +62,18 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
     return PsiJavaCodeReferenceElement.class;
   }
 
+  private static void registerLambdaParametersFix(PsiElement parent, @NotNull QuickFixActionRegistrar registrar) {
+    PsiVariable variable = ObjectUtils.tryCast(parent, PsiVariable.class);
+    if (variable == null) return;
+    PsiParameterList parameterList = ObjectUtils.tryCast(variable.getParent(), PsiParameterList.class);
+    if (parameterList == null) return;
+    PsiLambdaExpression lambdaExpression = ObjectUtils.tryCast(parameterList.getParent(), PsiLambdaExpression.class);
+    if (lambdaExpression == null) return;
+    registrar.register(PriorityIntentionActionWrapper.highPriority(
+      QuickFixFactory.getInstance().createRemoveRedundantLambdaParameterTypesFix(lambdaExpression, JavaBundle.message(
+        "quickfix.family.remove.local.variable.syntax"))));
+  }
+
   private static void registerSetVariableTypeFix(PsiElement parent, @NotNull QuickFixActionRegistrar registrar) {
     PsiVariable variable = ObjectUtils.tryCast(parent, PsiVariable.class);
     if (variable == null) return;
@@ -75,21 +87,6 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
       PsiForeachStatement foreach = (PsiForeachStatement)variable.getParent();
       PsiExpression iteratedValue = foreach.getIteratedValue();
       return iteratedValue != null ? JavaGenericsUtil.getCollectionItemType(iteratedValue) : null;
-    }
-    else if (variable instanceof PsiParameter) {
-      PsiParameterList parameterList = ObjectUtils.tryCast(variable.getParent(), PsiParameterList.class);
-      if (parameterList == null) return null;
-      PsiLambdaExpression lambda = ObjectUtils.tryCast(parameterList.getParent(), PsiLambdaExpression.class);
-      if (lambda == null) return null;
-      PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
-      if (functionalInterfaceType == null) return null;
-      ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-      PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-      if (interfaceMethod == null) return null;
-      PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-      int index = parameterList.getParameterIndex((PsiParameter)variable);
-      if (index >= parameters.length) return null;
-      return LambdaUtil.getSubstitutor(interfaceMethod, resolveResult).substitute(parameters[index].getType());
     }
     else if (variable instanceof PsiLocalVariable) {
       PsiExpression initializer = variable.getInitializer();

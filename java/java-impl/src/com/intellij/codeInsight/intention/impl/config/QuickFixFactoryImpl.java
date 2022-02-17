@@ -1147,4 +1147,25 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createReceiverParameterNameFix(@NotNull PsiReceiverParameter parameter, @NotNull String newName) {
     return new ReceiverParameterNameFix(parameter, newName);
   }
+
+  @Override
+  public @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
+                                                                               @IntentionName String message) {
+    return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message);
+  }
+
+  private final static class RemoveRedundantLambdaParameterTypesFix extends RemoveRedundantParameterTypesFix {
+    private final @IntentionName String myMessage;
+
+    private RemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression, @IntentionName String message) {
+      super(lambdaExpression);
+      myMessage = message;
+    }
+
+    @Nls
+    @Override
+    public @NotNull String getText() {
+      return myMessage;
+    }
+  }
 }

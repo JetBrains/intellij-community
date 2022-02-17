@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -599,4 +600,14 @@ public abstract class QuickFixFactory {
    */
   public abstract @NotNull IntentionAction createReceiverParameterNameFix(@NotNull PsiReceiverParameter parameter,
                                                                           @NotNull String newName);
+
+  /**
+   * Creates a fix that removes lambda parameter types when possible
+   *
+   * @param lambdaExpression lambda expression to process
+   * @param message          the text to show in the quick-fix popup.
+   * @return a new fix
+   */
+  public abstract @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
+                                                                                        @IntentionName String message);
 }
