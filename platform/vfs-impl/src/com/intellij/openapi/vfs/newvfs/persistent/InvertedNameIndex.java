@@ -111,7 +111,7 @@ final class InvertedNameIndex {
       return null;
     });
     if (FSRecords.LOG.isDebugEnabled()) {
-      FSRecords.LOG.debug("ReverseFilenameIndex rebuilt in " + TimeoutUtil.getDurationMillis(start) + " ms",
+      FSRecords.LOG.debug(InvertedNameIndex.class.getName()+ " rebuilt in " + TimeoutUtil.getDurationMillis(start) + " ms",
                           EDT.isCurrentThreadEdt() ? new Throwable("### EDT ###") : null);
     }
   }
