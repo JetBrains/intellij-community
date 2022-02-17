@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.testFramework.ApplicationExtension
@@ -68,7 +68,7 @@ class CancellationTest {
   fun `cancellable job is a child of current`() {
     val job = Job()
     withJob(job) {
-      executeCancellable { cancellableJob ->
+      ensureCurrentJob { cancellableJob ->
         assertJobIsChildOf(cancellableJob, job)
       }
     }
@@ -77,7 +77,7 @@ class CancellationTest {
   @Test
   fun `cancellable job becomes current`() {
     assertNull(Cancellation.currentJob())
-    executeCancellable { cancellableJob ->
+    ensureCurrentJob { cancellableJob ->
       assertSame(cancellableJob, Cancellation.currentJob())
     }
     assertNull(Cancellation.currentJob())
@@ -117,7 +117,7 @@ class CancellationTest {
 
   private inline fun <reified T : Throwable> doTestRethrow(t: T) {
     val thrown = assertThrows<T> {
-      executeCancellable {
+      ensureCurrentJob {
         throw t
       }
     }
@@ -134,7 +134,7 @@ class CancellationTest {
   @Test
   fun `cancellable job completes normally`(): Unit = timeoutRunBlocking {
     lateinit var cancellableJob: Job
-    val result = executeCancellable {
+    val result = ensureCurrentJob {
       cancellableJob = it
       42
     }
@@ -165,7 +165,7 @@ class CancellationTest {
   fun `cancellable job fails on exception`(): Unit = timeoutRunBlocking {
     lateinit var cancellableJob: Job
     assertThrows<NumberFormatException> {
-      executeCancellable {
+      ensureCurrentJob {
         cancellableJob = it
         throw NumberFormatException()
       }
@@ -198,7 +198,7 @@ class CancellationTest {
   fun `cancellable job is cancelled by child failure`() {
     val t = Throwable()
     val ce = assertThrows<CancellationException> {
-      executeCancellable { cancellableJob ->
+      ensureCurrentJob { cancellableJob ->
         Job(parent = cancellableJob).completeExceptionally(t)
         throw assertThrows<JobCanceledException> {
           Cancellation.checkCancelled()
@@ -227,7 +227,7 @@ class CancellationTest {
   @Test
   fun `cancellable job throws CE when cancelled`() {
     assertThrows<CancellationException> {
-      executeCancellable { cancellableJob ->
+      ensureCurrentJob { cancellableJob ->
         cancellableJob.cancel()
         throw assertThrows<JobCanceledException> {
           Cancellation.checkCancelled()
@@ -250,7 +250,7 @@ class CancellationTest {
     val job = launch(Dispatchers.IO) {
       withIndicator(indicator) {
         val ce = assertThrows<CancellationException> {
-          executeCancellable {
+          ensureCurrentJob {
             assertDoesNotThrow {
               Cancellation.checkCancelled()
             }
