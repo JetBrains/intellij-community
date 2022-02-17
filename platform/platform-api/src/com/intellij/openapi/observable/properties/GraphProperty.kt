@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see PropertyGraph.property
  */
 @Suppress("DEPRECATION")
+@ApiStatus.NonExtendable
 interface GraphProperty<T> : ObservableClearableProperty<T> {
 
   /**
