@@ -28,7 +28,7 @@ class MavenCatalogsConfigurable(private val project: Project) : BoundConfigurabl
         .bind(
           { table.catalogs },
           { _, it -> table.catalogs = it },
-          MutableProperty.of(
+          MutableProperty(
             { catalogsManager.getCatalogs(project) },
             { catalogsManager.setCatalogs(it) }
           )

@@ -30,7 +30,7 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: KMutableProperty0<Str
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(getter: () -> String, setter: (String) -> Unit): Cell<T> {
-  return bindText(MutableProperty.of(getter, setter))
+  return bindText(MutableProperty(getter, setter))
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.text(text: String): Cell<T> {

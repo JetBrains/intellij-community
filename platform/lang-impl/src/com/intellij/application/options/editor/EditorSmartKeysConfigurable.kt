@@ -38,37 +38,37 @@ private val cbSmartHome
                              PropertyBinding(editorSettings::isSmartHome, editorSettings::setSmartHome))
 private val cbSmartEnd
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.end.on.blank.line"),
-                             codeInsightSettings::SMART_END_ACTION.toBinding())
+                             codeInsightSettings::SMART_END_ACTION)
 private val cbInsertPairBracket
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.bracket"),
-                             codeInsightSettings::AUTOINSERT_PAIR_BRACKET.toBinding())
+                             codeInsightSettings::AUTOINSERT_PAIR_BRACKET)
 private val cbInsertPairQuote
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.quote"),
-                             codeInsightSettings::AUTOINSERT_PAIR_QUOTE.toBinding())
+                             codeInsightSettings::AUTOINSERT_PAIR_QUOTE)
 private val cbReformatBlockOnTypingRBrace
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.reformat.on.typing.rbrace"),
-                             codeInsightSettings::REFORMAT_BLOCK_ON_RBRACE.toBinding())
+                             codeInsightSettings::REFORMAT_BLOCK_ON_RBRACE)
 private val cbCamelWords
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.camelhumps.words"),
                              PropertyBinding(editorSettings::isCamelWords, editorSettings::setCamelWords))
 private val cbSurroundSelectionOnTyping
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.surround.selection.on.typing.quote.or.brace"),
-                             codeInsightSettings::SURROUND_SELECTION_ON_QUOTE_TYPED.toBinding())
+                             codeInsightSettings::SURROUND_SELECTION_ON_QUOTE_TYPED)
 private val cbTabExistsBracketsAndQuotes
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.tab.exists.brackets.and.quotes"),
-                             codeInsightSettings::TAB_EXITS_BRACKETS_AND_QUOTES.toBinding())
+                             codeInsightSettings::TAB_EXITS_BRACKETS_AND_QUOTES)
 private val cbEnableAddingCaretsOnDoubleCtrlArrows
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.enable.double.ctrl",
                                                        KeyEvent.getKeyText(ModifierKeyDoubleClickHandler.getMultiCaretActionModifier())),
                              PropertyBinding(editorSettings::addCaretsOnDoubleCtrl, editorSettings::setAddCaretsOnDoubleCtrl))
 private val cbSmartIndentOnEnter
-  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.indent"), codeInsightSettings::SMART_INDENT_ON_ENTER.toBinding())
+  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.indent"), codeInsightSettings::SMART_INDENT_ON_ENTER)
 private val cbInsertPairCurlyBraceOnEnter
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.curly.brace"),
-                             codeInsightSettings::INSERT_BRACE_ON_ENTER.toBinding())
+                             codeInsightSettings::INSERT_BRACE_ON_ENTER)
 private val cbInsertJavadocStubOnEnter
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.javadoc.stub.after.slash.star.star"),
-                             codeInsightSettings::JAVADOC_STUB_ON_ENTER.toBinding())
+                             codeInsightSettings::JAVADOC_STUB_ON_ENTER)
 internal val cbHonorCamelHumpsWhenSelectingByClicking
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.honor.camelhumps.words.settings.on.double.click"),
                              PropertyBinding(editorSettings::isMouseClickSelectionHonorsCamelWords,
@@ -166,7 +166,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
               else -> ""
             })
           })
-          .bindItem(MutableProperty.of(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullableProperty())
+          .bindItem(MutableProperty(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullableProperty())
       }
       row(ApplicationBundle.message("combobox.paste.reformat")) {
         comboBox(

@@ -16,7 +16,7 @@ fun Cell<JSlider>.bindValue(prop: KMutableProperty0<Int>): Cell<JSlider> {
 }
 
 fun Cell<JSlider>.bindValue(getter: () -> Int, setter: (Int) -> Unit): Cell<JSlider> {
-  return bindValue(MutableProperty.of(getter, setter))
+  return bindValue(MutableProperty(getter, setter))
 }
 
 fun Cell<JSlider>.showValueHint(): Cell<JSlider> {

@@ -430,7 +430,7 @@ private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: Strin
           item?.caretStopBoundary ?: mode.get(CaretStopOptionsTransposed.DEFAULT)
         },
         { it, value -> it.selectedItem = mode.find(value) },
-        MutableProperty.of(
+        MutableProperty(
           {
             val value = fromCaretStopOptions(editorSettings.caretStopOptions)
             mode.get(value)

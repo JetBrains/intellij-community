@@ -169,7 +169,7 @@ internal class CellImpl<T : JComponent>(
 
   @Deprecated("Use overloaded method")
   override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
-    return bind(componentGet, componentSet, MutableProperty.of(binding.get, binding.set))
+    return bind(componentGet, componentSet, MutableProperty(binding.get, binding.set))
   }
 
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {

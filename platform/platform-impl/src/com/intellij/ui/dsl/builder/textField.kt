@@ -52,7 +52,7 @@ fun <T : JTextComponent> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(getter: () -> String, setter: (String) -> Unit): Cell<T> {
-  return bindText(MutableProperty.of(getter, setter))
+  return bindText(MutableProperty(getter, setter))
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
@@ -71,7 +71,7 @@ fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) -> Unit): Cell<T> {
-  return bindIntText(MutableProperty.of(getter, setter))
+  return bindIntText(MutableProperty(getter, setter))
 }
 
 fun <T : JTextComponent> Cell<T>.text(text: String): Cell<T> {

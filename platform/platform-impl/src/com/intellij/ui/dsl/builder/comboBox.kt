@@ -12,7 +12,7 @@ import kotlin.reflect.KMutableProperty0
 
 @Deprecated("Use overloaded method")
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C> {
-  return bindItem(MutableProperty.of(binding.get, binding.set))
+  return bindItem(MutableProperty(binding.get, binding.set))
 }
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: MutableProperty<T?>): Cell<C> {
@@ -38,7 +38,7 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T?>): Cell<C> 
 }
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit): Cell<C> {
-  return bindItem(MutableProperty.of(getter, setter))
+  return bindItem(MutableProperty(getter, setter))
 }
 
 /**

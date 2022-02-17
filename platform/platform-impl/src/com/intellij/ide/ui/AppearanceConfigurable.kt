@@ -91,8 +91,7 @@ private val cdSeparateMainMenu
   get() = CheckboxDescriptor(message("checkbox.main.menu.separate.toolbar"), settings::separateMainMenu, groupName = uiOptionGroupName)
 
 private val cdUseTransparentMode
-  get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"),
-                             PropertyBinding({ settings.state.enableAlphaMode }, { settings.state.enableAlphaMode = it }))
+  get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), settings.state::enableAlphaMode)
 private val cdOverrideLaFFont get() = CheckboxDescriptor(message("checkbox.override.default.laf.fonts"), settings::overrideLafFonts)
 private val cdUseContrastToolbars
   get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
@@ -163,8 +162,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .bind(
             { it.fontName },
             { it, value -> it.fontName = value },
-            MutableProperty.of({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
-                               { settings.fontFace = it })
+            MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
+                            { settings.fontFace = it })
           )
           .shouldUpdateLaF()
           .enabledIf(overrideLaF.selected)
@@ -200,7 +199,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
         if (supportedValues.isNotEmpty()) {
-          val colorBlindnessProperty = MutableProperty.of({ settings.colorBlindness }, { settings.colorBlindness = it })
+          val colorBlindnessProperty = MutableProperty({ settings.colorBlindness }, { settings.colorBlindness = it })
           val onApply = {
             // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
             ApplicationManager.getApplication().invokeLater(Runnable {
@@ -401,7 +400,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 }
 
 private fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
-  return fontSizeComboBox(MutableProperty.of({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
+  return fontSizeComboBox(MutableProperty({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
 }
 
 private fun Row.fontSizeComboBox(prop: MutableProperty<String?>): Cell<ComboBox<String>> {

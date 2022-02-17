@@ -48,7 +48,7 @@ class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
         row(XmlBundle.message("settings.opacity")) {
           spinner(0.0..1.0, step = 0.05)
             .bind({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
-                  MutableProperty.of(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
+                  MutableProperty(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
             .onApply { clearTagTreeHighlighting() }
             .horizontalAlign(HorizontalAlign.FILL)
           cell()

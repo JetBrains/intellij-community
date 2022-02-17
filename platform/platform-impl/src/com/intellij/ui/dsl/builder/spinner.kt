@@ -10,7 +10,7 @@ fun <T : JBIntSpinner> Cell<T>.bindIntValue(prop: KMutableProperty0<Int>): Cell<
 }
 
 fun <T : JBIntSpinner> Cell<T>.bindIntValue(getter: () -> Int, setter: (Int) -> Unit): Cell<T> {
-  return bindIntValue(MutableProperty.of(getter, setter))
+  return bindIntValue(MutableProperty(getter, setter))
 }
 
 fun <T : JSpinner> Cell<T>.bindValue(prop: KMutableProperty0<Double>): Cell<T> {
@@ -18,7 +18,7 @@ fun <T : JSpinner> Cell<T>.bindValue(prop: KMutableProperty0<Double>): Cell<T> {
 }
 
 fun <T : JSpinner> Cell<T>.bindValue(getter: () -> Double, setter: (Double) -> Unit): Cell<T> {
-  return bindValue(MutableProperty.of(getter, setter))
+  return bindValue(MutableProperty(getter, setter))
 }
 
 private fun <T : JBIntSpinner> Cell<T>.bindIntValue(prop: MutableProperty<Int>): Cell<T> {

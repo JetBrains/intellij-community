@@ -9,16 +9,15 @@ interface MutableProperty<T> {
   fun get(): T
   fun set(value: T)
 
-  companion object {
-    @JvmStatic
-    fun <T> of(getter: () -> T, setter: (value: T) -> Unit): MutableProperty<T> {
-      return MutablePropertyImpl(getter, setter)
-    }
-  }
+}
+
+@Suppress("FunctionName")
+fun <T> MutableProperty(getter: () -> T, setter: (value: T) -> Unit): MutableProperty<T> {
+  return MutablePropertyImpl(getter, setter)
 }
 
 fun <T> KMutableProperty0<T>.toMutableProperty(): MutableProperty<T> {
-  return MutablePropertyImpl({ get() }, { set(it) })
+  return MutableProperty({ get() }, { set(it) })
 }
 
 /**
@@ -28,20 +27,20 @@ fun <T> KMutableProperty0<T>.toMutableProperty(): MutableProperty<T> {
  * Useful for [Cell<ComboBox>.bindItem(prop: KMutableProperty0<T?>)] if the ComboBox is not empty and the property is non-nullable
  */
 fun <T> KMutableProperty0<T>.toNullableProperty(): MutableProperty<T?> {
-  return MutableProperty.of({ get() }, { set(it!!) })
+  return MutableProperty({ get() }, { set(it!!) })
 }
 
 fun <T> KMutableProperty0<T>.toNullableProperty(defaultValue: T): MutableProperty<T?> {
-  return MutableProperty.of({ get() }, { set(it ?: defaultValue) })
+  return MutableProperty({ get() }, { set(it ?: defaultValue) })
 }
 
 /**
  * See the doc for overloaded method
  */
 fun <T> MutableProperty<T>.toNullableProperty(): MutableProperty<T?> {
-  return MutableProperty.of({ get() }, { set(it!!) })
+  return MutableProperty({ get() }, { set(it!!) })
 }
 
 fun <T> MutableProperty<T>.toNullableProperty(defaultValue: T): MutableProperty<T?> {
-  return MutableProperty.of({ get() }, { set(it ?: defaultValue) })
+  return MutableProperty({ get() }, { set(it ?: defaultValue) })
 }

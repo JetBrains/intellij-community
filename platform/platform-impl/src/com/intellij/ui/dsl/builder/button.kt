@@ -37,7 +37,7 @@ fun <T : AbstractButton> Cell<T>.bindSelected(prop: KMutableProperty0<Boolean>):
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(getter: () -> Boolean, setter: (Boolean) -> Unit): Cell<T> {
-  return bindSelected(MutableProperty.of(getter, setter))
+  return bindSelected(MutableProperty(getter, setter))
 }
 
 fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): Cell<T> {

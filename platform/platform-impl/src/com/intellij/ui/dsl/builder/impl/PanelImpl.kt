@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
@@ -280,7 +279,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   @Deprecated("Use buttonsGroup(...) instead")
   override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, indent: Boolean, init: Panel.() -> Unit) {
     buttonsGroup(title, indent, init)
-      .bind(MutableProperty.of(binding.get, binding.set), type)
+      .bind(MutableProperty(binding.get, binding.set), type)
   }
 
   override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {

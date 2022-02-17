@@ -32,7 +32,7 @@ class ComboBoxTest {
     panel {
       row {
         val comboBox = comboBox(items)
-          .bindItem(MutableProperty.of({ localProperty }, { localProperty = it!! }))
+          .bindItem(MutableProperty({ localProperty }, { localProperty = it!! }))
         assertEquals(comboBox.component.selectedItem, localProperty)
       }
     }
