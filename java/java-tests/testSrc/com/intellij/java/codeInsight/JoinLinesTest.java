@@ -154,6 +154,8 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testLocalVarImplicit() { doTest(); }
 
   public void testSlashComment() { doTest(); }
+  public void testSlashCommentFollowedByBlockComment() { doTest(); }
+  public void testSlashCommentFollowedByBlockCommentAndCode() { doTest(); }
   public void testDocComment() { doTest(); }
 
   public void testOnEmptyLine() { doTest(); }

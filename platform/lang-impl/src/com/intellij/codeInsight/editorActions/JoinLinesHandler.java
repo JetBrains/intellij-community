@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
+import static com.intellij.psi.util.PsiUtilCore.getElementType;
 
 public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
   private static final Logger LOG = Logger.getInstance(JoinLinesHandler.class);
@@ -149,7 +150,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
             int nextStart = CharArrayUtil.shiftForward(text, myDoc.getLineStartOffset(line + 1), " \t\n");
             if (nextStart < text.length() &&
                 myDoc.getLineNumber(nextStart) <= myLine + lineCount &&
-                getCommentElement(myFile.findElementAt(nextStart)) == null) {
+                !isLineComment(getCommentElement(myFile.findElementAt(nextStart)))) {
               endComments.add(comment);
             }
           }
@@ -165,6 +166,13 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       if (changed) {
         myManager.doPostponedOperationsAndUnblockDocument(myDoc);
       }
+    }
+
+    private static boolean isLineComment(@Nullable PsiComment element) {
+      if (element == null) return false;
+      Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(element.getLanguage());
+      return commenter instanceof CodeDocumentationAwareCommenter &&
+             ((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType() == getElementType(element);
     }
 
     /**
