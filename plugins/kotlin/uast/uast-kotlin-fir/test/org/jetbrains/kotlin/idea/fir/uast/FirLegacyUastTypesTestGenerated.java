@@ -63,6 +63,11 @@ public class FirLegacyUastTypesTestGenerated extends AbstractFirLegacyUastTypesT
         runTest("../uast-kotlin/tests/testData/BrokenDataClass.kt");
     }
 
+    @TestMetadata("BrokenGeneric.kt")
+    public void testBrokenGeneric() throws Exception {
+        runTest("../uast-kotlin/tests/testData/BrokenGeneric.kt");
+    }
+
     @TestMetadata("BrokenMethod.kt")
     public void testBrokenMethod() throws Exception {
         runTest("../uast-kotlin/tests/testData/BrokenMethod.kt");
@@ -81,6 +86,11 @@ public class FirLegacyUastTypesTestGenerated extends AbstractFirLegacyUastTypesT
     @TestMetadata("Comments.kt")
     public void testComments() throws Exception {
         runTest("../uast-kotlin/tests/testData/Comments.kt");
+    }
+
+    @TestMetadata("ComplicatedTypes.kt")
+    public void testComplicatedTypes() throws Exception {
+        runTest("../uast-kotlin/tests/testData/ComplicatedTypes.kt");
     }
 
     @TestMetadata("ConstructorDelegate.kt")
@@ -176,6 +186,11 @@ public class FirLegacyUastTypesTestGenerated extends AbstractFirLegacyUastTypesT
     @TestMetadata("InnerNonFixedTypeVariable.kt")
     public void testInnerNonFixedTypeVariable() throws Exception {
         runTest("../uast-kotlin/tests/testData/InnerNonFixedTypeVariable.kt");
+    }
+
+    @TestMetadata("LambdaExpressionFunctionalInterfaceType.kt")
+    public void testLambdaExpressionFunctionalInterfaceType() throws Exception {
+        runTest("../uast-kotlin/tests/testData/LambdaExpressionFunctionalInterfaceType.kt");
     }
 
     @TestMetadata("LambdaParameters.kt")

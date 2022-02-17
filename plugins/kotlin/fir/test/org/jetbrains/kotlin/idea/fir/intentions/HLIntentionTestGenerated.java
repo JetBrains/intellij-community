@@ -742,6 +742,11 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
             runTest("../idea/tests/testData/intentions/specifyTypeExplicitly/stringRedefined.kt");
         }
 
+        @TestMetadata("typeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("../idea/tests/testData/intentions/specifyTypeExplicitly/typeAlias.kt");
+        }
+
         @TestMetadata("typeAlreadyProvided.kt")
         public void testTypeAlreadyProvided() throws Exception {
             runTest("../idea/tests/testData/intentions/specifyTypeExplicitly/typeAlreadyProvided.kt");
