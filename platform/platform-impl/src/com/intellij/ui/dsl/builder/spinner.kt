@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import javax.swing.JSpinner
 import kotlin.reflect.KMutableProperty0
 

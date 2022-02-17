@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
-import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 

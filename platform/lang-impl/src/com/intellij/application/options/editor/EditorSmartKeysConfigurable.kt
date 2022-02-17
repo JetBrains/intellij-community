@@ -19,6 +19,7 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
@@ -165,7 +166,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
               else -> ""
             })
           })
-          .bindItem(PropertyBinding(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullable())
+          .bindItem(MutableProperty.of(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullableProperty())
       }
       row(ApplicationBundle.message("combobox.paste.reformat")) {
         comboBox(

@@ -10,10 +10,15 @@ interface MutableProperty<T> {
   fun set(value: T)
 
   companion object {
+    @JvmStatic
     fun <T> of(getter: () -> T, setter: (value: T) -> Unit): MutableProperty<T> {
       return MutablePropertyImpl(getter, setter)
     }
   }
+}
+
+fun <T> KMutableProperty0<T>.toMutableProperty(): MutableProperty<T> {
+  return MutablePropertyImpl({ get() }, { set(it) })
 }
 
 /**
@@ -27,5 +32,16 @@ fun <T> KMutableProperty0<T>.toNullableProperty(): MutableProperty<T?> {
 }
 
 fun <T> KMutableProperty0<T>.toNullableProperty(defaultValue: T): MutableProperty<T?> {
+  return MutableProperty.of({ get() }, { set(it ?: defaultValue) })
+}
+
+/**
+ * See the doc for overloaded method
+ */
+fun <T> MutableProperty<T>.toNullableProperty(): MutableProperty<T?> {
+  return MutableProperty.of({ get() }, { set(it!!) })
+}
+
+fun <T> MutableProperty<T>.toNullableProperty(defaultValue: T): MutableProperty<T?> {
   return MutableProperty.of({ get() }, { set(it ?: defaultValue) })
 }

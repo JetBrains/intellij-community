@@ -40,7 +40,6 @@ import kotlin.reflect.KMutableProperty0
 @DslMarker
 annotation class CellMarker
 
-@Deprecated("Use MutableProperty and Kotlin UI DSL 2")
 data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
 @PublishedApi
@@ -79,6 +78,7 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
   return PropertyBinding(prop.getter, prop.setter)
 }
 
+@Deprecated("Use MutableProperty and Kotlin UI DSL 2")
 fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
   return PropertyBinding<T?>({ get() }, { set(it!!) })
 }

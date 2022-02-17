@@ -3,10 +3,10 @@ package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
@@ -28,7 +28,7 @@ class MavenCatalogsConfigurable(private val project: Project) : BoundConfigurabl
         .bind(
           { table.catalogs },
           { _, it -> table.catalogs = it },
-          PropertyBinding(
+          MutableProperty.of(
             { catalogsManager.getCatalogs(project) },
             { catalogsManager.setCatalogs(it) }
           )

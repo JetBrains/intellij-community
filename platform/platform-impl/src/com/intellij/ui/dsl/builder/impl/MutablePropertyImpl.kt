@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.ui.dsl.builder.MutableProperty
 import org.jetbrains.annotations.ApiStatus
-import kotlin.reflect.KMutableProperty0
 
 @ApiStatus.Internal
 internal data class MutablePropertyImpl<T>(val getter: () -> T, val setter: (value: T) -> Unit) : MutableProperty<T> {
@@ -15,9 +14,4 @@ internal data class MutablePropertyImpl<T>(val getter: () -> T, val setter: (val
   override fun set(value: T) {
     setter(value)
   }
-}
-
-@ApiStatus.Internal
-fun <T> KMutableProperty0<T>.toMutableProperty(): MutableProperty<T> {
-  return MutablePropertyImpl({ get() }, { set(it) })
 }

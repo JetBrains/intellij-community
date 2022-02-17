@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextComponent
 import com.intellij.ui.dsl.ValidationException
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
-import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange

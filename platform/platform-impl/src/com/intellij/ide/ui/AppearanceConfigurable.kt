@@ -163,8 +163,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .bind(
             { it.fontName },
             { it, value -> it.fontName = value },
-            PropertyBinding({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
-                            { settings.fontFace = it })
+            MutableProperty.of({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
+                               { settings.fontFace = it })
           )
           .shouldUpdateLaF()
           .enabledIf(overrideLaF.selected)
@@ -200,7 +200,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
         if (supportedValues.isNotEmpty()) {
-          val modelBinding = PropertyBinding({ settings.colorBlindness }, { settings.colorBlindness = it })
+          val colorBlindnessProperty = MutableProperty.of({ settings.colorBlindness }, { settings.colorBlindness = it })
           val onApply = {
             // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
             ApplicationManager.getApplication().invokeLater(Runnable {
@@ -215,19 +215,19 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .comment(UIBundle.message("color.blindness.checkbox.comment"))
                 .bind({ if (it.isSelected) supportedValues.first() else null },
                       { it, value -> it.isSelected = value != null },
-                      modelBinding)
+                      colorBlindnessProperty)
                 .onApply(onApply)
             }
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
-                .applyToComponent { isSelected = modelBinding.get() != null }
+                .applyToComponent { isSelected = colorBlindnessProperty.get() != null }
               comboBox(supportedValues)
                 .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
                 .bind({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                       { it, value -> it.selectedItem = value ?: supportedValues.first() },
-                      modelBinding)
+                      colorBlindnessProperty)
                 .onApply(onApply)
                 .accessibleName(UIBundle.message("color.blindness.checkbox.text"))
             }
@@ -400,27 +400,23 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private fun <T : JComponent> Cell<T>.shouldUpdateLaF(): Cell<T> = onApply { shouldUpdateLaF = true }
 }
 
-internal fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
-  return fontSizeComboBox(PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
+private fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
+  return fontSizeComboBox(MutableProperty.of({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
 }
 
-internal fun Row.fontSizeComboBox(getter: () -> Float, setter: (Float) -> Unit, defaultValue: Float): Cell<ComboBox<String>> {
-  return fontSizeComboBox(PropertyBinding({ getter().toString() }, { setter(getFloatValue(it, defaultValue)) }))
-}
-
-internal fun Row.fontSizeComboBox(modelBinding: PropertyBinding<String?>): Cell<ComboBox<String>> {
+private fun Row.fontSizeComboBox(prop: MutableProperty<String?>): Cell<ComboBox<String>> {
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
   return comboBox(model)
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
       isEditable = true
       renderer = SimpleListCellRenderer.create("") { it.toString() }
-      selectedItem = modelBinding.get()
+      selectedItem = prop.get()
     }
     .bind(
       { component -> component.editor.item as String? },
       { component, value -> component.setSelectedItem(value) },
-      modelBinding
+      prop
     )
 }
 

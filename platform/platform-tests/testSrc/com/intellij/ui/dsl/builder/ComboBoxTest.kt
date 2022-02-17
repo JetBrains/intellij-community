@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.ui.layout.*
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -33,7 +32,7 @@ class ComboBoxTest {
     panel {
       row {
         val comboBox = comboBox(items)
-          .bindItem(PropertyBinding({ localProperty }, { localProperty = it!! }))
+          .bindItem(MutableProperty.of({ localProperty }, { localProperty = it!! }))
         assertEquals(comboBox.component.selectedItem, localProperty)
       }
     }

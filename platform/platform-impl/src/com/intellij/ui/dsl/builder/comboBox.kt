@@ -6,7 +6,6 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
-import com.intellij.ui.dsl.builder.impl.toMutableProperty
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
