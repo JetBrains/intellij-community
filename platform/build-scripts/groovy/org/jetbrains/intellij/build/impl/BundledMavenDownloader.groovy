@@ -26,7 +26,7 @@ class BundledMavenDownloader {
     for (String coordinates : mavenCommonLibs) {
       String[] split = coordinates.split(":")
       if (split.length != 3) {
-        throw new IllegalArgumentException("Expected exactly 3 coordinates: " + coordinates);
+        throw new IllegalArgumentException("Expected exactly 3 coordinates: " + coordinates)
       }
 
       URI uri = BuildDependenciesDownloader.getUriForMavenArtifact(
@@ -42,8 +42,8 @@ class BundledMavenDownloader {
   }
 
   static Path downloadMavenDistribution(BuildDependenciesCommunityRoot communityRoot) {
-    Properties properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
-    String bundledMavenVersion = properties.getProperty("bundledMavenVersion")
+    Map<String, String> properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
+    String bundledMavenVersion = properties.get("bundledMavenVersion")
 
     URI uri = BuildDependenciesDownloader.getUriForMavenArtifact(
       BuildDependenciesConstants.MAVEN_CENTRAL_URL,

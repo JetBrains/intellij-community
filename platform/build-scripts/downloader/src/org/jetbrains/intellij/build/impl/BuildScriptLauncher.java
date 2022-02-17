@@ -38,7 +38,7 @@ public class BuildScriptLauncher {
       }
       String message = sw.toString();
 
-      if (TeamCityHelper.isIsUnderTeamCity()) {
+      if (TeamCityHelper.isUnderTeamCity) {
         // Under TeamCity non-zero exit code will be displayed as a separate build error
         System.out.println(new Message(message, "FAILURE", null).asString());
         // Make sure it fails the build, see
