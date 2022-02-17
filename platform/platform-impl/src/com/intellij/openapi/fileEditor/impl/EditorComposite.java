@@ -573,6 +573,9 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return myFile.isValid() ? new VirtualFile[]{myFile} : null;
       }
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return getProject();
+      }
       JComponent component = getPreferredFocusedComponent();
       if (component instanceof DataProvider && component != this) {
         return ((DataProvider)component).getData(dataId);
