@@ -83,6 +83,7 @@ public final class Conditions {
     return t -> !Comparing.equal(t, option);
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> Condition<T> oneOf(T @NotNull ... options) {
     return oneOf(Arrays.asList(options));
