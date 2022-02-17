@@ -167,7 +167,7 @@ public final class ExperimentalUI {
     paths.put("actions/diff.svg", "expui/vcs/diff.svg");
     paths.put("icons/currentBranchLabel.svg", "expui/vcs/label.svg");
     paths.put("vcs/push.svg", "expui/vcs/push.svg");
-    paths.put("actions/rollback.png", "expui/vcs/revert.svg");
+    paths.put("actions/rollback.svg", "expui/vcs/revert.svg");
     paths.put("vcs/shelve.svg", "expui/vcs/stash.svg");
     paths.put("vcs/shelveSilent.svg", "expui/vcs/stash.svg");
     paths.put("actions/checkOut.svg", "expui/vcs/update.svg");
