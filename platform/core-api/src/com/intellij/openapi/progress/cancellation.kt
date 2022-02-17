@@ -37,15 +37,18 @@ fun <T> ensureCurrentJob(action: (Job) -> T): T {
   if (indicator != null) {
     return ensureCurrentJob(indicator, action)
   }
-  return doExecuteWithChildJob(parent = Cancellation.currentJob(), action)
+  val currentJob = Job(parent = Cancellation.currentJob())
+  return executeWithJobAndCompleteIt(currentJob) {
+    action(currentJob)
+  }
 }
 
 private fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (Job) -> T): T {
-  // no job parent, the "parent" is the indicator
-  return doExecuteWithChildJob(parent = null) { childJob ->
-    val indicatorWatcher = cancelWithIndicator(childJob, indicator)
+  val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
+  return executeWithJobAndCompleteIt(currentJob) {
+    val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
     try {
-      action(childJob)
+      action(currentJob)
     }
     finally {
       indicatorWatcher.cancel()
@@ -69,24 +72,21 @@ private fun cancelWithIndicator(job: CompletableJob, indicator: ProgressIndicato
 }
 
 /**
- * Associates the calling thread with a job, invokes [action], and completes the job with its result.
+ * Associates the calling thread with a [job], invokes [action], and completes the job.
  * @return action result
  */
-fun <X> executeWithChildJob(parent: Job, action: (childJob: CompletableJob) -> X): X {
-  return doExecuteWithChildJob(parent, action)
-}
-
-private fun <X> doExecuteWithChildJob(parent: Job?, action: (childJob: CompletableJob) -> X): X {
-  val job = Job(parent)
-  return withJob(job) {
-    try {
-      val result: X = action(job)
-      job.complete()
-      result
-    }
-    catch (e: Throwable) {
-      job.completeExceptionally(e)
-      throw e
-    }
+@Internal
+fun <X> executeWithJobAndCompleteIt(
+  job: CompletableJob,
+  action: () -> X,
+): X {
+  try {
+    val result: X = withJob(job, action)
+    job.complete()
+    return result
+  }
+  catch (e: Throwable) {
+    job.completeExceptionally(e)
+    throw e
   }
 }
