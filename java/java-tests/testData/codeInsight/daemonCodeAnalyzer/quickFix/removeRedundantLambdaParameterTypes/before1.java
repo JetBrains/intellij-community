@@ -1,4 +1,4 @@
-// "Remove local variable syntax" "true"
+// "Remove 'var'" "true"
 import java.util.function.Function;
 
 class Main {

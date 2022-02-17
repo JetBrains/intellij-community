@@ -71,7 +71,7 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
     if (lambdaExpression == null) return;
     registrar.register(PriorityIntentionActionWrapper.highPriority(
       QuickFixFactory.getInstance().createRemoveRedundantLambdaParameterTypesFix(lambdaExpression, JavaBundle.message(
-        "quickfix.family.remove.local.variable.syntax"))));
+        "remove.var.keyword.text"))));
   }
 
   private static void registerSetVariableTypeFix(PsiElement parent, @NotNull QuickFixActionRegistrar registrar) {
