@@ -193,6 +193,11 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     return myTable;
   }
 
+  @NotNull
+  public JTableHeader getTreeHeader() {
+    return myTreeTableHeader;
+  }
+
   public void setDefaultRenderer(@NotNull Class<?> columnClass, @NotNull TableCellRenderer renderer) {
     myTable.setDefaultRenderer(columnClass,renderer);
   }
