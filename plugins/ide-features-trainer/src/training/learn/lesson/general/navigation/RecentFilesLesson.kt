@@ -32,7 +32,7 @@ import javax.swing.JLabel
 import kotlin.math.min
 
 abstract class RecentFilesLesson : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name")) {
-  abstract override val existedFile: String
+  abstract override val sampleFilePath: String
   abstract val transitionMethodName: String
   abstract val transitionFileName: String
   abstract val stringForRecentFilesSearch: String  // should look like transitionMethodName
@@ -93,7 +93,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task {
       text(LessonsBundle.message("recent.files.search.jump", LessonUtil.rawEnter()))
-      stateCheck { virtualFile.name == existedFile.substringAfterLast("/") }
+      stateCheck { virtualFile.name == sampleFilePath.substringAfterLast("/") }
       restoreState {
         !checkRecentFilesSearch("rfd") || previous.ui?.isShowing != true
       }

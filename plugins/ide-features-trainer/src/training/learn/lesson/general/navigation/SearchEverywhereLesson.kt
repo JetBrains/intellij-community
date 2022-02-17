@@ -25,7 +25,7 @@ import java.awt.event.KeyEvent
 import javax.swing.JList
 
 abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name")) {
-  abstract override val existedFile: String?
+  abstract override val sampleFilePath: String?
 
   abstract val resultFileName: String
 
