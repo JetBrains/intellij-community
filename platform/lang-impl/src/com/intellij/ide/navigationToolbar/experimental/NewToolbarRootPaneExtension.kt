@@ -33,6 +33,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.event.ActionEvent
@@ -287,11 +288,6 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     panel.isEnabled = toolbarSettings.isEnabled
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
     project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
-
-    val rightPanel = layout.getLayoutComponent(BorderLayout.EAST)
-    if (!panel.isVisible && rightPanel != null) {
-      panel.remove(rightPanel)
-    }
 
     panel.revalidate()
     panel.repaint()
