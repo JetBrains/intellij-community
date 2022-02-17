@@ -160,6 +160,10 @@ public final class ExperimentalUI {
     paths.put("general/chevron-left.svg", "expui/general/chevronLeft.svg");
     paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
     paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
+    paths.put("actions/findAndShowPrevMatches.svg", "expui/general/chevronUp.svg");
+    paths.put("actions/findAndShowPrevMatchesSmall.svg", "expui/general/chevronUp.svg");
+    paths.put("actions/findAndShowNextMatches.svg", "expui/general/chevronDown.svg");
+    paths.put("actions/findAndShowNextMatchesSmall.svg", "expui/general/chevronDown.svg");
     paths.put("general/filter.svg", "expui/general/filter.svg");
     paths.put("vcs/changelist.svg", "expui/vcs/changelist.svg");
     paths.put("icons/outgoing.svg", "expui/vcs/changesPush@12x12.svg");
