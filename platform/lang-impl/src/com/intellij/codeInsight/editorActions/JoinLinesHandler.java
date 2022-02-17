@@ -408,6 +408,10 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
           String fixedSuffix = suffix.charAt(0)+" "+suffix.substring(1);
           commentText = commentText.replace(suffix, fixedSuffix);
         }
+        if (commentText.startsWith(" ") && !commentText.endsWith(" ")) {
+          // "// foo" should be translated to "/* foo */" not "/* foo*/"
+          commentText += " ";
+        }
         try {
           Project project = commentElement.getProject();
           PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
