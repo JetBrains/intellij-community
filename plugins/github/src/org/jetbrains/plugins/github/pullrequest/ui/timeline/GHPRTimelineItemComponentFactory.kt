@@ -104,10 +104,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                  textPane,
                                                  { detailsDataProvider.getDescriptionMarkdownBody(EmptyProgressIndicator()) },
                                                  { newText ->
-                                                   detailsDataProvider.updateDetails(EmptyProgressIndicator(),
-                                                                                     description = newText).successOnEdt {
-                                                     textPane.setBody(it.body)
-                                                   }
+                                                   detailsDataProvider.updateDetails(EmptyProgressIndicator(), description = newText)
+                                                     .successOnEdt { textPane.setBody(it.body.convertToHtml(project)) }
                                                  })
       contentPanel = panelHandle.panel
       actionsPanel = if (details.viewerCanUpdate) NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
@@ -133,8 +131,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                textPane,
                                                { commentsDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
                                                { newText ->
-                                                 commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id,
-                                                                                    newText).successOnEdt { textPane.setBody(it) }
+                                                 commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
+                                                   .successOnEdt { textPane.setBody(it.convertToHtml(project)) }
                                                })
     val actionsPanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
       if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
@@ -154,15 +152,14 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
     val panelHandle: GHEditableHtmlPaneHandle?
     if (review.body.isNotEmpty()) {
-      val editorPane = HtmlEditorPane(review.body)
+      val textPane = HtmlEditorPane(review.body.convertToHtml(project))
       panelHandle =
         GHEditableHtmlPaneHandle(project,
-                                 editorPane,
+                                 textPane,
                                  { reviewDataProvider.getReviewMarkdownBody(EmptyProgressIndicator(), review.id) },
                                  { newText ->
-                                   reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText).successOnEdt {
-                                     editorPane.setBody(it)
-                                   }
+                                   reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText)
+                                     .successOnEdt { textPane.setBody(it.convertToHtml(project)) }
                                  })
     }
     else {

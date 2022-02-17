@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import com.intellij.collaboration.ui.SingleValueModel
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -30,24 +30,24 @@ internal object GHPRTitleComponent {
 
   fun create(project: Project, model: SingleValueModel<GHPullRequestShort>, detailsDataProvider: GHPRDetailsDataProvider): JComponent {
     val icon = JLabel()
-    val title = HtmlEditorPane().apply {
+    val titlePane = HtmlEditorPane().apply {
       font = font.deriveFont((font.size * 1.5).toFloat())
     }
 
     model.addAndInvokeListener {
       icon.icon = GHUIUtil.getPullRequestStateIcon(model.value.state, model.value.isDraft)
-      title.setBody(getTitleBody(model.value.title, model.value.number.toString()))
+      titlePane.setBody(getTitleBody(model.value.title, model.value.number.toString()))
     }
 
     if (model.value.viewerCanUpdate) {
       val panelHandle = object : GHEditableHtmlPaneHandle(project,
-                                                          title,
+                                                          titlePane,
                                                           { CompletableFuture.completedFuture(model.value.title) },
                                                           { newText ->
-                                                            detailsDataProvider.updateDetails(EmptyProgressIndicator(),
-                                                                                              title = newText).successOnEdt {
-                                                              title.setBody(getTitleBody(newText, model.value.number.toString()))
-                                                            }
+                                                            detailsDataProvider.updateDetails(EmptyProgressIndicator(), title = newText)
+                                                              .successOnEdt {
+                                                                titlePane.setBody(getTitleBody(newText, model.value.number.toString()))
+                                                              }
                                                           }) {
         override fun wrapEditorPane(editorPane: HtmlEditorPane): JComponent {
           val editButton = GHTextActions.createEditButton(this)
@@ -58,7 +58,7 @@ internal object GHPRTitleComponent {
       return panelHandle.panel
     }
     else {
-      return layout(icon, title)
+      return layout(icon, titlePane)
     }
   }
 
