@@ -27,7 +27,6 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   // please update it as well for further changes
   @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
   @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
-  @NonNls public static final Pattern GROOVY_VERSION_REGEX = Pattern.compile("^\\d+\\.\\d+(\\.\\d+(-alpha-\\d|-beta-\\d|-rc-\\d)?)?$");
 
   @NlsSafe public static final String NO_VERSION = "<no version>";
   @NlsSafe public static final String GROOVY1_7 = "1.7";

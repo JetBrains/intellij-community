@@ -358,8 +358,6 @@
     <registryKey key="groovy.flat.dfa" defaultValue="true"
                  description="Merges all control flows graphs in method"/>
 
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizardUsageCollector"/>
-
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 

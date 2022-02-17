@@ -143,16 +143,3 @@ class FrameworkLibraryDistributionInfo(val version: FrameworkLibraryVersion) : A
   override val name: String = version.versionString
   override val description: String? = null
 }
-
-fun logGroovySdkSelected(context: WizardContext, distribution: DistributionInfo?) {
-  val (distributionType, version) = when (distribution) {
-    is FrameworkLibraryDistributionInfo -> GroovyNewProjectWizardUsageCollector.DistributionType.MAVEN to distribution.version.versionString
-    is LocalDistributionInfo -> GroovyNewProjectWizardUsageCollector.DistributionType.LOCAL to GroovyConfigUtils.getInstance().getSDKVersionOrNull(
-      distribution.path)
-    else -> return
-  }
-  if (version == null) {
-    return
-  }
-  GroovyNewProjectWizardUsageCollector.logGroovyLibrarySelected(context, distributionType, version)
-}

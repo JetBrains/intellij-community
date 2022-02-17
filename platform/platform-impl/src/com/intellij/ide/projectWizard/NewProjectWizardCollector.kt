@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -20,7 +20,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
     // @formatter:off
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 3)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 4)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = IntEventField("screen")
@@ -133,6 +133,17 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
     private val Sdk.featureVersion: Int?
       get() = JavaVersion.tryParse(versionString)?.feature
+  }
+
+  object Groovy {
+    private val versionField = EventFields.Version
+    private val sourceTypeField = BoundedStringEventField("groovy_sdk_type", "maven", "local")
+
+    private val groovyLibrarySelected = GROUP.registerEvent("groovy.lib", sessionIdField, sourceTypeField, versionField)
+    private val groovyLibraryFinished = GROUP.registerEvent("groovy.lib.finished", sessionIdField, sourceTypeField, versionField)
+
+    fun logGroovyLibraryChanged(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String) = groovyLibrarySelected.log(context.project, context.sessionId.id, groovyLibrarySource, groovyLibraryVersion)
+    fun logGroovyLibraryFinished(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String) = groovyLibraryFinished.log(context.project, context.sessionId.id, groovyLibrarySource, groovyLibraryVersion)
   }
 
   private class BoundedStringEventField(name: String, vararg allowedValues: String) : StringEventField(name) {
