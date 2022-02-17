@@ -22,10 +22,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 
@@ -33,6 +30,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
   private final Int2ObjectMap<PassConfig> myRegisteredPassFactories = new Int2ObjectOpenHashMap<>();
+  private volatile PassConfig[] myFrozenPassConfigs; // passId -> PassConfig; contents is immutable, updated by COW
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = ContainerUtil.createConcurrentList();
   private final AtomicInteger nextAvailableId = new AtomicInteger();
   private boolean checkedForCycles; // guarded by this
@@ -66,10 +64,26 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     synchronized (this) {
       checkedForCycles = false;
       myRegisteredPassFactories.clear();
+      myFrozenPassConfigs = null;
       nextAvailableId.set(Pass.LAST_PASS + 1);
       myDirtyScopeTrackingFactories.clear();
     }
     EP_NAME.forEachExtensionSafe(registrar -> registrar.registerHighlightingPassFactory(this, myProject));
+  }
+
+  private synchronized PassConfig @NotNull [] freezeRegisteredPassFactories() {
+    PassConfig[] configs = myFrozenPassConfigs;
+    if (configs == null) {
+      int maxId = myRegisteredPassFactories.keySet().intStream().max().getAsInt();
+      configs = new PassConfig[maxId + 1];
+      for (Int2ObjectMap.Entry<PassConfig> entry : myRegisteredPassFactories.int2ObjectEntrySet()) {
+        int id = entry.getIntKey();
+        PassConfig config = entry.getValue();
+        configs[id] = config;
+      }
+      myFrozenPassConfigs = configs;
+    }
+    return configs;
   }
 
   @ApiStatus.Internal
@@ -109,6 +123,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
+    myFrozenPassConfigs = null; // clear cache
     if (factory instanceof DirtyScopeTrackingHighlightingPassFactory) {
       myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);
     }
@@ -121,10 +136,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @Override
-  @NotNull
-  public List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
-                                                            @NotNull Editor editor,
-                                                            int @NotNull [] passesToIgnore) {
+  public @NotNull List<@NotNull TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
+                                                                              @NotNull Editor editor,
+                                                                              int @NotNull [] passesToIgnore) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       throw new IllegalStateException("Must not instantiate passes in EDT");
     }
@@ -143,16 +157,16 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
                                             PsiUtilCore.getVirtualFile(psiFile);
     }
-    List<TextEditorHighlightingPass> result = new ArrayList<>(myRegisteredPassFactories.size());
+    PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
+    List<TextEditorHighlightingPass> result = new ArrayList<>(frozenPassConfigs.length);
     IntList passesRefusedToCreate = new IntArrayList();
     boolean isDumb = DumbService.getInstance(myProject).isDumb();
-    for (IntIterator iterator = myRegisteredPassFactories.keySet().iterator(); iterator.hasNext(); ) {
-      int passId = iterator.nextInt();
+    for (int passId = 0; passId < frozenPassConfigs.length; passId++) {
+      PassConfig passConfig = frozenPassConfigs[passId];
+      if (passConfig == null) continue;
       if (ArrayUtil.find(passesToIgnore, passId) != -1) {
         continue;
       }
-
-      PassConfig passConfig = myRegisteredPassFactories.get(passId);
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
       TextEditorHighlightingPass pass = isDumb && !DumbService.isDumbAware(factory) ? null : factory.createHighlightingPass(psiFile, editor);
       if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
@@ -162,14 +176,18 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         // init with editor's colors scheme
         pass.setColorsScheme(editor.getColorsScheme());
 
-        IntList ids=new IntArrayList(passConfig.completionPredecessorIds.length);
+        IntList ids = new IntArrayList(passConfig.completionPredecessorIds.length);
         for (int id : passConfig.completionPredecessorIds) {
-          if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
+          if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
+            ids.add(id);
+          }
         }
         pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
         ids = new IntArrayList(passConfig.startingPredecessorIds.length);
         for (int id : passConfig.startingPredecessorIds) {
-          if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
+          if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
+            ids.add(id);
+          }
         }
         pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
         pass.setId(passId);
@@ -185,15 +203,15 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     return result;
   }
 
-  @NotNull
   @Override
-  public List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
-                                                                @NotNull Document document,
-                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+  public @NotNull List<@NotNull TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
+                                                                                  @NotNull Document document,
+                                                                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     Set<TextEditorHighlightingPass> ids = new HashSet<>();
-    for (IntIterator iterator = myRegisteredPassFactories.keySet().iterator(); iterator.hasNext(); ) {
-      int passId = iterator.nextInt();
-      PassConfig passConfig = myRegisteredPassFactories.get(passId);
+    PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
+    for (int passId = 0; passId < frozenPassConfigs.length; passId++) {
+      PassConfig passConfig = frozenPassConfigs[passId];
+      if (passConfig == null) continue;
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
       if (factory instanceof MainHighlightingPassFactory) {
         TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
@@ -209,14 +227,16 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   private void checkForCycles() {
     Int2ObjectMap<IntSet> transitivePredecessors = new Int2ObjectOpenHashMap<>();
 
-    for (Int2ObjectMap.Entry<PassConfig> entry : myRegisteredPassFactories.int2ObjectEntrySet()) {
-      int passId = entry.getIntKey();
-      PassConfig config = entry.getValue();
-      IntSet allPredecessors = new IntOpenHashSet(config.completionPredecessorIds);
-      allPredecessors.addAll(IntArrayList.wrap(config.startingPredecessorIds));
+    PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
+    for (int passId = 0; passId < frozenPassConfigs.length; passId++) {
+      PassConfig passConfig = frozenPassConfigs[passId];
+      if (passConfig == null) continue;
+
+      IntSet allPredecessors = new IntOpenHashSet(passConfig.completionPredecessorIds);
+      allPredecessors.addAll(IntArrayList.wrap(passConfig.startingPredecessorIds));
       transitivePredecessors.put(passId, allPredecessors);
       allPredecessors.forEach((IntConsumer)predecessorId -> {
-        PassConfig predecessor = myRegisteredPassFactories.get(predecessorId);
+        PassConfig predecessor = predecessorId < frozenPassConfigs.length ? frozenPassConfigs[predecessorId] : null;
         if (predecessor == null) {
           return;
         }
@@ -232,7 +252,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }
     transitivePredecessors.keySet().forEach((IntConsumer)passId -> {
       if (transitivePredecessors.get(passId).contains(passId)) {
-        throw new IllegalArgumentException("There is a cycle introduced involving pass " + myRegisteredPassFactories.get(passId).passFactory);
+        throw new IllegalArgumentException("There is a cycle introduced involving pass " + passId +": "+frozenPassConfigs[passId].passFactory);
       }
     });
   }
