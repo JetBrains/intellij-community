@@ -10,10 +10,10 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.ExternalSystemManager
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCollisionPassType
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
@@ -185,10 +185,11 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   protected fun VirtualFile.delete() =
     runWriteAction { delete(null) }
 
-  fun VirtualFile.modify(modificationType: ModificationType = ModificationType.INTERNAL) {
+  fun VirtualFile.modify(modificationType: ExternalSystemModificationType = INTERNAL) {
     when (modificationType) {
-      ModificationType.INTERNAL -> appendLine("println 'hello'")
-      ModificationType.EXTERNAL -> appendLineInIoFile("println 'hello'")
+      INTERNAL -> appendLine("println 'hello'")
+      ExternalSystemModificationType.EXTERNAL -> appendLineInIoFile("println 'hello'")
+      ExternalSystemModificationType.UNKNOWN -> throw UnsupportedOperationException()
     }
   }
 
@@ -522,7 +523,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     projectAware: MockProjectAware,
     private val settingsFile: VirtualFile
   ) : SimpleTestBench(projectAware) {
-    fun modifySettingsFile(modificationType: ModificationType = ModificationType.INTERNAL) = settingsFile.modify(modificationType)
+    fun modifySettingsFile(modificationType: ExternalSystemModificationType = INTERNAL) = settingsFile.modify(modificationType)
   }
 
   inner class DummyExternalSystemTestBench(val projectAware: ProjectAwareWrapper) {
