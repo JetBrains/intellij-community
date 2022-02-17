@@ -18,7 +18,7 @@ class IncorrectFormattingInspectionMerger : InspectionElementsMergerBase() {
     if (sourceElement.getAttributeValue("enabled", "false").toBoolean()) {
       toolElement.addContent(
         Element("option")
-          .setAttribute("name", "forceForKotlin")
+          .setAttribute("name", "kotlinOnly")
           .setAttribute("value", "true")
       )
     }

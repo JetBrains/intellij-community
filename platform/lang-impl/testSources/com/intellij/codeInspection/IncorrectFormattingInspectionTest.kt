@@ -19,12 +19,12 @@ class IncorrectFormattingInspectionTest : BasePlatformTestCase() {
   fun testInvalidFile() = doTest()
 
   private fun doTest(reportPerFile: Boolean = true, extension: String = "xml") {
-    myFixture.enableInspections(IncorrectFormattingInspection(reportPerFile, silentMode = false))
+    myFixture.enableInspections(IncorrectFormattingInspection(reportPerFile, kotlinOnly = false))
     myFixture.testHighlighting(true, false, true, "${getTestName(true)}.$extension")
   }
 
   fun testBodyExtraSpaceSilent() {
-    myFixture.enableInspections(IncorrectFormattingInspection(false, silentMode = true))
+    myFixture.enableInspections(IncorrectFormattingInspection(false, kotlinOnly = true))
     myFixture.testHighlighting(true, false, true, "${getTestName(true)}.xml")
   }
 

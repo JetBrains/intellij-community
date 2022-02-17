@@ -2,16 +2,12 @@
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ui.InspectionOptionsPanel
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import java.util.concurrent.atomic.AtomicBoolean
@@ -21,10 +17,8 @@ val INSPECTION_KEY = Key.create<IncorrectFormattingInspection>(IncorrectFormatti
 var notificationShown = AtomicBoolean(false)
 
 class IncorrectFormattingInspection(
-  @JvmField var reportPerFile: Boolean = false,        // generate only one warning per file
-  @JvmField var silentMode: Boolean = true,            // show ads notification instead of real problems
-  @JvmField var suppressNotification: Boolean = false, // don't show notification anymore
-  @JvmField var forceForKotlin: Boolean = false        // process kotlin files normally even in silent mode, compatibility
+  @JvmField var reportPerFile: Boolean = false,  // generate only one warning per file
+  @JvmField var kotlinOnly: Boolean = false  // process kotlin files normally even in silent mode, compatibility
 ) : LocalInspectionTool() {
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
@@ -33,38 +27,34 @@ class IncorrectFormattingInspection(
     if (!file.isWritable) return null
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
 
-    // Backward compatibility for those who used ReformatInspection from kotlin before
-    if (forceForKotlin && file.language.id == "kotlin") {
-        return inScopeOf(file, document, manager, isOnTheFly) {
-          getAllReports(false, reportPerFile)
-            .takeIf { it.isNotEmpty() }
-            ?.toTypedArray()
-        }
+    if (kotlinOnly && file.language.id != "kotlin") {
+      return null
     }
 
-    // Fast check
-    if (silentMode && (notificationShown.get() || suppressNotification)) return null
+    val scope = CheckingScope(file, document, manager, isOnTheFly)
 
-    return inScopeOf(file, document, manager, isOnTheFly) {
-      getAllReports(silentMode, reportPerFile)
-        .takeIf { it.isNotEmpty() }
-        ?.toTypedArray()
+    val changes = scope
+      .getChanges()
+      .takeIf { it.isNotEmpty() }
+      ?: return null
+
+    return if (reportPerFile) {
+      arrayOf(scope.createGlobalReport())
     }
-
+    else {
+      scope.createAllReports(changes)
+    }
   }
 
   override fun createOptionsPanel() = object : InspectionOptionsPanel(this) {
     init {
-      addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.silent.mode"), "silentMode")
       addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.report.per.file"), "reportPerFile")
+      addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.kotlin.only"), "kotlinOnly")
     }
   }
 
   override fun runForWholeFile() = true
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WEAK_WARNING
-  override fun isEnabledByDefault() = true
+  override fun isEnabledByDefault() = false
 
 }
-
-private fun <R> inScopeOf(file: PsiFile, document: Document, manager: InspectionManager, isOnTheFly: Boolean, body: CheckingScope.() -> R) =
-  CheckingScope(file, document, manager, isOnTheFly).body()

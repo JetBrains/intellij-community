@@ -23,48 +23,44 @@ import kotlin.math.abs
 
 class CheckingScope(val file: PsiFile, val document: Document, val manager: InspectionManager, val isOnTheFly: Boolean) {
 
-  fun getAllReports(silentMode: Boolean, reportPerFile: Boolean): List<ProblemDescriptor> {
-    val changes: List<FormattingChange> = getChanges()
-    if (changes.isEmpty()) return emptyList()
+  fun createAllReports(changes: List<FormattingChange>): Array<ProblemDescriptor>? {
+    if (changes.isEmpty()) return null
 
-    if (silentMode && notificationShown.compareAndSet(false, true)) {
-      NotificationGroupManager.getInstance()
-        .getNotificationGroup("Incorrect Formatting")
-        .createNotification(
-          LangBundle.message("inspection.incorrect.formatting.notification.title"),
-          LangBundle.message("inspection.incorrect.formatting.notification.contents"),
-          NotificationType.INFORMATION
-        )
-        .setImportantSuggestion(false)
-        .setSuggestionType(false)
-        .addAction(
-          createSimpleExpiring(LangBundle.message("inspection.incorrect.formatting.notification.action.enable")) {
-            InspectionProjectProfileManager
-              .getInstance(file.project)
-              .currentProfile
-              .modifyToolSettings(INSPECTION_KEY, file) { inspection ->
-                inspection.silentMode = false
-              }
-          }
-        )
-        .addAction(
-          createSimpleExpiring(LangBundle.message("inspection.incorrect.formatting.notification.action.dont.show")) {
-            InspectionProjectProfileManager
-              .getInstance(file.project)
-              .currentProfile
-              .modifyToolSettings(INSPECTION_KEY, file) { inspection ->
-                inspection.suppressNotification = true
-              }
-          }
-        )
-        .notify(file.project)
-
-      return emptyList()
-    }
-
-    if (reportPerFile) {
-      return listOf(createGlobalWarning())
-    }
+    // TODO: move to reformat action
+    //if (silentMode && notificationShown.compareAndSet(false, true)) {
+    //  NotificationGroupManager.getInstance()
+    //    .getNotificationGroup("Incorrect Formatting")
+    //    .createNotification(
+    //      LangBundle.message("inspection.incorrect.formatting.notification.title"),
+    //      LangBundle.message("inspection.incorrect.formatting.notification.contents"),
+    //      NotificationType.INFORMATION
+    //    )
+    //    .setImportantSuggestion(false)
+    //    .setSuggestionType(true)
+    //    .addAction(
+    //      createSimpleExpiring(LangBundle.message("inspection.incorrect.formatting.notification.action.enable")) {
+    //        InspectionProjectProfileManager
+    //          .getInstance(file.project)
+    //          .currentProfile
+    //          .modifyToolSettings(INSPECTION_KEY, file) { inspection ->
+    //            inspection.silentMode = false
+    //          }
+    //      }
+    //    )
+    //    .addAction(
+    //      createSimpleExpiring(LangBundle.message("inspection.incorrect.formatting.notification.action.dont.show")) {
+    //        InspectionProjectProfileManager
+    //          .getInstance(file.project)
+    //          .currentProfile
+    //          .modifyToolSettings(INSPECTION_KEY, file) { inspection ->
+    //            inspection.suppressNotification = true
+    //          }
+    //      }
+    //    )
+    //    .notify(file.project)
+    //
+    //  return emptyList()
+    //}
 
     val result = arrayListOf<ProblemDescriptor>()
 
@@ -75,6 +71,8 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
     result += inLineChangeDescriptors(inLineChanges)
 
     return result
+      .takeIf { it.isNotEmpty() }
+      ?.toTypedArray()
   }
 
   // Collect all formatting changes for the file
@@ -101,7 +99,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
     return changeCollector.getChanges()
   }
 
-  fun createGlobalWarning() =
+  fun createGlobalReport() =
     manager.createProblemDescriptor(
       file,
       LangBundle.message("inspection.incorrect.formatting.global.problem.descriptor", file.name),

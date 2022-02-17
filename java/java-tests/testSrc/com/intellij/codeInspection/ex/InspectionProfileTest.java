@@ -799,17 +799,14 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionToolWrapper toolWrapper = profile.getInspectionTool("IncorrectFormatting", getProject()); //call to initialize inspections
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("IncorrectFormatting"), null));
     IncorrectFormattingInspection tool = (IncorrectFormattingInspection)toolWrapper.getTool();
-    assertTrue("Should be enabled for kotlin", tool.forceForKotlin);
+    assertTrue("Should be enabled for kotlin only", tool.kotlinOnly);
   }
   
   public void testMergedReformatInspectionDisabled() throws Exception {
     InspectionProfileImpl profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
                                                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                          "</profile>");
-    InspectionToolWrapper toolWrapper = profile.getInspectionTool("IncorrectFormatting", getProject());
-    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("IncorrectFormatting"), null));
-    IncorrectFormattingInspection tool = (IncorrectFormattingInspection)toolWrapper.getTool();
-    assertFalse("Should be disabled for kotlin", tool.forceForKotlin);
+    assertFalse("Should be disabled by default", profile.isToolEnabled(HighlightDisplayKey.find("IncorrectFormatting"), null));
   }
 
   public void testSecondMergedRedundantStringOperationsInspections() throws Exception {
