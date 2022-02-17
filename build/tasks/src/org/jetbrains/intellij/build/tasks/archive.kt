@@ -3,9 +3,11 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.io.IOUtils
 import org.jetbrains.intellij.build.io.isWindows
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.writeNewFile
@@ -19,6 +21,8 @@ import java.nio.file.attribute.FileTime
 import java.util.*
 import java.util.function.BiConsumer
 import java.util.zip.ZipEntry
+import kotlin.io.path.inputStream
+import kotlin.io.path.readText
 
 // 0100000
 private const val fileFlag = 32768
@@ -142,8 +146,9 @@ fun crossPlatformZip(macDistDir: Path,
         !p.startsWith("bin/printenv") &&
         p != "bin/idea.properties" &&
         !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions"))) &&
-        // do not copy common files
-        !Files.exists(linuxDistDir.resolve(p))
+        // do not copy common files, error if they are different
+        (!Files.exists(linuxDistDir.resolve(p)) || failIfContentNotEqualOrFalse(macDistDir.resolve(p), linuxDistDir.resolve(p),
+                                                                                "Two files from mac and linux distributions with the target path $p have different content"))
       }, entryCustomizer = entryCustomizer)
 
       out.dir(startDir = linuxDistDir, prefix = "", fileFilter = { _, relativeFile ->
@@ -168,12 +173,26 @@ fun crossPlatformZip(macDistDir: Path,
         !(p.startsWith("bin/") && p.endsWith(".exe.vmoptions")) &&
         !(p.startsWith("bin/$executableName") && p.endsWith(".exe")) &&
         !winExcludes.contains(p) &&
-        // do not copy common files
-        !Files.exists(macDistDir.resolve(p)) &&
-        !Files.exists(linuxDistDir.resolve(p))
+        // do not copy common files, error if they are different
+        (!Files.exists(macDistDir.resolve(p)) || failIfContentNotEqualOrFalse(winDistDir.resolve(p), macDistDir.resolve(p),
+                                                                              "Two files from windows and mac distributions with the target path $p have different content")) &&
+        (!Files.exists(linuxDistDir.resolve(p)) || failIfContentNotEqualOrFalse(winDistDir.resolve(p), linuxDistDir.resolve(p),
+                                                                                "Two files from windows and linux distributions with the target path $p have different content"))
       }, entryCustomizer = entryCustomizer)
     }
   }
+}
+
+private fun failIfContentNotEqualOrFalse(file1: Path, file2: Path, message: String): Boolean {
+  if (IOUtils.contentEquals(file1.inputStream(), file2.inputStream()))
+    return false
+
+  val file1Text = file1.readText()
+  val file2Text = file2.readText()
+  if (!file1Text.take(1024).all { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 } ||
+      !file2Text.take(1024).all { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 })
+    error(message)
+  throw FileComparisonFailure(message, file1Text, file2Text, file1.toString(), file2.toString())
 }
 
 fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiConsumer<String, ByteArray>) {
