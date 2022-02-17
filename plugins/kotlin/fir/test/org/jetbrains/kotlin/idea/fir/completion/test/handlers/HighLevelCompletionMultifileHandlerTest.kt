@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import java.nio.file.Paths
 
 @RunWith(JUnit38ClassRunner::class)
-class HighLevelCompletionMultifileHandlerTest : CompletionMultiFileHandlerTest() {
+class HighLevelCompletionMultifileHandlerTest : CompletionMultiFileHandlerTest22() {
 
     /**
      * This is a temporary solution! This test should be rewritten to be generated!
