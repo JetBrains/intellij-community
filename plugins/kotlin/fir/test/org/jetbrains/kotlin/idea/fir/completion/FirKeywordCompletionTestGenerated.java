@@ -110,9 +110,19 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/tests/testData/keywords/BreakContinue.kt");
         }
 
+        @TestMetadata("BreakPrefixMatching.kt")
+        public void testBreakPrefixMatching() throws Exception {
+            runTest("../completion/tests/testData/keywords/BreakPrefixMatching.kt");
+        }
+
         @TestMetadata("BreakWithLabel.kt")
         public void testBreakWithLabel() throws Exception {
             runTest("../completion/tests/testData/keywords/BreakWithLabel.kt");
+        }
+
+        @TestMetadata("BreakWithLabelPrefix.kt")
+        public void testBreakWithLabelPrefix() throws Exception {
+            runTest("../completion/tests/testData/keywords/BreakWithLabelPrefix.kt");
         }
 
         @TestMetadata("CommaExpected.kt")
@@ -125,9 +135,19 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/tests/testData/keywords/CompanionObjectBeforeObject.kt");
         }
 
+        @TestMetadata("ContinuePrefixMatching.kt")
+        public void testContinuePrefixMatching() throws Exception {
+            runTest("../completion/tests/testData/keywords/ContinuePrefixMatching.kt");
+        }
+
         @TestMetadata("ContinueWithLabel.kt")
         public void testContinueWithLabel() throws Exception {
             runTest("../completion/tests/testData/keywords/ContinueWithLabel.kt");
+        }
+
+        @TestMetadata("ContinueWithLabelPrefix.kt")
+        public void testContinueWithLabelPrefix() throws Exception {
+            runTest("../completion/tests/testData/keywords/ContinueWithLabelPrefix.kt");
         }
 
         @TestMetadata("Else1.kt")
@@ -465,9 +485,14 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/tests/testData/keywords/Return5.kt");
         }
 
-        @TestMetadata("Return6.kt")
-        public void testReturn6() throws Exception {
-            runTest("../completion/tests/testData/keywords/Return6.kt");
+        @TestMetadata("Return6_1.kt")
+        public void testReturn6_1() throws Exception {
+            runTest("../completion/tests/testData/keywords/Return6_1.kt");
+        }
+
+        @TestMetadata("Return6_2.kt")
+        public void testReturn6_2() throws Exception {
+            runTest("../completion/tests/testData/keywords/Return6_2.kt");
         }
 
         @TestMetadata("Return7.kt")
@@ -523,6 +548,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("ReturnNullableBoolean.kt")
         public void testReturnNullableBoolean() throws Exception {
             runTest("../completion/tests/testData/keywords/ReturnNullableBoolean.kt");
+        }
+
+        @TestMetadata("ReturnPrefixMatching.kt")
+        public void testReturnPrefixMatching() throws Exception {
+            runTest("../completion/tests/testData/keywords/ReturnPrefixMatching.kt");
         }
 
         @TestMetadata("ReturnSet.kt")
@@ -608,6 +638,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("ThisInCompanion.kt")
         public void testThisInCompanion() throws Exception {
             runTest("../completion/tests/testData/keywords/ThisInCompanion.kt");
+        }
+
+        @TestMetadata("ThisLabelPrefix.kt")
+        public void testThisLabelPrefix() throws Exception {
+            runTest("../completion/tests/testData/keywords/ThisLabelPrefix.kt");
         }
 
         @TestMetadata("ThisPrefixMatching.kt")

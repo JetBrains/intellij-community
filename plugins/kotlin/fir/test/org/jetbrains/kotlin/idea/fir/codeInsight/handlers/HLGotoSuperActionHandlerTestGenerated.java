@@ -21,26 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class HLGotoSuperActionHandlerTestGenerated extends AbstractHLGotoSuperActionHandlerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/classes")
-    public static class Classes extends AbstractHLGotoSuperActionHandlerTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("classImplemeningInterfaces.kt")
-        public void testClassImplemeningInterfaces() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/classes/classImplemeningInterfaces.kt");
-        }
-
-        @TestMetadata("classWithDeepHeiarchy.kt")
-        public void testClassWithDeepHeiarchy() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/classes/classWithDeepHeiarchy.kt");
-        }
-
-        @TestMetadata("singleSuperClass.kt")
-        public void testSingleSuperClass() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/classes/singleSuperClass.kt");
-        }
-
+    public abstract static class Classes extends AbstractHLGotoSuperActionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/classes/incorrectCode")
         public static class IncorrectCode extends AbstractHLGotoSuperActionHandlerTest {
@@ -58,30 +39,34 @@ public abstract class HLGotoSuperActionHandlerTestGenerated extends AbstractHLGo
                 runTest("testData/codeInsight/handlers/gotoSuperActionHandler/classes/incorrectCode/extendFinalClass.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/classes")
+        public static class Uncategorized extends AbstractHLGotoSuperActionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("classImplemeningInterfaces.kt")
+            public void testClassImplemeningInterfaces() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/classes/classImplemeningInterfaces.kt");
+            }
+
+            @TestMetadata("classWithDeepHeiarchy.kt")
+            public void testClassWithDeepHeiarchy() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/classes/classWithDeepHeiarchy.kt");
+            }
+
+            @TestMetadata("singleSuperClass.kt")
+            public void testSingleSuperClass() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/classes/singleSuperClass.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/methods")
-    public static class Methods extends AbstractHLGotoSuperActionHandlerTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("intersectionOverrideMethods.kt")
-        public void testIntersectionOverrideMethods() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/methods/intersectionOverrideMethods.kt");
-        }
-
-        @TestMetadata("multipleSuperMethodsFromInterfaces.kt")
-        public void testMultipleSuperMethodsFromInterfaces() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/methods/multipleSuperMethodsFromInterfaces.kt");
-        }
-
-        @TestMetadata("singleSuperMethod.kt")
-        public void testSingleSuperMethod() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/methods/singleSuperMethod.kt");
-        }
-
+    public abstract static class Methods extends AbstractHLGotoSuperActionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/methods/incorrectCode")
         public static class IncorrectCode extends AbstractHLGotoSuperActionHandlerTest {
@@ -104,30 +89,34 @@ public abstract class HLGotoSuperActionHandlerTestGenerated extends AbstractHLGo
                 runTest("testData/codeInsight/handlers/gotoSuperActionHandler/methods/incorrectCode/overrideFinalMethodInFinalClass.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/methods")
+        public static class Uncategorized extends AbstractHLGotoSuperActionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("intersectionOverrideMethods.kt")
+            public void testIntersectionOverrideMethods() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/methods/intersectionOverrideMethods.kt");
+            }
+
+            @TestMetadata("multipleSuperMethodsFromInterfaces.kt")
+            public void testMultipleSuperMethodsFromInterfaces() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/methods/multipleSuperMethodsFromInterfaces.kt");
+            }
+
+            @TestMetadata("singleSuperMethod.kt")
+            public void testSingleSuperMethod() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/methods/singleSuperMethod.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/properties")
-    public static class Properties extends AbstractHLGotoSuperActionHandlerTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("intersectionOverrideProperties.kt")
-        public void testIntersectionOverrideProperties() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/properties/intersectionOverrideProperties.kt");
-        }
-
-        @TestMetadata("multipleSuperPropertiesFromInterfaces.kt")
-        public void testMultipleSuperPropertiesFromInterfaces() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/properties/multipleSuperPropertiesFromInterfaces.kt");
-        }
-
-        @TestMetadata("singleSuperProperty.kt")
-        public void testSingleSuperProperty() throws Exception {
-            runTest("testData/codeInsight/handlers/gotoSuperActionHandler/properties/singleSuperProperty.kt");
-        }
-
+    public abstract static class Properties extends AbstractHLGotoSuperActionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/properties/incorrectCode")
         public static class IncorrectCode extends AbstractHLGotoSuperActionHandlerTest {
@@ -148,6 +137,29 @@ public abstract class HLGotoSuperActionHandlerTestGenerated extends AbstractHLGo
             @TestMetadata("overrideFinalPropertyInFinalClass.kt")
             public void testOverrideFinalPropertyInFinalClass() throws Exception {
                 runTest("testData/codeInsight/handlers/gotoSuperActionHandler/properties/incorrectCode/overrideFinalPropertyInFinalClass.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/codeInsight/handlers/gotoSuperActionHandler/properties")
+        public static class Uncategorized extends AbstractHLGotoSuperActionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("intersectionOverrideProperties.kt")
+            public void testIntersectionOverrideProperties() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/properties/intersectionOverrideProperties.kt");
+            }
+
+            @TestMetadata("multipleSuperPropertiesFromInterfaces.kt")
+            public void testMultipleSuperPropertiesFromInterfaces() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/properties/multipleSuperPropertiesFromInterfaces.kt");
+            }
+
+            @TestMetadata("singleSuperProperty.kt")
+            public void testSingleSuperProperty() throws Exception {
+                runTest("testData/codeInsight/handlers/gotoSuperActionHandler/properties/singleSuperProperty.kt");
             }
         }
     }

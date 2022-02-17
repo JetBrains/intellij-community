@@ -20,771 +20,7 @@ import org.junit.runner.RunWith;
 public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractHighLevelJvmBasicCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/tests/testData/basic/common")
-    public static class Common extends AbstractHighLevelJvmBasicCompletionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("AfterFloatOnNewLine.kt")
-        public void testAfterFloatOnNewLine() throws Exception {
-            runTest("../completion/tests/testData/basic/common/AfterFloatOnNewLine.kt");
-        }
-
-        @TestMetadata("AfterIntSeparatedWithComments.kt")
-        public void testAfterIntSeparatedWithComments() throws Exception {
-            runTest("../completion/tests/testData/basic/common/AfterIntSeparatedWithComments.kt");
-        }
-
-        @TestMetadata("ambiguousSuperMethod.kt")
-        public void testAmbiguousSuperMethod() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethod.kt");
-        }
-
-        @TestMetadata("ambiguousSuperMethodDiamond.kt")
-        public void testAmbiguousSuperMethodDiamond() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodDiamond.kt");
-        }
-
-        @TestMetadata("ambiguousSuperMethodDiamondAny.kt")
-        public void testAmbiguousSuperMethodDiamondAny() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodDiamondAny.kt");
-        }
-
-        @TestMetadata("ambiguousSuperMethodHigherUp.kt")
-        public void testAmbiguousSuperMethodHigherUp() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodHigherUp.kt");
-        }
-
-        @TestMetadata("ambiguousSuperMethodSingleImpl.kt")
-        public void testAmbiguousSuperMethodSingleImpl() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodSingleImpl.kt");
-        }
-
-        @TestMetadata("BasicAny.kt")
-        public void testBasicAny() throws Exception {
-            runTest("../completion/tests/testData/basic/common/BasicAny.kt");
-        }
-
-        @TestMetadata("BasicInt.kt")
-        public void testBasicInt() throws Exception {
-            runTest("../completion/tests/testData/basic/common/BasicInt.kt");
-        }
-
-        @TestMetadata("BeforeDotInCall.kt")
-        public void testBeforeDotInCall() throws Exception {
-            runTest("../completion/tests/testData/basic/common/BeforeDotInCall.kt");
-        }
-
-        @TestMetadata("CallLocalLambda.kt")
-        public void testCallLocalLambda() throws Exception {
-            runTest("../completion/tests/testData/basic/common/CallLocalLambda.kt");
-        }
-
-        @TestMetadata("classObjectElementsInClass.kt")
-        public void testClassObjectElementsInClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/classObjectElementsInClass.kt");
-        }
-
-        @TestMetadata("ClassRedeclaration1.kt")
-        public void testClassRedeclaration1() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ClassRedeclaration1.kt");
-        }
-
-        @TestMetadata("ClassRedeclaration2.kt")
-        public void testClassRedeclaration2() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ClassRedeclaration2.kt");
-        }
-
-        @TestMetadata("CompletionInSetter.kt")
-        public void testCompletionInSetter() throws Exception {
-            runTest("../completion/tests/testData/basic/common/CompletionInSetter.kt");
-        }
-
-        @TestMetadata("ComponentFunction.kt")
-        public void testComponentFunction() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ComponentFunction.kt");
-        }
-
-        @TestMetadata("ConsiderExtensionType.kt")
-        public void testConsiderExtensionType() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ConsiderExtensionType.kt");
-        }
-
-        @TestMetadata("CoroutineContextReleaseCoroutines.kt")
-        public void testCoroutineContextReleaseCoroutines() throws Exception {
-            runTest("../completion/tests/testData/basic/common/CoroutineContextReleaseCoroutines.kt");
-        }
-
-        @TestMetadata("DataClassMembers.kt")
-        public void testDataClassMembers() throws Exception {
-            runTest("../completion/tests/testData/basic/common/DataClassMembers.kt");
-        }
-
-        @TestMetadata("DataClassMembers2.kt")
-        public void testDataClassMembers2() throws Exception {
-            runTest("../completion/tests/testData/basic/common/DataClassMembers2.kt");
-        }
-
-        @TestMetadata("EnumItemsThroughChainedTypeAlias.kt")
-        public void testEnumItemsThroughChainedTypeAlias() throws Exception {
-            runTest("../completion/tests/testData/basic/common/EnumItemsThroughChainedTypeAlias.kt");
-        }
-
-        @TestMetadata("EnumItemsThroughSingleTypeAlias.kt")
-        public void testEnumItemsThroughSingleTypeAlias() throws Exception {
-            runTest("../completion/tests/testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
-        }
-
-        @TestMetadata("ExtendClassName.kt")
-        public void testExtendClassName() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtendClassName.kt");
-        }
-
-        @TestMetadata("ExtendQualifiedClassName.kt")
-        public void testExtendQualifiedClassName() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtendQualifiedClassName.kt");
-        }
-
-        @TestMetadata("ExtensionForProperty.kt")
-        public void testExtensionForProperty() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionForProperty.kt");
-        }
-
-        @TestMetadata("ExtensionFunReceiver.kt")
-        public void testExtensionFunReceiver() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionFunReceiver.kt");
-        }
-
-        @TestMetadata("ExtensionFunReceiverForce.kt")
-        public void testExtensionFunReceiverForce() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionFunReceiverForce.kt");
-        }
-
-        @TestMetadata("ExtensionFunctionInClassObject.kt")
-        public void testExtensionFunctionInClassObject() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionFunctionInClassObject.kt");
-        }
-
-        @TestMetadata("ExtensionInsideFunction.kt")
-        public void testExtensionInsideFunction() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionInsideFunction.kt");
-        }
-
-        @TestMetadata("ExtensionOnTypeAliasFromOtherTypeAlias.kt")
-        public void testExtensionOnTypeAliasFromOtherTypeAlias() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionOnTypeAliasFromOtherTypeAlias.kt");
-        }
-
-        @TestMetadata("ExtensionToIntInFloatStyle.kt")
-        public void testExtensionToIntInFloatStyle() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionToIntInFloatStyle.kt");
-        }
-
-        @TestMetadata("ExtensionWithAdditionalTypeParameters.kt")
-        public void testExtensionWithAdditionalTypeParameters() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionWithAdditionalTypeParameters.kt");
-        }
-
-        @TestMetadata("ExtensionWithGenericParamInReceiver.kt")
-        public void testExtensionWithGenericParamInReceiver() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionWithGenericParamInReceiver.kt");
-        }
-
-        @TestMetadata("ExtensionWithGenericReceiver.kt")
-        public void testExtensionWithGenericReceiver() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionWithGenericReceiver.kt");
-        }
-
-        @TestMetadata("ExtensionWithInternalGenericParameters.kt")
-        public void testExtensionWithInternalGenericParameters() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionWithInternalGenericParameters.kt");
-        }
-
-        @TestMetadata("ExtensionWithManyTypeParamsInReceiver.kt")
-        public void testExtensionWithManyTypeParamsInReceiver() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionWithManyTypeParamsInReceiver.kt");
-        }
-
-        @TestMetadata("ExtensionsWithTypeParameterConstraints.kt")
-        public void testExtensionsWithTypeParameterConstraints() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ExtensionsWithTypeParameterConstraints.kt");
-        }
-
-        @TestMetadata("FromImports.kt")
-        public void testFromImports() throws Exception {
-            runTest("../completion/tests/testData/basic/common/FromImports.kt");
-        }
-
-        @TestMetadata("FunctionCompletionFormatting.kt")
-        public void testFunctionCompletionFormatting() throws Exception {
-            runTest("../completion/tests/testData/basic/common/FunctionCompletionFormatting.kt");
-        }
-
-        @TestMetadata("FunctionVariableCallArgument.kt")
-        public void testFunctionVariableCallArgument() throws Exception {
-            runTest("../completion/tests/testData/basic/common/FunctionVariableCallArgument.kt");
-        }
-
-        @TestMetadata("GenericCompanionExtension.kt")
-        public void testGenericCompanionExtension() throws Exception {
-            runTest("../completion/tests/testData/basic/common/GenericCompanionExtension.kt");
-        }
-
-        @TestMetadata("GenericExtensionFunReceiver1.kt")
-        public void testGenericExtensionFunReceiver1() throws Exception {
-            runTest("../completion/tests/testData/basic/common/GenericExtensionFunReceiver1.kt");
-        }
-
-        @TestMetadata("GenericExtensionFunReceiver2.kt")
-        public void testGenericExtensionFunReceiver2() throws Exception {
-            runTest("../completion/tests/testData/basic/common/GenericExtensionFunReceiver2.kt");
-        }
-
-        @TestMetadata("GenericKotlinClass.kt")
-        public void testGenericKotlinClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/GenericKotlinClass.kt");
-        }
-
-        @TestMetadata("GetPrefixForProperties.kt")
-        public void testGetPrefixForProperties() throws Exception {
-            runTest("../completion/tests/testData/basic/common/GetPrefixForProperties.kt");
-        }
-
-        @TestMetadata("ImportedEnumMembers.kt")
-        public void testImportedEnumMembers() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ImportedEnumMembers.kt");
-        }
-
-        @TestMetadata("ImportedMemberFromObject.kt")
-        public void testImportedMemberFromObject() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ImportedMemberFromObject.kt");
-        }
-
-        @TestMetadata("InCallExpression.kt")
-        public void testInCallExpression() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InCallExpression.kt");
-        }
-
-        @TestMetadata("InClassInitializer.kt")
-        public void testInClassInitializer() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InClassInitializer.kt");
-        }
-
-        @TestMetadata("InClassObject.kt")
-        public void testInClassObject() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InClassObject.kt");
-        }
-
-        @TestMetadata("InClassPropertyAccessor.kt")
-        public void testInClassPropertyAccessor() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InClassPropertyAccessor.kt");
-        }
-
-        @TestMetadata("InEmptyImport.kt")
-        public void testInEmptyImport() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InEmptyImport.kt");
-        }
-
-        @TestMetadata("InEmptyPackage.kt")
-        public void testInEmptyPackage() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InEmptyPackage.kt");
-        }
-
-        @TestMetadata("InExpressionNoPrefix.kt")
-        public void testInExpressionNoPrefix() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InExpressionNoPrefix.kt");
-        }
-
-        @TestMetadata("InExtendTypeAnnotation.kt")
-        public void testInExtendTypeAnnotation() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InExtendTypeAnnotation.kt");
-        }
-
-        @TestMetadata("InFileWithMultiDeclaration.kt")
-        public void testInFileWithMultiDeclaration() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InFileWithMultiDeclaration.kt");
-        }
-
-        @TestMetadata("InFileWithTypedef.kt")
-        public void testInFileWithTypedef() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InFileWithTypedef.kt");
-        }
-
-        @TestMetadata("InFunInClassInitializer.kt")
-        public void testInFunInClassInitializer() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InFunInClassInitializer.kt");
-        }
-
-        @TestMetadata("InFunctionArguments.kt")
-        public void testInFunctionArguments() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InFunctionArguments.kt");
-        }
-
-        @TestMetadata("InGlobalPropertyInitializer.kt")
-        public void testInGlobalPropertyInitializer() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InGlobalPropertyInitializer.kt");
-        }
-
-        @TestMetadata("InImport.kt")
-        public void testInImport() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InImport.kt");
-        }
-
-        @TestMetadata("InInitializerInPropertyAccessor.kt")
-        public void testInInitializerInPropertyAccessor() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InInitializerInPropertyAccessor.kt");
-        }
-
-        @TestMetadata("InInnerClass.kt")
-        public void testInInnerClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InInnerClass.kt");
-        }
-
-        @TestMetadata("InLambda.kt")
-        public void testInLambda() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InLambda.kt");
-        }
-
-        @TestMetadata("InLocalObjectDeclaration.kt")
-        public void testInLocalObjectDeclaration() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InLocalObjectDeclaration.kt");
-        }
-
-        @TestMetadata("InLongDotQualifiedExpression.kt")
-        public void testInLongDotQualifiedExpression() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InLongDotQualifiedExpression.kt");
-        }
-
-        @TestMetadata("InMiddleOfPackage.kt")
-        public void testInMiddleOfPackage() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InMiddleOfPackage.kt");
-        }
-
-        @TestMetadata("InMiddleOfPackageDirective.kt")
-        public void testInMiddleOfPackageDirective() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InMiddleOfPackageDirective.kt");
-        }
-
-        @TestMetadata("InNestedClass.kt")
-        public void testInNestedClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InNestedClass.kt");
-        }
-
-        @TestMetadata("InObjectInDelegationSpecifier.kt")
-        public void testInObjectInDelegationSpecifier() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InObjectInDelegationSpecifier.kt");
-        }
-
-        @TestMetadata("InPackage.kt")
-        public void testInPackage() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InPackage.kt");
-        }
-
-        @TestMetadata("InParametersTypes.kt")
-        public void testInParametersTypes() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InParametersTypes.kt");
-        }
-
-        @TestMetadata("InParametersTypesForce.kt")
-        public void testInParametersTypesForce() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InParametersTypesForce.kt");
-        }
-
-        @TestMetadata("InPropertyAccessor.kt")
-        public void testInPropertyAccessor() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InPropertyAccessor.kt");
-        }
-
-        @TestMetadata("InPropertyInitializer.kt")
-        public void testInPropertyInitializer() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InPropertyInitializer.kt");
-        }
-
-        @TestMetadata("InSecondaryConstructorBody.kt")
-        public void testInSecondaryConstructorBody() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InSecondaryConstructorBody.kt");
-        }
-
-        @TestMetadata("InSecondaryConstructorDefaultParameter.kt")
-        public void testInSecondaryConstructorDefaultParameter() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InSecondaryConstructorDefaultParameter.kt");
-        }
-
-        @TestMetadata("InSecondaryConstructorDelegationCall.kt")
-        public void testInSecondaryConstructorDelegationCall() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InSecondaryConstructorDelegationCall.kt");
-        }
-
-        @TestMetadata("InSecondaryConstructorFirstDefaultParameter.kt")
-        public void testInSecondaryConstructorFirstDefaultParameter() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InSecondaryConstructorFirstDefaultParameter.kt");
-        }
-
-        @TestMetadata("InTypeAnnotation.kt")
-        public void testInTypeAnnotation() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InTypeAnnotation.kt");
-        }
-
-        @TestMetadata("InfixCall.kt")
-        public void testInfixCall() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InfixCall.kt");
-        }
-
-        @TestMetadata("InfixCallNoSpecialLambdaArgumentItem.kt")
-        public void testInfixCallNoSpecialLambdaArgumentItem() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InfixCallNoSpecialLambdaArgumentItem.kt");
-        }
-
-        @TestMetadata("InnerClass.kt")
-        public void testInnerClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InnerClass.kt");
-        }
-
-        @TestMetadata("InnerInBaseClass.kt")
-        public void testInnerInBaseClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InnerInBaseClass.kt");
-        }
-
-        @TestMetadata("InsideAnonymousClass.kt")
-        public void testInsideAnonymousClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InsideAnonymousClass.kt");
-        }
-
-        @TestMetadata("InterfaceNameBeforeRunBug.kt")
-        public void testInterfaceNameBeforeRunBug() throws Exception {
-            runTest("../completion/tests/testData/basic/common/InterfaceNameBeforeRunBug.kt");
-        }
-
-        @TestMetadata("KT10664.kt")
-        public void testKT10664() throws Exception {
-            runTest("../completion/tests/testData/basic/common/KT10664.kt");
-        }
-
-        @TestMetadata("KT12033.kt")
-        public void testKT12033() throws Exception {
-            runTest("../completion/tests/testData/basic/common/KT12033.kt");
-        }
-
-        @TestMetadata("KT13780.kt")
-        public void testKT13780() throws Exception {
-            runTest("../completion/tests/testData/basic/common/KT13780.kt");
-        }
-
-        @TestMetadata("KT13780_1.kt")
-        public void testKT13780_1() throws Exception {
-            runTest("../completion/tests/testData/basic/common/KT13780_1.kt");
-        }
-
-        @TestMetadata("KT31762.kt")
-        public void testKT31762() throws Exception {
-            runTest("../completion/tests/testData/basic/common/KT31762.kt");
-        }
-
-        @TestMetadata("KT33903_1.kt")
-        public void testKT33903_1() throws Exception {
-            runTest("../completion/tests/testData/basic/common/KT33903_1.kt");
-        }
-
-        @TestMetadata("KT33903_2.kt")
-        public void testKT33903_2() throws Exception {
-            runTest("../completion/tests/testData/basic/common/KT33903_2.kt");
-        }
-
-        @TestMetadata("LocalMultideclarationValues.kt")
-        public void testLocalMultideclarationValues() throws Exception {
-            runTest("../completion/tests/testData/basic/common/LocalMultideclarationValues.kt");
-        }
-
-        @TestMetadata("NameWithDollars.kt")
-        public void testNameWithDollars() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NameWithDollars.kt");
-        }
-
-        @TestMetadata("NamedObject.kt")
-        public void testNamedObject() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NamedObject.kt");
-        }
-
-        @TestMetadata("NestedBuiltInClass.kt")
-        public void testNestedBuiltInClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NestedBuiltInClass.kt");
-        }
-
-        @TestMetadata("NestedClassBug.kt")
-        public void testNestedClassBug() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NestedClassBug.kt");
-        }
-
-        @TestMetadata("NestedClassNameForExtension.kt")
-        public void testNestedClassNameForExtension() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NestedClassNameForExtension.kt");
-        }
-
-        @TestMetadata("NestedClassNameForExtension2.kt")
-        public void testNestedClassNameForExtension2() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NestedClassNameForExtension2.kt");
-        }
-
-        @TestMetadata("NestedClassesOnClassWithDefaultObject.kt")
-        public void testNestedClassesOnClassWithDefaultObject() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NestedClassesOnClassWithDefaultObject.kt");
-        }
-
-        @TestMetadata("NestedClassesOnClassWithNamedDefaultObject.kt")
-        public void testNestedClassesOnClassWithNamedDefaultObject() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NestedClassesOnClassWithNamedDefaultObject.kt");
-        }
-
-        @TestMetadata("NestedClassesOnDefaultObjectLiteral.kt")
-        public void testNestedClassesOnDefaultObjectLiteral() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NestedClassesOnDefaultObjectLiteral.kt");
-        }
-
-        @TestMetadata("NoAutoInsertionOfNotImported.kt")
-        public void testNoAutoInsertionOfNotImported() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoAutoInsertionOfNotImported.kt");
-        }
-
-        @TestMetadata("NoClassNameDuplication.kt")
-        public void testNoClassNameDuplication() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoClassNameDuplication.kt");
-        }
-
-        @TestMetadata("NoCompletionForCoroutinesIntinsics.kt")
-        public void testNoCompletionForCoroutinesIntinsics() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoCompletionForCoroutinesIntinsics.kt");
-        }
-
-        @TestMetadata("NoCompletionForCoroutinesJvmInternal.kt")
-        public void testNoCompletionForCoroutinesJvmInternal() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoCompletionForCoroutinesJvmInternal.kt");
-        }
-
-        @TestMetadata("NoCompletionForExcluded.kt")
-        public void testNoCompletionForExcluded() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoCompletionForExcluded.kt");
-        }
-
-        @TestMetadata("NoEmptyPackage.kt")
-        public void testNoEmptyPackage() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoEmptyPackage.kt");
-        }
-
-        @TestMetadata("NoEnumEntryType.kt")
-        public void testNoEnumEntryType() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoEnumEntryType.kt");
-        }
-
-        @TestMetadata("NoEnumMembersFromImplicitQualifier.kt")
-        public void testNoEnumMembersFromImplicitQualifier() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoEnumMembersFromImplicitQualifier.kt");
-        }
-
-        @TestMetadata("NoExtensionsAfterQualifier.kt")
-        public void testNoExtensionsAfterQualifier() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoExtensionsAfterQualifier.kt");
-        }
-
-        @TestMetadata("NoLocalsDeclaredAhead.kt")
-        public void testNoLocalsDeclaredAhead() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoLocalsDeclaredAhead.kt");
-        }
-
-        @TestMetadata("NoNestedClassAfterReceiver.kt")
-        public void testNoNestedClassAfterReceiver() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoNestedClassAfterReceiver.kt");
-        }
-
-        @TestMetadata("NoNestedClassesFromImplicitQualifier.kt")
-        public void testNoNestedClassesFromImplicitQualifier() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoNestedClassesFromImplicitQualifier.kt");
-        }
-
-        @TestMetadata("NoPackageFacadeClasses.kt")
-        public void testNoPackageFacadeClasses() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoPackageFacadeClasses.kt");
-        }
-
-        @TestMetadata("NoParameterAnnotationInPresentation.kt")
-        public void testNoParameterAnnotationInPresentation() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoParameterAnnotationInPresentation.kt");
-        }
-
-        @TestMetadata("NoTopLevelCompletionInQualifiedUserTypes.kt")
-        public void testNoTopLevelCompletionInQualifiedUserTypes() throws Exception {
-            runTest("../completion/tests/testData/basic/common/NoTopLevelCompletionInQualifiedUserTypes.kt");
-        }
-
-        @TestMetadata("ObjectInTypePosition.kt")
-        public void testObjectInTypePosition() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ObjectInTypePosition.kt");
-        }
-
-        @TestMetadata("ObjectMembersFromNested.kt")
-        public void testObjectMembersFromNested() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ObjectMembersFromNested.kt");
-        }
-
-        @TestMetadata("ObjectRedeclaration1.kt")
-        public void testObjectRedeclaration1() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ObjectRedeclaration1.kt");
-        }
-
-        @TestMetadata("ObjectRedeclaration2.kt")
-        public void testObjectRedeclaration2() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ObjectRedeclaration2.kt");
-        }
-
-        @TestMetadata("OverloadFunctions.kt")
-        public void testOverloadFunctions() throws Exception {
-            runTest("../completion/tests/testData/basic/common/OverloadFunctions.kt");
-        }
-
-        @TestMetadata("parameterDefaultValueInFunction.kt")
-        public void testParameterDefaultValueInFunction() throws Exception {
-            runTest("../completion/tests/testData/basic/common/parameterDefaultValueInFunction.kt");
-        }
-
-        @TestMetadata("PreferLessParameters.kt")
-        public void testPreferLessParameters() throws Exception {
-            runTest("../completion/tests/testData/basic/common/PreferLessParameters.kt");
-        }
-
-        @TestMetadata("PrivatesInSecondPressCompletion.kt")
-        public void testPrivatesInSecondPressCompletion() throws Exception {
-            runTest("../completion/tests/testData/basic/common/PrivatesInSecondPressCompletion.kt");
-        }
-
-        @TestMetadata("ProtectedExtensionMethod.kt")
-        public void testProtectedExtensionMethod() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ProtectedExtensionMethod.kt");
-        }
-
-        @TestMetadata("QualifiedSuperMembers.kt")
-        public void testQualifiedSuperMembers() throws Exception {
-            runTest("../completion/tests/testData/basic/common/QualifiedSuperMembers.kt");
-        }
-
-        @TestMetadata("RecieverMembersFromExtAccessor.kt")
-        public void testRecieverMembersFromExtAccessor() throws Exception {
-            runTest("../completion/tests/testData/basic/common/RecieverMembersFromExtAccessor.kt");
-        }
-
-        @TestMetadata("RecieverMembersFromExtFun.kt")
-        public void testRecieverMembersFromExtFun() throws Exception {
-            runTest("../completion/tests/testData/basic/common/RecieverMembersFromExtFun.kt");
-        }
-
-        @TestMetadata("SecondTypeArg.kt")
-        public void testSecondTypeArg() throws Exception {
-            runTest("../completion/tests/testData/basic/common/SecondTypeArg.kt");
-        }
-
-        @TestMetadata("SetPrefixForProperties.kt")
-        public void testSetPrefixForProperties() throws Exception {
-            runTest("../completion/tests/testData/basic/common/SetPrefixForProperties.kt");
-        }
-
-        @TestMetadata("ShortClassNamesInTypePosition.kt")
-        public void testShortClassNamesInTypePosition() throws Exception {
-            runTest("../completion/tests/testData/basic/common/ShortClassNamesInTypePosition.kt");
-        }
-
-        @TestMetadata("StandardJetArrayFirst.kt")
-        public void testStandardJetArrayFirst() throws Exception {
-            runTest("../completion/tests/testData/basic/common/StandardJetArrayFirst.kt");
-        }
-
-        @TestMetadata("StandardJetDoubleFirst.kt")
-        public void testStandardJetDoubleFirst() throws Exception {
-            runTest("../completion/tests/testData/basic/common/StandardJetDoubleFirst.kt");
-        }
-
-        @TestMetadata("SubpackageInFun.kt")
-        public void testSubpackageInFun() throws Exception {
-            runTest("../completion/tests/testData/basic/common/SubpackageInFun.kt");
-        }
-
-        @TestMetadata("SuperMembers.kt")
-        public void testSuperMembers() throws Exception {
-            runTest("../completion/tests/testData/basic/common/SuperMembers.kt");
-        }
-
-        @TestMetadata("SuperMembers2.kt")
-        public void testSuperMembers2() throws Exception {
-            runTest("../completion/tests/testData/basic/common/SuperMembers2.kt");
-        }
-
-        @TestMetadata("SuperMembers3.kt")
-        public void testSuperMembers3() throws Exception {
-            runTest("../completion/tests/testData/basic/common/SuperMembers3.kt");
-        }
-
-        @TestMetadata("SuperMembers4.kt")
-        public void testSuperMembers4() throws Exception {
-            runTest("../completion/tests/testData/basic/common/SuperMembers4.kt");
-        }
-
-        @TestMetadata("TopLevelClassCompletionInQualifiedCall.kt")
-        public void testTopLevelClassCompletionInQualifiedCall() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TopLevelClassCompletionInQualifiedCall.kt");
-        }
-
-        @TestMetadata("TopLevelClassName1.kt")
-        public void testTopLevelClassName1() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TopLevelClassName1.kt");
-        }
-
-        @TestMetadata("topLevelClassName2.kt")
-        public void testTopLevelClassName2() throws Exception {
-            runTest("../completion/tests/testData/basic/common/topLevelClassName2.kt");
-        }
-
-        @TestMetadata("TopLevelClassName4.kt")
-        public void testTopLevelClassName4() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TopLevelClassName4.kt");
-        }
-
-        @TestMetadata("TopLevelClassName5.kt")
-        public void testTopLevelClassName5() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TopLevelClassName5.kt");
-        }
-
-        @TestMetadata("TopLevelClassName6.kt")
-        public void testTopLevelClassName6() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TopLevelClassName6.kt");
-        }
-
-        @TestMetadata("TopLevelClassName-3.kt")
-        public void testTopLevelClassName_3() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TopLevelClassName-3.kt");
-        }
-
-        @TestMetadata("TypeArgCompletionBug.kt")
-        public void testTypeArgCompletionBug() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TypeArgCompletionBug.kt");
-        }
-
-        @TestMetadata("TypeArgFromTheSameFile.kt")
-        public void testTypeArgFromTheSameFile() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TypeArgFromTheSameFile.kt");
-        }
-
-        @TestMetadata("TypeArgOfOwnerClass.kt")
-        public void testTypeArgOfOwnerClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TypeArgOfOwnerClass.kt");
-        }
-
-        @TestMetadata("TypeParameterFromOuterClass.kt")
-        public void testTypeParameterFromOuterClass() throws Exception {
-            runTest("../completion/tests/testData/basic/common/TypeParameterFromOuterClass.kt");
-        }
-
-        @TestMetadata("VariableClassName.kt")
-        public void testVariableClassName() throws Exception {
-            runTest("../completion/tests/testData/basic/common/VariableClassName.kt");
-        }
-
+    public abstract static class Common extends AbstractHighLevelJvmBasicCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/tests/testData/basic/common/annotations")
         public static class Annotations extends AbstractHighLevelJvmBasicCompletionTest {
@@ -2864,6 +2100,804 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/tests/testData/basic/common")
+        public static class Uncategorized extends AbstractHighLevelJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AfterFloatOnNewLine.kt")
+            public void testAfterFloatOnNewLine() throws Exception {
+                runTest("../completion/tests/testData/basic/common/AfterFloatOnNewLine.kt");
+            }
+
+            @TestMetadata("AfterIntSeparatedWithComments.kt")
+            public void testAfterIntSeparatedWithComments() throws Exception {
+                runTest("../completion/tests/testData/basic/common/AfterIntSeparatedWithComments.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethod.kt")
+            public void testAmbiguousSuperMethod() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ambiguousSuperMethod.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethodDiamond.kt")
+            public void testAmbiguousSuperMethodDiamond() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodDiamond.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethodDiamondAny.kt")
+            public void testAmbiguousSuperMethodDiamondAny() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodDiamondAny.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethodHigherUp.kt")
+            public void testAmbiguousSuperMethodHigherUp() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodHigherUp.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethodSingleImpl.kt")
+            public void testAmbiguousSuperMethodSingleImpl() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodSingleImpl.kt");
+            }
+
+            @TestMetadata("BasicAny.kt")
+            public void testBasicAny() throws Exception {
+                runTest("../completion/tests/testData/basic/common/BasicAny.kt");
+            }
+
+            @TestMetadata("BasicInt.kt")
+            public void testBasicInt() throws Exception {
+                runTest("../completion/tests/testData/basic/common/BasicInt.kt");
+            }
+
+            @TestMetadata("BeforeDotInCall.kt")
+            public void testBeforeDotInCall() throws Exception {
+                runTest("../completion/tests/testData/basic/common/BeforeDotInCall.kt");
+            }
+
+            @TestMetadata("CallLocalLambda.kt")
+            public void testCallLocalLambda() throws Exception {
+                runTest("../completion/tests/testData/basic/common/CallLocalLambda.kt");
+            }
+
+            @TestMetadata("classObjectElementsInClass.kt")
+            public void testClassObjectElementsInClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/classObjectElementsInClass.kt");
+            }
+
+            @TestMetadata("ClassRedeclaration1.kt")
+            public void testClassRedeclaration1() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ClassRedeclaration1.kt");
+            }
+
+            @TestMetadata("ClassRedeclaration2.kt")
+            public void testClassRedeclaration2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ClassRedeclaration2.kt");
+            }
+
+            @TestMetadata("CompletionInSetter.kt")
+            public void testCompletionInSetter() throws Exception {
+                runTest("../completion/tests/testData/basic/common/CompletionInSetter.kt");
+            }
+
+            @TestMetadata("ComponentFunction.kt")
+            public void testComponentFunction() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ComponentFunction.kt");
+            }
+
+            @TestMetadata("ConsiderExtensionType.kt")
+            public void testConsiderExtensionType() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ConsiderExtensionType.kt");
+            }
+
+            @TestMetadata("CoroutineContextReleaseCoroutines.kt")
+            public void testCoroutineContextReleaseCoroutines() throws Exception {
+                runTest("../completion/tests/testData/basic/common/CoroutineContextReleaseCoroutines.kt");
+            }
+
+            @TestMetadata("DataClassMembers.kt")
+            public void testDataClassMembers() throws Exception {
+                runTest("../completion/tests/testData/basic/common/DataClassMembers.kt");
+            }
+
+            @TestMetadata("DataClassMembers2.kt")
+            public void testDataClassMembers2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/DataClassMembers2.kt");
+            }
+
+            @TestMetadata("EnumItemsThroughChainedTypeAlias.kt")
+            public void testEnumItemsThroughChainedTypeAlias() throws Exception {
+                runTest("../completion/tests/testData/basic/common/EnumItemsThroughChainedTypeAlias.kt");
+            }
+
+            @TestMetadata("EnumItemsThroughSingleTypeAlias.kt")
+            public void testEnumItemsThroughSingleTypeAlias() throws Exception {
+                runTest("../completion/tests/testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
+            }
+
+            @TestMetadata("ExtendClassName.kt")
+            public void testExtendClassName() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtendClassName.kt");
+            }
+
+            @TestMetadata("ExtendQualifiedClassName.kt")
+            public void testExtendQualifiedClassName() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtendQualifiedClassName.kt");
+            }
+
+            @TestMetadata("ExtensionForProperty.kt")
+            public void testExtensionForProperty() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionForProperty.kt");
+            }
+
+            @TestMetadata("ExtensionFunReceiver.kt")
+            public void testExtensionFunReceiver() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionFunReceiver.kt");
+            }
+
+            @TestMetadata("ExtensionFunReceiverForce.kt")
+            public void testExtensionFunReceiverForce() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionFunReceiverForce.kt");
+            }
+
+            @TestMetadata("ExtensionFunctionInClassObject.kt")
+            public void testExtensionFunctionInClassObject() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionFunctionInClassObject.kt");
+            }
+
+            @TestMetadata("ExtensionInsideFunction.kt")
+            public void testExtensionInsideFunction() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionInsideFunction.kt");
+            }
+
+            @TestMetadata("ExtensionOnTypeAliasFromOtherTypeAlias.kt")
+            public void testExtensionOnTypeAliasFromOtherTypeAlias() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionOnTypeAliasFromOtherTypeAlias.kt");
+            }
+
+            @TestMetadata("ExtensionToIntInFloatStyle.kt")
+            public void testExtensionToIntInFloatStyle() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionToIntInFloatStyle.kt");
+            }
+
+            @TestMetadata("ExtensionWithAdditionalTypeParameters.kt")
+            public void testExtensionWithAdditionalTypeParameters() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionWithAdditionalTypeParameters.kt");
+            }
+
+            @TestMetadata("ExtensionWithGenericParamInReceiver.kt")
+            public void testExtensionWithGenericParamInReceiver() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionWithGenericParamInReceiver.kt");
+            }
+
+            @TestMetadata("ExtensionWithGenericReceiver.kt")
+            public void testExtensionWithGenericReceiver() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionWithGenericReceiver.kt");
+            }
+
+            @TestMetadata("ExtensionWithInternalGenericParameters.kt")
+            public void testExtensionWithInternalGenericParameters() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionWithInternalGenericParameters.kt");
+            }
+
+            @TestMetadata("ExtensionWithManyTypeParamsInReceiver.kt")
+            public void testExtensionWithManyTypeParamsInReceiver() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionWithManyTypeParamsInReceiver.kt");
+            }
+
+            @TestMetadata("ExtensionsWithTypeParameterConstraints.kt")
+            public void testExtensionsWithTypeParameterConstraints() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ExtensionsWithTypeParameterConstraints.kt");
+            }
+
+            @TestMetadata("FromImports.kt")
+            public void testFromImports() throws Exception {
+                runTest("../completion/tests/testData/basic/common/FromImports.kt");
+            }
+
+            @TestMetadata("FunctionCompletionFormatting.kt")
+            public void testFunctionCompletionFormatting() throws Exception {
+                runTest("../completion/tests/testData/basic/common/FunctionCompletionFormatting.kt");
+            }
+
+            @TestMetadata("FunctionVariableCallArgument.kt")
+            public void testFunctionVariableCallArgument() throws Exception {
+                runTest("../completion/tests/testData/basic/common/FunctionVariableCallArgument.kt");
+            }
+
+            @TestMetadata("GenericCompanionExtension.kt")
+            public void testGenericCompanionExtension() throws Exception {
+                runTest("../completion/tests/testData/basic/common/GenericCompanionExtension.kt");
+            }
+
+            @TestMetadata("GenericExtensionFunReceiver1.kt")
+            public void testGenericExtensionFunReceiver1() throws Exception {
+                runTest("../completion/tests/testData/basic/common/GenericExtensionFunReceiver1.kt");
+            }
+
+            @TestMetadata("GenericExtensionFunReceiver2.kt")
+            public void testGenericExtensionFunReceiver2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/GenericExtensionFunReceiver2.kt");
+            }
+
+            @TestMetadata("GenericKotlinClass.kt")
+            public void testGenericKotlinClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/GenericKotlinClass.kt");
+            }
+
+            @TestMetadata("GetPrefixForProperties.kt")
+            public void testGetPrefixForProperties() throws Exception {
+                runTest("../completion/tests/testData/basic/common/GetPrefixForProperties.kt");
+            }
+
+            @TestMetadata("ImportedEnumMembers.kt")
+            public void testImportedEnumMembers() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ImportedEnumMembers.kt");
+            }
+
+            @TestMetadata("ImportedMemberFromObject.kt")
+            public void testImportedMemberFromObject() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ImportedMemberFromObject.kt");
+            }
+
+            @TestMetadata("InCallExpression.kt")
+            public void testInCallExpression() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InCallExpression.kt");
+            }
+
+            @TestMetadata("InClassInitializer.kt")
+            public void testInClassInitializer() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InClassInitializer.kt");
+            }
+
+            @TestMetadata("InClassObject.kt")
+            public void testInClassObject() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InClassObject.kt");
+            }
+
+            @TestMetadata("InClassPropertyAccessor.kt")
+            public void testInClassPropertyAccessor() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InClassPropertyAccessor.kt");
+            }
+
+            @TestMetadata("InEmptyImport.kt")
+            public void testInEmptyImport() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InEmptyImport.kt");
+            }
+
+            @TestMetadata("InEmptyPackage.kt")
+            public void testInEmptyPackage() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InEmptyPackage.kt");
+            }
+
+            @TestMetadata("InExpressionNoPrefix.kt")
+            public void testInExpressionNoPrefix() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InExpressionNoPrefix.kt");
+            }
+
+            @TestMetadata("InExtendTypeAnnotation.kt")
+            public void testInExtendTypeAnnotation() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InExtendTypeAnnotation.kt");
+            }
+
+            @TestMetadata("InFileWithMultiDeclaration.kt")
+            public void testInFileWithMultiDeclaration() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InFileWithMultiDeclaration.kt");
+            }
+
+            @TestMetadata("InFileWithTypedef.kt")
+            public void testInFileWithTypedef() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InFileWithTypedef.kt");
+            }
+
+            @TestMetadata("InFunInClassInitializer.kt")
+            public void testInFunInClassInitializer() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InFunInClassInitializer.kt");
+            }
+
+            @TestMetadata("InFunctionArguments.kt")
+            public void testInFunctionArguments() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InFunctionArguments.kt");
+            }
+
+            @TestMetadata("InGlobalPropertyInitializer.kt")
+            public void testInGlobalPropertyInitializer() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InGlobalPropertyInitializer.kt");
+            }
+
+            @TestMetadata("InImport.kt")
+            public void testInImport() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InImport.kt");
+            }
+
+            @TestMetadata("InInitializerInPropertyAccessor.kt")
+            public void testInInitializerInPropertyAccessor() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InInitializerInPropertyAccessor.kt");
+            }
+
+            @TestMetadata("InInnerClass.kt")
+            public void testInInnerClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InInnerClass.kt");
+            }
+
+            @TestMetadata("InLambda.kt")
+            public void testInLambda() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InLambda.kt");
+            }
+
+            @TestMetadata("InLocalObjectDeclaration.kt")
+            public void testInLocalObjectDeclaration() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InLocalObjectDeclaration.kt");
+            }
+
+            @TestMetadata("InLongDotQualifiedExpression.kt")
+            public void testInLongDotQualifiedExpression() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InLongDotQualifiedExpression.kt");
+            }
+
+            @TestMetadata("InMiddleOfPackage.kt")
+            public void testInMiddleOfPackage() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InMiddleOfPackage.kt");
+            }
+
+            @TestMetadata("InMiddleOfPackageDirective.kt")
+            public void testInMiddleOfPackageDirective() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InMiddleOfPackageDirective.kt");
+            }
+
+            @TestMetadata("InNestedClass.kt")
+            public void testInNestedClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InNestedClass.kt");
+            }
+
+            @TestMetadata("InObjectInDelegationSpecifier.kt")
+            public void testInObjectInDelegationSpecifier() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InObjectInDelegationSpecifier.kt");
+            }
+
+            @TestMetadata("InPackage.kt")
+            public void testInPackage() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InPackage.kt");
+            }
+
+            @TestMetadata("InParametersTypes.kt")
+            public void testInParametersTypes() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InParametersTypes.kt");
+            }
+
+            @TestMetadata("InParametersTypesForce.kt")
+            public void testInParametersTypesForce() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InParametersTypesForce.kt");
+            }
+
+            @TestMetadata("InPropertyAccessor.kt")
+            public void testInPropertyAccessor() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InPropertyAccessor.kt");
+            }
+
+            @TestMetadata("InPropertyInitializer.kt")
+            public void testInPropertyInitializer() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InPropertyInitializer.kt");
+            }
+
+            @TestMetadata("InSecondaryConstructorBody.kt")
+            public void testInSecondaryConstructorBody() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InSecondaryConstructorBody.kt");
+            }
+
+            @TestMetadata("InSecondaryConstructorDefaultParameter.kt")
+            public void testInSecondaryConstructorDefaultParameter() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InSecondaryConstructorDefaultParameter.kt");
+            }
+
+            @TestMetadata("InSecondaryConstructorDelegationCall.kt")
+            public void testInSecondaryConstructorDelegationCall() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InSecondaryConstructorDelegationCall.kt");
+            }
+
+            @TestMetadata("InSecondaryConstructorFirstDefaultParameter.kt")
+            public void testInSecondaryConstructorFirstDefaultParameter() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InSecondaryConstructorFirstDefaultParameter.kt");
+            }
+
+            @TestMetadata("InTypeAnnotation.kt")
+            public void testInTypeAnnotation() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InTypeAnnotation.kt");
+            }
+
+            @TestMetadata("InfixCall.kt")
+            public void testInfixCall() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InfixCall.kt");
+            }
+
+            @TestMetadata("InfixCallNoSpecialLambdaArgumentItem.kt")
+            public void testInfixCallNoSpecialLambdaArgumentItem() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InfixCallNoSpecialLambdaArgumentItem.kt");
+            }
+
+            @TestMetadata("InnerClass.kt")
+            public void testInnerClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InnerClass.kt");
+            }
+
+            @TestMetadata("InnerInBaseClass.kt")
+            public void testInnerInBaseClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InnerInBaseClass.kt");
+            }
+
+            @TestMetadata("InsideAnonymousClass.kt")
+            public void testInsideAnonymousClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InsideAnonymousClass.kt");
+            }
+
+            @TestMetadata("InterfaceNameBeforeRunBug.kt")
+            public void testInterfaceNameBeforeRunBug() throws Exception {
+                runTest("../completion/tests/testData/basic/common/InterfaceNameBeforeRunBug.kt");
+            }
+
+            @TestMetadata("KT10664.kt")
+            public void testKT10664() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KT10664.kt");
+            }
+
+            @TestMetadata("KT12033.kt")
+            public void testKT12033() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KT12033.kt");
+            }
+
+            @TestMetadata("KT13780.kt")
+            public void testKT13780() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KT13780.kt");
+            }
+
+            @TestMetadata("KT13780_1.kt")
+            public void testKT13780_1() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KT13780_1.kt");
+            }
+
+            @TestMetadata("KT31762.kt")
+            public void testKT31762() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KT31762.kt");
+            }
+
+            @TestMetadata("KT33903_1.kt")
+            public void testKT33903_1() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KT33903_1.kt");
+            }
+
+            @TestMetadata("KT33903_2.kt")
+            public void testKT33903_2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KT33903_2.kt");
+            }
+
+            @TestMetadata("KTIJ20039.kt")
+            public void testKTIJ20039() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KTIJ20039.kt");
+            }
+
+            @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
+            public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
+            }
+
+            @TestMetadata("KeywordsAreLowInParameterTypeCompletion2.kt")
+            public void testKeywordsAreLowInParameterTypeCompletion2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KeywordsAreLowInParameterTypeCompletion2.kt");
+            }
+
+            @TestMetadata("KeywordsAreLowInParameterTypeCompletion3.kt")
+            public void testKeywordsAreLowInParameterTypeCompletion3() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KeywordsAreLowInParameterTypeCompletion3.kt");
+            }
+
+            @TestMetadata("KeywordsAreLowInParameterTypeCompletion4.kt")
+            public void testKeywordsAreLowInParameterTypeCompletion4() throws Exception {
+                runTest("../completion/tests/testData/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
+            }
+
+            @TestMetadata("LocalMultideclarationValues.kt")
+            public void testLocalMultideclarationValues() throws Exception {
+                runTest("../completion/tests/testData/basic/common/LocalMultideclarationValues.kt");
+            }
+
+            @TestMetadata("NameWithDollars.kt")
+            public void testNameWithDollars() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NameWithDollars.kt");
+            }
+
+            @TestMetadata("NamedObject.kt")
+            public void testNamedObject() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NamedObject.kt");
+            }
+
+            @TestMetadata("NestedBuiltInClass.kt")
+            public void testNestedBuiltInClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NestedBuiltInClass.kt");
+            }
+
+            @TestMetadata("NestedClassBug.kt")
+            public void testNestedClassBug() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NestedClassBug.kt");
+            }
+
+            @TestMetadata("NestedClassNameForExtension.kt")
+            public void testNestedClassNameForExtension() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NestedClassNameForExtension.kt");
+            }
+
+            @TestMetadata("NestedClassNameForExtension2.kt")
+            public void testNestedClassNameForExtension2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NestedClassNameForExtension2.kt");
+            }
+
+            @TestMetadata("NestedClassesOnClassWithDefaultObject.kt")
+            public void testNestedClassesOnClassWithDefaultObject() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NestedClassesOnClassWithDefaultObject.kt");
+            }
+
+            @TestMetadata("NestedClassesOnClassWithNamedDefaultObject.kt")
+            public void testNestedClassesOnClassWithNamedDefaultObject() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NestedClassesOnClassWithNamedDefaultObject.kt");
+            }
+
+            @TestMetadata("NestedClassesOnDefaultObjectLiteral.kt")
+            public void testNestedClassesOnDefaultObjectLiteral() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NestedClassesOnDefaultObjectLiteral.kt");
+            }
+
+            @TestMetadata("NoAutoInsertionOfNotImported.kt")
+            public void testNoAutoInsertionOfNotImported() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoAutoInsertionOfNotImported.kt");
+            }
+
+            @TestMetadata("NoClassNameDuplication.kt")
+            public void testNoClassNameDuplication() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoClassNameDuplication.kt");
+            }
+
+            @TestMetadata("NoCompletionForCoroutinesIntinsics.kt")
+            public void testNoCompletionForCoroutinesIntinsics() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoCompletionForCoroutinesIntinsics.kt");
+            }
+
+            @TestMetadata("NoCompletionForCoroutinesJvmInternal.kt")
+            public void testNoCompletionForCoroutinesJvmInternal() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoCompletionForCoroutinesJvmInternal.kt");
+            }
+
+            @TestMetadata("NoCompletionForExcluded.kt")
+            public void testNoCompletionForExcluded() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoCompletionForExcluded.kt");
+            }
+
+            @TestMetadata("NoEmptyPackage.kt")
+            public void testNoEmptyPackage() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoEmptyPackage.kt");
+            }
+
+            @TestMetadata("NoEnumEntryType.kt")
+            public void testNoEnumEntryType() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoEnumEntryType.kt");
+            }
+
+            @TestMetadata("NoEnumMembersFromImplicitQualifier.kt")
+            public void testNoEnumMembersFromImplicitQualifier() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoEnumMembersFromImplicitQualifier.kt");
+            }
+
+            @TestMetadata("NoExtensionsAfterQualifier.kt")
+            public void testNoExtensionsAfterQualifier() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoExtensionsAfterQualifier.kt");
+            }
+
+            @TestMetadata("NoLocalsDeclaredAhead.kt")
+            public void testNoLocalsDeclaredAhead() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoLocalsDeclaredAhead.kt");
+            }
+
+            @TestMetadata("NoNestedClassAfterReceiver.kt")
+            public void testNoNestedClassAfterReceiver() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoNestedClassAfterReceiver.kt");
+            }
+
+            @TestMetadata("NoNestedClassesFromImplicitQualifier.kt")
+            public void testNoNestedClassesFromImplicitQualifier() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoNestedClassesFromImplicitQualifier.kt");
+            }
+
+            @TestMetadata("NoPackageFacadeClasses.kt")
+            public void testNoPackageFacadeClasses() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoPackageFacadeClasses.kt");
+            }
+
+            @TestMetadata("NoParameterAnnotationInPresentation.kt")
+            public void testNoParameterAnnotationInPresentation() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoParameterAnnotationInPresentation.kt");
+            }
+
+            @TestMetadata("NoTopLevelCompletionInQualifiedUserTypes.kt")
+            public void testNoTopLevelCompletionInQualifiedUserTypes() throws Exception {
+                runTest("../completion/tests/testData/basic/common/NoTopLevelCompletionInQualifiedUserTypes.kt");
+            }
+
+            @TestMetadata("ObjectInTypePosition.kt")
+            public void testObjectInTypePosition() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ObjectInTypePosition.kt");
+            }
+
+            @TestMetadata("ObjectMembersFromNested.kt")
+            public void testObjectMembersFromNested() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ObjectMembersFromNested.kt");
+            }
+
+            @TestMetadata("ObjectRedeclaration1.kt")
+            public void testObjectRedeclaration1() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ObjectRedeclaration1.kt");
+            }
+
+            @TestMetadata("ObjectRedeclaration2.kt")
+            public void testObjectRedeclaration2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ObjectRedeclaration2.kt");
+            }
+
+            @TestMetadata("OverloadFunctions.kt")
+            public void testOverloadFunctions() throws Exception {
+                runTest("../completion/tests/testData/basic/common/OverloadFunctions.kt");
+            }
+
+            @TestMetadata("parameterDefaultValueInFunction.kt")
+            public void testParameterDefaultValueInFunction() throws Exception {
+                runTest("../completion/tests/testData/basic/common/parameterDefaultValueInFunction.kt");
+            }
+
+            @TestMetadata("PreferLessParameters.kt")
+            public void testPreferLessParameters() throws Exception {
+                runTest("../completion/tests/testData/basic/common/PreferLessParameters.kt");
+            }
+
+            @TestMetadata("PrivatesInSecondPressCompletion.kt")
+            public void testPrivatesInSecondPressCompletion() throws Exception {
+                runTest("../completion/tests/testData/basic/common/PrivatesInSecondPressCompletion.kt");
+            }
+
+            @TestMetadata("ProtectedExtensionMethod.kt")
+            public void testProtectedExtensionMethod() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ProtectedExtensionMethod.kt");
+            }
+
+            @TestMetadata("QualifiedSuperMembers.kt")
+            public void testQualifiedSuperMembers() throws Exception {
+                runTest("../completion/tests/testData/basic/common/QualifiedSuperMembers.kt");
+            }
+
+            @TestMetadata("RecieverMembersFromExtAccessor.kt")
+            public void testRecieverMembersFromExtAccessor() throws Exception {
+                runTest("../completion/tests/testData/basic/common/RecieverMembersFromExtAccessor.kt");
+            }
+
+            @TestMetadata("RecieverMembersFromExtFun.kt")
+            public void testRecieverMembersFromExtFun() throws Exception {
+                runTest("../completion/tests/testData/basic/common/RecieverMembersFromExtFun.kt");
+            }
+
+            @TestMetadata("SecondTypeArg.kt")
+            public void testSecondTypeArg() throws Exception {
+                runTest("../completion/tests/testData/basic/common/SecondTypeArg.kt");
+            }
+
+            @TestMetadata("SetPrefixForProperties.kt")
+            public void testSetPrefixForProperties() throws Exception {
+                runTest("../completion/tests/testData/basic/common/SetPrefixForProperties.kt");
+            }
+
+            @TestMetadata("ShortClassNamesInTypePosition.kt")
+            public void testShortClassNamesInTypePosition() throws Exception {
+                runTest("../completion/tests/testData/basic/common/ShortClassNamesInTypePosition.kt");
+            }
+
+            @TestMetadata("StandardJetArrayFirst.kt")
+            public void testStandardJetArrayFirst() throws Exception {
+                runTest("../completion/tests/testData/basic/common/StandardJetArrayFirst.kt");
+            }
+
+            @TestMetadata("StandardJetDoubleFirst.kt")
+            public void testStandardJetDoubleFirst() throws Exception {
+                runTest("../completion/tests/testData/basic/common/StandardJetDoubleFirst.kt");
+            }
+
+            @TestMetadata("SubpackageInFun.kt")
+            public void testSubpackageInFun() throws Exception {
+                runTest("../completion/tests/testData/basic/common/SubpackageInFun.kt");
+            }
+
+            @TestMetadata("SuperMembers.kt")
+            public void testSuperMembers() throws Exception {
+                runTest("../completion/tests/testData/basic/common/SuperMembers.kt");
+            }
+
+            @TestMetadata("SuperMembers2.kt")
+            public void testSuperMembers2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/SuperMembers2.kt");
+            }
+
+            @TestMetadata("SuperMembers3.kt")
+            public void testSuperMembers3() throws Exception {
+                runTest("../completion/tests/testData/basic/common/SuperMembers3.kt");
+            }
+
+            @TestMetadata("SuperMembers4.kt")
+            public void testSuperMembers4() throws Exception {
+                runTest("../completion/tests/testData/basic/common/SuperMembers4.kt");
+            }
+
+            @TestMetadata("SuspendCanBePrefixSelectedInParameterTypeCompletion.kt")
+            public void testSuspendCanBePrefixSelectedInParameterTypeCompletion() throws Exception {
+                runTest("../completion/tests/testData/basic/common/SuspendCanBePrefixSelectedInParameterTypeCompletion.kt");
+            }
+
+            @TestMetadata("TopLevelClassCompletionInQualifiedCall.kt")
+            public void testTopLevelClassCompletionInQualifiedCall() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TopLevelClassCompletionInQualifiedCall.kt");
+            }
+
+            @TestMetadata("TopLevelClassName1.kt")
+            public void testTopLevelClassName1() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TopLevelClassName1.kt");
+            }
+
+            @TestMetadata("topLevelClassName2.kt")
+            public void testTopLevelClassName2() throws Exception {
+                runTest("../completion/tests/testData/basic/common/topLevelClassName2.kt");
+            }
+
+            @TestMetadata("TopLevelClassName4.kt")
+            public void testTopLevelClassName4() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TopLevelClassName4.kt");
+            }
+
+            @TestMetadata("TopLevelClassName5.kt")
+            public void testTopLevelClassName5() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TopLevelClassName5.kt");
+            }
+
+            @TestMetadata("TopLevelClassName6.kt")
+            public void testTopLevelClassName6() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TopLevelClassName6.kt");
+            }
+
+            @TestMetadata("TopLevelClassName-3.kt")
+            public void testTopLevelClassName_3() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TopLevelClassName-3.kt");
+            }
+
+            @TestMetadata("TypeArgCompletionBug.kt")
+            public void testTypeArgCompletionBug() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TypeArgCompletionBug.kt");
+            }
+
+            @TestMetadata("TypeArgFromTheSameFile.kt")
+            public void testTypeArgFromTheSameFile() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TypeArgFromTheSameFile.kt");
+            }
+
+            @TestMetadata("TypeArgOfOwnerClass.kt")
+            public void testTypeArgOfOwnerClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TypeArgOfOwnerClass.kt");
+            }
+
+            @TestMetadata("TypeParameterFromOuterClass.kt")
+            public void testTypeParameterFromOuterClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/TypeParameterFromOuterClass.kt");
+            }
+
+            @TestMetadata("VariableClassName.kt")
+            public void testVariableClassName() throws Exception {
+                runTest("../completion/tests/testData/basic/common/VariableClassName.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/tests/testData/basic/common/variableNameAndType")
         public static class VariableNameAndType extends AbstractHighLevelJvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -2982,121 +3016,7 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/tests/testData/basic/java")
-    public static class Java extends AbstractHighLevelJvmBasicCompletionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("AutoForceCompletion.kt")
-        public void testAutoForceCompletion() throws Exception {
-            runTest("../completion/tests/testData/basic/java/AutoForceCompletion.kt");
-        }
-
-        @TestMetadata("ClassFromDependency.kt")
-        public void testClassFromDependency() throws Exception {
-            runTest("../completion/tests/testData/basic/java/ClassFromDependency.kt");
-        }
-
-        @TestMetadata("CompletionForExcludedWhenInternalUse.kt")
-        public void testCompletionForExcludedWhenInternalUse() throws Exception {
-            runTest("../completion/tests/testData/basic/java/CompletionForExcludedWhenInternalUse.kt");
-        }
-
-        @TestMetadata("ExtensionFromStandardLibrary.kt")
-        public void testExtensionFromStandardLibrary() throws Exception {
-            runTest("../completion/tests/testData/basic/java/ExtensionFromStandardLibrary.kt");
-        }
-
-        @TestMetadata("InPackage.kt")
-        public void testInPackage() throws Exception {
-            runTest("../completion/tests/testData/basic/java/InPackage.kt");
-        }
-
-        @TestMetadata("JavaClassNames.kt")
-        public void testJavaClassNames() throws Exception {
-            runTest("../completion/tests/testData/basic/java/JavaClassNames.kt");
-        }
-
-        @TestMetadata("JavaPackage.kt")
-        public void testJavaPackage() throws Exception {
-            runTest("../completion/tests/testData/basic/java/JavaPackage.kt");
-        }
-
-        @TestMetadata("JavaSyntheticProperty.kt")
-        public void testJavaSyntheticProperty() throws Exception {
-            runTest("../completion/tests/testData/basic/java/JavaSyntheticProperty.kt");
-        }
-
-        @TestMetadata("KProperty.kt")
-        public void testKProperty() throws Exception {
-            runTest("../completion/tests/testData/basic/java/KProperty.kt");
-        }
-
-        @TestMetadata("KT9166.kt")
-        public void testKT9166() throws Exception {
-            runTest("../completion/tests/testData/basic/java/KT9166.kt");
-        }
-
-        @TestMetadata("NoDuplicationForImportedJavaClass.kt")
-        public void testNoDuplicationForImportedJavaClass() throws Exception {
-            runTest("../completion/tests/testData/basic/java/NoDuplicationForImportedJavaClass.kt");
-        }
-
-        @TestMetadata("NoDuplicationForRuntimeClass.kt")
-        public void testNoDuplicationForRuntimeClass() throws Exception {
-            runTest("../completion/tests/testData/basic/java/NoDuplicationForRuntimeClass.kt");
-        }
-
-        @TestMetadata("NoSyntheticClasses.kt")
-        public void testNoSyntheticClasses() throws Exception {
-            runTest("../completion/tests/testData/basic/java/NoSyntheticClasses.kt");
-        }
-
-        @TestMetadata("NonImportedPrefixMatching1.kt")
-        public void testNonImportedPrefixMatching1() throws Exception {
-            runTest("../completion/tests/testData/basic/java/NonImportedPrefixMatching1.kt");
-        }
-
-        @TestMetadata("NonImportedPrefixMatching2.kt")
-        public void testNonImportedPrefixMatching2() throws Exception {
-            runTest("../completion/tests/testData/basic/java/NonImportedPrefixMatching2.kt");
-        }
-
-        @TestMetadata("NullableAnnotation.kt")
-        public void testNullableAnnotation() throws Exception {
-            runTest("../completion/tests/testData/basic/java/NullableAnnotation.kt");
-        }
-
-        @TestMetadata("Number.kt")
-        public void testNumber() throws Exception {
-            runTest("../completion/tests/testData/basic/java/Number.kt");
-        }
-
-        @TestMetadata("PackageDirective.kt")
-        public void testPackageDirective() throws Exception {
-            runTest("../completion/tests/testData/basic/java/PackageDirective.kt");
-        }
-
-        @TestMetadata("SAMAdaptersStatic.kt")
-        public void testSAMAdaptersStatic() throws Exception {
-            runTest("../completion/tests/testData/basic/java/SAMAdaptersStatic.kt");
-        }
-
-        @TestMetadata("StandardKotlinTypeAliasAfterExplicitlyImported.kt")
-        public void testStandardKotlinTypeAliasAfterExplicitlyImported() throws Exception {
-            runTest("../completion/tests/testData/basic/java/StandardKotlinTypeAliasAfterExplicitlyImported.kt");
-        }
-
-        @TestMetadata("StandardKotlinTypeAliasFirst.kt")
-        public void testStandardKotlinTypeAliasFirst() throws Exception {
-            runTest("../completion/tests/testData/basic/java/StandardKotlinTypeAliasFirst.kt");
-        }
-
-        @TestMetadata("TopLevelFromStandardLibrary.kt")
-        public void testTopLevelFromStandardLibrary() throws Exception {
-            runTest("../completion/tests/testData/basic/java/TopLevelFromStandardLibrary.kt");
-        }
-
+    public abstract static class Java extends AbstractHighLevelJvmBasicCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/tests/testData/basic/java/boldOrGrayed")
         public static class BoldOrGrayed extends AbstractHighLevelJvmBasicCompletionTest {
@@ -3238,6 +3158,124 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("SyntheticExtensions2.kt")
             public void testSyntheticExtensions2() throws Exception {
                 runTest("../completion/tests/testData/basic/java/syntheticExtensions/SyntheticExtensions2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/tests/testData/basic/java")
+        public static class Uncategorized extends AbstractHighLevelJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AutoForceCompletion.kt")
+            public void testAutoForceCompletion() throws Exception {
+                runTest("../completion/tests/testData/basic/java/AutoForceCompletion.kt");
+            }
+
+            @TestMetadata("ClassFromDependency.kt")
+            public void testClassFromDependency() throws Exception {
+                runTest("../completion/tests/testData/basic/java/ClassFromDependency.kt");
+            }
+
+            @TestMetadata("CompletionForExcludedWhenInternalUse.kt")
+            public void testCompletionForExcludedWhenInternalUse() throws Exception {
+                runTest("../completion/tests/testData/basic/java/CompletionForExcludedWhenInternalUse.kt");
+            }
+
+            @TestMetadata("ExtensionFromStandardLibrary.kt")
+            public void testExtensionFromStandardLibrary() throws Exception {
+                runTest("../completion/tests/testData/basic/java/ExtensionFromStandardLibrary.kt");
+            }
+
+            @TestMetadata("InPackage.kt")
+            public void testInPackage() throws Exception {
+                runTest("../completion/tests/testData/basic/java/InPackage.kt");
+            }
+
+            @TestMetadata("JavaClassNames.kt")
+            public void testJavaClassNames() throws Exception {
+                runTest("../completion/tests/testData/basic/java/JavaClassNames.kt");
+            }
+
+            @TestMetadata("JavaPackage.kt")
+            public void testJavaPackage() throws Exception {
+                runTest("../completion/tests/testData/basic/java/JavaPackage.kt");
+            }
+
+            @TestMetadata("JavaSyntheticProperty.kt")
+            public void testJavaSyntheticProperty() throws Exception {
+                runTest("../completion/tests/testData/basic/java/JavaSyntheticProperty.kt");
+            }
+
+            @TestMetadata("KProperty.kt")
+            public void testKProperty() throws Exception {
+                runTest("../completion/tests/testData/basic/java/KProperty.kt");
+            }
+
+            @TestMetadata("KT9166.kt")
+            public void testKT9166() throws Exception {
+                runTest("../completion/tests/testData/basic/java/KT9166.kt");
+            }
+
+            @TestMetadata("NoDuplicationForImportedJavaClass.kt")
+            public void testNoDuplicationForImportedJavaClass() throws Exception {
+                runTest("../completion/tests/testData/basic/java/NoDuplicationForImportedJavaClass.kt");
+            }
+
+            @TestMetadata("NoDuplicationForRuntimeClass.kt")
+            public void testNoDuplicationForRuntimeClass() throws Exception {
+                runTest("../completion/tests/testData/basic/java/NoDuplicationForRuntimeClass.kt");
+            }
+
+            @TestMetadata("NoSyntheticClasses.kt")
+            public void testNoSyntheticClasses() throws Exception {
+                runTest("../completion/tests/testData/basic/java/NoSyntheticClasses.kt");
+            }
+
+            @TestMetadata("NonImportedPrefixMatching1.kt")
+            public void testNonImportedPrefixMatching1() throws Exception {
+                runTest("../completion/tests/testData/basic/java/NonImportedPrefixMatching1.kt");
+            }
+
+            @TestMetadata("NonImportedPrefixMatching2.kt")
+            public void testNonImportedPrefixMatching2() throws Exception {
+                runTest("../completion/tests/testData/basic/java/NonImportedPrefixMatching2.kt");
+            }
+
+            @TestMetadata("NullableAnnotation.kt")
+            public void testNullableAnnotation() throws Exception {
+                runTest("../completion/tests/testData/basic/java/NullableAnnotation.kt");
+            }
+
+            @TestMetadata("Number.kt")
+            public void testNumber() throws Exception {
+                runTest("../completion/tests/testData/basic/java/Number.kt");
+            }
+
+            @TestMetadata("PackageDirective.kt")
+            public void testPackageDirective() throws Exception {
+                runTest("../completion/tests/testData/basic/java/PackageDirective.kt");
+            }
+
+            @TestMetadata("SAMAdaptersStatic.kt")
+            public void testSAMAdaptersStatic() throws Exception {
+                runTest("../completion/tests/testData/basic/java/SAMAdaptersStatic.kt");
+            }
+
+            @TestMetadata("StandardKotlinTypeAliasAfterExplicitlyImported.kt")
+            public void testStandardKotlinTypeAliasAfterExplicitlyImported() throws Exception {
+                runTest("../completion/tests/testData/basic/java/StandardKotlinTypeAliasAfterExplicitlyImported.kt");
+            }
+
+            @TestMetadata("StandardKotlinTypeAliasFirst.kt")
+            public void testStandardKotlinTypeAliasFirst() throws Exception {
+                runTest("../completion/tests/testData/basic/java/StandardKotlinTypeAliasFirst.kt");
+            }
+
+            @TestMetadata("TopLevelFromStandardLibrary.kt")
+            public void testTopLevelFromStandardLibrary() throws Exception {
+                runTest("../completion/tests/testData/basic/java/TopLevelFromStandardLibrary.kt");
             }
         }
     }
