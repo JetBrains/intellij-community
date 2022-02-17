@@ -1,4 +1,4 @@
 class A {
-  /* foo*/ int x;
+  /* foo */ int x;
 
 }
