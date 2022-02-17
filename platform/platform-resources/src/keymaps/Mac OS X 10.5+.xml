@@ -1,5 +1,5 @@
 <keymap name="Mac OS X 10.5+" parent="$default" version="1" disable-mnemonics="true">
-  <action id="FileChooser.TogglePathShowing">
+  <action id="FileChooser.TogglePathBar">
     <keyboard-shortcut first-keystroke="meta P"/>
   </action>
 

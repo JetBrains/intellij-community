@@ -24,9 +24,6 @@
   <action id="SplitChooser.SplitCenter">
     <keyboard-shortcut first-keystroke="SPACE"/>
   </action>
-  <action id="FileChooser.TogglePathShowing">
-    <keyboard-shortcut first-keystroke="control P"/>
-  </action>
   <action id="ShowSettings">
     <keyboard-shortcut first-keystroke="control alt S"/>
   </action>
@@ -1068,6 +1065,7 @@
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>
+
   <action id="FileChooser.GotoHome">
     <keyboard-shortcut first-keystroke="control 1"/>
   </action>
@@ -1083,6 +1081,9 @@
   <action id="FileChooser.NewFolder">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
     <keyboard-shortcut first-keystroke="control N"/>
+  </action>
+  <action id="FileChooser.TogglePathBar">
+    <keyboard-shortcut first-keystroke="control P"/>
   </action>
 
   <action id="PopupHector">

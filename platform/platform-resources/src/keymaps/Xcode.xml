@@ -229,7 +229,7 @@
   </action>
   <action id="FileChooser.GotoHome"/>
   <action id="FileChooser.GotoProject"/>
-  <action id="FileChooser.TogglePathShowing"/>
+  <action id="FileChooser.TogglePathBar"/>
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="meta G"/>
     <keyboard-shortcut first-keystroke="F3"/>
