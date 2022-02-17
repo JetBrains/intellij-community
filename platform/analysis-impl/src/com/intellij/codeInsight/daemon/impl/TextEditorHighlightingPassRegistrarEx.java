@@ -30,19 +30,18 @@ import java.util.List;
 
 @ApiStatus.Internal
 public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHighlightingPassRegistrar {
-
   public static TextEditorHighlightingPassRegistrarEx getInstanceEx(Project project) {
     return (TextEditorHighlightingPassRegistrarEx)getInstance(project);
   }
 
   @NotNull
-  public abstract List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
-                                                                     @NotNull Editor editor,
-                                                                     int @NotNull [] passesToIgnore);
+  public abstract List<@NotNull TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
+                                                                              @NotNull Editor editor,
+                                                                              int @NotNull [] passesToIgnore);
   @NotNull
-  public abstract List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
-                                                                         @NotNull Document document,
-                                                                         @NotNull HighlightInfoProcessor highlightInfoProcessor);
+  public abstract List<@NotNull TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
+                                                                                  @NotNull Document document,
+                                                                                  @NotNull HighlightInfoProcessor highlightInfoProcessor);
   @NotNull
   public abstract Iterable<DirtyScopeTrackingHighlightingPassFactory> getDirtyScopeTrackingFactories();
 }

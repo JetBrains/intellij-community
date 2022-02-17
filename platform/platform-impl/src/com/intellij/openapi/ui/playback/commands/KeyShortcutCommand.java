@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -15,7 +16,7 @@ public class KeyShortcutCommand extends TypeCommand {
   }
 
   @Override
-  public Promise<Object> _execute(PlaybackContext context) {
+  public @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final String one = getText().substring(PREFIX.length());
     if (!one.endsWith(POSTFIX)) {
       dumpError(context, "Expected " + "]");
