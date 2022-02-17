@@ -57,26 +57,32 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   private fun registerValidators(component: JComponent, validator: ComponentValidator) {
-    validator.withValidator(object : Supplier<ValidationInfo?> {
-      override fun get(): ValidationInfo? {
-        applyValidators(validations[component])?.let { validationInfo ->
-          fireValidationStatusChanged(component, validationInfo)
-          return validationInfo
-        }
-        if (applyValidationRequestor.isActive) {
-          applyValidators(validationsOnApply[component])?.let { validationInfo ->
-            fireValidationStatusChanged(component, validationInfo)
-            return validationInfo
-          }
-        }
-        fireValidationStatusChanged(component, null)
-        return null
+    validator.withValidator(Supplier {
+      val validators = ArrayList<DialogValidation>()
+      validations[component]?.let(validators::addAll)
+      if (applyValidationRequestor.isActive) {
+        validationsOnApply[component]?.let(validators::addAll)
       }
+      val validationInfo = applyValidators(validators)
+      fireValidationStatusChanged(component, validationInfo)
+      validationInfo
     })
   }
 
-  private fun applyValidators(validators: List<DialogValidation>?): ValidationInfo? {
-    return validators?.asSequence()?.mapNotNull { it.validate() }?.firstOrNull()
+  private fun applyValidators(validations: List<DialogValidation>): ValidationInfo? {
+    var result: ValidationInfo? = null
+    for (validation in validations) {
+      val validationInfo = validation.validate()
+      if (validationInfo != null) {
+        if (!validationInfo.okEnabled) {
+          return validationInfo
+        }
+        if (result == null || !validationInfo.warning) {
+          result = validationInfo
+        }
+      }
+    }
+    return result
   }
 
   private fun registerValidationRequestors(component: JComponent, validator: ComponentValidator, parentDisposable: Disposable) {
