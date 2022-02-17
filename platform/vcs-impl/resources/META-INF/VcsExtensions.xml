@@ -284,11 +284,11 @@
     <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyFileDocumentManagerListener"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
-    <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
-    <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
-    <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Vcs Notifications" displayType="BALLOON"/>
-    <notificationGroup id="Vcs Silent Notifications" displayType="NONE"/>
+    <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.messages"/>
+    <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.common.messages"/>
+    <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.important.messages"/>
+    <notificationGroup id="Vcs Notifications" displayType="BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.notifications"/>
+    <notificationGroup id="Vcs Silent Notifications" displayType="NONE" bundle="messages.VcsBundle" key="notification.group.vcs.silent.notifications"/>
     <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
                     serviceImplementation="com.intellij.impl.RunConfigurationVcsSupportImpl"
                     overrides="true"/>
