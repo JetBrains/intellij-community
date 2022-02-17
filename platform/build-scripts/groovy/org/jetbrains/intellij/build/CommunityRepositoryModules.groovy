@@ -30,7 +30,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.laf.macos") {
       bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     },
-    plugin("intellij.webp"){
+    plugin("intellij.webp") {
       withResource("lib/libwebp/linux", "lib/libwebp/linux")
       withResource("lib/libwebp/mac", "lib/libwebp/mac")
       withResource("lib/libwebp/win", "lib/libwebp/win")
@@ -52,7 +52,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
-    plugin("intellij.vcs.svn"){
+    plugin("intellij.vcs.svn") {
       withProjectLibrary("sqlite")
     },
     plugin("intellij.xpath") {
@@ -104,7 +104,7 @@ final class CommunityRepositoryModules {
         "maven-dependency-tree-1.2.jar",
         "mercury-artifact-1.0-alpha-6.jar",
         "nexus-indexer-1.2.3.jar"
-      ].each {withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib")}
+      ].each { withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib") }
       doNotCopyModuleLibrariesAutomatically([
         "intellij.maven.server.m2.impl", "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
         "intellij.maven.server.m2.impl", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
@@ -260,6 +260,13 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.keymap.visualStudio"),
     simplePlugin("intellij.keymap.netbeans"),
     simplePlugin("kotlin.plugin-fir"),
+    plugin("intellij.platform.testFramework.ui") {
+      withModuleLibrary("intellij.remoterobot.ide.launcher", mainModule, "")
+      withModuleLibrary("intellij.remoterobot.remote.fixtures", mainModule, "")
+      withModuleLibrary("intellij.remoterobot.remote.robot", mainModule, "")
+      withModuleLibrary("intellij.remoterobot.robot.server", mainModule, "")
+      withProjectLibrary("okhttp")
+    },
   )
 
   public final static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = List.of(
