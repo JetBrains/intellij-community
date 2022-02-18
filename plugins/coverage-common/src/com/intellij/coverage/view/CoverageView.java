@@ -107,10 +107,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     addEmptyCoverageText(project, suitesBundle);
     final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
-    myTable.getTable().setRowSorter(rowSorter);
-    final JTable table = myTable.getTreeHeader().getTable();
-    table.setModel(myTable.getTable().getModel());
-    table.setRowSorter(rowSorter);
+    myTable.setRowSorter(rowSorter);
     if (stateBean.mySortingColumn < 0 || stateBean.mySortingColumn >= myModel.getColumnCount()) {
       stateBean.myAscendingOrder = true;
       stateBean.mySortingColumn = 0;
@@ -241,7 +238,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       widths.add(columnModel.getColumn(i).getWidth());
     }
     // tree width comes last
-    widths.add(myTable.getTreeHeader().getColumnModel().getColumn(0).getWidth());
+    widths.add(myTable.getWidth() - myTable.getTable().getWidth());
     myStateBean.myColumnSize = widths;
 
     final RowSorter<? extends TableModel> sorter = myTable.getTable().getRowSorter();
