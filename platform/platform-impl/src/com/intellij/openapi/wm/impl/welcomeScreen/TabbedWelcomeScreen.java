@@ -151,9 +151,9 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     tree.setSelectionRow(tabIndex);
     var selectedTab = getSelectedTab();
     if(selectedTab == null) return;
-    if(selectedTab.myAssociatedComponent == null) return;
+    if(selectedTab.myAssociatedComponent.getComponentCount() == 0) return;
 
-    var panel = selectedTab.myAssociatedComponent;
+    var panel = (JComponent)selectedTab.myAssociatedComponent.getComponent(0);
     panel.removeAll();
     panel.add(component, BorderLayout.CENTER);
     revalidate();
