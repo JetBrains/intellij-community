@@ -159,7 +159,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         new RootPath(rootPath),
         getImportingSettings(),
         getGeneralSettings(),
-        new MavenImportSpec(true, true, true)
+        MavenImportSpec.EXPLICIT_IMPORT
       );
       return Collections.singletonList(dummyModule);
     }

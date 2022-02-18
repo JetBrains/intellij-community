@@ -51,7 +51,7 @@ class MavenProjectsAware(
           watcher.scheduleUpdate(filesToUpdate, filesToDelete, MavenImportSpec(false, true, context.isExplicitReload))
         }
         else {
-          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec(false, true, context.isExplicitReload))
         }
       }
     }
