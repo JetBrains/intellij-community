@@ -1085,6 +1085,12 @@
   <action id="FileChooser.TogglePathBar">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
+  <action id="FileChooserList.Root">
+    <keyboard-shortcut first-keystroke="control BACK_SLASH"/>
+  </action>
+  <action id="FileChooserList.LevelUp">
+    <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+  </action>
 
   <action id="PopupHector">
     <keyboard-shortcut first-keystroke="ctrl alt shift H"/>

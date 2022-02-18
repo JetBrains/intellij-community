@@ -150,6 +150,22 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
     });
     new ListSpeedSearch<>(myList);
+    myList.getActionMap().put(ListActions.Left.ID, myList.getActionMap().get(ListActions.Home.ID));
+    myList.getActionMap().put(ListActions.Right.ID, myList.getActionMap().get(ListActions.End.ID));
+    myList.getActionMap().put(FileChooserPanelActions.Root.ID, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        load(null, myCurrentDirectory, 0);
+      }
+    });
+    myList.getActionMap().put(FileChooserPanelActions.LevelUp.ID, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myCurrentDirectory != null) {
+          load(parent(myCurrentDirectory), null, UPPER_LEVEL);
+        }
+      }
+    });
 
     var scrollPane = ScrollPaneFactory.createScrollPane(myList);
     var pathInsets = myPath.getInsets();

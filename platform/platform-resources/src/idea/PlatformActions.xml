@@ -1071,6 +1071,14 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <group id="FileChooserList">
+      <action id="FileChooserList.Root" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$Root"/>
+      <action id="FileChooserList.LevelUp" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$LevelUp"
+              icon="com.intellij.icons.AllIcons.Nodes.UpFolder"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
     <group id="ChangeScheme">
       <action id="ChangeColorScheme" class="com.intellij.ide.actions.QuickChangeColorSchemeAction"/>
       <action id="ChangeKeymap" class="com.intellij.ide.actions.QuickChangeKeymapAction"/>

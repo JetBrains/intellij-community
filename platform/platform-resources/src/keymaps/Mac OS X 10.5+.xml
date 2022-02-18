@@ -2,6 +2,12 @@
   <action id="FileChooser.TogglePathBar">
     <keyboard-shortcut first-keystroke="meta P"/>
   </action>
+  <action id="FileChooserList.Root">
+    <keyboard-shortcut first-keystroke="meta SLASH"/>
+  </action>
+  <action id="FileChooserList.LevelUp">
+    <keyboard-shortcut first-keystroke="meta UP"/>
+  </action>
 
   <action id="$Delete">
     <keyboard-shortcut first-keystroke="DELETE"/>
