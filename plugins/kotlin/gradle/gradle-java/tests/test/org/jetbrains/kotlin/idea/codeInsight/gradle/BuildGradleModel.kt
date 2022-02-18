@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.testFramework.IdeaTestUtil
+import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ResultHandler
@@ -93,7 +93,7 @@ fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, 
         buildActionExecutor.setStandardOutput(System.out)
         buildActionExecutor.setStandardError(System.err)
 
-        val allModels = runBlockingCancellable {
+        val allModels = runBlocking {
             suspendCoroutine<ProjectImportAction.AllModels> { continuation ->
                 val buildActionResultHandler = object : ResultHandler<ProjectImportAction.AllModels> {
                     override fun onComplete(result: ProjectImportAction.AllModels) {
