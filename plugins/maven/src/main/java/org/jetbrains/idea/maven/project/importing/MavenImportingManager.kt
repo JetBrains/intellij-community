@@ -51,7 +51,7 @@ class MavenImportingManager(val project: Project) {
         override fun run(indicator: ProgressIndicator) {
           try {
             val finishedContext = doImport(
-              MavenProgressIndicator(project, indicator, null),
+              MavenProgressIndicator(project, indicator) { console },
               importPaths,
               generalSettings,
               importingSettings,
@@ -112,6 +112,7 @@ class MavenImportingManager(val project: Project) {
         currentContext?.indicator?.checkCanceled()
         flow.resolveDependencies(readMavenFiles)
       }
+
       val resolvePlugins = doTask(MavenProjectBundle.message("maven.downloading.plugins")) {
         currentContext?.indicator?.checkCanceled()
         flow.resolvePlugins(dependenciesContext)
@@ -132,6 +133,7 @@ class MavenImportingManager(val project: Project) {
         flow.runPostImportTasks(importContext)
         flow.updateProjectManager(readMavenFiles)
         flow.configureMavenProject(importContext)
+        MavenResolveResultProblemProcessor.notifyMavenProblems(project) // remove this, should be in appropriate phase
         return@doTask MavenImportFinishedContext(importContext)
       }
     }.also { it.context?.let(flow::runImportExtensions) }
