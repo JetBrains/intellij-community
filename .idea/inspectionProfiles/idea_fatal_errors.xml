@@ -3941,6 +3941,7 @@
       <option name="m_ignoreImmediatelyReturnedVariables" value="false" />
       <option name="m_ignoreAnnotatedVariables" value="false" />
     </inspection_tool>
+    <inspection_tool class="UnnecessaryModifier" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UnnecessaryModuleDependencyInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnnecessaryParentheses" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreClarifyingParentheses" value="false" />
