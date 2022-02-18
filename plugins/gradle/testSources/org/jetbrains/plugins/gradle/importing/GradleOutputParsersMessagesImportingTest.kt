@@ -114,6 +114,14 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
     val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
     val className = if (isGradleNewerOrSameAs("6.8")) "class 'example.SomePlugin'." else "[class 'example.SomePlugin']"
+
+    val tryText = if (isGradleNewerOrSameAs("7.4")) {
+                              """|> Run with --stacktrace option to get the stack trace.
+                                 |> Run with --debug option to get more log output.
+                                 |> Run with --scan to get full insights."""
+    } else {
+      """|Run with --stacktrace option to get the stack trace. Run with --debug option to get more log output.$tryScanSuggestion"""
+    }
     assertSyncViewSelectedNode("Something's wrong!",
                                """
                                  |Build file '$filePath' line: 1
@@ -123,7 +131,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                  |   > Something's wrong!
                                  |
                                  |* Try:
-                                 |Run with --stacktrace option to get the stack trace. Run with --debug option to get more log output.$tryScanSuggestion
+                                 $tryText
                                  |
                                """.trimMargin())
 
