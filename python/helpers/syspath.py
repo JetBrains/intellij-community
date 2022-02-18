@@ -1,4 +1,8 @@
-import sys
 import os.path
-for x in sys.path:
-    if x != os.path.dirname(sys.argv [0]) and x != '.': sys.stdout.write(x+chr(10))
+import sys
+
+_helpers_root = os.path.dirname(os.path.abspath(__file__))
+
+for root in sys.path:
+    if root != _helpers_root and root != os.curdir:
+        print(root)
