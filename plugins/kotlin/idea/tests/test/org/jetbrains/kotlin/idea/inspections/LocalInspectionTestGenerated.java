@@ -8793,6 +8793,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableVararg_ni.kt");
         }
 
+        @TestMetadata("nullableReceiver.kt")
+        public void testNullableReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/redundantLambdaArrow/nullableReceiver.kt");
+        }
+
         @TestMetadata("overload4.kt")
         public void testOverload4() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/overload4.kt");
