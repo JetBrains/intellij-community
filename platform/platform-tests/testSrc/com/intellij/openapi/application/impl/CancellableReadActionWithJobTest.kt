@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -16,14 +17,20 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
   fun context() {
     currentJobTest { currentJob ->
       val application = ApplicationManager.getApplication()
+
+      assertNull(ProgressManager.getGlobalProgressIndicator())
       application.assertReadAccessNotAllowed()
+
       val result = computeCancellable {
         val readJob = requireNotNull(Cancellation.currentJob())
         assertJobIsChildOf(job = readJob, parent = currentJob)
+        assertNull(ProgressManager.getGlobalProgressIndicator())
         application.assertReadAccessAllowed()
         42
       }
       assertEquals(42, result)
+
+      assertNull(ProgressManager.getGlobalProgressIndicator())
       application.assertReadAccessNotAllowed()
     }
   }

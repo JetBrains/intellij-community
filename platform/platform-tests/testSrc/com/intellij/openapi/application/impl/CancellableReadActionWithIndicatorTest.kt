@@ -16,16 +16,19 @@ class CancellableReadActionWithIndicatorTest : CancellableReadActionTests() {
       val application = ApplicationManager.getApplication()
 
       assertNull(Cancellation.currentJob())
+      assertNotNull(ProgressManager.getGlobalProgressIndicator())
       application.assertReadAccessNotAllowed()
 
       val result = computeCancellable {
         assertNotNull(Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
         application.assertReadAccessAllowed()
         42
       }
       assertEquals(42, result)
 
       assertNull(Cancellation.currentJob())
+      assertNotNull(ProgressManager.getGlobalProgressIndicator())
       application.assertReadAccessNotAllowed()
     }
   }

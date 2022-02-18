@@ -14,11 +14,16 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
   fun context() {
     currentJobTest { job ->
       assertSame(job, Cancellation.currentJob())
+      assertNull(ProgressManager.getGlobalProgressIndicator())
+
       ensureCurrentJob { currentJob ->
         assertSame(job, Cancellation.currentJob())
         assertSame(job, currentJob)
+        assertNull(ProgressManager.getGlobalProgressIndicator())
       }
+
       assertSame(job, Cancellation.currentJob())
+      assertNull(ProgressManager.getGlobalProgressIndicator())
     }
   }
 

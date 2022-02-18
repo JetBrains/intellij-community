@@ -3,10 +3,12 @@
 
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -31,13 +33,24 @@ suspend fun checkCanceled() {
  *
  * This is a bridge for invoking suspending code from blocking code.
  *
- * Example:
+ * Example: running a coroutine under indicator.
  * ```
  * ProgressManager.getInstance().runProcess({
  *   runBlockingCancellable {
  *     someSuspendingFunctionWhichDoesntKnowAboutIndicator()
  *   }
  * }, progress);
+ * ```
+ *
+ * Example 2: running a coroutine under current job.
+ * ```
+ * launch { // given a coroutine
+ *   blockingContext { // installs the current job
+ *     runBlockingCancellable { // becomes a child of the current job
+ *       someSuspendingFunction()
+ *     }
+ *   }
+ * }
  * ```
  *
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
@@ -51,10 +64,13 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
     return runBlockingCancellable(indicator, action)
   }
   return ensureCurrentJob { currentJob ->
+    // TODO put currentThreadContext() into the runBlocking context
     val context = currentJob +
                   CoroutineName("job run blocking")
     runBlocking(context) {
-      action()
+      resetThreadContext(EmptyCoroutineContext).use {
+        action()
+      }
     }
   }
 }
@@ -62,10 +78,41 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
 @Internal
 fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   return ensureCurrentJob(indicator) { currentJob ->
+    // TODO put currentThreadContext() into the runBlocking context
     val context = currentJob +
                   CoroutineName("indicator run blocking") +
                   ProgressIndicatorSink(indicator).asContextElement()
     runBlocking(context) {
+      resetThreadContext(EmptyCoroutineContext).use {
+        action()
+      }
+    }
+  }
+}
+
+/**
+ * Switches from a suspending context to the blocking context.
+ *
+ * The function is marked with `suspend` so it's only callable from a coroutine.
+ *
+ * This function resets [current thread context][com.intellij.concurrency.currentThreadContext]
+ * to the [coroutine context][coroutineContext] of the calling coroutine.
+ * It's done because the context propagation should be done by the coroutine framework.
+ *
+ * Current thread context usually includes [current job][Cancellation.currentJob],
+ * which makes [ProgressManager.checkCanceled] work inside [action].
+ * [ProcessCanceledException] thrown from `ProgressManager.checkCanceled()` inside the [action] is rethrown as [CancellationException],
+ * so the calling code could continue working in the coroutine framework terms.
+ *
+ * This function is expected to be rarely needed because if some code needs [ProgressManager.checkCanceled],
+ * then it, most probably, should work inside a [com.intellij.openapi.application.readAction],
+ * which already performs the switch to the blocking context.
+ *
+ * @see com.intellij.concurrency.currentThreadContext
+ */
+suspend fun <T> blockingContext(action: () -> T): T {
+  return resetThreadContext(coroutineContext).use {
+    withJob {
       action()
     }
   }

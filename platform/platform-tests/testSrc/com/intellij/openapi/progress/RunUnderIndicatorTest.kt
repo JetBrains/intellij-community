@@ -5,12 +5,25 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class RunUnderIndicatorTest : CancellationTest() {
+
+  @Test
+  fun context(): Unit = timeoutRunBlocking {
+    assertNull(Cancellation.currentJob())
+    assertNull(ProgressManager.getGlobalProgressIndicator())
+
+    runUnderIndicator {
+      assertNull(Cancellation.currentJob())
+      assertNotNull(ProgressManager.getGlobalProgressIndicator())
+    }
+
+    assertNull(Cancellation.currentJob())
+    assertNull(ProgressManager.getGlobalProgressIndicator())
+  }
 
   @Test
   fun cancellation(): Unit = timeoutRunBlocking {
