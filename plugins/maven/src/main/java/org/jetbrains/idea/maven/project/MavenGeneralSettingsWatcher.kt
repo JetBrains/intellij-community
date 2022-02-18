@@ -31,7 +31,7 @@ class MavenGeneralSettingsWatcher private constructor(
   private fun fireSettingsChange() {
     embeddersManager.reset()
     MavenDistributionsCache.getInstance(manager.project).cleanCaches();
-    watcher.scheduleUpdateAll(MavenImportSpec(true, true, false))
+    watcher.scheduleUpdateAll(MavenImportSpec.IMPLICIT_IMPORT)
   }
 
   private fun fireSettingsXmlChange() {

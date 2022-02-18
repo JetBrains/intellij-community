@@ -108,7 +108,7 @@ public class MavenProjectsManagerWatcher {
   public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(spec, promise);
-    scheduleReadingTask(new MavenProjectsProcessorReadingTask(spec, myProjectsTree, myGeneralSettings, onCompletion));
+    scheduleReadingTask(new MavenProjectsProcessorReadingTask(spec.isForceReading(), myProjectsTree, myGeneralSettings, onCompletion));
     return promise;
   }
 
@@ -118,7 +118,7 @@ public class MavenProjectsManagerWatcher {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(spec, promise);
     if (LOG.isDebugEnabled()) {
-      String withForceOptionMessage = force ? " with force option" : "";
+      String withForceOptionMessage = spec.isForceReading() ? " with force option" : "";
       LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
                 ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
     }
