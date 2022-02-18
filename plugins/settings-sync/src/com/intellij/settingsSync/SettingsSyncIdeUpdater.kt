@@ -2,20 +2,20 @@ package com.intellij.settingsSync
 
 import com.intellij.application.options.editor.EditorOptionsPanel
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory
-import com.intellij.configurationStore.ComponentStoreImpl
-import com.intellij.configurationStore.StateStorageManagerImpl
-import com.intellij.configurationStore.XmlElementStorage
+import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.ProjectManager
@@ -23,12 +23,15 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.ui.JBColor
 import com.intellij.util.SmartList
-import com.intellij.util.io.delete
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import com.intellij.util.ui.StartupUiUtil
+import java.io.InputStream
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
-internal class SettingsSyncIdeUpdater(private val componentStore: ComponentStoreImpl, private val rootConfig: Path) {
+internal class SettingsSyncIdeUpdater(private val application: Application,
+                                      private val componentStore: ComponentStoreImpl,
+                                      private val rootConfig: Path) : StreamProvider {
 
   companion object {
     val LOG = logger<SettingsSyncIdeUpdater>()
@@ -54,10 +57,96 @@ internal class SettingsSyncIdeUpdater(private val componentStore: ComponentStore
     }
 
     // 3. after that update the rest of changed settings
-    val regularFileStates = snapshot.fileStates.filter { it !=  settingsSyncFileState && it != pluginsFileState }
+    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState && it != pluginsFileState }
     updateSettings(regularFileStates)
 
     invokeLater { updateUI() }
+  }
+
+  private val appConfig: Path get() = rootConfig.resolve(OPTIONS_DIRECTORY)
+
+  override val isExclusive: Boolean
+    get() = true
+
+  override val enabled: Boolean
+    get() = isSettingsSyncEnabledByKey() && SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()
+
+  override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+    return true
+  }
+
+  override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+    val file = getFileRelativeToRootConfig(fileSpec)
+
+    // todo can we call default "stream provider" instead of duplicating logic?
+    rootConfig.resolve(file).write(content, 0, size)
+
+    if (!isSyncEnabled(fileSpec, roamingType)) {
+      return
+    }
+
+    val snapshot = SettingsSnapshot(setOf(FileState.Modified(file, content, size)))
+    application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
+  }
+
+  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+    val path = appConfig.resolve(fileSpec)
+    try {
+      consumer(path.inputStreamIfExists())
+      return true
+    }
+    catch (e: Throwable) {
+      LOG.error("Couldn't read $fileSpec", e, Attachment(fileSpec, path.readText()))
+      return false
+    }
+  }
+
+  override fun processChildren(path: String,
+                               roamingType: RoamingType,
+                               filter: (name: String) -> Boolean,
+                               processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
+    rootConfig.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) { fileStream ->
+      for (file in fileStream) {
+        if (!file.inputStream().use { processor(file.fileName.toString(), it, false) }) {
+          break
+        }
+      }
+    }
+    // this method is called only for reading => no SETTINGS_CHANGED_TOPIC message is needed
+    return true
+  }
+
+  override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
+    val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
+    val file = rootConfig.resolve(adjustedSpec)
+    val deleted = deleteOrLogError(file)
+    if (deleted) {
+      val snapshot = SettingsSnapshot(setOf(FileState.Deleted(adjustedSpec)))
+      application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
+    }
+    return deleted
+  }
+
+  private fun deleteOrLogError(file: Path): Boolean {
+    try {
+      file.delete()
+      return true
+    }
+    catch (e: Exception) {
+      LOG.error("Couldn't delete ${file.pathString}", e)
+      return false
+    }
+  }
+
+  private fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
+    // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
+    // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
+    return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
+      OPTIONS_DIRECTORY + "/" + fileSpecPassedToProvider
+    }
+    else {
+      fileSpecPassedToProvider
+    }
   }
 
   private fun updateSettings(fileStates: Collection<FileState>) {
