@@ -13,9 +13,9 @@ interface GitNewProjectWizardData {
   companion object {
     val KEY = Key.create<GitNewProjectWizardData>(GitNewProjectWizardData::class.java.name)
 
-    val NewProjectWizardStep.gitData get() = data.getUserData(KEY)!!
+    val NewProjectWizardStep.gitData: GitNewProjectWizardData? get() = data.getUserData(KEY)
 
-    val NewProjectWizardStep.gitProperty get() = gitData.gitProperty
-    val NewProjectWizardStep.git get() = gitData.git
+    val NewProjectWizardStep.gitProperty get() = gitData!!.gitProperty
+    val NewProjectWizardStep.git get() = gitData!!.git
   }
 }

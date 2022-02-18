@@ -8,25 +8,49 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
-import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.projectWizard.generators.*
+import com.intellij.ide.starters.local.GeneratorAsset
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.chain
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
+import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindSelected
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override val name = GradleConstants.SYSTEM_ID.readableName
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
   class Step(parent: JavaNewProjectWizard.Step) :
     GradleNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),
     BuildSystemJavaNewProjectWizardData by parent,
     GradleJavaNewProjectWizardData {
+
+    override val addSampleCodeProperty = propertyGraph.property(false)
+      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+
+    override var addSampleCode by addSampleCodeProperty
+
+    override fun setupSettingsUI(builder: Panel) {
+      super.setupSettingsUI(builder)
+      builder.row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+      }.topGap(TopGap.SMALL)
+    }
 
     override fun setupProject(project: Project) {
       val builder = generateModuleBuilder()
@@ -53,6 +77,27 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
     }
+  }
+
+  private class AssetsStep(parent: NewProjectWizardStep) : JavaAssetsNewProjectWizardStep(parent) {
+    override fun getOutputDirectory() = "$path/$name"
+
+    override fun getTemplateProperties() = mapOf("PACKAGE_NAME" to groupId)
+
+    override fun getAssets(): List<GeneratorAsset> {
+      val assets = ArrayList<GeneratorAsset>()
+      if (gitData?.git == true) {
+        assets.addAll(StandardAssetsProvider().getGradleIgnoreAssets())
+      }
+      if (addSampleCode) {
+        assets.add(getJavaSampleCodeAsset("src/main/java", groupId))
+      }
+      return assets
+    }
+
+    override fun getFilePathsToOpen() = listOf(
+      "src/main/java/" + groupId.replace('.', '/') + "/Main.java"
+    )
   }
 }
 

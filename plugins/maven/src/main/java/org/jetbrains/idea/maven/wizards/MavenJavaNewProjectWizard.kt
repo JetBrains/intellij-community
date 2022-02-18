@@ -9,20 +9,45 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
+import com.intellij.ide.projectWizard.generators.JavaAssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.starters.local.GeneratorAsset
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.chain
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
+import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override val name = MAVEN
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
   class Step(parent: JavaNewProjectWizard.Step) :
     MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),
     BuildSystemJavaNewProjectWizardData by parent {
+
+    private val addSampleCodeProperty = propertyGraph.property(false)
+      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+
+    var addSampleCode by addSampleCodeProperty
+
+    override fun setupSettingsUI(builder: Panel) {
+      super.setupSettingsUI(builder)
+      builder.row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+      }.topGap(TopGap.SMALL)
+    }
 
     override fun setupProject(project: Project) {
       val builder = InternalMavenModuleBuilder().apply {
@@ -50,6 +75,27 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
     }
+  }
+
+  private class AssetsStep(private val parent: Step) : JavaAssetsNewProjectWizardStep(parent) {
+    override fun getOutputDirectory() = "$path/$name"
+
+    override fun getTemplateProperties() = mapOf("PACKAGE_NAME" to parent.groupId)
+
+    override fun getAssets(): List<GeneratorAsset> {
+      val assets = ArrayList<GeneratorAsset>()
+      if (gitData?.git == true) {
+        assets.addAll(StandardAssetsProvider().getMavenIgnoreAssets())
+      }
+      if (parent.addSampleCode) {
+        assets.add(getJavaSampleCodeAsset("src/main/java", parent.groupId))
+      }
+      return assets
+    }
+
+    override fun getFilePathsToOpen() = listOf(
+      "src/main/java/" + parent.groupId.replace('.', '/') + "/Main.java"
+    )
   }
 
   companion object {

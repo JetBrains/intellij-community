@@ -4,6 +4,7 @@ package com.intellij.ide.starters.local.generator
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.GeneratorContext
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
@@ -14,18 +15,31 @@ import java.io.IOException
 class AssetsProcessor {
 
   internal fun generateSources(context: GeneratorContext, templateProperties: Map<String, Any>) {
-    generateSources(context.outputDirectory, context.assets, templateProperties + ("context" to context))
+    val outputDir = VfsUtil.createDirectoryIfMissing(context.outputDirectory.fileSystem, context.outputDirectory.path)
+                    ?: throw IllegalStateException("Unable to create directory ${context.outputDirectory.path}")
+    generateSources(outputDir, context.assets, templateProperties + ("context" to context))
   }
 
-  fun generateSources(outputDirectory: VirtualFile, assets: List<GeneratorAsset>, templateProperties: Map<String, Any>) {
-    val outputDir = VfsUtil.createDirectoryIfMissing(outputDirectory.fileSystem, outputDirectory.path)
-                    ?: throw IllegalStateException("Unable to create directory ${outputDirectory.path}")
+  fun generateSources(
+    outputDirectory: String,
+    assets: List<GeneratorAsset>,
+    templateProperties: Map<String, Any>
+  ): List<VirtualFile> {
+    val outputDir = VfsUtil.createDirectoryIfMissing(LocalFileSystem.getInstance(), outputDirectory)
+                    ?: throw IllegalStateException("Unable to create directory ${outputDirectory}")
+    return generateSources(outputDir, assets, templateProperties)
+  }
 
-    for (asset in assets) {
+  private fun generateSources(
+    outputDirectory: VirtualFile,
+    assets: List<GeneratorAsset>,
+    templateProperties: Map<String, Any>
+  ): List<VirtualFile> {
+    return assets.map { asset ->
       when (asset) {
-        is GeneratorTemplateFile -> generateSources(outputDir, asset, templateProperties)
-        is GeneratorResourceFile -> generateSources(outputDir, asset)
-        is GeneratorEmptyDirectory -> generateSources(outputDir, asset)
+        is GeneratorTemplateFile -> generateSources(outputDirectory, asset, templateProperties)
+        is GeneratorResourceFile -> generateSources(outputDirectory, asset)
+        is GeneratorEmptyDirectory -> generateSources(outputDirectory, asset)
       }
     }
   }
@@ -49,7 +63,7 @@ class AssetsProcessor {
     return fileDirectory.findOrCreateChildData(this, fileName)
   }
 
-  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorTemplateFile, templateProps: Map<String, Any>) {
+  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorTemplateFile, templateProps: Map<String, Any>): VirtualFile {
     val sourceCode = try {
       asset.template.getText(templateProps)
     }
@@ -58,18 +72,20 @@ class AssetsProcessor {
     }
     val file = createFile(outputDirectory, asset.targetFileName)
     VfsUtil.saveText(file, sourceCode)
+    return file
   }
 
-  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorResourceFile) {
+  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorResourceFile): VirtualFile {
     val file = createFile(outputDirectory, asset.targetFileName)
     asset.resource.openStream().use {
       file.setBinaryContent(it.readBytes())
     }
+    return file
   }
 
-  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorEmptyDirectory) {
+  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorEmptyDirectory): VirtualFile {
     LOG.info("Creating empty directory ${asset.targetFileName} in ${outputDirectory.path}")
-    VfsUtil.createDirectoryIfMissing(outputDirectory, asset.targetFileName)
+    return VfsUtil.createDirectoryIfMissing(outputDirectory, asset.targetFileName)
   }
 
   private class TemplateProcessingException(t: Throwable) : IOException("Unable to process template", t)

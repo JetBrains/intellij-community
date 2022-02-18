@@ -6,10 +6,16 @@ import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
+import com.intellij.ide.projectWizard.generators.JavaAssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.starters.local.GeneratorAsset
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -64,6 +70,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
   override fun createStep(context: WizardContext) =
     RootNewProjectWizardStep(context).chain(::CommentStep, ::NewProjectWizardBaseStep, ::GitNewProjectWizardStep, ::Step)
+      .chain(::AssetsStep)
 
   private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
     override fun getComment(name: String): String {
@@ -447,4 +454,16 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   }
 
   class Builder : GeneratorNewProjectWizardBuilderAdapter(MavenArchetypeNewProjectWizard())
+
+  private class AssetsStep(parent: NewProjectWizardStep) : JavaAssetsNewProjectWizardStep(parent) {
+    override fun getOutputDirectory() = "$path/$name"
+
+    override fun getAssets(): List<GeneratorAsset> {
+      val assets = ArrayList<GeneratorAsset>()
+      if (gitData?.git == true) {
+        assets.addAll(StandardAssetsProvider().getMavenIgnoreAssets())
+      }
+      return assets
+    }
+  }
 }
