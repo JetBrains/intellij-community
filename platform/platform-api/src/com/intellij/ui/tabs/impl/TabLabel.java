@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -86,7 +85,11 @@ public class TabLabel extends JPanel implements Accessible {
           Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
           if (c instanceof InplaceButton) return;
           myTabs.select(info, true);
-          ObjectUtils.consumeIfNotNull(PopupUtil.getPopupContainerFor(TabLabel.this), JBPopup::cancel);
+          ObjectUtils.consumeIfNotNull(PopupUtil.getPopupContainerFor(TabLabel.this), popup -> {
+            if (ClientProperty.isTrue(popup.getContent(), MorePopupAware.class)) {
+              popup.cancel();
+            }
+          });
         }
         else {
           handlePopup(e);

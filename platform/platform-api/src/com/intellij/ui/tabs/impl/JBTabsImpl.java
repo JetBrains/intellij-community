@@ -1116,6 +1116,7 @@ public class JBTabsImpl extends JComponent
       gridPanel.add(label);
     }
     myMorePopupState.prepareToShow(popup);
+    popup.getContent().putClientProperty(MorePopupAware.class, Boolean.TRUE);
     popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
   }
 
