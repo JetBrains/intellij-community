@@ -20,6 +20,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Function
+import java.util.stream.Collectors
 
 @CompileStatic
 final class LibraryLicensesListGenerator {
@@ -78,13 +79,12 @@ final class LibraryLicensesListGenerator {
       }
     }
 
-    licenses.sort(Comparator.comparing(new Function<LibraryLicense, String>() {
+    return licenses.stream().sorted(Comparator.comparing(new Function<LibraryLicense, String>() {
       @Override
       String apply(LibraryLicense library) {
         return library.presentableName
       }
-    }))
-    return licenses
+    })).distinct().collect(Collectors.toList())
   }
 
   static String getLibraryName(JpsLibrary lib) {
