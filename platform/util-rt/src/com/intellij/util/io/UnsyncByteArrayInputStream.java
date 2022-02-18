@@ -94,6 +94,6 @@ public class UnsyncByteArrayInputStream extends InputStream {
 
   @Override
   public String toString() {
-    return getClass() + " ("+available()+" bytes available out of " + myCount+ ")";
+    return getClass() + " (" + available() + " bytes available out of " + myCount + ")";
   }
 }
