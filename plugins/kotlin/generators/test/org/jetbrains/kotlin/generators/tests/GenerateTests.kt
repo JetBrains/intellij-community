@@ -58,7 +58,6 @@ import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaToLib
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToDecompiledLibraryTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTestWithJS
-import org.jetbrains.kotlin.idea.decompiler.stubBuilder.AbstractClsStubBuilderTest
 import org.jetbrains.kotlin.idea.decompiler.stubBuilder.AbstractLoadJavaClsStubTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextFromJsMetadataTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextTest
@@ -71,9 +70,6 @@ import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationT
 import org.jetbrains.kotlin.idea.filters.AbstractKotlinExceptionFilterTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
-import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
-import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
-import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.handlers.AbstractHLGotoSuperActionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
@@ -681,14 +677,29 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFormatterTest> {
             model("formatter", pattern = Patterns.forRegex("""^([^\.]+)\.after\.kt.*$"""))
-            model("formatter/trailingComma", pattern = Patterns.forRegex("""^([^\.]+)\.call\.after\.kt.*$"""), testMethodName = "doTestCallSite", testClassName = "FormatterCallSite")
+            model(
+                "formatter/trailingComma",
+                pattern = Patterns.forRegex("""^([^\.]+)\.call\.after\.kt.*$"""),
+                testMethodName = "doTestCallSite",
+                testClassName = "FormatterCallSite"
+            )
             model("formatter", pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""), testMethodName = "doTestInverted", testClassName = "FormatterInverted")
-            model("formatter/trailingComma", pattern = Patterns.forRegex("""^([^\.]+)\.call\.after\.inv\.kt.*$"""), testMethodName = "doTestInvertedCallSite", testClassName = "FormatterInvertedCallSite")
+            model(
+                "formatter/trailingComma",
+                pattern = Patterns.forRegex("""^([^\.]+)\.call\.after\.inv\.kt.*$"""),
+                testMethodName = "doTestInvertedCallSite",
+                testClassName = "FormatterInvertedCallSite"
+            )
         }
 
         testClass<AbstractTypingIndentationTestBase> {
             model("indentationOnNewline", pattern = Patterns.forRegex("""^([^\.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
-            model("indentationOnNewline", pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+            model(
+                "indentationOnNewline",
+                pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""),
+                testMethodName = "doNewlineTestWithInvert",
+                testClassName = "InvertedSettings"
+            )
         }
 
         testClass<AbstractDiagnosticMessageTest> {
@@ -749,8 +760,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractLightTestRunLineMarkersTest> {
-            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"), testMethodName = "doLightTest", testClassName="WithLightTestFramework")
-            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"), testMethodName = "doPureTest", testClassName="WithoutLightTestFramework")
+            model(
+                "codeInsight/lineMarker/runMarkers",
+                pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"),
+                testMethodName = "doLightTest",
+                testClassName = "WithLightTestFramework"
+            )
+            model(
+                "codeInsight/lineMarker/runMarkers",
+                pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"),
+                testMethodName = "doPureTest",
+                testClassName = "WithoutLightTestFramework"
+            )
         }
 
         testClass<AbstractLineMarkersTestInLibrarySources> {
@@ -802,8 +823,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractAutoImportTest> {
-            model("editor/autoImport", testMethodName = "doTest", testClassName="WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName="WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmOptimizeImportsTest> {
@@ -996,10 +1017,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide")
         }
-//
-//      testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
-//          model("outOfBlockProjectWide")
-//      }
+        //
+        //      testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
+        //          model("outOfBlockProjectWide")
+        //      }
 
         testClass<AbstractSessionsInvalidationTest> {
             model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
@@ -1012,17 +1033,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-   /* testGroup("idea/idea-fir-performance-tests/tests", "idea") {
-        testClass<AbstractFirHighlightingPerformanceTest> {
-            model("testData/highlighter")
-        }
-    }
+    /* testGroup("idea/idea-fir-performance-tests/tests", "idea") {
+         testClass<AbstractFirHighlightingPerformanceTest> {
+             model("testData/highlighter")
+         }
+     }
 
-    testGroup("idea/idea-fir-performance-tests/tests", "idea/idea-completion/testData") {
-        testClass<AbstractHighLevelPerformanceBasicCompletionHandlerTest> {
-            model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS)
-        }
-    }*/
+     testGroup("idea/idea-fir-performance-tests/tests", "idea/idea-completion/testData") {
+         testClass<AbstractHighLevelPerformanceBasicCompletionHandlerTest> {
+             model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS)
+         }
+     }*/
 
     testGroup("fir", testDataPath = "../idea/tests/testData") {
         testClass<AbstractFirReferenceResolveTest> {
@@ -1519,7 +1540,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractPerformanceTypingIndentationTest> {
             model("indentationOnNewline", pattern = Patterns.forRegex("""^([^\.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
-            model("indentationOnNewline", pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+            model(
+                "indentationOnNewline",
+                pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""),
+                testMethodName = "doNewlineTestWithInvert",
+                testClassName = "InvertedSettings"
+            )
         }
     }
 
