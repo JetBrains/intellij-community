@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ThreadContext")
 @file:Experimental
 
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.AccessToken
 import org.jetbrains.annotations.ApiStatus.Experimental
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.coroutineContext
 
 private val tlCoroutineContext: ThreadLocal<CoroutineContext?> = ThreadLocal()
 
@@ -23,19 +22,6 @@ internal fun checkUninitializedThreadContext() {
  */
 fun currentThreadContext(): CoroutineContext {
   return tlCoroutineContext.get() ?: EmptyCoroutineContext
-}
-
-/**
- * Replaces the current thread context with the [current coroutine context][coroutineContext].
- *
- * This is the bridge for invoking blocking code from suspending code.
- * The current thread context is fully replaced because the context propagation should be done by the coroutine framework.
- * The function is marked with `suspend` so it's only callable from a coroutine.
- *
- * @return handle to restore the previous thread context
- */
-suspend fun resetThreadContext(): AccessToken {
-  return resetThreadContext(coroutineContext)
 }
 
 /**
