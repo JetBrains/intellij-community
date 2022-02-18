@@ -104,7 +104,7 @@ object GrazieReplaceTypoQuickFix {
     val spm = SmartPointerManager.getInstance(file.project)
     @Suppress("HardCodedStringLiteral") val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
-    val toHighlight = spm.createSmartPsiFileRangePointer(file, problem.text.textRangeToFile(makeNonEmpty(problem.replacementRange, file)))
+    val toHighlight = spm.createSmartPsiFileRangePointer(file, makeNonEmpty(problem.text.textRangeToFile(problem.replacementRange), file))
     problem.corrections.forEachIndexed { index, suggestion ->
       val replacements = toFileReplacements(problem.replacementRange, suggestion, problem.text)
       result.add(ChangeToVariantAction(problem.rule, index, familyName, suggestion, replacements, underlineRanges, toHighlight))
