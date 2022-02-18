@@ -8,13 +8,9 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.formatting.virtualFormattingListener
 import com.intellij.lang.LangBundle
 import com.intellij.lang.LanguageFormatting
-import com.intellij.notification.NotificationAction.createSimpleExpiring
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager

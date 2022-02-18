@@ -10,6 +10,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.ExternalFormatProcessor
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -25,6 +26,12 @@ class IncorrectFormattingInspection(
 
     // Skip files we are not able to fix
     if (!file.isWritable) return null
+
+    // Doesn't work with external formatters since they modify the file
+    if (ExternalFormatProcessor.useExternalFormatter(file)) {
+      return null
+    }
+
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
 
     if (kotlinOnly && file.language.id != "kotlin") {
