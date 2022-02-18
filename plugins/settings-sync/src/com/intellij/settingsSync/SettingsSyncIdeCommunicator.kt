@@ -41,7 +41,18 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
     val LOG = logger<SettingsSyncIdeCommunicator>()
   }
 
+  private val appConfig: Path get() = rootConfig.resolve(OPTIONS_DIRECTORY)
   private val fileSpecsToLocks = ConcurrentCollectionFactory.createConcurrentMap<String, ReadWriteLock>()
+
+  override val isExclusive: Boolean
+    get() = true
+
+  override val enabled: Boolean
+    get() = isSettingsSyncEnabledByKey() && SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()
+
+  override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+    return true
+  }
 
   fun settingsLogged(snapshot: SettingsSnapshot) {
     // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
@@ -67,18 +78,6 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
     updateSettings(regularFileStates)
 
     invokeLater { updateUI() }
-  }
-
-  private val appConfig: Path get() = rootConfig.resolve(OPTIONS_DIRECTORY)
-
-  override val isExclusive: Boolean
-    get() = true
-
-  override val enabled: Boolean
-    get() = isSettingsSyncEnabledByKey() && SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()
-
-  override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-    return true
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
