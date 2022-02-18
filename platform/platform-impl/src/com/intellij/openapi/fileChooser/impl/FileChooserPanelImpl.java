@@ -636,7 +636,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private static final class PathWrapper {
     private final Path path;
 
-    private PathWrapper(Path path) { this.path = path; }
+    private PathWrapper(Path path) {
+      this.path = path;
+    }
 
     @Override
     public boolean equals(Object o) {
