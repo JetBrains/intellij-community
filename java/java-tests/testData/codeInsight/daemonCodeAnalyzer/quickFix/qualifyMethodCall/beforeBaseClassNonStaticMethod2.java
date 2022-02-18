@@ -1,4 +1,4 @@
-// "Qualify the call with 'Base.this'" "false"
+// "Qualify the call with 'A.this'" "true"
 class Base {
   String name() {
     return "";
@@ -10,9 +10,5 @@ class A extends Base {
     String name(String key) {
       return name(<caret>);
     }
-  }
-
-  public String name() {
-    return "";
   }
 }

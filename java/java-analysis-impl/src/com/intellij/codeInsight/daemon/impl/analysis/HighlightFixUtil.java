@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QualifyMethodCallFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceAssignmentFromVoidWithStatementIntentionAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceGetClassWithClassLiteralFix;
@@ -19,11 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -466,5 +469,24 @@ public final class HighlightFixUtil {
       }
       return true;
     });
+  }
+
+  public static void registerQualifyMethodCallFix(CandidateInfo @NotNull [] methodCandidates,
+                                                  @NotNull PsiMethodCallExpression methodCall,
+                                                  @NotNull PsiExpressionList exprList,
+                                                  @Nullable HighlightInfo highlightInfo) {
+    for (CandidateInfo methodCandidate : methodCandidates) {
+      PsiMethod method = (PsiMethod)methodCandidate.getElement();
+      if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
+        final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(methodCall, null);
+        boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
+        if (staticParentElement == null || isMethodStatic) {
+          PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodCall.getMethodExpression(), method);
+          if (qualifier == null) continue;
+          IntentionAction fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
+          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(methodCall), fix);
+        }
+      }
+    }
   }
 }

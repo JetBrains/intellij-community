@@ -5,19 +5,16 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class QualifyWith extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class QualifyMethodCallFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myQualifierText;
 
-  public QualifyWith(@NotNull PsiReferenceExpression expression,
-                     @NotNull String qualifierText) {
-    super(expression);
+  public QualifyMethodCallFix(@NotNull PsiMethodCallExpression call,
+                              @NotNull String qualifierText) {
+    super(call);
     myQualifierText = qualifierText;
   }
 
@@ -39,7 +36,7 @@ public class QualifyWith extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    PsiReferenceExpression expression = (PsiReferenceExpression)startElement;
+    PsiReferenceExpression expression = ((PsiMethodCallExpression)startElement).getMethodExpression();
     expression.setQualifierExpression(JavaPsiFacade.getElementFactory(project).createExpressionFromText(myQualifierText, null));
   }
 }

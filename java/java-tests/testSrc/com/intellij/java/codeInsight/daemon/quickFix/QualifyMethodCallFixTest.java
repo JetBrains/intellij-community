@@ -3,11 +3,11 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
-public class QualifyWithTest extends LightQuickFixParameterizedTestCase {
+public class QualifyMethodCallFixTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/qualifyWith";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/qualifyMethodCall";
   }
 
 }
