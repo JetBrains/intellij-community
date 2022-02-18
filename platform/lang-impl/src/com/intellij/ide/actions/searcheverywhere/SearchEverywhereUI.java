@@ -432,7 +432,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
       @Override
       public int getIconGap() {
-        return JBUIScale.scale(10);
+        return JBUIScale.scale(ExperimentalUI.isNewUI() ? 6 : 10);
       }
     };
     res.addExtension(leftExt);
