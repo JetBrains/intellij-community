@@ -98,6 +98,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+
 /**
  * This dialog is used in two ways:
  * 1. a non-modal search dialog, showing a scope panel
@@ -154,7 +156,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private final boolean myEditConfigOnly;
 
   // components
-  private static final int COMMON_SIDE_INSET = 10;
   private final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
   private ActionToolbarImpl myOptionsToolbar;
   private EditorTextField mySearchCriteriaEdit;
@@ -398,7 +399,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final JPanel centerPanel = new JPanel(centerPanelLayout);
     centerPanel.add(searchPanel, centerConstraint.newLine().fillXY().growXY().get());
     centerPanel.add(myReplacePanel, centerConstraint.newLine().fillXY().growXY().get());
-    centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(12, COMMON_SIDE_INSET, 4, 12).get());
+    centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(12, DEFAULT_HGAP, 4, 12).get());
 
     updateColors();
 
@@ -599,18 +600,18 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     mySearchWrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
 
     searchEditorPanel.add(mySearchCriteriaEdit, searchConstraint.width(5).fillXY().growXY().get());
-    searchEditorPanel.add(searchTargetLabel, searchConstraint.newLine().noFill().noGrow().width(1).insets(10, COMMON_SIDE_INSET, 10, 0).get());
+    searchEditorPanel.add(searchTargetLabel, searchConstraint.newLine().noFill().noGrow().width(1).insets(10, DEFAULT_HGAP, 10, 0).get());
     searchEditorPanel.add(myTargetComboBox, searchConstraint.get());
     searchEditorPanel.add(injected, searchConstraint.get());
-    searchEditorPanel.add(matchCase, searchConstraint.insets(10, COMMON_SIDE_INSET, 10, COMMON_SIDE_INSET).get());
+    searchEditorPanel.add(matchCase, searchConstraint.insets(10, DEFAULT_HGAP, 10, DEFAULT_HGAP).get());
 
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
     myComponentsWithEditorBackground.add(myFilterPanel.getTable());
 
     final JPanel searchPanel = new JPanel(new GridBagLayout());
     final var northConstraint = new GridBagConstraintHolder();
-    searchPanel.add(searchTemplateLabel, northConstraint.insets(6, COMMON_SIDE_INSET, 6, 0).get());
-    searchPanel.add(myOptionsToolbar.getComponent(), northConstraint.growX().anchorEnd().insets(6, 0, 6, COMMON_SIDE_INSET).get());
+    searchPanel.add(searchTemplateLabel, northConstraint.insets(6, DEFAULT_HGAP, 6, 0).get());
+    searchPanel.add(myOptionsToolbar.getComponent(), northConstraint.growX().anchorEnd().insets(6, 0, 6, DEFAULT_HGAP).get());
     searchPanel.add(mySearchWrapper, northConstraint.newLine().fillXY().growXY().width(2).insets(0, 0, 0, 0).get());
     return searchPanel;
   }
@@ -660,7 +661,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     final JPanel replacePanel = new JPanel(new GridBagLayout());
     final var replaceConstraint = new GridBagConstraintHolder();
-    replacePanel.add(replacementTemplateLabel, replaceConstraint.fillX().growX().insets(16, COMMON_SIDE_INSET, 14, 0).get());
+    replacePanel.add(replacementTemplateLabel, replaceConstraint.fillX().growX().insets(16, DEFAULT_HGAP, 14, 0).get());
     replacePanel.add(myReplaceWrapper, replaceConstraint.newLine().fillXY().growXY().noInsets().get());
     return replacePanel;
   }
