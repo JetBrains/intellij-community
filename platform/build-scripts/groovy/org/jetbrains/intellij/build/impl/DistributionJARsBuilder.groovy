@@ -561,6 +561,8 @@ final class DistributionJARsBuilder {
       Files.createDirectories(artifactDir)
       Files.copy(getThirdPartyLibrariesHtmlFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
       Files.copy(getThirdPartyLibrariesJsonFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
+      context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
+      context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
     }
 
     if (productProperties.buildSourcesArchive) {
