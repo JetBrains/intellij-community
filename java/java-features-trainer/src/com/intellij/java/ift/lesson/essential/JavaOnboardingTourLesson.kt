@@ -33,12 +33,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
-import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.toolWindow.StripeButton
-import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -51,6 +48,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
+import training.dsl.LessonUtil.adjustSearchEverywherePosition
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restorePopupPosition
@@ -64,7 +62,10 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
-import training.util.*
+import training.util.LessonEndInfo
+import training.util.getActionById
+import training.util.invokeActionForFocusContext
+import training.util.isToStringContains
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
@@ -584,7 +585,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
         val ui = previous.ui ?: return@before
         val popupWindow = UIUtil.getParentOfType(JWindow::class.java, ui) ?: return@before
         val oldPopupLocation = WindowStateService.getInstance(project).getLocation(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
-        if (adjustSearchEverywherePosition(popupWindow) || LessonUtil.adjustPopupPosition(project, popupWindow)) {
+        if (adjustSearchEverywherePosition(popupWindow, "of array ") || LessonUtil.adjustPopupPosition(project, popupWindow)) {
           backupPopupLocation = oldPopupLocation
         }
       }
@@ -609,37 +610,4 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   private fun TaskRuntimeContext.runManager() = RunManager.getInstance(project)
   private fun TaskRuntimeContext.configurations() =
     runManager().allSettings.filter { it.name.contains(demoConfigurationName) }
-
-
-  private fun TaskRuntimeContext.adjustSearchEverywherePosition(popupWindow: JWindow): Boolean {
-    val indexOf = 4 + (editor.document.charsSequence.indexOf("8]))").takeIf { it > 0 } ?: return false)
-    val endOfEditorText = editor.offsetToXY(indexOf)
-
-    val locationOnScreen = editor.contentComponent.locationOnScreen
-
-    val leftBorder = Point(locationOnScreen.x + endOfEditorText.x, locationOnScreen.y + endOfEditorText.y)
-    val screenRectangle = ScreenUtil.getScreenRectangle(leftBorder)
-
-
-    val learningToolWindow = learningToolWindow(project) ?: return false
-    if (learningToolWindow.anchor != ToolWindowAnchor.LEFT) return false
-
-    val popupBounds = popupWindow.bounds
-
-    if (popupBounds.x > leftBorder.x) return false // ok, no intersection
-
-    val rightScreenBorder = screenRectangle.x + screenRectangle.width
-    if (leftBorder.x + popupBounds.width > rightScreenBorder) {
-      val mainWindow = UIUtil.getParentOfType(IdeFrameImpl::class.java, editor.contentComponent) ?: return false
-      val offsetFromBorder = leftBorder.x - mainWindow.x
-      val needToShiftWindowX = rightScreenBorder - offsetFromBorder - popupBounds.width
-      if (needToShiftWindowX < screenRectangle.x) return false // cannot shift the window back
-      mainWindow.location = Point(needToShiftWindowX, mainWindow.location.y)
-      popupWindow.location = Point(needToShiftWindowX + offsetFromBorder, popupBounds.y)
-    }
-    else {
-      popupWindow.location = Point(leftBorder.x, popupBounds.y)
-    }
-    return true
-  }
 }

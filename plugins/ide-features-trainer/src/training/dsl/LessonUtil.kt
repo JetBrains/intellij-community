@@ -58,6 +58,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
+import javax.swing.JWindow
 import javax.swing.KeyStroke
 
 object LessonUtil {
@@ -296,6 +297,38 @@ object LessonUtil {
         }
       }
       else -> return false
+    }
+    return true
+  }
+
+  fun TaskRuntimeContext.adjustSearchEverywherePosition(popupWindow: JWindow, leftBorderText: String): Boolean {
+    val indexOf = 4 + (editor.document.charsSequence.indexOf(leftBorderText).takeIf { it > 0 } ?: return false)
+    val endOfEditorText = editor.offsetToXY(indexOf)
+
+    val locationOnScreen = editor.contentComponent.locationOnScreen
+
+    val leftBorder = Point(locationOnScreen.x + endOfEditorText.x, locationOnScreen.y + endOfEditorText.y)
+    val screenRectangle = ScreenUtil.getScreenRectangle(leftBorder)
+
+
+    val learningToolWindow = learningToolWindow(project) ?: return false
+    if (learningToolWindow.anchor != ToolWindowAnchor.LEFT) return false
+
+    val popupBounds = popupWindow.bounds
+
+    if (popupBounds.x > leftBorder.x) return false // ok, no intersection
+
+    val rightScreenBorder = screenRectangle.x + screenRectangle.width
+    if (leftBorder.x + popupBounds.width > rightScreenBorder) {
+      val mainWindow = UIUtil.getParentOfType(IdeFrameImpl::class.java, editor.contentComponent) ?: return false
+      val offsetFromBorder = leftBorder.x - mainWindow.x
+      val needToShiftWindowX = rightScreenBorder - offsetFromBorder - popupBounds.width
+      if (needToShiftWindowX < screenRectangle.x) return false // cannot shift the window back
+      mainWindow.location = Point(needToShiftWindowX, mainWindow.location.y)
+      popupWindow.location = Point(needToShiftWindowX + offsetFromBorder, popupBounds.y)
+    }
+    else {
+      popupWindow.location = Point(leftBorder.x, popupBounds.y)
     }
     return true
   }
