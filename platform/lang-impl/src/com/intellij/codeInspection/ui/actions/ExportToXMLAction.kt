@@ -16,6 +16,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Supplier
 
+@Suppress("ComponentNotRegistered")
 class ExportToXMLAction : InspectionResultsExportActionProvider(Supplier { "XML" },
                                                                 InspectionsBundle.messagePointer("inspection.action.export.xml.description"),
                                                                 AllIcons.FileTypes.Xml) {
