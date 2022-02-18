@@ -18,29 +18,36 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Set;
-
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 public final class TestUtils {
   public static final String RUN_WITH = "org.junit.runner.RunWith";
   private static final String PARAMETERIZED_FQN = "org.junit.runners.Parameterized";
+  private static final String PER_CLASS_PROPERTY_KEY = "junit.jupiter.testinstance.lifecycle.default";
+  private static final String JUNIT_PROPERTY_FILE_NAME = "junit-platform.properties";
   private static final CallMatcher ASSERT_THROWS =
     CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertThrows");
 
@@ -149,12 +156,13 @@ public final class TestUtils {
 
   /**
    * @return true if class is annotated with {@code @TestInstance(TestInstance.Lifecycle.PER_CLASS)}
+   * or junit properties file has "per_class" property
    */
   public static boolean testInstancePerClass(@NotNull PsiClass containingClass) {
-    return testInstancePerClass(containingClass, new HashSet<>());
+    return hasPerClassAnnotation(containingClass, new HashSet<>()) || hasPerClassProperty(containingClass);
   }
 
-  private static boolean testInstancePerClass(@NotNull PsiClass containingClass, HashSet<? super PsiClass> classes) {
+  private static boolean hasPerClassAnnotation(@NotNull PsiClass containingClass, HashSet<? super PsiClass> classes) {
     PsiAnnotation annotation = MetaAnnotationUtil.findMetaAnnotations(containingClass, Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE))
       .findFirst().orElse(null);
     if (annotation != null) {
@@ -165,8 +173,30 @@ public final class TestUtils {
     }
     else {
       for (PsiClass superClass : containingClass.getSupers()) {
-        if (classes.add(superClass) && testInstancePerClass(superClass, classes)) return true;
+        if (classes.add(superClass) && hasPerClassAnnotation(superClass, classes)) return true;
       }
+    }
+    return false;
+  }
+
+  private static boolean hasPerClassProperty(@NotNull PsiClass containingClass) {
+    Module classModule = containingClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(containingClass) : null;
+    if (classModule == null) return false;
+    final GlobalSearchScope globalSearchScope = GlobalSearchScope.moduleRuntimeScope(classModule, true);
+    Optional<VirtualFile> propertiesFile =
+      FilenameIndex.getVirtualFilesByName(JUNIT_PROPERTY_FILE_NAME, globalSearchScope).stream().findFirst();
+    if (propertiesFile.isEmpty()) return false;
+    final Properties junitProperties = new Properties();
+    try {
+      InputStream stream = propertiesFile.get().getInputStream();
+      junitProperties.load(stream);
+    }
+    catch (IOException e) {
+      return false;
+    }
+    String property = junitProperties.getProperty(PER_CLASS_PROPERTY_KEY);
+    if (property != null && !property.isEmpty()) {
+      return "per_class".equals(property);
     }
     return false;
   }
