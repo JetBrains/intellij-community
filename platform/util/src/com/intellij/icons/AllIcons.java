@@ -219,7 +219,7 @@ public class AllIcons {
     @Deprecated
     public static final @NotNull Icon ShowHiddens = ToggleVisibility;
 
-    /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
+    /** @deprecated to be removed (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
@@ -1187,7 +1187,7 @@ public class AllIcons {
       /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("welcome/project/removeDisabled.svg", -1565572817, 2);
     }
 
-    /** @deprecated to be removed in IDEA 2021.1 */
+    /** @deprecated to be removed */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval

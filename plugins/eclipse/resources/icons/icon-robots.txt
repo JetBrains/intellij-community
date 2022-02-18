@@ -1,1 +1,1 @@
-deprecated: eclipse.png -> com.intellij.icons.AllIcons@/providers/eclipse.svg; to be removed in IDEA 2020 - use AllIcons.Providers.Eclipse
+deprecated: eclipse.png -> com.intellij.icons.AllIcons@/providers/eclipse.svg; to be removed - use AllIcons.Providers.Eclipse

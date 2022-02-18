@@ -396,7 +396,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       append(result, "@Deprecated", level)
     }
     if (image.scheduledForRemoval) {
-      append(result, "@ScheduledForRemoval(inVersion = \"${image.scheduledForRemovalRelease}\")", level)
+      append(result, "@ScheduledForRemoval", level)
     }
 
     val sourceRoot = image.sourceRoot
