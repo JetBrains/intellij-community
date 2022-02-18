@@ -73,17 +73,17 @@ class StripedLock {
           }
         }
       }
-      if (!exceptions.isEmpty()) {
-        IllegalStateException exception = new IllegalStateException("Exceptions during unlocking");
-        for (Exception subException : exceptions) {
-          exception.addSuppressed(subException);
-        }
-        throw exception;
+    }
+    if (!exceptions.isEmpty()) {
+      IllegalStateException exception = new IllegalStateException("Exceptions during unlocking");
+      for (Exception subException : exceptions) {
+        exception.addSuppressed(subException);
       }
-      else {
-        assert isComputed : "Computation in StripedLock.withAllLocksReadLocked was incorrect";
-        return result;
-      }
+      throw exception;
+    }
+    else {
+      assert isComputed : "Computation in StripedLock.withAllLocksReadLocked was incorrect";
+      return result;
     }
   }
 }
