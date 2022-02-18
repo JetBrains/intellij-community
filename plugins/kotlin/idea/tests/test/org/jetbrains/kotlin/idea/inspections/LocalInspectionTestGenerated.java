@@ -2152,6 +2152,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap4.kt");
                 }
 
+                @TestMetadata("mapToMapWithDestination.kt")
+                public void testMapToMapWithDestination() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination.kt");
+                }
+
+                @TestMetadata("mapToMapWithDestination2.kt")
+                public void testMapToMapWithDestination2() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination2.kt");
+                }
+
+                @TestMetadata("mapToMapWithDestination3.kt")
+                public void testMapToMapWithDestination3() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination3.kt");
+                }
+
                 @TestMetadata("mapWithReturn.kt")
                 public void testMapWithReturn() throws Exception {
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapWithReturn.kt");
