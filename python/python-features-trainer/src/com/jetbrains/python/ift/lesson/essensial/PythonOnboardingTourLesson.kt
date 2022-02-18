@@ -43,8 +43,6 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
 import com.jetbrains.python.ift.PythonLessonsUtil
 import com.jetbrains.python.sdk.pythonSdk
-import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
@@ -66,7 +64,6 @@ import training.ui.LearningUiManager
 import training.util.*
 import java.awt.Point
 import java.awt.event.KeyEvent
-import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.JWindow
 import javax.swing.tree.TreePath
@@ -230,7 +227,7 @@ class PythonOnboardingTourLesson :
     highlightButtonByIdTask("Debug")
 
     actionTask("Debug") {
-      buttonBalloon(PythonLessonsBundle.message("python.onboarding.balloon.start.debugging"))
+      showBalloonOnHighlightingComponent(PythonLessonsBundle.message("python.onboarding.balloon.start.debugging"))
       restoreIfModified(sample)
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
@@ -248,7 +245,7 @@ class PythonOnboardingTourLesson :
 
     highlightButtonByIdTask("Stop")
     actionTask("Stop") {
-      buttonBalloon(
+      showBalloonOnHighlightingComponent(
         PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
       restoreIfModified(sample)
       PythonLessonsBundle.message("python.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend))
@@ -257,16 +254,6 @@ class PythonOnboardingTourLesson :
     prepareRuntimeTask {
       LearningUiHighlightingManager.clearHighlights()
     }
-  }
-
-  private fun TaskContext.buttonBalloon(@Language("HTML") @Nls message: String,
-                                        chooser: (List<JComponent>) -> JComponent? = { it.firstOrNull() }) {
-    val highlightingComponent = chooser(LearningUiHighlightingManager.highlightingComponents.filterIsInstance<JComponent>())
-    val useBalloon = LearningBalloonConfig(Balloon.Position.below,
-                                           width = 0,
-                                           highlightingComponent = highlightingComponent,
-                                           duplicateMessage = false)
-    text(message, useBalloon)
   }
 
   private fun LessonContext.waitIndexingTasks() {

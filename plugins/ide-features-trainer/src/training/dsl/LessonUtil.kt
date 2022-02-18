@@ -24,6 +24,7 @@ import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowStateService
@@ -42,6 +43,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
 import org.assertj.swing.timing.Timeout
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
@@ -58,10 +60,7 @@ import java.awt.event.KeyEvent
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import javax.swing.JList
-import javax.swing.JPanel
-import javax.swing.JWindow
-import javax.swing.KeyStroke
+import javax.swing.*
 
 object LessonUtil {
   val productName: String get() {
@@ -664,4 +663,16 @@ fun TaskContext.triggerOnQuickDocumentationPopup() {
   else {
     triggerUI().component { _: DocumentationComponent -> true }
   }
+}
+
+fun TaskContext.showBalloonOnHighlightingComponent(@Language("HTML") @Nls message: String,
+                                                   position: Balloon.Position = Balloon.Position.below,
+                                                   chooser: (List<JComponent>) -> JComponent? = { it.firstOrNull() }) {
+  val highlightingComponent = chooser(LearningUiHighlightingManager.highlightingComponents.filterIsInstance<JComponent>())
+  val useBalloon = LearningBalloonConfig(
+    side = position,
+    width = 0,
+    highlightingComponent = highlightingComponent,
+    duplicateMessage = false)
+  text(message, useBalloon)
 }
