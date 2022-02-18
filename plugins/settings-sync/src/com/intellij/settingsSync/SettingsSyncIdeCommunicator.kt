@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.application.options.editor.EditorOptionsPanel
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
@@ -27,6 +28,9 @@ import com.intellij.util.io.*
 import com.intellij.util.ui.StartupUiUtil
 import java.io.InputStream
 import java.nio.file.Path
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
 import kotlin.io.path.pathString
 
 internal class SettingsSyncIdeCommunicator(private val application: Application,
@@ -36,6 +40,8 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
   companion object {
     val LOG = logger<SettingsSyncIdeCommunicator>()
   }
+
+  private val fileSpecsToLocks = ConcurrentCollectionFactory.createConcurrentMap<String, ReadWriteLock>()
 
   fun settingsLogged(snapshot: SettingsSnapshot) {
     // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
@@ -78,8 +84,9 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
     val file = getFileRelativeToRootConfig(fileSpec)
 
-    // todo can we call default "stream provider" instead of duplicating logic?
-    rootConfig.resolve(file).write(content, 0, size)
+    writeUnderLock(file) {
+      rootConfig.resolve(file).write(content, 0, size)
+    }
 
     if (!isSyncEnabled(fileSpec, roamingType)) {
       return
@@ -91,13 +98,16 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
     val path = appConfig.resolve(fileSpec)
-    try {
-      consumer(path.inputStreamIfExists())
-      return true
-    }
-    catch (e: Throwable) {
-      LOG.error("Couldn't read $fileSpec", e, Attachment(fileSpec, path.readText()))
-      return false
+    val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
+    return readUnderLock(adjustedSpec) {
+      try {
+        consumer(path.inputStreamIfExists())
+        true
+      }
+      catch (e: Throwable) {
+        LOG.error("Couldn't read $fileSpec", e, Attachment(fileSpec, path.readText()))
+        false
+      }
     }
   }
 
@@ -107,7 +117,13 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
                                processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
     rootConfig.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) { fileStream ->
       for (file in fileStream) {
-        if (!file.inputStream().use { processor(file.fileName.toString(), it, false) }) {
+        val shouldProceed = file.inputStream().use { inputStream ->
+          val fileSpec = rootConfig.relativize(file).systemIndependentPath
+          read(fileSpec) {
+            processor(file.fileName.toString(), inputStream, false)
+          }
+        }
+        if (!shouldProceed) {
           break
         }
       }
@@ -119,7 +135,9 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     val file = rootConfig.resolve(adjustedSpec)
-    val deleted = deleteOrLogError(file)
+    val deleted = writeUnderLock(adjustedSpec) {
+      deleteOrLogError(file)
+    }
     if (deleted) {
       val snapshot = SettingsSnapshot(setOf(FileState.Deleted(adjustedSpec)))
       application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
@@ -159,11 +177,15 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
         // todo handle exceptions when modifying the file system
         when (fileState) {
           is FileState.Modified -> {
-            file.write(fileState.content, 0, fileState.size)
+            writeUnderLock(fileSpec) {
+              file.write(fileState.content, 0, fileState.size)
+            }
             changedFileSpecs.add(fileSpec)
           }
           is FileState.Deleted -> {
-            file.delete()
+            writeUnderLock(fileSpec) {
+              file.delete()
+            }
             deletedFileSpecs.add(fileSpec)
           }
         }
@@ -172,6 +194,20 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
 
     invokeAndWaitIfNeeded { reloadComponents(changedFileSpecs, deletedFileSpecs) }
   }
+
+  private fun <R> writeUnderLock(fileSpec: String, writingProcedure: () -> R): R {
+    return getOrCreateLock(fileSpec).writeLock().withLock {
+      writingProcedure()
+    }
+  }
+
+  private fun <R> readUnderLock(fileSpec: String, readingProcedure: () -> R): R {
+    return getOrCreateLock(fileSpec).readLock().withLock {
+      readingProcedure()
+    }
+  }
+
+  private fun getOrCreateLock(fileSpec: String) = fileSpecsToLocks.computeIfAbsent(fileSpec) { ReentrantReadWriteLock() }
 
   private fun reloadComponents(changedFileSpecs: List<String>, deletedFileSpecs: List<String>) {
     val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
