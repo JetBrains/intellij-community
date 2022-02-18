@@ -1098,7 +1098,7 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" text="$Clz$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+      <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" order="1" text="$Clz$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
       </searchConfiguration>
