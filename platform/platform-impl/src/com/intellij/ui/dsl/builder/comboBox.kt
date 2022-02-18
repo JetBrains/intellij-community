@@ -31,9 +31,20 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: ObservableMutableProperty<T>
 }
 
 /**
- * For binding to non-nullable property use [toNullableProperty]
+ * If ComboBox doesn't have any items, then NPE will be thrown. Because of that the method is deprecated now and will be changed in
+ * the future. What to do:
+ *
+ * 1. If the property is nullable, use [bindItemNullable]
+ * 2. If the property is non-nullable:
+ *     * If the ComboBox is not empty use `bindItem(::prop.toNullableProperty())
+ *     * In other cases other approaches should be used depending on desired behaviour
  */
-fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T?>): Cell<C> {
+@Deprecated("Signature of the method is going to be changed to bindItem(prop: KMutableProperty0<T?>). See the doc for details")
+fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T>): Cell<C> {
+  return bindItem(prop.toMutableProperty().toNullableProperty())
+}
+
+fun <T, C : ComboBox<T>> Cell<C>.bindItemNullable(prop: KMutableProperty0<T?>): Cell<C> {
   return bindItem(prop.toMutableProperty())
 }
 
