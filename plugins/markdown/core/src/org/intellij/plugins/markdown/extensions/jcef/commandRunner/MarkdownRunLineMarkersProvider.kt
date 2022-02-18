@@ -68,7 +68,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
       override fun actionPerformed(event: AnActionEvent) {
         val project = event.getRequiredData(CommonDataKeys.PROJECT)
         TrustedProjectUtil.executeIfTrusted(project) {
-          RUNNER_EXECUTED.log(project, RunnerPlace.EDITOR, RunnerType.BLOCK, runner.javaClass.name)
+          RUNNER_EXECUTED.log(project, RunnerPlace.EDITOR, RunnerType.BLOCK, runner.javaClass)
           runner.run(text, project, dir, DefaultRunExecutor.getRunExecutorInstance())
         }
       }

@@ -15,7 +15,7 @@ class MarkdownUsageCollector : CounterUsagesCollector() {
       "runner.executed",
       EventFields.Enum("place", RunnerPlace::class.java),
       EventFields.Enum("type", RunnerType::class.java),
-      EventFields.StringValidatedByCustomRule("runner", "class_name")
+      EventFields.Class("runner")
     )
 
   }

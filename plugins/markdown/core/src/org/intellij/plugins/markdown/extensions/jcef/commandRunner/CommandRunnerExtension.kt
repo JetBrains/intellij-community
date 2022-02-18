@@ -173,7 +173,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     val virtualFile = panel.virtualFile
     if (project != null && virtualFile != null) {
       TrustedProjectUtil.executeIfTrusted(project) {
-        RUNNER_EXECUTED.log(project,  RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass.name)
+        RUNNER_EXECUTED.log(project,  RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
         runner.run(command, project, virtualFile.parent.canonicalPath, executor)
       }
     }
@@ -305,7 +305,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       for (provider in RunAnythingProvider.EP_NAME.extensionList) {
         val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
         return TrustedProjectUtil.executeIfTrusted(project) {
-          RUNNER_EXECUTED.log(project, place, RunnerType.LINE, provider.javaClass.name)
+          RUNNER_EXECUTED.log(project, place, RunnerType.LINE, provider.javaClass)
           provider.execute(dataContext, value)
         }
       }
