@@ -17,7 +17,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -584,7 +583,12 @@ public final class CustomizationUtil {
         public @NotNull Action visit(@NotNull TreePath path) {
           String userObjectString = ObjectUtils.doIfCast(path.getLastPathComponent(), DefaultMutableTreeNode.class,
                                                          o -> ObjectUtils.tryCast(o.getUserObject(), String.class));
-          if (Comparing.equal(userObjectString, actionID)) {
+          if (userObjectString == null) {
+            Group group = ObjectUtils.doIfCast(path.getLastPathComponent(), DefaultMutableTreeNode.class,
+                                               o -> ObjectUtils.tryCast(o.getUserObject(), Group.class));
+            userObjectString = ObjectUtils.doIfNotNull(group, Group::getName);
+          }
+          if (Objects.equals(userObjectString, actionID)) {
             TreeUtil.selectPath(myActionsTree, path);
             return Action.INTERRUPT;
           }
