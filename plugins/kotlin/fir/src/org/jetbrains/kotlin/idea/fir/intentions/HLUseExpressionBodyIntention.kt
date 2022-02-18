@@ -27,17 +27,13 @@ class HLUseExpressionBodyIntention : AbstractHLIntention<KtDeclarationWithBody, 
     class Input : HLApplicatorInput
 
     override val applicabilityRange: HLApplicabilityRange<KtDeclarationWithBody> =
-        applicabilityRanges { declaration: KtDeclarationWithBody ->
-            val returnExpression = declaration.singleReturnExpressionOrNull ?: return@applicabilityRanges emptyList()
-            val resultTextRanges = mutableListOf(TextRange(0, returnExpression.returnKeyword.endOffset - declaration.startOffset))
-
-            // Adding applicability to the end of the declaration block
-            val rBraceTextRange = declaration.rBraceOffSetTextRange ?: return@applicabilityRanges resultTextRanges
-            resultTextRanges.add(rBraceTextRange)
-
-            return@applicabilityRanges resultTextRanges
-        }
-
+        applicabilityRanges(fun(declaration: KtDeclarationWithBody): List<TextRange> {
+            val returnExpression = declaration.singleReturnExpressionOrNull ?: return emptyList()
+            return listOf(
+                TextRange(0, returnExpression.returnKeyword.endOffset - declaration.startOffset),
+                declaration.rBraceOffSetTextRange
+            )
+        })
 
     override val inputProvider: HLApplicatorInputProvider<KtDeclarationWithBody, Input> = inputProvider { Input() }
 
@@ -96,8 +92,7 @@ class HLUseExpressionBodyIntention : AbstractHLIntention<KtDeclarationWithBody, 
          * @param[newBody] the new "= <returnedExpression>" like body, which replaces the old one
          */
         private fun Editor.correctRightMargin(
-            declaration: KtDeclarationWithBody, newBody: KtExpression
-        ) {
+            declaration: KtDeclarationWithBody, newBody: KtExpression) {
             val kotlinFactory = KtPsiFactory(declaration)
             val startOffset = newBody.startOffset
             val startLine = document.getLineNumber(startOffset)
@@ -115,15 +110,14 @@ class HLUseExpressionBodyIntention : AbstractHLIntention<KtDeclarationWithBody, 
         }
 
         private val KtDeclarationWithBody.singleReturnExpressionOrNull: KtReturnExpression?
-            get() = bodyBlockExpression?.statements?.singleOrNull() as? KtReturnExpression
+            get() = bodyBlockExpression?.statements?.firstOrNull() as? KtReturnExpression
 
         private val KtDeclarationWithBody.singleReturnedExpressionOrNull: KtExpression?
             get() = singleReturnExpressionOrNull?.returnedExpression
 
-        private val KtDeclarationWithBody.rBraceOffSetTextRange: TextRange?
-            get() {
-                val rightBlockBodyBrace = bodyBlockExpression?.rBrace ?: return null
-                return rightBlockBodyBrace.textRange.shiftLeft(startOffset)
+        private val KtDeclarationWithBody.rBraceOffSetTextRange: TextRange
+            get() = bodyBlockExpression.let {
+                TextRange(it?.rBrace?.startOffset?.minus(startOffset) ?: 0, it?.rBrace?.endOffset?.minus(startOffset) ?: 0)
             }
     }
 }
