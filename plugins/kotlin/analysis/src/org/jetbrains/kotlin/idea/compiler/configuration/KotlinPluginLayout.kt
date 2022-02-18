@@ -11,7 +11,7 @@ import com.intellij.util.io.isFile
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.resolveMavenArtifactInMavenRepo
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.resolveKotlinMavenArtifact
 import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
 import java.nio.file.Path
@@ -115,25 +115,40 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
         }
     }
 
-    override val kotlinc: File by lazy {
+    private val repositoryDir: File by lazy {
         val compilerForIdeArtifactFile = PathManager.getJarPathForClass(KtElement::class.java)?.let { File(it) }
             ?: error("Can't find kotlin-stdlib.jar in Maven Local")
 
-        // IDEA should have downloaded the library as a part of dependency resolution in the 'kotlin.util.compiler-dependencies' module
-        val packedDist = generateSequence(compilerForIdeArtifactFile) { it.parentFile }
-            .map { resolveMavenArtifactInMavenRepo(it, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
-            .firstOrNull { it.exists() }
-            ?: error(
-                "Can't find artifact '$KOTLIN_MAVEN_GROUP_ID:$KOTLIN_DIST_ARTIFACT_ID:$bundledJpsVersion' in Maven Local"
-            )
+        fun resolutionFailed(): Nothing = error("Maven repository not found for artifact '$compilerForIdeArtifactFile'")
 
-        KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, bundledJpsVersion)
+        val versionDir = compilerForIdeArtifactFile.parentFile
+        val artifactDir = versionDir?.parentFile
+        val artifactGroupDir = artifactDir?.parentFile
+
+        if (artifactGroupDir == null || !compilerForIdeArtifactFile.name.startsWith(artifactDir.name + "-" + versionDir.name)) {
+            resolutionFailed()
+        }
+
+        KOTLIN_MAVEN_GROUP_ID.split('.').asReversed().fold(artifactGroupDir) { dir, chunk ->
+            check(dir.name == chunk)
+            dir.parentFile ?: resolutionFailed()
+        }
+    }
+
+    private fun resolveKotlinArtifact(artifactId: String): File {
+        val artifact = resolveKotlinMavenArtifact(repositoryDir, artifactId, bundledJpsVersion)
+        check(artifact.exists()) {
+            "Can't find artifact '$KOTLIN_MAVEN_GROUP_ID:$artifactId:$bundledJpsVersion' in Maven Local"
+        }
+        return artifact
+    }
+
+    override val kotlinc: File by lazy {
+        val distArtifact = resolveKotlinArtifact(KOTLIN_DIST_ARTIFACT_ID)
+        KotlinPathsProvider.lazyUnpackKotlincDist(distArtifact, bundledJpsVersion)
     }
 
     override val jpsPluginJar: File by lazy {
-        KotlinPathsProvider.getExpectedMavenArtifactJarPath(
-            KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-            bundledJpsVersion
-        )
+        resolveKotlinArtifact(KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID)
     }
 }
