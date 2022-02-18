@@ -17,59 +17,64 @@ class AssetsProcessor {
     generateSources(context.outputDirectory, context.assets, templateProperties + ("context" to context))
   }
 
-  fun generateSources(outputDir: VirtualFile, assets: List<GeneratorAsset>, templateProps: Map<String, Any>) {
-    val log = logger<AssetsProcessor>()
+  fun generateSources(outputDirectory: VirtualFile, assets: List<GeneratorAsset>, templateProperties: Map<String, Any>) {
+    val outputDir = VfsUtil.createDirectoryIfMissing(outputDirectory.fileSystem, outputDirectory.path)
+                    ?: throw IllegalStateException("Unable to create directory ${outputDirectory.path}")
 
     for (asset in assets) {
-      val subPath = if (asset.targetFileName.contains("/"))
-        "/" + asset.targetFileName.substringBeforeLast("/")
-      else
-        ""
-
-      val outputDirectory = VfsUtil.createDirectoryIfMissing(outputDir.fileSystem, outputDir.path)
-                            ?: throw IllegalStateException("Unable to create directory ${outputDir.path}")
-
-      if (asset is GeneratorEmptyDirectory) {
-        log.info("Creating empty directory ${asset.targetFileName} in ${outputDirectory.path}")
-        VfsUtil.createDirectoryIfMissing(outputDirectory, asset.targetFileName)
-      }
-      else {
-        val fileDirectory = if (subPath.isEmpty()) {
-          outputDirectory
-        }
-        else {
-          VfsUtil.createDirectoryIfMissing(outputDirectory, subPath)
-          ?: throw IllegalStateException("Unable to create directory ${subPath} in ${outputDirectory.path}")
-        }
-
-        val fileName = asset.targetFileName.substringAfterLast("/")
-        log.info("Creating file $fileName in ${fileDirectory.path}")
-
-        when (asset) {
-          is GeneratorTemplateFile -> {
-            val sourceCode: String
-            try {
-              sourceCode = asset.template.getText(templateProps)
-            }
-            catch (e: Exception) {
-              throw TemplateProcessingException(e)
-            }
-            val file = fileDirectory.findOrCreateChildData(this, fileName)
-            VfsUtil.saveText(file, sourceCode)
-          }
-          is GeneratorResourceFile -> {
-            val file = fileDirectory.findOrCreateChildData(this, fileName)
-            asset.resource.openStream().use {
-              file.setBinaryContent(it.readBytes())
-            }
-          }
-          else -> {
-            throw UnsupportedOperationException("Unsupported asset type")
-          }
-        }
+      when (asset) {
+        is GeneratorTemplateFile -> generateSources(outputDir, asset, templateProperties)
+        is GeneratorResourceFile -> generateSources(outputDir, asset)
+        is GeneratorEmptyDirectory -> generateSources(outputDir, asset)
       }
     }
   }
 
+  private fun createFile(outputDirectory: VirtualFile, relativePath: String): VirtualFile {
+    val subPath = if (relativePath.contains("/"))
+      "/" + relativePath.substringBeforeLast("/")
+    else
+      ""
+
+    val fileDirectory = if (subPath.isEmpty()) {
+      outputDirectory
+    }
+    else {
+      VfsUtil.createDirectoryIfMissing(outputDirectory, subPath)
+      ?: throw IllegalStateException("Unable to create directory ${subPath} in ${outputDirectory.path}")
+    }
+
+    val fileName = relativePath.substringAfterLast("/")
+    LOG.info("Creating file $fileName in ${fileDirectory.path}")
+    return fileDirectory.findOrCreateChildData(this, fileName)
+  }
+
+  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorTemplateFile, templateProps: Map<String, Any>) {
+    val sourceCode = try {
+      asset.template.getText(templateProps)
+    }
+    catch (e: Exception) {
+      throw TemplateProcessingException(e)
+    }
+    val file = createFile(outputDirectory, asset.targetFileName)
+    VfsUtil.saveText(file, sourceCode)
+  }
+
+  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorResourceFile) {
+    val file = createFile(outputDirectory, asset.targetFileName)
+    asset.resource.openStream().use {
+      file.setBinaryContent(it.readBytes())
+    }
+  }
+
+  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorEmptyDirectory) {
+    LOG.info("Creating empty directory ${asset.targetFileName} in ${outputDirectory.path}")
+    VfsUtil.createDirectoryIfMissing(outputDirectory, asset.targetFileName)
+  }
+
   private class TemplateProcessingException(t: Throwable) : IOException("Unable to process template", t)
+
+  companion object {
+    private val LOG = logger<AssetsProcessor>()
+  }
 }
