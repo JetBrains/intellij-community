@@ -8,7 +8,6 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
@@ -16,7 +15,6 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.SmartList;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -27,9 +25,6 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -39,8 +34,6 @@ public final class ExistingTemplatesComponent {
   private final Tree patternTree;
   private final DefaultTreeModel patternTreeModel;
   private final JComponent panel;
-  private DialogWrapper owner;
-  private final SmartList<Runnable> queuedActions = new SmartList<>();
 
   ExistingTemplatesComponent(Project project) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
@@ -117,7 +110,7 @@ public final class ExistingTemplatesComponent {
           patternTree.addSelectionRow(rows[0] - 1);
         }
         patternTreeModel.removeNodeFromParent(node);
-        queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
+        ConfigurationManager.getInstance(project).removeConfiguration(configuration);
       }).setRemoveActionUpdater(e -> {
         final Configuration configuration = getSelectedConfiguration();
         return configuration != null && !configuration.isPredefined();
@@ -125,8 +118,6 @@ public final class ExistingTemplatesComponent {
       .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
       .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
       .createPanel();
-
-    configureSelectTemplateAction(patternTree);
   }
 
   @NotNull
@@ -168,29 +159,6 @@ public final class ExistingTemplatesComponent {
       return null;
     }
     return (Configuration)node.getUserObject();
-  }
-
-  private void configureSelectTemplateAction(JComponent component) {
-    component.addKeyListener(
-      new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER && patternTree.isVisible() && getSelectedConfiguration() != null) {
-            owner.close(DialogWrapper.OK_EXIT_CODE);
-          }
-        }
-      }
-    );
-
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(@NotNull MouseEvent event) {
-        if (patternTree.isVisible() && getSelectedConfiguration() != null) {
-          owner.close(DialogWrapper.OK_EXIT_CODE);
-        }
-        return true;
-      }
-    }.installOn(component);
   }
 
   private static Tree createTree(TreeModel treeModel) {
@@ -273,17 +241,6 @@ public final class ExistingTemplatesComponent {
       }
       SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), text, style, foreground, background, this);
     }
-  }
-
-  public void setOwner(DialogWrapper owner) {
-    this.owner = owner;
-  }
-
-  public void finish(boolean performQueuedActions) {
-    if (performQueuedActions) {
-      queuedActions.forEach(Runnable::run);
-    }
-    queuedActions.clear();
   }
 
   public void onConfigurationSelected(Consumer<Configuration> consumer) {
