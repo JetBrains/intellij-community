@@ -176,6 +176,26 @@ object LessonUtil {
   fun TaskRuntimeContext.sampleRestoreNotification(@Nls message: String, sample: LessonSample) =
     TaskContext.RestoreNotification(message) { setSample(sample) }
 
+  fun TaskRuntimeContext.checkEditorModification(sample: LessonSample,
+                                                 modificationPositionId: Int,
+                                                 needChange: String): Boolean {
+    val startOfChange = sample.getPosition(modificationPositionId).startOffset
+    val sampleText = sample.text
+    val prefix = sampleText.substring(0, startOfChange)
+    val suffix = sampleText.substring(startOfChange, sampleText.length)
+    val current = editor.document.text
+
+    if (!current.startsWith(prefix)) return false
+    if (!current.endsWith(suffix)) return false
+
+    val indexOfSuffix = current.indexOf(suffix)
+    if (indexOfSuffix < startOfChange) return false
+
+    val change = current.substring(startOfChange, indexOfSuffix)
+
+    return change.replace(" ", "") == needChange
+  }
+
   fun findItem(ui: JList<*>, checkList: (item: Any) -> Boolean): Int? {
     for (i in 0 until ui.model.size) {
       val elementAt = ui.model.getElementAt(i)

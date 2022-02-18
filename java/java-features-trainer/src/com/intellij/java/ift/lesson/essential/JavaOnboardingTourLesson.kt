@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
+import training.dsl.LessonUtil.checkEditorModification
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restorePopupPosition
@@ -491,27 +492,9 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
                                      code("length"), action("EditorChooseLookupItem")))
       text(JavaLessonsBundle.message("java.onboarding.invoke.completion.tip", action("CodeCompletion")))
       stateCheck {
-        checkEditorModification(sample.getPosition(2), "/values.length")
+        checkEditorModification(sample, modificationPositionId = 2, needChange = "/values.length")
       }
     }
-  }
-
-  private fun TaskRuntimeContext.checkEditorModification(completionPosition: LessonSamplePosition, needChange: String): Boolean {
-    val startOfChange = completionPosition.startOffset
-    val sampleText = sample.text
-    val prefix = sampleText.substring(0, startOfChange)
-    val suffix = sampleText.substring(startOfChange, sampleText.length)
-    val current = editor.document.text
-
-    if (!current.startsWith(prefix)) return false
-    if (!current.endsWith(suffix)) return false
-
-    val indexOfSuffix = current.indexOf(suffix)
-    if (indexOfSuffix < startOfChange) return false
-
-    val change = current.substring(startOfChange, indexOfSuffix)
-
-    return change.replace(" ", "") == needChange
   }
 
   private fun LessonContext.contextActions() {

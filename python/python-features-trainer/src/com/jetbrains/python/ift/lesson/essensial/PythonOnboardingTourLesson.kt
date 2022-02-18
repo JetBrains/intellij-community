@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
+import training.dsl.LessonUtil.checkEditorModification
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -484,28 +485,10 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
                                        code("values"), action("EditorChooseLookupItem")))
       stateCheck {
-        checkEditorModification(sample.getPosition(2), "/len(values)")
+        checkEditorModification(sample, modificationPositionId = 2, needChange = "/len(values)")
       }
       restoreByUi()
     }
-  }
-
-  private fun TaskRuntimeContext.checkEditorModification(completionPosition: LessonSamplePosition, needChange: String): Boolean {
-    val startOfChange = completionPosition.startOffset
-    val sampleText = sample.text
-    val prefix = sampleText.substring(0, startOfChange)
-    val suffix = sampleText.substring(startOfChange, sampleText.length)
-    val current = editor.document.text
-
-    if (!current.startsWith(prefix)) return false
-    if (!current.endsWith(suffix)) return false
-
-    val indexOfSuffix = current.indexOf(suffix)
-    if (indexOfSuffix < startOfChange) return false
-
-    val change = current.substring(startOfChange, indexOfSuffix)
-
-    return change.replace(" ", "") == needChange
   }
 
   private fun LessonContext.contextActions() {
