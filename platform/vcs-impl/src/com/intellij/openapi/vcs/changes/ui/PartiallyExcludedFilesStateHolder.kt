@@ -141,11 +141,11 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   }
 
   fun excludeElements(elements: Collection<T>) {
-    elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(it, true) }
-    myIncludedElements -= elements.asSet()
+    elements.forEach {
+      findTrackerFor(it)?.setExcludedFromCommit(it, true)
+      myIncludedElements.remove(it)
+    }
 
     updateExclusionStates()
   }
-
-  private fun <E> Collection<E>.asSet(): Set<E> = this as? Set ?: HashSet(this)
 }
