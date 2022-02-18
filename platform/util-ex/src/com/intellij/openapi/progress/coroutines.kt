@@ -85,7 +85,7 @@ fun <T> CoroutineScope.runUnderIndicator(action: () -> T): T = runUnderIndicator
 
 fun <T> runUnderIndicator(ctx: CoroutineContext, action: () -> T): T = runUnderIndicator(requireNotNull(ctx[Job]), action)
 
-@Suppress("EXPERIMENTAL_API_USAGE_ERROR")
+@OptIn(InternalCoroutinesApi::class)
 fun <T> runUnderIndicator(job: Job, action: () -> T): T {
   job.ensureActive()
   val indicator = EmptyProgressIndicator()
