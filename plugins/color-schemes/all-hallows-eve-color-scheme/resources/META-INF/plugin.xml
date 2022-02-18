@@ -1,0 +1,10 @@
+<idea-plugin>
+  <name>All Hallow's Eve Color Scheme</name>
+  <id>com.intellij.plugins.all_hallows_eve.colorscheme</id>
+  <vendor>JetBrains</vendor>
+  <category>UI</category>
+  <depends>com.intellij.modules.lang</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <bundledColorScheme path="/colorSchemes/all_hallows_eve"/>
+  </extensions>
+</idea-plugin>

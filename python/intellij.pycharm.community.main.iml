@@ -35,9 +35,9 @@
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.monokai.color.scheme" />
-    <orderEntry type="module" module-name="intellij.twilight.color.scheme" />
-    <orderEntry type="module" module-name="intellij.warmNeon.colorScheme" />
-    <orderEntry type="module" module-name="intellij.github.color.scheme" />
+    <orderEntry type="module" module-name="intellij.color.scheme.monokai" />
+    <orderEntry type="module" module-name="intellij.color.scheme.twilight" />
+    <orderEntry type="module" module-name="intellij.color.scheme.warmNeon" />
+    <orderEntry type="module" module-name="intellij.color.scheme.github" />
   </component>
 </module>

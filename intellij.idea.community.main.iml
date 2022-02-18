@@ -185,8 +185,8 @@
     <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.refactoring.detector" scope="RUNTIME" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinx.kotlinx-serialization-compiler-plugin-for-compilation" level="project" />
-    <orderEntry type="module" module-name="intellij.eclipse.keymap" />
-    <orderEntry type="module" module-name="intellij.visualStudio.keymap" />
-    <orderEntry type="module" module-name="intellij.netbeans5.6.keymap" />
+    <orderEntry type="module" module-name="intellij.keymap.eclipse" />
+    <orderEntry type="module" module-name="intellij.keymap.visualStudio" />
+    <orderEntry type="module" module-name="intellij.keymap.netbeans5.6" />
   </component>
 </module>
