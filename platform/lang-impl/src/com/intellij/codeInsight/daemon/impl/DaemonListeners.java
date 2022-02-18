@@ -94,9 +94,7 @@ public final class DaemonListeners implements Disposable {
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private boolean myEscPressed;
   private volatile boolean cutOperationJustHappened;
-  private final DaemonCodeAnalyzer.DaemonListener myDaemonEventPublisher;
   private List<Editor> myActiveEditors = Collections.emptyList();
-
   private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
 
   public static DaemonListeners getInstance(@NotNull Project project) {
@@ -113,7 +111,6 @@ public final class DaemonListeners implements Disposable {
     }
 
     MessageBus messageBus = myProject.getMessageBus();
-    myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
     if (project.isDefault()) {
       return;
     }
@@ -363,7 +360,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         PsiManager.getInstance(myProject).dropPsiCaches();
-        myDaemonCodeAnalyzer.cancelSubmittedPasses();
+        myDaemonCodeAnalyzer.cancelUpdateProgress(false, "plugin unload: " + pluginDescriptor);
         removeHighlightersOnPluginUnload(pluginDescriptor);
         myDaemonCodeAnalyzer.clearProgressIndicator();
         myDaemonCodeAnalyzer.cleanAllFileLevelHighlights();
@@ -383,8 +380,7 @@ public final class DaemonListeners implements Disposable {
           PsiManager.getInstance(myProject).dropPsiCaches();
         }
       }));
-    HeavyProcessLatch.INSTANCE.addListener(this, __ ->
-      myDaemonCodeAnalyzer.stopProcess(true, "re-scheduled to execute after heavy processing finished"));
+    HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
   }
 
   private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {
@@ -571,15 +567,11 @@ public final class DaemonListeners implements Disposable {
   }
 
   private void stopDaemon(boolean toRestartAlarm, @NonNls @NotNull String reason) {
-    if (myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason)) {
-      myDaemonEventPublisher.daemonCancelEventOccurred(reason);
-    }
+    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason);
   }
 
   private void stopDaemonAndRestartAllFiles(@NotNull String reason) {
-    if (myDaemonCodeAnalyzer.doRestart(reason) && !myProject.isDisposed()) {
-      myDaemonEventPublisher.daemonCancelEventOccurred(reason);
-    }
+    myDaemonCodeAnalyzer.stopProcessAndRestartAllFiles(reason);
   }
 
   private void removeHighlightersOnPluginUnload(@NotNull PluginDescriptor pluginDescriptor) {

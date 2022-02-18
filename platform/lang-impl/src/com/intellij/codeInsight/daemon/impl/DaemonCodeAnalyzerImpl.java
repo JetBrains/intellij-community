@@ -108,6 +108,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   // When it's so happens that future is started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
   private long myScheduledUpdateTimestamp; // guarded by this
   volatile private boolean completeEssentialHighlightingRequested;
+  private final AtomicInteger daemonCancelEventCount = new AtomicInteger();
+  private final DaemonListener myDaemonListenerPublisher;
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project) {
     // DependencyValidationManagerImpl adds scope listener, so, we need to force service creation
@@ -130,7 +132,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     myInitialized = true;
     myDisposed = false;
-    myFileStatusMap.markAllFilesDirty("DCAI init");
+    myFileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init");
     myUpdateRunnable = new UpdateRunnable(project);
     Disposer.register(this, () -> {
       assert myInitialized : "Disposing not initialized component";
@@ -147,6 +149,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       throw new IllegalStateException("FileEditorManagerEx.getInstanceEx(myProject) = null; myProject="+project);
     }
     myEditorTracker = EditorTracker.getInstance(project);
+    myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
   }
 
   @Override
@@ -343,9 +346,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       // heavy ops are bad, but VFS refresh is ok
     }
     while (RefreshQueueImpl.isRefreshInProgress() || heavyProcessIsRunning());
-    long dstart = System.currentTimeMillis();
+    long dStart = System.currentTimeMillis();
     while (mustWaitForSmartMode && DumbService.getInstance(myProject).isDumb()) {
-      if (System.currentTimeMillis() > dstart + 100000) {
+      if (System.currentTimeMillis() > dStart + 100_000) {
         throw new IllegalStateException("Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false).");
       }
       UIUtil.dispatchAllInvocationEvents();
@@ -565,13 +568,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @Override
   public void restart() {
-    doRestart("Global restart");
+    stopProcessAndRestartAllFiles("Global restart");
   }
 
   // return true if the progress was really canceled
-  boolean doRestart(@NotNull String reason) {
+  void stopProcessAndRestartAllFiles(@NotNull String reason) {
     myFileStatusMap.markAllFilesDirty(reason);
-    return stopProcess(true, reason);
+    stopProcess(true, reason);
   }
 
   @Override
@@ -630,8 +633,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   // return true if the progress really was canceled
-  synchronized boolean stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
-    boolean canceled = cancelUpdateProgress(toRestartAlarm, reason);
+  synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
+    cancelUpdateProgress(toRestartAlarm, reason);
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
 
     // reset myScheduledUpdateStart always, but re-schedule myUpdateRunnable only rarely because of thread scheduling overhead
@@ -643,8 +646,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (restart && isDone) {
       scheduleUpdateRunnable(TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay()));
     }
-
-    return canceled;
   }
 
   private void scheduleUpdateRunnable(long delayNanos) {
@@ -656,21 +657,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   // return true if the progress really was canceled
-  private synchronized boolean cancelUpdateProgress(boolean toRestartAlarm, @NotNull @NonNls String reason) {
+  synchronized void cancelUpdateProgress(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     DaemonProgressIndicator updateProgress = myUpdateProgress;
-    if (myDisposed) return false;
+    if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) return;
     if (!updateProgress.isCanceled()) {
       PassExecutorService.log(updateProgress, null, "Cancel", reason, toRestartAlarm);
       updateProgress.cancel();
       myPassExecutorService.cancelAll(false);
-      return true;
+      ApplicationManager.getApplication().invokeLater(() -> myDaemonListenerPublisher.daemonCancelEventOccurred(reason),
+                                                      __->myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed());
     }
-    return false;
-  }
-
-  void cancelSubmittedPasses() {
-    cancelUpdateProgress(false, "cancelSubmittedPasses()");
-    myPassExecutorService.cancelAll(true);
+    daemonCancelEventCount.incrementAndGet();
   }
 
 
@@ -910,6 +907,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (fileEditors.isEmpty()) {
       throw new IllegalArgumentException("no file editors to highlight");
     }
+    int modificationCountBefore = daemonCancelEventCount.get();
     Map<FileEditor, BackgroundEditorHighlighter> highlighters = new HashMap<>(fileEditors.size());
 
     for (FileEditor fileEditor : fileEditors) {
@@ -953,6 +951,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
               if (myProject.isDisposed() || !fileEditor.isValid()) {
                 return HighlightingPass.EMPTY_ARRAY;
               }
+              if (daemonCancelEventCount.get() != modificationCountBefore) {
+                // editor or something was changed between commit document notification in EDT and this point in the FJP thread
+                throw new ProcessCanceledException();
+              }
               HighlightingPass[] result = highlighter instanceof TextEditorBackgroundHighlighter ?
                                           ((TextEditorBackgroundHighlighter)highlighter).getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
                                           highlighter.createPassesForEditor();
@@ -978,6 +980,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         LOG.error(e);
       }
     }, null);
+    assert session != null;
     return session;
   }
 
@@ -1030,7 +1033,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     DaemonProgressIndicator progress = new MyDaemonProgressIndicator(myProject, fileEditors);
     progress.setModalityProgress(null);
     progress.start();
-    myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonStarting(fileEditors);
+    myDaemonListenerPublisher.daemonStarting(fileEditors);
     if (isRestartToCompleteEssentialHighlightingRequested()) {
       progress.putUserData(COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY, true);
     }
@@ -1051,10 +1054,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     boolean stopIfRunning() {
       boolean wasStopped = super.stopIfRunning();
       if (wasStopped) {
-        myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(myFileEditors);
+        DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+        daemon.myDaemonListenerPublisher.daemonFinished(myFileEditors);
         myFileEditors.clear();
         HighlightingSessionImpl.clearProgressIndicator(this);
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).completeEssentialHighlightingRequested = false;
+        daemon.completeEssentialHighlightingRequested = false;
       }
       return wasStopped;
     }
@@ -1139,7 +1143,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     setUpdateByTimerEnabled(false);
     try {
       cancelUpdateProgress(false, "serializeCodeInsightPasses");
-      myPassExecutorService.cancelAll(true);
 
       TextEditorHighlightingPassRegistrarImpl registrar =
         (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
