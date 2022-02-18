@@ -148,4 +148,17 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
 
     updateExclusionStates()
   }
+
+  fun retainElements(elements: Collection<T>) {
+    val toRetain = createElementsSet(elements)
+
+    myIncludedElements.retainAll(toRetain)
+    trackers.forEach { (element, tracker) ->
+      if (!toRetain.contains(element)) {
+        tracker.setExcludedFromCommit(element, true)
+      }
+    }
+
+    updateExclusionStates()
+  }
 }
