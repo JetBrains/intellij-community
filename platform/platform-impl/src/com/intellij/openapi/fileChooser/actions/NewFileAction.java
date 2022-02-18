@@ -35,10 +35,10 @@ import static java.util.Objects.requireNonNullElse;
 public class NewFileAction extends FileChooserAction implements LightEditCompatible {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    var visible = e.getData(FileChooserKeys.NEW_FILE_TYPE) != null;
     var directory = panel.currentDirectory();
-    var visible = directory != null && e.getData(FileChooserKeys.NEW_FILE_TYPE) != null;
     e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(visible && !directory.getFileSystem().isReadOnly());
+    e.getPresentation().setEnabled(visible && directory != null && !directory.getFileSystem().isReadOnly());
   }
 
   @Override
