@@ -15,10 +15,8 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -40,28 +38,43 @@ public final class ExistingTemplatesComponent {
 
   private final Tree patternTree;
   private final DefaultTreeModel patternTreeModel;
-  private final DefaultMutableTreeNode userTemplatesNode;
   private final JComponent panel;
-  private final CollectionListModel<Configuration> historyModel;
-  private final JList<Configuration> historyList;
-  private final JComponent historyPanel;
   private DialogWrapper owner;
-  private final Project project;
   private final SmartList<Runnable> queuedActions = new SmartList<>();
 
   ExistingTemplatesComponent(Project project) {
-    this.project = project;
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
     patternTreeModel = new DefaultTreeModel(root);
     patternTree = createTree(patternTreeModel);
 
+    final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
+
+    // 'Recent' node
+    DefaultMutableTreeNode recentNode;
+    root.add(recentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")));
+    for (final Configuration config : configurationManager.getHistoryConfigurations()) {
+      recentNode.add(new DefaultMutableTreeNode(config));
+    }
+    patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), recentNode}));
+
+    // 'Saved templates' node
+    DefaultMutableTreeNode userTemplatesNode;
     root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
+    for (final Configuration config : configurationManager.getConfigurations()) {
+      userTemplatesNode.add(new DefaultMutableTreeNode(config));
+    }
+    patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), userTemplatesNode}));
+
+    // Predefined templates
     for (Configuration info : StructuralSearchUtil.getPredefinedTemplates()) {
       getOrCreateCategoryNode(root, SPLIT.split(info.getCategory())).add(new DefaultMutableTreeNode(info, false));
     }
 
+    patternTreeModel.reload();
     TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
+
+    // Toolbar actions
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
       .setRemoveAction(button -> {
@@ -114,18 +127,6 @@ public final class ExistingTemplatesComponent {
       .createPanel();
 
     configureSelectTemplateAction(patternTree);
-
-    historyModel = new CollectionListModel<>();
-    historyPanel = new JPanel(new BorderLayout());
-    historyPanel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("used.templates")));
-
-    historyList = new JBList<>(historyModel);
-    historyPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(historyList));
-    historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-    ListSpeedSearch<Configuration> speedSearch = new ListSpeedSearch<>(historyList, Configuration::getName);
-    historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
-    configureSelectTemplateAction(historyList);
   }
 
   @NotNull
@@ -167,19 +168,6 @@ public final class ExistingTemplatesComponent {
       return null;
     }
     return (Configuration)node.getUserObject();
-  }
-
-  private void initialize() {
-    final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
-    userTemplatesNode.removeAllChildren();
-    for (final Configuration config : configurationManager.getConfigurations()) {
-      userTemplatesNode.add(new DefaultMutableTreeNode(config));
-    }
-    patternTreeModel.reload(userTemplatesNode);
-
-    patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), userTemplatesNode}));
-    historyModel.replaceAll(configurationManager.getHistoryConfigurations());
-    historyList.setSelectedIndex(0);
   }
 
   private void configureSelectTemplateAction(JComponent component) {
@@ -246,42 +234,8 @@ public final class ExistingTemplatesComponent {
     return tree;
   }
 
-  public JTree getPatternTree() {
-    return patternTree;
-  }
-
   public JComponent getTemplatesPanel() {
     return panel;
-  }
-
-  public static ExistingTemplatesComponent getInstance(Project project) {
-    final ExistingTemplatesComponent existingTemplatesComponent = project.getService(ExistingTemplatesComponent.class);
-    existingTemplatesComponent.initialize();
-    return existingTemplatesComponent;
-  }
-
-  private static class ExistingTemplatesListCellRenderer extends ColoredListCellRenderer<Configuration> {
-
-    private final ListSpeedSearch mySpeedSearch;
-
-    ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
-      mySpeedSearch = speedSearch;
-    }
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList list, Configuration value, int index, boolean selected, boolean focus) {
-      final Color background = UIUtil.getListBackground(selected, focus);
-      final Color foreground = UIUtil.getListForeground(selected, focus);
-      setPaintFocusBorder(false);
-      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), value.getName(), SimpleTextAttributes.STYLE_PLAIN,
-                                 foreground, background, this);
-      final long created = value.getCreated();
-      if (created > 0) {
-        final String createdString = DateFormatUtil.formatPrettyDateTime(created);
-        append(" (" + createdString + ')',
-               selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      }
-    }
   }
 
   private static class ExistingTemplatesTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -319,14 +273,6 @@ public final class ExistingTemplatesComponent {
       }
       SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), text, style, foreground, background, this);
     }
-  }
-
-  public JList<Configuration> getHistoryList() {
-    return historyList;
-  }
-
-  public JComponent getHistoryPanel() {
-    return historyPanel;
   }
 
   public void setOwner(DialogWrapper owner) {
