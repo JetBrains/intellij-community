@@ -10,7 +10,8 @@ import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.ide.IdeBundle
 
-class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest {
+class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest, VolumeCopyingRequest{
+  override var shouldCopyVolumes: Boolean = false
   override val configuration: WslTargetEnvironmentConfiguration
   var ptyOptions: LocalPtyOptions? = null
   val wslOptions: WSLCommandLineOptions = WSLCommandLineOptions()

@@ -4,7 +4,6 @@ package com.intellij.execution.wsl.sync
 import com.intellij.execution.wsl.AbstractWslDistribution
 import com.intellij.execution.wsl.getWslPath
 import io.ktor.util.toLowerCasePreservingASCIIRules
-import org.apache.commons.io.FilenameUtils
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -13,11 +12,17 @@ class FilePathRelativeToDir(path: String) {
 
   init {
     if (path.startsWith("/")) throw IllegalArgumentException("Not a relative path: $path")
-    this.path = FilenameUtils.separatorsToUnix(path.trimEnd('/', '\\'))
+    this.path = separatorsToUnix(path.trimEnd('/', '\\'))
   }
 
-  val asUnixPath: String get() = FilenameUtils.separatorsToUnix(path)
-  val asWindowsPath: String get() = FilenameUtils.separatorsToWindows(path)
+  val asUnixPath: String get() = separatorsToUnix(path)
+
+  private fun separatorsToUnix(path: String): String = path.replace('\\', '/')
+
+  private fun separatorsToWindows(path: String): String = path.replace('/', '\\')
+
+  val asWindowsPath: String get() = separatorsToWindows(path)
+
   override fun toString(): String = path
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
