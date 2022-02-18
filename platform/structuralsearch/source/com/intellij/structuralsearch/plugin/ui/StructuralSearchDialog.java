@@ -154,7 +154,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private final boolean myEditConfigOnly;
 
   // components
-  private final int COMMON_SIDE_INSET = 10;
+  private static final int COMMON_SIDE_INSET = 10;
   private final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
   private ActionToolbarImpl myOptionsToolbar;
   private EditorTextField mySearchCriteriaEdit;
