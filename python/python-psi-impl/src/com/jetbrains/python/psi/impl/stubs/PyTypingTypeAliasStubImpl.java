@@ -55,4 +55,9 @@ public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
   public QualifiedName getCalleeName() {
     return null;
   }
+
+  @Override
+  public String toString() {
+    return "PyTypingAliasStub(text='" + getText() +"')";
+  }
 }
