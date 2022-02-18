@@ -162,7 +162,7 @@ public final class AnnotationDocGenerator {
     generateAnnotationAttributes(buffer, generateLink, isForRenderedDoc, doSyntaxHighlighting);
     if (isInferred) buffer.append("</i>");
     if (highlightNonCodeAnnotations) buffer.append("</b>");
-    if (generateLink && isNonCodeAnnotation && !isForRenderedDoc) {
+    if (generateLink && isNonCodeAnnotation && !isForRenderedDoc && format != AnnotationFormat.ToolTip) {
       if (isInferred && ApplicationManager.getApplication().isInternal()) {
         HtmlChunk.tag("sup").child(HtmlChunk.tag("font").attr("size", 3)
                                      .attr("color", ColorUtil.toHex(JBColor.GRAY))

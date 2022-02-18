@@ -106,8 +106,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
 
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
                    "<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
-                   "<b><i><span style=\"color:#808000;\">@</span><a href=\"psi_element://org.jetbrains.annotations.Contract\"><code><span style=\"color:#808000;\">Contract</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"null,_,_->null\"</span><span style=\"\">)</span></i></b><sup><font color=\"808080\" size=\"3\"><i>i</i></font></sup>" +
-                   "<a href=\"https://www.jetbrains.com/help/idea/annotating-source-code.html#bundled-annotations\"><icon src=\"AllIcons.Ide.External_link_arrow\"/></a> \n" +
+                   "<b><i><span style=\"color:#808000;\">@</span><a href=\"psi_element://org.jetbrains.annotations.Contract\"><code><span style=\"color:#808000;\">Contract</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"null,_,_->null\"</span><span style=\"\">)</span></i></b> \n" +
                    "<span style=\"color:#000000;\">Throwable</span> <span style=\"color:#000000;\">createWithCause</span><span style=\"\">(</span><span style=\"color:#000000;\">Class</span><span style=\"\">,</span>\n" +
                    "<span style=\"color:#000000;\">String</span><span style=\"\">,</span>\n" +
                    "<span style=\"color:#000000;\">Throwable</span><span style=\"\">)</span></html>");
@@ -116,7 +115,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   public void testExternalAnnoGutter() {
     checkHasGutter("java.lang.String",
                    "<html>External annotations available. Full signature:<p>\n" +
-                   "<span style=\"color:#000000;\">String</span><span style=\"\">(</span><b><span style=\"color:#808000;\">@</span><a href=\"psi_element://org.jetbrains.annotations.NotNull\"><code><span style=\"color:#808000;\">NotNull</span></code></a></b><a href=\"https://www.jetbrains.com/help/idea/external-annotations.html\"><icon src=\"AllIcons.Ide.External_link_arrow\"/></a> <span style=\"color:#000080;font-weight:bold;\">char</span><span style=\"\">[]</span><span style=\"\">,</span>\n" +
+                   "<span style=\"color:#000000;\">String</span><span style=\"\">(</span><b><span style=\"color:#808000;\">@</span><a href=\"psi_element://org.jetbrains.annotations.NotNull\"><code><span style=\"color:#808000;\">NotNull</span></code></a></b> <span style=\"color:#000080;font-weight:bold;\">char</span><span style=\"\">[]</span><span style=\"\">,</span>\n" +
                    "<span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,</span>\n" +
                    "<span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">)</span></html>");
   }
