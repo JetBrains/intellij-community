@@ -29,12 +29,12 @@ import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-internal class SettingsSyncIdeUpdater(private val application: Application,
-                                      private val componentStore: ComponentStoreImpl,
-                                      private val rootConfig: Path) : StreamProvider {
+internal class SettingsSyncIdeCommunicator(private val application: Application,
+                                           private val componentStore: ComponentStoreImpl,
+                                           private val rootConfig: Path) : StreamProvider {
 
   companion object {
-    val LOG = logger<SettingsSyncIdeUpdater>()
+    val LOG = logger<SettingsSyncIdeCommunicator>()
   }
 
   fun settingsLogged(snapshot: SettingsSnapshot) {
