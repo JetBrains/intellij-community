@@ -110,17 +110,20 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
+    "kotlin-script-runtime",
+    "kotlinc.kotlin-scripting-compiler-impl",
+    "kotlinc.kotlin-scripting-common",
+    "kotlinc.kotlin-scripting-jvm",
+    "kotlinc.kotlin-gradle-statistics"
+  )
+
+  private static final List<String> COMPILER_PLUGINS = List.of(
     "kotlinc.android-extensions-compiler-plugin",
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
     "kotlinc.sam-with-receiver-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
-    "kotlin-script-runtime",
-    "kotlinc.kotlin-scripting-compiler-impl",
-    "kotlinc.kotlin-scripting-common",
-    "kotlinc.kotlin-scripting-jvm",
-    "kotlinc.kotlin-gradle-statistics",
     "kotlinc.lombok-compiler-plugin"
   )
 
@@ -156,6 +159,9 @@ final class KotlinPluginBuilder {
       }
       for (String library : LIBRARIES) {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
+      }
+      for (String library : COMPILER_PLUGINS) {
+        withProjectLibrary(library, ProjectLibraryData.PackMode.STANDALONE_MERGED)
       }
 
       if (isUltimate && kind == KotlinPluginKind.IJ) {
