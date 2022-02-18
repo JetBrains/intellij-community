@@ -259,13 +259,6 @@ class PythonOnboardingTourLesson :
     }
   }
 
-  private fun LessonContext.highlightButtonByIdTask(actionId: String) {
-    val highlighted = highlightButtonById(actionId)
-    task {
-      addStep(highlighted)
-    }
-  }
-
   private fun TaskContext.buttonBalloon(@Language("HTML") @Nls message: String,
                                         chooser: (List<JComponent>) -> JComponent? = { it.firstOrNull() }) {
     val highlightingComponent = chooser(LearningUiHighlightingManager.highlightingComponents.filterIsInstance<JComponent>())

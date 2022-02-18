@@ -611,6 +611,13 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
   return feature
 }
 
+fun LessonContext.highlightButtonByIdTask(actionId: String) {
+  val highlighted = highlightButtonById(actionId)
+  task {
+    addStep(highlighted)
+  }
+}
+
 inline fun <reified ComponentType : Component> LessonContext.highlightAllFoundUi(
   clearPreviousHighlights: Boolean = true,
   highlightInside: Boolean = true,
