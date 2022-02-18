@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledElement;
@@ -40,9 +41,15 @@ public class AddGradleDslDependencyAction extends CodeInsightAction {
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (ofNullable(getPlugin(getId("com.jetbrains.packagesearch.intellij-plugin"))).map(p -> p.isEnabled()).orElse(false)) return false;
+    if (packageSearchPluginEnabled()) return false;
     if (file instanceof PsiCompiledElement) return false;
     if (!GradleFileType.isGradleFile(file)) return false;
     return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName());
+  }
+
+  @NotNull
+  private static Boolean packageSearchPluginEnabled() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    return ofNullable(getPlugin(getId("com.jetbrains.packagesearch.intellij-plugin"))).map(p -> p.isEnabled()).orElse(false);
   }
 }
