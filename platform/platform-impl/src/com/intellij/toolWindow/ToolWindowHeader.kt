@@ -30,8 +30,8 @@ import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
-import net.miginfocom.layout.ConstraintParser
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -50,7 +50,7 @@ abstract class ToolWindowHeader internal constructor(
   private val contentUi: ToolWindowContentUi,
   private val gearProducer: Supplier<ActionGroup>
 ) :
-  JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fill(), ConstraintParser.parseColumnConstraints("[grow][pref!]"))),
+  BorderLayoutPanel(),
   UISettingsListener, DataProvider, PropertyChangeListener {
   private var image: BufferedImage? = null
   private var activeImage: BufferedImage? = null
@@ -85,7 +85,7 @@ abstract class ToolWindowHeader internal constructor(
     westPanel.add(contentUi.tabComponent, CC().growY())
     MouseDragHelper.setComponentDraggable(westPanel, true)
     @Suppress("LeakingThis")
-    add(westPanel, CC().grow())
+    add(westPanel)
     ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
     toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
@@ -122,7 +122,7 @@ abstract class ToolWindowHeader internal constructor(
     }
     component.isOpaque = false
     @Suppress("LeakingThis")
-    add(component)
+    add(component, BorderLayout.EAST)
 
     //westPanel.addMouseListener(
     //  object : PopupHandler() {
