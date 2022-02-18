@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -59,19 +60,13 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
 
   private static boolean isFileNotFoundHandled(@NotNull PsiExpression context) {
     PsiClassType fileNotFoundType = TypeUtils.getType("java.io.FileNotFoundException", context);
-    PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(context, PsiTryStatement.class, true, PsiMethod.class, PsiLambdaExpression.class);
-    while (tryStatement != null) {
-      PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-      for (PsiCatchSection catchSection : catchSections) {
-        PsiParameter catchParameter = catchSection.getParameter();
-        if (catchParameter != null && TypeConversionUtil.isAssignable(catchParameter.getType(), fileNotFoundType)) {
-          PsiClassType ioException = TypeUtils.getType("java.io.IOException", context);
-          return !TypeConversionUtil.isAssignable(catchParameter.getType(), ioException);
-        }
-      }
-      tryStatement = PsiTreeUtil.getParentOfType(tryStatement, PsiTryStatement.class, true, PsiMethod.class, PsiLambdaExpression.class);
-    }
-    return false;
+    ExceptionUtil.HandlePlace place = ExceptionUtil.getHandlePlace(context, fileNotFoundType, null);
+    ExceptionUtil.HandlePlace.TryCatch fileNotFoundCatch = ObjectUtils.tryCast(place, ExceptionUtil.HandlePlace.TryCatch.class);
+    if (fileNotFoundCatch == null) return false;
+    PsiParameter catchParameter = fileNotFoundCatch.getParameter();
+    if (catchParameter == null) return false;
+    PsiClassType ioException = TypeUtils.getType("java.io.IOException", context);
+    return !TypeConversionUtil.isAssignable(catchParameter.getType(), ioException);
   }
 
   private static @Nullable PsiExpression getOnlyArgument(@NotNull PsiCallExpression expression) {
