@@ -407,7 +407,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     existingTemplates.onConfigurationSelected(configuration -> {
       loadConfiguration(configuration);
     });
-    final var splitter = new OnePixelSplitter();
+    final var splitter = new OnePixelSplitter(false, 0.2f);
     final JComponent panel = existingTemplates.getTemplatesPanel();
     panel.setBorder(JBUI.Borders.empty());
     splitter.setFirstComponent(panel);
