@@ -60,9 +60,7 @@ class HLUseExpressionBodyIntention : AbstractHLIntention<KtDeclarationWithBody, 
 
                 // Check if the returnedExpression actually always returns (early return is possible)
                 // TODO: take into consideration other cases (???)
-                if (returnedExpression.anyDescendantOfType<KtReturnExpression>(
-                        canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor }))
-                    return@isApplicableByPsi false
+                if (returnedExpression.anyDescendantOfType<KtReturnExpression>()) return@isApplicableByPsi false
 
                 true
             }
