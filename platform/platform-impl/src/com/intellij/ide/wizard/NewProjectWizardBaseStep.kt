@@ -93,6 +93,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .applyIf(context.isCreatingNewProject) { validation(CHECK_PROJECT_PATH(context.project, locationProperty)) }
           .applyIf(!context.isCreatingNewProject) { validation(CHECK_MODULE_PATH(context.project, locationProperty)) }
           .focused()
+          .gap(RightGap.SMALL)
         installNameGenerators(getBuilderId(), nameProperty)
       }.bottomGap(BottomGap.SMALL)
       row(UIBundle.message("label.project.wizard.new.project.location")) {

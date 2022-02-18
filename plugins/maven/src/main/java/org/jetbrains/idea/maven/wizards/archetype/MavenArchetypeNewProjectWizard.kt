@@ -116,6 +116,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .applyToComponent { setSwingPopup(false) }
             .bindItem(catalogItemProperty)
             .columns(COLUMNS_MEDIUM)
+            .gap(RightGap.SMALL)
           link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.button")) {
             manageCatalogs()
           }
@@ -132,6 +133,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .horizontalAlign(HorizontalAlign.FILL)
             .resizableColumn()
             .validationOnApply { validateArchetypeId() }
+            .gap(RightGap.SMALL)
           button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
             addArchetype()
           }
