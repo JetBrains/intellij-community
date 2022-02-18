@@ -24,10 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -230,8 +227,10 @@ open class CombinedDiffRequestProcessor(project: Project?,
                                               private val blockToSelect: CombinedDiffBlock<*>?) :
     Update(ComparableObject.Impl(*blockIds.toTypedArray()), pendingUpdatesCount.incrementAndGet()) {
 
+    val indicator = EmptyProgressIndicator()
+
     override fun run() {
-      loadVisibleContent(blockIds, blockToSelect)
+      loadVisibleContent(indicator, blockIds, blockToSelect)
       pendingUpdatesCount.decrementAndGet()
     }
 
@@ -240,32 +239,38 @@ open class CombinedDiffRequestProcessor(project: Project?,
     override fun setRejected() {
       super.setRejected()
       pendingUpdatesCount.decrementAndGet()
+      indicator.cancel()
     }
   }
 
-  internal fun loadVisibleContent(visibleBlockIds: Collection<CombinedBlockId>, blockToSelect: CombinedDiffBlock<*>?) {
+  internal fun loadVisibleContent(indicator: ProgressIndicator,
+                                  visibleBlockIds: Collection<CombinedBlockId>,
+                                  blockToSelect: CombinedDiffBlock<*>?) {
     val combinedViewer = viewer ?: return
 
     runInEdt { showProgressBar(true) }
 
-    val indicator = EmptyProgressIndicator()
-    for (blockId in visibleBlockIds) {
-      val lazyDiffViewer = combinedViewer.diffViewers[blockId] as? CombinedLazyDiffViewer ?: continue
-      val childDiffRequest =
-        runBlockingCancellable(indicator) { runUnderIndicator { loadRequest(lazyDiffViewer.requestProducer, indicator) } }
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, {
+      for (blockId in visibleBlockIds) {
+        ProgressManager.checkCanceled()
 
-      childDiffRequest.putUserData(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, true)
+        val lazyDiffViewer = combinedViewer.diffViewers[blockId] as? CombinedLazyDiffViewer ?: continue
+        val childDiffRequest =
+          runBlockingCancellable(indicator) { runUnderIndicator { loadRequest(lazyDiffViewer.requestProducer, indicator) } }
 
-      runInEdt {
-        CombinedDiffViewerBuilder.buildBlockContent(combinedViewer, context, childDiffRequest, blockId)?.let { newContent ->
-          combinedViewer.diffBlocks[blockId]?.let { block ->
-            differencesLabel.countDifferences(blockId, newContent.viewer)
-            combinedViewer.updateBlockContent(block, newContent)
-            childDiffRequest.onAssigned(true)
+        childDiffRequest.putUserData(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, true)
+
+        runInEdt {
+          CombinedDiffViewerBuilder.buildBlockContent(combinedViewer, context, childDiffRequest, blockId)?.let { newContent ->
+            combinedViewer.diffBlocks[blockId]?.let { block ->
+              differencesLabel.countDifferences(blockId, newContent.viewer)
+              combinedViewer.updateBlockContent(block, newContent)
+              childDiffRequest.onAssigned(true)
+            }
           }
         }
       }
-    }
+    }, indicator)
 
     runInEdt {
       showProgressBar(false)
@@ -334,18 +339,23 @@ open class CombinedDiffRequestProcessor(project: Project?,
             val visibleBlockCount = min(viewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
             val blocksOutsideViewportCount = childCount - visibleBlockCount
             val buildVisibleBlockIds = buildBlocks(viewer, request, to = visibleBlockCount)
+            val indicator = EmptyProgressIndicator()
 
             BackgroundTaskUtil.executeOnPooledThread(viewer) {
-              if (buildVisibleBlockIds.isNotEmpty()) {
-                processor.loadVisibleContent(buildVisibleBlockIds, null)
-              }
-              if (blocksOutsideViewportCount > 0) {
-                runInEdt { processor.showProgressBar(true) }
+              BackgroundTaskUtil.runUnderDisposeAwareIndicator(viewer, {
+                if (buildVisibleBlockIds.isNotEmpty()) {
+                  processor.loadVisibleContent(indicator, buildVisibleBlockIds, null)
+                }
+                if (blocksOutsideViewportCount > 0) {
 
-                buildBlocks(viewer, request, from = visibleBlockCount)
+                  runInEdt { processor.showProgressBar(true) }
 
-                runInEdt { processor.showProgressBar(false) }
-              }
+                  buildBlocks(viewer, request, from = visibleBlockCount)
+
+                  runInEdt { processor.showProgressBar(false) }
+
+                }
+              }, indicator)
             }
           }, 100
         )
