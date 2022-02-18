@@ -54,10 +54,5 @@
       <className>org.jetbrains.kotlin.idea.fir.intentions.HLAddNamesToFollowingArgumentsIntention</className>
       <category>Kotlin</category>
     </intentionAction>
-
-    <intentionAction>
-      <className>org.jetbrains.kotlin.idea.fir.intentions.HLUseExpressionBodyIntention</className>
-      <category>Kotlin</category>
-    </intentionAction>
   </extensions>
 </idea-plugin>
