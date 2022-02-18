@@ -58,8 +58,6 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
                                                          ::returnFocusToToolWindow, disposable!!) {
     init {
       tree.emptyText
-        .appendLine(GitBundle.message("stash.empty.text.action.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                    ActionUtil.createActionListener("Git.Stash.Silently", this, SAVED_PATCHES_UI_PLACE))
         .appendLine("")
         .appendLine(AllIcons.General.ContextHelp, GitBundle.message("stash.empty.text.help.link"),
                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
