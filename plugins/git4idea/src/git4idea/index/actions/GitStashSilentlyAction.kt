@@ -39,10 +39,9 @@ class GitStashSilentlyAction : DumbAwareAction() {
     if (isStagingAreaAvailable(project)) {
       val gitStageTracker = project.serviceIfCreated<GitStageTracker>() ?: return emptyList()
       return gitStageTracker.state.changedRoots
-    } else {
-      return repositories.filter { repository ->
-        ChangeListManager.getInstance(project).haveChangesUnder(repository.root) != ThreeState.NO
-      }.map { it.root }
     }
+    return repositories.filter { repository ->
+      ChangeListManager.getInstance(project).haveChangesUnder(repository.root) != ThreeState.NO
+    }.map { it.root }
   }
 }
