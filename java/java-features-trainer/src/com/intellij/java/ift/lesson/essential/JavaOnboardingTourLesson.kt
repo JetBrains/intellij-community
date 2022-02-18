@@ -16,10 +16,7 @@ import com.intellij.java.ift.lesson.run.highlightRunGutters
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
@@ -68,10 +65,8 @@ import training.util.getActionById
 import training.util.invokeActionForFocusContext
 import training.util.isToStringContains
 import java.awt.Point
-import java.awt.Rectangle
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.JWindow
 import javax.swing.tree.TreePath
@@ -318,23 +313,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       rehighlightPreviousUi = true
     }
 
-    task {
-      val stopAction = getActionById("Stop")
-      triggerAndFullHighlight { usePulsation = true }.componentPart { ui: ActionToolbarImpl ->
-        ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
-          val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
-          val stop = ui.components.find { it is ActionButton && it.action == stopAction }
-          if (configurations != null && stop != null) {
-            val x = configurations.x
-            val y = configurations.y
-            val width = stop.x + stop.width - x
-            val height = stop.y + stop.height - y
-            Rectangle(x, y, width, height)
-          }
-          else null
-        }
-      }
-    }
+    highlightRunToolbar()
 
     task {
       text(JavaLessonsBundle.message("java.onboarding.temporary.configuration.description",

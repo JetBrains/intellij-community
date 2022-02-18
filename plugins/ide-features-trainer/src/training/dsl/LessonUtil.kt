@@ -7,6 +7,7 @@ import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enab
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
@@ -58,6 +59,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
+import javax.swing.JPanel
 import javax.swing.JWindow
 import javax.swing.KeyStroke
 
@@ -389,6 +391,26 @@ object LessonUtil {
 
 fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
+}
+
+fun LessonContext.highlightRunToolbar() {
+  task {
+    val stopAction = getActionById("Stop")
+    triggerAndFullHighlight { usePulsation = true }.componentPart { ui: ActionToolbarImpl ->
+      ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
+        val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
+        val stop = ui.components.find { it is ActionButton && it.action == stopAction }
+        if (configurations != null && stop != null) {
+          val x = configurations.x
+          val y = configurations.y
+          val width = stop.x + stop.width - x
+          val height = stop.y + stop.height - y
+          Rectangle(x, y, width, height)
+        }
+        else null
+      }
+    }
+  }
 }
 
 fun LessonContext.highlightDebugActionsToolbar() {
