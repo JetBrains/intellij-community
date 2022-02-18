@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -862,6 +862,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     int options = (replaceConstructorWithInit ? 0 : PsiFormatUtilBase.SHOW_NAME) | PsiFormatUtilBase.SHOW_PARAMETERS;
     int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
+    
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_15)) {
+      parameterOptions |= PsiFormatUtilBase.SHOW_RAW_TYPE;
+    }
 
     String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
     if (replaceConstructorWithInit) {
