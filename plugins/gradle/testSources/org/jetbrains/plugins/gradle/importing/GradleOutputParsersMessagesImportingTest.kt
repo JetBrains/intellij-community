@@ -230,7 +230,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     val requiredByProject = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
     val artifacts = when {
       currentGradleVersion < GradleVersion.version("4.0") -> "dependencies"
-      currentGradleVersion < GradleVersion.version("4.6") -> "files"
+      currentGradleVersion < GradleVersion.version("4.6") || currentGradleVersion >= GradleVersion.version("7.4") -> "files"
       else -> "artifacts"
     }
 
@@ -317,17 +317,25 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
         .addTestImplementationDependency(builder.code("group: 'junit', name: 'junit', version: '4.12"))
         .generate())
 
-    if (isGradleOlderThan("7.0")) {
-      assertSyncViewTreeEquals("-\n" +
-                               " -failed\n" +
-                               "  -build.gradle\n" +
-                               "   expecting ''', found '\\n'")
-    }
-    else {
-      assertSyncViewTreeEquals("-\n" +
-                               " -failed\n" +
-                               "  -build.gradle\n" +
-                               "   Unexpected input: '{'")
+    when {
+      isGradleOlderThan("7.0") -> {
+        assertSyncViewTreeEquals("-\n" +
+                                 " -failed\n" +
+                                 "  -build.gradle\n" +
+                                 "   expecting ''', found '\\n'")
+      }
+      isGradleOlderThan("7.4") -> {
+        assertSyncViewTreeEquals("-\n" +
+                                 " -failed\n" +
+                                 "  -build.gradle\n" +
+                                 "   Unexpected input: '{'")
+      }
+      else -> {
+        assertSyncViewTreeEquals("-\n" +
+                                 " -failed\n" +
+                                 "  -build.gradle\n" +
+                                 "   Unexpected character: '\\''")
+      }
     }
   }
 
@@ -339,7 +347,10 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     assertSyncViewTreeEquals("-\n" +
                              " -failed\n" +
                              "  -build.gradle\n" +
-                             "   only buildscript {} and other plugins {} script blocks are allowed before plugins {} blocks, no other statements are allowed")
+                             "   only buildscript {}" +
+                             (if (isGradleNewerOrSameAs("7.4")) {", pluginManagement {}"} else {""}) +
+                             " and other plugins {} script blocks are allowed before plugins {} blocks, no other statements are allowed")
+
   }
 
   @Test
@@ -355,12 +366,19 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
     assertSyncViewSelectedNode("Cannot get property 'foo' on null object", true) {
       val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
+      val trySuggestion = if (isGradleOlderThan("7.4")) {
+        "Run with --debug option to get more log output.$tryScanSuggestion\n"
+      }
+      else {
+        "> Run with --debug option to get more log output.\n" +
+        "> Run with --scan to get full insights.\n"
+      }
       assertThat(it).startsWith("Build file '$filePath' line: 1\n\n" +
                                 "A problem occurred evaluating root project 'project'.\n" +
                                 "> Cannot get property 'foo' on null object\n" +
                                 "\n" +
                                 "* Try:\n" +
-                                "Run with --debug option to get more log output.$tryScanSuggestion\n" +
+                                trySuggestion +
                                 "\n" +
                                 "* Exception is:\n" +
                                 "org.gradle.api.GradleScriptException: A problem occurred evaluating root project 'project'.")
