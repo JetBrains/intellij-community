@@ -16,13 +16,19 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.PopupStep.FINAL_CHOICE
 import com.intellij.openapi.ui.popup.SpeedSearchFilter
+import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.tail
+import com.intellij.util.text.Matcher
 import com.intellij.util.ui.tree.AbstractTreeModel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
+import git4idea.GitLocalBranch
+import git4idea.GitRemoteBranch
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
@@ -30,6 +36,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import icons.DvcsImplIcons
 import javax.swing.tree.TreeModel
+import javax.swing.tree.TreePath
+import kotlin.properties.Delegates.observable
 
 private typealias PathAndBranch = Pair<List<String>, GitBranch>
 
@@ -38,8 +46,14 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
   private var finalRunnable: Runnable? = null
 
   val treeModel: TreeModel = BranchesTreeModel(project, repository)
-  val preSelectedPath: List<NodeDescriptor<*>>?
-    get() = (treeModel as BranchesTreeModel).getPreSelectionPath()
+
+  fun getPreferredSelection(): TreePath? {
+    return (treeModel as BranchesTreeModel).getPreferredSelection()
+  }
+
+  fun setBranchesMatcher(matcher: MinusculeMatcher?) {
+    (treeModel as BranchesTreeModel).branchesMatcher = matcher
+  }
 
   override fun getFinalRunnable() = finalRunnable
 
@@ -136,6 +150,71 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
 
       private val structureCache = mutableMapOf<Any, List<AbstractTreeNode<*>>>()
 
+      private val localBranches = ClearableLazyValue.create {
+        processLocal(repository.branches.localBranches)
+      }
+
+      private val remoteBranches = ClearableLazyValue.create {
+        processRemote(repository.branches.remoteBranches)
+      }
+
+      var branchesMatcher by observable<MinusculeMatcher?>(null) { _, _, _ ->
+        structureCache.keys.removeIf {
+          !(it is Repository || it is Action)
+        }
+        localBranches.drop()
+        remoteBranches.drop()
+        treeStructureChanged(TreePath(arrayOf(root, RemoteBranches())), null, null)
+        treeStructureChanged(TreePath(arrayOf(root, LocalBranches())), null, null)
+      }
+
+      private fun processLocal(branches: Collection<GitLocalBranch>): BranchesWithPreference<GitLocalBranch> {
+        val matcher = branchesMatcher ?: return processDefaultPreference(branches)
+        return processMatcherPreference(branches, matcher)
+      }
+
+      private fun processDefaultPreference(branches: Collection<GitLocalBranch>): BranchesWithPreference<GitLocalBranch> {
+        val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
+        val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
+          branches.find { it.name == recentBranchName }
+        }
+        if (recentBranch != null) {
+          return BranchesWithPreference(branches, recentBranch to Int.MAX_VALUE)
+        }
+
+        val currentBranch = repository.currentBranch
+        if (currentBranch != null) {
+          return BranchesWithPreference(branches, currentBranch to Int.MAX_VALUE)
+        }
+
+        return BranchesWithPreference(branches)
+      }
+
+      private fun processRemote(branches: Collection<GitRemoteBranch>): BranchesWithPreference<GitRemoteBranch> {
+        val matcher = branchesMatcher ?: return BranchesWithPreference(branches.toList())
+        return processMatcherPreference(branches, matcher)
+      }
+
+      private fun <B : GitBranch> processMatcherPreference(branches: Collection<B>, matcher: MinusculeMatcher): BranchesWithPreference<B> {
+        if (branches.isEmpty()) return BranchesWithPreference(branches)
+
+        val result = mutableListOf<B>()
+        var topMatch: Pair<B, Int>? = null
+
+        for (branch in branches) {
+          val matchingFragments = matcher.matchingFragments(branch.name)
+          if (matchingFragments == null) continue
+          result.add(branch)
+          val matchingDegree = matcher.matchingDegree(branch.name, false, matchingFragments)
+          if (topMatch == null || topMatch.second < matchingDegree) {
+            topMatch = branch to matchingDegree
+          }
+        }
+        return BranchesWithPreference(result, topMatch)
+      }
+
+      private data class BranchesWithPreference<B : GitBranch>(val branches: Collection<B>, val preference: Pair<B, Int>? = null)
+
       override fun getRoot() = repositoryNode
 
       override fun getChild(parent: Any?, index: Int): Any = getChildren(parent)[index]
@@ -153,21 +232,30 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
         }
       }
 
-      fun getPreSelectionPath(): List<NodeDescriptor<*>>? {
-        val recentBranchName = GitVcsSettings.getInstance(project).recentBranchesByRepository[repository.root.path]
-        if (recentBranchName != null) {
-          return repository.branches.localBranches.find { it.name == recentBranchName }?.let(::createTreePathFor)
-        }
+      fun getPreferredSelection(): TreePath? {
+        val localPreference = localBranches.value.preferFirstIfNoPreference()
+        val remotePreference = remoteBranches.value.preferFirstIfNoPreference()
+        if (localPreference == null && remotePreference == null) return null
+        if (localPreference != null && remotePreference == null) return createTreePathFor(localPreference.first)
+        if (localPreference == null && remotePreference != null) return createTreePathFor(remotePreference.first)
 
-        val currentBranch = repository.currentBranch
-        if (currentBranch != null) {
-          return createTreePathFor(currentBranch)
+        if(localPreference!!.second >= remotePreference!!.second) {
+          return createTreePathFor(localPreference.first)
+        } else {
+          return createTreePathFor(remotePreference.first)
         }
-
-        return null
       }
 
-      private fun createTreePathFor(branch: GitBranch): List<NodeDescriptor<*>> {
+      private fun BranchesWithPreference<*>.preferFirstIfNoPreference() =
+        let { (branches, preference) ->
+          when {
+            preference != null -> preference
+            branches.isNotEmpty() -> branches.first() to Int.MIN_VALUE
+            else -> null
+          }
+        }
+
+      private fun createTreePathFor(branch: GitBranch): TreePath {
         val root = root as NodeDescriptor<*>
         val group = (if (branch.isRemote) RemoteBranches() else LocalBranches())
 
@@ -177,11 +265,11 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
         }
         val nameParts = branch.name.split('/')
         nameParts.subList(0, nameParts.size - 1).forEach {
-          val folder = Folder(it) { emptyList() }
+          val folder = Folder(it) { error("Cannot load children for dummy folder node") }
           path.add(folder)
         }
         path.add(Branch(branch, nameParts.last()))
-        return path
+        return TreePathUtil.convertCollectionToTreePath(path)
       }
 
       private inner class Repository : Node<GitRepository>(project, repository) {
@@ -241,7 +329,9 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
           myName = value
         }
 
-        override fun getChildren() = groupBranches(repository.branches.localBranches.map { it.name.split('/') to it })
+        override fun getChildren() = localBranches.value.branches
+          .map { it.name.split('/') to it }
+          .toNodes()
 
         override fun update(presentation: PresentationData) {
           presentation.presentableText = GitBundle.message("group.Git.Local.Branch.title")
@@ -254,7 +344,9 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
           myName = value
         }
 
-        override fun getChildren() = groupBranches(repository.branches.remoteBranches.map { it.name.split('/') to it })
+        override fun getChildren() = remoteBranches.value.branches
+          .map { it.name.split('/') to it }
+          .toNodes()
 
         override fun update(presentation: PresentationData) {
           presentation.presentableText = GitBundle.message("group.Git.Remote.Branch.title")
@@ -268,7 +360,7 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
           myName = value
         }
 
-        override fun getChildren() = groupBranches(branchesSupplier())
+        override fun getChildren() = branchesSupplier().toNodes()
 
         override fun update(presentation: PresentationData) {
           presentation.presentableText = value
@@ -309,12 +401,12 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
         !branchManager.isFavorite(GitBranchType.of(it.value), repository, it.value.name)
       } then compareBy { it.name }
 
-      private fun groupBranches(branchesMapping: List<PathAndBranch>): List<Node<*>> {
+      private fun List<PathAndBranch>.toNodes(): List<Node<*>> {
 
         val branches = mutableListOf<Branch>()
         val groupsByPrefix = mutableMapOf<String, List<PathAndBranch>>()
 
-        for ((pathParts, branch) in branchesMapping) {
+        for ((pathParts, branch) in this) {
           val firstPathPart = pathParts.first()
           if (pathParts.size <= 1) {
             branches.add(Branch(branch, firstPathPart))
