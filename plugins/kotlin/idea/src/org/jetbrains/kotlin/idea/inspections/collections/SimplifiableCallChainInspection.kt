@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection
+import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -20,9 +21,9 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.builtIns
@@ -66,11 +67,20 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                         !KotlinBuiltIns.isDouble(type)
                     ) return@check false
                 }
+                if (conversion.firstName == "map" && conversion.secondName == "toMap") {
+                    val argumentSize = expression.callExpression?.valueArguments?.size ?: return@check false
+                    if (conversion.replacement == "associate" && argumentSize != 0
+                        || conversion.replacement == "associateTo" && argumentSize != 1
+                    ) return@check false
+                }
                 return@check conversion.enableSuspendFunctionCall || !containsSuspendFunctionCall(firstResolvedCall, context)
             } ?: return
 
             val associateFunction = getAssociateFunction(conversion, expression.receiverExpression)
-            if (associateFunction != null) conversion = conversion.copy(replacement = associateFunction.functionName)
+                ?.let { (associateFunction, associateFunctionName) ->
+                    conversion = conversion.copy(replacement = associateFunctionName)
+                    associateFunction
+                }
 
             val replacement = conversion.replacement
             val descriptor = holder.manager.createProblemDescriptor(
@@ -122,14 +132,15 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         }
     }
 
-    private fun getAssociateFunction(conversion: Conversion, expression: KtExpression): AssociateFunction? {
-        if (conversion.replacement != "associate") return null
+    private fun getAssociateFunction(conversion: Conversion, expression: KtExpression): Pair<AssociateFunction, String>? {
+        val isAssociateTo = conversion.replacement == "associateTo"
+        if (conversion.replacement != "associate" && !isAssociateTo) return null
         if (expression !is KtDotQualifiedExpression) return null
         val (associateFunction, problemHighlightType) =
             ReplaceAssociateFunctionInspection.getAssociateFunctionAndProblemHighlightType(expression) ?: return null
         if (problemHighlightType == ProblemHighlightType.INFORMATION) return null
         if (associateFunction != AssociateFunction.ASSOCIATE_WITH && associateFunction != AssociateFunction.ASSOCIATE_BY) return null
-        return associateFunction
+        return associateFunction to associateFunction.name(isAssociateTo)
     }
 
     private val conversionGroups = conversions.group()
@@ -181,6 +192,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             Conversion("kotlin.collections.map", "kotlin.collections.joinToString", "joinToString", enableSuspendFunctionCall = false),
             Conversion("kotlin.collections.map", "kotlin.collections.filterNotNull", "mapNotNull"),
             Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associate"),
+            Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associateTo"),
             Conversion(
                 "kotlin.collections.map", "kotlin.collections.sum", "sumOf", replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
