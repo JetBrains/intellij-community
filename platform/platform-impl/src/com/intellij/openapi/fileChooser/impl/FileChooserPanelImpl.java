@@ -86,6 +86,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private final SortedListModel<FsItem> myModel;
   private final JBList<FsItem> myList;
   private boolean myShowPathBar;
+  private boolean myPathBarActive;
   private volatile boolean myShowHiddenFiles;
 
   private final Object myLock = new String("file.chooser.panel.lock");
@@ -117,6 +118,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
     myPath.setVisible(myShowPathBar);
     myPath.setEditable(true);
+    myPath.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myPathBarActive = true;
+      }
+    });
     var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
     var finder = new LocalFsFinder(false).withBaseDir(null);
     FileLookup.LookupFilter filter =
@@ -127,6 +134,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myList = new JBList<>(myModel);
     myList.setCellRenderer(new MyListCellRenderer());
     myList.setSelectionMode(descriptor.isChooseMultiple() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
+    myList.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myPathBarActive = false;
+      }
+    });
     myList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -230,7 +243,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   @NotNull List<@NotNull Path> chosenPaths() {
-    if (myShowPathBar && myPath.isAncestorOf(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner())) {
+    if (myShowPathBar && myPathBarActive) {
       var object = myPath.getEditor().getItem();
       if (object instanceof PathWrapper) {
         return List.of(((PathWrapper)object).path);
