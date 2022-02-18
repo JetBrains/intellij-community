@@ -32,6 +32,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 public final class ExistingTemplatesComponent {
@@ -337,5 +338,19 @@ public final class ExistingTemplatesComponent {
       queuedActions.forEach(Runnable::run);
     }
     queuedActions.clear();
+  }
+
+  public void onConfigurationSelected(Consumer<Configuration> consumer) {
+    patternTree.addTreeSelectionListener(event -> {
+      final var selection = patternTree.getLastSelectedPathComponent();
+      if (!(selection instanceof DefaultMutableTreeNode)) {
+        return;
+      }
+
+      final var configuration = ((DefaultMutableTreeNode)selection).getUserObject();
+      if (configuration instanceof Configuration) {
+        consumer.accept((Configuration)configuration);
+      }
+    });
   }
 }

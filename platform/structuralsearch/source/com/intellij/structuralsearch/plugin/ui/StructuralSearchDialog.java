@@ -403,6 +403,9 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     updateColors();
 
     final var existingTemplates = new ExistingTemplatesComponent(getProject());
+    existingTemplates.onConfigurationSelected(configuration -> {
+      loadConfiguration(configuration);
+    });
     final var splitter = new OnePixelSplitter();
     final JComponent panel = existingTemplates.getTemplatesPanel();
     panel.setBorder(JBUI.Borders.empty());
