@@ -1090,9 +1090,7 @@ private class NotificationComponent(val project: Project,
     component.isOpaque = false
     component.border = null
 
-    val kit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
-    NotificationsUtil.setLinkForeground(kit.styleSheet)
-    component.editorKit = kit
+    NotificationsUtil.configureHtmlEditorKit(component)
 
     if (myNotificationWrapper.notification!!.listener != null) {
       component.addHyperlinkListener { e ->
@@ -1117,9 +1115,7 @@ private class NotificationComponent(val project: Project,
     }
 
     myLafUpdater = Runnable {
-      val newKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
-      NotificationsUtil.setLinkForeground(newKit.styleSheet)
-      component.editorKit = newKit
+      NotificationsUtil.configureHtmlEditorKit(component)
       component.text = text
       component.revalidate()
       component.repaint()

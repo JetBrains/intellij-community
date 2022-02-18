@@ -61,7 +61,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -453,9 +452,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    HTMLEditorKit kit = new HTMLEditorKitBuilder().withWordWrapViewFactory().build();
-    NotificationsUtil.setLinkForeground(kit.getStyleSheet());
-    text.setEditorKit(kit);
+    NotificationsUtil.configureHtmlEditorKit(text);
     text.setForeground(layoutData.textColor);
 
     HyperlinkListener listener = NotificationsUtil.wrapListener(notification);
@@ -719,9 +716,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     notification.setBalloon(balloon);
 
     ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
-      HTMLEditorKit newKit = new HTMLEditorKitBuilder().withWordWrapViewFactory().build();
-      NotificationsUtil.setLinkForeground(newKit.getStyleSheet());
-      text.setEditorKit(newKit);
+      NotificationsUtil.configureHtmlEditorKit(text);
       text.setText(textContent);
       text.revalidate();
       text.repaint();

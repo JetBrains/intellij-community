@@ -14,8 +14,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 
@@ -150,6 +151,20 @@ public final class NotificationsUtil {
         }
       }
     };
+  }
+
+  public static void configureHtmlEditorKit(@NotNull JEditorPane editorPane) {
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withWordWrapViewFactory().withFontResolver(new CSSFontResolver() {
+      @Override
+      public @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet) {
+        if ("a".equalsIgnoreCase(String.valueOf(attributeSet.getAttribute(AttributeSet.NameAttribute)))) {
+          return UIUtil.getLabelFont();
+        }
+        return defaultFont;
+      }
+    }).build();
+    setLinkForeground(kit.getStyleSheet());
+    editorPane.setEditorKit(kit);
   }
 
   public static void setLinkForeground(@NotNull StyleSheet styleSheet) {
