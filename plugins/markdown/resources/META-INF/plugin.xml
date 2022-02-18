@@ -302,10 +302,9 @@ Includes the following features:</p>
 
     <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
                  defaultValue="true"
-                 description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview). Any opened Markdown editors should be manually reopened."/>
-    <registryKey key="markdown.experimental.boundary.precise.scroll.multiplier"
-                 defaultValue="8"
-                 description="A multiplier used in translation of awt scroll event to the browser one"/>
+                 description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
+                              Any opened Markdown editors should be manually reopened.
+                              Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
