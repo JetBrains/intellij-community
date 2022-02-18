@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SkipSlowTestLocally
 public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
@@ -129,9 +131,17 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     //System.out.println("Lengths: "+JobLauncher.lengths);
   }
 
+
+
   public void testRandomEditingPerformance() {
     configureFromFileText("Stress.java", text);
-    List<HighlightInfo> oldWarnings = new ArrayList<>(doHighlighting());
+
+    // TODO: properly exclude IncorrectFormatting inspection from test
+    List<HighlightInfo> oldWarnings = doHighlighting()
+      .stream()
+      .filter(it -> it == null || !"Incorrect whitespace".equals(it.getDescription()))
+      .collect(Collectors.toList());
+
     Comparator<HighlightInfo> infoComparator = (o1, o2) -> {
       if (o1.equals(o2)) return 0;
       if (o1.getActualStartOffset() != o2.getActualStartOffset()) return o1.getActualStartOffset() - o2.getActualStartOffset();
@@ -163,7 +173,13 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       }
       getEditor().getCaretModel().moveToOffset(offset);
       type("/*--*/");
-      List<HighlightInfo> infos = doHighlighting();
+
+      // TODO: properly exclude IncorrectFormatting inspection from test
+      List<HighlightInfo> infos = doHighlighting()
+        .stream()
+        .filter(it -> it == null || !"Incorrect whitespace".equals(it.getDescription()))
+        .collect(Collectors.toList());
+
       if (oldWarningSize != infos.size()) {
         infos = new ArrayList<>(infos);
         Collections.sort(infos, infoComparator);
