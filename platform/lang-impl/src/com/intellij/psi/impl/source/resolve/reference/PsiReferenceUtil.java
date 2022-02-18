@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +23,13 @@ public final class PsiReferenceUtil {
     if (clazz.isInstance(ref)) return (T)ref;
     if (ref instanceof PsiMultiReference) {
       for (PsiReference reference : ((PsiMultiReference)ref).getReferences()) {
+        if (clazz.isInstance(reference)) {
+          return (T)reference;
+        }
+      }
+    } 
+    if (ref instanceof PsiDynaReference) {
+      for (PsiReference reference : ((PsiDynaReference<?>)ref).getReferences()) {
         if (clazz.isInstance(reference)) {
           return (T)reference;
         }
