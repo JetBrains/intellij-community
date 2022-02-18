@@ -39,6 +39,22 @@ suspend fun <X> withJob(action: (currentJob: Job) -> X): X {
  */
 @Internal
 fun <T> ensureCurrentJob(action: (Job) -> T): T {
+  return ensureCurrentJobInner(allowOrphan = false, action)
+}
+
+/**
+ * Same as [ensureCurrentJob] but doesn't fail when there is no current job or indicator.
+ * Instead, it creates a new orphan job, and installs it as the [current job][Cancellation.currentJob].
+ * If there is no current job or indicator, then the calling code cannot cancel this call from outside.
+ * This method is needed when the migration is anticipated,
+ * when the same code could be cancellable when run under job/indicator, and non-cancellable when run in raw context.
+ */
+@Internal
+fun <T> ensureCurrentJobAllowingOrphan(action: (Job) -> T): T {
+  return ensureCurrentJobInner(allowOrphan = true, action)
+}
+
+private fun <T> ensureCurrentJobInner(allowOrphan: Boolean, action: (Job) -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
     return ensureCurrentJob(indicator, action)
@@ -47,7 +63,9 @@ fun <T> ensureCurrentJob(action: (Job) -> T): T {
   if (currentJob != null) {
     return action(currentJob)
   }
-  LOG.error("There is no ProgressIndicator or Job in this thread, the current job is not cancellable.")
+  if (!allowOrphan) {
+    LOG.error("There is no ProgressIndicator or Job in this thread, the current job is not cancellable.")
+  }
   val orphanJob = Job(parent = null)
   return executeWithJobAndCompleteIt(orphanJob) {
     action(orphanJob)
