@@ -21,7 +21,8 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
       @Override
       public void visitParameterList(PsiParameterList parameterList) {
         super.visitParameterList(parameterList);
-        if (RemoveRedundantParameterTypesFix.isApplicable(parameterList)) {
+        if (parameterList.getParent() instanceof PsiLambdaExpression &&
+            RemoveRedundantParameterTypesFix.isApplicable(parameterList)) {
           holder.registerProblem(parameterList, JavaBundle.message("inspection.message.lambda.parameter.type.is.redundant"),
                                  new RemoveRedundantParameterTypesFix((PsiLambdaExpression)parameterList.getParent()));
         }
