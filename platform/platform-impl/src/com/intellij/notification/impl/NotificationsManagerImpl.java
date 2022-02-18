@@ -809,7 +809,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     AnAction helpAction = notification.getContextHelpAction();
     if (helpAction != null) {
       Presentation presentation = helpAction.getTemplatePresentation();
-      ContextHelpLabel helpLabel = new ContextHelpLabel(presentation.getText(), presentation.getDescription());
+      ContextHelpLabel helpLabel =
+        ContextHelpLabel.create(StringUtil.defaultIfEmpty(presentation.getText(), ""), presentation.getDescription());
       helpLabel.setForeground(UIUtil.getLabelDisabledForeground());
       actionPanel.addAction(helpLabel);
     }

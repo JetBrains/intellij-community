@@ -873,8 +873,9 @@ private class NotificationComponent(val project: Project,
 
     val actions = notification.actions
     val actionsSize = actions.size
+    val helpAction = notification.contextHelpAction
 
-    if (actionsSize > 0) {
+    if (actionsSize > 0 || helpAction != null) {
       val layout = HorizontalLayout(JBUIScale.scale(16))
       val actionPanel = JPanel(if (!notification.isSuggestionType && actions.size > 1) DropDownActionLayout(layout) else layout)
       actionPanel.isOpaque = false
@@ -908,6 +909,12 @@ private class NotificationComponent(val project: Project,
         if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
           actionPanel.add(MyDropDownAction(this))
         }
+      }
+      if (helpAction != null) {
+        val presentation = helpAction.templatePresentation
+        val helpLabel = ContextHelpLabel.create(StringUtil.defaultIfEmpty(presentation.text, ""), presentation.description)
+        helpLabel.foreground = UIUtil.getLabelDisabledForeground()
+        actionPanel.add(helpLabel)
       }
       centerPanel.add(actionPanel)
     }
