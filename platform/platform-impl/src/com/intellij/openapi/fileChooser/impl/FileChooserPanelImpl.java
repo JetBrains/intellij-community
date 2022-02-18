@@ -711,6 +711,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (UPLINK.equals(o2.name)) return 1;
       var byType = Boolean.compare(o2.directory, o1.directory);
       if (byType != 0) return byType;
+      byType = Boolean.compare(o1.name.startsWith("\\\\"), o2.name.startsWith("\\\\"));
+      if (byType != 0) return byType;
       return (o1.cs ? NaturalComparator.CASE_SENSITIVE_INSTANCE : NaturalComparator.INSTANCE).compare(o1.name, o2.name);
     };
   }
