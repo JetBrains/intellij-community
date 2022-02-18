@@ -83,7 +83,7 @@
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
-    <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.DevKitModuleBuilder"/>
+    <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.IdePluginModuleBuilder"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <compileServer.plugin classpath="devkit-jps.jar"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.idea.devkit.module.PluginModuleConvertToGradleStartupActivity"/>

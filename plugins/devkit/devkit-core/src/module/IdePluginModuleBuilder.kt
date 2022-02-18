@@ -4,8 +4,8 @@ package org.jetbrains.idea.devkit.module
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
@@ -13,15 +13,18 @@ import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -29,12 +32,13 @@ import com.intellij.util.lang.JavaVersion
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitFileTemplatesFactory
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Supplier
 import javax.swing.Icon
 
-class DevKitModuleBuilder : StarterModuleBuilder() {
+class IdePluginModuleBuilder : StarterModuleBuilder() {
 
-  private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("devkit.plugin.type")
+  private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
 
   override fun getBuilderId(): String = "idea-plugin"
   override fun getPresentableName(): String = DevKitBundle.message("module.builder.title")
@@ -64,13 +68,11 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
   }
 
   override fun createOptionsStep(contextProvider: StarterContextProvider): StarterInitialStep {
-    return DevKitInitialStep(contextProvider)
+    return IdePluginInitialStep(contextProvider)
   }
 
   override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
-    val pluginType = starterContext.getUserData(PLUGIN_TYPE_KEY) ?: PluginType.PLUGIN
-
-    if (pluginType == PluginType.PLUGIN) {
+    if (getPluginType() == PluginType.PLUGIN) {
       return super.isSuitableSdkType(sdkType)
     }
 
@@ -87,49 +89,105 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
 
   override fun getAssets(starter: Starter): List<GeneratorAsset> {
     val ftManager = FileTemplateManager.getInstance(ProjectManager.getInstance().defaultProject)
-    val standardAssetsProvider = StandardAssetsProvider()
-
     val assets = mutableListOf<GeneratorAsset>()
-    assets.add(GeneratorTemplateFile("build.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.BUILD_GRADLE_KTS)))
-    assets.add(GeneratorTemplateFile("settings.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.SETTINGS_GRADLE_KTS)))
-    assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
-                                     ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
 
-    assets.addAll(standardAssetsProvider.getGradlewAssets())
-    assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+    if (getPluginType() == PluginType.PLUGIN) {
+      val standardAssetsProvider = StandardAssetsProvider()
 
-    val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
-    if (starterContext.language == JAVA_STARTER_LANGUAGE) {
-      assets.add(GeneratorEmptyDirectory("src/main/java/${packagePath}"))
+      assets.add(GeneratorResourceFile("src/main/resources/META-INF/pluginIcon.svg",
+                                       javaClass.getResource("/assets/devkit-pluginIcon.svg")!!))
+      assets.add(GeneratorTemplateFile("src/main/resources/META-INF/plugin.xml",
+                                       ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.PLUGIN_XML)))
+      assets.add(GeneratorTemplateFile("build.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.BUILD_GRADLE_KTS)))
+      assets.add(GeneratorTemplateFile("settings.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.SETTINGS_GRADLE_KTS)))
+      assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
+                                       ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
+
+      assets.addAll(standardAssetsProvider.getGradlewAssets())
+      assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+
+      val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
+      if (starterContext.language == JAVA_STARTER_LANGUAGE) {
+        assets.add(GeneratorEmptyDirectory("src/main/java/${packagePath}"))
+      }
+      else if (starterContext.language == KOTLIN_STARTER_LANGUAGE) {
+        assets.add(GeneratorEmptyDirectory("src/main/kotlin/${packagePath}"))
+      }
+
+      assets.add(GeneratorResourceFile(".run/Run IDE with Plugin.run.xml",
+                                       javaClass.getResource("/assets/devkit-Run_IDE_with_Plugin_run.xml")!!))
     }
-    else if (starterContext.language == KOTLIN_STARTER_LANGUAGE) {
-      assets.add(GeneratorEmptyDirectory("src/main/kotlin/${packagePath}"))
+    else {
+      assets.add(GeneratorResourceFile(".gitignore", javaClass.getResource("/assets/devkit-theme.gitignore")!!))
+      assets.add(GeneratorResourceFile("resources/META-INF/pluginIcon.svg",
+                                       javaClass.getResource("/assets/devkit-pluginIcon.svg")!!))
+      assets.add(GeneratorTemplateFile("resources/META-INF/plugin.xml",
+                                       ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.THEME_PLUGIN_XML)))
+      assets.add(GeneratorTemplateFile("resources/theme/${sanitizeThemeFilename(starterContext.artifact)}.theme.json",
+                                       ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.THEME_JSON)))
     }
-
-    assets.add(GeneratorTemplateFile("src/main/resources/META-INF/plugin.xml",
-                                     ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.PLUGIN_XML)))
-    assets.add(GeneratorResourceFile("src/main/resources/META-INF/pluginIcon.svg",
-                                     javaClass.getResource("/assets/devkit-pluginIcon.svg")!!))
-
-    assets.add(GeneratorResourceFile(".run/Run IDE with Plugin.run.xml",
-                                     javaClass.getResource("/assets/devkit-Run_IDE_with_Plugin_run.xml")!!))
 
     return assets
   }
 
+  override fun getModuleType(): ModuleType<*> {
+    if (getPluginType() == PluginType.THEME) {
+      return PluginModuleType.getInstance()
+    }
+
+    return super.getModuleType()
+  }
+
+  override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
+    super.setupRootModel(modifiableRootModel)
+
+    if (getPluginType() == PluginType.THEME) {
+      val contentEntryPath = contentEntryPath ?: return
+      val resourceRootPath = "$contentEntryPath/resources" //NON-NLS
+      val contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath) ?: return
+
+      val contentEntry = MarkRootActionBase.findContentEntry(modifiableRootModel, contentRoot)
+      contentEntry?.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE)
+    }
+  }
+
   override fun getGeneratorContextProperties(sdk: Sdk?, dependencyConfig: DependencyConfig): Map<String, String> {
-    return mapOf("pluginTitle" to Strings.capitalize(starterContext.artifact))
+    return mapOf(
+      "pluginTitle" to Strings.capitalize(starterContext.artifact),
+      "themeName" to sanitizeThemeFilename(starterContext.artifact)
+    )
   }
 
   override fun getFilePathsToOpen(): List<String> {
+    if (getPluginType() == PluginType.THEME) {
+      return listOf(
+        "resources/META-INF/plugin.xml",
+        "resources/theme/${sanitizeThemeFilename(starterContext.artifact)}.theme.json"
+      )
+    }
+
     return listOf(
       "src/main/resources/META-INF/plugin.xml",
       "build.gradle.kts"
     )
   }
 
-  private inner class DevKitInitialStep(contextProvider: StarterContextProvider) : StarterInitialStep(contextProvider) {
-    private val typeProperty: GraphProperty<PluginType> = propertyGraph.graphProperty { PluginType.PLUGIN }
+  private fun sanitizeThemeFilename(title: String): String {
+    return title.replace("-", "")
+      .replace(INVALID_PACKAGE_NAME_SYMBOL_PATTERN, "_")
+      .replace(Regex("\\s"), "")
+  }
+
+  fun setPluginType(pluginType: PluginType) {
+    starterContext.putUserData(PLUGIN_TYPE_KEY, pluginType)
+  }
+
+  private fun getPluginType(): PluginType {
+    return starterContext.getUserData(PLUGIN_TYPE_KEY) ?: PluginType.PLUGIN
+  }
+
+  private inner class IdePluginInitialStep(contextProvider: StarterContextProvider) : StarterInitialStep(contextProvider) {
+    private val typeProperty: GraphProperty<PluginType> = propertyGraph.property(PluginType.PLUGIN)
 
     override fun addFieldsBefore(layout: Panel) {
       layout.row(DevKitBundle.message("module.builder.type")) {
@@ -137,10 +195,10 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
           .bind(typeProperty)
       }.bottomGap(BottomGap.SMALL)
 
-      starterContext.putUserData(PLUGIN_TYPE_KEY, PluginType.PLUGIN)
+      setPluginType(PluginType.PLUGIN)
 
       typeProperty.afterChange { pluginType ->
-        starterContext.putUserData(PLUGIN_TYPE_KEY, pluginType)
+        setPluginType(pluginType)
 
         languageRow.visible(pluginType == PluginType.PLUGIN)
         groupRow.visible(pluginType == PluginType.PLUGIN)
@@ -160,7 +218,7 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
       }
       layout.row {
         hyperLink(DevKitBundle.message("module.builder.github.template.link"),
-                  "https://github.com/JetBrains/intellij-platform-plugin-template")
+                  "https://jb.gg/plugin-template")
       }
 
       if (PluginManager.isPluginInstalled(PluginId.findId("org.intellij.scala"))) {
@@ -172,7 +230,7 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
     }
   }
 
-  private enum class PluginType(
+  enum class PluginType(
     val messagePointer: Supplier<String>
   ) {
     PLUGIN(DevKitBundle.messagePointer("module.builder.type.plugin")),
