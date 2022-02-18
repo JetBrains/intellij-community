@@ -50,7 +50,7 @@ class GitStashCache(val project: Project) : Disposable {
     }
     catch (e: Exception) {
       if (e !is ProcessCanceledException) LOG.error("Could not load stash at '${stashId.hash}' in '${stashId.root}'", e)
-      throw CompletionException(e);
+      throw CompletionException(e)
     }
   }
 
