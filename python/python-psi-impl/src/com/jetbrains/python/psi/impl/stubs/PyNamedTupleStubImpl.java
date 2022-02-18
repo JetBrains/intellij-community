@@ -307,6 +307,11 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return element == null ? null : element.getText();
   }
 
+  @Override
+  public String toString() {
+    return "PyNamedTupleStub(calleeName=" + myCalleeName + ", name=" + myName + ", fields=" + myFields + ')';
+  }
+
   private enum NamedTupleModule {
 
     COLLECTIONS {
