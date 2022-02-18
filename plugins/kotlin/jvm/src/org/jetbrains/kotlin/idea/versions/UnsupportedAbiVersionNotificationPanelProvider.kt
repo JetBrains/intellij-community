@@ -46,7 +46,7 @@ import javax.swing.event.HyperlinkEvent
 
 class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvider {
 
-    private fun doCreate(fileEditor: FileEditor, project: Project, module: Module, badVersionedRoots: Collection<BinaryVersionedFile<BinaryVersion>>): EditorNotificationPanel {
+    private fun doCreate(fileEditor: FileEditor, project: Project, badVersionedRoots: Collection<BinaryVersionedFile<BinaryVersion>>): EditorNotificationPanel {
         val answer = ErrorNotificationPanel(fileEditor)
         val badRootFiles = badVersionedRoots.map { it.file }
 
@@ -146,21 +146,25 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
 
         }
 
-        createShowPathsActionLabel(project, module, answer, KotlinJvmBundle.message("button.text.details"))
+        createShowPathsActionLabel(project, badVersionedRoots, answer, KotlinJvmBundle.message("button.text.details"))
 
         return answer
     }
 
-    private fun createShowPathsActionLabel(project: Project, module: Module, answer: EditorNotificationPanel, @NlsContexts.LinkLabel labelText: String) {
+    private fun createShowPathsActionLabel(
+        project: Project,
+        badVersionedRoots: Collection<BinaryVersionedFile<BinaryVersion>>,
+        answer: EditorNotificationPanel,
+        @NlsContexts.LinkLabel labelText: String
+    ) {
         answer.createComponentActionLabel(labelText) { label ->
             val task = {
-                val badRoots = collectBadRoots(module)
-                assert(!badRoots.isEmpty()) { "This action should only be called when bad roots are present" }
+                assert(!badVersionedRoots.isEmpty()) { "This action should only be called when bad roots are present" }
 
                 val listPopupModel = LibraryRootsPopupModel(
                     KotlinJvmBundle.message("unsupported.format.plugin.version.0", KotlinPluginUtil.getPluginVersion()),
                     project,
-                    badRoots
+                    badVersionedRoots
                 )
                 val popup = JBPopupFactory.getInstance().createListPopup(listPopupModel)
                 popup.showUnderneathOf(label)
@@ -212,7 +216,12 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
 
             val module = ModuleUtilCore.findModuleForFile(file, project) ?: return CONST_NULL
 
-            return Function { checkAndCreate(it, project, module) }
+            project.service<SuppressNotificationState>().state.takeUnless(SuppressNotificationState::isSuppressed) ?: return CONST_NULL
+
+            val badRoots: Collection<BinaryVersionedFile<BinaryVersion>> =
+                collectBadRoots(module).takeUnless(Collection<BinaryVersionedFile<BinaryVersion>>::isEmpty) ?: return CONST_NULL
+
+            return Function { doCreate(it, project, badRoots) }
         } catch (e: ProcessCanceledException) {
             // Ignore
         } catch (e: IndexNotReadyException) {
@@ -220,20 +229,6 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         }
 
         return CONST_NULL
-    }
-
-    fun checkAndCreate(fileEditor: FileEditor, project: Project, module: Module): EditorNotificationPanel? {
-        val state = project.service<SuppressNotificationState>().state
-        if (state.isSuppressed) {
-            return null
-        }
-
-        val badRoots = collectBadRoots(module)
-        if (!badRoots.isEmpty()) {
-            return doCreate(fileEditor, project, module, badRoots)
-        }
-
-        return null
     }
 
     private fun findBadRootsInRuntimeLibraries(
