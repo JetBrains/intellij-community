@@ -13,10 +13,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.joinCanonicalPath
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.UIBundle
@@ -24,7 +26,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.annotations.Nls
 import java.io.File
-import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -40,6 +41,7 @@ abstract class CommonStarterInitialStep(
   protected val propertyGraph: PropertyGraph = PropertyGraph()
   protected val entityNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
   protected val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
+  protected val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
   protected val groupIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { starterContext.group }
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
   protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }
@@ -103,8 +105,8 @@ abstract class CommonStarterInitialStep(
   }
 
   private fun getLocationComment(): @Nls String {
-    return UIBundle.message("label.project.wizard.new.project.path.description",
-                            StringUtil.shortenPathWithEllipsis(Path.of(location, entityName).toString(), 60))
+    val shortPath = StringUtil.shortenPathWithEllipsis(getPresentablePath(canonicalPathProperty.get()), 60)
+    return UIBundle.message("label.project.wizard.new.project.path.description", wizardContext.isCreatingNewProjectInt, shortPath)
   }
 
   protected fun Panel.addSampleCodeUi() {
