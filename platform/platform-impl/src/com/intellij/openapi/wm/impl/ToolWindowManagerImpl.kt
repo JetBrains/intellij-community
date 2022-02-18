@@ -1268,7 +1268,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       ToolWindowAnchor.RIGHT -> position.set(Balloon.Position.atLeft)
     }
 
-    toolWindowAvailable(entry.toolWindow)
+    if (!entry.readOnlyWindowInfo.isVisible) {
+      toolWindowAvailable(entry.toolWindow)
+    }
 
     val balloon = createBalloon(options, entry)
     val button = stripe.getButtonFor(options.toolWindowId)?.getComponent()
