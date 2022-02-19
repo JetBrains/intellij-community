@@ -255,6 +255,7 @@
       <reference id="Vcs.Shelf.Pop"/>
       <reference id="ShelveChanges.UnshelveWithDialog"/>
       <reference ref="Vcs.Shelf.Drop"/>
+      <reference ref="ShelvedChanges.Restore"/>
     </group>
 
     <!--a group for plugins to add their actions-->
