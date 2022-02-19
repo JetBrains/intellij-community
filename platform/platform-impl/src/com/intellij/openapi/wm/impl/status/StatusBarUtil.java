@@ -54,6 +54,11 @@ public final class StatusBarUtil {
       return null;
     }
 
+    FileEditor currentEditor = statusBar.getCurrentEditor();
+    if (currentEditor != null) {
+      return currentEditor;
+    }
+
     Project project = statusBar.getProject();
     if (project == null) {
       return null;
