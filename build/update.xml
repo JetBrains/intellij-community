@@ -2,11 +2,11 @@
 <project name="IntelliJ IDEA CE developer's update" default="layout">
   <dirname property="build" file="${ant.file}"/>
   <property name="project.home" value="${build}/../"/>
-  <property name="gant.home" value="${project.home}/build/lib/gant"/>
+
+  <!-- do not build by default -->
+  <property name="intellij.build.local.plugins.repository" value="" />
 
   <macrodef name="run">
-    <attribute name="script"/>
-    <attribute name="target" default="default"/>
     <attribute name="deploy"/>
     <attribute name="distOutputRelativePath" default="dist"/>
 
@@ -21,8 +21,6 @@
   </macrodef>
 
   <target name="layout">
-    <run script="${project.home}/build/scripts/idea_community.gant"
-         target="update-from-sources"
-         deploy="${project.home}/out/deploy"/>
+    <run deploy="${project.home}/out/deploy"/>
   </target>
 </project>
