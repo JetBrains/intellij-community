@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.google.common.collect.Lists;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.ide.ui.search.SearchEverywhereTabsCustomization;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
@@ -265,16 +266,19 @@ public class SearchEverywhereHeader {
       res.add(allTab);
     }
 
-    contributors.stream()
-      .filter(SearchEverywhereContributor::isShownInSeparateTab)
-      .forEach(contributor -> {
+    Map<String, ? extends SearchEverywhereContributor<?>> contributorsMap =
+      ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(), c));
+
+    SearchEverywhereTabsCustomization.getInstance().getContributorsWithTab().forEach(id -> {
+      SearchEverywhereContributor<?> contributor = contributorsMap.get(id);
+      if (contributor != null) {
         SETab tab = createTab(contributor, () -> {
           myToolbar.updateActionsImmediately();
           myScopeChangedCallback.run();
         });
         res.add(tab);
-      });
-
+      }
+    });
     return res;
   }
 

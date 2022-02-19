@@ -208,6 +208,9 @@
                         serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
 
+    <applicationService serviceInterface="com.intellij.ide.ui.search.SearchEverywhereTabsCustomization"
+                        serviceImplementation="com.intellij.ide.ui.search.DefaultSearchEverywhereTabsCustomization"/>
+
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
