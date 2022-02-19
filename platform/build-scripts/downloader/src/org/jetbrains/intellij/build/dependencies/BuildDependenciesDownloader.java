@@ -203,9 +203,14 @@ final public class BuildDependenciesDownloader {
 
     if (start[0] == (byte)0x50 && start[1] == (byte)0x4B) {
       BuildDependenciesUtil.extractZip(archiveFile, targetDirectory, stripRoot);
-    } else if (start[0] == (byte)0x1F && start[1] == (byte)0x8B) {
+    }
+    else if (start[0] == (byte)0x1F && start[1] == (byte)0x8B) {
       BuildDependenciesUtil.extractTarGz(archiveFile, targetDirectory, stripRoot);
-    } else {
+    }
+    else if (start[0] == (byte)0x42 && start[1] == (byte)0x5A) {
+      BuildDependenciesUtil.extractTarBz2(archiveFile, targetDirectory, stripRoot);
+    }
+    else {
       throw new IllegalStateException("Unknown archive format at " + archiveFile + ". Currently only .tar.gz or .zip are supported");
     }
 

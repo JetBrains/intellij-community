@@ -7,6 +7,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -150,8 +152,30 @@ public final class BuildDependenciesUtil {
     }
   }
 
+  public static void extractTarBz2(Path archiveFile, Path target, boolean stripRoot) throws Exception {
+    extractTarBasedArchive(archiveFile, target, stripRoot, is -> {
+      try {
+        return new BZip2CompressorInputStream(is);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
   public static void extractTarGz(Path archiveFile, Path target, boolean stripRoot) throws Exception {
-    try (TarArchiveInputStream archive = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(archiveFile))))) {
+    extractTarBasedArchive(archiveFile, target, stripRoot, is -> {
+      try {
+        return new GzipCompressorInputStream(is);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<InputStream, InputStream> unpacker) throws Exception {
+    try (TarArchiveInputStream archive = new TarArchiveInputStream(unpacker.apply(new BufferedInputStream(Files.newInputStream(archiveFile))))) {
       final EntryNameConverter converter = new EntryNameConverter(archiveFile, target, stripRoot);
 
       while (true) {
