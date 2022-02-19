@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBarCentralWidget;
@@ -619,7 +620,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private static boolean isDecoratedMenu() {
-    boolean osSupported = (SystemInfo.isMac && ExperimentalUI.isNewToolbar()) || SystemInfo.isWindows;
+    boolean osSupported = SystemInfo.isWindows ||
+      (SystemInfo.isMac && ExperimentalUI.isNewToolbar() && Registry.is("ide.experimental.ui.title.toolbar.in.macos"));
     return (IdeFrameDecorator.isCustomDecorationActive() || MainToolbarKt.isToolbarInHeader()) && osSupported;
   }
 }

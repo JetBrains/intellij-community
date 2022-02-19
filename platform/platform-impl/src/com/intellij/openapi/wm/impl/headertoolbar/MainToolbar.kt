@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -141,5 +142,6 @@ private class VisibleComponentsPool {
 }
 
 @JvmOverloads internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
-  return (SystemInfoRt.isMac || (SystemInfoRt.isWindows && !settings.separateMainMenu)) && IdeFrameDecorator.isCustomDecorationAvailable();
+  return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos"))
+          || (SystemInfoRt.isWindows && !settings.separateMainMenu)) && IdeFrameDecorator.isCustomDecorationAvailable();
 }
