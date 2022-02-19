@@ -19,9 +19,8 @@ import com.intellij.diff.tools.external.ExternalDiffSettings
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
@@ -40,30 +39,27 @@ class ExternalDiffSettingsPanel {
           .bindSelected(settings::isExternalToolsEnabled)
       }
 
-      panel {
-        val externalToolsTablePanel = ExternalToolsTablePanel()
-        indent {
-          group(DiffBundle.message("settings.external.diff.panel.tree.title"), false) {
-            row {
-              cell(ExternalToolsTreePanel(externalToolsTablePanel.model))
-                .horizontalAlign(HorizontalAlign.FILL)
-                .bind(
-                  ExternalToolsTreePanel::getData,
-                  ExternalToolsTreePanel::updateData,
-                  settings::externalTools.toBinding(),
-                )
-            }
-          }.bottomGap(BottomGap.MEDIUM)
+      val externalToolsTablePanel = ExternalToolsTablePanel()
+      indent {
+        row {
+          val treePanel = ExternalToolsTreePanel(externalToolsTablePanel.model)
+          cell(treePanel.component)
+            .label(DiffBundle.message("settings.external.diff.panel.tree.title"), LabelPosition.TOP)
+            .horizontalAlign(HorizontalAlign.FILL)
+            .bind(
+              { treePanel.getData() },
+              { _, value -> treePanel.updateData(value) },
+              settings::externalTools.toMutableProperty()
+            )
+        }.bottomGap(BottomGap.MEDIUM)
 
-          group(DiffBundle.message("settings.external.diff.panel.table.title"), false) {
-            row {
-              cell(externalToolsTablePanel)
-                .horizontalAlign(HorizontalAlign.FILL)
-                .onIsModified { externalToolsTablePanel.onModified(settings) }
-                .onApply { externalToolsTablePanel.onApply(settings) }
-                .onReset { externalToolsTablePanel.onReset(settings) }
-            }
-          }
+        row {
+          cell(externalToolsTablePanel.component)
+            .label(DiffBundle.message("settings.external.diff.panel.table.title"), LabelPosition.TOP)
+            .horizontalAlign(HorizontalAlign.FILL)
+            .onIsModified { externalToolsTablePanel.onModified(settings) }
+            .onApply { externalToolsTablePanel.onApply(settings) }
+            .onReset { externalToolsTablePanel.onReset(settings) }
         }
       }.enabledIf(externalToolsEnabled.component.selected)
     }

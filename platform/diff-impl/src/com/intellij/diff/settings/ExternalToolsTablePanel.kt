@@ -21,7 +21,6 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.BorderLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -35,6 +34,7 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
   val model: ListTableModel<ExternalToolConfiguration> = ListTableModel<ExternalToolConfiguration>(columnInfos, mutableListOf(), 0)
 
   private val table: TableView<ExternalToolConfiguration> = TableView(model).apply {
+    visibleRowCount = 8
     addMouseListener(object : MouseAdapter() {
       override fun mousePressed(mouseEvent: MouseEvent) {
         if (mouseEvent.clickCount == 2 && selectedRow != -1) {
@@ -44,12 +44,9 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
     })
   }
 
-  init {
-    JBUI.size(preferredSize).withHeight(250).let {
-      minimumSize = it
-      preferredSize = it
-    }
+  val component: JComponent
 
+  init {
     val toolbarTable = ToolbarDecorator.createDecorator(table)
       .setAddAction { addData() }
       .setRemoveAction { removeData() }
@@ -57,7 +54,7 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
       .disableUpDownActions()
       .createPanel()
 
-    add(toolbarTable, BorderLayout.CENTER)
+    component = toolbarTable
   }
 
   fun onModified(settings: ExternalDiffSettings): Boolean {
