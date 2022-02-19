@@ -3,7 +3,10 @@ package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -106,28 +109,30 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   override fun runHealthCheck() {
     try {
       for ((project, filter) in myProjectFilters) {
-        val errors = ReadAction
-          .nonBlocking(Callable { runHealthCheck(project, filter) })
-          .inSmartMode(project)
-          .executeSynchronously()
-
-        if (errors.isNotEmpty()) {
-          for (error in errors) {
-            error.fix(filter)
-          }
-
-          val message = StringUtil.first(errors.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
-                                         300,
-                                         true)
-          FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
+        var errors: List<HealthCheckError>? = null
+        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
+          if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
+          errors = runHealthCheck(project, filter)
         }
-        else {
-          FileBasedIndexImpl.LOG.info("Health check heartbeat")
+
+        if (errors.isNullOrEmpty()) continue
+
+        for (error in errors!!) {
+          error.fix(filter)
         }
+
+        val message = StringUtil.first(errors!!.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
+                                       300,
+                                       true)
+        FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
+
       }
     }
     catch (e: Exception) {
       FileBasedIndexImpl.LOG.error(e)
+    }
+    catch (_: ProcessCanceledException) {
+
     }
   }
 
