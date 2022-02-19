@@ -192,6 +192,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       decor.setCustomDecorationTitleBarHeight(window, 0)
     }
     else {
+      if (height == 0) return
       val toList = getHitTestSpots().map { java.util.Map.entry(it.first.getRectangleOn(window), it.second) }.toList()
       decor.setCustomDecorationHitTestSpots(window, toList)
       decor.setCustomDecorationTitleBarHeight(window, height)

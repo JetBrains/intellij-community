@@ -211,7 +211,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   public static boolean isCustomDecorationAvailable() {
-    return SystemInfoRt.isWindows && JBR.isCustomWindowDecorationSupported();
+    return (SystemInfoRt.isMac || SystemInfoRt.isWindows) && JBR.isCustomWindowDecorationSupported();
   }
 
   private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();

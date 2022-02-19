@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ToolbarUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
@@ -108,11 +110,16 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = myFrame.getRootPane();
-          ToolbarUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
-            if(!Disposer.isDisposed(parentDisposable)) {
-              Disposer.register(parentDisposable, () -> runnable.run());
-            }
-          });
+          if (ExperimentalUI.isNewToolbar() && MainToolbarKt.isToolbarInHeader()) {
+            ToolbarUtil.removeSystemTitleBar(rootPane);
+          }
+          else {
+            ToolbarUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
+              if (!Disposer.isDisposed(parentDisposable)) {
+                Disposer.register(parentDisposable, () -> runnable.run());
+              }
+            });
+          }
 
           exitFullScreen();
           ActiveWindowsWatcher.addActiveWindow(myFrame);

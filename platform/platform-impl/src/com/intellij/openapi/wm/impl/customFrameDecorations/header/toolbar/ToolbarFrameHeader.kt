@@ -18,7 +18,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.IconManager
@@ -38,7 +39,7 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
-internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener, ToolbarHolder {
+internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
   private var myToolbar : MainToolbar? = null
@@ -81,6 +82,8 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
+
+  override fun getComponent(): JComponent = this
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateLayout(uiSettings)
