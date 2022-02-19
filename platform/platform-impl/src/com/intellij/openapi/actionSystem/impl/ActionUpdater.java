@@ -47,7 +47,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 final class ActionUpdater {
@@ -69,7 +68,6 @@ final class ActionUpdater {
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
   private final Map<ActionGroup, List<AnAction>> myGroupChildren = new ConcurrentHashMap<>();
-  private final Map<ActionGroup, Boolean> myCanBePerformedCache = new ConcurrentHashMap<>();
   private final UpdateStrategy myRealUpdateStrategy;
   private final UpdateStrategy myCheapStrategy;
 
@@ -111,9 +109,8 @@ final class ActionUpdater {
     myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action),
-      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))),
-      group -> callAction(group, Op.canBePerformed, () -> doCanBePerformed(group, myDataContext)));
-    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null), group -> true);
+      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))));
+    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null));
 
     myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) || ActionPlaces.isShortcutPlace(myPlace) ?
                         0 : Registry.intValue("actionSystem.update.actions.async.test.delay", 0);
@@ -539,10 +536,6 @@ final class ActionUpdater {
     return Collections.singletonList(child);
   }
 
-  private boolean canBePerformed(ActionGroup group, UpdateStrategy strategy) {
-    return myCanBePerformedCache.computeIfAbsent(group, __ -> strategy.canBePerformed.test(group));
-  }
-
   private Presentation orDefault(AnAction action, Presentation presentation) {
     return presentation != null ? presentation : myPresentationFactory.getPresentation(action).clone();
   }
@@ -605,8 +598,7 @@ final class ActionUpdater {
       if (presentation == null || !presentation.isVisible()) {
         return null;
       }
-      if (presentation.isPopupGroup() || presentation.isPerformGroup() ||
-          strategy.canBePerformed.test(oo)) {
+      if (presentation.isPopupGroup() || presentation.isPerformGroup()) {
         return null;
       }
       return getGroupChildren(oo, strategy);
@@ -639,9 +631,6 @@ final class ActionUpdater {
 
     Presentation presentation = strategy.update.fun(action);
     if (presentation != null) {
-      presentation.setPerformGroup(
-        action instanceof ActionGroup && presentation.isPopupGroup() &&
-        (presentation.isPerformGroup() || canBePerformed((ActionGroup)action, strategy)));
       myUpdatedPresentations.put(action, presentation);
     }
     return presentation;
@@ -651,7 +640,15 @@ final class ActionUpdater {
   static boolean doUpdate(@NotNull AnAction action, @NotNull AnActionEvent e) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
     try {
-      return !ActionUtil.performDumbAwareUpdate(action, e, false);
+      boolean result = !ActionUtil.performDumbAwareUpdate(action, e, false);
+      if (result) {
+        Presentation presentation = e.getPresentation();
+        // to be removed when ActionGroup#canBePerformed is dropped
+        presentation.setPerformGroup(
+          action instanceof ActionGroup && presentation.isPopupGroup() &&
+          (presentation.isPerformGroup() || doCanBePerformed((ActionGroup)action, e.getDataContext())));
+      }
+      return result;
     }
     catch (Throwable ex) {
       handleException(Op.update, action, e, ex);
@@ -715,14 +712,11 @@ final class ActionUpdater {
   private static class UpdateStrategy {
     final NullableFunction<? super AnAction, Presentation> update;
     final NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren;
-    final Predicate<? super ActionGroup> canBePerformed;
 
     UpdateStrategy(NullableFunction<? super AnAction, Presentation> update,
-                   NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren,
-                   Predicate<? super ActionGroup> canBePerformed) {
+                   NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren) {
       this.update = update;
       this.getChildren = getChildren;
-      this.canBePerformed = canBePerformed;
     }
   }
 
