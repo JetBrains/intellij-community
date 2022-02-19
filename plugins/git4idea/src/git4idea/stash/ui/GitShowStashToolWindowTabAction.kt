@@ -10,7 +10,7 @@ class GitShowStashToolWindowTabAction : VcsShowToolWindowTabAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     val project = e.project
-    if (project == null || !isStashToolWindowAvailable(project)) {
+    if (project == null || !isStashToolWindowEnabled(project)) {
       e.presentation.isEnabledAndVisible = false
     }
   }

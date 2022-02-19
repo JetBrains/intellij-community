@@ -50,16 +50,14 @@ import com.intellij.util.*;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.UtilKt;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -97,6 +95,7 @@ public class ShelvedChangesViewManager implements Disposable {
   private final Project myProject;
   private ShelfToolWindowPanel myPanel = null;
   private ContentImpl myContent = null;
+  private boolean myDisposed = false;
   private final MergingUpdateQueue myUpdateQueue;
   private final List<Runnable> myPostUpdateEdtActivity = new ArrayList<>();
 
@@ -120,7 +119,11 @@ public class ShelvedChangesViewManager implements Disposable {
     myShelveChangesManager = ShelveChangesManager.getInstance(project);
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
-    project.getMessageBus().connect().subscribe(ShelveChangesManager.SHELF_TOPIC, e -> scheduleContentUpdate());
+    MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, e -> scheduleContentUpdate());
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> {
+      ApplicationManager.getApplication().invokeLater(this::updateAvailability, o -> myDisposed);
+    });
   }
 
   private void scheduleContentUpdate() {
@@ -132,9 +135,16 @@ public class ShelvedChangesViewManager implements Disposable {
     treeConsumer.consume(myPanel.myTree);
   }
 
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void updateAvailability() {
+    updateViewContent();
+    scheduleContentUpdate();
+  }
+
   @RequiresEdt
   void updateViewContent() {
-    if (myShelveChangesManager.getAllLists().isEmpty()) {
+    if (myShelveChangesManager.getAllLists().isEmpty() || hideDefaultShelfTab(myProject)) {
       if (myContent != null) {
         removeContent(myContent);
         VcsNotifier.getInstance(myProject).hideAllNotificationsByType(ShelfNotification.class);
@@ -165,6 +175,13 @@ public class ShelvedChangesViewManager implements Disposable {
         tree.rebuildTree();
       });
     }
+  }
+
+  @ApiStatus.Internal
+  public static boolean hideDefaultShelfTab(@NotNull Project project) {
+    AbstractVcs singleVcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS();
+    if (singleVcs == null) return false;
+    return singleVcs.isWithCustomShelves();
   }
 
   protected void removeContent(Content content) {
@@ -282,6 +299,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @Override
   public void dispose() {
+    myDisposed = true;
     myUpdateQueue.cancelAllUpdates();
   }
 
