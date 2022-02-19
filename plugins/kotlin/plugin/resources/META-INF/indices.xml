@@ -64,7 +64,7 @@
     <registryKey
             key="kotlin.cache.top.level.subpackages"
             description="Enables top level subpackages caching"
-            defaultValue="true"
+            defaultValue="false"
             restartRequired="true"/>
 
   </extensions>
