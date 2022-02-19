@@ -238,7 +238,7 @@ public class CustomizableActionsPanel {
     mySelectedSchema.copyFrom(source);
     updateLocalSchema(mySelectedSchema);
     patchActionsTreeCorrespondingToSchema(root);
-    if (expandedIds.isEmpty() || needExpandAll()) {
+    if (needExpandAll()) {
       new DefaultTreeExpander(myActionsTree).expandAll();
     } else {
       TreeUtil.restoreExpandedPaths(myActionsTree, toTreePaths(root, expandedIds));
