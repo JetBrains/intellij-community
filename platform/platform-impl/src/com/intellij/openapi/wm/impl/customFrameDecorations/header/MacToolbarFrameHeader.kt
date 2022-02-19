@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
@@ -15,14 +16,15 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Rectangle
 import java.beans.PropertyChangeListener
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JRootPane
 
 private const val GAP_FOR_BUTTONS = 80
 
-internal class MacToolbarFrameHeader(private val frame: JFrame, private val root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
+internal class MacToolbarFrameHeader(private val frame: JFrame,
+                                     private val root: JRootPane,
+                                     private val ideMenu: IdeMenuBar) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
 
   private var myToolbar : MainToolbar? = null
 
@@ -69,7 +71,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
       ?.toList() ?: emptyList()
   }
 
-  override fun updateMenuActions(forceRebuild: Boolean) {}
+  override fun updateMenuActions(forceRebuild: Boolean) = ideMenu.updateMenuActions(forceRebuild)
 
   override fun getComponent(): JComponent = this
 

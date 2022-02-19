@@ -151,7 +151,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @NotNull
   private MainFrameCustomHeader createCustomTitle(@NotNull JFrame frame, IdeMenuBar ideMenu) {
     if (ExperimentalUI.isNewToolbar()) {
-      return SystemInfo.isMac ? new MacToolbarFrameHeader(frame, this) : new ToolbarFrameHeader(frame, ideMenu);
+      return SystemInfo.isMac ? new MacToolbarFrameHeader(frame, this, ideMenu) : new ToolbarFrameHeader(frame, ideMenu);
     }
 
     return new MenuFrameHeader(frame, mySelectedEditorFilePath, ideMenu);
@@ -325,10 +325,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void updateMainMenuActions() {
-    if (menuBar == null) return;
-
-    ((IdeMenuBar)menuBar).updateMenuActions(false);
-    menuBar.repaint();
+    if (menuBar != null) {
+      ((IdeMenuBar)menuBar).updateMenuActions(false);
+      menuBar.repaint();
+    }
 
     if (myCustomFrameTitlePane != null) {
       myCustomFrameTitlePane.updateMenuActions(false);
