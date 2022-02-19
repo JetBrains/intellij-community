@@ -3,8 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.util.XmlDomReader
-import com.intellij.util.XmlElement
+import com.intellij.util.xml.dom.XmlDomReader
+import com.intellij.util.xml.dom.XmlElement
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 import groovy.xml.XmlUtil
