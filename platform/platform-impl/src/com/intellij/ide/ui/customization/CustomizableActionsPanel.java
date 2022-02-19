@@ -195,7 +195,7 @@ public class CustomizableActionsPanel {
       CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
     }
     restorePathsAfterTreeOptimization(treePaths);
-    updateGlobalScheme();
+    updateGlobalSchema();
     CustomActionsSchema.getInstance().initActionIcons();
     CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
     if (SystemInfo.isMac) {
@@ -205,8 +205,11 @@ public class CustomizableActionsPanel {
     CustomActionsListener.fireSchemaChanged();
   }
 
-  protected void updateGlobalScheme() {
+  protected void updateGlobalSchema() {
     CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
+  }
+
+  protected void updateLocalSchema(CustomActionsSchema localSchema) {
   }
 
   private void restorePathsAfterTreeOptimization(final List<? extends TreePath> treePaths) {
@@ -233,6 +236,7 @@ public class CustomizableActionsPanel {
     CustomActionsSchema source = restoreLastState ? CustomActionsSchema.getInstance() : new CustomActionsSchema();
     if (mySelectedSchema == null) mySelectedSchema = new CustomActionsSchema();
     mySelectedSchema.copyFrom(source);
+    updateLocalSchema(mySelectedSchema);
     patchActionsTreeCorrespondingToSchema(root);
     if (expandedIds.isEmpty() || needExpandAll()) {
       new DefaultTreeExpander(myActionsTree).expandAll();

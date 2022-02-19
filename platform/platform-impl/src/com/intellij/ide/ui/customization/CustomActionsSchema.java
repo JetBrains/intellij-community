@@ -135,8 +135,11 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public void addAction(ActionUrl url) {
-    myActions.add(url);
-    resortActions();
+    if (myActions.contains(url)) return;
+    ActionUrl inverseUrl = new ActionUrl(url.getGroupPath(), url.getComponent(), -url.getActionType(), url.getAbsolutePosition());
+    if (!myActions.remove(inverseUrl)) {
+      myActions.add(url);
+    }
   }
 
   @NotNull
@@ -155,7 +158,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIconCustomizations.clear();
 
     for (ActionUrl actionUrl : result.myActions) {
-      myActions.add(actionUrl.copy());
+      addAction(actionUrl.copy());
     }
     resortActions();
 
@@ -209,7 +212,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     for (Element groupElement : schElement.getChildren(GROUP)) {
       ActionUrl url = new ActionUrl();
       url.readExternal(groupElement);
-      myActions.add(url);
+      addAction(url);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {

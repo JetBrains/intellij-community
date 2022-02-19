@@ -249,7 +249,10 @@ public class ActionUrl implements JDOMExternalizable {
     ActionUrl url = (ActionUrl)object;
     Object comp = myComponent instanceof Pair ? ((Pair<?, ?>)myComponent).first : myComponent;
     Object thatComp = url.myComponent instanceof Pair ? ((Pair<?, ?>)url.myComponent).first : url.myComponent;
-    return Comparing.equal(comp, thatComp) && myGroupPath.equals(url.myGroupPath) && myAbsolutePosition == url.getAbsolutePosition();
+    return Comparing.equal(comp, thatComp)
+           && myGroupPath.equals(url.myGroupPath)
+           && myAbsolutePosition == url.getAbsolutePosition()
+           && myActionType == url.myActionType;
   }
 
   @Override

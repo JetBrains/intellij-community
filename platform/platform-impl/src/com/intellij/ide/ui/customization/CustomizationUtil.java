@@ -45,10 +45,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -526,16 +524,34 @@ public final class CustomizationUtil {
         public void actionPerformed(@NotNull AnActionEvent e) {
           reset();
         }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()));
+        }
       }, new DumbAwareAction(IdeBundle.messagePointer("button.restore.defaults")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           resetToDefaults();
+        }
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          CustomActionsSchema cleanScheme = new CustomActionsSchema();
+          updateLocalSchema(cleanScheme);
+          e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
         }
       }){
         {
           getTemplatePresentation().setPopupGroup(true);
           getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
           getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          CustomActionsSchema cleanScheme = new CustomActionsSchema();
+          updateLocalSchema(cleanScheme);
+          e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) || mySelectedSchema.isModified(cleanScheme));
         }
       };
     }
@@ -550,14 +566,19 @@ public final class CustomizationUtil {
     }
 
     @Override
-    protected void updateGlobalScheme() {
+    protected void updateGlobalSchema() {
+      updateLocalSchema(mySelectedSchema);
+      super.updateGlobalSchema();
+    }
+
+    @Override
+    protected void updateLocalSchema(CustomActionsSchema localSchema) {
       CustomActionsSchema.getInstance().getActions().forEach(url -> {
         // Foreign (global) customization shouldn't be lost, so we add them to a scheme with local action group root
         if (!url.getGroupPath().contains(myGroupName)) {
-          mySelectedSchema.addAction(url.copy());
+          localSchema.addAction(url.copy());
         }
       });
-      super.updateGlobalScheme();
     }
 
     @Override
