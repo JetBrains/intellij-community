@@ -1,0 +1,14 @@
+UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: Stream
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util.stream: stream
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util: util
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = stream) -> PsiPackage:java.util.stream: stream
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> Decompiled_Class: Stream
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = of) -> Decompiled_Method: of
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = map) -> Decompiled_Method: map
+        UReturnExpression -> UQualifiedReferenceExpression -> null: null
+        UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> FUNCTION_LITERAL: <anonymous>
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
