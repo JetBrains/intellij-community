@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.savedPatches
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -14,15 +13,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.shelf.*
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.DateFormatUtil
+import one.util.streamex.StreamEx
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.stream.Stream
 import javax.swing.event.ChangeListener
 
 class ShelfProvider(private val project: Project, parent: Disposable) : SavedPatchesProvider<ShelvedChangeList>, Disposable {
@@ -30,7 +30,6 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   private val shelveManager: ShelveChangesManager get() = ShelveChangesManager.getInstance(project)
 
   override val dataClass: Class<ShelvedChangeList> get() = ShelvedChangeList::class.java
-  override val dataKey: DataKey<List<ShelvedChangeList>> get() = SHELVED_CHANGELIST_KEY
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Apply")
   override val popAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Pop")
 
@@ -64,18 +63,53 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
     })
   }
 
-  private fun visibleLists() = shelveManager.allLists.filter { l -> !l.isDeleted && !l.isRecycled }
+  private fun mainLists(): List<ShelvedChangeList> {
+    return shelveManager.allLists.filter { l -> !l.isDeleted && !l.isRecycled }
+  }
 
-  override fun isEmpty() = visibleLists().isEmpty()
+  private fun deletedLists() = shelveManager.allLists.filter { l -> l.isDeleted }
+
+  override fun isEmpty() = mainLists().isEmpty() && deletedLists().isEmpty()
 
   override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
-    val shelvesList = visibleLists().sortedByDescending { it.DATE }
-
+    val shelvesList = mainLists().sortedByDescending { it.DATE }
     val shelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(VcsBundle.message("shelf.root.node.title"))
     modelBuilder.insertSubtreeRoot(shelvesRoot)
-    for (shelve in shelvesList) {
-      modelBuilder.insertSubtreeRoot(ShelvedChangeListChangesBrowserNode(ShelfObject(shelve)), shelvesRoot)
+    modelBuilder.insertShelves(shelvesRoot, shelvesList)
+
+    val deletedShelvesList = deletedLists().sortedByDescending { it.DATE }
+    if (deletedShelvesList.isNotEmpty()) {
+      val deletedShelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(VcsBundle.message("shelve.recently.deleted.node"),
+                                                                                 expandByDefault = false, sortWeight = 20)
+      modelBuilder.insertSubtreeRoot(deletedShelvesRoot, shelvesRoot)
+      modelBuilder.insertShelves(deletedShelvesRoot, deletedShelvesList)
     }
+  }
+
+  private fun TreeModelBuilder.insertShelves(root: SavedPatchesTree.TagWithCounterChangesBrowserNode,
+                                             shelvesList: List<ShelvedChangeList>) {
+
+    for (shelve in shelvesList) {
+      insertSubtreeRoot(ShelvedChangeListChangesBrowserNode(ShelfObject(shelve)), root)
+    }
+  }
+
+  override fun getData(dataId: String, selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>): Any? {
+    if (ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY.`is`(dataId)) {
+      return filterLists(selectedObjects) { l -> !l.isRecycled && !l.isDeleted }
+    }
+    else if (ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY.`is`(dataId)) {
+      return filterLists(selectedObjects) { l -> l.isRecycled && !l.isDeleted }
+    }
+    else if (ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY.`is`(dataId)) {
+      return filterLists(selectedObjects) { l -> l.isDeleted }
+    }
+    return null
+  }
+
+  private fun filterLists(selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>,
+                          predicate: (ShelvedChangeList) -> Boolean): List<ShelvedChangeList> {
+    return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass).filter(predicate).toList()
   }
 
   override fun dispose() {

@@ -24,7 +24,6 @@ import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.tree.TreeUtil
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Graphics
@@ -87,12 +86,9 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun getData(dataId: String): Any? {
-    val provider = savedPatchesProviders.find { it.dataKey.`is`(dataId) }
-    if (provider != null) {
-      return StreamEx.of(selectedPatchObjects().map(SavedPatchesProvider.PatchObject<*>::data))
-        .filterIsInstance(provider.dataClass)
-        .toList()
-    }
+    val selectedObjects = selectedPatchObjects()
+    val data = savedPatchesProviders.firstNotNullOfOrNull { provider -> provider.getData(dataId, selectedObjects) }
+    if (data != null) return data
     if (CommonDataKeys.PROJECT.`is`(dataId)) return myProject
     return super.getData(dataId)
   }
@@ -103,8 +99,8 @@ class SavedPatchesTree(project: Project,
 
   override fun getToggleClickCount(): Int = 2
 
-  class TagWithCounterChangesBrowserNode(text: @Nls String, private val sortWeight: Int? = null) :
-    TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, true) {
+  class TagWithCounterChangesBrowserNode(text: @Nls String, expandByDefault: Boolean = true, private val sortWeight: Int? = null) :
+    TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault) {
     private val stashCount = ClearableLazyValue.create {
       VcsTreeModelData.children(this).userObjects(SavedPatchesProvider.PatchObject::class.java).size
     }

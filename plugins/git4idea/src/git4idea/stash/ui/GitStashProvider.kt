@@ -39,9 +39,11 @@ import git4idea.stash.GitStashTrackerListener
 import git4idea.stash.isNotEmpty
 import git4idea.ui.StashInfo
 import git4idea.ui.StashInfo.Companion.subject
+import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
+import java.util.stream.Stream
 
 class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesProvider<StashInfo>, Disposable {
   private val iconCache = LabelIconCache()
@@ -50,8 +52,6 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
   private val stashCache: GitStashCache get() = project.service()
 
   override val dataClass: Class<StashInfo> get() = StashInfo::class.java
-  override val dataKey: DataKey<List<StashInfo>> get() = STASH_INFO
-
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_APPLY_ACTION)
   override val popAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_POP_ACTION)
 
@@ -109,6 +109,13 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
   private fun TreeModelBuilder.insertErrorNode(error: VcsException, parent: ChangesBrowserNode<*>) {
     val errorNode = ChangesBrowserStringNode(error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)
     insertSubtreeRoot(errorNode, parent)
+  }
+
+  override fun getData(dataId: String, selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>): Any? {
+    if (STASH_INFO.`is`(dataId)) {
+      return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass).toList()
+    }
+    return null
   }
 
   override fun dispose() {

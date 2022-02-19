@@ -3,17 +3,16 @@ package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.*
 import java.awt.Graphics2D
 import java.util.concurrent.CompletableFuture
+import java.util.stream.Stream
 
 interface SavedPatchesProvider<S> {
   val dataClass: Class<S>
-  val dataKey: DataKey<List<S>>
 
   val applyAction: AnAction
   val popAction: AnAction
@@ -21,6 +20,7 @@ interface SavedPatchesProvider<S> {
   fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit)
   fun isEmpty(): Boolean
   fun buildPatchesTree(modelBuilder: TreeModelBuilder)
+  fun getData(dataId: String, selectedObjects: Stream<PatchObject<*>>): Any?
 
   interface PatchObject<S> {
     val data: S
