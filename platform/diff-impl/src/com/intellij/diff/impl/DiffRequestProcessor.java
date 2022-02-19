@@ -690,8 +690,6 @@ public abstract class DiffRequestProcessor implements Disposable {
     private ShowInExternalToolAction(ExternalDiffSettings.@NotNull ExternalTool externalTool) {
       super(DiffBundle.message("action.use.external.tool.text", externalTool.getName()));
       myExternalTool = externalTool;
-
-      getTemplatePresentation();
     }
 
     @Override
@@ -711,7 +709,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   private class ShowInExternalToolActionGroup extends ActionGroup {
     private ShowInExternalToolActionGroup() {
       ActionUtil.copyFrom(this, "Diff.ShowInExternalTool");
-      setPopup(true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      getShowActions().get(0).actionPerformed(e);
     }
 
     @Override
@@ -721,17 +723,28 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
+      List<ShowInExternalToolAction> actions = getShowActions();
+
       e.getPresentation().setEnabled(ExternalDiffTool.canShow(myActiveRequest));
+      e.getPresentation().setPerformGroup(actions.size() == 1);
+      e.getPresentation().setPopupGroup(true);
       e.getPresentation().setVisible(true);
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      Map<ExternalToolGroup, List<ExternalTool>> externalTools = ExternalDiffSettings.getInstance().getExternalTools();
-      List<ExternalTool> diffTools = externalTools.getOrDefault(ExternalToolGroup.DIFF_TOOL, Collections.emptyList());
-      List<ShowInExternalToolAction> actions = ContainerUtil.map(diffTools, ShowInExternalToolAction::new);
+      List<ShowInExternalToolAction> actions = getShowActions();
+      if (actions.size() <= 1) return AnAction.EMPTY_ARRAY;
 
       return actions.toArray(AnAction.EMPTY_ARRAY);
+    }
+
+    @NotNull
+    private List<ShowInExternalToolAction> getShowActions() {
+      Map<ExternalToolGroup, List<ExternalTool>> externalTools = ExternalDiffSettings.getInstance().getExternalTools();
+      List<ExternalTool> diffTools = externalTools.getOrDefault(ExternalToolGroup.DIFF_TOOL, Collections.emptyList());
+
+      return ContainerUtil.map(diffTools, ShowInExternalToolAction::new);
     }
   }
 
