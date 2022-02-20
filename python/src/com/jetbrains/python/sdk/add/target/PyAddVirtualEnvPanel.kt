@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.fixHighlightingOfUiDslComponents
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -17,8 +16,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
@@ -37,7 +39,6 @@ import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import icons.PythonIcons
 import java.awt.BorderLayout
 import java.util.function.Supplier
-import javax.swing.ButtonGroup
 
 /**
  * Panel with a control that allows to add either new or selecting existing virtualenv.
@@ -61,7 +62,9 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   private val baseInterpreterCombobox: PySdkPathChoosingComboBox
 
-  private val inheritSitePackagesCheckBox: JBCheckBox
+  private var isCreateNewVirtualenv: Boolean = false
+
+  private var isInheritSitePackages: Boolean = false
 
   /**
    * Encapsulates the work with the files synchronization options.
@@ -98,54 +101,42 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
                               FileChooserDescriptorFactory.createSingleFolderDescriptor())
     }
     baseInterpreterCombobox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
-    inheritSitePackagesCheckBox = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
     val panel = panel {
-      val addEnvironmentModeChangedListener: (() -> Unit) -> Unit
+      lateinit var newEnvironmentModeSelected: ComponentPredicate
+
       if (allowAddNewVirtualenv && isMutableTarget) {
-        val existingEnvironmentRadioButton = JBRadioButton(PyBundle.message("sdk.create.venv.existing.option.label"), false)
-        val newEnvironmentRadioButton = JBRadioButton(PyBundle.message("sdk.create.venv.new.option.label"), true)
-        val buttonGroup = ButtonGroup()
-        buttonGroup.add(existingEnvironmentRadioButton)
-        buttonGroup.add(newEnvironmentRadioButton)
-        row {
-          cell(isFullWidth = true) {
+        isCreateNewVirtualenv = true
+        buttonsGroup {
+          row {
             label(PyBundle.message("sdk.create.venv.environment.label"))
-            component(existingEnvironmentRadioButton).withLeftGap()
-            component(newEnvironmentRadioButton).withLargeLeftGap()
+            radioButton(PyBundle.message("sdk.create.venv.existing.option.label"), false)
+            val newEnvironmentRadioButton = radioButton(PyBundle.message("sdk.create.venv.new.option.label"), true)
+            newEnvironmentModeSelected = newEnvironmentRadioButton.selected
           }
-        }
-        isNewEnvironmentMode = { newEnvironmentRadioButton.isSelected }
-        addEnvironmentModeChangedListener = { environmentModeChangeListener ->
-          existingEnvironmentRadioButton.addActionListener { environmentModeChangeListener() }
-          newEnvironmentRadioButton.addActionListener { environmentModeChangeListener() }
-        }
+        }.bind(getter = { isCreateNewVirtualenv }, setter = { isCreateNewVirtualenv = it })
       }
       else {
-        isNewEnvironmentMode = { false }
-        addEnvironmentModeChangedListener = {}
-      }
-      val interpreterRow = row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) { interpreterCombobox() }
-      val rowsForNewVirtualenvCase = listOf(
-        row(PyBundle.message("sdk.create.venv.dialog.location.label")) { locationField() },
-        row(PyBundle.message("sdk.create.venv.dialog.base.interpreter.label")) { baseInterpreterCombobox() },
-        row { inheritSitePackagesCheckBox() }
-      )
-
-      // add listeners
-      fun updateComponentsVisibility() {
-        interpreterRow.visible = !isNewEnvironmentMode()
-        rowsForNewVirtualenvCase.forEach { it.visible = isNewEnvironmentMode() }
+        newEnvironmentModeSelected = ConstantComponentPredicate.FALSE
       }
 
-      addEnvironmentModeChangedListener { updateComponentsVisibility() }
+      row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) {
+        cell(interpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+      }.visibleIf(newEnvironmentModeSelected.not())
+
+      row(PyBundle.message("sdk.create.venv.dialog.location.label")) {
+        cell(locationField).horizontalAlign(HorizontalAlign.FILL)
+      }.visibleIf(newEnvironmentModeSelected)
+      row(PyBundle.message("sdk.create.venv.dialog.base.interpreter.label")) {
+        cell(baseInterpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+      }.visibleIf(newEnvironmentModeSelected)
+      row {
+        checkBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
+          .bindSelected(::isInheritSitePackages)
+      }
+        .visibleIf(newEnvironmentModeSelected)
 
       projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
-
-      updateComponentsVisibility()
     }
-
-    // workarounds the issue with cropping the focus highlighting
-    panel.fixHighlightingOfUiDslComponents()
 
     add(panel, BorderLayout.NORTH)
 
@@ -175,7 +166,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   override fun validateAll(): List<ValidationInfo> =
     if (isUnderLocalTarget) {
-      when (isNewEnvironmentMode()) {
+      when (isCreateNewVirtualenv) {
         true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField),
                               validateSdkComboBox(baseInterpreterCombobox, this))
         false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
@@ -190,7 +181,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     // TODO [targets] Refactor this workaround
     applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
 
-    if (isNewEnvironmentMode()) return createNewVirtualenvSdk(targetEnvironmentConfiguration)
+    if (isCreateNewVirtualenv) return createNewVirtualenvSdk(targetEnvironmentConfiguration)
 
     val item = interpreterCombobox.selectedItem
     // there should *not* be other items other than `ExistingPySdkComboBoxItem`
@@ -224,7 +215,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
         indicator.isIndeterminate = true
         try {
           val packageManager = PyPackageManager.getInstance(baseSdk)
-          return packageManager.createVirtualEnv(root, inheritSitePackagesCheckBox.isSelected)
+          return packageManager.createVirtualEnv(root, isInheritSitePackages)
         }
         finally {
           // this fixes the issue with unsuccessful attempts to create the new SDK after removing the underlying Web Deployment
@@ -278,6 +269,16 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
     if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
+  }
+
+  private class ConstantComponentPredicate(private val value: Boolean) : ComponentPredicate() {
+    override fun addListener(listener: (Boolean) -> Unit) = Unit
+
+    override fun invoke(): Boolean = value
+
+    companion object {
+      val FALSE = ConstantComponentPredicate(value = false)
+    }
   }
 
   companion object {

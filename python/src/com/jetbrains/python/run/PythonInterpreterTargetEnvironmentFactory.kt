@@ -6,7 +6,7 @@ import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
@@ -60,13 +60,13 @@ interface PythonInterpreterTargetEnvironmentFactory {
       EP_NAME.extensionList.mapNotNull { it.getProjectSync(project, configuration) }.firstOrNull()
 
     /**
-     * Looks for [ProjectSync] that corresponds to the provided [configuration], applies its UI to [this] [LayoutBuilder] via
+     * Looks for [ProjectSync] that corresponds to the provided [configuration], applies its UI to [this] [Panel] via
      * [ProjectSync.extendDialogPanelWithOptionalFields] and returns [ProjectSync].
      *
      * Does nothing if [project] is `null` or it is the default project.
      */
     @JvmStatic
-    fun LayoutBuilder.projectSyncRows(project: Project?, configuration: TargetEnvironmentConfiguration?): ProjectSync? =
+    fun Panel.projectSyncRows(project: Project?, configuration: TargetEnvironmentConfiguration?): ProjectSync? =
       if (configuration != null && project != null && !project.isDefault) {
         findProjectSync(project, configuration)?.also { projectSync ->
           projectSync.extendDialogPanelWithOptionalFields(this)

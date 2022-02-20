@@ -22,7 +22,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
@@ -48,7 +50,6 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
 
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.system.interpreter")
   protected val sdkComboBox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
-  protected val permWarning = JBLabel(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv"))
 
   /**
    * Encapsulates the work with the files synchronization options.
@@ -92,10 +93,10 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
   protected open fun layoutComponents() {
     val panel = panel {
       row(PySdkBundle.message("python.interpreter.label")) {
-        component(sdkComboBox).constraints(CCFlags.growX)
-      }
-      row(EMPTY_LABEL) {
-        component(permWarning).constraints(CCFlags.growY)
+        cell(sdkComboBox)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .comment(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv.content"),
+                   maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
       }
       projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
     }
@@ -128,9 +129,5 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
 
   override fun addChangeListener(listener: Runnable) {
     sdkComboBox.childComponent.addItemListener { listener.run() }
-  }
-
-  companion object {
-    private const val EMPTY_LABEL = ""
   }
 }
