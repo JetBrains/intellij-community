@@ -344,6 +344,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
           decorator.updateActiveAndHoverState()
         }
       }
+      revalidateStripeButtons()
     })
   }
 
