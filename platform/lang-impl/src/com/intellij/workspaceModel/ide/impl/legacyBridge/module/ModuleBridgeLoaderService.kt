@@ -32,7 +32,10 @@ internal class ModuleBridgeLoaderService(private val project: Project) {
       val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
       val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
       if (projectModelSynchronizer != null) {
-        if (projectModelSynchronizer.isModuleListMissing()) workspaceModel.ignoreCache()
+        if (projectModelSynchronizer.hasNoSerializedModules()) {
+          LOG.warn("No serialized modules found. Workspace model cache will be ignored, project structure will be recreated.")
+          workspaceModel.ignoreCache()
+        }
         if (!workspaceModel.loadedFromCache) {
           LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
           activity = StartUpMeasurer.startActivity("modules loading without cache", ActivityCategory.DEFAULT)
