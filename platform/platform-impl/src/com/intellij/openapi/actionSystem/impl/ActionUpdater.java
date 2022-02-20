@@ -166,10 +166,6 @@ final class ActionUpdater {
     if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
       LOG.error("Calling on EDT " + operationName + (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
     }
-    if (myPreCacheSlowDataKeys && !isEDT &&
-        (shallEDT || Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false))) {
-      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(operationName));
-    }
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
@@ -184,6 +180,9 @@ final class ActionUpdater {
           LOG.warn(elapsedReport(elapsed, isEDT, operationName));
         }
       }
+    }
+    if (myPreCacheSlowDataKeys) {
+      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(operationName));
     }
     return computeOnEdt(operationName, call);
   }
@@ -317,9 +316,6 @@ final class ActionUpdater {
 
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
-      if (Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false)) {
-        ensureSlowDataKeysPreCached("expandActionGroupAsync");
-      }
       if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
       return () -> { // invoked outside the read-action
