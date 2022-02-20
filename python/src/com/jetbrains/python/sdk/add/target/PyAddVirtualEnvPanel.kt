@@ -28,7 +28,10 @@ import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.*
+import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
+import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
+import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
+import com.jetbrains.python.sdk.add.addInterpretersAsync
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import icons.PythonIcons
@@ -65,6 +68,8 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
    */
   private var projectSync: ProjectSync? = null
 
+  private lateinit var isNewEnvironmentMode: () -> Boolean
+
   override var newProjectPath: String? = null
     set(value) {
       field = value
@@ -96,7 +101,6 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     inheritSitePackagesCheckBox = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
     val panel = panel {
       val addEnvironmentModeChangedListener: (() -> Unit) -> Unit
-      val isNewEnvironmentMode: () -> Boolean
       if (allowAddNewVirtualenv && isMutableTarget) {
         val existingEnvironmentRadioButton = JBRadioButton(PyBundle.message("sdk.create.venv.existing.option.label"), false)
         val newEnvironmentRadioButton = JBRadioButton(PyBundle.message("sdk.create.venv.new.option.label"), true)
@@ -171,10 +175,10 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   override fun validateAll(): List<ValidationInfo> =
     if (isUnderLocalTarget) {
-      when (interpreterCombobox.selectedItem) {
-        is NewPySdkComboBoxItem -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField),
-                                                 validateSdkComboBox(baseInterpreterCombobox, this))
-        else -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
+      when (isNewEnvironmentMode()) {
+        true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField),
+                              validateSdkComboBox(baseInterpreterCombobox, this))
+        false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
       }
     }
     else emptyList()
@@ -186,11 +190,11 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     // TODO [targets] Refactor this workaround
     applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
 
-    return when (val item = interpreterCombobox.selectedItem) {
-      is NewPySdkComboBoxItem -> createNewVirtualenvSdk(targetEnvironmentConfiguration)
-      is ExistingPySdkComboBoxItem -> configureExistingVirtualenvSdk(targetEnvironmentConfiguration, item.sdk)
-      null -> null
-    }
+    if (isNewEnvironmentMode()) return createNewVirtualenvSdk(targetEnvironmentConfiguration)
+
+    val item = interpreterCombobox.selectedItem
+    // there should *not* be other items other than `ExistingPySdkComboBoxItem`
+    return if (item is ExistingPySdkComboBoxItem) configureExistingVirtualenvSdk(targetEnvironmentConfiguration, item.sdk) else null
   }
 
   /**
