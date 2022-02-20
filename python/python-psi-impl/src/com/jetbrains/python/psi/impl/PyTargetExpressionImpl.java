@@ -369,7 +369,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     else if (iterableType instanceof PyUnionType) {
       return ((PyUnionType)iterableType).map(member -> getIterationType(member, source, anchor, context));
     }
-    else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
+
+    final PyForStatement forStatement = PsiTreeUtil.getParentOfType(source, PyForStatement.class);
+    final boolean isAsync = forStatement != null && forStatement.isAsync();
+    if (iterableType != null && !isAsync && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
       if (iterateMethod != null) {
         final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
@@ -384,7 +387,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return getContextSensitiveType(getItem, context, source);
       }
     }
-    else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ASYNC_ITERABLE, context)) {
+    else if (iterableType != null && isAsync && PyABCUtil.isSubtype(iterableType, PyNames.ASYNC_ITERABLE, context)) {
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.AITER, context);
       if (iterateMethod != null) {
         final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);

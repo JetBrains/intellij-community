@@ -486,6 +486,31 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  // PY-41061
+  public void testHybridIterForLoop() {
+    doTest("str",
+           "from typing import AsyncIterator, Iterator\n" +
+           "\n" +
+           "class HybridIterator:\n" +
+           "    def __iter__() -> Iterator[str]: ...\n" +
+           "    def __aiter__() -> AsyncIterator[int]: ...\n" +
+           "\n" +
+           "for expr in HybridIterator():\n" +
+           "    pass\n");
+  }
+
+  public void testHybridIterAsyncForLoop() {
+    doTest("int",
+           "from typing import AsyncIterator, Iterator\n" +
+           "\n" +
+           "class HybridIterator:\n" +
+           "    def __iter__() -> Iterator[str]: ...\n" +
+           "    def __aiter__() -> AsyncIterator[int]: ...\n" +
+           "\n" +
+           "async for expr in HybridIterator():\n" +
+           "    pass\n");
+  }
+
   // PY-16353
   public void testAssignedType() {
     doTest("Iterable[int]",
