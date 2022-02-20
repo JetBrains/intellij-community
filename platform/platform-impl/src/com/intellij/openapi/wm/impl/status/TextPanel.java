@@ -26,6 +26,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TextPanel extends NonOpaquePanel implements Accessible {
+  public static final String PROPERTY_TEXT = "TextPanel.text";
+
   @Nullable @Nls private String myText;
 
   private Integer myPrefHeight;
@@ -140,7 +142,9 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
       oldAccessibleName = accessibleContext.getAccessibleName();
     }
 
+    String oldText = myText;
     myText = text;
+    firePropertyChange(PROPERTY_TEXT, oldText, text);
 
     if ((accessibleContext != null) && !StringUtil.equals(accessibleContext.getAccessibleName(), oldAccessibleName)) {
       accessibleContext.firePropertyChange(
