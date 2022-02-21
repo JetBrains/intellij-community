@@ -103,9 +103,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-js-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-js:0.2.2" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-js:0.3.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-js/0.2.2/completion-ranking-js-0.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-js/0.3.0/completion-ranking-js-0.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -113,9 +113,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-typescript-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-typescript:0.3.3" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-typescript:0.4.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0.3.3/completion-ranking-typescript-0.3.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0.4.0/completion-ranking-typescript-0.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
