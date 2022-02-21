@@ -77,11 +77,13 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
 }
 
 private fun KtExpression.isValidCandidateExpression(): Boolean {
-    if (this is KtParenthesizedExpression) return false
+    if (this is KtParenthesizedExpression || this is KtQualifiedExpression) return false
     if (this is KtOperationReferenceExpression || this is KtForExpression || this is KtProperty || this is KtNameReferenceExpression) return true
     val parent = parent
     if (parent is KtCallExpression && parent.calleeExpression == this) return true
-    if (this is KtCallExpression && (calleeExpression is KtCallExpression || calleeExpression is KtParenthesizedExpression)) return true
+    if (this is KtCallExpression &&
+        (calleeExpression is KtCallExpression || calleeExpression is KtParenthesizedExpression || calleeExpression is KtQualifiedExpression)
+    ) return true
     return false
 }
 

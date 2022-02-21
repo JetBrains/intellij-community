@@ -9768,6 +9768,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
         }
 
+        @TestMetadata("invokingByQualified.kt")
+        public void testInvokingByQualified() throws Exception {
+            runTest("testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
+        }
+
         @TestMetadata("override.kt")
         public void testOverride() throws Exception {
             runTest("testData/inspectionsLocal/redundantSuspend/override.kt");
