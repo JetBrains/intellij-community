@@ -478,9 +478,11 @@ public final class HighlightFixUtil {
     for (CandidateInfo methodCandidate : methodCandidates) {
       PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
-        final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(methodCall, null);
-        boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
-        if (staticParentElement == null || isMethodStatic) {
+        final PsiClass parentClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
+        final PsiMethod parentMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
+        if ((parentClass != null && !parentClass.hasModifierProperty(PsiModifier.STATIC) &&
+             parentMethod != null && !parentMethod.hasModifierProperty(PsiModifier.STATIC)) ||
+            method.hasModifierProperty(PsiModifier.STATIC)) {
           PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodCall.getMethodExpression(), method);
           if (qualifier == null) continue;
           IntentionAction fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
