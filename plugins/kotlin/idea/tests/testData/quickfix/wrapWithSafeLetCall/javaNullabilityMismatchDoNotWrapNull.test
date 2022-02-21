@@ -1,6 +1,7 @@
 // FILE: test.before.kt
 // "Wrap with '?.let { ... }' call" "false"
 // ACTION: Add 'toString()' call
+// ACTION: Add names in comment to call arguments
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Do not show hints for current method
