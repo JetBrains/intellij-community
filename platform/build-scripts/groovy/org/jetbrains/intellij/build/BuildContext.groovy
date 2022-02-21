@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.DependenciesProperties
+import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Path
@@ -109,4 +110,6 @@ abstract class BuildContext implements CompilationContext {
   abstract BuildContext forkForParallelTask(String taskName)
 
   abstract BuildContext createCopyForProduct(ProductProperties productProperties, String projectHomeForCustomizers)
+
+  abstract @Nullable OsSpecificDistributionBuilder getOsDistributionBuilder(OsFamily os, Path ideaProperties = null)
 }
