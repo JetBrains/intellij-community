@@ -34,9 +34,11 @@ import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
 import org.jetbrains.kotlin.idea.search.projectScope
-import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.findFirstPsiJavaModule
+import org.jetbrains.kotlin.idea.util.isDev
+import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.util.projectStructure.version
@@ -299,7 +301,7 @@ fun findApplicableConfigurator(module: Module): KotlinProjectConfigurator {
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
     return module.project.syncNonBlockingReadAction {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
                     hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
@@ -310,7 +312,7 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
 
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
     return module.project.syncNonBlockingReadAction {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
         })
@@ -319,7 +321,7 @@ fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
 
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
     return module.project.syncNonBlockingReadAction {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind))
     }
 }
