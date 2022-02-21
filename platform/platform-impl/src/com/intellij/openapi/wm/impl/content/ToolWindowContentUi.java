@@ -40,6 +40,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -136,8 +137,19 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         ensureSelectedContentVisible();
         rebuild();
 
-        if (contentManager.isEmpty() && window.isToHideOnEmptyContent()) {
-          window.getToolWindowManager().hideToolWindow(window.getId(), false, true, false, null);
+        if (contentManager.isEmpty()) {
+          boolean removeFromStripe;
+          if (window.isToHideOnEmptyContent()) {
+            removeFromStripe = true;
+          }
+          else if (window.canCloseContents() && StatusText.getDefaultEmptyText().equals(window.getEmptyText().getText())) {
+            removeFromStripe = false;
+          }
+          else {
+            return;
+          }
+          window.getToolWindowManager()
+            .hideToolWindow(window.getId(), /* hideSide = */ false, /* moveFocus = */ true, removeFromStripe, /* source = */ null);
         }
       }
 

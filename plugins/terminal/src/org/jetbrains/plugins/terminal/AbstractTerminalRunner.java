@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.Executor;
@@ -134,7 +134,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public void initToolWindow(@NotNull ToolWindowEx toolWindow, Supplier<Content> newTabRunnable) {
-
     toolWindow.setTabActions(
       new DumbAwareAction(IdeBundle.messagePointer("action.DumbAware.TerminalView.text.new.session"),
                           IdeBundle.messagePointer("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
@@ -146,7 +145,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       new TerminalNewPredefinedSessionAction()
     );
     toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
-    toolWindow.setToHideOnEmptyContent(true);
   }
 
   public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
