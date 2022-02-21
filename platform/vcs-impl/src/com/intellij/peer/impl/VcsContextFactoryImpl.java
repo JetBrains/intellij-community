@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.RemoteFilePath;
+import com.intellij.openapi.vcs.UrlFilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -34,7 +36,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @Override
   @NotNull
   public FilePath createFilePathOn(@NotNull VirtualFile virtualFile) {
-    return createFilePath(virtualFile.getPath(), virtualFile.isDirectory());
+    return createFilePath(virtualFile.isInLocalFileSystem() ? virtualFile.getPath() : virtualFile.getUrl(), virtualFile.isDirectory());
   }
 
   @Override
@@ -83,6 +85,8 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @NotNull
   @Override
   public FilePath createFilePath(@NotNull String path, boolean isDirectory) {
-    return new LocalFilePath(path, isDirectory);
+    return path.contains(URLUtil.SCHEME_SEPARATOR)
+           ? new UrlFilePath(path, isDirectory)
+           : new LocalFilePath(path, isDirectory);
   }
 }
