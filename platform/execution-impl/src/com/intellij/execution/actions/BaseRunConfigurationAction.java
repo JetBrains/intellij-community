@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -208,6 +208,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
     if (!success) {
       recordUpdateTimeout();
       approximatePresentationByPreviousAvailability(event, hadAnythingRunnable);
+      event.getPresentation().setPerformGroup(false); // todo ???
     }
   }
 
@@ -256,6 +257,8 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
       final String name = suggestRunActionName(configuration.getConfiguration());
       updatePresentation(presentation, existing != null || fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null ? name : "", context);
     }
+    // todo inline me and delete canBePerformed, see ActionUpdater.update(action, strategy)
+    event.getPresentation().setPerformGroup(canBePerformed(event.getDataContext()));
   }
 
   @Override

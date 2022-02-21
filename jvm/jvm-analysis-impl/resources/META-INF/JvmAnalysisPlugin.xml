@@ -45,6 +45,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.dependency.display.name"
                      implementationClass="com.intellij.codeInspection.DependencyInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="ERROR" shortName="IllegalDependencyOnInternalPackage"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.dependency.on.internal.display.name"
+                     implementationClass="com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="ERROR" shortName="JUnitRule"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.junit.rule.display.name"
