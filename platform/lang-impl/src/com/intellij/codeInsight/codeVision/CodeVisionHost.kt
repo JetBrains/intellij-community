@@ -119,6 +119,7 @@ open class CodeVisionHost(val project: Project) {
   }
 
   fun collectPlaceholders(editor: Editor): List<Pair<TextRange, CodeVisionEntry>> {
+    if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     return providers
       .flatMap { provider ->
         provider.collectPlaceholders(editor)
