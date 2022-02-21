@@ -76,11 +76,6 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
     return null
   }
 
-
-  override fun getDefaultFolder(project: Project): String? {
-    return null
-  }
-
   override fun getConfigurable(project: Project): UnnamedConfigurable = object : UnnamedConfigurable {
     val settings = PyVirtualEnvTerminalSettings.getInstance(project)
 
