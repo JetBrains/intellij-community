@@ -3,17 +3,14 @@ package com.intellij.psi.search;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
@@ -23,13 +20,18 @@ import com.intellij.util.indexing.impl.storage.AbstractIntLog;
 import com.intellij.util.indexing.impl.storage.IntLog;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -42,10 +44,6 @@ import java.util.function.IntConsumer;
 public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, UpdatableIndex.EmptyData>, FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
-  private final @NotNull SLRUMap<Integer, Integer> myForwardIndexCache;
-  private final @NotNull SLRUMap<Integer, IntSeq> myInvertedIndexCache;
-
-  private final @NotNull MemorySnapshotHandler myMemorySnapshotHandler;
   private final @NotNull Disposable myDisposable;
 
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
@@ -58,7 +56,9 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   private final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
   private final @NotNull ID<FileType, Void> myIndexId;
 
-  public LogFileTypeIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException {
+  private final @NotNull MemorySnapshot mySnapshot;
+
+  public LogFileTypeIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException, StorageException {
     myExtension = extension;
     myIndexId = extension.getName();
     Path storageFile = IndexInfrastructure.getStorageFile(myIndexId);
@@ -66,16 +66,14 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
                                                          true,
                                                          new StorageLockContext(false, true)));
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(IndexInfrastructure.getStorageFile(myIndexId).resolveSibling("fileType.enum"));
-    int cacheSize = extension.getCacheSize();
-    myForwardIndexCache = new SLRUMap<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25)));
-    myInvertedIndexCache = new SLRUMap<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25)));
 
     if (myExtension.dependsOnFileContent()) {
       throw new IllegalArgumentException(myExtension.getName() + " should not depend on content");
     }
 
     myDisposable = Disposer.newDisposable();
-    myMemorySnapshotHandler = new MemorySnapshotHandler();
+
+    mySnapshot = loadIndexToMemory(myPersistentLog);
   }
 
   @Override
@@ -173,7 +171,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   }
 
   @Override
-  public void updateWithMap(@NotNull AbstractUpdateData<FileType, Void> updateData) throws StorageException {
+  public void updateWithMap(@NotNull AbstractUpdateData<FileType, Void> updateData) {
     throw new UnsupportedOperationException();
   }
 
@@ -195,17 +193,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
     myLock.readLock().lock();
     try {
-      IntSeq cachedFileIds = getInputIdsFromCache(fileTypeId);
-      IntSeq fileIds;
-      if (cachedFileIds == null) {
-        MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
-        fileIds = snapshot != null ? snapshot.getFileIds(fileTypeId) : myPersistentLog.getFileIds(fileTypeId);
-        cacheInputIds(fileTypeId, fileIds);
-      }
-      else {
-        fileIds = cachedFileIds;
-      }
-      fileIds.forEach(id -> result.addValue(id, null));
+      mySnapshot.getFileIds(fileTypeId).forEach(id -> result.addValue(id, null));
     }
     finally {
       myLock.readLock().unlock();
@@ -244,12 +232,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   private int getIndexedFileTypeId(int fileId) throws StorageException {
     myLock.readLock().lock();
     try {
-      int data = getFileTypeIdFromCache(fileId);
-      if (data != 0) return data;
-      MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
-      data = snapshot != null ? snapshot.getIndexedData(fileId) : myPersistentLog.getIndexedData(fileId);
-      updateForwardIndexCache(fileId, data);
-      return data;
+      return mySnapshot.getIndexedData(fileId);
     }
     finally {
       myLock.readLock().unlock();
@@ -274,22 +257,9 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
         throw new IllegalStateException("file type index should not be updated for unsaved changes");
       }
       else {
-        boolean memoryDataUpdated = true;
-        MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
-        if (snapshot != null) {
-          boolean snapshotModified = snapshot.addData(fileTypeId, inputId);
-          if (!snapshotModified) {
-            memoryDataUpdated = false;
-          }
-        }
-        boolean cacheModified = updateForwardIndexCache(inputId, fileTypeId);
-        if (!cacheModified) {
-          memoryDataUpdated = false;
-        }
-
-        if (memoryDataUpdated) {
+        boolean snapshotModified = mySnapshot.addData(fileTypeId, inputId);
+        if (snapshotModified) {
           myPersistentLog.addData(fileTypeId, inputId);
-          clearInvertedIndexCache();
         }
       }
     }
@@ -303,49 +273,8 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     return Boolean.TRUE;
   }
 
-  private void clearInvertedIndexCache() {
-    synchronized (myInvertedIndexCache) {
-      myInvertedIndexCache.clear();
-    }
-  }
-
-  private void cacheInputIds(int fileTypeId, IntSeq inputIds) {
-    IntSeq copy = inputIds.copy();
-    synchronized (myInvertedIndexCache) {
-      myInvertedIndexCache.put(fileTypeId, copy);
-    }
-  }
-
-  private @Nullable IntSeq getInputIdsFromCache(int fileTypeId) {
-    synchronized (myInvertedIndexCache) {
-      return myInvertedIndexCache.get(fileTypeId);
-    }
-  }
-
-  private int getFileTypeIdFromCache(int fileId) {
-    synchronized (myForwardIndexCache) {
-      Integer data = myForwardIndexCache.get(fileId);
-      if (data != null) {
-        return data;
-      }
-    }
-    return 0;
-  }
-
-  private boolean updateForwardIndexCache(int inputId, int fileTypeId) {
-    synchronized (myForwardIndexCache) {
-      Integer currentFileTypeId = myForwardIndexCache.get(inputId);
-      if (currentFileTypeId != null && fileTypeId == currentFileTypeId.intValue()) {
-        return false;
-      }
-      myForwardIndexCache.put(inputId, fileTypeId);
-      return true;
-    }
-  }
-
   @Override
   public void flush() throws StorageException {
-    clearCache();
     try {
       myPersistentLog.flush();
     }
@@ -356,8 +285,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
   @Override
   public void clear() throws StorageException {
-    clearCache();
-    myMemorySnapshotHandler.mySnapshot = null;
+    mySnapshot.clear();
     myPersistentLog.clear();
   }
 
@@ -378,7 +306,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   }
 
   @Override
-  public String getFileTypeName(int id) throws IOException {
+  public String getFileTypeName(int id) {
     assert id < Short.MAX_VALUE;
     Ref<String> fileType = myId2FileNameCache.get(id);
     if (fileType == null) {
@@ -390,10 +318,6 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
   private interface IntIntIndex {
     boolean addData(int data, int inputId) throws StorageException;
-
-    @NotNull LogFileTypeIndex.IntSeq getFileIds(int data) throws StorageException;
-
-    int getIndexedData(int inputId) throws StorageException;
   }
 
   private static class LogBasedIntIntIndex implements IntIntIndex {
@@ -407,37 +331,6 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     public boolean addData(int data, int inputId) throws StorageException {
       myLog.addData(data, inputId);
       return true;
-    }
-
-    @Override
-    public @NotNull IntSeq getFileIds(int dataKey) throws StorageException {
-      IntSet inputIds = new IntOpenHashSet();
-
-      AbstractIntLog.IntLogEntryProcessor processor = (data, inputId) -> {
-        if (data == dataKey) {
-          inputIds.add(inputId);
-        }
-        else {
-          inputIds.remove(inputId);
-        }
-        return true;
-      };
-
-      myLog.processEntries(processor);
-      return new IntSeq.FromIntSet(inputIds);
-    }
-
-    @Override
-    public int getIndexedData(int fileId) throws StorageException {
-      int[] foundData = {0};
-      AbstractIntLog.IntLogEntryProcessor processor = (data, inputId) -> {
-        if (fileId == inputId) {
-          foundData[0] = data;
-        }
-        return true;
-      };
-      myLog.processEntries(processor);
-      return foundData[0];
     }
 
     private void processEntries(@NotNull AbstractIntLog.IntLogEntryProcessor processor) throws StorageException {
@@ -485,13 +378,11 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       return updated;
     }
 
-    @Override
     public synchronized @NotNull IntSeq getFileIds(int data) {
       BitSet fileIds = myInvertedIndex.get(data);
       return fileIds == null ? IntSeq.EMPTY : new IntSeq.FromBitSet(fileIds);
     }
 
-    @Override
     public synchronized int getIndexedData(int inputId) {
       return getDataFromForwardIndex(myForwardIndex, inputId);
     }
@@ -502,81 +393,31 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       }
       return forwardIndex.getInt(inputId);
     }
-  }
 
-  private class MemorySnapshotHandler {
-    private final @NotNull List<Project> myIndexBatchUpdatingProjects = new ArrayList<>();
-    private volatile @Nullable MemorySnapshot mySnapshot;
-
-    MemorySnapshotHandler() {
-      UnindexedFilesUpdaterListener unindexedFilesUpdaterListener = new UnindexedFilesUpdaterListener() {
-        @Override
-        public void updateStarted(@NotNull Project project) {
-          loadMemorySnapshot(project);
-        }
-
-        @Override
-        public void updateFinished(@NotNull Project project) {
-          dropMemorySnapshot(project);
-        }
-      };
-      ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(UnindexedFilesUpdaterListener.TOPIC,
-                                                                                          unindexedFilesUpdaterListener);
-    }
-
-    synchronized void loadMemorySnapshot(@NotNull Project project) {
-      myIndexBatchUpdatingProjects.add(project);
-      if (mySnapshot == null) {
-        try {
-          LOG.trace("Loading file type index snapshot");
-          mySnapshot = loadIndexToMemory(myPersistentLog);
-        }
-        catch (StorageException e) {
-          LOG.error(e);
-          FileBasedIndex.getInstance().requestRebuild(FileTypeIndex.NAME);
-          mySnapshot = new MemorySnapshot(new Int2ObjectOpenHashMap<>(), new IntArrayList());
-        }
-      }
-    }
-
-    synchronized void dropMemorySnapshot(@NotNull Project project) {
-      myIndexBatchUpdatingProjects.remove(project);
-      if (myIndexBatchUpdatingProjects.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
-        mySnapshot = null;
-        LOG.trace("File type index snapshot dropped");
-      }
-    }
-
-    @Nullable MemorySnapshot getSnapshot() {
-      return mySnapshot;
-    }
-
-    @NotNull MemorySnapshot loadIndexToMemory(@NotNull LogBasedIntIntIndex intLogIndex) throws StorageException {
-      Int2ObjectMap<BitSet> invertedIndex = new Int2ObjectOpenHashMap<>();
-      IntList forwardIndex = new IntArrayList();
-      intLogIndex.processEntries((data, inputId) -> {
-        if (data != 0) {
-          setForwardIndexData(forwardIndex, data, inputId);
-          invertedIndex.computeIfAbsent(data, __ -> new BitSet()).set(inputId);
-        }
-        else {
-          int previousData = MemorySnapshot.getDataFromForwardIndex(forwardIndex, inputId);
-          if (previousData != 0) {
-            forwardIndex.set(inputId, 0);
-            invertedIndex.get(previousData).clear(inputId);
-          }
-        }
-        return true;
-      });
-      return new MemorySnapshot(invertedIndex, forwardIndex);
+    private void clear() {
+      myInvertedIndex.clear();
+      myForwardIndex.clear();
     }
   }
 
-  private void clearCache() {
-    synchronized (myForwardIndexCache) {
-      myForwardIndexCache.clear();
-    }
-    clearInvertedIndexCache();
+  private static @NotNull MemorySnapshot loadIndexToMemory(@NotNull LogBasedIntIntIndex intLogIndex) throws StorageException {
+    Int2ObjectMap<BitSet> invertedIndex = new Int2ObjectOpenHashMap<>();
+    IntList forwardIndex = new IntArrayList();
+    intLogIndex.processEntries((data, inputId) -> {
+      if (data != 0) {
+        setForwardIndexData(forwardIndex, data, inputId);
+        invertedIndex.computeIfAbsent(data, __ -> new BitSet()).set(inputId);
+      }
+      else {
+        int previousData = MemorySnapshot.getDataFromForwardIndex(forwardIndex, inputId);
+        if (previousData != 0) {
+          forwardIndex.set(inputId, 0);
+          invertedIndex.get(previousData).clear(inputId);
+        }
+      }
+      return true;
+    });
+    return new MemorySnapshot(invertedIndex, forwardIndex);
   }
 
   private static boolean setForwardIndexData(@NotNull IntList forwardIndex, int data, int inputId) {
@@ -604,23 +445,6 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       @Override
       public @NotNull LogFileTypeIndex.IntSeq copy() {
         return new FromBitSet((BitSet)myBitSet.clone());
-      }
-    }
-
-    class FromIntSet implements IntSeq {
-      private final IntSet myIntSet;
-
-      private FromIntSet(@NotNull IntSet set) {myIntSet = set;}
-
-
-      @Override
-      public void forEach(@NotNull IntConsumer consumer) {
-        myIntSet.forEach(consumer);
-      }
-
-      @Override
-      public @NotNull LogFileTypeIndex.IntSeq copy() {
-        return new FromIntSet(new IntOpenHashSet(myIntSet));
       }
     }
 
