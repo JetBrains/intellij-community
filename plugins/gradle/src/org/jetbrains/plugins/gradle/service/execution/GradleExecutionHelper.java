@@ -59,6 +59,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
@@ -410,8 +411,11 @@ public class GradleExecutionHelper {
         }
       }
       else {
-        // TODO remove this replacement when --tests option will become available for tooling API
-        replaceTestCommandOptionWithInitScript(filteredArgs);
+        var testTaskPatterns = removeTestTaskPatterns(filteredArgs);
+        var path = renderInitScript(testTaskPatterns);
+        if (path != null) {
+          ContainerUtil.addAll(filteredArgs, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
+        }
       }
     }
     filteredArgs.add("-Didea.active=true");
@@ -769,9 +773,12 @@ public class GradleExecutionHelper {
     return buildEnvironment;
   }
 
-  private static void replaceTestCommandOptionWithInitScript(@NotNull List<String> args) {
-    Set<String> testIncludePatterns = new LinkedHashSet<>();
-    Iterator<String> it = args.iterator();
+  /**
+   * @return test include patterns: classes, methods, etc.
+   */
+  private static Set<String> removeTestTaskPatterns(@NotNull List<String> args) {
+    var testIncludePatterns = new LinkedHashSet<String>();
+    var it = args.iterator();
     while (it.hasNext()) {
       final String next = it.next();
       if (GradleConstants.TESTS_ARG_NAME.equals(next)) {
@@ -782,24 +789,7 @@ public class GradleExecutionHelper {
         }
       }
     }
-    if (!testIncludePatterns.isEmpty()) {
-      StringBuilder buf = new StringBuilder();
-      buf.append('[');
-      for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
-        String pattern = iterator.next();
-        String groovyPattern = toGroovyString(pattern);
-        buf.append('\'').append(groovyPattern).append('\'');
-        if (iterator.hasNext()) {
-          buf.append(',');
-        }
-      }
-      buf.append(']');
-
-      String path = renderInitScript(buf.toString());
-      if (path != null) {
-        ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
-      }
-    }
+    return testIncludePatterns;
   }
 
   /**
@@ -852,6 +842,13 @@ public class GradleExecutionHelper {
     return taskToTestsPatterns;
   }
 
+  private static String toGroovyList(@NotNull List<String> list) {
+    var rawList = list.stream()
+      .map(it -> toGroovyString(it))
+      .collect(Collectors.joining(","));
+    return "[" + rawList + "]";
+  }
+
   @NotNull
   public static String toGroovyString(@NotNull String string) {
     StringBuilder stringBuilder = new StringBuilder();
@@ -862,9 +859,6 @@ public class GradleExecutionHelper {
       else if (ch == '\'') {
         stringBuilder.append("\\'");
       }
-      else if (ch == '"') {
-        stringBuilder.append("\\\"");
-      }
       else if (ch == '$') {
         stringBuilder.append("\\$");
       }
@@ -872,18 +866,19 @@ public class GradleExecutionHelper {
         stringBuilder.append(ch);
       }
     }
-    return stringBuilder.toString();
+    return "'" + stringBuilder + "'";
   }
 
   @Nullable
-  public static String renderInitScript(@NotNull String testArgs) {
+  public static String renderInitScript(@NotNull Set<String> testTasksPatterns) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
     if (stream == null) {
       LOG.error("Can't find test filter init script template");
       return null;
     }
     try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), Matcher.quoteReplacement(testArgs));
+      var testNameIncludes = Matcher.quoteReplacement(toGroovyList(new ArrayList<>(testTasksPatterns)));
+      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), testNameIncludes);
       File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
       return tempFile.getAbsolutePath();
     }
