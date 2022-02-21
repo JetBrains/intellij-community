@@ -64,7 +64,7 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
                             @NotNull Point point,
                             @NotNull Project project,
                             @Nullable Runnable hideRunnable) {
-    super(ACTION_PLACE);
+    super();
     myTreeCreator = creator;
     myProject = project;
     myEditor = editor;
@@ -81,9 +81,8 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
     showTreePopup(myTreeCreator.createTree(selectedItem));
   }
 
-  @Override
   protected @NotNull DefaultActionGroup getToolbarActions() {
-    DefaultActionGroup toolbarActions = super.getToolbarActions();
+    DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(new EnableSetValueMode());
     toolbarActions.add(new SetValue());
     toolbarActions.add(new DisableSetValueMode());
@@ -108,7 +107,7 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
     tree.getModel().addTreeModelListener(createTreeListener(tree));
     JComponent popupContent = createPopupContent(tree);
 
-    setContent(popupContent, tree);
+    setContent(popupContent, getToolbarActions(), ACTION_PLACE, tree);
 
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, tree)
       .setRequestFocus(true)

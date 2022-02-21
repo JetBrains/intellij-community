@@ -33,33 +33,17 @@ import java.util.Locale;
 
 @ApiStatus.Experimental
 public abstract class XDebuggerPopupPanel {
-  protected final @NotNull BorderLayoutPanel myContent;
-  protected final @NotNull BorderLayoutPanel myMainPanel;
-  protected final @NotNull ActionToolbarImpl myToolbar;
-  private final @NotNull String myToolbarActionsPlace;
-
-  @ApiStatus.Experimental
-  protected XDebuggerPopupPanel(@NotNull String toolbarActionsPlace) {
-    myToolbarActionsPlace = toolbarActionsPlace;
-    myContent = JBUI.Panels.simplePanel();
-    myMainPanel = JBUI.Panels.simplePanel();
-    myToolbar = createToolbar();
-
-    fillContentPanel();
-  }
-
-  @NotNull
-  protected DefaultActionGroup getToolbarActions() {
-    DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    toolbarActions.addSeparator();
-    return toolbarActions;
-  }
+  protected final @NotNull BorderLayoutPanel myContent = JBUI.Panels.simplePanel();
+  protected final @NotNull BorderLayoutPanel myMainPanel = JBUI.Panels.simplePanel();
+  protected ActionToolbarImpl myToolbar = null;
 
   protected boolean shouldBeVisible(AnAction action) {
     return true;
   }
 
-  protected void setAutoResizeUntilToolbarNotFull(@NotNull Runnable resizeRunnable, Disposable disposable) {
+  protected final void setAutoResizeUntilToolbarNotFull(@NotNull Runnable resizeRunnable, Disposable disposable) {
+    if (myToolbar == null) return;
+
     ContainerListener containerListener = new ContainerListener() {
       @Override
       public void componentAdded(ContainerEvent e) {
@@ -86,24 +70,22 @@ public abstract class XDebuggerPopupPanel {
     }, disposable);
   }
 
-  private void setToolbarActionsDataProvider(@Nullable Component dataProvider) {
-    for (AnAction action : myToolbar.getActions()) {
-      if (action instanceof ActionWrapper) {
-        ((ActionWrapper)action).setDataProvider(dataProvider);
-      }
-    }
-  }
-
-  protected void setContent(@NotNull JComponent content, @Nullable Component toolbarActionsDataProvider) {
-    myMainPanel.addToCenter(content);
-    setToolbarActionsDataProvider(toolbarActionsDataProvider);
+  protected final void setContent(@NotNull JComponent content,
+                                  @NotNull DefaultActionGroup toolbarActions,
+                                  @NotNull String actionsPlace,
+                                  @Nullable Component toolbarActionsDataProvider) {
+    myToolbar = createToolbar(toolbarActions, actionsPlace, toolbarActionsDataProvider);
+    fillContentPanel(content, myToolbar);
   }
 
   @NotNull
-  protected ActionToolbarImpl createToolbar() {
-    DefaultActionGroup wrappedActions = wrapActions(getToolbarActions());
+  private ActionToolbarImpl createToolbar(@NotNull DefaultActionGroup toolbarActions,
+                                          @NotNull String actionsPlace,
+                                          @Nullable Component toolbarActionsDataProvider) {
+    toolbarActions.add(new Separator());
+    DefaultActionGroup wrappedActions = wrapActions(toolbarActions, actionsPlace, toolbarActionsDataProvider);
 
-    var toolbarImpl = new ActionToolbarImpl(myToolbarActionsPlace, wrappedActions, true);
+    var toolbarImpl = new ActionToolbarImpl(actionsPlace, wrappedActions, true);
     toolbarImpl.setTargetComponent(null);
     for (AnAction action : wrappedActions.getChildren(null)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
@@ -113,23 +95,27 @@ public abstract class XDebuggerPopupPanel {
     return toolbarImpl;
   }
 
-  protected void fillContentPanel() {
-    myToolbar.setBackground(UIUtil.getToolTipActionBackground());
+  private void fillContentPanel(@NotNull JComponent content, @NotNull ActionToolbarImpl toolbar) {
+    myMainPanel.addToCenter(content);
+    toolbar.setBackground(UIUtil.getToolTipActionBackground());
 
     WindowMoveListener moveListener = new WindowMoveListener(myContent);
-    myToolbar.addMouseListener(moveListener);
-    myToolbar.addMouseMotionListener(moveListener);
+    toolbar.addMouseListener(moveListener);
+    toolbar.addMouseMotionListener(moveListener);
 
     myContent
       .addToCenter(myMainPanel)
-      .addToBottom(myToolbar);
+      .addToBottom(toolbar);
   }
 
   @NotNull
-  private DefaultActionGroup wrapActions(@NotNull DefaultActionGroup toolbarActions) {
+  private DefaultActionGroup wrapActions(@NotNull DefaultActionGroup toolbarActions,
+                                         @NotNull String actionsPlace,
+                                         @Nullable Component toolbarActionsDataProvider) {
     DefaultActionGroup wrappedActions = new DefaultActionGroup();
     for (AnAction action : toolbarActions.getChildren(null)) {
-      ActionWrapper actionLink = new ActionWrapper(action);
+      ActionWrapper actionLink = new ActionWrapper(action, actionsPlace);
+      actionLink.setDataProvider(toolbarActionsDataProvider);
       wrappedActions.add(actionLink);
     }
 
@@ -192,12 +178,14 @@ public abstract class XDebuggerPopupPanel {
 
   private class ActionWrapper extends AnAction implements CustomComponentAction {
     private final AnAction myDelegate;
+    private final @NotNull String myActionPlace;
     private @Nullable Component myProvider;
 
-    ActionWrapper(AnAction delegate) {
+    ActionWrapper(AnAction delegate, @NotNull String actionPlace) {
       super(delegate.getTemplateText());
       copyFrom(delegate);
       myDelegate = delegate;
+      myActionPlace = actionPlace;
     }
 
     public void setDataProvider(@Nullable Component provider) {
@@ -210,7 +198,7 @@ public abstract class XDebuggerPopupPanel {
       if (myProvider != null) {
         delegateEvent = AnActionEvent.createFromAnAction(myDelegate,
                                                          e.getInputEvent(),
-                                                         myToolbarActionsPlace,
+                                                         myActionPlace,
                                                          DataManager.getInstance().getDataContext(myProvider));
       }
       myDelegate.actionPerformed(delegateEvent);
@@ -235,7 +223,7 @@ public abstract class XDebuggerPopupPanel {
         return getSecretComponentForToolbar(); // this is necessary because the toolbar hide if all action panels are not visible
       }
 
-      myDelegate.applyTextOverride(myToolbarActionsPlace, presentation);
+      myDelegate.applyTextOverride(myActionPlace, presentation);
 
       DataProvider dataProvider = myProvider instanceof DataProvider ? (DataProvider)myProvider : null;
 
@@ -246,12 +234,12 @@ public abstract class XDebuggerPopupPanel {
       presentation.addPropertyChangeListener(new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == Presentation.PROP_TEXT) {
+          if (Presentation.PROP_TEXT.equals(evt.getPropertyName())) {
             String value = (String)evt.getNewValue();
             button.setText(StringUtil.capitalize(value.toLowerCase(Locale.ROOT)));
             button.repaint();
           }
-          if (evt.getPropertyName() == Presentation.PROP_ENABLED) {
+          if (Presentation.PROP_ENABLED.equals(evt.getPropertyName())) {
             actionPanel.setVisible((Boolean)evt.getNewValue());
             actionPanel.repaint();
           }

@@ -4,15 +4,15 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
@@ -41,11 +41,13 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
   public static final String ACTION_PLACE = "XDebuggerTextPopup";
 
-  private static final int MAX_POPUP_WIDTH = 600;
-  private static final int MAX_POPUP_HEIGHT = 300;
+  private static final int MAX_POPUP_WIDTH = 650;
+  private static final int MAX_POPUP_HEIGHT = 400;
   private static final int MIN_POPUP_WIDTH = 170;
   private static final int MIN_POPUP_HEIGHT = 100;
+  private static final int MED_TEXT_VIEWER_SIZE = 300;
   private static final int TOOLBAR_MARGIN = 30;
+  private static final int STRING_SIZE = 250;
 
   protected final @Nullable XFullValueEvaluator myEvaluator;
   protected final @NotNull DebuggerTreeCreator<D> myTreeCreator;
@@ -70,7 +72,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
                             @NotNull Point point,
                             @NotNull Project project,
                             @Nullable Runnable hideRunnable) {
-    super(ACTION_PLACE);
+    super();
     myEvaluator = evaluator;
     myTreeCreator = creator;
     myInitialItem = initialItem;
@@ -79,13 +81,6 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     myProject = project;
     myHideRunnable = hideRunnable;
     myTextViewer = DebuggerUIUtil.createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), myProject);
-  }
-
-  private void setTextViewerSize() {
-    JFrame frame = WindowManager.getInstance().getFrame(myProject);
-    int preferredHeight = frame != null ? frame.getSize().height / 4 : MIN_POPUP_HEIGHT;
-    int preferredWidth = frame != null ? frame.getSize().width / 4 : MIN_POPUP_WIDTH;
-    myTextViewer.setPreferredSize(new Dimension(preferredWidth, preferredHeight));
   }
 
   private JBPopup createPopup(XFullValueEvaluator evaluator, Runnable afterEvaluation, Runnable hideTextPopupRunnable) {
@@ -109,8 +104,8 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   }
 
   public void show(@NotNull String initialText) {
-    setTextViewerSize();
-    setContent(myTextViewer, null);
+    myTextViewer.setPreferredSize(new Dimension(0, 0));
+    setContent(myTextViewer, getToolbarActions(), ACTION_PLACE, null);
 
     XFullValueEvaluator evaluator = myEvaluator != null ? myEvaluator : new ImmediateFullValueEvaluator(initialText);
 
@@ -142,16 +137,14 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       return;
     }
 
-    JFrame frame = WindowManager.getInstance().getFrame(myProject);
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
 
-    int metrics = myTextViewer.getFontMetrics(myTextViewer.getFont()).stringWidth(myTextViewer.getText());
-    Dimension preferredSize = metrics > 250 ?
-                              getMediumPopupSize(frame, myToolbar, metrics) : getMiniPopupSize(frame, myToolbar);
+    Dimension preferredSize = getPopupPreferredSize();
 
-    int newWidth = Math.min(preferredSize.width, getMaxPopupWidth(frame));
-    int newHeight = Math.min(preferredSize.height, getMaxPopupHeight(frame));
-    newWidth = Math.max(newWidth, MIN_POPUP_WIDTH);
-    newHeight = Math.max(newHeight, MIN_POPUP_HEIGHT);
+    int newWidth = Math.min(preferredSize.width, getMaxPopupWidth(screenRectangle));
+    int newHeight = Math.min(preferredSize.height, getMaxPopupHeight(screenRectangle));
+    newWidth = Math.max(newWidth, getMinPopupWidth(screenRectangle));
+    newHeight = Math.max(newHeight, getMinPopupHeight(screenRectangle));
 
     final Point location = popupWindow.getLocation();
     final Rectangle targetBounds = new Rectangle(location.x, location.y, newWidth, newHeight);
@@ -170,9 +163,8 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     }
   }
 
-  @Override
   protected @NotNull DefaultActionGroup getToolbarActions() {
-    DefaultActionGroup toolbarActions = super.getToolbarActions();
+    DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(new ShowAsObject());
     toolbarActions.add(new EnableSetValueMode());
     toolbarActions.add(new SetTextValueAction());
@@ -216,24 +208,52 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     return isSetValueModeAction && mySetValueModeEnabled || !isSetValueModeAction && !mySetValueModeEnabled;
   }
 
-  private static int getMaxPopupWidth(JFrame frame) {
-    return frame != null ? frame.getSize().width / 3 : MAX_POPUP_WIDTH;
+  private Dimension getTextViewerPreferredSize() {
+    String text = myTextViewer.getText();
+    FontMetrics fontMetrics = myTextViewer.getFontMetrics(myTextViewer.getFont());
+    int widthMetrics = fontMetrics.stringWidth(text);
+
+    int toolbarWidth = myToolbar.getPreferredSize().width + TOOLBAR_MARGIN;
+
+    int width = widthMetrics <= STRING_SIZE ? toolbarWidth : Math.max(toolbarWidth, widthMetrics);
+
+    int height;
+    Editor editor = myTextViewer.getEditor();
+    if (editor instanceof EditorImpl) {
+      height = ((EditorImpl)editor).getContentSize().height;
+    }
+    else {
+      int heightMetrics = StringUtil.countNewLines(text) * fontMetrics.getHeight();
+      height = widthMetrics <= STRING_SIZE ? heightMetrics : getMediumTextViewerHeight();
+    }
+
+    return new Dimension(width, height);
   }
 
-  private static int getMaxPopupHeight(JFrame frame) {
-    return frame != null ? frame.getSize().height / 3 : MAX_POPUP_HEIGHT;
+  private Dimension getPopupPreferredSize() {
+    Dimension textViewerPreferredSize = getTextViewerPreferredSize();
+    int height = textViewerPreferredSize.height + myToolbar.getPreferredSize().height;
+    return new Dimension(textViewerPreferredSize.width, height);
   }
 
-  private static Dimension getMiniPopupSize(JFrame frame, ActionToolbarImpl toolbar) {
-    int preferredHeight = frame != null ? frame.getSize().height / 7 : MIN_POPUP_HEIGHT;
-    int preferredWidth = toolbar.getPreferredSize().width + TOOLBAR_MARGIN;
-    return new Dimension(preferredWidth, preferredHeight);
+  private static int getMaxPopupWidth(Rectangle screenRectangle) {
+    return Math.min(screenRectangle.width / 3, MAX_POPUP_WIDTH);
   }
 
-  private static Dimension getMediumPopupSize(JFrame frame, ActionToolbarImpl toolbar, int metrics) {
-    int preferredHeight = frame != null ? frame.getSize().height / 4 : MAX_POPUP_HEIGHT;
-    int preferredWidth = Math.max(toolbar.getPreferredSize().width + TOOLBAR_MARGIN, metrics);
-    return new Dimension(preferredWidth, preferredHeight);
+  private static int getMaxPopupHeight(Rectangle screenRectangle) {
+    return Math.min(screenRectangle.height / 2, MAX_POPUP_HEIGHT);
+  }
+
+  private static int getMinPopupWidth(Rectangle screenRectangle) {
+    return Math.max(screenRectangle.width / 5, MIN_POPUP_WIDTH);
+  }
+
+  private static int getMinPopupHeight(Rectangle screenRectangle) {
+    return Math.max(screenRectangle.height / 7, MIN_POPUP_HEIGHT);
+  }
+
+  private static int getMediumTextViewerHeight() {
+    return MED_TEXT_VIEWER_SIZE;
   }
 
   private static boolean canSetTextValue(@NotNull XValueNodeImpl node) {
