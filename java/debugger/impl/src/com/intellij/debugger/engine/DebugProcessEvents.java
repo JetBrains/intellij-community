@@ -61,14 +61,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author lex
- */
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
   private static final String REQUEST_HANDLER = "REQUEST_HANDLER";
 
-  private Map<VirtualMachine, DebuggerEventThread> myEventThreads = new HashMap<>();
+  private final Map<VirtualMachine, DebuggerEventThread> myEventThreads = new HashMap<>();
 
   public DebugProcessEvents(Project project) {
     super(project);
@@ -393,8 +390,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
         @Override
         public void extensionRemoved(@NotNull PositionManagerFactory extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () ->
-            ObjectUtils.consumeIfNotNull(mapping.remove(extension), m -> myPositionManager.removePositionManager(m)));
+          getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () -> {
+            PositionManager manager = mapping.remove(extension);
+            if (manager != null) {
+              myPositionManager.removePositionManager(manager);
+            }
+          });
         }
       }, true, myDisposable);
 

@@ -30,8 +30,8 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.plaf.beg.BegResources.m
 import com.intellij.util.MathUtil
-import com.intellij.util.ObjectUtils
 import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -172,7 +172,7 @@ class InternalDecoratorImpl internal constructor(
     if (SystemInfoRt.isMac) {
       background = JBColor(Gray._200, Gray._90)
     }
-    if (ExperimentalUI.isNewUI()) {
+    if (toolWindow.toolWindowManager.isNewUi) {
       background = JBUI.CurrentTheme.ToolWindow.background()
     }
     contentManager.addContentManagerListener(object : ContentManagerListener {
@@ -308,7 +308,7 @@ class InternalDecoratorImpl internal constructor(
 
   fun unsplit(toSelect: Content?) {
     if (!mode!!.isSplit) {
-      ObjectUtils.consumeIfNotNull(findNearestDecorator(this)) { decorator: InternalDecoratorImpl -> decorator.unsplit(toSelect) }
+      findNearestDecorator(this)?.unsplit(toSelect)
       return
     }
     if (isSplitUnsplitInProgress()) {
@@ -316,28 +316,32 @@ class InternalDecoratorImpl internal constructor(
     }
     setSplitUnsplitInProgress(true)
     try {
-      if (firstDecorator == null || secondDecorator == null) return
-      if (firstDecorator!!.mode!!.isSplit) {
-        raise(true)
-        return
+      when {
+        firstDecorator == null || secondDecorator == null -> {
+          return
+        }
+        firstDecorator!!.mode!!.isSplit -> {
+          raise(true)
+          return
+        }
+        secondDecorator!!.mode!!.isSplit -> {
+          raise(false)
+          return
+        }
+        else -> {
+          for (c in firstDecorator!!.contentManager.contents) {
+            moveContent(c, firstDecorator!!, this)
+          }
+          for (c in secondDecorator!!.contentManager.contents) {
+            moveContent(c, secondDecorator!!, this)
+          }
+          updateMode(if (findNearestDecorator(this) != null) Mode.CELL else Mode.SINGLE)
+          toSelect?.manager?.setSelectedContent(toSelect)
+          firstDecorator = null
+          secondDecorator = null
+          splitter = null
+        }
       }
-      if (secondDecorator!!.mode!!.isSplit) {
-        raise(false)
-        return
-      }
-      for (c in firstDecorator!!.contentManager.contents) {
-        moveContent(c, firstDecorator!!, this)
-      }
-      for (c in secondDecorator!!.contentManager.contents) {
-        moveContent(c, secondDecorator!!, this)
-      }
-      updateMode(if (findNearestDecorator(this) != null) Mode.CELL else Mode.SINGLE)
-      if (toSelect != null) {
-        ObjectUtils.consumeIfNotNull(toSelect.manager) { m: ContentManager -> m.setSelectedContent(toSelect) }
-      }
-      firstDecorator = null
-      secondDecorator = null
-      splitter = null
     }
     finally {
       setSplitUnsplitInProgress(false)
@@ -513,7 +517,7 @@ class InternalDecoratorImpl internal constructor(
     val toolbar = headerToolbar
     if (toolbar is AlphaAnimated) {
       val alpha = toolbar as AlphaAnimated
-      alpha.alphaAnimator.setVisible(!ExperimentalUI.isNewUI() || isWindowHovered || header.isPopupShowing || toolWindow.isActive)
+      alpha.alphaAnimator.setVisible(!toolWindow.toolWindowManager.isNewUi || isWindowHovered || header.isPopupShowing || toolWindow.isActive)
     }
   }
 

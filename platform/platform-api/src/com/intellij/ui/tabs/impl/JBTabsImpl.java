@@ -151,7 +151,7 @@ public class JBTabsImpl extends JComponent
   private List<TabInfo> myAllTabs;
   private IdeFocusManager myFocusManager;
   private static final boolean myAdjustBorders = true;
-  private Set<JBTabsImpl> myNestedTabs = new HashSet<>();
+  private final Set<JBTabsImpl> myNestedTabs = new HashSet<>();
 
   boolean myAddNavigationGroup = true;
 
@@ -199,7 +199,7 @@ public class JBTabsImpl extends JComponent
   private boolean myMouseInsideTabsArea;
   private boolean myRemoveNotifyInProgress;
 
-  private TabsLayoutCallback myTabsLayoutCallback;
+  private final TabsLayoutCallback myTabsLayoutCallback;
   private MouseListener myTabsLayoutMouseListener;
   private MouseMotionListener myTabsLayoutMouseMotionListener;
   private MouseWheelListener myTabsLayoutMouseWheelListener;
@@ -582,9 +582,7 @@ public class JBTabsImpl extends JComponent
     }
     JComponent more = myMoreToolbar.getComponent();
 
-    if (Registry.is("ide.editor.tabs.show.fadeout") && !getTabsPosition().isSide() && more.isShowing()) {
-      TabInfo selectedInfo = getSelectedInfo();
-      final JBTabsImpl.Toolbar selectedToolbar = selectedInfo != null ? myInfo2Toolbar.get(selectedInfo) : null;
+    if (!getTabsPosition().isSide() && Registry.is("ide.editor.tabs.show.fadeout") && more.isShowing()) {
       int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
       Rectangle moreRect = getMoreRect();
       Rectangle labelsArea = null;
@@ -2378,8 +2376,13 @@ public class JBTabsImpl extends JComponent
 
   private void processRemove(final TabInfo info, boolean forcedNow) {
     TabLabel tabLabel = myInfo2Label.get(info);
-    ObjectUtils.consumeIfNotNull(tabLabel, label -> remove(label));
-    ObjectUtils.consumeIfNotNull(myInfo2Toolbar.get(info), toolbar -> remove(toolbar));
+    if (tabLabel != null) {
+      remove(tabLabel);
+    }
+    Toolbar toolbar = myInfo2Toolbar.get(info);
+    if (toolbar != null) {
+      remove(toolbar);
+    }
 
     JComponent tabComponent = info.getComponent();
 

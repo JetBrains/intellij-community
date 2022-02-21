@@ -155,10 +155,11 @@ public final class CustomizationUtil {
         final ActionUrl[] defaultUserObjects = getChildUserObjects(visited, url);
         final ActionUrl[] currentUserObjects = getChildUserObjects(treeNode, url);
         computeDiff(defaultUserObjects, currentUserObjects, actions);
-      } else {
+      }
+      else {
         //customizations at the new place
         url.getGroupPath().remove(url.getParentGroup());
-        if (actions.contains(url)){
+        if (actions.contains(url)) {
           url.getGroupPath().add(groupName);
           actions.addAll(schema.getChildActions(url));
         }
