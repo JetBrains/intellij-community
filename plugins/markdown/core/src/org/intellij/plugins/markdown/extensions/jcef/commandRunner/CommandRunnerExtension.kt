@@ -189,9 +189,10 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       LOG.error("Command hash $cmdHash not found. Please attach .md file to error report.\n${hash2Cmd}")
       return
     }
+    val trimmedCmd = trimPrompt(command)
     if (firstLineCommand == null) {
       ApplicationManager.getApplication().invokeLater {
-        executeBlock(command, executorId)
+        executeBlock(trimmedCmd, executorId)
       }
       return
     }
@@ -205,7 +206,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
                                            AllIcons.RunConfigurations.TestState.Run_run) {
       override fun actionPerformed(e: AnActionEvent) {
         ApplicationManager.getApplication().invokeLater {
-          executeBlock(command, executorId)
+          executeBlock(trimmedCmd, executorId)
         }
       }
     }
@@ -335,6 +336,14 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     }
 
     private val LOG = logger<CommandRunnerExtension>()
+
+    internal fun trimPrompt(cmd: String): String {
+      return cmd.lines()
+        .filter { line -> line.isNotEmpty() }
+        .joinToString("\n") { line ->
+          if (line.startsWith("$")) line.substringAfter("$") else line
+        }
+    }
   }
 }
 
