@@ -1414,10 +1414,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static @Nullable FileAttributes loadAttributes(@NotNull NewVirtualFileSystem fs, @NotNull String path) {
-    return fs.getAttributes(new StubVirtualFile(fs) {
-      @Override public @NotNull String getPath() { return path; }
-      @Override public @Nullable VirtualFile getParent() { return null; }
-    });
+    StubVirtualFile virtualFile = new StubVirtualFile(fs) {
+      @Override
+      public @NotNull String getPath() { return path; }
+
+      @Override
+      public @Nullable VirtualFile getParent() { return null; }
+    };
+    return fs instanceof ArchiveFileSystem ? ((ArchiveFileSystem)fs).getCachedAttributes(virtualFile) : fs.getAttributes(virtualFile);
   }
 
   @Override

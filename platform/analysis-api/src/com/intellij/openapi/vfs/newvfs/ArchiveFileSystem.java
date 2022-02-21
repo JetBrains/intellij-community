@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -134,6 +131,18 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
     return myAttrGetter.apply(file);
   }
+
+  public @Nullable FileAttributes getCachedAttributes(@NotNull VirtualFile file) {
+    int separatorIndex = file.getPath().indexOf("!/");
+    VirtualFile archiveVirtualFile;
+    if (separatorIndex < 0) {
+      archiveVirtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + file.getPath());
+    } else {
+      archiveVirtualFile = VfsUtilCore.getVirtualFileForJar(file);
+    }
+    return getHandler(file).getCachedAttributes(archiveVirtualFile, getRelativePath(file));
+  }
+
 
   private final Function<VirtualFile, String[]> myChildrenGetter =
     ManagingFS.getInstance().accessDiskWithCheckCanceled(file -> getHandler(file).list(getRelativePath(file)));

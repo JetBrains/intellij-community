@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -80,6 +81,20 @@ public abstract class ArchiveHandler {
       }
     }
     else if (Files.exists(myPath.toPath())) {
+      return DIRECTORY_ATTRIBUTES;
+    }
+
+    return null;
+  }
+
+  public @Nullable FileAttributes getCachedAttributes(@Nullable VirtualFile archiveVirtualFile, @NotNull String relativePath) {
+    if (!relativePath.isEmpty()) {
+      EntryInfo e = getEntryInfo(relativePath);
+      if (e != null) {
+        return new FileAttributes(e.isDirectory, false, false, false, e.length, e.timestamp, false, FileAttributes.CaseSensitivity.SENSITIVE);
+      }
+    }
+    else if (archiveVirtualFile != null) {
       return DIRECTORY_ATTRIBUTES;
     }
 
