@@ -916,7 +916,7 @@ public final class JBUI {
       }
 
       public static Insets separatorLabelInsets() {
-        return insets("Popup.separatorLabelInsets", insets(2, 20, 2, 20));
+        return insets("Popup.separatorLabelInsets", insets(3, 20));
       }
 
       public static Color separatorTextColor() {

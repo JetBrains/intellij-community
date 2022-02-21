@@ -279,13 +279,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myHeaderAlwaysFocusable = headerAlwaysFocusable;
     myMovable = movable;
 
-    ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(EmptyIcon.ICON_0) : titleIcon;
-
     myHeaderPanel = new JPanel(new BorderLayout());
 
     if (caption != null) {
       if (!caption.isEmpty()) {
-        TitlePanel titlePanel = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
+        TitlePanel titlePanel = titleIcon == null ? new TitlePanel() : new TitlePanel(titleIcon.getRegular(), titleIcon.getInactive());
         titlePanel.setText(caption);
         titlePanel.setPopupTitle(ExperimentalUI.isNewUI());
         myCaption = titlePanel;
@@ -1288,9 +1286,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       textField.setOpaque(false);
       JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
-      mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder));
+      mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,
+                                                                JBUI.Borders.empty(JBUI.CurrentTheme.Popup.searchFieldInputInsets())));
       textField.setBorder(JBUI.Borders.empty());
-      textField.setMargin(JBUI.CurrentTheme.Popup.searchFieldInputInsets());
     } else {
       if (mySpeedSearchAlwaysShown) {
         mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
