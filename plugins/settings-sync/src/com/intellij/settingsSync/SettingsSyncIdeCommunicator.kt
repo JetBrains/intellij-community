@@ -104,7 +104,14 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
         true
       }
       catch (e: Throwable) {
-        LOG.error("Couldn't read $fileSpec", e, Attachment(fileSpec, path.readText()))
+        val attachment =
+          try {
+            Attachment(fileSpec, path.readText())
+          }
+          catch (errorReadingFile: Throwable) {
+            Attachment("file-read-error", errorReadingFile)
+          }
+        LOG.error("Couldn't read $fileSpec", e, attachment)
         false
       }
     }
