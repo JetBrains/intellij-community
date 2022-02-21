@@ -35,6 +35,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import icons.DvcsImplIcons
+import java.util.IdentityHashMap
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
@@ -148,7 +149,7 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
 
       private val repositoryNode = Repository()
 
-      private val structureCache = mutableMapOf<Any, List<AbstractTreeNode<*>>>()
+      private val structureCache = IdentityHashMap<Any, List<AbstractTreeNode<*>>>()
 
       private val localBranches = ClearableLazyValue.create {
         processLocal(repository.branches.localBranches)
