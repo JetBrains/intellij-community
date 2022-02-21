@@ -467,7 +467,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertTrue("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
         TestCase.assertTrue("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
 
-        val testClass = uFile.findElementByTextFromPsi<UClass>("Test")
+        val testClass = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
         TestCase.assertNotNull("can't convert class Test", testClass)
         testClass.methods.forEach { mtd ->
             if (mtd.sourcePsi is KtConstructor<*>) {
