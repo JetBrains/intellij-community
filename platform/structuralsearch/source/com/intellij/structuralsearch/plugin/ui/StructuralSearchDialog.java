@@ -161,8 +161,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private EditorTextField mySearchCriteriaEdit;
   private EditorTextField myReplaceCriteriaEdit;
   private OnePixelSplitter mySearchEditorPanel;
+  private OnePixelSplitter myMainSplitter;
 
   private FilterPanel myFilterPanel;
+  private JComponent myTemplatesPanel;
   private LinkComboBox myTargetComboBox;
   private ScopePanel myScopePanel;
   private JCheckBox myOpenInNewTab;
@@ -407,12 +409,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     existingTemplates.onConfigurationSelected(configuration -> {
       loadConfiguration(configuration);
     });
-    final var splitter = new OnePixelSplitter(false, 0.2f);
-    final JComponent panel = existingTemplates.getTemplatesPanel();
-    panel.setBorder(JBUI.Borders.empty());
-    splitter.setFirstComponent(panel);
-    splitter.setSecondComponent(centerPanel);
-    return splitter;
+    myMainSplitter = new OnePixelSplitter(false, 0.2f);
+    myTemplatesPanel = existingTemplates.getTemplatesPanel();
+    myTemplatesPanel.setBorder(JBUI.Borders.empty());
+    myMainSplitter.setFirstComponent(myTemplatesPanel);
+    myMainSplitter.setSecondComponent(centerPanel);
+    return myMainSplitter;
   }
 
   private JPanel createSearchPanel() {
@@ -501,6 +503,21 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     presentation.setIcon(AllIcons.General.Settings);
     presentation.setText(SSRBundle.message("tools.button"));
 
+    // Existing templates action
+    final AnAction showTemplatesAction = new DumbAwareToggleAction(SSRBundle.message("templates.button"),
+                                                                   SSRBundle.message("templates.button.description"),
+                                                                   AllIcons.Actions.PreviewDetails) {
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return isExistingTemplatesPanelVisible();
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        setExistingTemplatesPanelVisible(state);
+      }
+    };
+
     // Filter action
     final Icon filterModifiedIcon = ExecutionUtil.getLiveIndicator(AllIcons.General.Filter);
     final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
@@ -546,7 +563,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       };
 
     final DefaultActionGroup optionsActionGroup =
-      new DefaultActionGroup(myFileTypeChooser, filterAction, pinAction, templateActionGroup);
+      new DefaultActionGroup(myFileTypeChooser, showTemplatesAction, filterAction, pinAction, templateActionGroup);
     final ActionManager actionManager = ActionManager.getInstance();
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
@@ -995,6 +1012,18 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   private boolean isFilterPanelVisible() {
     return mySearchEditorPanel.getSecondComponent() != null;
+  }
+
+  private void setExistingTemplatesPanelVisible(boolean visible) {
+    if (visible) {
+      myMainSplitter.setFirstComponent(myTemplatesPanel);
+    } else {
+        myMainSplitter.setFirstComponent(null);
+    }
+  }
+
+  private boolean isExistingTemplatesPanelVisible() {
+    return myMainSplitter.getFirstComponent() != null;
   }
 
   private void setSearchTargets(MatchOptions matchOptions) {
