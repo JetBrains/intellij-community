@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData;
 import com.intellij.ide.wizard.LanguageNewProjectWizardData;
 import com.intellij.ide.wizard.NewProjectWizardBaseData;
+import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,8 +57,10 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
   private String myJdkHome;
 
   public void testGradleNPWPropertiesSuggestion() throws Exception {
-    Project project = createProjectFromTemplate(IdeBundle.message("empty.project.generator.name"), null, null);
-    assertModules(project);
+    Project project = createProjectFromTemplate(UIBundle.message("label.project.wizard.empty.project.generator.name"), step -> {
+      NewProjectWizardBaseData.setName(step, "project");
+    });
+    assertModules(project, "project");
 
     var projectPath = project.getBasePath();
     var externalProjectPath1 = projectPath + "/untitled";
@@ -81,7 +84,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       });
     });
     assertModules(
-      project,
+      project, "project",
       "untitled", "untitled.main", "untitled.test",
       "untitled1", "untitled1.main", "untitled1.test"
     );
@@ -107,7 +110,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       });
     });
     assertModules(
-      project,
+      project, "project",
       "untitled", "untitled.main", "untitled.test",
       "untitled1", "untitled1.main", "untitled1.test",
       "untitled.untitled2", "untitled.untitled2.main", "untitled.untitled2.test",
@@ -191,8 +194,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
   }
 
   @Override
-  protected Project createProject(Consumer adjuster) throws IOException {
-    @SuppressWarnings("unchecked")
+  protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
     Project project = super.createProject(adjuster);
     Disposer.register(getTestRootDisposable(), () -> PathKt.delete(ProjectUtil.getExternalConfigurationDir(project)));
     return project;
