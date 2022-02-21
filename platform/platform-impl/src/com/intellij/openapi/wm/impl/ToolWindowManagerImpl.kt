@@ -320,10 +320,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   private fun revalidateStripeButtons() {
-    if (buttonManager is ToolWindowPaneNewButtonManager) {
-      val refreshButtons = (buttonManager as ToolWindowPaneNewButtonManager)::refreshUi
-      ApplicationManager.getApplication().invokeLater(refreshButtons, project.disposed)
-    }
+    val buttonManager = toolWindowPane?.buttonManager as? ToolWindowPaneNewButtonManager ?: return
+    ApplicationManager.getApplication().invokeLater(buttonManager::refreshUi, project.disposed)
   }
 
   internal fun createNotInHierarchyIterable(): Iterable<Component> {
