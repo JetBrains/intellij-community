@@ -20,7 +20,8 @@ abstract class AbstractFirKeywordCompletionHandlerTest : AbstractKeywordCompleti
             IgnoreTests.cleanUpIdenticalFirTestFile(
                 originalTestFile,
                 additionalFileToMarkFirIdentical = originalTestFile.withExtension("kt.after"),
-                additionalFileToDeleteIfIdentical = originalTestFile.withExtension("fir.kt.after")
+                additionalFileToDeleteIfIdentical = originalTestFile.withExtension("fir.kt.after"),
+                additionalFilesToCompare = listOf(originalTestFile.withExtension("kt.after") to originalTestFile.withExtension("fir.kt.after")),
             )
         }
     }
