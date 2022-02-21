@@ -7,14 +7,21 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.GridBagConstraintHolder;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -26,6 +33,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 public final class ExistingTemplatesComponent {
@@ -34,6 +42,10 @@ public final class ExistingTemplatesComponent {
   private final Tree patternTree;
   private final DefaultTreeModel patternTreeModel;
   private final JComponent panel;
+  private final JComponent myToolbar;
+  private Supplier<? extends Configuration> myConfigurationProducer;
+  private final DefaultMutableTreeNode myRecentNode;
+  private final DefaultMutableTreeNode myUserTemplatesNode;
 
   ExistingTemplatesComponent(Project project) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
@@ -43,20 +55,15 @@ public final class ExistingTemplatesComponent {
     final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
 
     // 'Recent' node
-    DefaultMutableTreeNode recentNode;
-    root.add(recentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")));
+    root.add(myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")));
     for (final Configuration config : configurationManager.getHistoryConfigurations()) {
-      recentNode.add(new DefaultMutableTreeNode(config));
+      myRecentNode.add(new DefaultMutableTreeNode(config));
     }
-    patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), recentNode}));
+    patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), myRecentNode}));
 
     // 'Saved templates' node
-    DefaultMutableTreeNode userTemplatesNode;
-    root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
-    for (final Configuration config : configurationManager.getConfigurations()) {
-      userTemplatesNode.add(new DefaultMutableTreeNode(config));
-    }
-    patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), userTemplatesNode}));
+    root.add(myUserTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
+    reloadUserTemplates(configurationManager);
 
     // Predefined templates
     for (Configuration info : StructuralSearchUtil.getPredefinedTemplates()) {
@@ -69,55 +76,110 @@ public final class ExistingTemplatesComponent {
 
     // Toolbar actions
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
-    panel = ToolbarDecorator.createDecorator(patternTree)
-      .setRemoveAction(button -> {
-        final Object selection = patternTree.getLastSelectedPathComponent();
-        if (!(selection instanceof DefaultMutableTreeNode)) {
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    final DefaultActionGroup saveGroup = new DefaultActionGroup(SSRBundle.messagePointer("save.template"),
+                                                                SSRBundle.messagePointer("save.template.description.button"),
+                                                                AllIcons.Actions.MenuSaveall);
+
+    final DumbAwareAction saveTemplateAction = new DumbAwareAction(SSRBundle.message("save.template.action.text")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        ConfigurationManager.getInstance(project).showSaveTemplateAsDialog(myConfigurationProducer.get());
+        reloadUserTemplates(configurationManager);
+      }
+    };
+    final DumbAwareAction saveInspectionAction = new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        StructuralSearchProfileActionProvider.createNewInspection(myConfigurationProducer.get(), project);
+      }
+    };
+
+    saveGroup.addAll(saveTemplateAction, saveInspectionAction);
+    saveGroup.setPopup(true);
+
+    final DumbAwareAction removeAction = new DumbAwareAction(SSRBundle.messagePointer("remove.template"),
+                                                             AllIcons.General.Remove) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        removeTemplate(project);
+      }
+    };
+
+    actionGroup.add(saveGroup);
+    actionGroup.add(removeAction);
+    actionGroup.add(Separator.getInstance());
+    actionGroup.addAll(actionManager.createExpandAllAction(treeExpander, patternTree),
+                       actionManager.createCollapseAllAction(treeExpander, patternTree));
+
+    final var optionsToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
+    optionsToolbar.setTargetComponent(patternTree);
+    optionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    optionsToolbar.setForceMinimumSize(true);
+    myToolbar = optionsToolbar.getComponent();
+
+    panel = new JPanel(new GridBagLayout());
+    final var constraints = new GridBagConstraintHolder();
+    panel.add(myToolbar, constraints.growX().fillX().get());
+    final var scrollPane = new JBScrollPane(patternTree);
+    scrollPane.setBorder(JBUI.Borders.empty());
+    panel.add(scrollPane, constraints.newLine().growXY().fillXY().get());
+    panel.setBorder(JBUI.Borders.empty());
+  }
+
+  private void reloadUserTemplates(ConfigurationManager configurationManager) {
+    myUserTemplatesNode.removeAllChildren();
+    for (final Configuration config : configurationManager.getConfigurations()) {
+      myUserTemplatesNode.add(new DefaultMutableTreeNode(config));
+    }
+    patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), myUserTemplatesNode}));
+    patternTreeModel.reload(myUserTemplatesNode);
+  }
+
+  private void removeTemplate(Project project) {
+    final Object selection = patternTree.getLastSelectedPathComponent();
+    if (!(selection instanceof DefaultMutableTreeNode)) {
+      return;
+    }
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+    if (!(node.getUserObject() instanceof Configuration)) {
+      return;
+    }
+    final Configuration configuration = (Configuration)node.getUserObject();
+    if (configuration.isPredefined()) {
+      return;
+    }
+    if (((DefaultMutableTreeNode)selection).isNodeAncestor(myRecentNode)) {
+      return;
+    }
+    final String configurationName = configuration.getName();
+    for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
+      final MatchVariableConstraint constraint =
+        otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+      if (constraint == null) {
+        continue;
+      }
+      final String within = constraint.getWithinConstraint();
+      if (configurationName.equals(within)) {
+        if (Messages.CANCEL == Messages.showOkCancelDialog(
+          project,
+          SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
+          SSRBundle.message("template.in.use.title", configurationName),
+          CommonBundle.message("button.remove"),
+          Messages.getCancelButton(),
+          AllIcons.General.WarningDialog
+        )) {
           return;
         }
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-        if (!(node.getUserObject() instanceof Configuration)) {
-          return;
-        }
-        final Configuration configuration = (Configuration)node.getUserObject();
-        if (configuration.isPredefined()) {
-          return;
-        }
-        final String configurationName = configuration.getName();
-        for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
-          final MatchVariableConstraint constraint =
-            otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
-          if (constraint == null) {
-            continue;
-          }
-          final String within = constraint.getWithinConstraint();
-          if (configurationName.equals(within)) {
-            if (Messages.CANCEL == Messages.showOkCancelDialog(
-              project,
-              SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
-              SSRBundle.message("template.in.use.title", configurationName),
-              CommonBundle.message("button.remove"),
-              Messages.getCancelButton(),
-              AllIcons.General.WarningDialog
-            )) {
-              return;
-            }
-            break;
-          }
-        }
-        final int[] rows = patternTree.getSelectionRows();
-        if (rows != null && rows.length > 0) {
-          patternTree.addSelectionRow(rows[0] - 1);
-        }
-        patternTreeModel.removeNodeFromParent(node);
-        ConfigurationManager.getInstance(project).removeConfiguration(configuration);
-      }).setRemoveActionUpdater(e -> {
-        final Configuration configuration = getSelectedConfiguration();
-        return configuration != null && !configuration.isPredefined();
-      })
-      .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
-      .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
-      .createPanel();
+        break;
+      }
+    }
+    final int[] rows = patternTree.getSelectionRows();
+    if (rows != null && rows.length > 0) {
+      patternTree.addSelectionRow(rows[0] - 1);
+    }
+    patternTreeModel.removeNodeFromParent(node);
+    ConfigurationManager.getInstance(project).removeConfiguration(configuration);
   }
 
   @NotNull
@@ -255,5 +317,14 @@ public final class ExistingTemplatesComponent {
         consumer.accept((Configuration)configuration);
       }
     });
+  }
+
+  public void setConfigurationProducer(Supplier<? extends Configuration> configurationProducer) {
+    myConfigurationProducer = configurationProducer;
+  }
+
+  public void updateColors() {
+    myToolbar.setBorder(JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.Editor.BORDER_COLOR),
+                                              JBUI.Borders.empty(3)));
   }
 }

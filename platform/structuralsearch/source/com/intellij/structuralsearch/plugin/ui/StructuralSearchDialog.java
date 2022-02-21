@@ -62,7 +62,6 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
-import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
@@ -164,7 +163,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private OnePixelSplitter myMainSplitter;
 
   private FilterPanel myFilterPanel;
-  private JComponent myTemplatesPanel;
+  private ExistingTemplatesComponent myExistingTemplatesComponent;
   private LinkComboBox myTargetComboBox;
   private ScopePanel myScopePanel;
   private JCheckBox myOpenInNewTab;
@@ -403,17 +402,18 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     centerPanel.add(myReplacePanel, centerConstraint.newLine().fillXY().growXY().get());
     centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(12, DEFAULT_HGAP, 4, 12).get());
 
-    updateColors();
-
-    final var existingTemplates = new ExistingTemplatesComponent(getProject());
-    existingTemplates.onConfigurationSelected(configuration -> {
+    myExistingTemplatesComponent = new ExistingTemplatesComponent(getProject());
+    myExistingTemplatesComponent.onConfigurationSelected(configuration -> {
       loadConfiguration(configuration);
     });
+    myExistingTemplatesComponent.setConfigurationProducer(() -> {
+      return myConfiguration;
+    });
     myMainSplitter = new OnePixelSplitter(false, 0.2f);
-    myTemplatesPanel = existingTemplates.getTemplatesPanel();
-    myTemplatesPanel.setBorder(JBUI.Borders.empty());
-    myMainSplitter.setFirstComponent(myTemplatesPanel);
+    myMainSplitter.setFirstComponent(myExistingTemplatesComponent.getTemplatesPanel());
     myMainSplitter.setSecondComponent(centerPanel);
+
+    updateColors();
     return myMainSplitter;
   }
 
@@ -465,31 +465,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     // Other actions
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
-    templateActionGroup.add(
-      new DumbAwareAction(SSRBundle.message("save.template.text.button")) {
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
-        }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
-        }
-      });
-    templateActionGroup.add(
-      new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
-        }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), getProject());
-        }
-      });
-    templateActionGroup.addSeparator();
     mySwitchAction = new SwitchAction();
     templateActionGroup.addAll(
       new CopyConfigurationAction(),
@@ -1016,7 +991,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   private void setExistingTemplatesPanelVisible(boolean visible) {
     if (visible) {
-      myMainSplitter.setFirstComponent(myTemplatesPanel);
+      myMainSplitter.setFirstComponent(myExistingTemplatesComponent.getTemplatesPanel());
     } else {
         myMainSplitter.setFirstComponent(null);
     }
@@ -1223,6 +1198,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (mySearchWrapper != null) mySearchWrapper.setBorder(borderTopBottom);
       if (myReplaceWrapper != null) myReplaceWrapper.setBorder(borderTopBottom);
     }
+
+    myExistingTemplatesComponent.updateColors();
   }
 
   private static class ErrorBorder implements Border {
