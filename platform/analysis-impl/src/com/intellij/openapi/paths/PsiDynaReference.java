@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -148,7 +149,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   protected ResolveResult[] innerResolve(final boolean incompleteCode) {
-    List<ResolveResult> result = new ArrayList<>();
+    LinkedHashSet<ResolveResult> result = new LinkedHashSet<>();
     for (PsiReference reference : myReferences) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult rr: ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {
