@@ -1311,7 +1311,7 @@ private class DropDownActionLayout(layout: LayoutManager2) : FinalLayoutWrapper(
     if (component is MyDropDownAction) {
       myDropDownAction = component
     }
-    else {
+    else if (component is LinkLabel<*>) {
       @Suppress("UNCHECKED_CAST")
       actions.add(component as LinkLabel<AnAction>)
     }
