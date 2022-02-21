@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.sam-with-receiver-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:1.6.20-M1-release-207" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:1.6.20-M1-release-210" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.20-M1-release-207/sam-with-receiver-compiler-plugin-for-ide-1.6.20-M1-release-207.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.20-M1-release-210/sam-with-receiver-compiler-plugin-for-ide-1.6.20-M1-release-210.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.20-M1-release-207/sam-with-receiver-compiler-plugin-for-ide-1.6.20-M1-release-207-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.20-M1-release-210/sam-with-receiver-compiler-plugin-for-ide-1.6.20-M1-release-210-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
