@@ -229,6 +229,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     highlightDebugActionsToolbar()
 
     task {
+      rehighlightPreviousUi = true
       text(JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
                                      strong(UIBundle.message("tool.window.name.debug")),
                                      if (Registry.`is`("debugger.new.tool.window.layout")) 0 else 1,

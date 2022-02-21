@@ -235,6 +235,7 @@ class PythonOnboardingTourLesson :
     highlightDebugActionsToolbar()
 
     task {
+      rehighlightPreviousUi = true
       text(PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                        strong(UIBundle.message("tool.window.name.debug")),
                                        if (Registry.`is`("debugger.new.tool.window.layout")) 0 else 1,
