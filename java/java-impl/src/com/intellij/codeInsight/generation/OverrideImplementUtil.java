@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -121,8 +121,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
-      PsiElement copyClass = copyClass(aClass);
-      PsiMethod result = (PsiMethod)copyClass.add(method1);
+      PsiClass copyClass = copyClass(aClass);
+      PsiMethod result = (PsiMethod)copyClass.addBefore(method1, copyClass.getRBrace());
       if (PsiUtil.isAnnotationMethod(result)) {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)result).getDefaultValue();
         if (defaultValue != null) {
@@ -145,13 +145,13 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @NotNull
-  private static PsiElement copyClass(@NotNull PsiClass aClass) {
+  private static PsiClass copyClass(@NotNull PsiClass aClass) {
     Object marker = new Object();
     PsiTreeUtil.mark(aClass, marker);
     PsiElement copy = aClass.getContainingFile().copy();
     PsiElement copyClass = PsiTreeUtil.releaseMark(copy, marker);
     LOG.assertTrue(copyClass != null);
-    return copyClass;
+    return (PsiClass)copyClass;
   }
 
   @NotNull
