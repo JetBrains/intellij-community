@@ -11,6 +11,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncMain"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
+    <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncEvents"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager"/>
     <applicationInitializedListener implementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager$StartupInitializer"/>
     <applicationConfigurable id="settings.sync"
