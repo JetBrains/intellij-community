@@ -6,3 +6,5 @@ val foo: O
     get() {
         return if (true) O() else P()<caret>
     }
+
+/* IGNORE_FIR */

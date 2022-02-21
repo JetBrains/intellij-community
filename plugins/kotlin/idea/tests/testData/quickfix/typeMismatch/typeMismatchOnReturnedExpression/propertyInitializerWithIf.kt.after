@@ -3,3 +3,5 @@ class O
 class P
 
 val foo: Any = if (true) O() else P()
+
+/* IGNORE_FIR */
