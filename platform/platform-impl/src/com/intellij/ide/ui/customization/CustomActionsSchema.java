@@ -39,7 +39,11 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"), category = SettingsCategory.UI)
+@State(
+  name = "com.intellij.ide.ui.customization.CustomActionsSchema",
+  storages = @Storage(value = "customization.xml", usePathMacroManager = false),
+  category = SettingsCategory.UI
+)
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
   /**
