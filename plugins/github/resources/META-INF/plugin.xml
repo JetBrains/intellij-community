@@ -72,6 +72,8 @@
       implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
 
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
+
+    <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
   </extensions>
 
   <projectListeners>
