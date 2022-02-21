@@ -8,3 +8,5 @@ fun test(b: Boolean, p: P?): Any? {
         else -> p
     }
 }
+
+/* IGNORE_FIR */

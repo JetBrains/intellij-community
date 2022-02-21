@@ -3,3 +3,5 @@ fun test() {
     if (true) return "foo"<caret>
     return null
 }
+
+/* IGNORE_FIR */

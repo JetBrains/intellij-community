@@ -3,3 +3,5 @@ fun test(x: CharSequence): CharSequence {
     if (true) return "foo"<caret>
     return x
 }
+
+/* IGNORE_FIR */
