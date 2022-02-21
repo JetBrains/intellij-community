@@ -514,8 +514,8 @@
                  description="If set to false, IDE will ignore configured WSL1 executables. See IDEA-242469"/>
     <registryKey key="git.detect.wsl.executables" defaultValue="true"
                  description="Search for available executables in WSL on Windows"/>
-    <registryKey key="git.enable.stash.toolwindow" defaultValue="false"
-                 description="Show toolwindow tab with stashes"/>
+    <registryKey key="git.enable.stash.toolwindow" defaultValue="true"
+                 description="Show toolwindow tab with stashes and shelves together"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
                  description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speedup worktree cleanup."/>
     <registryKey key="git.stage.separate.undo.stack" defaultValue="true"
