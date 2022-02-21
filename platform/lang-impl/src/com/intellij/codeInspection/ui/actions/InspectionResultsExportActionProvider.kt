@@ -10,8 +10,6 @@ import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
@@ -47,31 +45,19 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
     if (!dialog.showAndGet()) return
     val path = dialog.path
 
-    ApplicationManager.getApplication().invokeLater {
-      val exportRunnable = {
-        ApplicationManager.getApplication().runReadAction {
-          writeResults(view, path)
-        }
-      }
-
+    ApplicationManager.getApplication().runReadAction {
       try {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-          exportRunnable,
-          progressTitle,
-          true,
-          view.project
-        )
-        onExportSuccessful()
+        writeResults(view, path)
       }
-      catch (_: ProcessCanceledException) {}
       catch (e: Exception) {
         LOG.error(e)
         ApplicationManager.getApplication().invokeLater {
           Messages.showErrorDialog(view, e.message)
         }
       }
-
     }
+
+    onExportSuccessful()
   }
 
   /**
