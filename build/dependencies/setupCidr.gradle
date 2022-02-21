@@ -34,24 +34,19 @@ task setupCidr
     path: "CIDR/clion/bin/clang"
   ],
   lldb: [
+    version: "d37893e63d098eef2c75de1e339770f18fb4b600",
     platforms: [
       win: [
         version: "8ffd204e9a7f82c62835b3706fb8e3f0b475bbbf",
         archs: ["x64", "x86"]
       ],
-      linux: [
-        version: "f9f6ec73b9475d2681a8b6bd11dd8605778a144f",
-        archs: ["x64"]
-      ],
-      mac: [
-        version: "f9f6ec73b9475d2681a8b6bd11dd8605778a144f",
-        archs: ["x64"]
-      ]
+      linux: [archs: ["x64"]],
+      mac: [archs: ["x64"]]
     ],
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   lldbfrontend: [
-    version: "9a2042e226b54cca37f2c41f06d629e52c67a74e",
+    version: "8f9ae7691a192ae946846ab978b28ceb2a8f0fe5",
     platforms: [
       win: [archs: ["x64", "x86"]],
       linux: [archs: ["x64"]],
@@ -68,7 +63,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   jbdevice: [
-    version: "b19d276",
+    version: "27e674",
     platforms: [
       "mac": [archs: ["x64"]]
     ],
