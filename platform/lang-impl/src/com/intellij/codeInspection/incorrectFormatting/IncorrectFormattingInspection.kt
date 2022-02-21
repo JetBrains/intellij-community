@@ -6,7 +6,9 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ui.InspectionOptionsPanel
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -22,6 +24,8 @@ class IncorrectFormattingInspection(
   @JvmField var kotlinOnly: Boolean = false  // process kotlin files normally even in silent mode, compatibility
 ) : LocalInspectionTool() {
 
+  val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
+
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
 
     // Skip files we are not able to fix
@@ -34,7 +38,7 @@ class IncorrectFormattingInspection(
 
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
 
-    if (kotlinOnly && file.language.id != "kotlin") {
+    if (isKotlinPlugged && kotlinOnly && file.language.id != "kotlin") {
       return null
     }
 
@@ -56,7 +60,9 @@ class IncorrectFormattingInspection(
   override fun createOptionsPanel() = object : InspectionOptionsPanel(this) {
     init {
       addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.report.per.file"), "reportPerFile")
-      addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.kotlin.only"), "kotlinOnly")
+      if (isKotlinPlugged) {
+        addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.kotlin.only"), "kotlinOnly")
+      }
     }
   }
 
