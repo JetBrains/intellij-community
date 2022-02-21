@@ -8,7 +8,7 @@ import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil
 
-fun getAvailableMacroSupport(call: GrCall): GroovyMacroTransformationSupport? {
+internal fun getAvailableMacroSupport(call: GrCall): GroovyMacroTransformationSupport? {
   if (!GdkMethodUtil.isMacro(call.resolveMethod())) {
     return null
   }
@@ -17,8 +17,8 @@ fun getAvailableMacroSupport(call: GrCall): GroovyMacroTransformationSupport? {
   }
 }
 
-private val EP_NAME: ExtensionPointName<GroovyMacroTransformationSupport> = ExtensionPointName.create(
-  "org.intellij.groovy.macroTransformationSupport")
+private val EP_NAME: ExtensionPointName<GroovyMacroTransformationSupport>
+= ExtensionPointName.create("org.intellij.groovy.macroTransformationSupport")
 
 private fun doGetAvailableMacros(call: GrCall): GroovyMacroTransformationSupport? {
   val available = EP_NAME.extensionList.filter { it.isApplicable(call) }

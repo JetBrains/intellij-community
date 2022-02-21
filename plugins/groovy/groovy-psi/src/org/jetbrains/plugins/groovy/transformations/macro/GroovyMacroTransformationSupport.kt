@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
  *
  * **See:** [Groovy macros](https://groovy-lang.org/metaprogramming.html#_macros)
  */
-interface GroovyMacroTransformationSupport {
+internal interface GroovyMacroTransformationSupport {
 
   /**
    * It is guaranteed that [macroCall] is a call to Groovy macros.
