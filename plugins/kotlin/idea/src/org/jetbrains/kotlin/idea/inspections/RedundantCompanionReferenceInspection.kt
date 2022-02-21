@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -22,16 +21,22 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeAsSequence
 import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
+import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
+import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -71,10 +76,14 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
             context[BindingContext.DECLARATION_TO_DESCRIPTOR, containingClass] as? ClassDescriptor ?: return false
         if (containingClassDescriptor.hasSameNameMemberAs(selectorExpression, context)) return false
 
-        val parentCallableDeclarations = parent.parents.takeWhile { it !is KtClassOrObject }.filterIsInstance<KtCallableDeclaration>()
-        if (parentCallableDeclarations.any { it.extensionClassDescriptor(context).hasSameNameMemberAs(selectorExpression, context) }) {
-            return false
-        }
+        val implicitReceiverClassDescriptor = reference.getResolutionScope(context)?.getImplicitReceiversHierarchy().orEmpty()
+            .flatMap {
+                val type = it.value.type
+                if (type.isTypeParameter()) type.supertypes() else listOf(type)
+            }
+            .mapNotNull { it.constructor.declarationDescriptor as? ClassDescriptor }
+            .filterNot { it.isCompanionObject }
+        if (implicitReceiverClassDescriptor.any { it.hasSameNameMemberAs(selectorExpression, context) }) return false
 
         (reference as? KtSimpleNameExpression)?.getReceiverExpression()?.getQualifiedElementSelector()
             ?.mainReference?.resolveToDescriptors(context)?.firstOrNull()
@@ -99,12 +108,6 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
         if (this !is KtQualifiedExpression) return false
         val descriptor = getResolvedCall(context)?.resultingDescriptor
         return descriptor == null || descriptor is ConstructorDescriptor || descriptor is FakeCallableDescriptorForObject
-    }
-
-    private fun KtCallableDeclaration.extensionClassDescriptor(context: BindingContext): ClassDescriptor? {
-        if (receiverTypeReference == null) return null
-        val callableDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor ?: return null
-        return callableDescriptor.extensionReceiverParameter?.type?.constructor?.declarationDescriptor as? ClassDescriptor
     }
 
     private fun ClassDescriptor?.hasSameNameMemberAs(expression: KtExpression?, context: BindingContext): Boolean {

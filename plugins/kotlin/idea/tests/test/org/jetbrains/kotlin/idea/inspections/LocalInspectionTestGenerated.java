@@ -8051,14 +8051,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameGlobalVariable.kt");
         }
 
-        @TestMetadata("sameNameInExtensionAndCompanion.kt")
-        public void testSameNameInExtensionAndCompanion() throws Exception {
-            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInExtensionAndCompanion.kt");
+        @TestMetadata("sameNameInImplicitReceiverClass.kt")
+        public void testSameNameInImplicitReceiverClass() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass.kt");
         }
 
-        @TestMetadata("sameNameInExtensionAndCompanion2.kt")
-        public void testSameNameInExtensionAndCompanion2() throws Exception {
-            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInExtensionAndCompanion2.kt");
+        @TestMetadata("sameNameInImplicitReceiverClass2.kt")
+        public void testSameNameInImplicitReceiverClass2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass2.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass3.kt")
+        public void testSameNameInImplicitReceiverClass3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass3.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass4.kt")
+        public void testSameNameInImplicitReceiverClass4() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass4.kt");
         }
 
         @TestMetadata("sameNameLocalFunction.kt")
