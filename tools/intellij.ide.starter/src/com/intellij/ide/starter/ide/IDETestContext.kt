@@ -554,6 +554,7 @@ data class IDETestContext(
     val patchedIdeGeneralXml = File(this::class.java.classLoader.getResource("ide.general.xml")!!.path)
     val pathToGeneralXml = paths.configDir.toAbsolutePath().resolve("options/ide.general.xml")
     if (!pathToGeneralXml.exists()) {
+      pathToGeneralXml.parent.createDirectories()
       patchedIdeGeneralXml.copyTo(pathToGeneralXml.toFile())
     }
     return this
