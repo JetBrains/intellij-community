@@ -19,16 +19,19 @@ public final class RowsDnDSupport {
   }
 
   public static void install(@NotNull final JTable table, @NotNull final EditableModel model) {
+    if (GraphicsEnvironment.isHeadless()) return;
     table.setDragEnabled(true);
     installImpl(table, model);
   }
 
   public static void install(@NotNull final JList list, @NotNull final EditableModel model) {
+    if (GraphicsEnvironment.isHeadless()) return;
     list.setDragEnabled(true);
     installImpl(list, model);
   }
 
   public static void install(@NotNull final JTree tree, @NotNull final EditableModel model) {
+    if (GraphicsEnvironment.isHeadless()) return;
     tree.setDragEnabled(true);
     installImpl(tree, model);
   }
