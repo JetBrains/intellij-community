@@ -414,10 +414,10 @@ fun LessonContext.highlightRunToolbar() {
 
 fun LessonContext.highlightDebugActionsToolbar() {
   task {
-    before {
-      LearningUiHighlightingManager.clearHighlights()
-    }
-    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", clearPreviousHighlights = false)
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume")
+  }
+
+  task {
     if (!Registry.`is`("debugger.new.tool.window.layout")) {
       highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", clearPreviousHighlights = false)
     }
