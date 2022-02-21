@@ -9,9 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
@@ -33,10 +31,11 @@ class RemoveWhenBranchFix(
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
             val whenEntry = psiElement.getParentOfType<KtWhenEntry>(strict = false)
-                ?.takeIf { it.conditions.size == 1 }
-                ?: return emptyList()
+            if (whenEntry != null && (whenEntry.isElse || whenEntry.conditions.size == 1)) {
+                return listOf(RemoveWhenBranchFix(whenEntry))
+            }
 
-            return listOfNotNull(RemoveWhenBranchFix(whenEntry))
+            return emptyList()
         }
     }
 }
