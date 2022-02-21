@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.EmptyAction
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -23,9 +22,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabC
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import javax.swing.JPanel
 
-
-class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
-
+internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = with(toolWindow as ToolWindowEx) {
     setTitleActions(listOf(EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), component),
                            GHPRSelectPullRequestForFileAction()))

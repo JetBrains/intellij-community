@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
@@ -57,8 +57,10 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     updateRepositories()
   }
 
-  fun findKnownRepositories(repository: GitRepository) = knownRepositories.filter {
-    it.gitRemoteUrlCoordinates.repository == repository
+  fun findKnownRepositories(repository: GitRepository): List<GHGitRepositoryMapping> {
+    return knownRepositories.filter {
+      it.gitRemoteUrlCoordinates.repository == repository
+    }
   }
 
   @CalledInAny
@@ -96,7 +98,9 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     val repositories = HashSet<GHGitRepositoryMapping>()
     for (remote in remotes) {
       val repository = servers.find { it.matches(remote.url) }?.let { GHGitRepositoryMapping.create(it, remote) }
-      if (repository != null) repositories.add(repository)
+      if (repository != null) {
+        repositories.add(repository)
+      }
       else {
         scheduleEnterpriseServerDiscovery(remote)
       }
@@ -105,7 +109,9 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     knownRepositories = repositories
 
     for (server in authenticatedServers) {
-      if (server.isGithubDotCom) continue
+      if (server.isGithubDotCom) {
+        continue
+      }
       service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).successOnEdt {
         GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, it)
       }
@@ -153,7 +159,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
       override fun onRepositoryListChanges(newList: Set<GHGitRepositoryMapping>) = listener()
     })
 
-  class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
+  internal class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
     override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
     override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
   }
@@ -169,7 +175,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
     @JvmField
     //project level topic
-    val LIST_CHANGES_TOPIC = Topic.create("Repository List Changes", ListChangesListener::class.java)
+    val LIST_CHANGES_TOPIC = Topic(ListChangesListener::class.java)
 
     private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
       val application = ApplicationManager.getApplication()
@@ -179,7 +185,9 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
     private fun updateRepositories(project: Project) {
       try {
-        if (!project.isDisposed) project.service<GHProjectRepositoriesManager>().updateRepositories()
+        if (!project.isDisposed) {
+          project.service<GHProjectRepositoriesManager>().updateRepositories()
+        }
       }
       catch (e: Exception) {
         LOG.info("Error occurred while updating repositories", e)
