@@ -223,7 +223,6 @@ class CompilerArgumentsCachingTest {
 
         pluginOptions = generateRandomStringArray(20)
         pluginClasspaths = generateRandomStringArray(20)
-        useExperimental = generateRandomStringArray(20)
         optIn = generateRandomStringArray(20)
         commonSources = generateRandomStringArray(20)
         disablePhases = generateRandomStringArray(20)
