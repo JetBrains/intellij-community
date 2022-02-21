@@ -8,18 +8,10 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import kotlin.coroutines.coroutineContext
 
 private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress")
 
 fun <X> withJob(job: Job, action: () -> X): X = Cancellation.withJob(job, ThrowableComputable(action))
-
-suspend fun <X> withJob(action: (currentJob: Job) -> X): X {
-  val currentJob = coroutineContext.job
-  return withJob(currentJob) {
-    action(currentJob)
-  }
-}
 
 /**
  * Ensures that the current thread has an [associated job][Cancellation.currentJob].

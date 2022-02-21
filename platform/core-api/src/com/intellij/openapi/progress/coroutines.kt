@@ -135,9 +135,7 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
  */
 suspend fun <T> blockingContext(action: () -> T): T {
   return resetThreadContext(coroutineContext).use {
-    withJob {
-      action()
-    }
+    withJob(coroutineContext.job, action)
   }
 }
 
