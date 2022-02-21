@@ -209,7 +209,6 @@ final class KotlinPluginBuilder {
       withProjectLibrary("javaslang", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("kotlinx-collections-immutable-jvm", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("javax-inject", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlinx-coroutines-jdk8", "kotlinc-lib.jar")
       withProjectLibrary("completion-ranking-kotlin")
 
       withGeneratedResources(new BiConsumer<Path, BuildContext>() {
