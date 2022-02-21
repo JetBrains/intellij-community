@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,17 @@ import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
-  public static final int MAX_CONTENT_LENGTH = Registry.intValue("ide.netty.max.frame.size.in.mb") * 1024 * 1024;
+  public static final int MAX_CONTENT_LENGTH;
+
+  static {
+    int maxContentLength = 180;
+    try {
+      maxContentLength = Integer.parseInt(System.getProperty("ide.netty.max.frame.size.in.mb", "180")) * 1024 * 1024;
+    }
+    catch (NumberFormatException ignore) {
+    }
+    MAX_CONTENT_LENGTH = maxContentLength;
+  }
 
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
