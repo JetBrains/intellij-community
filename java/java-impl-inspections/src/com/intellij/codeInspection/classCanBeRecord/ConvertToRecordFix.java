@@ -36,10 +36,12 @@ import static com.intellij.psi.PsiModifier.*;
 public class ConvertToRecordFix extends InspectionGadgetsFix {
   private final boolean myShowAffectedMembers;
   private final boolean mySuggestAccessorsRenaming;
+  private final @NotNull List<String> myIgnoredAnnotations;
 
-  ConvertToRecordFix(boolean showAffectedMembers, boolean suggestAccessorsRenaming) {
+  ConvertToRecordFix(boolean showAffectedMembers, boolean suggestAccessorsRenaming, @NotNull List<String> ignoredAnnotations) {
     myShowAffectedMembers = showAffectedMembers;
     mySuggestAccessorsRenaming = suggestAccessorsRenaming;
+    myIgnoredAnnotations = ignoredAnnotations;
   }
 
   @Override
@@ -59,7 +61,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     PsiClass psiClass = ObjectUtils.tryCast(psiElement.getParent(), PsiClass.class);
     if (psiClass == null) return;
 
-    RecordCandidate recordCandidate = getClassDefinition(psiClass, mySuggestAccessorsRenaming);
+    RecordCandidate recordCandidate = getClassDefinition(psiClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
     if (recordCandidate == null) return;
 
     ConvertToRecordProcessor processor = new ConvertToRecordProcessor(recordCandidate, myShowAffectedMembers);
@@ -71,7 +73,9 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
    * There are some restrictions for records:
    * https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html.
    */
-  public static RecordCandidate getClassDefinition(@NotNull PsiClass psiClass, boolean suggestAccessorsRenaming) {
+  public static RecordCandidate getClassDefinition(@NotNull PsiClass psiClass,
+                                                   boolean suggestAccessorsRenaming,
+                                                   @NotNull List<String> ignoredAnnotations) {
     boolean isNotAppropriatePsiClass = psiClass.isEnum() || psiClass.isAnnotationType() || psiClass instanceof PsiAnonymousClass ||
                                        psiClass.isInterface() || psiClass.isRecord();
     if (isNotAppropriatePsiClass) return null;
@@ -80,8 +84,6 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     if (psiClassModifiers == null || psiClassModifiers.hasModifierProperty(ABSTRACT) || psiClassModifiers.hasModifierProperty(SEALED)) {
       return null;
     }
-    if (!mayBeFinal(psiClass)) return null;
-
     // todo support local classes later
     if (PsiUtil.isLocalClass(psiClass)) return null;
     if (psiClass.getContainingClass() != null && !psiClass.hasModifierProperty(STATIC)) return null;
@@ -91,16 +93,11 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
     if (ContainerUtil.exists(psiClass.getInitializers(), initializer -> !initializer.hasModifierProperty(STATIC))) return null;
 
+    if (AnnotationUtil.checkAnnotatedUsingPatterns(psiClass, ignoredAnnotations)) return null;
+
     RecordCandidate result = new RecordCandidate(psiClass, suggestAccessorsRenaming);
     if (!result.isValid()) return null;
     return ClassInheritorsSearch.search(psiClass, false).findFirst() == null ? result : null;
-  }
-
-  /**
-   * Some classes might be proxied e.g. according to JPA spec an entity class can't be final.
-   */
-  private static boolean mayBeFinal(@NotNull PsiClass psiClass) {
-    return !psiClass.hasAnnotation("javax.persistence.Entity");
   }
 
   /**

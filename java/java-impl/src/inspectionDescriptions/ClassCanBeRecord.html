@@ -39,6 +39,16 @@ Suggests replacing classes with records.
   record Point(int x, int y) {
   }
 </code></pre>
+<p>Enable <b>Suggest renaming get/is-accessors</b> checkbox to allow renaming <code>getX()</code>/<code>isX()</code> accessors to <code>x()</code> automatically.</p>
+<p>
+  Use <b>When conversion weakens the member access level</b> option to set up the conversion behavior if one may violate class encapsulation:
+<ul>
+  <li>Choose <b>Do not suggest conversion</b> option to suppress conversion if one violates class encapsulation</li>
+  <li>Choose <b>Show affected members in conflicts view</b> option to apply conversion with notification about encapsulation violation issues</li>
+  <li>Choose <b>Convert silently</b> option to apply conversion silently whether encapsulation violation issues exist or not</li>
+</ul>
+<p>Use <b>Suppress conversion if class is annotated by</b> list to suppress the conversion of classes annotated by certain annotation names or its containing packages.
+</p>
 <p>This inspection only reports if the language level of the project or module is 16 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
