@@ -125,6 +125,9 @@ public class FileIndexesValuesApplier {
       if (shouldMarkFileAsIndexed) {
         IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject);
       }
+      else if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
+        IndexingFlag.unlockFile(file);
+      }
       VfsEventsMerger.tryLog("INDEX_UPDATED", file,
                              () -> " updated_indexes=" + stats.getPerIndexerUpdateTimes().keySet() +
                                    " deleted_indexes=" + stats.getPerIndexerDeleteTimes().keySet());
