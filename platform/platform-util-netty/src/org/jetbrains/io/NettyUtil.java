@@ -3,7 +3,6 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -12,6 +11,7 @@ import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -114,13 +114,20 @@ public final class NettyUtil {
                                                       .build()));
   }
 
-  public static void ensureRequestUriIsRelative(@NotNull FullHttpRequest httpRequest) {
+  @ApiStatus.Internal
+  public static @NotNull FullHttpRequest ensureRequestUriIsRelative(@NotNull FullHttpRequest httpRequest) {
     try {
       URI uri = new URI(httpRequest.uri());
-      httpRequest.setUri(uri.getPath());
+      if (uri.getHost() != null) {
+        URI patchedRequestURI = new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment());
+        FullHttpRequest httpRequestCopy = httpRequest.copy();
+        httpRequestCopy.setUri(patchedRequestURI.toString());
+        return httpRequestCopy;
+      }
     }
     catch (URISyntaxException ignored) {
     }
+    return httpRequest;
   }
 
   @TestOnly
