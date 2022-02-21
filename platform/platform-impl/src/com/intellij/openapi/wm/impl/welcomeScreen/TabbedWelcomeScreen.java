@@ -149,13 +149,16 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   @ApiStatus.Experimental
   public void navigateToTabAndSetMainComponent(@NotNull DefaultWelcomeScreenTab tab, Component component) {
     int tabIndex = 0;
+    boolean found = false;
     while (tabIndex < tree.getRowCount()) {
       var t = getTabByIndex(tabIndex);
       if (t == tab) {
+        found = true;
         break;
       }
       tabIndex++;
     }
+    if (!found) return;
     tree.setSelectionRow(tabIndex);
 
     var panel = (JComponent)tab.myAssociatedComponent.getComponent(0);
