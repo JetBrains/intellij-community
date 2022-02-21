@@ -111,7 +111,6 @@ public final class DefinitionMap {
    */
   public @Nullable DefinitionMap getTopClosureState() {
     if (closureFrames == null || closureFrames.getHead() == null) {
-      ReachingDefinitionsDfaInstance.LOG.error("Incorrect CFG");
       return null;
     } else {
       return closureFrames.getHead();
