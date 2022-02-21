@@ -25,7 +25,6 @@ Adds support for working with shell script files
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="Shell Script" extensions="bash;sh;zsh" hashBangs="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script"
               implementationClass="com.intellij.sh.ShFileType"/>
-    <backgroundPostStartupActivity implementation="com.intellij.sh.fileType.ShShebangFileTypeDetectorActivity"/>
     <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
     <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
     <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.editor.ShCommenter"/>
