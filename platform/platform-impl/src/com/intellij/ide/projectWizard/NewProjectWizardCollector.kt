@@ -20,7 +20,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
     // @formatter:off
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 4)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 5)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = IntEventField("screen")
@@ -31,6 +31,12 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
+    private val buildSystemField = BoundedStringEventField("build_system", "intellij", "maven", "gradle")
+    private val buildSystemDslField = BoundedStringEventField("build_system_dsl", "groovy", "kotlin")
+    private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
+    private val buildSystemParentField = EventFields.Boolean("build_system_parent")
+    private val groovyVersionField = EventFields.Version
+    private val groovySourceTypeField = BoundedStringEventField("groovy_sdk_type", "maven", "local")
 
     //events
     private val activity = GROUP.registerIdeActivity("new_project_wizard", finishEventAdditionalFields = arrayOf(isSucceededField))
@@ -48,11 +54,26 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val gitChanged = GROUP.registerEvent("git.changed", sessionIdField)
     private val templateSelected = GROUP.registerEvent("select.custom.template", sessionIdField)
     private val helpNavigation = GROUP.registerEvent("navigate.help", sessionIdField)
+    private val buildSystemChangedEvent = GROUP.registerEvent("build.system.changed", sessionIdField, languageField, buildSystemField)
+    private val sdkChangedEvent = GROUP.registerVarargEvent("build.system.sdk.changed", sessionIdField, languageField, buildSystemField, buildSystemSdkField)
+    private val dslChangedEvent = GROUP.registerVarargEvent("build.system.dsl.changed", sessionIdField, languageField, buildSystemField, buildSystemDslField)
+    private val parentChangedEvent = GROUP.registerVarargEvent("build.system.parent.changed", sessionIdField, languageField, buildSystemField, buildSystemParentField)
+    private val addSampleCodeChangedEvent = GROUP.registerEvent("build.system.add.sample.code.changed", sessionIdField, languageField, buildSystemField)
+    private val moduleNameChangedEvent = GROUP.registerEvent("build.system.module.name.changed", sessionIdField, languageField, buildSystemField)
+    private val contentRootChangedEvent = GROUP.registerEvent("build.system.content.root.changed", sessionIdField, languageField, buildSystemField)
+    private val moduleFileLocationChangedEvent = GROUP.registerEvent("build.system.module.file.location.changed", sessionIdField, languageField, buildSystemField)
+    private val groupIdChangedEvent = GROUP.registerEvent("build.system.group.id.changed", sessionIdField, languageField, buildSystemField)
+    private val artifactIdChangedEvent = GROUP.registerEvent("build.system.artifact.id.changed", sessionIdField, languageField, buildSystemField)
+    private val versionChangedEvent = GROUP.registerEvent("build.system.version.changed", sessionIdField, languageField, buildSystemField)
+    private val groovyLibraryChanged = GROUP.registerEvent("groovy.lib.changed", sessionIdField, groovySourceTypeField, groovyVersionField)
 
     //finish events
     private val gitFinish = GROUP.registerEvent("create.git.repo", sessionIdField, gitField)
     private val generatorFinished = GROUP.registerEvent("generator.finished", sessionIdField, generatorTypeField)
     private val languageFinished = GROUP.registerEvent("language.finished", sessionIdField, languageField)
+    private val buildSystemFinishedEvent = GROUP.registerEvent("build.system.finished", sessionIdField, languageField, buildSystemField)
+    private val sdkFinishedEvent = GROUP.registerVarargEvent("build.system.sdk.finished", sessionIdField, languageField, buildSystemField, buildSystemSdkField)
+    private val groovyLibraryFinished = GROUP.registerEvent("groovy.lib.finished", sessionIdField, groovySourceTypeField, groovyVersionField)
 
     //logs
     @JvmStatic fun logStarted(project: Project?) = activity.started(project)
@@ -80,55 +101,36 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   object BuildSystem {
     // @formatter:off
-    private val buildSystemField = BoundedStringEventField("build_system", "intellij", "maven", "gradle")
-    private val buildSystemDslField = BoundedStringEventField("build_system_dsl", "groovy", "kotlin")
-    private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
-    private val buildSystemParentField = EventFields.Boolean("build_system_parent")
-
-    private val buildSystemEvent = GROUP.registerEvent("build.system", sessionIdField, languageField, buildSystemField)
-    private val buildSystemFinishedEvent = GROUP.registerEvent("build.system.finished", sessionIdField, languageField, buildSystemField)
-    private val sdkEvent = GROUP.registerVarargEvent("build.system.sdk", sessionIdField, languageField, buildSystemField, buildSystemSdkField)
-    private val sdkFinishedEvent = GROUP.registerVarargEvent("build.system.sdk.finished", sessionIdField, languageField, buildSystemField, buildSystemSdkField)
-    private val dslEvent = GROUP.registerVarargEvent("build.system.dsl", sessionIdField, languageField, buildSystemField, buildSystemDslField)
-    private val parentEvent = GROUP.registerVarargEvent("build.system.parent", sessionIdField, languageField, buildSystemField, buildSystemParentField)
-    private val addSampleCodeEvent = GROUP.registerEvent("build.system.add.sample.code", sessionIdField, languageField, buildSystemField)
-    private val moduleNameEvent = GROUP.registerEvent("build.system.module.name", sessionIdField, languageField, buildSystemField)
-    private val contentRootEvent = GROUP.registerEvent("build.system.content.root", sessionIdField, languageField, buildSystemField)
-    private val moduleFileLocationEvent = GROUP.registerEvent("build.system.module.file.location", sessionIdField, languageField, buildSystemField)
-    private val groupIdEvent = GROUP.registerEvent("build.system.group.id", sessionIdField, languageField, buildSystemField)
-    private val artifactIdEvent = GROUP.registerEvent("build.system.artifact.id", sessionIdField, languageField, buildSystemField)
-    private val versionEvent = GROUP.registerEvent("build.system.version", sessionIdField, languageField, buildSystemField)
-
-    fun logBuildSystemChanged(context: WizardContext, language: String, buildSystem: String) = buildSystemEvent.log(context.project, context.sessionId.id, language, buildSystem)
+    fun logBuildSystemChanged(context: WizardContext, language: String, buildSystem: String) = buildSystemChangedEvent.log(context.project, context.sessionId.id, language, buildSystem)
     fun logBuildSystemFinished(context: WizardContext, language: String, buildSystem: String) = buildSystemFinishedEvent.log(context.project, context.sessionId.id, language, buildSystem)
     fun logSdkChanged(context: WizardContext, language: String, buildSystem: String, sdk: Sdk?) = logSdkChanged(context, language, buildSystem, sdk?.featureVersion ?: -1)
-    fun logSdkChanged(context: WizardContext, language: String, buildSystem: String, version: Int) = sdkEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemSdkField, version))
+    fun logSdkChanged(context: WizardContext, language: String, buildSystem: String, version: Int) = sdkChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemSdkField, version))
     fun logSdkFinished(context: WizardContext, language: String, buildSystem: String, sdk: Sdk?) = logSdkFinished(context, language, buildSystem, sdk?.featureVersion ?: -1)
     fun logSdkFinished(context: WizardContext, language: String, buildSystem: String, version: Int) = sdkFinishedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemSdkField, version))
     fun logDslChanged(context: WizardContext, language: String, buildSystem: String, isUseKotlinDsl: Boolean) = logDslChanged(context, language, buildSystem, if (isUseKotlinDsl) "kotlin" else "groovy")
-    fun logDslChanged(context: WizardContext, language: String, buildSystem: String, dsl: String) = dslEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemDslField, dsl))
-    fun logParentChanged(context: WizardContext, language: String, buildSystem: String, isNone: Boolean) = parentEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemParentField, isNone))
-    fun logAddSampleCodeChanged(context: WizardContext, language: String, buildSystem: String) = addSampleCodeEvent.log(context.project, context.sessionId.id, language, buildSystem)
-    fun logModuleNameChanged(context: WizardContext, language: String, buildSystem: String) = moduleNameEvent.log(context.project, context.sessionId.id, language, buildSystem)
-    fun logContentRootChanged(context: WizardContext, language: String, buildSystem: String) = contentRootEvent.log(context.project, context.sessionId.id, language, buildSystem)
-    fun logModuleFileLocationChanged(context: WizardContext, language: String, buildSystem: String) = moduleFileLocationEvent.log(context.project, context.sessionId.id, language, buildSystem)
-    fun logGroupIdChanged(context: WizardContext, language: String, buildSystem: String) = groupIdEvent.log(context.project, context.sessionId.id, language, buildSystem)
-    fun logArtifactIdChanged(context: WizardContext, language: String, buildSystem: String) = artifactIdEvent.log(context.project, context.sessionId.id, language, buildSystem)
-    fun logVersionChanged(context: WizardContext, language: String, buildSystem: String) = versionEvent.log(context.project, context.sessionId.id, language, buildSystem)
+    fun logDslChanged(context: WizardContext, language: String, buildSystem: String, dsl: String) = dslChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemDslField, dsl))
+    fun logParentChanged(context: WizardContext, language: String, buildSystem: String, isNone: Boolean) = parentChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemParentField, isNone))
+    fun logAddSampleCodeChanged(context: WizardContext, language: String, buildSystem: String) = addSampleCodeChangedEvent.log(context.project, context.sessionId.id, language, buildSystem)
+    fun logModuleNameChanged(context: WizardContext, language: String, buildSystem: String) = moduleNameChangedEvent.log(context.project, context.sessionId.id, language, buildSystem)
+    fun logContentRootChanged(context: WizardContext, language: String, buildSystem: String) = contentRootChangedEvent.log(context.project, context.sessionId.id, language, buildSystem)
+    fun logModuleFileLocationChanged(context: WizardContext, language: String, buildSystem: String) = moduleFileLocationChangedEvent.log(context.project, context.sessionId.id, language, buildSystem)
+    fun logGroupIdChanged(context: WizardContext, language: String, buildSystem: String) = groupIdChangedEvent.log(context.project, context.sessionId.id, language, buildSystem)
+    fun logArtifactIdChanged(context: WizardContext, language: String, buildSystem: String) = artifactIdChangedEvent.log(context.project, context.sessionId.id, language, buildSystem)
+    fun logVersionChanged(context: WizardContext, language: String, buildSystem: String) = versionChangedEvent.log(context.project, context.sessionId.id, language, buildSystem)
 
-    fun <S> S.logBuildSystemChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logBuildSystemChanged(context, buildSystem, language)
-    fun <S> S.logBuildSystemFinished() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logBuildSystemFinished(context, buildSystem, language)
-    fun <S> S.logSdkChanged(sdk: Sdk?) where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logSdkChanged(context, buildSystem, language, sdk)
-    fun <S> S.logSdkFinished(sdk: Sdk?) where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logSdkFinished(context, buildSystem, language, sdk)
-    fun <S> S.logDslChanged(isUseKotlinDsl: Boolean) where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logDslChanged(context, buildSystem, language, isUseKotlinDsl)
-    fun <S> S.logParentChanged(isNone: Boolean) where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logParentChanged(context, buildSystem, language, isNone)
-    fun <S> S.logAddSampleCodeChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logAddSampleCodeChanged(context, buildSystem, language)
-    fun <S> S.logModuleNameChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logModuleNameChanged(context, buildSystem, language)
-    fun <S> S.logContentRootChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logContentRootChanged(context, buildSystem, language)
-    fun <S> S.logModuleFileLocationChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logModuleFileLocationChanged(context, buildSystem, language)
-    fun <S> S.logGroupIdChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logGroupIdChanged(context, buildSystem, language)
-    fun <S> S.logArtifactIdChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logArtifactIdChanged(context, buildSystem, language)
-    fun <S> S.logVersionChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logVersionChanged(context, buildSystem, language)
+    fun <S> S.logBuildSystemChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logBuildSystemChanged(context, language, buildSystem)
+    fun <S> S.logBuildSystemFinished() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logBuildSystemFinished(context, language, buildSystem)
+    fun <S> S.logSdkChanged(sdk: Sdk?) where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logSdkChanged(context, language, buildSystem, sdk)
+    fun <S> S.logSdkFinished(sdk: Sdk?) where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logSdkFinished(context, language, buildSystem, sdk)
+    fun <S> S.logDslChanged(isUseKotlinDsl: Boolean) where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logDslChanged(context, language, buildSystem, isUseKotlinDsl)
+    fun <S> S.logParentChanged(isNone: Boolean) where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logParentChanged(context, language, buildSystem, isNone)
+    fun <S> S.logAddSampleCodeChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logAddSampleCodeChanged(context, language, buildSystem)
+    fun <S> S.logModuleNameChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logModuleNameChanged(context, language, buildSystem)
+    fun <S> S.logContentRootChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logContentRootChanged(context, language, buildSystem)
+    fun <S> S.logModuleFileLocationChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logModuleFileLocationChanged(context, language, buildSystem)
+    fun <S> S.logGroupIdChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logGroupIdChanged(context, language, buildSystem)
+    fun <S> S.logArtifactIdChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logArtifactIdChanged(context, language, buildSystem)
+    fun <S> S.logVersionChanged() where S: BuildSystemNewProjectWizardData, S: NewProjectWizardStep = logVersionChanged(context, language, buildSystem)
     // @formatter:on
 
     private val Sdk.featureVersion: Int?
@@ -136,13 +138,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
   }
 
   object Groovy {
-    private val versionField = EventFields.Version
-    private val sourceTypeField = BoundedStringEventField("groovy_sdk_type", "maven", "local")
-
-    private val groovyLibrarySelected = GROUP.registerEvent("groovy.lib", sessionIdField, sourceTypeField, versionField)
-    private val groovyLibraryFinished = GROUP.registerEvent("groovy.lib.finished", sessionIdField, sourceTypeField, versionField)
-
-    fun logGroovyLibraryChanged(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String) = groovyLibrarySelected.log(context.project, context.sessionId.id, groovyLibrarySource, groovyLibraryVersion)
+    fun logGroovyLibraryChanged(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String) = groovyLibraryChanged.log(context.project, context.sessionId.id, groovyLibrarySource, groovyLibraryVersion)
     fun logGroovyLibraryFinished(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String) = groovyLibraryFinished.log(context.project, context.sessionId.id, groovyLibrarySource, groovyLibraryVersion)
   }
 
