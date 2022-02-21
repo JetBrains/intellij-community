@@ -118,7 +118,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
                                        javaClass.getResource("/assets/devkit-Run_IDE_with_Plugin_run.xml")!!))
     }
     else {
-      assets.add(GeneratorResourceFile(".gitignore", javaClass.getResource("/assets/devkit-theme.gitignore")!!))
+      assets.add(GeneratorResourceFile(".gitignore", javaClass.getResource("/assets/devkit-theme.gitignore.txt")!!))
       assets.add(GeneratorResourceFile("resources/META-INF/pluginIcon.svg",
                                        javaClass.getResource("/assets/devkit-pluginIcon.svg")!!))
       assets.add(GeneratorTemplateFile("resources/META-INF/plugin.xml",
