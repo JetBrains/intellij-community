@@ -8,3 +8,5 @@ import simple.F
 
 @F<caret>()
 class A
+
+/* IGNORE_FIR */
