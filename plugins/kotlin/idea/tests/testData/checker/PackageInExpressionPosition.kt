@@ -21,6 +21,6 @@ fun main() {
     <error descr="[NO_COMPANION_OBJECT] Classifier 'System' does not have a companion object, and thus must be initialized here">System</error> is Int
     <error descr="[INVISIBLE_MEMBER] Cannot access '<init>': it is private in 'System'">System</error>()
     (<error descr="[NO_COMPANION_OBJECT] Classifier 'System' does not have a companion object, and thus must be initialized here">System</error>)
-    <warning descr="[REDUNDANT_LABEL_WARNING] Label is redundant, because it can not be referenced in either ''break'', ''continue'', or ''return'' expression">foo@</warning> <error descr="[NO_COMPANION_OBJECT] Classifier 'System' does not have a companion object, and thus must be initialized here">System</error>
+    <warning descr="[REDUNDANT_LABEL_WARNING] Label is redundant, because it can not be referenced in either 'break', 'continue', or 'return' expression">foo@</warning> <error descr="[NO_COMPANION_OBJECT] Classifier 'System' does not have a companion object, and thus must be initialized here">System</error>
     null in <error descr="[NO_COMPANION_OBJECT] Classifier 'System' does not have a companion object, and thus must be initialized here">System</error>
 }
