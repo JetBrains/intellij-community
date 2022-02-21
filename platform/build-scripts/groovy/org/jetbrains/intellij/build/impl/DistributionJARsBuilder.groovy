@@ -735,7 +735,12 @@ final class DistributionJARsBuilder {
                              .setAttribute("isUpdateFromSources", isUpdateFromSources), new Supplier<List<DistributionFileEntry>>() {
       @Override
       List<DistributionFileEntry> get() {
-        return ForkJoinTask.invokeAll(OsFamily.values().findResults { osFamily ->
+        return ForkJoinTask.invokeAll([
+          new Tuple2(OsFamily.MACOS, JvmArchitecture.x64),
+          new Tuple2(OsFamily.MACOS, JvmArchitecture.aarch64),
+          new Tuple2(OsFamily.WINDOWS, JvmArchitecture.x64),
+          new Tuple2(OsFamily.LINUX, JvmArchitecture.x64)
+        ].findResults { OsFamily osFamily, JvmArchitecture arch ->
           if (!context.shouldBuildDistributionForOS(osFamily.osId)) {
             return null
           }
@@ -752,10 +757,11 @@ final class DistributionJARsBuilder {
 
           Path outDir = isUpdateFromSources
             ? context.paths.distAllDir.resolve("plugins")
-            : getOsSpecificDistDirectory(osFamily, context).resolve("plugins")
+            : getOsAndArchSpecificDistDirectory(osFamily, arch, context).resolve("plugins")
 
           return buildHelper.createTask(spanBuilder("build bundled plugins")
                                           .setAttribute("os", osFamily.osName)
+                                          .setAttribute("arch", arch.name())
                                           .setAttribute("count", osSpecificPlugins.size())
                                           .setAttribute("outDir", outDir.toString()), new Supplier<List<DistributionFileEntry>>() {
             @Override
@@ -768,8 +774,8 @@ final class DistributionJARsBuilder {
     })
   }
 
-  static Path getOsSpecificDistDirectory(OsFamily osFamily, BuildContext buildContext) {
-    return buildContext.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}")
+  static Path getOsAndArchSpecificDistDirectory(OsFamily osFamily, JvmArchitecture arch, BuildContext buildContext) {
+    return buildContext.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name()}")
   }
 
   /**
