@@ -62,7 +62,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   @NotNull
   @Override
   protected ChangesGroupingSupport installGroupingSupport() {
-    return new ChangesGroupingSupport(myProject, this, true);
+    return new ChangesGroupingSupport(myProject, this, false);
   }
 
   @Override
