@@ -9,7 +9,9 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
+import com.intellij.util.Alarm
 import training.featuresSuggester.DocumentationSuggestion
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.PopupSuggestion
@@ -48,6 +50,7 @@ class NotificationSuggestionPresenter :
     }
 
     notification.notify(project)
+    Alarm().addRequest(notification::expire, 10000, ModalityState.any())
     FeatureSuggesterStatistics.logNotificationShowed(suggestion.suggesterId)
   }
 
