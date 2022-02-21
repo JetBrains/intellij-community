@@ -21,6 +21,7 @@ class SetterBackingFieldAssignmentInspection : AbstractKotlinInspection(), Clean
         propertyAccessorVisitor(fun(accessor) {
             if (!accessor.isSetter) return
             val bodyExpression = accessor.bodyBlockExpression ?: return
+            if (bodyExpression.statements.lastOrNull() is KtThrowExpression) return
 
             val property = accessor.property
             val propertyContext = property.analyze()

@@ -13736,6 +13736,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/setterBackingFieldAssignment/plusAssign.kt");
         }
 
+        @TestMetadata("throw.kt")
+        public void testThrow() throws Exception {
+            runTest("testData/inspectionsLocal/setterBackingFieldAssignment/throw.kt");
+        }
+
         @TestMetadata("timesAssign.kt")
         public void testTimesAssign() throws Exception {
             runTest("testData/inspectionsLocal/setterBackingFieldAssignment/timesAssign.kt");
