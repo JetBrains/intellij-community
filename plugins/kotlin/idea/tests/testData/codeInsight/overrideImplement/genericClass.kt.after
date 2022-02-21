@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 interface I<T> {
     fun <U> a(t: T, u: U)
     fun b()

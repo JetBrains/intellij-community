@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class SomeType
 
 val test: ((a: <caret>) -> Unit)? = null
