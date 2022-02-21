@@ -9,13 +9,17 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.util.text.CharFilter.NOT_WHITESPACE_FILTER;
 
 public class JavadocBlankLinesInspection extends LocalInspectionTool {
   @Override
@@ -24,30 +28,79 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
       @Override
       public void visitDocToken(PsiDocToken token) {
         super.visitDocToken(token);
-        PsiElement nextSibling = token.getNextSibling();
+        PsiElement nextWhitespace = token.getNextSibling();
+        PsiElement prevWhitespace = token.getPrevSibling();
         if (token.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS &&
-            token.getPrevSibling() instanceof PsiWhiteSpace &&
-            nextSibling instanceof PsiWhiteSpace && !isBeforeParagraphOrBlockTag(nextSibling)) {
+            prevWhitespace instanceof PsiWhiteSpace &&
+            nextWhitespace instanceof PsiWhiteSpace &&
+            !isAfterParagraphOrBlockTag(prevWhitespace) &&
+            !isBeforeParagraphOrBlockTag(nextWhitespace) &&
+            !isAfterPreTag(token)) {
           holder.registerProblem(token, JavaBundle.message("inspection.javadoc.blank.lines.message"), new InsertParagraphTagFix(token));
         }
       }
     };
   }
 
-  private static boolean isBeforeParagraphOrBlockTag(PsiElement element) {
-    PsiDocToken maybeLeadingAsterisks = ObjectUtils.tryCast(element.getNextSibling(), PsiDocToken.class);
-    if (maybeLeadingAsterisks == null || maybeLeadingAsterisks.getTokenType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
-      return false;
+  private static boolean isAfterPreTag(PsiDocToken token) {
+    PsiElement parent = token.getParent();
+    if (parent instanceof PsiInlineDocTag) {
+      return isAfterPreTagInner(PsiTreeUtil.getPrevSiblingOfType(parent, PsiDocToken.class));
     }
-    PsiElement nextSibling = maybeLeadingAsterisks.getNextSibling();
-    if (nextSibling == null) return false;
-    return nextSibling.getText().stripLeading().startsWith("<p>") ||
-           isBlockTag(nextSibling) ||
-           isBlockTag(nextSibling.getNextSibling());
+    return isAfterPreTagInner(token);
   }
 
-  private static boolean isBlockTag(PsiElement element) {
-    return element instanceof PsiDocTag && !(element instanceof PsiInlineDocTag);
+  private static boolean isAfterPreTagInner(PsiDocToken token) {
+    boolean result = false;
+    while (token != null) {
+      String text = token.getText();
+      int closingPreTagIndex = StringUtil.toLowerCase(text).lastIndexOf("</pre>");
+      int openingPreTagIndex = StringUtil.toLowerCase(text).lastIndexOf("<pre>");
+      result = openingPreTagIndex != -1 && (closingPreTagIndex == -1 || closingPreTagIndex < openingPreTagIndex);
+      if (closingPreTagIndex != -1 || openingPreTagIndex != -1) break;
+      token = PsiTreeUtil.getPrevSiblingOfType(token, PsiDocToken.class);
+    }
+    return result;
+  }
+
+  private static boolean isAfterParagraphOrBlockTag(PsiElement element) {
+    PsiElement prevSibling = element.getPrevSibling();
+    if (!(prevSibling instanceof PsiDocToken)) return true;
+    if (((PsiDocToken)prevSibling).getTokenType() != JavaDocTokenType.DOC_COMMENT_DATA) return true;
+    String text = prevSibling.getText();
+    return endsWithHtmlBlockTag(text) || isNullOrBlockTag(prevSibling);
+  }
+
+  private static boolean isBeforeParagraphOrBlockTag(PsiElement element) {
+    PsiElement nextSibling = element.getNextSibling();
+    if (!(nextSibling instanceof PsiDocToken)) return true;
+    if (((PsiDocToken)nextSibling).getTokenType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return true;
+    nextSibling = nextSibling.getNextSibling();
+    if (nextSibling == null) return true;
+    String text = nextSibling.getText();
+    return isNullOrBlockTag(nextSibling) ||
+           startsWithHtmlBlockTag(text) ||
+           isNullOrBlockTag(nextSibling.getNextSibling());
+  }
+
+  private static boolean startsWithHtmlBlockTag(String text) {
+    text = text.stripLeading();
+    if (text.isEmpty() || text.charAt(0) != '<') return false;
+    String maybeBlockTag = text.substring(1, text.indexOf('>'));
+    String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
+    return HtmlUtil.isHtmlBlockTag(trimmed) || "br".equalsIgnoreCase(trimmed);
+  }
+
+  private static boolean endsWithHtmlBlockTag(String text) {
+    text = text.stripTrailing();
+    if (text.isEmpty() || text.charAt(text.length() - 1) != '>') return false;
+    String maybeBlockTag = text.substring(text.lastIndexOf('<') + 1, text.length() - 1);
+    String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
+    return HtmlUtil.isHtmlBlockTag(trimmed) || "br".equalsIgnoreCase(trimmed);
+  }
+
+  private static boolean isNullOrBlockTag(PsiElement element) {
+    return element == null || (element instanceof PsiDocTag && !(element instanceof PsiInlineDocTag));
   }
 
   private static class InsertParagraphTagFix extends LocalQuickFixAndIntentionActionOnPsiElement {
