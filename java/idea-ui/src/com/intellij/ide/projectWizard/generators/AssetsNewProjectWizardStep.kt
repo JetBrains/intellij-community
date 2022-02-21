@@ -9,9 +9,9 @@ import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
@@ -55,22 +55,27 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   override fun setupProject(project: Project) {
     setupAssets(project)
 
-    val generatedFiles = WriteAction.computeAndWait<List<VirtualFile>, Throwable> {
+    WriteAction.runAndWait<Throwable> {
       try {
-        AssetsProcessor().generateSources(outputDirectory, assets, templateProperties)
+        val generatedFiles = AssetsProcessor().generateSources(outputDirectory, assets, templateProperties)
+        runWhenCreated(project) { //IDEA-244863
+          reformatCode(project, generatedFiles)
+          openFilesInEditor(project, generatedFiles.filter { it.path in filesToOpen })
+        }
       }
       catch (e: IOException) {
         logger<NewProjectWizardStep>().error("Unable generating sources", e)
-        emptyList()
       }
     }
+  }
 
-    StartupManager.getInstance(project).runAfterOpened {
-      invokeLater(project) {
-        reformatCode(project, generatedFiles)
-
-        val files = generatedFiles.filter { it.path in filesToOpen }
-        openFilesInEditor(project, files)
+  private fun runWhenCreated(project: Project, action: () -> Unit) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      action()
+    }
+    else {
+      StartupManager.getInstance(project).runAfterOpened {
+        ApplicationManager.getApplication().invokeLater(action, project.disposed)
       }
     }
   }
