@@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribu
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
@@ -47,25 +48,25 @@ public abstract class StructMember {
     return hasModifier(CodeConstants.ACC_SYNTHETIC) || hasAttribute(StructGeneralAttribute.ATTRIBUTE_SYNTHETIC);
   }
 
-  protected abstract int getArrayDimensions();
+  protected abstract Type getType();
 
   public boolean memberAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr) {
-    Set<AnnotationExprent> typeAnnotations = TargetInfo.EmptyTarget.extract(getPossibleTypeAnnotationCollisions(getArrayDimensions()))
+    Set<AnnotationExprent> typeAnnotations = TargetInfo.EmptyTarget.extract(getPossibleTypeAnnotationCollisions(getType()))
       .stream()
       .map(typeAnnotation-> typeAnnotation.getAnnotationExpr())
       .collect(Collectors.toUnmodifiableSet());
     return typeAnnotations.contains(typeAnnotationExpr);
   }
 
-  public boolean paramAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr, int arrayDim, int param) {
+  public boolean paramAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr, Type type, int param) {
     Set<AnnotationExprent> typeAnnotations = TargetInfo.FormalParameterTarget
-      .extract(getPossibleTypeAnnotationCollisions(arrayDim), param).stream()
+      .extract(getPossibleTypeAnnotationCollisions(type), param).stream()
       .map(typeAnnotation-> typeAnnotation.getAnnotationExpr())
       .collect(Collectors.toUnmodifiableSet());
     return typeAnnotations.contains(typeAnnotationExpr);
   }
 
-  private List<TypeAnnotation> getPossibleTypeAnnotationCollisions(int arrayDim) {
+  private List<TypeAnnotation> getPossibleTypeAnnotationCollisions(Type type) {
     return Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
       .flatMap(attrKey -> {
         StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)getAttribute(attrKey);
@@ -75,7 +76,7 @@ public abstract class StructMember {
           return attribute.getAnnotations().stream();
         }
       })
-      .filter(ta -> ta.isForDeepestArrayComponent(arrayDim))
+      .filter(ta -> ta.isWrittenBeforeType(type))
       .collect(Collectors.toList());
   }
 

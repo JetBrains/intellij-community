@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructPermittedSubclassesAttrib
 import org.jetbrains.java.decompiler.struct.attr.StructRecordAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -238,7 +239,7 @@ public class StructClass extends StructMember {
   }
 
   @Override
-  protected int getArrayDimensions() {
-    return 0;
+  protected Type getType() {
+    return null;
   }
 }

@@ -188,7 +188,7 @@ public class SingleClassesTest {
   }
   @Test public void testNestedTypeAnnotations() {doTest("typeAnnotations/NestedTypeAnnotations",
     "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
-    "typeAnnotations/F", "typeAnnotations/Z");
+    "typeAnnotations/F", "typeAnnotations/Z", "typeAnnotations/P", "typeAnnotations/S", "typeAnnotations/T");
   }
   @Test public void testArrayNestedTypeAnnotations() {doTest("typeAnnotations/ArrayNestedTypeAnnotations",
     "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/Z");

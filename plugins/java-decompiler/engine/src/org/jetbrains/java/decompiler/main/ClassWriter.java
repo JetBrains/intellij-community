@@ -758,7 +758,7 @@ public class ClassWriter {
 
             Type paramType;
             if (descriptor != null) paramType = descriptor.parameterTypes.get(paramCount); else paramType = md.params[i];
-            appendParameterAnnotations(buffer, mt, paramType.getArrayDim(), paramCount);
+            appendParameterAnnotations(buffer, mt, paramType, paramCount);
 
             VarVersionPair pair = new VarVersionPair(index, 0);
             if (methodWrapper.varproc.isParameterFinal(pair) ||
@@ -1195,14 +1195,14 @@ public class ClassWriter {
     }
   }
 
-  private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int arrayDim, int param) {
+  private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, Type type, int param) {
     for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
       StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(key);
       if (attribute != null) {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
         if (param < annotations.size()) {
           for (AnnotationExprent annotation : annotations.get(param)) {
-            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, arrayDim, param)) continue;
+            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, type, param)) continue;
             String text = annotation.toJava(-1, BytecodeMappingTracer.DUMMY).toString();
             buffer.append(text).append(' ');
           }

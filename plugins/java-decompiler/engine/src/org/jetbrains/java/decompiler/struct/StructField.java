@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
@@ -54,7 +55,7 @@ public class StructField extends StructMember {
   }
 
   @Override
-  protected int getArrayDimensions() {
-    return new VarType(descriptor).getArrayDim();
+  protected Type getType() {
+    return new VarType(descriptor);
   }
 }
