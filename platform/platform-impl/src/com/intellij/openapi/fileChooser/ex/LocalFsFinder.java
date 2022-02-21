@@ -205,6 +205,8 @@ public class LocalFsFinder implements Finder {
   public static final class IoFile extends LookupFileWithMacro {
     private final Path myFile;
 
+    /** @deprecated please use {@link #IoFile(Path)} instead */
+    @Deprecated
     public IoFile(@NotNull File file) {
       this(file.toPath());
     }
