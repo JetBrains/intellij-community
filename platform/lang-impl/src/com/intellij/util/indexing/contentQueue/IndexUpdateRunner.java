@@ -3,6 +3,7 @@ package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
@@ -43,6 +44,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @ApiStatus.Internal
 public final class IndexUpdateRunner {
+  private static final Logger LOG = Logger.getInstance(IndexUpdateRunner.class);
 
   private static final long SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = 20 * FileUtilRt.MEGABYTE;
 
@@ -53,6 +55,9 @@ public final class IndexUpdateRunner {
   private final ExecutorService myIndexingExecutor;
 
   private final int myNumberOfIndexingThreads;
+
+  private final AtomicInteger myIndexingAttemptCount = new AtomicInteger();
+  private final AtomicInteger myIndexingSuccessfulCount = new AtomicInteger();
 
   /**
    * Memory optimization to prevent OutOfMemory on loading file contents.
@@ -262,10 +267,17 @@ public final class IndexUpdateRunner {
       indexingJob.setLocationBeingIndexed(file);
       if (!file.isDirectory()) {
         FileIndexesValuesApplier applier = ReadAction
-          .nonBlocking(() -> myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent))
+          .nonBlocking(() -> {
+            myIndexingAttemptCount.incrementAndGet();
+            return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent);
+          })
           .expireWith(indexingJob.myProject)
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
+        myIndexingSuccessfulCount.incrementAndGet();
+        if (LOG.isTraceEnabled() && myIndexingSuccessfulCount.longValue() % 10_000 == 0) {
+          LOG.trace("File indexing attempts = " + myIndexingAttemptCount.longValue() + ", indexed file count = " + myIndexingSuccessfulCount.longValue());
+        }
         applier.apply(file);
         long processingTime = System.nanoTime() - startTime;
         IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
