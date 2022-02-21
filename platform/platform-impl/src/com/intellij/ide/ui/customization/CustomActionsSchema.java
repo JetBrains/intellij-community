@@ -134,10 +134,8 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return ApplicationManager.getApplication().getService(CustomActionsSchema.class);
   }
 
-  public void addAction(ActionUrl url) {
-    if (myActions.contains(url)) return;
-    ActionUrl inverseUrl = new ActionUrl(url.getGroupPath(), url.getComponent(), -url.getActionType(), url.getAbsolutePosition());
-    if (!myActions.remove(inverseUrl)) {
+  public void addAction(@NotNull ActionUrl url) {
+    if (!myActions.contains(url) && !myActions.remove(url.getInverted())) {
       myActions.add(url);
     }
   }

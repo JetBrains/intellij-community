@@ -31,6 +31,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -66,11 +67,12 @@ public class CustomizableActionsPanel {
     @SuppressWarnings("DialogTitleCapitalization")
     Group rootGroup = new Group("root", null, null);
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
-    DefaultTreeModel model = new DefaultTreeModel(root);
+    MyActionsTreeModel model = new MyActionsTreeModel(root);
     myActionsTree = new Tree(model);
     myActionsTree.setRootVisible(false);
     myActionsTree.setShowsRootHandles(true);
     myActionsTree.setCellRenderer(createDefaultRenderer());
+    RowsDnDSupport.install(myActionsTree, model);
 
     patchActionsTreeCorrespondingToSchema(root);
 
@@ -689,6 +691,49 @@ public class CustomizableActionsPanel {
     }
   }
 
+  private class MyActionsTreeModel extends DefaultTreeModel implements EditableModel {
+    private MyActionsTreeModel(TreeNode root) {
+      super(root);
+    }
+
+    @Override
+    public void addRow() {
+    }
+
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+      List<TreePath> selectedPaths = TreeUtil.collectSelectedPaths(myActionsTree);
+      TreePath path = myActionsTree.getPathForRow(oldIndex);
+      ActionUrl url = CustomizationUtil.getActionUrl(path, ActionUrl.MOVE);
+      url.setInitialPosition(url.getAbsolutePosition());
+      url.setAbsolutePosition(url.getInitialPosition() + newIndex - oldIndex);
+      ActionUrl.changePathInActionsTree(myActionsTree, url);
+      addCustomizedAction(url);
+
+      ((DefaultTreeModel)myActionsTree.getModel()).reload();
+      TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
+      TreeUtil.selectPaths(myActionsTree, selectedPaths);
+    }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return Objects.equals(myActionsTree.getPathForRow(oldIndex).getParentPath(),
+                            myActionsTree.getPathForRow(newIndex).getParentPath());
+    }
+
+    @Override
+    public void removeRow(int idx) {
+      TreePath path = myActionsTree.getPathForRow(idx);
+      if (path != null && path.getPath().length > 2) {
+        List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        removePaths(path);
+        TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
+      }
+    }
+  }
+
+
   private final class RemoveAction extends TreeSelectionAction {
     private RemoveAction() {
       super(IdeBundle.messagePointer("button.remove"), Presentation.NULL_STRING, AllIcons.General.Remove);
@@ -702,18 +747,20 @@ public class CustomizableActionsPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
-      final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
-      if (selectionPath != null) {
-        for (TreePath treePath : selectionPath) {
-          final ActionUrl url = CustomizationUtil.getActionUrl(treePath, ActionUrl.DELETED);
-          ActionUrl.changePathInActionsTree(myActionsTree, url);
-          addCustomizedAction(url);
-        }
-        ((DefaultTreeModel)myActionsTree.getModel()).reload();
-      }
+      List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+      removePaths(myActionsTree.getSelectionPaths());
       TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
     }
+  }
+
+  private void removePaths(TreePath... paths) {
+    if (paths == null) return;
+    for (TreePath treePath : paths) {
+      final ActionUrl url = CustomizationUtil.getActionUrl(treePath, ActionUrl.DELETED);
+      ActionUrl.changePathInActionsTree(myActionsTree, url);
+      addCustomizedAction(url);
+    }
+    ((DefaultTreeModel)myActionsTree.getModel()).reload();
   }
 
   private final class EditIconAction extends TreeSelectionAction {

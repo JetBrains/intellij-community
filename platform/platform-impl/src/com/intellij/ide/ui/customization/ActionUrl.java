@@ -287,4 +287,15 @@ public class ActionUrl implements JDOMExternalizable {
     url.setInitialPosition(getInitialPosition());
     return url;
   }
+
+  public ActionUrl getInverted() {
+    ActionUrl copy = copy();
+    if (myActionType == ADDED || myActionType == DELETED) {
+      copy.setActionType(-myActionType);
+    } else {
+      copy.setInitialPosition(myAbsolutePosition);
+      copy.setAbsolutePosition(myInitialPosition);
+    }
+    return copy;
+  }
 }
