@@ -255,7 +255,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
       PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
       PsiFile file = pointer.getContainingFile();
       assert file != null;
-      Document document = manager.getDocument(file);
+      Document document = file.getViewProvider().getDocument();
       assert document != null;
       manager.commitDocument(document);
       XmlTag tag = pointer.getElement();
@@ -278,7 +278,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
       String prefix = getDeclaredPrefix(attribute);
 
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      Document document = documentManager.getDocument(parent.getContainingFile());
+      Document document = parent.getContainingFile().getViewProvider().getDocument();
       assert document != null;
       attribute.delete();
       if (myRemoveLocation) {
