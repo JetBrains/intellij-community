@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -19,10 +20,20 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabControllerImpl
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import javax.swing.JPanel
 
 internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
+  override fun init(toolWindow: ToolWindow) {
+    ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable)
+      .subscribe(GHProjectRepositoriesManager.LIST_CHANGES_TOPIC, object : GHProjectRepositoriesManager.ListChangeListener {
+        override fun repositoryListChanged(newList: Set<GHGitRepositoryMapping>, project: Project) {
+          toolWindow.isAvailable = newList.isNotEmpty()
+        }
+      })
+  }
+
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = with(toolWindow as ToolWindowEx) {
     setTitleActions(listOf(EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), component),
                            GHPRSelectPullRequestForFileAction()))

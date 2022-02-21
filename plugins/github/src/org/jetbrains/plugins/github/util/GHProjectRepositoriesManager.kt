@@ -36,7 +36,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   var knownRepositories by observable(emptySet<GHGitRepositoryMapping>()) { _, oldValue, newValue ->
     if (oldValue != newValue) {
-      project.messageBus.syncPublisher(LIST_CHANGES_TOPIC).onRepositoryListChanges(newValue)
+      ApplicationManager.getApplication().messageBus.syncPublisher(LIST_CHANGES_TOPIC).repositoryListChanged(newValue, project)
     }
   }
     private set
@@ -154,26 +154,27 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
   }
 
-  fun addRepositoryListChangedListener(disposable: Disposable, listener: () -> Unit) =
-    project.messageBus.connect(disposable).subscribe(LIST_CHANGES_TOPIC, object : ListChangesListener {
-      override fun onRepositoryListChanges(newList: Set<GHGitRepositoryMapping>) = listener()
+  fun addRepositoryListChangedListener(disposable: Disposable, listener: () -> Unit) {
+    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(LIST_CHANGES_TOPIC, object : ListChangeListener {
+      override fun repositoryListChanged(newList: Set<GHGitRepositoryMapping>, project: Project) = listener()
     })
+  }
 
   internal class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
     override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
     override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
   }
 
-  interface ListChangesListener {
-    fun onRepositoryListChanges(newList: Set<GHGitRepositoryMapping>)
+  interface ListChangeListener {
+    fun repositoryListChanged(newList: Set<GHGitRepositoryMapping>, project: Project)
   }
 
   companion object {
     private val LOG = logger<GHProjectRepositoriesManager>()
 
     @JvmField
-    //project level topic
-    val LIST_CHANGES_TOPIC = Topic(ListChangesListener::class.java)
+    @Topic.AppLevel
+    val LIST_CHANGES_TOPIC = Topic(ListChangeListener::class.java, Topic.BroadcastDirection.NONE)
 
     private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
       val application = ApplicationManager.getApplication()

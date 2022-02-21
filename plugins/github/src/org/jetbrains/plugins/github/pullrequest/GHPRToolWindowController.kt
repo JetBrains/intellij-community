@@ -7,8 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
-import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 
 @Service
 internal class GHPRToolWindowController(private val project: Project) : Disposable {
@@ -29,18 +27,12 @@ internal class GHPRToolWindowController(private val project: Project) : Disposab
     }
   }
 
-  fun getTabController(): GHPRToolWindowTabController? = ToolWindowManager.getInstance(project)
-    .getToolWindow(GHPRToolWindowFactory.ID)
-    ?.let { it.contentManagerIfCreated?.selectedContent?.getUserData(GHPRToolWindowTabController.KEY) }
-
-  override fun dispose() {
+  fun getTabController(): GHPRToolWindowTabController? {
+    return ToolWindowManager.getInstance(project)
+      .getToolWindow(GHPRToolWindowFactory.ID)
+      ?.let { it.contentManagerIfCreated?.selectedContent?.getUserData(GHPRToolWindowTabController.KEY) }
   }
 
-  internal class RepoListListener(private val project: Project) : GHProjectRepositoriesManager.ListChangesListener {
-
-    override fun onRepositoryListChanges(newList: Set<GHGitRepositoryMapping>) {
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID) ?: return
-        toolWindow.isAvailable = newList.isNotEmpty()
-    }
+  override fun dispose() {
   }
 }
