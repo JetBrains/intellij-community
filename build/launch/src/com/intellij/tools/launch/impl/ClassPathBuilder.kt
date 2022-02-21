@@ -93,13 +93,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
       .recursively()
       .satisfying { if (it is JpsModuleDependency) !isModuleExcluded(it.module) else true }
       .includedIn(JpsJavaClasspathKind.runtime(modules.includeTestDependencies))
-      .classes()
-      .roots
-      .onEach {
-        if (!it.exists()) error("Classpath element does not exist for module '${module.name}': $it")
-      }
-      .map { it.path }
-      .toList()
+      .classes().roots.filter { it.exists() }.map { it.path }.toList()
   }
 
   private fun isModuleExcluded(module: JpsModule?): Boolean {
