@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Sets;
@@ -112,16 +112,17 @@ public final class TerminalView implements Disposable {
     myToolWindow = toolWindow;
     myTerminalRunner.initToolWindow(toolWindow, () -> newTab(toolWindow, null));
 
-    myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-      @Override
-      public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
-            toolWindow.isVisible() && toolWindow.getContentManager().isEmpty()) {
-          // open a new session if all tabs were closed manually
-          createNewSession(myTerminalRunner, null, true, true);
+    myProject.getMessageBus().connect(toolWindow.getDisposable())
+      .subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+        @Override
+        public void toolWindowShown(@NotNull ToolWindow toolWindow) {
+          if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
+              toolWindow.isVisible() && toolWindow.getContentManager().isEmpty()) {
+            // open a new session if all tabs were closed manually
+            createNewSession(myTerminalRunner, null, true, true);
+          }
         }
-      }
-    });
+      });
 
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer();
