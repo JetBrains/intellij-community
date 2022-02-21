@@ -61,15 +61,15 @@ class CodeVisionRichTextPainter<T>(
     if (hovered) {
       val size = size(editor, state, value)
 
-      withColor(g, underlineColor ?: g.color) {
+      withColor(g, underlineColor) {
         EffectPainter2D.LINE_UNDERSCORE.paint(g, x.toDouble(), (y + JBUI.scale(1)).toDouble(), size.width.toDouble(), 5.0, g.font)
       }
     }
   }
 
-  private inline fun withColor(g: Graphics2D, targetColor: Color, block: () -> Unit){
+  private inline fun withColor(g: Graphics2D, targetColor: Color?, block: () -> Unit){
     val curColor = g.color
-    g.color = targetColor
+    g.color = targetColor ?: g.color
     block.invoke()
     g.color = curColor
   }
