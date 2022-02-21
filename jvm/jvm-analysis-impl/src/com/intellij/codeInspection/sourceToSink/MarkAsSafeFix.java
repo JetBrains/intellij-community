@@ -162,7 +162,9 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
       if (owner == null) continue;
       try {
         annotationsManager.annotateExternally(owner, DEFAULT_UNTAINTED_ANNOTATION, owner.getContainingFile(), null);
-      } catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
+      } catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {
+        return;
+      }
     }
   }
 
