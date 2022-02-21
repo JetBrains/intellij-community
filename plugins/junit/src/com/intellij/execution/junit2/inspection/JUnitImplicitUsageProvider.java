@@ -21,7 +21,7 @@ import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
@@ -30,9 +30,6 @@ import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_
 public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   private static final String MOCK = "org.mockito.Mock";
   private static final String KOTLIN_JVM_STATIC = "kotlin.jvm.JvmStatic";
-  private static final String KOTLIN_COMPANION_OBJ_CLASS_NAME = "Companion";
-  private static final Collection<String> PARAMETERIZED_TEST_AND_METHOD_SOURCE =
-    ContainerUtil.immutableList(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
 
   private static final List<String> INJECTED_FIELD_ANNOTATIONS = Arrays.asList(
     MOCK,
@@ -94,14 +91,17 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     if (psiMethod.getParameterList().getParametersCount() != 0) return false;
     if (!TestUtils.isInTestSourceContent(psiClass)) return false;
 
-    if (psiMethod.hasAnnotation(KOTLIN_JVM_STATIC) && KOTLIN_COMPANION_OBJ_CLASS_NAME.equals(psiClass.getName())) {
+    if (psiMethod.hasAnnotation(KOTLIN_JVM_STATIC)) {
       PsiElement parent = psiClass.getParent();
       if (parent != null) psiClass = (PsiClass)parent;
     }
 
     return ContainerUtil.exists(psiClass.findMethodsByName(methodName, false),
-                                               it -> psiMethod != it &&
-                                                     MetaAnnotationUtil.isMetaAnnotated(it, PARAMETERIZED_TEST_AND_METHOD_SOURCE));
+                                it -> psiMethod != it &&
+                                      MetaAnnotationUtil.isMetaAnnotated(it, Collections.singleton(
+                                        ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE)) &&
+                                      MetaAnnotationUtil.isMetaAnnotated(it, Collections.singleton(
+                                        ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)));
   }
 
   private static boolean isEnumClassReferencedInEnumSourceAnnotation(PsiClass psiClass) {
