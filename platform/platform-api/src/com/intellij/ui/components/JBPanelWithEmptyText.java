@@ -18,7 +18,7 @@ public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implemen
     @Override
     protected boolean isStatusVisible() {
       //noinspection SSBasedInspection
-      return Arrays.stream(getComponents()).anyMatch(Component::isVisible);
+      return Arrays.stream(getComponents()).noneMatch(Component::isVisible);
     }
   };
 
