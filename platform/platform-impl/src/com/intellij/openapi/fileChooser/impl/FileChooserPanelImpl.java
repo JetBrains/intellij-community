@@ -195,7 +195,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private @Nullable WatchService startWatchService() {
     try {
       var watcher = FileSystems.getDefault().newWatchService();
-      ProcessIOExecutorService.INSTANCE.execute(() -> {
+      execute(() -> {
         while (true) {
           try {
             var key = watcher.take();
@@ -386,7 +386,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       cancelCurrentTask();
       var id = myCounter++;
       if (LOG.isTraceEnabled()) LOG.trace("starting: " + id + ", " + path);
-      myCurrentTask = pair(id, ProcessIOExecutorService.INSTANCE.submit(() -> {
+      myCurrentTask = pair(id, execute(() -> {
         var directory = directoryToLoad(path, direction == INTO_ARCHIVE);
         if (directory != null) {
           var pathToSelect = focusOn != null ? focusOn :
@@ -641,6 +641,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   private static boolean isJar(URI uri) {
     return "jar".equals(uri.getScheme());
+  }
+
+  private static Future<Void> execute(Runnable operation) {
+    return CompletableFuture
+      .runAsync(operation, ProcessIOExecutorService.INSTANCE)
+      .exceptionally(t -> { LOG.error(t); return null; });
   }
 
   private void update(int id, AtomicBoolean cancelled, Runnable operation) {
