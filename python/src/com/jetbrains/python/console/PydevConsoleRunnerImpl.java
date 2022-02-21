@@ -720,6 +720,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           consoleView.setEditable(false);
+          // PY-53068: When we send to python side command `exit` we don't get notifyFinished,
+          // so we should clear Console Command Queue
+          consoleView.restoreQueueWindow(true);
         }
       });
 
