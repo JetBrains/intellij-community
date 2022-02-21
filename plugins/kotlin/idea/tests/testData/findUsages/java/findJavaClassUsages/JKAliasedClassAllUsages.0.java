@@ -16,3 +16,4 @@ public class <caret>AAA {
 
     }
 }
+// FIR_COMPARISON
