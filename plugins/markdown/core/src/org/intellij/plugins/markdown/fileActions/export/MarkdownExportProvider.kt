@@ -25,5 +25,10 @@ interface MarkdownExportProvider {
       ExtensionPointName.create("org.intellij.markdown.markdownExportProvider")
 
     val allProviders: List<MarkdownExportProvider> = EP_NAME.extensionList
+
+    internal object NotificationIds {
+      const val exportSuccess = "markdown.export.success"
+      const val exportFailed = "markdown.export.failed"
+    }
   }
 }

@@ -43,6 +43,7 @@ object MarkdownSettingsUtil {
       }
       MarkdownNotifications.showInfo(
         project,
+        id = "markdown.extensions.download.success",
         title = MarkdownBundle.message("markdown.settings.download.extension.notification.title"),
         message = MarkdownBundle.message("markdown.settings.download.extension.notification.success.content")
       )
@@ -50,6 +51,7 @@ object MarkdownSettingsUtil {
     }
     MarkdownNotifications.showError(
       project,
+      id = "markdown.extensions.download.failed",
       title = MarkdownBundle.message("markdown.settings.download.extension.notification.title"),
       message = MarkdownBundle.message("markdown.settings.download.extension.notification.failure.content"),
     )

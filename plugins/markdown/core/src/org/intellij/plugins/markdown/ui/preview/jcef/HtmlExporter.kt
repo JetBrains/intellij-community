@@ -61,7 +61,11 @@ class HtmlExporter(htmlSource: String,
     }
     catch (exception: IOException) {
       val name = File(url).name
-      MarkdownNotifications.showWarning(project, message = MarkdownBundle.message("markdown.export.style.not.found.msg", name))
+      MarkdownNotifications.showWarning(
+        project,
+        id = "markdown.export.html.missing.style",
+        message = MarkdownBundle.message("markdown.export.style.not.found.msg", name)
+      )
       null
     }
   }
@@ -112,7 +116,11 @@ class HtmlExporter(htmlSource: String,
     }
     catch (exception: IOException) {
       val name = File(url).name
-      MarkdownNotifications.showWarning(project, message = MarkdownBundle.message("markdown.export.images.not.found.msg", name))
+      MarkdownNotifications.showWarning(
+        project,
+        id = "markdown.export.html.missing.image",
+        message = MarkdownBundle.message("markdown.export.images.not.found.msg", name)
+      )
       null
     }
 
