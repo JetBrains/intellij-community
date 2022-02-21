@@ -2,10 +2,10 @@
 package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.progress.withJob
+import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
@@ -27,7 +27,7 @@ internal class InternalReadAction<T>(
       check(unsatisfiedConstraint == null) {
         "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
       }
-      return withJob(coroutineContext.job, action)
+      return blockingContext(action)
     }
     return coroutineScope {
       readLoop()
@@ -58,35 +58,36 @@ internal class InternalReadAction<T>(
     }
   }
 
-  private suspend fun tryReadAction(loopJob: Job): ReadResult<T> {
+  private suspend fun tryReadAction(loopJob: Job): ReadResult<T> = blockingContext {
     if (blocking) {
-      return tryReadBlocking(loopJob)
+      tryReadBlocking(loopJob)
     }
-    var result: ReadResult<T>? = null
-    CoroutineScope(loopJob).launch(CoroutineName("read action")) {
-      val readJob = coroutineContext.job
-      ProgressIndicatorUtils.runActionAndCancelBeforeWrite(application, readJob::cancel) {
-        readJob.ensureActive()
-        result = tryReadAction(loopJob, readJob)
-      }
-    }.join()
-    return result
-           ?: ReadResult.WritePending
+    else {
+      tryReadCancellable(loopJob)
+    }
   }
 
   private fun tryReadBlocking(loopJob: Job): ReadResult<T> {
-    return tryReadAction(loopJob, loopJob)
+    var result: ReadResult<T>? = null
+    application.tryRunReadAction {
+      result = insideReadAction(loopJob)
+    }
+    return result
            ?: ReadResult.WritePending
   }
 
-  private fun tryReadAction(loopJob: Job, readJob: Job): ReadResult<T>? {
-    var result: ReadResult<T>? = null
-    application.tryRunReadAction {
-      withJob(readJob) {
-        result = insideReadAction(loopJob)
-      }
+  private fun tryReadCancellable(loopJob: Job): ReadResult<T> = try {
+    cancellableReadActionInternal(loopJob) {
+      insideReadAction(loopJob)
     }
-    return result
+  }
+  catch (e: CancellationException) {
+    if (e.cause is CannotReadException) {
+      ReadResult.WritePending
+    }
+    else {
+      throw e
+    }
   }
 
   private fun insideReadAction(loopJob: Job): ReadResult<T> {
