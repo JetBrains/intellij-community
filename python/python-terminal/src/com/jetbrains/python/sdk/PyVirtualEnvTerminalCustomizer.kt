@@ -16,6 +16,8 @@ import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
 import java.nio.file.Path
 import javax.swing.JCheckBox
+import kotlin.io.path.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
@@ -33,7 +35,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
       if (path != null && command.isNotEmpty()) {
         val shellPath = command[0]
 
-        if (shellPath == "powershell.exe") {
+        if (Path(shellPath).name == "powershell.exe") {
           val powerShellActivator = Path.of(path).parent?.resolve("activate.ps1") ?: return command
           return if (powerShellActivator.exists()) arrayOf("powershell.exe", "-NoExit", "-File", powerShellActivator.pathString) else command
         }
@@ -57,7 +59,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
     return command
   }
 
-  private fun isShellIntegrationAvailable(shellPath: String) : Boolean {
+  private fun isShellIntegrationAvailable(shellPath: String): Boolean {
     if (TerminalOptionsProvider.instance.shellIntegration) {
       val shellName = File(shellPath).name
       return shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || shellName == "zsh" || shellName == "fish"
