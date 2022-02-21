@@ -8,3 +8,5 @@ import simple.f
 fun main() {
     <caret>f
 }
+
+/* IGNORE_FIR */
