@@ -19,6 +19,10 @@ class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvi
     // nothing
   }
 
+  override fun collectPlaceholders(editor: Editor): List<TextRange> {
+    return delegate.collectPlaceholders(editor)
+  }
+
   override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit): Boolean {
     val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)

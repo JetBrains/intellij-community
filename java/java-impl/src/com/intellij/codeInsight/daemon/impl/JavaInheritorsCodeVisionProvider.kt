@@ -49,6 +49,22 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
     return lenses
   }
 
+  override fun collectPlaceholders(editor: Editor): List<TextRange> {
+    val document = editor.document
+    val project = editor.project ?: return emptyList()
+    val psiDocumentManager = PsiDocumentManager.getInstance(project)
+    val psiFile = psiDocumentManager.getPsiFile(document)
+    if (psiFile !is PsiJavaFile) return emptyList()
+    val traverser = SyntaxTraverser.psiTraverser(psiFile)
+    val lenses = ArrayList<TextRange>()
+    for (element in traverser) {
+      if ((element is PsiClass && element is PsiTypeParameter) || element is PsiMethod) {
+        val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+        lenses.add(range)
+      }
+    }
+    return lenses
+  }
 
   override val name: String
     get() = JavaBundle.message("settings.inlay.java.inheritors")

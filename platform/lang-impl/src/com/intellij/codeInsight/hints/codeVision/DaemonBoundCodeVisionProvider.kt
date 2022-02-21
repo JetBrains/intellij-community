@@ -31,6 +31,13 @@ interface DaemonBoundCodeVisionProvider {
   }
 
   /**
+   * Calls on background BEFORE editor opening
+   * Returns ranges where placeholders should be when editor opens
+   */
+  @JvmDefault
+  fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
+
+  /**
    * Name in settings.
    */
   @get:Nls
