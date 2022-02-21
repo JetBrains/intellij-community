@@ -115,6 +115,8 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
         arrow.isVisible = isEnabled
 
         toolTipText = presentation.description
+        setting.toolTipText = presentation.description
+        arrow.toolTipText = presentation.description
       }
 
       private fun fill() {
