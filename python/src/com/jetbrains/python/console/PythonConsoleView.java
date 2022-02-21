@@ -560,7 +560,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myCommandQueue));
     }
     if (removeCommand) {
-      myCommandQueuePanel.removeAllCommands();
+      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+        .removeCommand(myRunner.getPydevConsoleCommunication(), true);
     }
   }
 
