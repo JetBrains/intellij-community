@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ApplicationManager
@@ -30,7 +30,7 @@ internal class InternalReadAction<T>(
       return withJob(coroutineContext.job, action)
     }
     return coroutineScope {
-      readLoop(this)
+      readLoop()
     }
   }
 
@@ -43,13 +43,14 @@ internal class InternalReadAction<T>(
     return null
   }
 
-  private suspend fun readLoop(rootScope: CoroutineScope): T {
+  private suspend fun readLoop(): T {
+    val loopJob = coroutineContext.job
     while (true) {
-      rootScope.coroutineContext.ensureActive()
+      loopJob.ensureActive()
       if (application.isWriteActionPending || application.isWriteActionInProgress) {
         yieldToPendingWriteActions() // Write actions are executed on the write thread => wait until write action is processed.
       }
-      when (val readResult = tryReadAction(rootScope)) {
+      when (val readResult = tryReadAction(loopJob)) {
         is ReadResult.Successful -> return readResult.value
         is ReadResult.UnsatisfiedConstraint -> readResult.waitForConstraint.join()
         is ReadResult.WritePending -> Unit // retry
@@ -57,44 +58,44 @@ internal class InternalReadAction<T>(
     }
   }
 
-  private suspend fun tryReadAction(rootScope: CoroutineScope): ReadResult<T> {
+  private suspend fun tryReadAction(loopJob: Job): ReadResult<T> {
     if (blocking) {
-      return tryReadBlocking(rootScope)
+      return tryReadBlocking(loopJob)
     }
     var result: ReadResult<T>? = null
-    rootScope.launch(CoroutineName("read action")) {
+    CoroutineScope(loopJob).launch(CoroutineName("read action")) {
       val readJob = coroutineContext.job
       ProgressIndicatorUtils.runActionAndCancelBeforeWrite(application, readJob::cancel) {
         readJob.ensureActive()
-        result = tryReadAction(rootScope, readJob)
+        result = tryReadAction(loopJob, readJob)
       }
     }.join()
     return result
            ?: ReadResult.WritePending
   }
 
-  private fun tryReadBlocking(rootScope: CoroutineScope): ReadResult<T> {
-    return tryReadAction(rootScope, rootScope.coroutineContext.job)
+  private fun tryReadBlocking(loopJob: Job): ReadResult<T> {
+    return tryReadAction(loopJob, loopJob)
            ?: ReadResult.WritePending
   }
 
-  private fun tryReadAction(rootScope: CoroutineScope, readJob: Job): ReadResult<T>? {
+  private fun tryReadAction(loopJob: Job, readJob: Job): ReadResult<T>? {
     var result: ReadResult<T>? = null
     application.tryRunReadAction {
       withJob(readJob) {
-        result = insideReadAction(rootScope)
+        result = insideReadAction(loopJob)
       }
     }
     return result
   }
 
-  private fun insideReadAction(rootScope: CoroutineScope): ReadResult<T> {
+  private fun insideReadAction(loopJob: Job): ReadResult<T> {
     val unsatisfiedConstraint = findUnsatisfiedConstraint()
     return if (unsatisfiedConstraint == null) {
       ReadResult.Successful(action())
     }
     else {
-      ReadResult.UnsatisfiedConstraint(waitForConstraint(rootScope, unsatisfiedConstraint))
+      ReadResult.UnsatisfiedConstraint(waitForConstraint(loopJob, unsatisfiedConstraint))
     }
   }
 }
@@ -113,8 +114,8 @@ private suspend fun yieldToPendingWriteActions() {
   yieldUntilRun(ApplicationManager.getApplication()::invokeLater)
 }
 
-private fun waitForConstraint(rootScope: CoroutineScope, constraint: ReadConstraint): Job {
-  return rootScope.launch(Dispatchers.Unconfined + CoroutineName("waiting for constraint '$constraint'")) {
+private fun waitForConstraint(loopJob: Job, constraint: ReadConstraint): Job {
+  return CoroutineScope(loopJob).launch(Dispatchers.Unconfined + CoroutineName("waiting for constraint '$constraint'")) {
     check(ApplicationManager.getApplication().isReadAccessAllowed) // schedule while holding read lock
     yieldUntilRun(constraint::schedule)
     check(constraint.isSatisfied())
