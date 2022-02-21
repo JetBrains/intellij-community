@@ -5,14 +5,13 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
@@ -47,7 +46,6 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   private static final int MIN_POPUP_HEIGHT = 100;
   private static final int MED_TEXT_VIEWER_SIZE = 300;
   private static final int TOOLBAR_MARGIN = 30;
-  private static final int STRING_SIZE = 250;
 
   protected final @Nullable XFullValueEvaluator myEvaluator;
   protected final @NotNull DebuggerTreeCreator<D> myTreeCreator;
@@ -129,32 +127,51 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
   }
 
-  private void resizePopup() {
-    if (myPopup == null || !myPopup.isVisible() || myPopup.isDisposed()) return;
+  private void updatePopupWidth(@NotNull Window popupWindow) {
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
 
+    String text = myTextViewer.getText();
+    FontMetrics fontMetrics = myTextViewer.getFontMetrics(EditorUtil.getEditorFont());
+    int width = fontMetrics.stringWidth(text) + TOOLBAR_MARGIN;
+
+    int toolbarWidth = myToolbar.getPreferredSize().width + TOOLBAR_MARGIN;
+
+    int newWidth = Math.max(toolbarWidth, width);
+
+    newWidth = Math.min(newWidth, getMaxPopupWidth(screenRectangle));
+    newWidth = Math.max(newWidth, getMinPopupWidth(screenRectangle));
+
+    updatePopupBounds(popupWindow, newWidth, popupWindow.getHeight());
+  }
+
+  private void updatePopupHeight(@NotNull Window popupWindow) {
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
+
+    int newHeight = myToolbar.getPreferredSize().height;
+    Editor editor = myTextViewer.getEditor();
+    if (editor != null) {
+      newHeight += editor.getContentComponent().getHeight();
+    }
+    else {
+      newHeight += getMediumTextViewerHeight();
+    }
+
+    newHeight = Math.min(newHeight, getMaxPopupHeight(screenRectangle));
+    newHeight = Math.max(newHeight, getMinPopupHeight(screenRectangle));
+
+    updatePopupBounds(popupWindow, popupWindow.getWidth(), newHeight);
+  }
+
+  private void resizePopup() {
+    if (myPopup == null || !myPopup.isVisible() || myPopup.isDisposed()) {
+      return;
+    }
     final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
     if (popupWindow == null) {
       return;
     }
-
-    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
-
-    Dimension preferredSize = getPopupPreferredSize();
-
-    int newWidth = Math.min(preferredSize.width, getMaxPopupWidth(screenRectangle));
-    int newHeight = Math.min(preferredSize.height, getMaxPopupHeight(screenRectangle));
-    newWidth = Math.max(newWidth, getMinPopupWidth(screenRectangle));
-    newHeight = Math.max(newHeight, getMinPopupHeight(screenRectangle));
-
-    final Point location = popupWindow.getLocation();
-    final Rectangle targetBounds = new Rectangle(location.x, location.y, newWidth, newHeight);
-
-    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    if (targetBounds.width != popupWindow.getWidth() || targetBounds.height != popupWindow.getHeight()) {
-      popupWindow.setBounds(targetBounds);
-      popupWindow.validate();
-      popupWindow.repaint();
-    }
+    updatePopupWidth(popupWindow);
+    updatePopupHeight(popupWindow);
   }
 
   protected void hideTextPopup() {
@@ -208,36 +225,20 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     return isSetValueModeAction && mySetValueModeEnabled || !isSetValueModeAction && !mySetValueModeEnabled;
   }
 
-  private Dimension getTextViewerPreferredSize() {
-    String text = myTextViewer.getText();
-    FontMetrics fontMetrics = myTextViewer.getFontMetrics(myTextViewer.getFont());
-    int widthMetrics = fontMetrics.stringWidth(text);
+  private static void updatePopupBounds(@NotNull Window popupWindow, int newWidth, int newHeight) {
+    final Point location = popupWindow.getLocation();
+    final Rectangle targetBounds = new Rectangle(location.x, location.y, newWidth, newHeight);
 
-    int toolbarWidth = myToolbar.getPreferredSize().width + TOOLBAR_MARGIN;
-
-    int width = widthMetrics <= STRING_SIZE ? toolbarWidth : Math.max(toolbarWidth, widthMetrics);
-
-    int height;
-    Editor editor = myTextViewer.getEditor();
-    if (editor instanceof EditorImpl) {
-      height = ((EditorImpl)editor).getContentSize().height;
+    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
+    if (targetBounds.height != popupWindow.getHeight() || targetBounds.width != popupWindow.getWidth()) {
+      popupWindow.setBounds(targetBounds);
+      popupWindow.validate();
+      popupWindow.repaint();
     }
-    else {
-      int heightMetrics = StringUtil.countNewLines(text) * fontMetrics.getHeight();
-      height = widthMetrics <= STRING_SIZE ? heightMetrics : getMediumTextViewerHeight();
-    }
-
-    return new Dimension(width, height);
-  }
-
-  private Dimension getPopupPreferredSize() {
-    Dimension textViewerPreferredSize = getTextViewerPreferredSize();
-    int height = textViewerPreferredSize.height + myToolbar.getPreferredSize().height;
-    return new Dimension(textViewerPreferredSize.width, height);
   }
 
   private static int getMaxPopupWidth(Rectangle screenRectangle) {
-    return Math.min(screenRectangle.width / 3, MAX_POPUP_WIDTH);
+    return Math.min(screenRectangle.width / 2, MAX_POPUP_WIDTH);
   }
 
   private static int getMaxPopupHeight(Rectangle screenRectangle) {
