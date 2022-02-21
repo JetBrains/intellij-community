@@ -14,7 +14,6 @@ import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXE
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.trimPrompt
-import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -57,13 +56,15 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
 
   }
 
+  private fun collectFenceText(element: MarkdownCodeFence): String? {
+    val fenceElements = MarkdownCodeFence.obtainFenceContent(element, false) ?: return null
+    return trimPrompt(fenceElements.joinToString(separator = "") { it.text })
+  }
 
   private fun processBlock(lang: String, element: PsiElement): Info? {
     val language = CodeFenceLanguageGuesser.guessLanguageForInjection(lang)
     val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) } ?: return null
-    val text = trimPrompt(getContent(element.parent as MarkdownCodeFence, false)
-      ?.fold(StringBuilder()) { acc, psiElement -> acc.append(psiElement.text) }
-      .toString())
+    val text = (element.parent as? MarkdownCodeFence)?.let(this::collectFenceText) ?: return null
     val dir = element.containingFile.virtualFile.parent?.path ?: return null
     val runAction = object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
       override fun actionPerformed(event: AnActionEvent) {
