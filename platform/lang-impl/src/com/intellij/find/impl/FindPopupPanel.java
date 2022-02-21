@@ -770,7 +770,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     };
     scrollPane.setBorder(JBUI.Borders.empty());
     myPreviewSplitter.setFirstComponent(scrollPane);
-    JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 4 4, fillx, hidemode 3, gap 0"));
+    JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 0 0 0 0, fillx, hidemode 3, gap 0"));
     bottomPanel.add(myNewTabCheckbox = new JBCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView()));
     myNewTabCheckbox.addActionListener(new ActionListener() {
       @Override
@@ -827,12 +827,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       myScopeSelectionToolbar.getComponent().setOpaque(false);
       myScopeDetailsPanel.setOpaque(false);
       UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
-      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(12, 8, 5, 0));
+      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(10, 8, 6, 0));
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
-      scopesPanel.setBorder(JBUI.Borders.empty(PopupUtil.createComplexPopupTextFieldInsets(4, 4)));
+      scopesPanel.setBorder(JBUI.Borders.empty(4, 20));
       myScopeSelectionToolbar.setBorder(JBUI.Borders.empty());
       myPreviewSplitter.setBorder(JBUI.Borders.empty(0, textFieldBorderInsets.getUnscaled().left, 0, textFieldBorderInsets.getUnscaled().right));
+      bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
     } else {
       header.panel.setBorder(JBUI.Borders.empty(2, 5));
       mySearchTextArea.setBorder(JBUI.Borders.compound(
@@ -843,6 +844,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         JBUI.Borders.empty(1, 0, 2, 0)));
       scopesPanel.setBorder(JBUI.Borders.empty(3, 5));
       myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
+      bottomPanel.setBorder(JBUI.Borders.empty(5));
     }
     add(header.panel, "growx, pushx, wrap");
 
@@ -1662,7 +1664,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         ActionButtonWithText result = new ActionButtonWithText(action, presentation, place, minimumSize){
           @Override
           protected Insets getMargins() {
-            return new JBInsets(4, 6, 4, 6);
+            return new JBInsets(4, 2, 4, 2);
           }
         };
 

@@ -13,6 +13,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.StateRestoringCheckBox
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.EmptyIcon
@@ -39,14 +40,21 @@ internal class FindPopupHeader(project: Project, filterContextButton: ActionButt
   init {
     panel = panel {
       row {
-        titleLabel = label(FindBundle.message("find.in.path.dialog.title"))
+        val titleCell = label(FindBundle.message("find.in.path.dialog.title"))
           .bold()
-          .gap(RightGap.SMALL)
-          .component
+        titleLabel = titleCell.component
         infoLabel = label("")
           .gap(RightGap.SMALL)
           .component
-        UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, infoLabel)
+
+        if (ExperimentalUI.isNewUI()) {
+          titleCell.customize(JBGaps(right = 12))
+          infoLabel.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+        }
+        else {
+          titleCell.gap(RightGap.SMALL)
+          UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, infoLabel)
+        }
 
         loadingIcon = icon(EmptyIcon.ICON_16)
           .resizableColumn()

@@ -827,7 +827,7 @@ public final class JBUI {
       public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
 
       public static JBInsets headerInsets() {
-        return insets("ComplexPopup.Header.insets", insets(12, 10, 10, 10));
+        return insets("ComplexPopup.Header.insets", insets(9, 20, 8, 15));
       }
 
       public static JBInsets textFieldBorderInsets() {

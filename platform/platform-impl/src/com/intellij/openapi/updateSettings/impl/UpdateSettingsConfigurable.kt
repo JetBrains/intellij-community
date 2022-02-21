@@ -17,7 +17,7 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.util.text.DateFormatUtil
@@ -121,7 +121,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
             row {
               icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
                 .verticalAlign(VerticalAlign.TOP)
-                .customize(customGaps = Gaps(right = JBUI.scale(10)))
+                .customize(customGaps = JBGaps(right = 10))
               panel {
                 row {
                   text(IdeBundle.message("updates.settings.recommend.toolbox", TOOLBOX_URL, ExternalUpdateManager.TOOLBOX.toolName))
