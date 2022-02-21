@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -6,11 +6,32 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
-  private static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY = file -> new ZipResourceFile(file);
+  private static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY;
+
+  static {
+    if (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows")
+        && Boolean.parseBoolean(System.getProperty("idea.use.old.zip.class.loader", "true"))) {
+      RESOURCE_FILE_FACTORY = file -> {
+        String path = file.toString();
+        if (path.length() > 2 && path.charAt(0) == '\\' && path.charAt(1) == '\\') {
+          return new JdkZipResourceFile(file, true);
+        }
+        else {
+          return new ZipResourceFile(file);
+        }
+      };
+    }
+    else {
+      RESOURCE_FILE_FACTORY = file -> {
+        return new ZipResourceFile(file);
+      };
+    }
+  }
 
   private static final boolean isParallelCapable = registerAsParallelCapable();
 
@@ -28,6 +49,7 @@ public final class PathClassLoader extends UrlClassLoader {
     byte[] transform(ClassLoader loader, String className, byte[] classBytes);
   }
 
+  @SuppressWarnings("unused")
   public static Function<Path, ResourceFile> getResourceFileFactory() {
     return RESOURCE_FILE_FACTORY;
   }
