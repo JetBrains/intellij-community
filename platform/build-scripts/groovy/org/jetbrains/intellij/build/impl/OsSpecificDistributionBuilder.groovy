@@ -27,4 +27,8 @@ abstract class OsSpecificDistributionBuilder {
   List<String> generateExecutableFilesPatterns(boolean includeJre) {
     return Collections.emptyList()
   }
+
+  List<String> getArtifactNames(BuildContext context) {
+    return Collections.emptyList()
+  }
 }

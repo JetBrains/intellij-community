@@ -439,4 +439,27 @@ final class BuildContextImpl extends BuildContext {
 
     return jvmArgs
   }
+
+  @Override
+  OsSpecificDistributionBuilder getOsDistributionBuilder(OsFamily os, Path ideaProperties) {
+    OsSpecificDistributionBuilder builder
+    switch (os) {
+      case OsFamily.WINDOWS:
+        builder = windowsDistributionCustomizer?.with {
+          new WindowsDistributionBuilder(this, it, ideaProperties, "$applicationInfo")
+        }
+        break
+      case OsFamily.LINUX:
+        builder = linuxDistributionCustomizer?.with {
+          new LinuxDistributionBuilder(this, it, ideaProperties)
+        }
+        break
+      case OsFamily.MACOS:
+        builder = macDistributionCustomizer?.with {
+          new MacDistributionBuilder(this, it, ideaProperties)
+        }
+        break
+    }
+    return builder
+  }
 }

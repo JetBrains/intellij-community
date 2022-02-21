@@ -3,13 +3,15 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
@@ -21,7 +23,6 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 import static java.nio.file.attribute.PosixFilePermission.*
@@ -147,41 +148,7 @@ final class BundledRuntime {
       throw new IllegalStateException("Unable to detect root dir of $archive")
     }
 
-    boolean stripRootDir = rootDir.startsWith("jbr")
-    if (SystemInfoRt.isWindows) {
-      Decompressor.Tar decompressor = new Decompressor.Tar(archive)
-      if (stripRootDir) {
-        decompressor.removePrefixPath(rootDir)
-      }
-      decompressor.extract(destination)
-    }
-    else {
-      // 'tar' command is used to ensure that executable flags will be preserved
-      Files.createDirectories(destination)
-      List<String> args = new ArrayList<>(10)
-      args.add("tar")
-      args.add("xf")
-      args.add(archive.fileName.toString())
-      if (stripRootDir) {
-        args.add("--strip")
-        args.add("1")
-      }
-      args.add("--directory")
-      args.add(destination.toString())
-
-      // return BuildHelper.runProcess(context, args, archive.parent) when we switch to jps-bootstrap
-
-      ProcessBuilder builder = new ProcessBuilder(args).inheritIO().directory(archive.parent.toFile())
-      Process process = builder.start()
-      if (!process.waitFor(10, TimeUnit.MINUTES)) {
-        process.destroyForcibly().waitFor()
-        throw new IllegalStateException("Cannot execute $args: 10 min timeout")
-      }
-      int exitCode = process.exitValue()
-      if (exitCode != 0) {
-        throw new RuntimeException("Cannot execute $args (exitCode=$exitCode)")
-      }
-    }
+    ArchiveUtils.unTar(archive, destination, rootDir.startsWith("jbr") ? rootDir : null)
   }
 
   private static TarArchiveInputStream createTarGzInputStream(@NotNull Path archive) {

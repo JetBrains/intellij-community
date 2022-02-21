@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
@@ -39,16 +40,15 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.lang.reflect.UndeclaredThrowableException
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
+import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
-import java.util.function.Function
 import java.util.function.Supplier
 
+import static java.nio.file.attribute.PosixFilePermission.*
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 
 @CompileStatic
@@ -239,7 +239,7 @@ final class BuildTasksImpl extends BuildTasks {
       })
   }
 
-  private Path patchIdeaPropertiesFile() {
+  static Path patchIdeaPropertiesFile(BuildContext buildContext) {
     StringBuilder builder = new StringBuilder(Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties")))
 
     buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
@@ -329,9 +329,9 @@ idea.fatal.error.notification=disabled
   private static BuildTaskRunnable createDistributionForOsTask(@NotNull OsFamily os,
                                                                @NotNull JvmArchitecture arch,
                                                                @NotNull Map<Pair<OsFamily, JvmArchitecture>, Path> result,
-                                                               @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
+                                                               @NotNull Path ideaProperties) {
     createDistributionForOsTask(os, arch) { context ->
-      OsSpecificDistributionBuilder builder = factory.apply(context)
+      OsSpecificDistributionBuilder builder = context.getOsDistributionBuilder(os, ideaProperties)
       if (builder != null) {
         Path osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
         builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
@@ -560,42 +560,14 @@ idea.fatal.error.notification=disabled
   }
 
   private Map<Pair<OsFamily, JvmArchitecture>, Path> buildOsSpecificDistributions(BuildContext context) {
-    Path propertiesFile = patchIdeaPropertiesFile()
+    Path propertiesFile = patchIdeaPropertiesFile(buildContext)
     Map<Pair<OsFamily, JvmArchitecture>, Path> distDirs = Collections.synchronizedMap(new HashMap<Pair<OsFamily, JvmArchitecture>, Path>(SUPPORTED_DISTRIBUTIONS.size()))
     buildContext.executeStep("Building OS-specific distributions", BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP) {
       List<BuildTaskRunnable> createDistTasks = List.of(
-        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.macDistributionCustomizer?.with {
-              new MacDistributionBuilder(customContext, it, propertiesFile)
-            }
-          }
-        }),
-        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.macDistributionCustomizer?.with {
-              new MacDistributionBuilder(customContext, it, propertiesFile)
-            }
-          }
-        }),
-        createDistributionForOsTask(OsFamily.WINDOWS, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.windowsDistributionCustomizer?.with {
-              new WindowsDistributionBuilder(customContext, it, propertiesFile, customContext.applicationInfo.getAppInfoXml())
-            }
-          }
-        }),
-        createDistributionForOsTask(OsFamily.LINUX, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.linuxDistributionCustomizer?.with {
-              new LinuxDistributionBuilder(customContext, it, propertiesFile)
-            }
-          }
-        })
+        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, distDirs, propertiesFile),
+        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64, distDirs, propertiesFile),
+        createDistributionForOsTask(OsFamily.WINDOWS, JvmArchitecture.x64, distDirs, propertiesFile),
+        createDistributionForOsTask(OsFamily.LINUX, JvmArchitecture.x64, distDirs, propertiesFile)
       )
       runInParallel(createDistTasks.findAll { it != null }, context)
     }
@@ -1048,19 +1020,8 @@ idea.fatal.error.notification=disabled
     layoutShared(buildContext)
 
     if (includeBinAndRuntime) {
-      Path propertiesFile = patchIdeaPropertiesFile()
-      OsSpecificDistributionBuilder builder
-      switch (currentOs) {
-        case OsFamily.WINDOWS:
-          builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, "$buildContext.applicationInfo")
-          break
-        case OsFamily.LINUX:
-          builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
-          break
-        case OsFamily.MACOS:
-          builder = new MacDistributionBuilder(buildContext, buildContext.macDistributionCustomizer, propertiesFile)
-          break
-      }
+      Path propertiesFile = patchIdeaPropertiesFile(buildContext)
+      OsSpecificDistributionBuilder builder = buildContext.getOsDistributionBuilder(currentOs, propertiesFile)
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       buildContext.bundledRuntime.extractTo(BundledRuntime.getProductPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
 
@@ -1073,12 +1034,31 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void updateExecutablePermissions(Path targetDirectory, List<String> executableFilesPatterns) {
-    buildContext.ant.chmod(perm: "755") {
-      fileset(dir: targetDirectory.toString()) {
-        for (String pattern in executableFilesPatterns) {
-          include(name: pattern)
+  static void updateExecutablePermissions(Path destinationDir, List<String> executableFilesPatterns) {
+    Set<PosixFilePermission> executable = EnumSet.of(
+      OWNER_READ, OWNER_WRITE, OWNER_EXECUTE,
+      GROUP_READ, GROUP_EXECUTE,
+      OTHERS_READ, OTHERS_EXECUTE
+    )
+    Set<PosixFilePermission> regular = EnumSet.of(
+      OWNER_READ, OWNER_WRITE,
+      GROUP_READ,
+      OTHERS_READ
+    )
+    List<PathMatcher> executableFilesMatchers = executableFilesPatterns.collect {
+      FileSystems.getDefault().getPathMatcher("glob:$it")
+    }
+    Files.walk(destinationDir).withCloseable { stream ->
+      stream.filter { !Files.isDirectory(it) }.forEach { file ->
+        if (SystemInfoRt.isUnix) {
+          Path relativeFile = destinationDir.relativize(file)
+          boolean isExecutable = executableFilesMatchers.any {
+            it.matches(relativeFile)
+          }
+          Files.setPosixFilePermissions(file, isExecutable ? executable : regular)
+        }
+        else {
+          ((DosFileAttributeView)Files.getFileAttributeView(file, DosFileAttributeView.class)).setReadOnly(false)
         }
       }
     }
