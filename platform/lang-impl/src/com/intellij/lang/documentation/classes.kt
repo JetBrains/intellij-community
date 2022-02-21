@@ -2,7 +2,7 @@
 package com.intellij.lang.documentation
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.progress.withJob
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -44,7 +44,7 @@ internal class AsyncResolvedTarget(
 
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {
-    withJob {
+    blockingContext {
       this@asAsyncSupplier.get()
     }
   }
@@ -60,7 +60,7 @@ internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver?
 @Suppress("OPT_IN_USAGE")
 internal fun <X> Consumer<in Consumer<in X>>.asFlow(): Flow<X> {
   val flow = channelFlow {
-    withJob {
+    blockingContext {
       accept { content ->
         check(trySend(content).isSuccess) // sanity check
       }
