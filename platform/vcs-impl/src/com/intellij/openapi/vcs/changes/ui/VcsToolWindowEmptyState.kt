@@ -31,43 +31,43 @@ import java.awt.event.InputEvent
 
 private const val ACTION_LOCAL_HISTORY = "LocalHistory.ShowHistory"
 
-internal fun StatusText.setChangesViewEmptyState(project: Project) {
+internal fun setChangesViewEmptyState(statusText: StatusText, project: Project) {
   fun invokeAction(source: Any?, actionId: String) = invokeAction(project, source, actionId, CHANGES_VIEW_EMPTY_STATE)
   fun invokeAction(source: Any?, action: AnAction) = invokeAction(project, source, action, CHANGES_VIEW_EMPTY_STATE)
 
-  appendLine(message("status.text.vcs.toolwindow"))
+  statusText.appendLine(message("status.text.vcs.toolwindow"))
   findCreateRepositoryAction()?.let { action ->
-    appendLine(message("status.text.vcs.toolwindow.create.repository"), LINK_PLAIN_ATTRIBUTES) {
+    statusText.appendLine(message("status.text.vcs.toolwindow.create.repository"), LINK_PLAIN_ATTRIBUTES) {
       invokeAction(it.source, action)
     }
   }
-  appendLine(message("status.text.vcs.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
+  statusText.appendLine(message("status.text.vcs.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
     invokeAction(it.source, ACTION_LOCAL_HISTORY)
   }
-  appendLine("")
-  appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
+  statusText.appendLine("")
+  statusText.appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
     invokeAction(it.source, ACTION_CONTEXT_HELP)
   }
 }
 
-internal fun StatusText.setCommitViewEmptyState(project: Project) {
+internal fun setCommitViewEmptyState(statusText: StatusText, project: Project) {
   fun invokeAction(source: Any?, actionId: String) = invokeAction(project, source, actionId, COMMIT_VIEW_EMPTY_STATE)
   fun invokeAction(source: Any?, action: AnAction) = invokeAction(project, source, action, COMMIT_VIEW_EMPTY_STATE)
 
   findCreateRepositoryAction()?.let { action ->
-    appendLine(message("status.text.commit.toolwindow.create.repository.prefix"))
+    statusText.appendLine(message("status.text.commit.toolwindow.create.repository.prefix"))
       .appendText(" ")
       .appendText(message("status.text.commit.toolwindow.create.repository"), LINK_PLAIN_ATTRIBUTES) {
         invokeAction(it.source, action)
       }
   }
-  appendLine(message("status.text.commit.toolwindow.local.history.prefix"))
+  statusText.appendLine(message("status.text.commit.toolwindow.local.history.prefix"))
     .appendText(" ")
     .appendText(message("status.text.commit.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
       invokeAction(it.source, ACTION_LOCAL_HISTORY)
     }
-  appendLine("")
-  appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
+  statusText.appendLine("")
+  statusText.appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
     invokeAction(it.source, ACTION_CONTEXT_HELP)
   }
 }
