@@ -3,6 +3,7 @@ package com.intellij.openapi.progress
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -80,6 +81,7 @@ class ContextSwitchTest : CancellationTest() {
     testBlockingContext(blockingTest)
     testRunUnderIndicator(blockingTest)
     testReadAction(blockingTest)
+    testReadActionBlocking(blockingTest)
   }
 
   private suspend fun testBlockingContext(blockingTest: () -> Unit) {
@@ -100,6 +102,14 @@ class ContextSwitchTest : CancellationTest() {
 
   private suspend fun testReadAction(blockingTest: () -> Unit) {
     readAction {
+      assertNotNull(Cancellation.currentJob())
+      assertNull(ProgressManager.getGlobalProgressIndicator())
+      blockingTest()
+    }
+  }
+
+  private suspend fun testReadActionBlocking(blockingTest: () -> Unit) {
+    readActionBlocking {
       assertNotNull(Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
       blockingTest()
