@@ -26,9 +26,11 @@ final class DuplicateExpressionsContext {
   private final Map<PsiExpression, List<PsiExpression>> myOccurrences = CollectionFactory.createCustomHashingStrategyMap(new ExpressionHashingStrategy());
   private final ComplexityCalculator myComplexityCalculator = new ComplexityCalculator();
   private final SideEffectCalculator mySideEffectCalculator = new SideEffectCalculator();
+  private final CanonicalExpressionProvider myCanonicalExpressionProvider = new CanonicalExpressionProvider();
 
   void addOccurrence(PsiExpression expression) {
-    List<PsiExpression> list = myOccurrences.computeIfAbsent(expression, unused -> new ArrayList<>());
+    PsiExpression canonicalExpression = myCanonicalExpressionProvider.getCanonicalExpression(expression);
+    List<PsiExpression> list = myOccurrences.computeIfAbsent(canonicalExpression, unused -> new ArrayList<>());
     list.add(expression);
   }
 

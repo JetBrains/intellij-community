@@ -1,12 +1,11 @@
-// "Extract 'java.nio.file.Path' constructions to variable" "false"
 import java.io.*;
 import java.nio.file.*;
 
-class Foo {
-  public boolean isRelativeDirectory(boolean b) {
+class C {
+  public boolean isRelativeDirectory() {
     String fileName = "foo";
     if (Path.of(fileName<caret>).isAbsolute()) return false;
-    if (b) fileName = "baz";
+    System.out.println(fileName);
     return Files.isDirectory(Path.of(fileName));
   }
 }

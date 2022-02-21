@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Pavel.Dolgov
- */
-public final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> {
+ */ 
+final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> {
   private static final EquivalenceChecker EQUIVALENCE_CHECKER = new NoSideEffectExpressionEquivalenceChecker();
 
   @Override
