@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -444,8 +445,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var cancelled = new AtomicBoolean(false);
 
     var vfsDirectory = new PreloadedDirectory(directory);
-    var dot = new FsItem(directory, false, true, false, myDescriptor.isFileSelectable(vfsDirectory), null);
-    var uplink = new FsItem(parent(directory));
+    var dot = new FsItem(directory, ".", false, true, false, myDescriptor.isFileSelectable(vfsDirectory), null);
+    var uplink = new FsItem(parent(directory), FsItem.UPLINK, false, true, true, false, AllIcons.Nodes.UpFolder);
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
       myPath.setItem(new PathWrapper(directory));
@@ -484,7 +485,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
           var visible = myDescriptor.isFileVisible(virtualFile, false);
           var selectable = myDescriptor.isFileSelectable(virtualFile);
           var icon = myDescriptor.getIcon(virtualFile);
-          var item = new FsItem(file, cs, attrs.isDirectory(), visible, selectable, icon);
+          var item = new FsItem(file, file.getFileName().toString(), cs, attrs.isDirectory(), visible, selectable, icon);
           update(id, cancelled, () -> {
             myCurrentContent.add(item);
             if (visible || myShowHiddenFiles) {
@@ -553,8 +554,17 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       try {
         var attrs = Files.readAttributes(root, BasicFileAttributes.class);
         var virtualFile = new LazyDirectoryOrFile(null, root, attrs);
-        var selectable = myDescriptor.isFileSelectable(virtualFile);
-        var item = new FsItem(root, false, attrs.isDirectory(), true, selectable, AllIcons.Nodes.Folder);
+        var name = NioFiles.getFileName(root);
+        if (name.length() > 1 && name.endsWith(File.separator)) {
+          name = name.substring(0, name.length() - 1);
+        }
+        if (SystemInfo.isWindows) {
+          var store = Files.getFileStore(root).name();
+          if (!store.isBlank()) {
+            name += " [" + store + ']';
+          }
+        }
+        var item = new FsItem(root, name, false, true, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);
         update(id, cancelled, () -> myModel.add(item));
         if (pathToSelect != null && root.equals(pathToSelect)) {
           selection.set(item);
@@ -693,20 +703,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     private final boolean selectable;
     private final @Nullable Icon icon;
 
-    private FsItem(Path path) {
+    private FsItem(Path path, String name, boolean cs, boolean directory, boolean visible, boolean selectable, @Nullable Icon icon) {
       this.path = path;
-      this.name = UPLINK;
-      this.cs = false;
-      this.directory = true;
-      this.visible = true;
-      this.selectable = false;
-      this.icon = AllIcons.Nodes.UpFolder;
-    }
-
-    private FsItem(Path path, boolean cs, boolean directory, boolean visible, boolean selectable, @Nullable Icon icon) {
-      this.path = path;
-      var name = NioFiles.getFileName(path);
-      this.name = name.length() > 1 && name.endsWith(File.separator) ? name.substring(0, name.length() - 1) : name;
+      this.name = name;
       this.cs = cs;
       this.directory = directory;
       this.visible = visible;
