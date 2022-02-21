@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -54,6 +56,9 @@ public class UpgradeSdkFix implements IntentionAction {
       .withSdkTypeFilter(type -> type instanceof JavaSdkType)
       .withSdkFilter(sdk -> JavaSdkVersionUtil.getJavaSdkVersion(sdk).isAtLeast(required))
       .updateSdkForFile(file)
+      .onSdkSelected(sdk -> ApplicationManager.getApplication()
+        .invokeLater(() -> new IncreaseLanguageLevelFix(myLevel)
+        .invoke(project, editor, file), ModalityState.NON_MODAL, project.getDisposed()))
       .buildPopup()
       .showInBestPositionFor(editor);
   }

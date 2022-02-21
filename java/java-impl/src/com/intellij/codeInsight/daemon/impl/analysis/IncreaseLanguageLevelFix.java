@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
@@ -74,7 +74,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
         return;
       }
     }
-    WriteAction.run(() -> {
+    WriteCommandAction.runWriteCommandAction(project, getText(), null, () -> {
       Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null) {
         LanguageLevel oldLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
