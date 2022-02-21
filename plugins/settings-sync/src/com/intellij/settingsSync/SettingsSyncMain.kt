@@ -50,7 +50,6 @@ internal class SettingsSyncMain : Disposable {
 
   @RequiresBackgroundThread
   internal fun syncSettings() {
-    val publisher = ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC)
     when (controls.remoteCommunicator.checkServerState()) {
       is ServerState.UpdateNeeded -> {
         LOG.info("Updating from server")
@@ -59,11 +58,11 @@ internal class SettingsSyncMain : Disposable {
       }
       ServerState.FileNotExists -> {
         LOG.info("No file on server, we must push")
-        publisher.settingChanged(SyncSettingsEvent.MustPushRequest)
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
       }
       ServerState.UpToDate -> {
         LOG.info("Updating settings is not needed, will check if push is needed")
-        publisher.settingChanged(SyncSettingsEvent.PushIfNeededRequest)
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PushIfNeededRequest)
       }
       is ServerState.Error -> {
         // error already logged in checkServerState, we schedule update
@@ -101,7 +100,7 @@ internal class SettingsSyncMain : Disposable {
       }
       val ideUpdater = SettingsSyncIdeCommunicator(application, componentStore, appConfigPath)
       val updateChecker = SettingsSyncUpdateChecker(application, remoteCommunicator)
-      val bridge = SettingsSyncBridge(application, parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker)
+      val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker)
 
       componentStore.storageManager.addStreamProvider(ideUpdater, true)
 

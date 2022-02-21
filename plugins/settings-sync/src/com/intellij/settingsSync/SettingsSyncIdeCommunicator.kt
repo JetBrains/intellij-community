@@ -92,7 +92,7 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
     }
 
     val snapshot = SettingsSnapshot(setOf(FileState.Modified(file, content, size)))
-    application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -146,7 +146,7 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
     }
     if (deleted) {
       val snapshot = SettingsSnapshot(setOf(FileState.Deleted(adjustedSpec)))
-      application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
     return deleted
   }

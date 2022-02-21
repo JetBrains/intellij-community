@@ -1,7 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -16,8 +15,7 @@ import java.util.concurrent.TimeUnit
  * Handles events about settings change both from the current IDE, and from the server, merges the settings, logs them,
  * and provides the combined data to clients: both to the IDE and to the server.
  */
-internal class SettingsSyncBridge(application: Application,
-                                  parentDisposable: Disposable,
+internal class SettingsSyncBridge(parentDisposable: Disposable,
                                   private val settingsLog: SettingsLog,
                                   private val ideUpdater: SettingsSyncIdeCommunicator,
                                   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
@@ -26,10 +24,10 @@ internal class SettingsSyncBridge(application: Application,
 
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
 
-  private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, true, null, parentDisposable, null, Alarm.ThreadToUse.POOLED_THREAD).
-    apply {
-      setRestartTimerOnAdd(true)
-    }
+  private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, true, null, parentDisposable, null,
+                                         Alarm.ThreadToUse.POOLED_THREAD).apply {
+    setRestartTimerOnAdd(true)
+  }
 
   private val updateObject = object : Update(1) { // all requests are always merged
     override fun run() {
@@ -39,18 +37,16 @@ internal class SettingsSyncBridge(application: Application,
   }
 
   init {
-    queue.queue(object: Update(0) {
+    queue.queue(object : Update(0) {
       override fun run() {
         initializeLog()
       }
     })
 
-    application.messageBus.connect(parentDisposable).subscribe(SETTINGS_CHANGED_TOPIC, object : SettingsChangeListener {
-      override fun settingChanged(event: SyncSettingsEvent) {
-        pendingEvents.add(event)
-        queue.queue(updateObject)
-      }
-    })
+    SettingsSyncEvents.getInstance().addSettingsChangedListener { event ->
+      pendingEvents.add(event)
+      queue.queue(updateObject)
+    }
   }
 
   private fun initializeLog() {

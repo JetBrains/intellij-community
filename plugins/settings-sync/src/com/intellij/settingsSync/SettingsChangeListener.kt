@@ -1,6 +1,8 @@
 package com.intellij.settingsSync
 
-internal interface SettingsChangeListener {
+import java.util.*
+
+internal fun interface SettingsChangeListener : EventListener {
 
   fun settingChanged(event: SyncSettingsEvent)
 
