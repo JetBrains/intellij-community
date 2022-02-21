@@ -12,13 +12,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.caches.project.StrongCachedValue
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
@@ -35,24 +36,23 @@ class SubpackagesIndexService(private val project: Project): Disposable {
 
     private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages")
 
-    private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
-        {
-            val packageTracker = KotlinPackageModificationListener.getInstance(project).packageTracker
-            val dependencies = arrayOf(
-                ProjectRootModificationTracker.getInstance(project),
-                otherLanguagesModificationTracker(),
-                packageTracker
-            )
-            CachedValueProvider.Result(
-                SubpackagesIndex(
-                    KotlinPartialPackageNamesIndex.findAllFqNames(project),
-                    packageTracker.modificationCount
-                ),
-                *dependencies,
-            )
-        },
-        false
-    )
+    private val cachedValue =
+        StrongCachedValue(
+            {
+                val packageTracker =
+                    KotlinPackageModificationListener.getInstance(project).packageTracker
+                val dependencies = arrayOf(
+                    ProjectRootModificationTracker.getInstance(project),
+                    otherLanguagesModificationTracker(),
+                    packageTracker
+                )
+                val result: CachedValueProvider.Result<SubpackagesIndex> =
+                    CachedValueProvider.Result(
+                        SubpackagesIndex(KotlinPartialPackageNamesIndex.findAllFqNames(project), packageTracker.modificationCount),
+                        *dependencies,
+                    )
+                result
+            })
 
     @Volatile
     private var otherLanguagesModificationTracker: ModificationTracker? = null
@@ -61,21 +61,23 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         val messageBusConnection = project.messageBus.connect(this)
         messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
             override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-                resetOtherLanguagesModificationTracker()
+                clean()
             }
 
             override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-                resetOtherLanguagesModificationTracker()
+                clean()
             }
         })
+        LowMemoryWatcher.register(::clean, this)
     }
 
-    private fun resetOtherLanguagesModificationTracker() {
+    private fun clean() {
+        cachedValue.clear()
         otherLanguagesModificationTracker = null
     }
 
     override fun dispose() {
-        resetOtherLanguagesModificationTracker()
+        clean()
     }
 
     private fun otherLanguagesModificationTracker(): ModificationTracker =
@@ -92,7 +94,7 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         private val fqNameByPrefix = MultiMap.createSet<FqName, FqName>()
         // SubpackagesIndex is cachedValue, therefore when we're low on memory - entire SubpackagesIndex will be freed, no reasons to
         // cache individual knownTopFqNames as cachedValue
-        private val knownTopFqNamesPerModule = ConcurrentHashMap<Module, MutableMap<Class<out ModuleSourceScope>, Set<FqName>>>()
+        private val knownTopFqNamesPerModule = ConcurrentHashMap<Module, MutableMap<Class<out ModuleSourceScope>, Collection<FqName>>>()
 
         init {
             this.allPackageFqNames.addAll(allPackageFqNames)
@@ -119,18 +121,19 @@ class SubpackagesIndexService(private val project: Project): Disposable {
          *
          * Null when it is not possible to get and cache fqNames for the scope
          */
-        private fun knownTopFqNames(scope: GlobalSearchScope): Set<FqName>? {
+        private fun knownTopFqNames(scope: GlobalSearchScope): Collection<FqName>? {
             if (!enableSubpackageCaching) return null
 
             val moduleSourceScope = scope.safeAs<ModuleSourceScope>() ?: return null
             val module = moduleSourceScope.module
-            val map: MutableMap<Class<out ModuleSourceScope>, Set<FqName>> =
+            val map: MutableMap<Class<out ModuleSourceScope>, Collection<FqName>> =
                 knownTopFqNamesPerModule.computeIfAbsent(module) {
-                    Collections.synchronizedMap(mutableMapOf<Class<out ModuleSourceScope>, Set<FqName>>())
+                    Collections.synchronizedMap(mutableMapOf<Class<out ModuleSourceScope>, Collection<FqName>>())
                 }
             val scopeClass = moduleSourceScope.javaClass
             val result = map.computeIfAbsent(scopeClass) {
-                KotlinPartialPackageNamesIndex.filterFqNames(topLevelPackageFqNames, scope)
+                val filterFqNames = KotlinPartialPackageNamesIndex.filterFqNames(topLevelPackageFqNames, scope)
+                if (filterFqNames.size <= 3) filterFqNames.toList() else filterFqNames
             }
             // result has to have at least `<root>` element, if it is empty it means nothing is indexed in a scope, no reasons to cache it
             return if (result.isEmpty() && runReadAction { DumbService.isDumb(project) }) {
