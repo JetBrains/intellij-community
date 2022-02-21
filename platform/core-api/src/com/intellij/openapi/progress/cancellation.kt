@@ -42,15 +42,7 @@ fun <T> ensureCurrentJob(action: (Job) -> T): T {
   return ensureCurrentJobInner(allowOrphan = false, action)
 }
 
-/**
- * Same as [ensureCurrentJob] but doesn't fail when there is no current job or indicator.
- * Instead, it creates a new orphan job, and installs it as the [current job][Cancellation.currentJob].
- * If there is no current job or indicator, then the calling code cannot cancel this call from outside.
- * This method is needed when the migration is anticipated,
- * when the same code could be cancellable when run under job/indicator, and non-cancellable when run in raw context.
- */
-@Internal
-fun <T> ensureCurrentJobAllowingOrphan(action: (Job) -> T): T {
+internal fun <T> ensureCurrentJobAllowingOrphan(action: (Job) -> T): T {
   return ensureCurrentJobInner(allowOrphan = true, action)
 }
 

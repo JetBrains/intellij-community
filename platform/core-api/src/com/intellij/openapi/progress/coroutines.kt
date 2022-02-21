@@ -53,6 +53,13 @@ suspend fun checkCanceled() {
  * }
  * ```
  *
+ * If this function is invoked without a current job or indicator, then it may block just as a regular [runBlocking].
+ * To prevent such usage an exception is logged.
+ * Normally, it should not occur in client code, as it's expected to happen only in the newer code which
+ * was introduced in a brief moment of time between the initial version (v0) and the current version (v1) of this function.
+ * To potentially block, the clients now have to migrate to [runBlockingMaybeCancellable]
+ * which repeats exact semantics of v0 w.r.t to cancellation.
+ *
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
  * @throws CancellationException if [current job][Cancellation.currentJob] is cancelled
  * @see runUnderIndicator
@@ -72,6 +79,22 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
         action()
       }
     }
+  }
+}
+
+/**
+ * **DO NOT USE**: if there is no current job or indicator, then the calling code cannot cancel this call from outside.
+ * This function is needed for compatibility: the same code could be cancellable when run under job/indicator,
+ * and non-cancellable when run in raw context.
+ *
+ * This function repeats semantics of [runBlockingCancellable] but doesn't log an error when there is no current job or indicator.
+ * Instead, it silently creates a new orphan job, and installs it as the [current job][Cancellation.currentJob],
+ * which makes inner [runBlockingCancellable] a child of the orphan job.
+ */
+@Internal
+fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
+  return ensureCurrentJobAllowingOrphan {
+    runBlockingCancellable(action)
   }
 }
 
