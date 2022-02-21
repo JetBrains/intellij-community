@@ -4,7 +4,6 @@ package com.intellij.openapi.application.rw
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ReadActionSupport
 import com.intellij.openapi.application.ReadConstraint
-import com.intellij.openapi.progress.ensureCurrentJob
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 
@@ -26,10 +25,8 @@ internal class PlatformReadActionSupport : ReadActionSupport {
   }
 
   override fun <X, E : Throwable> computeCancellable(action: ThrowableComputable<X, E>): X {
-    return ensureCurrentJob { currentJob ->
-      cancellableReadActionInternal(currentJob) {
-        action.compute()
-      }
+    return cancellableReadAction {
+      action.compute()
     }
   }
 }
