@@ -34,7 +34,10 @@ fun neverEndingStory(): Nothing {
 
 fun withRootJob(action: (rootJob: Job) -> Unit): Job {
   return CoroutineScope(Dispatchers.Default).async {
-    withJob(action)
+    blockingContext {
+      val currentJob = requireNotNull(Cancellation.currentJob())
+      action(currentJob)
+    }
   }
 }
 
