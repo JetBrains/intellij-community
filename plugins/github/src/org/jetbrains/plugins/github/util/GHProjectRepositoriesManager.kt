@@ -14,10 +14,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.EventDispatcher
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.messages.Topic
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
@@ -26,23 +25,19 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
-import com.intellij.collaboration.ui.SimpleEventListener
-import com.intellij.util.messages.Topic
-import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import kotlin.properties.Delegates.observable
-import kotlin.reflect.KProperty
 
 @Service
 class GHProjectRepositoriesManager(private val project: Project) : Disposable {
-
-  private val updateQueue = MergingUpdateQueue("GitHub repositories update", 50, true, null, this, null, true)
-    .usePassThroughInUnitTestMode()
+  private val updateAlarm = SingleAlarm(task = ::doUpdateRepositories, delay = 50, parentDisposable = this)
 
   private val accountManager: GHAccountManager
     get() = service()
 
-  var knownRepositories by observable(emptySet<GHGitRepositoryMapping>()) { _, _, newValue ->
-    project.messageBus.syncPublisher(LIST_CHANGES_TOPIC).onRepositoryListChanges(newValue)
+  var knownRepositories by observable(emptySet<GHGitRepositoryMapping>()) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      project.messageBus.syncPublisher(LIST_CHANGES_TOPIC).onRepositoryListChanges(newValue)
+    }
   }
     private set
 
@@ -65,7 +60,12 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   @CalledInAny
   private fun updateRepositories() {
-    updateQueue.queue(Update.create(UPDATE_IDENTITY, ::doUpdateRepositories))
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      doUpdateRepositories()
+    }
+    else {
+      updateAlarm.request()
+    }
   }
 
   //TODO: execute on pooled thread - need to make GithubAccountManager ready
@@ -170,8 +170,6 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   companion object {
     private val LOG = logger<GHProjectRepositoriesManager>()
-
-    private val UPDATE_IDENTITY = Any()
 
     @JvmField
     //project level topic
