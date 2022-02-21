@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
@@ -183,22 +184,19 @@ public final class TestUtils {
     Module classModule = containingClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(containingClass) : null;
     if (classModule == null) return false;
     final GlobalSearchScope globalSearchScope = GlobalSearchScope.moduleRuntimeScope(classModule, true);
-    Optional<VirtualFile> propertiesFile =
-      FilenameIndex.getVirtualFilesByName(JUNIT_PROPERTY_FILE_NAME, globalSearchScope).stream().findFirst();
-    if (propertiesFile.isEmpty()) return false;
+    VirtualFile propertiesFile =
+      ContainerUtil.getFirstItem(FilenameIndex.getVirtualFilesByName(JUNIT_PROPERTY_FILE_NAME, globalSearchScope));
+    if (propertiesFile == null) return false;
     final Properties junitProperties = new Properties();
     try {
-      InputStream stream = propertiesFile.get().getInputStream();
+      InputStream stream = propertiesFile.getInputStream();
       junitProperties.load(stream);
     }
     catch (IOException e) {
       return false;
     }
     String property = junitProperties.getProperty(PER_CLASS_PROPERTY_KEY);
-    if (property != null && !property.isEmpty()) {
-      return "per_class".equals(property);
-    }
-    return false;
+    return "per_class".equals(property);
   }
 
   /**
