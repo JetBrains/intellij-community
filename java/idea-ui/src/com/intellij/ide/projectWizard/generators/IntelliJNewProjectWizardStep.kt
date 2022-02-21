@@ -7,6 +7,7 @@ import com.intellij.ide.wizard.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -33,6 +34,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
   val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
   val addSampleCodeProperty = propertyGraph.property(false)
+    .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
   final override var sdk by sdkProperty
   final override var moduleName by moduleNameProperty

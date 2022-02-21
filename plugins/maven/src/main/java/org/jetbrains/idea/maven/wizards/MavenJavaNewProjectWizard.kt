@@ -9,9 +9,8 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
-import com.intellij.ide.projectWizard.generators.JavaAssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
-import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
@@ -77,25 +76,16 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class AssetsStep(private val parent: Step) : JavaAssetsNewProjectWizardStep(parent) {
-    override fun getOutputDirectory() = "$path/$name"
-
-    override fun getTemplateProperties() = mapOf("PACKAGE_NAME" to parent.groupId)
-
-    override fun getAssets(): List<GeneratorAsset> {
-      val assets = ArrayList<GeneratorAsset>()
+  private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
       if (gitData?.git == true) {
-        assets.addAll(StandardAssetsProvider().getMavenIgnoreAssets())
+        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
       }
       if (parent.addSampleCode) {
-        assets.add(getJavaSampleCodeAsset("src/main/java", parent.groupId))
+        withJavaSampleCodeAsset("src/main/java", parent.groupId)
       }
-      return assets
     }
-
-    override fun getFilePathsToOpen() = listOf(
-      "src/main/java/" + parent.groupId.replace('.', '/') + "/Main.java"
-    )
   }
 
   companion object {

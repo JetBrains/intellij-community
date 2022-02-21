@@ -9,7 +9,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.ide.projectWizard.generators.*
-import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
@@ -79,25 +78,16 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class AssetsStep(parent: NewProjectWizardStep) : JavaAssetsNewProjectWizardStep(parent) {
-    override fun getOutputDirectory() = "$path/$name"
-
-    override fun getTemplateProperties() = mapOf("PACKAGE_NAME" to groupId)
-
-    override fun getAssets(): List<GeneratorAsset> {
-      val assets = ArrayList<GeneratorAsset>()
+  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
       if (gitData?.git == true) {
-        assets.addAll(StandardAssetsProvider().getGradleIgnoreAssets())
+        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       }
       if (addSampleCode) {
-        assets.add(getJavaSampleCodeAsset("src/main/java", groupId))
+        withJavaSampleCodeAsset("src/main/java", groupId)
       }
-      return assets
     }
-
-    override fun getFilePathsToOpen() = listOf(
-      "src/main/java/" + groupId.replace('.', '/') + "/Main.java"
-    )
   }
 }
 

@@ -6,9 +6,8 @@ import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
-import com.intellij.ide.projectWizard.generators.JavaAssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
-import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
@@ -455,15 +454,12 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
   class Builder : GeneratorNewProjectWizardBuilderAdapter(MavenArchetypeNewProjectWizard())
 
-  private class AssetsStep(parent: NewProjectWizardStep) : JavaAssetsNewProjectWizardStep(parent) {
-    override fun getOutputDirectory() = "$path/$name"
-
-    override fun getAssets(): List<GeneratorAsset> {
-      val assets = ArrayList<GeneratorAsset>()
+  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
       if (gitData?.git == true) {
-        assets.addAll(StandardAssetsProvider().getMavenIgnoreAssets())
+        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
       }
-      return assets
     }
   }
 }

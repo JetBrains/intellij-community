@@ -8,7 +8,8 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logM
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
-import com.intellij.ide.starters.local.GeneratorAsset
+import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.addSampleCode
+import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.contentRoot
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.project.Project
@@ -60,17 +61,12 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class AssetsStep(private val parent: Step) : JavaAssetsNewProjectWizardStep(parent) {
-    override fun getOutputDirectory(): String {
-      return parent.contentRoot
-    }
-
-    override fun getAssets(): List<GeneratorAsset> {
-      val assets = ArrayList<GeneratorAsset>()
-      if (parent.addSampleCode) {
-        assets.add(getJavaSampleCodeAsset("src", ""))
+  private class AssetsStep(parent: Step) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = contentRoot
+      if (addSampleCode) {
+        withJavaSampleCodeAsset("src", "")
       }
-      return assets
     }
   }
 }
