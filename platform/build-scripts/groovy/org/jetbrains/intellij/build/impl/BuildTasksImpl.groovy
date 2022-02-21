@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
@@ -325,9 +326,10 @@ idea.fatal.error.notification=disabled
 
   @NotNull
   private static BuildTaskRunnable createDistributionForOsTask(@NotNull OsFamily os,
-                                                               @NotNull Map<OsFamily, Path> result,
+                                                               @NotNull JvmArchitecture arch,
+                                                               @NotNull Map<Pair<OsFamily, JvmArchitecture>, Path> result,
                                                                @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
-    return BuildTaskRunnable.task(os.osId, new Consumer<BuildContext>() {
+    return BuildTaskRunnable.task("${os.osId} ${arch.name()}", new Consumer<BuildContext>() {
       @Override
       void accept(BuildContext context) {
         if (!context.shouldBuildDistributionForOS(os.osId)) {
@@ -339,12 +341,12 @@ idea.fatal.error.notification=disabled
           return
         }
 
-        context.messages.block("build ${os.osName} distribution", new Supplier<Void>() {
+        context.messages.block("build ${os.osName} ${arch.name()} distribution", new Supplier<Void>() {
           @Override
           Void get() {
-            Path osSpecificDistDirectory = DistributionJARsBuilder.getOsSpecificDistDirectory(builder.targetOs, context)
-            builder.buildArtifacts(osSpecificDistDirectory)
-            result.put(os, osSpecificDistDirectory)
+            Path osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
+            builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
+            result.put(new Pair(os, arch), osAndArchSpecificDistDirectory)
             return null
           }
         })
@@ -490,9 +492,9 @@ idea.fatal.error.notification=disabled
       layoutShared(context)
 
       Path propertiesFile = patchIdeaPropertiesFile()
-      Map<OsFamily, Path> distDirs = Collections.synchronizedMap(new HashMap<OsFamily, Path>(3))
-      runInParallel(List.of(
-        createDistributionForOsTask(OsFamily.MACOS, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+      Map<Pair<OsFamily, JvmArchitecture>, Path> distDirs = Collections.synchronizedMap(new HashMap<Pair<OsFamily, JvmArchitecture>, Path>(4))
+      List<BuildTaskRunnable> createDistTasks = List.of(
+        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
           @Override
           OsSpecificDistributionBuilder apply(BuildContext customContext) {
             return customContext.macDistributionCustomizer?.with {
@@ -500,7 +502,15 @@ idea.fatal.error.notification=disabled
             }
           }
         }),
-        createDistributionForOsTask(OsFamily.WINDOWS, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+          @Override
+          OsSpecificDistributionBuilder apply(BuildContext customContext) {
+            return customContext.macDistributionCustomizer?.with {
+              new MacDistributionBuilder(customContext, it, propertiesFile)
+            }
+          }
+        }),
+        createDistributionForOsTask(OsFamily.WINDOWS, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
           @Override
           OsSpecificDistributionBuilder apply(BuildContext customContext) {
             return customContext.windowsDistributionCustomizer?.with {
@@ -508,7 +518,7 @@ idea.fatal.error.notification=disabled
             }
           }
         }),
-        createDistributionForOsTask(OsFamily.LINUX, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+        createDistributionForOsTask(OsFamily.LINUX, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
           @Override
           OsSpecificDistributionBuilder apply(BuildContext customContext) {
             return customContext.linuxDistributionCustomizer?.with {
@@ -516,7 +526,8 @@ idea.fatal.error.notification=disabled
             }
           }
         })
-      ).findAll { it != null }, context)
+      )
+      runInParallel(createDistTasks.findAll { it != null }, context)
       if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (context.buildNumber == null) {
           context.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
@@ -550,7 +561,7 @@ idea.fatal.error.notification=disabled
       }
 
       if (context.productProperties.buildCrossPlatformDistribution) {
-        if (distDirs.size() == 3) {
+        if (distDirs.size() == createDistTasks.size()) {
           context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP, new Runnable() {
             @Override
             void run() {
@@ -559,7 +570,7 @@ idea.fatal.error.notification=disabled
           })
         }
         else {
-          Span.current().addEvent("skip building cross-platform distribution because some OS-specific distributions were skipped")
+          Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
         }
       }
     }

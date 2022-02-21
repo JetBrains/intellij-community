@@ -15,6 +15,8 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
 
+import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+
 @CompileStatic
 final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
@@ -68,12 +70,13 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  void buildArtifacts(Path osSpecificDistPath) {
-    copyFilesForOsDistribution(osSpecificDistPath)
-    buildContext.executeStep("build linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
+  void buildArtifacts(@NotNull Path osAndArchSpecificDistPath, @NotNull JvmArchitecture arch) {
+    copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
+    buildContext.executeStep(spanBuilder("build linux .tar.gz")
+                               .setAttribute("arch", arch.name()), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledRuntime) {
         buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
-          buildTarGz(null, osSpecificDistPath, "-no-jbr", buildContext)
+          buildTarGz(null, osAndArchSpecificDistPath, "-no-jbr", buildContext)
         }
       }
 
@@ -81,11 +84,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         return
       }
 
-      Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.LINUX, JvmArchitecture.x64)
-      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "", buildContext)
+      Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.LINUX, arch)
+      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, "", buildContext)
 
       if (jreDirectoryPath != null) {
-        buildSnapPackage(jreDirectoryPath.toString(), osSpecificDistPath)
+        buildSnapPackage(jreDirectoryPath.toString(), osAndArchSpecificDistPath)
       }
       else {
         buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
