@@ -14,6 +14,8 @@ import java.io.IOException
 @ApiStatus.Experimental
 class AssetsProcessor {
 
+  private val LOG = logger<AssetsProcessor>()
+
   internal fun generateSources(context: GeneratorContext, templateProperties: Map<String, Any>) {
     val outputDir = VfsUtil.createDirectoryIfMissing(context.outputDirectory.fileSystem, context.outputDirectory.path)
                     ?: throw IllegalStateException("Unable to create directory ${context.outputDirectory.path}")
@@ -89,8 +91,4 @@ class AssetsProcessor {
   }
 
   private class TemplateProcessingException(t: Throwable) : IOException("Unable to process template", t)
-
-  companion object {
-    private val LOG = logger<AssetsProcessor>()
-  }
 }
