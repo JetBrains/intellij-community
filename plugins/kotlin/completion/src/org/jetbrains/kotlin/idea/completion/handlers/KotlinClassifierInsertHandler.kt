@@ -67,11 +67,8 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
                             fun(): ImportDescriptorResult = ImportInsertHelper.getInstance(project).importPsiClass(position, it.psiClass)
                         }
 
-                importAction?.invoke()?.let { importDescriptorResult ->
-                    if (importDescriptorResult == ImportDescriptorResult.FAIL) {
-                        document.replaceString(startOffset, context.tailOffset, qualifiedName)
-                    }
-                    return
+                importAction?.invoke()?.let {
+                    if (it != ImportDescriptorResult.FAIL) return
                 }
 
                 // first try to resolve short name for faster handling
