@@ -4,7 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.EventDispatcher
 
-internal class SettingsSyncEvents {
+internal class SettingsSyncEvents : Disposable {
 
   private val settingsChangeDispatcher = EventDispatcher.create(SettingsChangeListener::class.java)
   private val enabledStateChangeDispatcher = EventDispatcher.create(SettingsSyncEnabledStateListener::class.java)
@@ -19,7 +19,7 @@ internal class SettingsSyncEvents {
 
   fun addEnabledStateChangeListener(listener: SettingsSyncEnabledStateListener, parentDisposable: Disposable? = null) {
     if (parentDisposable != null) enabledStateChangeDispatcher.addListener(listener, parentDisposable)
-    else enabledStateChangeDispatcher.addListener(listener)
+    else enabledStateChangeDispatcher.addListener(listener, this)
   }
 
   fun fireEnabledStateChanged(syncEnabled: Boolean) {
@@ -28,5 +28,10 @@ internal class SettingsSyncEvents {
 
   companion object {
     fun getInstance(): SettingsSyncEvents = ApplicationManager.getApplication().getService(SettingsSyncEvents::class.java)
+  }
+
+  override fun dispose() {
+    settingsChangeDispatcher.listeners.clear()
+    enabledStateChangeDispatcher.listeners.clear()
   }
 }

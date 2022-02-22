@@ -1,36 +1,34 @@
 package com.intellij.settingsSync
 
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.FrameStateListener
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, FrameStateListener, SettingsSyncEnabledStateListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
 
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
-  private var enabledStateListenerAdded = false
+
+  override fun componentsInitialized() {
+    SettingsSyncPluginManager.getInstance()
+    SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
+
+    if (isSettingsSyncEnabledInSettings()) {
+      executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
+      return
+    }
+  }
 
   override fun onFrameActivated() {
-    if (!isSettingsSyncEnabledByKey()) {
-      return
-    }
-
-    if (!isSettingsSyncEnabledInSettings()) {
-      if (!enabledStateListenerAdded) {
-        SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
-        enabledStateListenerAdded = true
-      }
-      return
-    }
-
-    if (!SettingsSyncMain.isAvailable()) {
-      executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
+    if (!isSettingsSyncEnabledByKey() || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
       return
     }
 
