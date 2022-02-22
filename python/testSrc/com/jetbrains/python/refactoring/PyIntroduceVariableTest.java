@@ -303,7 +303,7 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
       doTest();
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      if (e.getMessage().equals("Cannot perform refactoring using the selected element(s)")) {
+      if (e.getMessage().equals("Cannot perform refactoring using the selected elements")) {
         thrownExpectedException = true;
       }
     }
