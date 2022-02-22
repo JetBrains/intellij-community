@@ -74,6 +74,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   override fun createComponent(): JPanel {
     ApplicationManager.getApplication().invokeLater {
+      if (myProject.isDisposed) return@invokeLater
       myRendererSettings = RendererSettings()
       setupRendererSettings()
       setupRendererChooser()
