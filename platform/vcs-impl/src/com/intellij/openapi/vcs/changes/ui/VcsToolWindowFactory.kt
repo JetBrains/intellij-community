@@ -3,11 +3,13 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
@@ -57,6 +59,13 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       }
     })
     ChangesViewContentEP.EP_NAME.addExtensionPointListener(project, ExtensionListener(window), window.disposable)
+
+    val vcsManager = window.project.getService(ProjectLevelVcsManager::class.java)
+    if (vcsManager != null && vcsManager.areVcsesActivated()) {
+      // already is activated - we missed the event, so, call explicitly
+      // must be executed later, because we set toolWindow.isAvailable (cannot be called in the init directly)
+      ApplicationManager.getApplication().invokeLater({ updateState(window.project, window) }, window.project.disposed)
+    }
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
