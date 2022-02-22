@@ -55,6 +55,7 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
@@ -889,8 +890,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
               if (e.getMessage().startsWith("Timeout")) {
                 value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
                 ConfigureTypeRenderersHyperLink configureLink = new ConfigureTypeRenderersHyperLink(null, getProject(), value);
-                node.clearAdditionalHyperlinks();
-                node.addAdditionalHyperlink(configureLink);
+                if (node instanceof XValueNodeImpl) {
+                  XValueNodeImpl valueNode = (XValueNodeImpl)node;
+                  valueNode.clearAdditionalHyperlinks();
+                  valueNode.addAdditionalHyperlink(configureLink);
+                }
               }
               else {
                 LOG.error(e);
