@@ -149,7 +149,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private void createPluginPanel() {
     myPanel = new OpaquePanel(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurable.MAIN_BG_COLOR);
-    myPanel.setBorder(new CustomLineBorder(new JBColor(0xC5C5C5, 0x515151), JBUI.insets(1, 0, 0, 0)) {
+    myPanel.setBorder(new CustomLineBorder(JBColor.border(), JBUI.insets(1, 0, 0, 0)) {
       @Override
       public Insets getBorderInsets(Component c) {
         return JBUI.insets(15, 20, 0, 0);
@@ -169,10 +169,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     JBLabel notificationLabel = new JBLabel();
     notificationLabel.setIcon(AllIcons.General.Warning);
     notificationLabel.setVerticalTextPosition(SwingConstants.TOP);
-    notificationLabel.setText(HtmlChunk
-                                .html()
-                                .addText(IdeBundle.message("plugins.configurable.not.allowed"))
-                                .toString());
+    notificationLabel.setText(HtmlChunk.html().addText(IdeBundle.message("plugins.configurable.not.allowed")).toString());
 
     myControlledByOrgNotification.addToCenter(notificationLabel);
     myControlledByOrgNotification.setVisible(false);

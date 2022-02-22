@@ -758,9 +758,6 @@
       "key": "Plugins.SearchField.background"
     },
     {
-      "key": "Plugins.SearchField.borderColor"
-    },
-    {
       "key": "Plugins.SectionHeader.background",
       "description": "Section dividers, e.g. \"Featured\" or \"New and Updated\" in the Plugins | Marketplace tab"
     },
