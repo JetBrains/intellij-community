@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.collectionModel
 import com.intellij.openapi.ui.naturalSorted
+import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
@@ -177,8 +178,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           textField()
             .bindText(versionProperty)
             .columns(COLUMNS_MEDIUM)
-            .validationOnInput { validateVersion() }
-            .validationOnApply { validateVersion() }
+            .textValidation(CHECK_NON_EMPTY)
         }.bottomGap(BottomGap.SMALL)
       }
     }
