@@ -356,7 +356,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       return null
     }
 
-    if (ModuleManager.getInstance(project).modules.isEmpty() || (options.isNewProject && options.runConfigurators)) {
+    if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())) {
       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project,
                                                                                  options.isProjectCreatedWithWizard)
       options.preparedToOpen?.invoke(module)
