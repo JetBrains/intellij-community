@@ -90,7 +90,7 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
     FindInProjectUtil.findUsages(model, project, progressIndicator, presentation, emptySet()) {
       val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(it) as UsageInfo2UsageAdapter
       progressIndicator.checkCanceled()
-      consumer.process(FoundItemDescriptor<UsageInfo2UsageAdapter>(usage, 1500))
+      consumer.process(FoundItemDescriptor<UsageInfo2UsageAdapter>(usage, 0))
       true
     }
   }
