@@ -97,8 +97,7 @@ suspend fun <T> runUnderIndicator(action: () -> T): T {
   return runUnderIndicator(ctx.job, ctx.progressSink, action)
 }
 
-@Internal
-@Suppress("EXPERIMENTAL_API_USAGE_ERROR")
+@OptIn(InternalCoroutinesApi::class)
 fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()
   val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
