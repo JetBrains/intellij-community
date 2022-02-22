@@ -23,6 +23,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <properties.files.provider implementation="com.intellij.testutils.JunitTestClassPropertyProvider"/>
     <referenceProviderType key="Properties File Key Provider"
                            implementationClass="com.intellij.lang.properties.PropertiesReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
