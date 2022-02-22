@@ -12,8 +12,8 @@ import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CACHE_MAPPER_BRANCHING
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCachingChain
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCachingManager.cacheCompilerArgument
 import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheAware
@@ -59,6 +59,9 @@ interface KotlinGradleModel : Serializable {
     val kotlinTarget: String?
     val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet
     val gradleUserHome: String
+    val cacheAware: CompilerArgumentsCacheAware
+
+    @Deprecated(level = DeprecationLevel.ERROR, message = "Use KotlinGradleModel#cacheAware instead")
     val partialCacheAware: CompilerArgumentsCacheAware
 }
 
@@ -74,8 +77,17 @@ data class KotlinGradleModelImpl(
     override val kotlinTarget: String? = null,
     override val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet,
     override val gradleUserHome: String,
+    override val cacheAware: CompilerArgumentsCacheAware
+) : KotlinGradleModel {
+
+    @Deprecated(
+        "Use KotlinGradleModel#cacheAware instead", level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("KotlinGradleModel#cacheAware")
+    )
+    @Suppress("OverridingDeprecatedMember")
     override val partialCacheAware: CompilerArgumentsCacheAware
-) : KotlinGradleModel
+        get() = throw UnsupportedOperationException("Not yet implemented")
+}
 
 abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
     companion object {
@@ -249,22 +261,21 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val cachedCompilerArgumentsBySourceSet = LinkedHashMap<String, CachedExtractedArgsInfo>()
         val additionalVisibleSourceSets = LinkedHashMap<String, Set<String>>()
         val extraProperties = HashMap<String, KotlinTaskProperties>()
-        val masterMapper = builderContext?.getData(CACHE_MAPPER_BRANCHING) ?: return null
-        val detachableMapper = masterMapper.branchOffDetachable(project.name == "buildSrc")
+        val argsMapper = CompilerArgumentsCacheMapperImpl()
 
         val kotlinCompileTasks = target?.let { it.compilations ?: emptyList() }
-                ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
-                ?: (project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList())
+            ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
+            ?: (project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList())
 
         kotlinCompileTasks.forEach { compileTask ->
             if (compileTask.javaClass.name !in kotlinCompileTaskClasses) return@forEach
             val sourceSetName = compileTask.getSourceSetName()
             if (androidVariantRequest.shouldSkipSourceSet(sourceSetName)) return@forEach
-            val currentArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileTask, detachableMapper, defaultsOnly = false)
-            val defaultArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileTask, detachableMapper, defaultsOnly = true)
-            val dependencyClasspath = compileTask.getDependencyClasspath().map { cacheCompilerArgument(it, detachableMapper) }
+            val currentArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileTask, argsMapper, defaultsOnly = false)
+            val defaultArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileTask, argsMapper, defaultsOnly = true)
+            val dependencyClasspath = compileTask.getDependencyClasspath().map { cacheCompilerArgument(it, argsMapper) }
             cachedCompilerArgumentsBySourceSet[sourceSetName] =
-                CachedExtractedArgsInfo(detachableMapper.cacheOriginIdentifier, currentArguments, defaultArguments, dependencyClasspath)
+                CachedExtractedArgsInfo(argsMapper.cacheOriginIdentifier, currentArguments, defaultArguments, dependencyClasspath)
 
             additionalVisibleSourceSets[sourceSetName] = getAdditionalVisibleSourceSets(project, sourceSetName)
             extraProperties.acknowledgeTask(compileTask, null)
@@ -284,7 +295,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTarget = platform ?: kotlinPluginId,
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
-            partialCacheAware = detachableMapper.detachCacheAware()
+            cacheAware = argsMapper
         )
     }
 }
