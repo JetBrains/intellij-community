@@ -33,6 +33,7 @@ import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +210,8 @@ public final class CustomizationUtil {
     return getTreePath(0, path, tree.getModel().getRoot());
   }
 
-  public static ActionUrl getActionUrl(final TreePath treePath, int actionType) {
+  public static ActionUrl getActionUrl(final TreePath treePath,
+                                       @MagicConstant(intValues = {ActionUrl.ADDED, ActionUrl.DELETED, ActionUrl.MOVE}) int actionType) {
     ActionUrl url = new ActionUrl();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
