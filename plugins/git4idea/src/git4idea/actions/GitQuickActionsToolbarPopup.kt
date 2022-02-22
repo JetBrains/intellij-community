@@ -68,7 +68,7 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
       ""
     }
     else {
-      GitBundle.message("action.Vcs.Toolbar.ShowMoreActions.text") + " "
+      GitBundle.message("action.Git.Toolbar.ShowMoreActions.text") + " "
     }
   }
 
