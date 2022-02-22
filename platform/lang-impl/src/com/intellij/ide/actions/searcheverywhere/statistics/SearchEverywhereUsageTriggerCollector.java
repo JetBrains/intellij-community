@@ -31,7 +31,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                                                                "CommandsContributor", "third.party",
                                                                                                "Vcs.Git", "UrlSearchEverywhereContributor",
                                                                                                "GitSearchEverywhereContributor",
-                                                                                               "SETextContributor"));
+                                                                                               "TextSearchContributor"));
 
   public static final StringEventField CURRENT_TAB_FIELD = EventFields.String("currentTabId",
                                                                               Arrays.asList("FileSearchEverywhereContributor",

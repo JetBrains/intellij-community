@@ -19,7 +19,7 @@ import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import java.awt.*;
 
-class SETextRenderer extends JPanel implements ListCellRenderer<UsageInfo2UsageAdapter> {
+class TextSearchRenderer extends JPanel implements ListCellRenderer<UsageInfo2UsageAdapter> {
   private final ColoredListCellRenderer<UsageInfo2UsageAdapter> myUsageRenderer = new ColoredListCellRenderer<>() {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends UsageInfo2UsageAdapter> list,
@@ -50,7 +50,7 @@ class SETextRenderer extends JPanel implements ListCellRenderer<UsageInfo2UsageA
 
   private final ColoredListCellRenderer<UsageInfo2UsageAdapter> myFileAndLineNumber;
 
-  SETextRenderer(@NotNull GlobalSearchScope scope) {
+  TextSearchRenderer(@NotNull GlobalSearchScope scope) {
     setLayout(new BorderLayout());
     myFileAndLineNumber = new FileAndLineTextRenderer(scope);
     add(myUsageRenderer, BorderLayout.CENTER);

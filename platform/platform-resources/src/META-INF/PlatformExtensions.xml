@@ -1338,8 +1338,8 @@
                         serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport"/>
     <registryKey key="new.project.wizard.modal.plugin.install" description="Enables modal lanungage plugins installing"
                  defaultValue="false"/>
-    <searchEverywhereContributor implementation="com.intellij.find.impl.SETextContributor$Companion$Factory"/>
-    <startupActivity implementation="com.intellij.find.impl.SETextContributor$Companion$SETextActivity"/>
+    <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
+    <startupActivity implementation="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchActivity"/>
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
