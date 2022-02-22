@@ -143,5 +143,5 @@ private class VisibleComponentsPool {
 
 @JvmOverloads internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
   return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos"))
-          || (SystemInfoRt.isWindows && !settings.separateMainMenu)) && IdeFrameDecorator.isCustomDecorationAvailable();
+          || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable();
 }
