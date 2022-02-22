@@ -3,6 +3,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -19,6 +20,8 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,9 +32,11 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -43,6 +48,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -272,7 +279,9 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                                      boolean insertOverrideWherePossible) throws IncorrectOperationException {
     List<PsiMethod> result = new ArrayList<>();
     for (CandidateInfo candidateInfo : candidates) {
-      result.addAll(overrideOrImplementMethod(aClass, (PsiMethod)candidateInfo.getElement(), candidateInfo.getSubstitutor(),
+      PsiMethod method = (PsiMethod)candidateInfo.getElement();
+      ProgressManager.progress(method.getName());
+      result.addAll(overrideOrImplementMethod(aClass, method, candidateInfo.getSubstitutor(),
                                               toCopyJavaDoc, insertOverrideWherePossible));
     }
     return result;
@@ -432,7 +441,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
     PsiUtilCore.ensureValid(aClass);
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    application.assertReadAccessAllowed();
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
     Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ?
@@ -445,10 +455,28 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
     PsiUtilCore.ensureValid(aClass);
-    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() ->
-      overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
-                                             chooser.isInsertOverrideAnnotation(), chooser.isGenerateJavadoc())
-    );
+    final ThrowableRunnable<RuntimeException> performImplementOverrideRunnable =
+        () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                                     chooser.isInsertOverrideAnnotation(), chooser.isGenerateJavadoc());
+    if(Registry.is("run.refactorings.under.progress")) {
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
+        return;
+      }
+      final String commandName = CommandProcessor.getInstance().getCurrentCommandName();
+      String title = ObjectUtils.notNull(commandName, JavaOverrideImplementMemberChooser.getChooserTitle(toImplement, false));
+      Runnable runnable = () -> application
+        .runWriteActionWithCancellableProgressInDispatchThread(title, project, null, 
+                                                               indicator -> performImplementOverrideRunnable.run());
+      if (commandName == null) {
+        CommandProcessor.getInstance().executeCommand(project, runnable, title, null);
+      }
+      else {
+        runnable.run();
+      }
+    }
+    else {
+      WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(performImplementOverrideRunnable);
+    }
   }
 
   @Nullable
@@ -559,6 +587,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       if (offset <= lbraceOffset || aClass.isEnum()) {
         resultMembers = new ArrayList<>();
         for (PsiMethodMember candidate : candidates) {
+          ProgressManager.progress(candidate.getElement().getName());
           Collection<PsiMethod> prototypes =
             overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(), copyJavadoc, insertOverrideWherePossible);
           List<PsiGenerationInfo<PsiMethod>> infos = convert2GenerationInfos(prototypes);
