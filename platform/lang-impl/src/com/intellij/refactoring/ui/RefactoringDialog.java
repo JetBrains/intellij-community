@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -115,6 +116,12 @@ public abstract class RefactoringDialog extends DialogWrapper {
    */
   protected final Action getRefactorAction() {
     return myRefactorAction;
+  }
+
+  protected final void setRefactorButtonText(@Button @NotNull String text) {
+    myRefactorAction.putValue(Action.NAME, text);
+    myRefactorAction.putValue(Action.DISPLAYED_MNEMONIC_INDEX_KEY, null);
+    myRefactorAction.putValue(Action.MNEMONIC_KEY, null);
   }
 
   /**
