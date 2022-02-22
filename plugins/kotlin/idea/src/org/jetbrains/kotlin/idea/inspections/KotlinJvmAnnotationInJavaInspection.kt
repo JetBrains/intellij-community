@@ -22,7 +22,7 @@ class KotlinJvmAnnotationInJavaInspection : LocalInspectionTool() {
                 val annotationName = qualifiedName.removePrefix(KOTLIN_JVM_PACKAGE)
                 holder.registerProblem(
                     annotation,
-                    KotlinBundle.message("inspection.useless.kotlin.jvm.annotation.in.java", "@$annotationName"),
+                    KotlinBundle.message("inspection.kotlin.jvm.annotation.in.java.description", "@$annotationName"),
                     RemoveAnnotationFix()
                 )
             }
