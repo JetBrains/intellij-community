@@ -30,7 +30,9 @@ final class ContentComboLabel extends ContentLabel {
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
-      return new Rectangle(getWidth() - getIconWidth() - ICONS_GAP, 0, getIconWidth(), getHeight());
+      Dimension size = getPreferredSize();
+      int width = size != null ? size.width : getWidth();
+      return new Rectangle(width - getIconWidth() - ICONS_GAP, 0, getIconWidth(), getHeight());
     }
 
     @Override
