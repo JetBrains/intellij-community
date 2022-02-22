@@ -70,8 +70,8 @@ internal fun createSouthPanelWithOptionsDropDown(southPanel: JComponent, optionD
   }
 }
 
-internal fun validateBranchField(branchField: ComboBoxWithAutoCompletion<String>,
-                                 @PropertyKey(resourceBundle = GitBundle.BUNDLE) emptyFieldMessage: String): ValidationInfo? {
+internal fun validateBranchExists(branchField: ComboBoxWithAutoCompletion<String>,
+                                  @PropertyKey(resourceBundle = GitBundle.BUNDLE) emptyFieldMessage: String): ValidationInfo? {
   val value = branchField.getText()
   if (value.isNullOrEmpty()) {
     return ValidationInfo(GitBundle.message(emptyFieldMessage), branchField)
@@ -230,7 +230,7 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun validateBranchField(): ValidationInfo? {
-    val validationInfo = validateBranchField(branchField, GitBundle.message("merge.no.branch.selected.error"))
+    val validationInfo = validateBranchExists(branchField, GitBundle.message("merge.no.branch.selected.error"))
     if (validationInfo != null) return validationInfo
 
     val selectedBranch = branchField.getText()
