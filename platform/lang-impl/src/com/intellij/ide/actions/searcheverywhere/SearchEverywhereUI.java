@@ -234,13 +234,18 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     String advertisementText = getWarning(contributors);
     if (advertisementText != null) {
       myHintHelper.setWarning(advertisementText);
+      updateRightActions(contributors);
       return;
     }
 
     advertisementText = getAdvertisement(contributors);
     myHintHelper.setHint(advertisementText);
 
-    List<AnAction> actions = updateRightActions(contributors);
+    updateRightActions(contributors);
+  }
+
+  private void updateRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+    List<AnAction> actions = getRightActions(contributors);
     myHintHelper.removeRightExtensions();
     if (!actions.isEmpty()) {
       myHintHelper.setRightExtensions(actions);
@@ -248,9 +253,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @NotNull
-  private List<AnAction> updateRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+  private List<AnAction> getRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
     for (SearchEverywhereContributor<?> contributor : contributors) {
-      if (getSelectedTabID() != contributor.getSearchProviderId() || !(contributor instanceof SearchFieldActionsContributor)) continue;
+      if (!Objects.equals(getSelectedTabID(), contributor.getSearchProviderId()) || !(contributor instanceof SearchFieldActionsContributor)) continue;
 
       return ((SearchFieldActionsContributor)contributor).createRightActions(() -> {
         scheduleRebuildList(SearchRestartReason.TEXT_SEARCH_OPTION_CHANGED);
