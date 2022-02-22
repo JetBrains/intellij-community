@@ -162,7 +162,9 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     return ReadAction.compute(() -> {
       UField uField = getUastElement();
       if (uField == null) {
-        LOG.error("No uField found for psi: " + getPsiElement());
+        WritableRefEntity owner = getOwner();
+        String parentName = owner != null ? owner.getName() : "no parent class";
+        LOG.error("No uField found for psi: " + getPsiElement() + ", name: " + getName() + ", " + parentName);
         return null;
       }
       return PsiFormatUtil.getExternalName((PsiModifierListOwner)uField.getJavaPsi());
