@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VersionedFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @Override
   @NotNull
   public FilePath createFilePathOn(@NotNull VirtualFile virtualFile) {
-    return createFilePath(virtualFile.isInLocalFileSystem() ? virtualFile.getPath() : virtualFile.getUrl(), virtualFile.isDirectory());
+    return createFilePath(virtualFile.getFileSystem() instanceof VersionedFileSystem ? virtualFile.getUrl() : virtualFile.getPath(), virtualFile.isDirectory());
   }
 
   @Override
