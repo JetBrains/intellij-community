@@ -792,7 +792,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @Override
   public boolean hasIntentionHint() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionHintComponent hint = getLastIntentionHint();
     return hint != null && !hint.isDisposed() && hint.isVisible();
   }
