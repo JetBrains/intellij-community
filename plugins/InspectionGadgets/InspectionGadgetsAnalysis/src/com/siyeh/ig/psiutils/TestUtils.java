@@ -18,24 +18,18 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInspection.resources.TestClassPropertyProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ObjectUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
-
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
@@ -47,8 +41,6 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 public final class TestUtils {
   public static final String RUN_WITH = "org.junit.runner.RunWith";
   private static final String PARAMETERIZED_FQN = "org.junit.runners.Parameterized";
-  private static final String PER_CLASS_PROPERTY_KEY = "junit.jupiter.testinstance.lifecycle.default";
-  private static final String JUNIT_PROPERTY_FILE_NAME = "junit-platform.properties";
   private static final CallMatcher ASSERT_THROWS =
     CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertThrows");
 
@@ -130,7 +122,6 @@ public final class TestUtils {
   }
 
 
-
   public static boolean isJUnitTestClass(@Nullable PsiClass targetClass) {
     return targetClass != null && InheritanceUtil.isInheritor(targetClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE);
   }
@@ -183,20 +174,10 @@ public final class TestUtils {
   private static boolean hasPerClassProperty(@NotNull PsiClass containingClass) {
     Module classModule = containingClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(containingClass) : null;
     if (classModule == null) return false;
-    final GlobalSearchScope globalSearchScope = GlobalSearchScope.moduleRuntimeScope(classModule, true);
-    VirtualFile propertiesFile =
-      ContainerUtil.getFirstItem(FilenameIndex.getVirtualFilesByName(JUNIT_PROPERTY_FILE_NAME, globalSearchScope));
-    if (propertiesFile == null) return false;
-    final Properties junitProperties = new Properties();
-    try {
-      InputStream stream = propertiesFile.getInputStream();
-      junitProperties.load(stream);
+    for (TestClassPropertyProvider provider : TestClassPropertyProvider.EP_NAME.getExtensions()) {
+      if (provider.hasTestClassProperty(classModule)) return true;
     }
-    catch (IOException e) {
-      return false;
-    }
-    String property = junitProperties.getProperty(PER_CLASS_PROPERTY_KEY);
-    return "per_class".equals(property);
+    return false;
   }
 
   /**
