@@ -13,7 +13,8 @@
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncEvents"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager"/>
-    <applicationInitializedListener implementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager$StartupInitializer"/>
+    <!--suppress PluginXmlDynamicPlugin -->
+    <applicationInitializedListener implementation="com.intellij.settingsSync.SettingsSynchronizer"/>
     <applicationConfigurable id="settings.sync"
                              key="title.settings.sync"
                              bundle="messages.SettingsSyncBundle"
