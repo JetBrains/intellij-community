@@ -28,9 +28,11 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     val sourceText = CodeVisionInlayData.pattern.matcher(expectedText).replaceAll("")
     myFixture.configureByText(fileName, sourceText)
 
+    val editor = myFixture.editor
+    editor.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     myFixture.doHighlighting()
 
-    codeVisionHost.calculateCodeVisionSync(myFixture.editor, testRootDisposable)
+    codeVisionHost.calculateCodeVisionSync(editor, testRootDisposable)
 
     val actualText = dumpCodeVisionHints(sourceText)
     assertEquals(expectedText, actualText)
