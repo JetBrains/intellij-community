@@ -100,7 +100,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
       file,
       LangBundle.message("inspection.incorrect.formatting.global.problem.descriptor", file.name),
       arrayOf(ReformatQuickFix, ShowDetailedReportIntention),
-      ProblemHighlightType.WEAK_WARNING,
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
       isOnTheFly,
       false
     )
@@ -180,7 +180,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
       file,
       range,
       message,
-      ProblemHighlightType.WEAK_WARNING,
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
       isOnTheFly,
       *fixes
     )
