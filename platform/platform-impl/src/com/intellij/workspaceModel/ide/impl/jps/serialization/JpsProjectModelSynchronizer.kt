@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
+import com.intellij.util.PlatformUtils
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
@@ -232,7 +233,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   // IDEA-288703
-  fun hasNoSerializedModules(): Boolean = (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
+  fun isModuleListMissing(): Boolean {
+    val currentSerializers = prepareSerializers() as JpsProjectSerializersImpl
+    if (currentSerializers.moduleSerializers.isNotEmpty()) return false
+    return currentSerializers.moduleListSerializersByUrl.keys.all { !JpsPathUtil.urlToFile(it).exists() }
+  }
 
   private fun prepareSerializers(): JpsProjectSerializers {
     val existingSerializers = this.serializers.get()
