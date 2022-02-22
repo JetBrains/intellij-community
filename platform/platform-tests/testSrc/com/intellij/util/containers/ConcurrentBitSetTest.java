@@ -21,11 +21,14 @@ import com.intellij.testFramework.Timings;
 import com.intellij.util.TimeoutUtil;
 import junit.framework.TestCase;
 
+import java.util.Arrays;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ConcurrentBitSetTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(ConcurrentBitSetTest.class);
+
   public void testSanity() {
     ConcurrentBitSet bitSet = ConcurrentBitSet.create();
     assertEquals(0, bitSet.nextClearBit(0));
@@ -70,11 +73,16 @@ public class ConcurrentBitSetTest extends TestCase {
         assertFalse(bitSet.get(i));
       }
     }
+    assertEquals(0, bitSet.stream().count());
     bitSet.set(100, true);
+    bitSet.set(200, true);
     assertEquals(100, bitSet.nextSetBit(0));
+    assertEquals(200, bitSet.nextSetBit(200));
+    assertEquals(Arrays.asList(100, 200), bitSet.stream().boxed().collect(Collectors.toList()));
 
     bitSet.clear();
     assertEquals(-1, bitSet.nextSetBit(0));
+    assertEquals(0, bitSet.stream().count());
   }
 
   public void testStressFineGrainedSmallSet() {
