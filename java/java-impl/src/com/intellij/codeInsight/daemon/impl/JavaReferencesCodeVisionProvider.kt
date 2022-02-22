@@ -29,6 +29,7 @@ class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
     val traverser = SyntaxTraverser.psiTraverser(psiFile)
     for (element in traverser) {
       if (element !is PsiMember || element is PsiTypeParameter) continue
+      if (!InlayHintsUtils.isFirstInLine(element)) continue
       val hint = JavaTelescope.usagesHint(element, psiFile)
       if (hint == null) continue
       val handler = ClickHandler(element)
