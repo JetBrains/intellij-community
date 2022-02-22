@@ -1344,6 +1344,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     CharSequence rootName;
     String rootPath;
+    FileAttributes attributes;
     if (fs instanceof ArchiveFileSystem) {
       ArchiveFileSystem afs = (ArchiveFileSystem)fs;
       VirtualFile localFile = afs.findLocalByRootPath(path);
@@ -1351,12 +1352,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       rootName = localFile.getNameSequence();
       rootPath = afs.getRootPathByLocal(localFile);
       rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), rootPath));
+      attributes = afs.getDefaultAttributes(new StubVirtualFile(fs) {
+        @Override public @NotNull String getPath() { return rootPath; }
+        @Override public @Nullable VirtualFile getParent() { return null; }
+      });
     }
     else {
       rootName = rootPath = path;
+      attributes = loadAttributes(fs, rootPath);
     }
 
-    FileAttributes attributes = loadAttributes(fs, rootPath);
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
@@ -1414,14 +1419,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static @Nullable FileAttributes loadAttributes(@NotNull NewVirtualFileSystem fs, @NotNull String path) {
-    StubVirtualFile virtualFile = new StubVirtualFile(fs) {
-      @Override
-      public @NotNull String getPath() { return path; }
-
-      @Override
-      public @Nullable VirtualFile getParent() { return null; }
-    };
-    return fs instanceof ArchiveFileSystem ? ((ArchiveFileSystem)fs).getCachedAttributes(virtualFile) : fs.getAttributes(virtualFile);
+    return fs.getAttributes(new StubVirtualFile(fs) {
+      @Override public @NotNull String getPath() { return path; }
+      @Override public @Nullable VirtualFile getParent() { return null; }
+    });
   }
 
   @Override
