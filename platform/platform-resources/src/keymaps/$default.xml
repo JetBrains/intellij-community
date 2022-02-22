@@ -276,7 +276,7 @@
   <action id="GotoAction">
     <keyboard-shortcut first-keystroke="control shift A"/>
   </action>
-  <action id="SETextAction">
+  <action id="TextSearchAction">
     <keyboard-shortcut first-keystroke="control shift alt E"/>
   </action>
   <action id="RunInspection">

@@ -5,7 +5,7 @@ import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindSettings
-import com.intellij.find.impl.SETextRightActionAction.*
+import com.intellij.find.impl.TextSearchRightActionAction.*
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SearchEverywhereClassifier
@@ -32,14 +32,13 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.CommonProcessors
-import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
 import javax.swing.ListCellRenderer
 
-class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<UsageInfo2UsageAdapter>,
-                                                    SearchFieldActionsContributor, DumbAware, ScopeSupporting, Disposable {
+class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<UsageInfo2UsageAdapter>,
+                                                        SearchFieldActionsContributor, DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel
@@ -95,7 +94,7 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
     }
   }
 
-  override fun getElementsRenderer(): ListCellRenderer<in UsageInfo2UsageAdapter> = SETextRenderer(GlobalSearchScope.allScope(project))
+  override fun getElementsRenderer(): ListCellRenderer<in UsageInfo2UsageAdapter> = TextSearchRenderer(GlobalSearchScope.allScope(project))
 
   override fun processSelectedItem(selected: UsageInfo2UsageAdapter, modifiers: Int, searchText: String): Boolean {
     if (!selected.canNavigate()) return false
@@ -107,7 +106,7 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
   override fun getActions(onChanged: Runnable): List<AnAction> =
     listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
 
-  override fun createRightActions(onChanged: Runnable): List<SETextRightActionAction> {
+  override fun createRightActions(onChanged: Runnable): List<TextSearchRightActionAction> {
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply { afterChange { model.isWholeWordsOnly = it } }
     val case = AtomicBooleanProperty(model.isCaseSensitive).apply { afterChange { model.isCaseSensitive = it } }
     val regexp = AtomicBooleanProperty(model.isRegularExpressions).apply { afterChange { model.isRegularExpressions = it } }
@@ -174,7 +173,7 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
   }
 
   companion object {
-    private const val ID = "Text"
+    private const val ID = "TextSearchContributor"
     private const val ADVANCED_OPTION_ID = "se.enable.text.search"
     private val SE_TEXT_SELECTED_SCOPE = Key.create<String>("SE_TEXT_SELECTED_SCOPE")
 
@@ -182,10 +181,10 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
 
     class Factory : SearchEverywhereContributorFactory<UsageInfo2UsageAdapter> {
       override fun isAvailable() = enabled()
-      override fun createContributor(event: AnActionEvent) = SETextContributor(event)
+      override fun createContributor(event: AnActionEvent) = TextSearchContributor(event)
     }
 
-    class SETextAction : SearchEverywhereBaseAction(), DumbAware {
+    class TextSearchAction : SearchEverywhereBaseAction(), DumbAware {
       override fun update(event: AnActionEvent) {
         super.update(event)
         event.presentation.isEnabledAndVisible = enabled()
@@ -196,7 +195,7 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
       }
     }
 
-    class SETextActivity : StartupActivity.DumbAware {
+    class TextSearchActivity : StartupActivity.DumbAware {
       override fun runActivity(project: Project) {
         RunOnceUtil.runOnceForApp(ADVANCED_OPTION_ID) {
           AdvancedSettings.setBoolean(ADVANCED_OPTION_ID, false)
