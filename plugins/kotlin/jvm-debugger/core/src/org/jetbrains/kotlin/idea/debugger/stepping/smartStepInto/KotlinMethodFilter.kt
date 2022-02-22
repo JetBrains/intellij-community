@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.trimIfMangledInBytecode
-import org.jetbrains.kotlin.idea.debugger.getInlineFunctionNamesAndBorders
+import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtClass
@@ -88,7 +88,7 @@ open class KotlinMethodFilter(
                // A correct way here is to memorize the original location (where smart step into was started)
                // and filter out ranges that contain that original location.
                // Otherwise, nested inline with the same method name will not work correctly.
-               method.getInlineFunctionNamesAndBorders()
+               method.getInlineFunctionAndArgumentVariablesToBordersMap()
                    .filter { location in it.value }
                    .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode) }
     }

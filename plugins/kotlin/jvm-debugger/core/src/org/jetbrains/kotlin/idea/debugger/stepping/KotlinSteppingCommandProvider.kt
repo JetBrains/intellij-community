@@ -204,7 +204,9 @@ internal fun createKotlinInlineFilter(suspendContext: SuspendContextImpl): Kotli
 }
 
 internal class KotlinInlineFilter(location: Location, method: Method) {
-    private val borders = method.getInlineFunctionNamesAndBorders().values.filter { location !in it }
+    private val borders =
+        method.getInlineFunctionAndArgumentVariablesToBordersMap()
+            .values.filter { location !in it }
 
     fun isNestedInline(context: SuspendContextImpl?): Boolean {
         if (context === null) return false

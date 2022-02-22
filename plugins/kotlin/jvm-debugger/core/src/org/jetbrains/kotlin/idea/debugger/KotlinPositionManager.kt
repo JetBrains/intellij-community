@@ -33,6 +33,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
+import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
@@ -51,8 +52,6 @@ import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
-import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
@@ -227,7 +226,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun Method.getInlineFunctionBorders(sourceFileName: String): List<ClosedRange<Location>> {
-        return getInlineFunctionLocalVariables()
+        return getInlineFunctionOrArgumentVariables()
             .mapNotNull { it.getBorders() }
             .filter { it.start.safeSourceName() == sourceFileName }
             .toList()
@@ -479,8 +478,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 }
 
-internal fun Method.getInlineFunctionNamesAndBorders(): Map<LocalVariable, ClosedRange<Location>> {
-    return getInlineFunctionLocalVariables()
+internal fun Method.getInlineFunctionAndArgumentVariablesToBordersMap(): Map<LocalVariable, ClosedRange<Location>> {
+    return getInlineFunctionOrArgumentVariables()
         .mapNotNull {
             val borders = it.getBorders()
             if (borders == null)
@@ -491,16 +490,12 @@ internal fun Method.getInlineFunctionNamesAndBorders(): Map<LocalVariable, Close
         .toMap()
 }
 
-private fun Method.getInlineFunctionLocalVariables(): Sequence<LocalVariable> {
+private fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
     val localVariables = safeVariables() ?: return emptySequence()
     return localVariables
         .asSequence()
-        .filter { it.isInlineFunctionLocalVariable() }
+        .filter { isFakeLocalVariableForInline(it.name()) }
 }
-
-private fun LocalVariable.isInlineFunctionLocalVariable() =
-    name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) ||
-    name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)
 
 fun Location.getClassName(): String? {
     val currentLocationFqName = declaringType().name() ?: return null

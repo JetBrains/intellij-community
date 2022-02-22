@@ -5,7 +5,7 @@ import com.intellij.debugger.PositionManager
 import com.intellij.debugger.jdi.GeneratedLocation
 import com.intellij.psi.util.parentOfType
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.idea.debugger.getInlineFunctionNamesAndBorders
+import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -16,8 +16,8 @@ class KotlinSmartStepTargetFiltererAdapter(
     private val positionManager: PositionManager,
     private val targetFilterer: KotlinSmartStepTargetFilterer
 ) : LineMatchingMethodVisitor(lines) {
-    private val inlineFunctionNamesAndBorders = location.safeMethod()
-        ?.getInlineFunctionNamesAndBorders()
+    private val inlineFunctionVariablesAndBorders = location.safeMethod()
+        ?.getInlineFunctionAndArgumentVariablesToBordersMap()
         ?.toList()
         .orEmpty()
     private var inInline = false
@@ -25,7 +25,7 @@ class KotlinSmartStepTargetFiltererAdapter(
     public override fun reportOpcode(opcode: Int) {
         if (!lineEverMatched) return
 
-        val inlineCall = inlineFunctionNamesAndBorders.firstOrNull {
+        val inlineCall = inlineFunctionVariablesAndBorders.firstOrNull {
             currentLine in it.second.toLineNumberRange()
         }
         if (inlineCall == null) {
