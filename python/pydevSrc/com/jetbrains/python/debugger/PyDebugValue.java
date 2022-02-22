@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PydevBundle;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.render.PyNodeRenderer;
@@ -472,10 +473,13 @@ public class PyDebugValue extends XNamedValue {
 
   private void setConfigureTypeRenderersLink(@NotNull XValueNode node) {
     String typeRendererId = getTypeRendererId();
-    node.clearAdditionalHyperlinks();
-    if (typeRendererId != null) {
-      XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
-      if (link != null) node.addAdditionalHyperlink(link);
+    if (node instanceof XValueNodeImpl) {
+      XValueNodeImpl valueNode = (XValueNodeImpl)node;
+      valueNode.clearAdditionalHyperlinks();
+      if (typeRendererId != null) {
+        XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
+        if (link != null) valueNode.addAdditionalHyperlink(link);
+      }
     }
   }
 

@@ -172,7 +172,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
-  @Override
   public void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) {
     invokeNodeUpdate(() -> {
       myAdditionalHyperLinks.add(link);
@@ -180,7 +179,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
-  @Override
   public void clearAdditionalHyperlinks() {
     invokeNodeUpdate(() -> {
       myAdditionalHyperLinks.clear();
