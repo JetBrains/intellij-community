@@ -8,9 +8,12 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.LayeredIcon
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 val noInterpreterMarker: String = "<${PyBundle.message("python.sdk.there.is.no.interpreter")}>"
@@ -130,3 +133,41 @@ private fun wrapIconWithWarningDecorator(icon: Icon): LayeredIcon =
     setIcon(icon, 0)
     setIcon(AllIcons.Actions.Cancel, 1)
   }
+
+internal fun SimpleColoredComponent.customizeWithSdkValue(value: Any?, nullSdkName: @Nls String, nullSdkValue: Sdk?) {
+  when (value) {
+    is PySdkToInstall -> {
+      value.renderInList(this)
+    }
+    is Sdk -> {
+      appendName(value, name(value))
+      icon = icon(value)
+    }
+    is String -> append(value)
+    null -> {
+      if (nullSdkValue != null) {
+        appendName(nullSdkValue, name(nullSdkValue, nullSdkName))
+        icon = icon(nullSdkValue)
+      }
+      else {
+        append(nullSdkName)
+      }
+    }
+  }
+}
+
+private fun SimpleColoredComponent.appendName(sdk: Sdk, name: Triple<String?, String, String?>) {
+  val (modifier, primary, secondary) = name
+  if (modifier != null) {
+    append("[$modifier] $primary", SimpleTextAttributes.ERROR_ATTRIBUTES)
+  }
+  else {
+    append(primary)
+  }
+
+  if (secondary != null) {
+    append(" $secondary", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+  }
+
+  path(sdk)?.let { append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES) }
+}

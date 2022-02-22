@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
@@ -105,8 +106,11 @@ private fun getPy310ToInstallOnWindows(): PySdkToInstallOnWindows {
 abstract class PySdkToInstall internal constructor(name: String, version: String)
   : ProjectJdkImpl(name, PythonSdkType.getInstance(), null, version) {
 
+  /**
+   * Customize [renderer], which is typically either [com.intellij.ui.ColoredListCellRenderer] or [com.intellij.ui.ColoredTreeCellRenderer].
+   */
   @CalledInAny
-  abstract fun renderInList(renderer: PySdkListCellRenderer)
+  abstract fun renderInList(renderer: SimpleColoredComponent)
 
   @CalledInAny
   @NlsContexts.DialogMessage
@@ -124,7 +128,7 @@ private class PySdkToInstallOnWindows(name: String,
                                       private val hashFunction: HashFunction,
                                       private val targetFileName: String) : PySdkToInstall(name, version) {
 
-  override fun renderInList(renderer: PySdkListCellRenderer) {
+  override fun renderInList(renderer: SimpleColoredComponent) {
     renderer.append(name)
     renderer.append(" $url", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)  // NON-NLS
     renderer.icon = AllIcons.Actions.Download
@@ -343,7 +347,7 @@ private class PySdkToInstallOnWindows(name: String,
 
 private class PySdkToInstallViaXCodeSelect : PySdkToInstall("Python", "") {
 
-  override fun renderInList(renderer: PySdkListCellRenderer) {
+  override fun renderInList(renderer: SimpleColoredComponent) {
     renderer.append(name)
     renderer.append(" ")
     renderer.append(PyBundle.message("python.cldt.installing.suggestion"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
