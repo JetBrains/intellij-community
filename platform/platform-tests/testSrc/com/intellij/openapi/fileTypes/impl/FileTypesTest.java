@@ -241,14 +241,49 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     PsiFile psi = getPsiManager().findFile(virtualFile);
     assertFalse(psi.toString(), psi instanceof PsiBinaryFile);
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
+    assertEmpty(psi.getText());
 
-    setBinaryContent(virtualFile, "x_x_x_x".getBytes(StandardCharsets.UTF_8));
+    String newText = "x_x_x_x";
+    setBinaryContent(virtualFile, newText.getBytes(StandardCharsets.UTF_8));
     assertEquals(FileTypes.PLAIN_TEXT, getFileType(virtualFile));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiFile after = getPsiManager().findFile(virtualFile);
-    assertNotSame(psi, after);
-    assertFalse(psi.isValid());
     assertTrue(after.isValid());
     assertTrue(after instanceof PsiPlainTextFile);
+    assertEquals(newText, after.getText());
+  }
+
+  public void testTypingInEmptyAutoDetectedFileMustChangeTheFileTypeAfterSave() throws IOException, JDOMException {
+    File dir = createTempDirectory();
+    File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
+    VirtualFile virtualFile = getVirtualFile(file);
+    Assume.assumeTrue(UnknownFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(virtualFile.getName())));
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
+    PsiFile psi = getPsiManager().findFile(virtualFile);
+    assertFalse(psi.toString(), psi instanceof PsiBinaryFile);
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
+    assertEmpty(psi.getText());
+
+    FileTypeManagerImpl.FileTypeWithDescriptor anySaneFtd = ContainerUtil.find(myFileTypeManager.getRegisteredFileTypeWithDescriptors(),
+      f -> !(f.fileType instanceof AbstractFileType) && !f.fileType.isBinary());
+
+    String hashBang = "xxxxx";  // make sure no other hashBang substrings here
+    associateHashBang(anySaneFtd, hashBang);
+
+    String hashBangedString = "#!" + hashBang + "\n";
+    FileTypeManagerImpl.FileTypeWithDescriptor byHashBang = myFileTypeManager.getExtensionMap().findAssociatedFileTypeByHashBang(hashBangedString);
+    assertEquals(myFileTypeManager.getExtensionMap()+"\nbyHashBang="+byHashBang+"\nhashBangedString='"+hashBangedString+"'", anySaneFtd, byHashBang);
+
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psi);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      for (char c : hashBangedString.toCharArray()) {
+        document.insertString(document.getTextLength(), String.valueOf(c));
+      }
+    });
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    FileDocumentManager.getInstance().saveAllDocuments();
+    assertEquals(anySaneFtd.fileType, getFileType(virtualFile));
+    assertEquals(hashBangedString, getPsiManager().findFile(virtualFile).getText());
   }
 
   public void testAutoDetectTextFileFromContents() throws IOException {
@@ -501,10 +536,16 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       f -> !(f.fileType instanceof AbstractFileType));
 
     String hashBang = "xxx";
+    associateHashBang(ftd, hashBang);
+
+    assertEquals(ftd, myFileTypeManager.getExtensionMap().findAssociatedFileTypeByHashBang("#!" + hashBang+"\n"));
+  }
+
+  private void associateHashBang(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor ftd, @NotNull String hashBang) throws IOException, JDOMException {
     @Language("XML")
     String xml = "<blahblah version='" + FileTypeManagerImpl.VERSION + "'>\n" +
                  "   <extensionMap>\n" +
-                 "     <hashBang value=\"" + hashBang + "\" type=\"" + ftd.getName() + "\" />\n"+
+                 "     <hashBang value=\"" + hashBang + "\" type=\"" + ftd.getName() + "\" />\n" +
                  "   </extensionMap>\n" +
                  "</blahblah>";
     Element element = JDOMUtil.load(xml);
@@ -512,8 +553,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
     reInitFileTypeManagerComponent(element);
     assertEmpty(myConflicts);
-
-    assertEquals(ftd, myFileTypeManager.getExtensionMap().findAssociatedFileTypeByHashBang("#!" + hashBang+"\n"));
   }
 
   public void testReassignedPredefinedFileType() {
