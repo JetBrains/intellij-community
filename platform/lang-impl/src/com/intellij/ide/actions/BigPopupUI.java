@@ -232,7 +232,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
     if (ExperimentalUI.isNewUI()) {
-      resultsScroll.setBorder(JBUI.Borders.empty(PopupUtil.createComplexPopupTextFieldInsets(4, 8)));
+      resultsScroll.setBorder(JBUI.Borders.empty(PopupUtil.createComplexPopupTextFieldInsets(0, 0)));
     }
     else {
       resultsScroll.setBorder(null);

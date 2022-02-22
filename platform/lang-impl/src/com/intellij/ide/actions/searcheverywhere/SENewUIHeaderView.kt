@@ -6,6 +6,7 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.util.function.Function
 import javax.swing.JComponent
@@ -27,12 +28,12 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
           .verticalAlign(VerticalAlign.BOTTOM)
           .customize(Gaps.EMPTY)
           .applyToComponent {
+            font = JBFont.regular()
             background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
             isFocusable = false
           }
           .component
         cell(toolbar)
-          .customize(Gaps.EMPTY)
       }
     }
 

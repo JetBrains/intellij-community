@@ -1365,6 +1365,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       myTextField = field;
       myHintTextIcon.setFont(myTextField.getFont());
       myHintTextIcon.setFontTransform(FontInfo.getFontRenderContext(myTextField).getTransform());
+      // Try aligning hint by baseline with the text field
+      myHintTextIcon.setInsets(JBUIScale.scale(3), 0, 0, 0);
 
       myWarnIcon.setIcon(AllIcons.General.Warning, 0);
       myWarnIcon.setIcon(myHintTextIcon, 1);
