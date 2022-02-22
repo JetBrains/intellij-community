@@ -28,7 +28,7 @@ import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.*
 
-internal class CheckerRunner(val text: TextContent) {
+class CheckerRunner(val text: TextContent) {
   private val sentences by lazy { SRXSentenceTokenizer.tokenize(text.toString()) }
 
   fun run(checkers: List<TextChecker>, consumer: (TextProblem) -> Unit) {
