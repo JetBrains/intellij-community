@@ -66,7 +66,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                                        : null;
 
     HintsBuffer buffer = psiFile != null ? InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor) : null;
-    var placeholders = CodeVisionHost.getInstance(myProject).collectPlaceholders(editor);
+    var placeholders = CodeVisionHost.getInstance(myProject).collectPlaceholders(editor, psiFile);
 
     return () -> {
       baseResult.run();

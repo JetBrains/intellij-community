@@ -2,10 +2,7 @@
 
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
-import com.intellij.codeInsight.codeVision.CodeVisionEntry
-import com.intellij.codeInsight.codeVision.CodeVisionProvider
-import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
+import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
@@ -16,8 +13,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -36,7 +31,6 @@ import com.intellij.psi.*
 import com.intellij.util.application
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
-import java.awt.Color
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
@@ -107,6 +101,21 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       throw e
     }
     return ranges
+  }
+
+  override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
+    if (psiFile == null) return null
+    val language = psiFile.language
+    val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
+    return object: BypassBasedPlaceholderCollector {
+      override fun collectPlaceholders(element: PsiElement, editor: Editor): List<TextRange> {
+        val ranges = ArrayList<TextRange>()
+        if (visionLanguageContext.isAccepted(element)) {
+          ranges.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element))
+        }
+        return ranges
+      }
+    }
   }
 
   override val name: String
