@@ -1188,7 +1188,9 @@
         <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction">
           <abbreviation value="laf"/>
         </action>
-        <action id="EnableMetalRendering" internal="true" class="com.intellij.ui.EnableMetalRenderingAction"/>
+        <action id="EnableMetalRendering" internal="true" class="com.intellij.ui.EnableMetalRenderingAction">
+          <abbreviation value="metal"/>
+        </action>
         <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction"/>
         <separator/>
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"/>
