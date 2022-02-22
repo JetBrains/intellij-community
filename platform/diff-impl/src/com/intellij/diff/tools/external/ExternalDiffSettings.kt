@@ -5,6 +5,8 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.*
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.NonNls
 
@@ -87,27 +89,6 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
 
   private fun nonNullString(initialValue: String = "") = property(initialValue) { it == initialValue }
 
-  private fun migrateOldSettings(state: ExternalDiffSettings) {
-    if (!state.isSettingsMigrated) {
-      // load old settings
-      state.isExternalToolsEnabled = isDiffEnabled
-      val oldDiffTool = ExternalTool(state.diffExePath, state.diffExePath, state.diffParameters,
-                                     false, ExternalToolGroup.DIFF_TOOL)
-      val oldMergeTool = ExternalTool(state.mergeExePath, state.mergeExePath, state.mergeParameters,
-                                      state.isMergeTrustExitCode, ExternalToolGroup.MERGE_TOOL)
-      state.externalTools[ExternalToolGroup.DIFF_TOOL] = listOf(oldDiffTool)
-      state.externalTools[ExternalToolGroup.MERGE_TOOL] = listOf(oldMergeTool)
-
-      // save old settings
-      state.defaultToolConfiguration = defaultToolConfiguration.apply {
-        if (state.isDiffEnabled && diffExePath.isNotEmpty()) diffToolName = oldDiffTool.name
-        if (state.isMergeEnabled && mergeExePath.isNotEmpty()) mergeToolName = oldMergeTool.name
-      }
-
-      state.isSettingsMigrated = true
-    }
-  }
-
   companion object {
     @JvmStatic
     val instance: ExternalDiffSettings
@@ -159,6 +140,34 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
 
     private fun findToolConfiguration(fileType: FileType): ExternalToolConfiguration? = instance.externalToolsConfiguration.find {
       fileTypeManager.findFileTypeByName(it.fileTypeName) == fileType
+    }
+
+    private fun migrateOldSettings(state: ExternalDiffSettings) {
+      if (!state.isSettingsMigrated) {
+        // load old settings
+        state.isExternalToolsEnabled = state.isDiffEnabled
+
+        // save old settings
+        state.defaultToolConfiguration = ExternalToolConfiguration().apply {
+          if (state.isDiffEnabled && state.diffExePath.isNotEmpty()) {
+            val oldDiffTool = ExternalTool(StringUtil.capitalize(PathUtilRt.getFileName(state.diffExePath)),
+                                           state.diffExePath, state.diffParameters,
+                                           false, ExternalToolGroup.DIFF_TOOL)
+            state.externalTools[ExternalToolGroup.DIFF_TOOL] = listOf(oldDiffTool)
+            diffToolName = oldDiffTool.name
+          }
+
+          if (state.isMergeEnabled && state.mergeExePath.isNotEmpty()) {
+            val oldMergeTool = ExternalTool(StringUtil.capitalize(PathUtilRt.getFileName(state.mergeExePath)),
+                                            state.mergeExePath, state.mergeParameters,
+                                            state.isMergeTrustExitCode, ExternalToolGroup.MERGE_TOOL)
+            state.externalTools[ExternalToolGroup.MERGE_TOOL] = listOf(oldMergeTool)
+            mergeToolName = oldMergeTool.name
+          }
+        }
+
+        state.isSettingsMigrated = true
+      }
     }
   }
 }
