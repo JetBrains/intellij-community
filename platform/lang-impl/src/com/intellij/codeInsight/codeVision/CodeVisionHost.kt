@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.rd.createNestedDisposable
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -48,6 +49,21 @@ open class CodeVisionHost(val project: Project) {
     const val defaultVisibleLenses = 5
     const val settingsLensProviderId = "!Settings"
     const val moreLensProviderId = "!More"
+
+    /**
+     * Flag which is enabled when executed test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
+     * Code vision can access different files during its work (and it is expected, e.g. references). So it is better to disable
+     * particular implementations of code vision to make sure that other tests' performance is not hurt.
+     */
+    val isCodeVisionTestKey: Key<Boolean> = Key.create("code.vision.test")
+
+    /**
+     * Returns true iff we are in test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
+     */
+    @JvmStatic
+    fun isCodeLensTest(editor: Editor) : Boolean {
+      return editor.getUserData(isCodeVisionTestKey) == true
+    }
   }
 
   protected val codeVisionLifetime = project.createLifetime()
