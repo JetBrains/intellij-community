@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,6 +114,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   public static boolean hasSwingPopup(JComponent component) {
     return component.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) == null;
+  }
+
+  @ApiStatus.Internal
+  public ComboPopup getPopup() {
+    return popup;
   }
 
   @Override
