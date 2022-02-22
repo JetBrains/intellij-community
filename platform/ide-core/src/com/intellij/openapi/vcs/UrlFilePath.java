@@ -26,6 +26,4 @@ public class UrlFilePath extends LocalFilePath {
   protected @NonNls String getPath(@NotNull VirtualFile cachedFile) {
     return cachedFile.getUrl();
   }
-
-
 }
