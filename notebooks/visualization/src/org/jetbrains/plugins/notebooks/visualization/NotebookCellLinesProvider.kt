@@ -22,6 +22,7 @@ open class NonIncrementalCellLinesProvider protected constructor(private val int
   override fun create(document: Document): NotebookCellLines =
     NonIncrementalCellLines.get(document, intervalsGenerator)
 
+  /* If NotebookCellLines doesn't exist, parse document once and don't create NotebookCellLines instance */
   override fun makeIntervals(document: Document): List<NotebookCellLines.Interval> =
     NonIncrementalCellLines.getOrNull(document)?.intervals ?: intervalsGenerator.makeIntervals(document)
 }
@@ -33,6 +34,6 @@ internal fun getLanguage(editor: Editor): Language? =
     ?.getPsiFile(editor.document)
     ?.language
 
-internal val Editor.notebookCellLinesProvider: NotebookCellLinesProvider?
+val Editor.notebookCellLinesProvider: NotebookCellLinesProvider?
   get() = getLanguage(this)
     ?.let(NotebookCellLinesProvider::forLanguage)
