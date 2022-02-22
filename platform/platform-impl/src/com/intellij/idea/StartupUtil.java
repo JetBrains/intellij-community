@@ -81,6 +81,9 @@ public final class StartupUtil {
   @SuppressWarnings("StaticNonFinalField")
   public static BiFunction<String, String[], Integer> LISTENER = (integer, s) -> Main.ACTIVATE_NOT_INITIALIZED;
 
+  @SuppressWarnings("StaticNonFinalField")
+  public static Activity startupStart;
+
   private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
   private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
@@ -94,9 +97,6 @@ public final class StartupUtil {
 
   private StartupUtil() { }
 
-  @SuppressWarnings("StaticNonFinalField")
-  public static Activity startupStart;
-
   /** Called via reflection from {@link Main#bootstrap}. */
   public static void start(@NotNull String mainClass,
                            boolean isHeadless,
@@ -106,7 +106,7 @@ public final class StartupUtil {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
     startupStart = StartUpMeasurer.startActivity("app initialization preparation");
 
-    // required if unified class loader is not used
+    // required if the unified class loader is not used
     if (setFlagsAgain) {
       Main.setFlags(args);
     }
@@ -162,8 +162,8 @@ public final class StartupUtil {
     Path systemPath = canonicalPath(PathManager.getSystemPath());
 
     activity = activity.endAndStart("system dirs locking");
-    // This needs to happen before UI initialization - if we're not going to show ui (in case another IDE instance is already running),
-    // we shouldn't initialize AWT toolkit. On macOS the latter might lead to unnecessary focus stealing and space switching.
+    // This needs to happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
+    // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
     boolean configImportNeeded = lockSystemDirs(!isHeadless, configPath, systemPath, args);
 
     activity = activity.endAndStart("LaF init scheduling");
@@ -171,8 +171,8 @@ public final class StartupUtil {
     // LookAndFeel type is not specified to avoid class loading
     CompletableFuture<Object/*LookAndFeel*/> initUiFuture = scheduleInitUi(busyThread, isHeadless);
 
-    // splash instance must be not created before base LaF is created,
-    // it is important on Linux, where GTK LaF must be initialized (to properly setup scale factor).
+    // A splash instance must not be created before base LaF is created.
+    // It is important on Linux, where GTK LaF must be initialized (to properly setup scale factor).
     // https://youtrack.jetbrains.com/issue/IDEA-286544
     CompletableFuture<Runnable> splashTaskFuture = isHeadless || Main.isLightEdit() ? null : initUiFuture.thenApplyAsync(__ -> {
       return prepareSplash(args);
@@ -192,7 +192,7 @@ public final class StartupUtil {
       });
 
       if (splashTaskFuture != null) {
-        // do not use method reference here for invokeLater
+        // please do not use a method-reference here
         showEuaIfNeededFuture.thenAcceptBothAsync(splashTaskFuture, (__, runnable) -> {
           runnable.run();
         }, it -> EventQueue.invokeLater(it));
@@ -209,7 +209,7 @@ public final class StartupUtil {
     Logger log = setupLogger();
     activity.end();
 
-    // plugins cannot be loaded when config import is needed, because plugins may be added after importing
+    // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     Java11Shim.INSTANCE = new Java11ShimImpl();
     if (!configImportNeeded) {
       ZipFilePool.POOL = new ZipFilePoolImpl();
@@ -224,7 +224,7 @@ public final class StartupUtil {
       setupSystemLibraries();
       loadSystemLibraries(log);
 
-      // JNA and Swing is used - invoke only after both are loaded
+      // JNA and Swing are used; invoke only after both are loaded
       if (!isHeadless && SystemInfoRt.isMac) {
         initUiFuture.thenRunAsync(() -> {
           Activity subActivity = StartUpMeasurer.startActivity("mac app init");
@@ -504,7 +504,7 @@ public final class StartupUtil {
         // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
         baseLaF.initialize();
 
-        // to compute system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
+        // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
         // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
         activity = activity.endAndStart("system font data initialization");
 
@@ -536,13 +536,13 @@ public final class StartupUtil {
 
         if (!isHeadless) {
           ForkJoinPool.commonPool().execute(() -> {
-            // as one FJ task - execute one by one to make a room for a more important tasks
+            // as one FJ task - execute one by one to make room for more important tasks
             updateFrameClassAndWindowIcon();
             loadSystemFontsAndDnDCursors();
           });
         }
         return baseLaF;
-      }, it -> EventQueue.invokeLater(it) /* don't use a method reference here (`EventQueue` class must be loaded on demand) */);
+      }, it -> EventQueue.invokeLater(it) /* do not use a method-reference here (`EventQueue` class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {
       return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(() -> {
@@ -572,7 +572,7 @@ public final class StartupUtil {
 
     Activity activity = StartUpMeasurer.startActivity("atk wrapper blocking");
     if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
-      // Replace AtkWrapper with a dummy Object. It'll be instantiated & garbage collected right away, a NOP.
+      // Replacing `AtkWrapper` with a dummy `Object`. It'll be instantiated & garbage collected right away, a NOP.
       System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
       Logger.getInstance(StartupUiUtil.class).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
@@ -581,9 +581,9 @@ public final class StartupUtil {
 
   private static void loadSystemFontsAndDnDCursors() {
     Activity activity = StartUpMeasurer.startActivity("system fonts loading");
-    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
+    // this forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
     new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
-    // caches available font family names (for the default locale), to speed up editor reopening (`ComplementaryFontsRegistry` initialization)
+    // this caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
     GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
 
     // preload cursors used by drag-n-drop AWT subsystem

@@ -71,10 +71,14 @@ import static com.intellij.openapi.util.Pair.pair;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
-  private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
-  private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
   public static final String CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY = "intellij.config.imported.from.other.product";
   public static final String CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY = "intellij.config.imported.from.previous.version";
+  public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
+  public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
+
+  private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
+  private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
+  private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
   private static final String CONFIG = "config";
   private static final String[] OPTIONS = {
@@ -86,14 +90,8 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
-
-  private static final Set<String> SESSION_FILES = Set.of(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN, BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
-
-  public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)*)");
-  private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
-
-  // constant is used instead of util method to ensure that ConfigImportHelper class is not loaded by StartupUtil
-  public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
+  private static final Set<String> SESSION_FILES =
+    Set.of(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN, BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
 
   private ConfigImportHelper() { }
 
@@ -117,7 +115,7 @@ public final class ConfigImportHelper {
 
     ConfigImportSettings settings = findCustomConfigImportSettings();
 
-    String pathSelectorOfOtherIde = (settings != null ? settings.getProductToImportFrom(args) : null);
+    String pathSelectorOfOtherIde = settings != null ? settings.getProductToImportFrom(args) : null;
     ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, pathSelectorOfOtherIde, settings);
     File tempBackup = null;
     boolean vmOptionFileChanged = false;
@@ -193,11 +191,9 @@ public final class ConfigImportHelper {
           importScenarioStatistics = IMPORTED_FROM_PREVIOUS_VERSION;
         }
 
-        if (guessedOldConfigDirs.fromSameProduct) {
-          System.setProperty(CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY, oldConfigDir.toString());
-        } else {
-          System.setProperty(CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY, oldConfigDir.toString());
-        }
+        System.setProperty(
+          guessedOldConfigDirs.fromSameProduct ? CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY : CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY,
+          oldConfigDir.toString());
 
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
@@ -374,7 +370,7 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * Checks that current user is a "new" one (i.e. this is the very first launch of the IDE on this machine).
+   * Checks that the current user is a "new" one (i.e. this is the very first launch of the IDE on this machine).
    */
   public static boolean isNewUser() {
     return isFirstSession() && !isConfigImported();
@@ -602,7 +598,7 @@ public final class ConfigImportHelper {
       files.add(ideHome.resolve(BIN + '/' + scriptName + ".sh"));
     }
 
-    // explicitly specified directory
+    // an explicitly specified directory
     for (Path file : files) {
       if (Files.isRegularFile(file)) {
         String candidatePath = PathManager.substituteVars(getPropertyFromFile(file, propertyName), ideHome.toString());
@@ -993,7 +989,7 @@ public final class ConfigImportHelper {
 
   static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
     String nameWithVersion = getNameWithVersion(oldConfigDir);
-    Matcher m = Pattern.compile("\\.?[^\\d]+(\\d+\\.\\d+)?").matcher(nameWithVersion);
+    Matcher m = Pattern.compile("\\.?\\D+(\\d+\\.\\d+)?").matcher(nameWithVersion);
     if (m.matches() && VersionComparatorUtil.compare("2019.1", m.group(1)) >= 0) {
       String keymapFileSpec = StoreUtilKt.getDefaultStoragePathSpec(KeymapManagerImpl.class);
       if (keymapFileSpec != null) {
@@ -1016,6 +1012,7 @@ public final class ConfigImportHelper {
   }
 
   /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version or duplicate/undercut platform ones. */
+  @SuppressWarnings("SpellCheckingInspection")
   private static void updateVMOptions(Path newConfigDir, Logger log) {
     Path vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
     if (Files.exists(vmOptionsFile)) {
@@ -1057,7 +1054,7 @@ public final class ConfigImportHelper {
       return Files.readAllLines(platformVmOptionsFile, VMOptions.getFileCharset());
     }
     catch (IOException e) {
-      // should not prevent a user's VM options file from being processed
+      // exceptions should not prevent a user's VM options file from being processed
       log.warn("Cannot read platform VM options file " + platformVmOptionsFile, e);
       return List.of();
     }
