@@ -27,16 +27,14 @@ import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
+import com.intellij.util.PathUtilRt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JList
-import javax.swing.JTree
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.tree.DefaultMutableTreeNode
@@ -236,7 +234,7 @@ internal class ExternalToolsTreePanel(
       textField.document.addDocumentListener(object : DocumentListener {
         override fun insertUpdate(event: DocumentEvent) {
           if (isAutocompleteToolName) {
-            val guessToolName = StringUtil.capitalize(text.split("/").last())
+            val guessToolName = StringUtil.capitalize(PathUtilRt.getFileName(text))
             toolNameField.text = guessToolName
           }
         }
