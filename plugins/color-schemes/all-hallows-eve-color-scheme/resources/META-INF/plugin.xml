@@ -3,6 +3,9 @@
   <id>com.intellij.plugins.all_hallows_eve.colorscheme</id>
   <vendor>JetBrains</vendor>
   <category>UI</category>
+  <description>
+    All Hallow's Eve editor color scheme for all IntelliJ-based IDEs.
+  </description>
   <depends>com.intellij.modules.lang</depends>
   <extensions defaultExtensionNs="com.intellij">
     <bundledColorScheme path="/colorSchemes/all_hallows_eve"/>
