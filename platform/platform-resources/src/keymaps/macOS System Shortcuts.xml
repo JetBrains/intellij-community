@@ -453,7 +453,7 @@
     <keyboard-shortcut first-keystroke="shift meta alt DOWN"/>
   </action>
 
-  <action id="SETextAction">
+  <action id="TextSearchAction">
     <keyboard-shortcut first-keystroke="shift ctrl alt E"/>
   </action>
 </keymap>

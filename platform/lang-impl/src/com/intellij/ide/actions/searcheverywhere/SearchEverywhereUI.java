@@ -4,7 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
-import com.intellij.find.impl.SETextRightActionAction;
+import com.intellij.find.impl.TextSearchRightActionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -1433,9 +1433,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         @Override
         public Icon getIcon(boolean hovered) {
           Presentation presentation = action.getTemplatePresentation();
-          if (!(action instanceof SETextRightActionAction)) return presentation.getIcon();
+          if (!(action instanceof TextSearchRightActionAction)) return presentation.getIcon();
 
-          if (((SETextRightActionAction)action).isSelected()) {
+          if (((TextSearchRightActionAction)action).isSelected()) {
             return presentation.getSelectedIcon();
           }
           else if (hovered) {

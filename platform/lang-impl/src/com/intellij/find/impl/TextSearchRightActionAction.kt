@@ -11,13 +11,13 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import javax.swing.Icon
 import javax.swing.JComponent
 
-sealed class SETextRightActionAction(message: String,
-                                     icon: Icon,
-                                     hoveredIcon: Icon,
-                                     selectedIcon: Icon,
-                                     private var state: AtomicBooleanProperty,
-                                     private val callback: Runnable,
-                                     private val myTooltipLink: TooltipLinkProvider.TooltipLink? = null) :
+sealed class TextSearchRightActionAction(message: String,
+                                         icon: Icon,
+                                         hoveredIcon: Icon,
+                                         selectedIcon: Icon,
+                                         private var state: AtomicBooleanProperty,
+                                         private val callback: Runnable,
+                                         private val myTooltipLink: TooltipLinkProvider.TooltipLink? = null) :
   DumbAwareToggleAction(FindBundle.message(message), null, icon), TooltipLinkProvider, TooltipDescriptionProvider {
   init {
     templatePresentation.hoveredIcon = hoveredIcon
@@ -34,13 +34,13 @@ sealed class SETextRightActionAction(message: String,
     callback.run()
   }
 
-  class CaseSensitiveAction(property: AtomicBooleanProperty, onChanged: Runnable) : SETextRightActionAction(
+  class CaseSensitiveAction(property: AtomicBooleanProperty, onChanged: Runnable) : TextSearchRightActionAction(
     "find.popup.case.sensitive", Actions.MatchCase, Actions.MatchCaseHovered, Actions.MatchCaseSelected, property, onChanged)
 
-  class WordAction(property: AtomicBooleanProperty, onChanged: Runnable) : SETextRightActionAction(
+  class WordAction(property: AtomicBooleanProperty, onChanged: Runnable) : TextSearchRightActionAction(
     "find.whole.words", Actions.Words, Actions.WordsHovered, Actions.WordsSelected, property, onChanged)
 
-  class RegexpAction(property: AtomicBooleanProperty, onChanged: Runnable) : SETextRightActionAction(
+  class RegexpAction(property: AtomicBooleanProperty, onChanged: Runnable) : TextSearchRightActionAction(
     "find.regex", Actions.Regex, Actions.RegexHovered, Actions.RegexSelected, property, onChanged,
     TooltipLinkProvider.TooltipLink(FindBundle.message("find.regex.help.link"), RegExHelpPopup.createRegExLinkRunnable(null)))
 }
