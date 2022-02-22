@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.java.JavaBundle;
@@ -71,6 +71,10 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         final String oldName = psiPackage.getQualifiedName();
         final String newName = super.getNewName();
         if (!Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {
+          setToSearchInComments(psiPackage, isSearchInComments());
+          if (isSearchForTextOccurrencesEnabled()) {
+            setToSearchForTextOccurrences(psiPackage, isSearchInNonJavaFiles());
+          }
           invokeRefactoring(createRenameMoveProcessor(newName, psiPackage, isSearchInComments(), isSearchInNonJavaFiles()));
         } else {
           super.doAction();
