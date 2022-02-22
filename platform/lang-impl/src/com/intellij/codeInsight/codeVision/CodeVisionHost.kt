@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -61,7 +62,7 @@ open class CodeVisionHost(val project: Project) {
      * Returns true iff we are in test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
      */
     @JvmStatic
-    fun isCodeLensTest(editor: Editor) : Boolean {
+    fun isCodeLensTest(editor: Editor): Boolean {
       return editor.getUserData(isCodeVisionTestKey) == true
     }
   }
@@ -86,51 +87,55 @@ open class CodeVisionHost(val project: Project) {
 
   init {
     lifeSettingModel.isEnabledWithRegistry.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
-      val liveEditorList = ProjectEditorLiveList(enableCodeVisionLifetime, project)
-      liveEditorList.editorList.view(enableCodeVisionLifetime) { editorLifetime, editor ->
-        if (isEditorApplicable(editor))
-          subscribeForFrontendEditor(editorLifetime, editor)
+      ApplicationManager.getApplication().invokeLater {
+        val liveEditorList = ProjectEditorLiveList(enableCodeVisionLifetime, project)
+        liveEditorList.editorList.view(enableCodeVisionLifetime) { editorLifetime, editor ->
+          if (isEditorApplicable(editor))
+            subscribeForFrontendEditor(editorLifetime, editor)
+        }
+
+        val viewService = ServiceManager.getService(project, CodeVisionView::class.java)
+        viewService.setPerAnchorLimits(
+          CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+
+
+        invalidateProviderSignal.advise(enableCodeVisionLifetime) { invalidateSignal ->
+          if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
+            viewService.setPerAnchorLimits(
+              CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+        }
+
+
+        lifeSettingModel.visibleMetricsAboveDeclarationCount.advise(codeVisionLifetime) {
+          invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
+        }
+
+        lifeSettingModel.visibleMetricsNextToDeclarationCount.advise(codeVisionLifetime) {
+          invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
+        }
+
+
+        rearrangeProviders()
+
+        project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
+          .subscribe(DynamicPluginListener.TOPIC,
+                     object : DynamicPluginListener {
+                       private fun recollectAndRearrangeProviders() {
+                         providers = CodeVisionProviderFactory.createAllProviders(
+                           project)
+                         rearrangeProviders()
+                       }
+
+                       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                         recollectAndRearrangeProviders()
+                       }
+
+                       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
+                                                   isUpdate: Boolean) {
+                         recollectAndRearrangeProviders()
+                       }
+                     })
       }
-
-      val viewService = ServiceManager.getService(project, CodeVisionView::class.java)
-      viewService.setPerAnchorLimits(
-        CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
-
-
-      invalidateProviderSignal.advise(enableCodeVisionLifetime) { invalidateSignal ->
-        if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
-          viewService.setPerAnchorLimits(
-            CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
-      }
-
-      lifeSettingModel.visibleMetricsAboveDeclarationCount.advise(codeVisionLifetime) {
-        invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
-      }
-
-      lifeSettingModel.visibleMetricsNextToDeclarationCount.advise(codeVisionLifetime) {
-        invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
-      }
-
-      rearrangeProviders()
-
-      project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
-        .subscribe(DynamicPluginListener.TOPIC,
-                   object : DynamicPluginListener {
-                     private fun recollectAndRearrangeProviders() {
-                       providers = CodeVisionProviderFactory.createAllProviders(
-                         project)
-                       rearrangeProviders()
-                     }
-
-                     override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-                       recollectAndRearrangeProviders()
-                     }
-
-                     override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
-                                                 isUpdate: Boolean) {
-                       recollectAndRearrangeProviders()
-                     }
-                   })
     }
   }
 
@@ -316,7 +321,7 @@ open class CodeVisionHost(val project: Project) {
           }
           return@forEach
         }
-        if(!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])){
+        if (!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) {
           everyProviderReadyToUpdate = false
           return@forEach
         }
@@ -325,12 +330,12 @@ open class CodeVisionHost(val project: Project) {
         results.addAll(result)
       }
 
-      if(!everyProviderReadyToUpdate){
+      if (!everyProviderReadyToUpdate) {
         editor.lensContextOrThrow.discardPending()
         return@executeOnPooledThread
       }
 
-      if(providerWhoWantToUpdate.isEmpty()) {
+      if (providerWhoWantToUpdate.isEmpty()) {
         editor.lensContextOrThrow.discardPending()
         return@executeOnPooledThread
       }
@@ -367,8 +372,8 @@ open class CodeVisionHost(val project: Project) {
     return indicator
   }
 
-  private fun openCodeVisionSettings(){
-    InlayHintsConfigurable.showSettingsDialogForLanguage(project, Language.ANY){
+  private fun openCodeVisionSettings() {
+    InlayHintsConfigurable.showSettingsDialogForLanguage(project, Language.ANY) {
       return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
     }
   }
