@@ -19,7 +19,7 @@ import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CACHE_MAPPER_BRANCHING
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildCachedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildSerializedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.*
@@ -58,12 +58,11 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
     private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KotlinMPPGradleModel? {
         try {
             val projectTargets = project.getTargets() ?: return null
-            val masterCompilerArgumentsCacheMapper = builderContext?.getData(CACHE_MAPPER_BRANCHING) ?: return null
-            val detachableCompilerArgumentsCacheMapper = masterCompilerArgumentsCacheMapper.branchOffDetachable()
+            val argsMapper = CompilerArgumentsCacheMapperImpl()
 
             val dependencyResolver = DependencyResolverImpl(project, false, true, SourceSetCachedFinder(project))
             val dependencyMapper = KotlinDependencyMapper()
-            val importingContext = MultiplatformModelImportingContextImpl(project, detachableCompilerArgumentsCacheMapper)
+            val importingContext = MultiplatformModelImportingContextImpl(project, argsMapper)
 
             importingContext.initializeSourceSets(buildSourceSets(importingContext, dependencyResolver, dependencyMapper) ?: return null)
 
@@ -85,7 +84,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = dependencyMapper.toDependencyMap(),
-                partialCacheAware = detachableCompilerArgumentsCacheMapper.detachCacheAware()
+                cacheAware = argsMapper
             )
             return model
         } catch (throwable: Throwable) {

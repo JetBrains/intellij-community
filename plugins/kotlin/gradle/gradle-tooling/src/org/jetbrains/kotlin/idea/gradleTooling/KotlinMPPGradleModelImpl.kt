@@ -280,7 +280,7 @@ data class KotlinMPPGradleModelImpl(
     override val extraFeatures: ExtraFeatures,
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
-    override val partialCacheAware: CompilerArgumentsCacheAware,
+    override val cacheAware: CompilerArgumentsCacheAware,
 ) : KotlinMPPGradleModel {
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
         sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
@@ -299,9 +299,18 @@ data class KotlinMPPGradleModelImpl(
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
-        partialCacheAware = CompilerArgumentsCacheAwareImpl(mppModel.partialCacheAware)
-
+        cacheAware = CompilerArgumentsCacheAwareImpl(mppModel.cacheAware)
     )
+
+    @Deprecated(
+        "Use KotlinGradleModel#cacheAware instead", level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("KotlinMPPGradleModel#cacheAware")
+    )
+    @Suppress("OverridingDeprecatedMember")
+    override val partialCacheAware: CompilerArgumentsCacheAware
+        get() = throw UnsupportedOperationException("Not yet implemented")
+
+
 }
 
 class KotlinPlatformContainerImpl() : KotlinPlatformContainer {
