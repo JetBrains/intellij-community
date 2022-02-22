@@ -162,6 +162,11 @@
       }
     },
 
+    "Counter": {
+      "background": "Grey8",
+      "foreground": "#000000"
+    },
+
     "FileColor": {
       "Yellow": "Yellow1",
       "Green": "Green1"
@@ -219,11 +224,12 @@
     },
 
     "Notification": {
-      "background": "Grey2",
-      "borderColor": "Grey3",
+      "background": "Grey3",
+      "borderColor": "Grey4",
       "MoreButton": {
         "background": "Grey2",
-        "innerBorderColor": "Grey4"
+        "innerBorderColor": "Grey4",
+        "foreground": "Grey9"
       }
     },
 
@@ -235,10 +241,13 @@
 
     "OnePixelDivider.background": "Grey3",
 
+    "Plugins.SectionHeader.background": "Grey3",
+
     "Popup": {
       "borderWidth": 1,
       "paintBorder": true,
       "borderColor": "Grey3",
+      "inactiveBorderColor": "Grey3",
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey8",
@@ -294,6 +303,12 @@
       "endBackground": "Yellow5"
     },
 
+    "SpeedSearch": {
+      "background": "Grey1",
+      "borderColor": "Grey4",
+      "errorForeground": "Red6"
+    },
+
 
     "StatusBar": {
       "Widget": {
@@ -319,6 +334,15 @@
       "contentAreaColor": "Grey1",
       "focusColor": "Blue2"
     },
+
+    "Table.gridColor": "Grey1",
+
+    "TableHeader": {
+      "bottomSeparatorColor": "Grey1",
+      "separatorColor": "Grey1"
+    },
+
+    "Tag.background": "Grey3",
 
     "ToolbarComboWidget.borderInsets": "3,8,3,4",
 
@@ -363,7 +387,10 @@
       "background": "Grey2"
     },
 
-    "Tree.rowHeight": "24",
+    "Tree": {
+      "rowHeight": 24,
+      "hash": "Grey5"
+    },
 
     "TitlePane.Button.preferredSize": "36,40",
 
@@ -374,7 +401,9 @@
         "hoveredBackground": "#FFFFFFED"
       },
       "FileHistory.Commit.selectedBranchBackground": "#1c2433"
-    }
+    },
+
+    "WelcomeScreen.Details.background": "Grey1"
   },
 
   "icons": {
