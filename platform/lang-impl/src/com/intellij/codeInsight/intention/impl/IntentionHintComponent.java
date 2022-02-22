@@ -272,21 +272,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     closePopup();
   }
 
-  @Nullable
-  @TestOnly
-  public IntentionAction getAction(int index) {
-    IntentionPopup that = myPopup;
-    if (that.myListPopup == null || that.myListPopup.isDisposed()) {
-      return null;
-    }
-    List<IntentionActionWithTextCaching> values = that.myCachedIntentions.getAllActions();
-    if (values.size() <= index) {
-      return null;
-    }
-    return values.get(index).getAction();
-  }
-
-
   private void showIntentionHintImpl(boolean delay) {
     int offset = myEditor.getCaretModel().getOffset();
 

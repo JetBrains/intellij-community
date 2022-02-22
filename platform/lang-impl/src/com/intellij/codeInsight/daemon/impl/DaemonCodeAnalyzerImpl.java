@@ -729,7 +729,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
 
     @Override
-    public boolean process(HighlightInfo info) {
+    public boolean process(@NotNull HighlightInfo info) {
       if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY || info.type == HighlightInfoType.TODO) {
         return true;
       }
@@ -804,7 +804,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       return state;
     }
 
-    List<String> array = new SmartList<>();
+    List<String> array = new ArrayList<>(myDisabledHintsFiles.size());
     for (VirtualFile file : myDisabledHintsFiles) {
       if (file.isValid()) {
         array.add(file.getUrl());
@@ -986,7 +986,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @NotNull
-  private Map<Document, List<FileEditor>> createPreferredFileEditorMap(Collection<? extends FileEditor> editors) {
+  private Map<Document, List<FileEditor>> createPreferredFileEditorMap(@NotNull Collection<? extends FileEditor> editors) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Map<Document, List<FileEditor>> result = new HashMap<>();
     MultiMap<Document, FileEditor> map =
