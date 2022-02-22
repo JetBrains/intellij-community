@@ -163,7 +163,7 @@
                 factoryClass="com.intellij.openapi.vcs.changes.ui.CommitToolWindowFactory"/>
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
-                factoryClass="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowFactory"/>
+                factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>
 
     <changesViewContent tabName="Repository"
                         className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"

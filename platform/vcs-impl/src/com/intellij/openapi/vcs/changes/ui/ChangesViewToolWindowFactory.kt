@@ -15,7 +15,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.util.ui.StatusText
 
-private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
+private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   override fun init(window: ToolWindow) {
     super.init(window)
 
@@ -50,7 +50,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     super.init(window)
 
     window.setAdditionalGearActions(ActionManager.getInstance().getAction("CommitView.GearActions") as ActionGroup)
-    window.hideIdLabelIfNotEmptyState()
+    hideIdLabelIfNotEmptyState(window)
   }
 
   override fun setEmptyState(project: Project, state: StatusText) {
