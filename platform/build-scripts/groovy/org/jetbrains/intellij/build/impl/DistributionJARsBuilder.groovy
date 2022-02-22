@@ -815,7 +815,6 @@ final class DistributionJARsBuilder {
     }
   }
 
-  // compressPluginArchive also means that blockmap for plugin archive will be built
   @Nullable
   ForkJoinTask<List<DistributionFileEntry>> createBuildNonBundledPluginsTask(@NotNull Set<PluginLayout> pluginsToPublish,
                                                                              boolean compressPluginArchive,
