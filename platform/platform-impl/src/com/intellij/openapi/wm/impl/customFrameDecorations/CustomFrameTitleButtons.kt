@@ -128,8 +128,8 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   }
 
   protected fun addComponent(component: JComponent) {
-    component.preferredSize = UIManager.getDimension("TitlePane.Button.preferredSize")
-                              ?: Dimension((47 * UISettings.defFontScale).toInt(), (28 * UISettings.defFontScale).toInt())
+    val size = UIManager.getDimension("TitlePane.Button.preferredSize") ?: Dimension(47, 28)
+    component.preferredSize = Dimension((size.width * UISettings.defFontScale).toInt(), (size.height * UISettings.defFontScale).toInt())
     panel.add(component, "top")
   }
 
