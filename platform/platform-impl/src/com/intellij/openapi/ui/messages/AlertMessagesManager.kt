@@ -198,7 +198,7 @@ private class AlertDialog(project: Project?,
     if (SystemInfoRt.isMac) {
       setInitialLocationCallback {
         val rootPane: JRootPane? = SwingUtilities.getRootPane(window.parent) ?: SwingUtilities.getRootPane(window.owner)
-        if (rootPane == null) {
+        if (rootPane == null || !rootPane.isShowing) {
           return@setInitialLocationCallback null
         }
         val location = rootPane.locationOnScreen
