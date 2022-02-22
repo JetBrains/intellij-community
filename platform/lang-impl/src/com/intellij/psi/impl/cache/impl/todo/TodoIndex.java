@@ -10,7 +10,7 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.*;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,9 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  */
 public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<TodoIndexEntry, Integer>> {
-  @NonNls
+  /** @deprecated Use {@link com.intellij.psi.impl.cache.TodoCacheManager} methods instead **/
+  @Deprecated
+  @ApiStatus.Internal
   public static final ID<Integer, Map<TodoIndexEntry, Integer>> NAME = ID.create("TodoIndex");
 
   public TodoIndex() {

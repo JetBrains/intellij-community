@@ -1,14 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.EditorHighlighterCache;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
@@ -64,16 +63,6 @@ public final class PlatformIdTableBuilding {
     return fileType instanceof CustomSyntaxTableFileType ? GENERAL_TODO_LISTENER : null;
   }
 
-  public static boolean checkCanUseCachedEditorHighlighter(final CharSequence chars, final EditorHighlighter editorHighlighter) {
-    assert editorHighlighter instanceof LexerEditorHighlighter;
-    final boolean b = ((LexerEditorHighlighter)editorHighlighter).checkContentIsEqualTo(chars);
-    if (!b) {
-      final Logger logger = Logger.getInstance(PlatformIdTableBuilding.class);
-      logger.warn("Unexpected mismatch of editor highlighter content with indexing content");
-    }
-    return b;
-  }
-
   private static class TokenSetTodoIndexer extends VersionedTodoIndexer {
     final TokenSet myCommentTokens;
 
@@ -93,7 +82,7 @@ public final class PlatformIdTableBuilding {
       EditorHighlighter highlighter;
 
       final EditorHighlighter editorHighlighter = inputData.getUserData(EDITOR_HIGHLIGHTER);
-      if (editorHighlighter != null && checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
+      if (editorHighlighter != null && EditorHighlighterCache.checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
         highlighter = editorHighlighter;
       }
       else {
