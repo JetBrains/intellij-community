@@ -9,10 +9,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.ColoredTableCellRenderer
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -190,12 +187,15 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
 
     private val fileTypeField = ComboBox(fileTypes.toTypedArray()).apply {
       renderer = FileTypeCellRenderer()
+      ComboboxSpeedSearch.installSpeedSearch(this) { it }
     }
     private val diffToolField = ComboBox(externalDiffTools.toTypedArray()).apply {
       renderer = ExternalToolCellRenderer()
+      ComboboxSpeedSearch.installSpeedSearch(this) { it.name }
     }
     private val mergeToolField = ComboBox(externalMergeTools.toTypedArray()).apply {
       renderer = ExternalToolCellRenderer()
+      ComboboxSpeedSearch.installSpeedSearch(this) { it.name }
     }
 
     private lateinit var fileTypeRow: Row
