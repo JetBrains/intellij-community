@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -83,7 +83,12 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   }
 
   private void debug(@NotNull String message) {
-    LOG.debug("[" + myName + "] " + message);
+    LOG.debug(formMessage(message));
+  }
+
+  @NotNull
+  private String formMessage(@NotNull String message) {
+    return "[" + myName + "] " + message;
   }
 
   private void cancelTask(@NotNull SingleTask t) {
@@ -203,7 +208,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         LOG.debug(e);
       }
       catch (TimeoutException e) {
-        if (longTimeOut) LOG.warn("Wait time out ", e);
+        if (longTimeOut) LOG.warn(formMessage("Wait time out "), e);
       }
     }
   }
