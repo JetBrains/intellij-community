@@ -132,15 +132,10 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return myAttrGetter.apply(file);
   }
 
-  public @Nullable FileAttributes getCachedAttributes(@NotNull VirtualFile file) {
-    int separatorIndex = file.getPath().indexOf("!/");
-    VirtualFile archiveVirtualFile;
-    if (separatorIndex < 0) {
-      archiveVirtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + file.getPath());
-    } else {
-      archiveVirtualFile = VfsUtilCore.getVirtualFileForJar(file);
-    }
-    return getHandler(file).getCachedAttributes(archiveVirtualFile, getRelativePath(file));
+  public @NotNull FileAttributes getDefaultAttributes(@NotNull VirtualFile file) {
+    // Hack for handler initialization to have a caching e.g. JarFileSystemImpl.getHandler
+    getHandler(file);
+    return ArchiveHandler.DIRECTORY_ATTRIBUTES;
   }
 
 
