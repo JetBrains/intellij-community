@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
+import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
@@ -51,22 +52,17 @@ class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
     }
   }
 
-  override fun collectPlaceholders(editor: Editor): List<TextRange> {
-    val document = editor.document
-    val project = editor.project ?: return emptyList()
-    val psiDocumentManager = PsiDocumentManager.getInstance(project)
-    val psiFile = psiDocumentManager.getPsiFile(document)
-    if (psiFile !is PsiJavaFile) return emptyList()
-    val traverser = SyntaxTraverser.psiTraverser(psiFile)
-    val lenses = ArrayList<TextRange>()
-    for (element in traverser) {
-      if (element !is PsiMember || element is PsiTypeParameter) continue
-      val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-      lenses.add(range)
+  override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
+    if (psiFile == null) return null
+    if (psiFile !is PsiJavaFile) return null
+    return object: BypassBasedPlaceholderCollector {
+      override fun collectPlaceholders(element: PsiElement, editor: Editor): List<TextRange> {
+        if (element !is PsiMember || element is PsiTypeParameter) return emptyList()
+        val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+        return listOf(range)
+      }
     }
-    return lenses
   }
-
 
   override val name: String
     get() = JavaBundle.message("settings.inlay.java.usages")
