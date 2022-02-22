@@ -791,9 +791,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @Override
-  public boolean hasIntentionHint() {
+  public boolean hasVisibleLightBulbOrPopup() {
     IntentionHintComponent hint = getLastIntentionHint();
-    return hint != null && !hint.isDisposed() && hint.isVisible();
+    return hint != null && hint.hasVisibleLightBulbOrPopup();
   }
 
   @NotNull
