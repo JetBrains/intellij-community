@@ -174,6 +174,9 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
         .map { it.filePath.virtualFile }
         .filter { it != null })
     }
+    else if (SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES.`is`(dataId)) {
+      return VcsTreeModelData.selected(myViewer).userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).toList()
+    }
     return super.getData(dataId)
   }
 

@@ -149,5 +149,6 @@ open class SavedPatchesUi(project: Project, private val providers: List<SavedPat
   companion object {
     const val SAVED_PATCHES_UI_PLACE = "SavedPatchesUiPlace"
     val SAVED_PATCHES_UI = DataKey.create<SavedPatchesUi>("SavedPatchesUi")
+    val SAVED_PATCH_SELECTED_CHANGES = DataKey.create<List<SavedPatchesProvider.ChangeObject>>("SavedPatchSelectedChanges")
   }
 }
