@@ -28,7 +28,8 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val traverser = SyntaxTraverser.psiTraverser(psiFile)
     for (element in traverser) {
-      if (element is PsiClass) {
+      if (element is PsiClass && element !is PsiTypeParameter) {
+        if (!InlayHintsUtils.isFirstInLine(element)) continue
         val inheritors = JavaTelescope.collectInheritingClasses(element)
         if (inheritors == 0) continue
         val isInterface: Boolean = element.isInterface
@@ -38,7 +39,8 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
         val handler = ClickHandler(element, JavaCodeVisionUsageCollector.CLASS_LOCATION, MarkerType.SUBCLASSED_CLASS)
         lenses.add(range to ClickableTextCodeVisionEntry(hint, id, onClick = handler))
       }
-      if (element is PsiMethod) {
+      else if (element is PsiMethod) {
+        if (!InlayHintsUtils.isFirstInLine(element)) continue
         val overrides = JavaTelescope.collectOverridingMethods(element)
         if (overrides != 0) {
           val isAbstractMethod = isAbstractMethod(element)
