@@ -5,6 +5,6 @@ class DefaultSearchEverywhereTabsCustomization: SearchEverywhereTabsCustomizatio
 
   override fun getContributorsWithTab(): List<String> =
     listOf("ClassSearchEverywhereContributor", "FileSearchEverywhereContributor", "SymbolSearchEverywhereContributor",
-           "ActionSearchEverywhereContributor", "Vcs.Git")
+           "ActionSearchEverywhereContributor", "DbSETablesContributor", "Vcs.Git")
 
 }
