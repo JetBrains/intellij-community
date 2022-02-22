@@ -56,6 +56,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       try {
         val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
+                                    ?: return@runReadAction emptyList()
         val traverser = SyntaxTraverser.psiTraverser(file)
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
