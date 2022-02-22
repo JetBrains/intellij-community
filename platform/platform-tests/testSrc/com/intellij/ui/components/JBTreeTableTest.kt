@@ -42,6 +42,7 @@ class JBTreeTableTest : HeavyPlatformTestCase() {
                |   e:0
                |   f:4
                |  d:3
+               | g:13
                |
                """.trimMargin())
 
@@ -49,6 +50,7 @@ class JBTreeTableTest : HeavyPlatformTestCase() {
     assertTree(treeTable.tree,
                """
                |-a:1
+               | g:13
                | -b:42
                |  d:3
                |  -c:12
@@ -61,6 +63,7 @@ class JBTreeTableTest : HeavyPlatformTestCase() {
     assertTree(treeTable.tree,
                """
                |-a:1
+               | g:13
                | -b:42
                |  d:3
                |  -c:12
@@ -78,6 +81,7 @@ class JBTreeTableTest : HeavyPlatformTestCase() {
                |   f:4
                |   e:0
                |  d:3
+               | g:13
                |
                """.trimMargin())
   }
@@ -161,16 +165,18 @@ private class ElementTreeStructure(private val project: Project) : AbstractTreeS
   val d = Element("d", 3)
   val e = Element("e", 0)
   val f = Element("f", 4)
+  val g = Element("g", 13)
 
   private val root = a
   private val parent = hashMapOf<Element, Element?>()
   private val children = hashMapOf(
-    a to listOf(b),
+    a to listOf(b, g),
     b to listOf(c, d),
     c to listOf(e, f),
     d to listOf(),
     e to listOf(),
     f to listOf(),
+    g to listOf(),
   ).onEach { (p, c) ->
     c.forEach { parent[it] = p }
   }
