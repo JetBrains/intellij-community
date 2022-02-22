@@ -93,7 +93,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
 
     if (psiMethod.hasAnnotation(KOTLIN_JVM_STATIC)) {
       PsiElement parent = psiClass.getParent();
-      if (parent != null) psiClass = (PsiClass)parent;
+      if (parent instanceof PsiClass) psiClass = (PsiClass)parent;
     }
 
     return ContainerUtil.exists(psiClass.findMethodsByName(methodName, false),
