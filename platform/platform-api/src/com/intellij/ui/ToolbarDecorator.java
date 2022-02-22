@@ -427,6 +427,12 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
         super.addNotify();
         updateButtons();
       }
+
+      @Override
+      public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        contextComponent.setEnabled(enabled);
+      }
     };
     panel.add(scrollPane != null ? scrollPane : contextComponent, BorderLayout.CENTER);
     panel.add(myActionsPanel, getPlacement(myToolbarPosition));
