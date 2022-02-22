@@ -281,18 +281,11 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
 
   @Override
   public int @NotNull [] toIntArray() {
-    long stamp;
-    int[] array;
-    do {
-      stamp = lock.tryOptimisticRead();
-      array = this.array;
-    } while (!lock.validate(stamp));
-
+    int[] array = readArrayUnderReadLock();
     return array.clone();
   }
 
-  @Override
-  public @NotNull IntStream stream() {
+  private int[] readArrayUnderReadLock() {
     long stamp;
     int[] array;
     do {
@@ -300,6 +293,12 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
       array = this.array;
     }
     while (!lock.validate(stamp));
+    return array;
+  }
+
+  @Override
+  public @NotNull IntStream stream() {
+    int[] array = readArrayUnderReadLock();
     ByteBuffer buffer = ByteBuffer.allocate(array.length * 4).order(ByteOrder.LITTLE_ENDIAN);
     buffer.asIntBuffer().put(array);
     return BitSet.valueOf(buffer).stream();
