@@ -4,8 +4,6 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.stream.IntStream;
-
 /**
  * This class is a thread-safe version of the
  * {@code java.util.BitSet} except for some methods which don't make sense in concurrent environment or those I was too lazy to implement.
@@ -113,6 +111,4 @@ public interface ConcurrentBitSet {
   int size();
 
   int @NotNull [] toIntArray();
-
-  @NotNull IntStream stream();
 }

@@ -5,12 +5,8 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.BitSet;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.IntUnaryOperator;
-import java.util.stream.IntStream;
 
 class ConcurrentBitSetImpl implements ConcurrentBitSet {
   ConcurrentBitSetImpl() {
@@ -294,14 +290,6 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     }
     while (!lock.validate(stamp));
     return array;
-  }
-
-  @Override
-  public @NotNull IntStream stream() {
-    int[] array = readArrayUnderReadLock();
-    ByteBuffer buffer = ByteBuffer.allocate(array.length * 4).order(ByteOrder.LITTLE_ENDIAN);
-    buffer.asIntBuffer().put(array);
-    return BitSet.valueOf(buffer).stream();
   }
 
   public void writeTo(@NotNull File file) throws IOException {
