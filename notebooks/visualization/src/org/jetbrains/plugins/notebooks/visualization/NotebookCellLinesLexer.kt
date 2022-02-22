@@ -8,8 +8,6 @@ import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines.MarkersAt
 import kotlin.math.max
 
 interface NotebookCellLinesLexer {
-  fun shouldParseWholeFile(): Boolean = false
-
   fun markerSequence(chars: CharSequence, ordinalIncrement: Int, offsetIncrement: Int): Sequence<NotebookCellLines.Marker>
 
   companion object {
@@ -42,14 +40,16 @@ interface NotebookCellLinesLexer {
       val result = mutableListOf<NotebookCellLines.Interval>()
       for (i in 0 until (intervals.size - 1)) {
         result += NotebookCellLines.Interval(ordinal = i, type = intervals[i].second,
-          lines = intervals[i].first until intervals[i + 1].first, markers = intervals[i].third)
+                                             lines = intervals[i].first until intervals[i + 1].first, markers = intervals[i].third)
       }
       return result
     }
 
-    fun intervalsGeneratorFromLexer(lexer: NotebookCellLinesLexer): (Document) -> List<NotebookCellLines.Interval> = { document ->
-      val markers = lexer.markerSequence(document.charsSequence, 0, 0).toList()
-      defaultIntervals(document, markers)
+    fun intervalsGeneratorFromLexer(lexer: NotebookCellLinesLexer): IntervalsGenerator = object : IntervalsGenerator {
+      override fun makeIntervals(document: Document): List<NotebookCellLines.Interval> {
+        val markers = lexer.markerSequence(document.charsSequence, 0, 0).toList()
+        return defaultIntervals(document, markers)
+      }
     }
   }
 }
