@@ -52,7 +52,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   private val myProject: Project
   private val myRendererChooser: ElementsChooser<PyUserNodeRenderer>
-  private val myRendererSettings: RendererSettings
+  private var myRendererSettings: RendererSettings? = null
 
   private var myRendererIndexToSelect: Int? = null
   private var myNewRendererToAdd: PyUserNodeRenderer? = null
@@ -62,7 +62,6 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     val openProjects = projectManager.openProjects
     myProject = if (openProjects.isNotEmpty()) openProjects.first() else projectManager.defaultProject
     myRendererChooser = ElementsChooser(true)
-    myRendererSettings = RendererSettings()
   }
 
   fun setRendererIndexToSelect(index: Int?) {
@@ -75,6 +74,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   override fun createComponent(): JPanel {
     ApplicationManager.getApplication().invokeLater {
+      myRendererSettings = RendererSettings()
       setupRendererSettings()
       setupRendererChooser()
       val chooserDecorator = RendererChooserToolbarDecorator().decorator
@@ -123,11 +123,11 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     }
 
     myRendererChooser.selectElements(selectedRenderers)
-    myRendererSettings.reset()
+    myRendererSettings?.reset()
   }
 
   override fun isModified(): Boolean {
-    if (myRendererSettings.isModified()) return true
+    if (myRendererSettings?.isModified() == true) return true
     val settings = PyUserTypeRenderersSettings.getInstance()
     if (myRendererChooser.elementCount != settings.renderers.size) return true
     settings.renderers.withIndex().forEach {
@@ -138,7 +138,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
   }
 
   override fun apply() {
-    myRendererSettings.apply()
+    myRendererSettings?.apply()
     val settings = PyUserTypeRenderersSettings.getInstance()
     val renderers = mutableListOf<PyUserNodeRenderer>()
     for (i in 0 until myRendererChooser.elementCount) {
@@ -175,7 +175,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
   }
 
   private fun setupRendererSettings() {
-    myRendererSettings.isVisible = false
+    myRendererSettings?.isVisible = false
   }
 
   private fun updateCurrentRendererName(newName: String) {
@@ -194,11 +194,12 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   private fun setCurrentRenderer(renderer: PyUserNodeRenderer?) {
     if (myCurrentRenderer === renderer) return
-    if (myRendererSettings.isModified()) {
-      myRendererSettings.apply()
+    if (myRendererSettings == null) return
+    if (myRendererSettings?.isModified() == true) {
+      myRendererSettings?.apply()
     }
     myCurrentRenderer = renderer
-    myRendererSettings.reset()
+    myRendererSettings?.reset()
   }
 
   fun getCurrentlyVisibleNames(): List<String> {
@@ -257,7 +258,9 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   override fun disposeUIResources() {
     super.disposeUIResources()
-    ApplicationManager.getApplication().executeOnPooledThread { Disposer.dispose(myRendererSettings) }
+    myRendererSettings?.let {
+      ApplicationManager.getApplication().executeOnPooledThread { Disposer.dispose(it) }
+    }
   }
 
   private inner class RendererSettings : JPanel(BorderLayout()), Disposable {
