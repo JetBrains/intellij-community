@@ -29,6 +29,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -143,15 +145,35 @@ open class CodeVisionHost(val project: Project) {
     }
   }
 
-  fun collectPlaceholders(editor: Editor): List<Pair<TextRange, CodeVisionEntry>> {
+  // run in read action
+  fun collectPlaceholders(editor: Editor,
+                          psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
-    return providers
-      .flatMap { provider ->
-        provider.collectPlaceholders(editor)
-          .associateWith {
-            PlaceholderCodeVisionEntry(provider.id)
-          }.toList()
+    val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
+    val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
+    for (provider in providers) {
+      val placeholderCollector: CodeVisionPlaceholderCollector? = provider.getPlaceholderCollector(editor, psiFile) ?: continue
+      if (placeholderCollector is BypassBasedPlaceholderCollector) {
+        bypassBasedCollectors.add(placeholderCollector to provider)
+      } else if (placeholderCollector is GenericPlaceholderCollector) {
+        for (placeholderRange in placeholderCollector.collectPlaceholders(editor)) {
+          placeholders.add(placeholderRange to PlaceholderCodeVisionEntry(provider.id))
+        }
       }
+    }
+
+    if (bypassBasedCollectors.isNotEmpty()) {
+      val traverser = SyntaxTraverser.psiTraverser(psiFile)
+      for (element in traverser) {
+        for ((collector, provider) in bypassBasedCollectors) {
+          for (placeholderRange in collector.collectPlaceholders(element, editor)) {
+            placeholders.add(placeholderRange to PlaceholderCodeVisionEntry(provider.id))
+          }
+        }
+      }
+    }
+
+    return placeholders
   }
 
   protected fun rearrangeProviders() {
