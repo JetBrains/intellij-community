@@ -36,7 +36,7 @@ internal class ModuleBridgeImpl(
 ) : ModuleImpl(name, project, virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
   init {
     // default project doesn't have modules
-    if (!project.isDefault) {
+    if (!project.isDefault && !project.isDisposed) {
       val busConnection = project.messageBus.connect(this)
 
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
