@@ -14,10 +14,18 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
 
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
+  private var enabledStateListenerAdded = false
 
   override fun onFrameActivated() {
-    if (!isSettingsSyncEnabledByKey() ||
-        !isSettingsSyncEnabledInSettings()) {
+    if (!isSettingsSyncEnabledByKey()) {
+      return
+    }
+
+    if (!isSettingsSyncEnabledInSettings()) {
+      if (!enabledStateListenerAdded) {
+        SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
+        enabledStateListenerAdded = true
+      }
       return
     }
 
