@@ -35,10 +35,10 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
     }
   }
 
-  override fun updateState(project: Project, toolWindow: ToolWindow) {
-    super.updateState(project, toolWindow)
+  override fun updateState(toolWindow: ToolWindow) {
+    super.updateState(toolWindow)
 
-    toolWindow.stripeTitle = ProjectLevelVcsManager.getInstance(project).allActiveVcss.singleOrNull()?.displayName
+    toolWindow.stripeTitle = ProjectLevelVcsManager.getInstance(toolWindow.project).allActiveVcss.singleOrNull()?.displayName
                              ?: ChangesViewContentManager.TOOLWINDOW_ID
   }
 

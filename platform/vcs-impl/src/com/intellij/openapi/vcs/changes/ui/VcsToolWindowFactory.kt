@@ -29,44 +29,42 @@ private val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.C
 
 abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
-    val project = window.project
-
-    val connection = project.messageBus.connect(window.disposable)
+    val connection = window.project.messageBus.connect(window.disposable)
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
-      AppUIExecutor.onUiThread().expireWith(project).execute {
-        updateState(project, window)
+      AppUIExecutor.onUiThread().expireWith(window.disposable).execute {
+        updateState(window)
       }
     })
     connection.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
-      AppUIExecutor.onUiThread().expireWith(project).execute {
-        updateState(project, window)
+      AppUIExecutor.onUiThread().expireWith(window.disposable).execute {
+        updateState(window)
       }
     })
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
-        updateState(project, window)
+        updateState(window)
         window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     CommitModeManager.subscribeOnCommitModeChange(connection, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() {
-        updateState(project, window)
+        updateState(window)
         window.contentManagerIfCreated?.selectFirstContent()
       }
     })
-    ChangesViewContentEP.EP_NAME.addExtensionPointListener(project, ExtensionListener(window), window.disposable)
+    ChangesViewContentEP.EP_NAME.addExtensionPointListener(window.project, ExtensionListener(window), window.disposable)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    updateContent(project, toolWindow)
+    updateContent(toolWindow)
     ChangesViewContentManager.getInstance(project).attachToolWindow(toolWindow)
     toolWindow.component.putClientProperty(IS_CONTENT_CREATED, true)
   }
 
-  protected open fun updateState(project: Project, toolWindow: ToolWindow) {
-    toolWindow.isAvailable = isAvailable(project)
-    updateContentIfCreated(project, toolWindow)
-    updateEmptyState(project, toolWindow)
+  protected open fun updateState(toolWindow: ToolWindow) {
+    toolWindow.isAvailable = isAvailable(toolWindow.project)
+    updateContentIfCreated(toolWindow)
+    updateEmptyState(toolWindow)
   }
 
   // shouldBeAvailable cannot be used -
@@ -77,16 +75,16 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   // final override to make sure that it is not overridden by mistake
   final override fun shouldBeAvailable(project: Project) = false
 
-  private fun updateEmptyState(project: Project, toolWindow: ToolWindow) {
+  private fun updateEmptyState(toolWindow: ToolWindow) {
     val emptyText = (toolWindow as? ToolWindowEx)?.emptyText ?: return
 
     ToolWindowEmptyStateAction.setEmptyStateBackground(toolWindow)
     emptyText.clear()
 
     // do not show empty state while project is being opened (as it might already have configured VCS)
-    val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
+    val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(toolWindow.project)
     if (vcsManager.areVcsesActivated() && !vcsManager.hasActiveVcss()) {
-      setEmptyState(project, emptyText)
+      setEmptyState(toolWindow.project, emptyText)
     }
   }
 
@@ -98,7 +96,7 @@ private fun getExtension(content: Content): ChangesViewContentEP? = content.getU
 
 private class ExtensionListener(private val toolWindow: ToolWindow) : ExtensionPointListener<ChangesViewContentEP> {
   override fun extensionAdded(extension: ChangesViewContentEP, pluginDescriptor: PluginDescriptor) {
-    updateContentIfCreated(toolWindow.project, toolWindow)
+    updateContentIfCreated(toolWindow)
   }
 
   override fun extensionRemoved(extension: ChangesViewContentEP, pluginDescriptor: PluginDescriptor) {
@@ -108,17 +106,18 @@ private class ExtensionListener(private val toolWindow: ToolWindow) : ExtensionP
   }
 }
 
-private fun updateContentIfCreated(project: Project, toolWindow: ToolWindow) {
+private fun updateContentIfCreated(toolWindow: ToolWindow) {
   if (ClientProperty.isTrue(toolWindow.component, IS_CONTENT_CREATED)) {
-    updateContent(project, toolWindow)
+    updateContent(toolWindow)
   }
 }
 
-private fun updateContent(project: Project, toolWindow: ToolWindow) {
-  val changesViewContentManager = ChangesViewContentManager.getInstance(project)
+private fun updateContent(toolWindow: ToolWindow) {
+  val changesViewContentManager = ChangesViewContentManager.getInstance(toolWindow.project)
 
   val wasEmpty = toolWindow.contentManager.contentCount == 0
-  getExtensions(project, toolWindow).forEach { extension ->
+  getExtensions(toolWindow).forEach { extension ->
+    val project = toolWindow.project
     val isVisible = extension.newPredicateInstance(project)?.test(project) != false
     val content = changesViewContentManager.findContents { getExtension(it) === extension }.firstOrNull()
     if (isVisible && content == null) {
@@ -133,11 +132,11 @@ private fun updateContent(project: Project, toolWindow: ToolWindow) {
   }
 }
 
-private fun getExtensions(project: Project, toolWindow: ToolWindow): Sequence<ChangesViewContentEP> {
-  return ChangesViewContentEP.EP_NAME.getExtensions(project)
+private fun getExtensions(toolWindow: ToolWindow): Sequence<ChangesViewContentEP> {
+  return ChangesViewContentEP.EP_NAME.getExtensions(toolWindow.project)
     .asSequence()
     .filter {
-      toolWindow.id == ChangesViewContentManager.getToolWindowId(project, it)
+      toolWindow.id == ChangesViewContentManager.getToolWindowId(toolWindow.project, it)
     }
 }
 
