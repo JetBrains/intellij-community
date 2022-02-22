@@ -79,7 +79,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
     HighlightingSession session = map.get(file);
     if (session == null) {
-      throw new IllegalStateException("No HighlightingSession found for " + file + " in " + indicator + " in map: " + map);
+      throw new IllegalStateException("No HighlightingSession found for " + file + " ("+file.getClass()+") in " + indicator + " in map: " + map);
     }
     return session;
   }
