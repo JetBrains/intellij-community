@@ -8,10 +8,22 @@ import com.intellij.psi.PsiDocumentManager
 
 private const val ID: String = "org.jetbrains.plugins.notebooks.notebookCellLinesProvider"
 
-interface NotebookCellLinesProvider {
+interface NotebookCellLinesProvider : IntervalsGenerator {
   fun create(document: Document): NotebookCellLines
 
   companion object : LanguageExtension<NotebookCellLinesProvider>(ID)
+}
+
+interface IntervalsGenerator {
+  fun makeIntervals(document: Document): List<NotebookCellLines.Interval>
+}
+
+open class NonIncrementalCellLinesProvider protected constructor(private val intervalsGenerator: IntervalsGenerator) : NotebookCellLinesProvider, IntervalsGenerator {
+  override fun create(document: Document): NotebookCellLines =
+    NonIncrementalCellLines.get(document, intervalsGenerator)
+
+  override fun makeIntervals(document: Document): List<NotebookCellLines.Interval> =
+    NonIncrementalCellLines.getOrNull(document)?.intervals ?: intervalsGenerator.makeIntervals(document)
 }
 
 internal fun getLanguage(editor: Editor): Language? =
