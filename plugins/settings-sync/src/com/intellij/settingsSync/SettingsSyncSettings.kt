@@ -1,19 +1,12 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
-import com.intellij.util.messages.Topic
 import java.util.*
 
-internal interface SettingsSyncEnabledStateListener {
+internal interface SettingsSyncEnabledStateListener : EventListener {
   fun enabledStateChanged(syncEnabled: Boolean)
-
-  companion object {
-    @Topic.AppLevel
-    internal val TOPIC = Topic("SettingsSyncEnabledState", SettingsSyncEnabledStateListener::class.java)
-  }
 }
 
 @State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
@@ -34,7 +27,7 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
     }
 
   private fun fireSettingsStateChanged(syncEnabled: Boolean) {
-    ApplicationManager.getApplication().messageBus.syncPublisher(SettingsSyncEnabledStateListener.TOPIC).enabledStateChanged(syncEnabled)
+    SettingsSyncEvents.getInstance().fireEnabledStateChanged(syncEnabled)
   }
 
   fun isCategoryEnabled(category: SettingsCategory) = !state.disabledCategories.contains(category)
@@ -86,9 +79,5 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
 
     var disabledCategories by list<SettingsCategory>()
     var disabledSubcategories by map<SettingsCategory, ArrayList<String>>()
-  }
-
-  fun addListener(listener: SettingsSyncEnabledStateListener, disposable: Disposable) {
-    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(SettingsSyncEnabledStateListener.TOPIC, listener)
   }
 }
