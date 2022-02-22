@@ -187,7 +187,7 @@ public abstract class KeymapsTestCaseBase extends BareTestFixtureTestCase {
     assertThat(newKeymaps)
       .overridingErrorMessage("Modify 'known duplicates list' test data. Keymaps were added: %s", newKeymaps)
       .isEmpty();
-    assertThat(newKeymaps)
+    assertThat(missingKeymaps)
       .overridingErrorMessage("Modify 'known duplicates list' test data. Keymaps were removed: %s", missingKeymaps)
       .isEmpty();
 
