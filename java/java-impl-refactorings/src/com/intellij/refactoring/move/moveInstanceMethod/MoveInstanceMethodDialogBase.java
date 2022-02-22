@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBInsets;
@@ -83,6 +84,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
         updateOnChanged(list);
       }
     });
+    new ListSpeedSearch<>(list);
     return list;
   }
 
