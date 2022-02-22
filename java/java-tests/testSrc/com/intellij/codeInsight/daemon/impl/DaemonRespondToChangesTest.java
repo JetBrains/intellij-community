@@ -1273,6 +1273,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertFalse(hintComponent.isDisposed());
     assertNotNull(hintComponent.getComponentHint());
     assertTrue(shown.contains(hintComponent.getComponentHint()));
+    assertTrue(hintComponent.hasVisibleLightBulbOrPopup());
 
     CommandProcessor.getInstance().executeCommand(getProject(), () -> EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_EDITOR_ESCAPE, true), "", null, getEditor().getDocument());
 
@@ -1288,6 +1289,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertFalse(hintComponentAfter.isDisposed());
     assertNotNull(hintComponentAfter.getComponentHint());
     assertTrue(shown.contains(hintComponentAfter.getComponentHint()));
+    assertTrue(hintComponentAfter.hasVisibleLightBulbOrPopup());
   }
 
   @Override
@@ -2156,6 +2158,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testLightBulbIsHiddenWhenFixRangeIsCollapsed() {
     configureByText(JavaFileType.INSTANCE, "class S { void foo() { boolean var; if (<selection>va<caret>r</selection>) {}} }");
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
     Set<LightweightHint> visibleHints = new ReferenceOpenHashSet<>();
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
@@ -2992,7 +2995,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                   "}";
     configureByText(JavaFileType.INSTANCE, text);
     makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
-    //Registry.get("inspection.sort").setValue(false);
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
     AtomicReference<String> diagnosticText = new AtomicReference<>("1st run");
     AtomicInteger stallMs = new AtomicInteger();
