@@ -94,7 +94,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
 
 
   override val name: String
-    get() = "Related problems"
+    get() = JavaBundle.message("title.related.problems.inlay.hints")
   override val relativeOrderings: List<CodeVisionRelativeOrdering> = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingLast)
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
