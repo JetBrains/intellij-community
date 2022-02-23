@@ -188,12 +188,11 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                     && otherRight.operationToken == KtTokens.EQEQEQ
                     && myMatchingVisitor.match(factory(other) {createExpression("null")}, otherRight.right)
         }
-
         val other = getTreeElementDepar<KtExpression>() ?: return
         when (other) {
             is KtBinaryExpression -> {
-                if (expression.operationToken == KtTokens.IDENTIFIER ) {
-                    myMatchingVisitor.result = myMatchingVisitor.match(expression.left, other.right)
+                if (expression.operationToken == KtTokens.IDENTIFIER) {
+                    myMatchingVisitor.result = myMatchingVisitor.match(expression.left, other.left)
                             && myMatchingVisitor.match(expression.right, other.right)
                             && myMatchingVisitor.match(expression.operationReference, other.operationReference)
                     return
