@@ -14,10 +14,13 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.PopupStep.FINAL_CHOICE
 import com.intellij.openapi.ui.popup.SpeedSearchFilter
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.PlatformIcons
+import com.intellij.util.containers.FList
 import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
@@ -34,7 +37,10 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
 
   override fun getFinalRunnable() = finalRunnable
 
+  private val _treeModel: GitBranchesTreeModel
   val treeModel: TreeModel
+    get() = _treeModel
+
 
   init {
     val topLevelActions = mutableListOf<PopupFactoryImpl.ActionItem>()
@@ -43,15 +49,37 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
       topLevelActions.addAll(createActionItems(actionGroup, project, repository))
     }
 
-    treeModel = GitBranchesTreeModel(project, repository, topLevelActions)
+    _treeModel = GitBranchesTreeModelImpl(project, repository, topLevelActions)
   }
 
   fun getPreferredSelection(): TreePath? {
-    return (treeModel as GitBranchesTreeModel).getPreferredSelection()
+    return _treeModel.getPreferredSelection()
   }
 
-  fun setBranchesMatcher(matcher: MinusculeMatcher?) {
-    (treeModel as GitBranchesTreeModel).branchesMatcher = matcher
+  private val LOCAL_SEARCH_PREFIX = "/l"
+  private val REMOTE_SEARCH_PREFIX = "/r"
+
+  fun setSearchPattern(pattern: String?) {
+    if (pattern == null || pattern == "/") {
+      _treeModel.filterBranches()
+      return
+    }
+
+    var branchType: GitBranchType? = null
+    var processedPattern = pattern
+
+    if (pattern.startsWith(LOCAL_SEARCH_PREFIX)) {
+      branchType = GitBranchType.LOCAL
+      processedPattern = pattern.removePrefix(LOCAL_SEARCH_PREFIX).trimStart()
+    }
+
+    if (pattern.startsWith(REMOTE_SEARCH_PREFIX)) {
+      branchType = GitBranchType.REMOTE
+      processedPattern = pattern.removePrefix(REMOTE_SEARCH_PREFIX).trimStart()
+    }
+
+    val matcher = PreferStartMatchMatcherWrapper(NameUtil.buildMatcher("*$processedPattern").build())
+    _treeModel.filterBranches(branchType, matcher)
   }
 
   override fun hasSubstep(selectedValue: Any?): Boolean {
@@ -173,5 +201,25 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
           else -> null
         }
       }
+
+    /**
+     * Adds weight to match offset. Degree of match is increased with the earlier the pattern was found in the name.
+     */
+    private class PreferStartMatchMatcherWrapper(private val delegate: MinusculeMatcher) : MinusculeMatcher() {
+      override fun getPattern(): String = delegate.pattern
+
+      override fun matchingFragments(name: String): FList<TextRange>? = delegate.matchingFragments(name)
+
+      override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
+        var degree = delegate.matchingDegree(name, valueStartCaseMatch, fragments)
+        if (fragments.isNullOrEmpty()) return degree
+        degree += MATCH_OFFSET - fragments.head.startOffset
+        return degree
+      }
+
+      companion object {
+        private const val MATCH_OFFSET = 10000
+      }
+    }
   }
 }
