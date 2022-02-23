@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.lang.Language
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
@@ -13,14 +11,11 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.LowMemoryWatcher
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.caches.project.StrongCachedValue
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
@@ -32,6 +27,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Responsible for Kotlin package only
+ */
 class SubpackagesIndexService(private val project: Project): Disposable {
 
     private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages")
@@ -43,7 +41,6 @@ class SubpackagesIndexService(private val project: Project): Disposable {
                     KotlinPackageModificationListener.getInstance(project).packageTracker
                 val dependencies = arrayOf(
                     ProjectRootModificationTracker.getInstance(project),
-                    otherLanguagesModificationTracker(),
                     packageTracker
                 )
                 val result: CachedValueProvider.Result<SubpackagesIndex> =
@@ -53,9 +50,6 @@ class SubpackagesIndexService(private val project: Project): Disposable {
                     )
                 result
             })
-
-    @Volatile
-    private var otherLanguagesModificationTracker: ModificationTracker? = null
 
     init {
         val messageBusConnection = project.messageBus.connect(this)
@@ -73,19 +67,11 @@ class SubpackagesIndexService(private val project: Project): Disposable {
 
     private fun clean() {
         cachedValue.clear()
-        otherLanguagesModificationTracker = null
     }
 
     override fun dispose() {
         clean()
     }
-
-    private fun otherLanguagesModificationTracker(): ModificationTracker =
-        otherLanguagesModificationTracker ?: synchronized(this) {
-            otherLanguagesModificationTracker ?: run {
-                OtherLanguagesModificationTracker(project).also { otherLanguagesModificationTracker = it }
-            }
-        }
 
     inner class SubpackagesIndex(allPackageFqNames: Collection<FqName>, private val ptCount: Long) {
         // a map from any existing package (in kotlin) to a set of subpackages (not necessarily direct) containing files
@@ -216,27 +202,3 @@ class SubpackagesIndexService(private val project: Project): Disposable {
     }
 }
 private fun FqName.pathSegmentsSize() = if (isRoot) 0 else asString().count { it == '.' } + 1
-
-private class OtherLanguagesModificationTracker(val project: Project): ModificationTracker {
-    private val delegate = PsiModificationTracker.SERVICE.getInstance(project).forLanguages {
-        // PSI changes of Kotlin and Java languages are covered by [KotlinPackageModificationListener]
-        // changes in other languages could affect packages
-        !it.`is`(Language.ANY) && !it.`is`(KotlinLanguage.INSTANCE) && !it.`is`(JavaLanguage.INSTANCE)
-    }
-
-    override fun getModificationCount(): Long = delegate.modificationCount
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as OtherLanguagesModificationTracker
-
-        return project == other.safeAs<OtherLanguagesModificationTracker>()?.project
-    }
-
-    override fun hashCode(): Int {
-        return project.hashCode()
-    }
-
-}
