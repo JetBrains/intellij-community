@@ -1145,7 +1145,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
 
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
-    collectUnresolvedProblems(file, result.getDependencyResolutionResult(), problems);
+    //collectUnresolvedProblems(file, result.getDependencyResolutionResult(), problems);
 
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.<MavenId>emptySet());
