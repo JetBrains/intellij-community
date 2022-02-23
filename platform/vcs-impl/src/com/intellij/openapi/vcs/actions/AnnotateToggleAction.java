@@ -193,6 +193,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     final Couple<Map<VcsRevisionNumber, Color>> bgColorMap = computeBgColors(fileAnnotation, editor);
     final Map<VcsRevisionNumber, Integer> historyIds = computeLineNumbers(fileAnnotation);
 
+    gutters.add(new FillerColumn(fileAnnotation, presentation, bgColorMap));
     if (switcher != null) {
       switcher.switchTo(switcher.getDefaultSource());
       final LineAnnotationAspect revisionAspect = switcher.getRevisionAspect();
@@ -237,7 +238,9 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     addActionsFromExtensions(presentation, fileAnnotation);
 
     for (AnnotationFieldGutter gutter : gutters) {
-      final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(upToDateLineNumbers, gutter);
+      final AnnotationGutterLineConvertorProxy proxy = gutter instanceof TextAnnotationGutterProvider.Filler
+                                                       ? new AnnotationGutterLineConvertorProxy.Filler(upToDateLineNumbers, gutter)
+                                                       : new AnnotationGutterLineConvertorProxy(upToDateLineNumbers, gutter);
       if (gutter.isGutterAction()) {
         editor.getGutter().registerTextAnnotation(proxy, proxy);
       }
