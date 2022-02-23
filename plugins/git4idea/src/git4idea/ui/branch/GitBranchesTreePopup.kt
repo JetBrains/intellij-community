@@ -2,11 +2,7 @@
 package git4idea.ui.branch
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
@@ -27,7 +23,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchesTreeUtil.buildRealPath
 import git4idea.ui.branch.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.GitBranchesTreeUtil.selectFirstLeaf
 import git4idea.ui.branch.GitBranchesTreeUtil.selectLastLeaf
@@ -38,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -104,7 +100,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     isRootVisible = false
     showsRootHandles = true
 
-    cellRenderer = Renderer()
+    cellRenderer = Renderer(treeStep)
 
     accessibleContext.accessibleName = GitBundle.message("git.branches.popup.tree.accessible.name")
 
@@ -168,7 +164,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   }
 
   private fun selectPreferred() {
-    val preferredSelection = treeStep.getPreferredSelection()?.let { tree.buildRealPath(it) }
+    val preferredSelection = treeStep.getPreferredSelection()
     if (preferredSelection != null) {
       tree.makeVisible(preferredSelection)
       tree.selectionPath = preferredSelection
@@ -290,33 +286,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     }
   }
 
-  private inner class Renderer : TreeCellRenderer {
-    private val nodeRenderer = NodeRenderer()
-    private val arrowLabel = JLabel()
-    private val panel = JBUI.Panels.simplePanel(nodeRenderer)
-      .addToRight(arrowLabel)
-      .withBorder(JBUI.Borders.emptyRight(2))
-      .andTransparent()
-
-    override fun getTreeCellRendererComponent(tree: JTree?,
-                                              value: Any?,
-                                              selected: Boolean,
-                                              expanded: Boolean,
-                                              leaf: Boolean,
-                                              row: Int,
-                                              hasFocus: Boolean): Component {
-      (value as? AbstractTreeNode<*>)?.update()
-      nodeRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, true)
-
-      val userObject = TreeUtil.getUserObject(value)
-      arrowLabel.apply {
-        isVisible = step.hasSubstep(userObject)
-        icon = if (selected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
-      }
-      return panel
-    }
-  }
-
   companion object {
 
     @JvmStatic
@@ -325,8 +294,41 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     }
 
     private fun uiScope(parent: Disposable) =
-      CoroutineScope(SupervisorJob() + AppUIExecutor.onUiThread().coroutineDispatchingContext()).also {
+      CoroutineScope(SupervisorJob() + Dispatchers.Main).also {
         Disposer.register(parent) { it.cancel() }
       }
+
+    private class Renderer(private val step: GitBranchesTreePopupStep) : TreeCellRenderer, JPanel(BorderLayout()) {
+      private val mainLabel = JLabel()
+      private val arrowLabel = JLabel()
+
+      init {
+        isOpaque = false
+        border = JBUI.Borders.emptyRight(2)
+        add(mainLabel, BorderLayout.WEST)
+        add(arrowLabel, BorderLayout.EAST)
+      }
+
+      override fun getTreeCellRendererComponent(tree: JTree?,
+                                                value: Any?,
+                                                selected: Boolean,
+                                                expanded: Boolean,
+                                                leaf: Boolean,
+                                                row: Int,
+                                                hasFocus: Boolean): Component {
+        val userObject = TreeUtil.getUserObject(value)
+        mainLabel.apply {
+          icon = step.getIcon(userObject)
+          text = step.getText(userObject)
+          foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
+        }
+
+        arrowLabel.apply {
+          isVisible = step.hasSubstep(userObject)
+          icon = if (selected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
+        }
+        return this
+      }
+    }
   }
 }

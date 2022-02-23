@@ -21,22 +21,6 @@ object GitBranchesTreeUtil {
     })
   }
 
-  /**
-   * Convert potentially dummy path to a real one.
-   * Dummy path is a path that is built from nodes that are equal to real ones, but has inconsistent children
-   */
-  fun JTree.buildRealPath(dummyPath: TreePath): TreePath? {
-    val parentPath = dummyPath.parentPath
-    if (parentPath == null) {
-      return TreePath(model.root)
-    }
-
-    val realParentPath = buildRealPath(parentPath) ?: return null
-    val realNode = TreeUtil.nodeChildren(realParentPath.lastPathComponent, model)
-                     .find { it == dummyPath.lastPathComponent } ?: return null
-    return realParentPath.pathByAddingChild(realNode)
-  }
-
   private val cycleScrolling: Boolean
     get() = UISettings.getInstance().cycleScrolling
 
