@@ -1,7 +1,12 @@
 <idea-plugin>
   <extensionPoints>
-     <extensionPoint
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.beforeResolveHighlightingVisitor"
             interface="org.jetbrains.kotlin.idea.highlighter.BeforeResolveHighlightingExtension"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.syntaxHighlighterFactory language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinSyntaxHighlighterFactory"/>
+
+  </extensions>
 </idea-plugin>
