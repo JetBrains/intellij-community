@@ -82,8 +82,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     with(uiScope(this)) {
       launch {
         searchPatternStateFlow.drop(1).debounce(100).collectLatest { pattern ->
-          val matcher = pattern?.let { NameUtil.buildMatcher("*$it").preferringStartMatches().allOccurrences().build() }
-          treeStep.setBranchesMatcher(matcher)
+          treeStep.setSearchPattern(pattern)
           selectPreferred()
         }
       }
