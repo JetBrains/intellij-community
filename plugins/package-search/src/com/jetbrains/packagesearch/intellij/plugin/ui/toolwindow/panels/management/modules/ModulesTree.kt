@@ -11,7 +11,6 @@ import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
@@ -55,7 +54,6 @@ internal class ModulesTree(
             val targetModules = checkNotNull(node.userObject as? TargetModules) {
                 "Node '${node.path}' has invalid data: ${node.userObject}"
             }
-            PackageSearchEventsLogger.logTargetModuleSelected(targetModules)
 
             setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
         }

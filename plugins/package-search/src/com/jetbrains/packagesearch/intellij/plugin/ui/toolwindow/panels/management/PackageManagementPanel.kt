@@ -121,6 +121,10 @@ internal class PackageManagementPanel(
             .onEach { PackageSearchEventsLogger.logPackageSelected(it is UiPackageModel.Installed) }
             .launchIn(this)
 
+        modulesTree.targetModulesFlow
+            .onEach { PackageSearchEventsLogger.logTargetModuleSelected(it) }
+            .launchIn(this)
+
         combine(
             knownRepositoriesInTargetModulesFlow,
             packagesListPanel.selectedPackageStateFlow,
