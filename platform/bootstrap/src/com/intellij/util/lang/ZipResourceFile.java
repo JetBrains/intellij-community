@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,8 +21,11 @@ import java.util.jar.Manifest;
 @SuppressWarnings("SuspiciousPackagePrivateAccess")
 final class ZipResourceFile implements ResourceFile {
   private final ZipFile zipFile;
+  private final boolean defineClassUsingBytes;
 
-  ZipResourceFile(@NotNull Path file) {
+  ZipResourceFile(@NotNull Path file, boolean defineClassUsingBytes) {
+    this.defineClassUsingBytes = defineClassUsingBytes;
+
     ZipFilePool pool = ZipFilePool.POOL;
     try {
       if (pool == null) {
@@ -100,7 +103,7 @@ final class ZipResourceFile implements ResourceFile {
   @Override
   public @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException {
-    if (classConsumer.isByteBufferSupported(className)) {
+    if (!defineClassUsingBytes && classConsumer.isByteBufferSupported(className)) {
       ByteBuffer buffer = zipFile.getByteBuffer(fileName);
       if (buffer == null) {
         return null;

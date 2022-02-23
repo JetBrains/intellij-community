@@ -14,21 +14,16 @@ public final class PathClassLoader extends UrlClassLoader {
   private static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY;
 
   static {
-    if (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows")
-        && Boolean.parseBoolean(System.getProperty("idea.use.old.zip.class.loader", "true"))) {
+    boolean defineClassUsingBytes = Boolean.parseBoolean(System.getProperty("idea.define.class.using.byte.array", "false"));
+    if (!defineClassUsingBytes && System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows")) {
       RESOURCE_FILE_FACTORY = file -> {
         String path = file.toString();
-        if (path.length() > 2 && path.charAt(0) == '\\' && path.charAt(1) == '\\') {
-          return new JdkZipResourceFile(file, true);
-        }
-        else {
-          return new ZipResourceFile(file);
-        }
+        return new ZipResourceFile(file, path.length() > 2 && path.charAt(0) == '\\' && path.charAt(1) == '\\');
       };
     }
     else {
       RESOURCE_FILE_FACTORY = file -> {
-        return new ZipResourceFile(file);
+        return new ZipResourceFile(file, defineClassUsingBytes);
       };
     }
   }
