@@ -252,7 +252,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
         }
         else {
           showingChildPath = selectionPath
-          handleNextStep(queriedStep, selectionPath as Any)
+          handleNextStep(queriedStep, selected)
           showingChildPath = null
         }
       }
