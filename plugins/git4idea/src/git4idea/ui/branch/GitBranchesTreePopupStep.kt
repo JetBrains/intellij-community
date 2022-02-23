@@ -22,6 +22,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.FList
 import git4idea.GitBranch
+import git4idea.GitLocalBranch
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
@@ -150,6 +151,11 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
       is PopupFactoryImpl.ActionItem -> value.text
       else -> value.toString()
     }
+  }
+
+  fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
+    if (treeNode !is GitLocalBranch) return null
+    return treeNode.findTrackedBranch(repository)?.name
   }
 
   override fun canceled() {}
