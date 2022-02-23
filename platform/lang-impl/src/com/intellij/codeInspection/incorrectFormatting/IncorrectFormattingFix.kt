@@ -5,33 +5,33 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.EMPTY
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.annotations.Nls
 
 
 class ReplaceQuickFix(val replacements: List<Pair<TextRange, String>>) : LocalQuickFix {
   override fun getFamilyName() = LangBundle.message("inspection.incorrect.formatting.fix.replace")
+  override fun getFileModifierForPreview(target: PsiFile) = this
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val psiFile = descriptor.psiElement.containingFile ?: return
-    WriteCommandAction.runWriteCommandAction(project) {
-      PsiDocumentManager
-        .getInstance(project)
-        .getDocument(psiFile)
-        ?.let { document ->
-          replacements
-            .sortedByDescending { (range, _) -> range.startOffset }
-            .forEach { (range, replacement) ->
-              document.replaceString(range.startOffset, range.endOffset, replacement)
-            }
-          PsiDocumentManager.getInstance(project).commitDocument(document)
-        }
-    }
+    descriptor
+      .psiElement
+      .containingFile
+      ?.viewProvider
+      ?.document
+      ?.let { doc ->
+        replacements
+          .sortedByDescending { (range, _) -> range.startOffset }
+          .forEach { (range, replacement) ->
+            doc.replaceString(range.startOffset, range.endOffset, replacement)
+          }
+        PsiDocumentManager.getInstance(project).commitDocument(doc)
+      }
   }
 }
 
