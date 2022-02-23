@@ -59,7 +59,9 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   JComboBox::class,
   JSlider::class,
   JSpinner::class,
+  JTable::class,
   JTextComponent::class,
+  JTree::class,
   SegmentedButtonComponent::class,
   SegmentedButtonToolbar::class
 )
