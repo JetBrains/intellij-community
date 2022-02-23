@@ -727,7 +727,9 @@ public class MavenProject {
       if (state.myUnresolvedDependenciesCache == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
-          if (!MavenArtifactUtilKt.resolved(each)) result.add(each);
+          boolean resolved = MavenArtifactUtilKt.resolved(each);
+          each.setFileUnresolved(!resolved);
+          if (!resolved) result.add(each);
         }
         state.myUnresolvedDependenciesCache = result;
       }
