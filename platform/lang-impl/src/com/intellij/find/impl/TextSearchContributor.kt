@@ -29,12 +29,17 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.reference.SoftReference
+import com.intellij.usages.Usage
 import com.intellij.usages.UsageInfo2UsageAdapter
+import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import java.lang.ref.Reference
+import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
 
 class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<UsageInfo2UsageAdapter>,
@@ -86,10 +91,18 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
     val presentation = FindInProjectUtil.setupProcessPresentation(project, UsageViewPresentation())
     val progressIndicator = indicator as? ProgressIndicatorEx ?: ProgressIndicatorBase()
 
+    val recentUsageRef = ThreadLocal<Reference<Usage>>()
     FindInProjectUtil.findUsages(model, project, progressIndicator, presentation, emptySet()) {
       val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(it) as UsageInfo2UsageAdapter
       progressIndicator.checkCanceled()
-      consumer.process(FoundItemDescriptor<UsageInfo2UsageAdapter>(usage, 0))
+
+      val recent = SoftReference.dereference(recentUsageRef.get())
+      val merged = (recent as? UsageInfoAdapter)?.merge(usage)
+      if (merged == null || !merged) {
+        recentUsageRef.set(WeakReference(usage))
+        consumer.process(FoundItemDescriptor<UsageInfo2UsageAdapter>(usage, 0))
+      }
+
       true
     }
   }
