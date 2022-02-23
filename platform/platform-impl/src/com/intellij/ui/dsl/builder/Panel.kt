@@ -40,7 +40,9 @@ interface Panel : CellBase<Panel> {
   override fun customize(customGaps: Gaps): Panel
 
   /**
-   * Adds standard left indent
+   * Adds standard left indent and groups rows into [RowsRange] that allows to use some groups operations on the rows
+   *
+   * @see [rowsRange]
    */
   fun indent(init: Panel.() -> Unit): RowsRange
 
@@ -77,7 +79,9 @@ interface Panel : CellBase<Panel> {
   fun panel(init: Panel.() -> Unit): Panel
 
   /**
-   * @see [RowsRange]
+   * Groups rows into [RowsRange] that allows to use some groups operations on the rows
+   *
+   * @see [indent]
    */
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
