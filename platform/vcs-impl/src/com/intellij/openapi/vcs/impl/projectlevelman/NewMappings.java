@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class NewMappings implements Disposable {
   private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparing(it -> it.root.getPath());
@@ -178,7 +177,7 @@ public final class NewMappings implements Disposable {
     });
   }
 
-  private void updateVcsMappings(@NotNull Collection<VcsDirectoryMapping> mappings) {
+  private void updateVcsMappings(@NotNull List<VcsDirectoryMapping> mappings) {
     myRootUpdateQueue.cancelAllUpdates();
 
     List<VcsDirectoryMapping> newMappings = List.copyOf(ContainerUtil.sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR));
@@ -238,13 +237,19 @@ public final class NewMappings implements Disposable {
     }, myProject.getDisposed());
   }
 
-  private static @NotNull List<VcsDirectoryMapping> removeDuplicates(@NotNull Collection<VcsDirectoryMapping> mappings) {
+  /**
+   * Take last mapping in collection in case of duplicates.
+   */
+  private static @NotNull List<VcsDirectoryMapping> removeDuplicates(@NotNull List<VcsDirectoryMapping> mappings) {
+    List<VcsDirectoryMapping> newMapping = new ArrayList<>();
     Set<String> paths = new HashSet<>();
-    // take last mapping in collection in case of duplicates
-    return mappings.stream()
-      .sorted(Collections.reverseOrder(MAPPINGS_COMPARATOR))
-      .filter(mapping -> paths.add(mapping.getDirectory()))
-      .collect(Collectors.toList());
+
+    for (VcsDirectoryMapping mapping : ContainerUtil.reverse(mappings)) {
+      if (paths.add(mapping.getDirectory())) {
+        newMapping.add(mapping);
+      }
+    }
+    return newMapping;
   }
 
   private @NotNull Mappings collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings) {
@@ -540,9 +545,11 @@ public final class NewMappings implements Disposable {
       else {
         AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
         if (vcs == null) {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject,
-                                                        VcsBundle.message("impl.notification.content.vcs.plugin.not.found.for.mapping.to", vcsName),
-                                                        MessageType.ERROR);
+          VcsBalloonProblemNotifier.showOverChangesView(
+            myProject,
+            VcsBundle.message("impl.notification.content.vcs.plugin.not.found.for.mapping.to", vcsName),
+            MessageType.ERROR
+          );
           filteredMappings.addAll(mappings);
         }
         else {
