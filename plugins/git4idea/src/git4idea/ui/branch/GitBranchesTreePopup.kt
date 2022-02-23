@@ -7,9 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.ClientProperty
+import com.intellij.ui.JBColor
 import com.intellij.ui.TreeActions
+import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -17,6 +18,7 @@ import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.FontUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -33,7 +35,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -297,16 +298,29 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
         Disposer.register(parent) { it.cancel() }
       }
 
-    private class Renderer(private val step: GitBranchesTreePopupStep) : TreeCellRenderer, JPanel(BorderLayout()) {
-      private val mainLabel = JLabel()
-      private val arrowLabel = JLabel()
+    private class Renderer(private val step: GitBranchesTreePopupStep) : TreeCellRenderer {
 
-      init {
-        isOpaque = false
-        border = JBUI.Borders.emptyRight(2)
-        add(mainLabel, BorderLayout.WEST)
-        add(arrowLabel, BorderLayout.EAST)
+      private val mainLabel = JLabel().apply {
+        border = JBUI.Borders.emptyBottom(1)
       }
+      private val secondaryLabel = JLabel().apply {
+        font = FontUtil.minusOne(font)
+        border = JBUI.Borders.empty(0, 10, 1, 0)
+        horizontalAlignment = SwingConstants.RIGHT
+      }
+      private val arrowLabel = JLabel().apply {
+        border = JBUI.Borders.empty(0, 2)
+      }
+
+      private val textPanel = JBUI.Panels.simplePanel()
+        .addToLeft(mainLabel)
+        .addToCenter(secondaryLabel)
+        .andTransparent()
+
+      private val mainPanel = JBUI.Panels.simplePanel()
+        .addToCenter(textPanel)
+        .addToRight(arrowLabel)
+        .andTransparent()
 
       override fun getTreeCellRendererComponent(tree: JTree?,
                                                 value: Any?,
@@ -322,11 +336,17 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
           foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
         }
 
+        secondaryLabel.apply {
+          text = step.getSecondaryText(userObject)
+          //todo: LAF color
+          foreground = if(selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
+        }
+
         arrowLabel.apply {
           isVisible = step.hasSubstep(userObject)
           icon = if (selected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
         }
-        return this
+        return mainPanel
       }
     }
   }
