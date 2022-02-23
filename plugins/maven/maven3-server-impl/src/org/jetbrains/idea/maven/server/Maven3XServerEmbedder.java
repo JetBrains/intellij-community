@@ -1145,6 +1145,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
 
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
+    collectUnresolvedProblems(file, result.getDependencyResolutionResult(), problems);
 
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.<MavenId>emptySet());
@@ -1244,7 +1245,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
     }
     for (ModelProblem problem : modelProblems) {
-
       String source;
       if (!StringUtilRt.isEmptyOrSpaces(problem.getSource())) {
         source = problem.getSource() +
@@ -1274,8 +1274,24 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
+  private void collectUnresolvedProblems(@Nullable File file,
+                                         @Nullable DependencyResolutionResult result,
+                                         Collection<MavenProjectProblem> problems) {
+    if (result == null) return;
+    String path = file == null ? "" : file.getPath();
+    for (Dependency unresolvedDependency : result.getUnresolvedDependencies()) {
+      for (Exception exception : result.getResolutionErrors(unresolvedDependency)) {
+        String message = getRootMessage(exception);
+        Artifact artifact = RepositoryUtils.toArtifact(unresolvedDependency.getArtifact());
+        MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(artifact, getLocalRepositoryFile());
+        problems.add(MavenProjectProblem.createArtifactTransferProblem(path, message, true, mavenArtifact));
+        break;
+      }
+    }
+  }
+
   @NotNull
-  private static String getRootMessage(Throwable each) throws RemoteException {
+  private static String getRootMessage(Throwable each) {
     String baseMessage = each.getMessage() != null ? each.getMessage() : "";
     Throwable rootCause = ExceptionUtils.getRootCause(each);
     String rootMessage = rootCause != null ? rootCause.getMessage() : "";

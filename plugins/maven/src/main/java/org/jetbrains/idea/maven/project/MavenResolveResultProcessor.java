@@ -29,7 +29,7 @@ public class MavenResolveResultProcessor {
         .showBuildIssue(buildIssue.getTitle(), buildIssue);
     }
 
-    for (MavenProjectProblem projectProblem : problem.unresolvedArtifactPronlems) {
+    for (MavenProjectProblem projectProblem : problem.unresolvedArtifactProblems) {
       if (projectProblem.getMavenArtifact() == null || projectProblem.getDescription() == null) continue;
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
         .showArtifactBuildIssue(projectProblem.getMavenArtifact().getMavenId().getKey(), projectProblem.getDescription());
@@ -73,21 +73,21 @@ public class MavenResolveResultProcessor {
     @NotNull
     public final Set<MavenProjectProblem> repositoryBlockedProblems;
     @NotNull
-    public final Set<MavenProjectProblem> unresolvedArtifactPronlems;
+    public final Set<MavenProjectProblem> unresolvedArtifactProblems;
     @NotNull
     public final Set<MavenArtifact> unresolvedArtifacts;
 
     public ArtifactTransferProblems(@NotNull Set<MavenProjectProblem> repositoryBlockedProblems,
-                                    @NotNull Set<MavenProjectProblem> unresolvedArtifactPronlems,
+                                    @NotNull Set<MavenProjectProblem> unresolvedArtifactProblems,
                                     @NotNull Set<MavenArtifact> unresolvedArtifacts) {
       this.repositoryBlockedProblems = repositoryBlockedProblems;
-      this.unresolvedArtifactPronlems = unresolvedArtifactPronlems;
+      this.unresolvedArtifactProblems = unresolvedArtifactProblems;
       this.unresolvedArtifacts = unresolvedArtifacts;
     }
 
     public boolean isEmpty() {
       return repositoryBlockedProblems.isEmpty()
-             && unresolvedArtifactPronlems.isEmpty() && unresolvedArtifacts.isEmpty();
+             && unresolvedArtifactProblems.isEmpty() && unresolvedArtifacts.isEmpty();
     }
   }
 }
