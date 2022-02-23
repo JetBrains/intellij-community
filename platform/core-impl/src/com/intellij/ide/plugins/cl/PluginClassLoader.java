@@ -21,9 +21,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
-import java.security.cert.Certificate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,9 +41,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   private static final AtomicInteger parentListCacheIdCounter = new AtomicInteger();
 
   private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES;
-
-  // avoid capturing reference to classloader in AccessControlContext
-  private static final ProtectionDomain PROTECTION_DOMAIN = new ProtectionDomain(new CodeSource(null, (Certificate[]) null), null);
 
   static {
     @SuppressWarnings("SSBasedInspection")
@@ -627,11 +621,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   public @NotNull List<IdeaPluginDescriptorImpl> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(parents));
-  }
-
-  @Override
-  protected ProtectionDomain getProtectionDomain() {
-    return PROTECTION_DOMAIN;
   }
 
   private static void flushDebugLog() {
