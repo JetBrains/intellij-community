@@ -706,7 +706,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     setFilterPanelVisible(properties.getBoolean(FILTERS_VISIBLE_STATE, true));
     myPinned = properties.getBoolean(PINNED_STATE, false);
     super.show();
-    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
   }
 
   private void startTemplate() {
