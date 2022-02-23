@@ -173,6 +173,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean TAB_EXITS_BRACKETS_AND_QUOTES = true;
 
+  public boolean SHOW_BOTTOM_PANEL_IN_LOOKUP_UI = true;
+
   /**
    * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings
    * and don't take project-specific settings into account.
