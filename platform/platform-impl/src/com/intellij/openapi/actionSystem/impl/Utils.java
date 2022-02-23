@@ -194,7 +194,7 @@ public final class Utils {
       }
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
-        project, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
+        project, context, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
       if (onProcessed != null) {
         promise.onSuccess(__ -> onProcessed.run());
         promise.onError(ex -> {

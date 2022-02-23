@@ -3,11 +3,10 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.impl.GutterEventListener;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +36,12 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract @NotNull List<GutterMark> getGutterRenderers(int line);
 
+  public abstract void addGutterEventListener(@NotNull GutterEventListener listener);
+
+  public abstract void removeGutterEventListener(@NotNull GutterEventListener listener);
+
+  public abstract @Nullable EditorGutterAction getAttachedEditorGutterAction(@NotNull TextAnnotationGutterProvider provider);
+
   public abstract int getWhitespaceSeparatorOffset();
 
   public abstract void revalidateMarkup();
@@ -61,6 +66,9 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract void setCanCloseAnnotations(boolean canCloseAnnotations);
 
   public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
+
+  @ApiStatus.Experimental
+  public abstract @NotNull List<AnAction> getTextAnnotationPopupActions(int logicalLineAtCursor);
 
   public abstract boolean isPaintBackground();
 

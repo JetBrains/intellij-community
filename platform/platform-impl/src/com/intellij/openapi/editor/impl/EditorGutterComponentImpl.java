@@ -83,6 +83,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,6 +188,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
     if (isShowing()) repaint();
   });
+  @NotNull private final List<GutterEventListener> myGutterEventListeners = new ArrayList<>();
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -1375,9 +1377,32 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
+  public void addGutterEventListener(@NotNull GutterEventListener listener) {
+    myGutterEventListeners.add(listener);
+  }
+
+  @Override
+  public void removeGutterEventListener(@NotNull GutterEventListener listener) {
+    myGutterEventListeners.remove(listener);
+  }
+
+  private void fireTextAnnotationGutterProviderAdded(@NotNull TextAnnotationGutterProvider provider) {
+    for (GutterEventListener listener : myGutterEventListeners) {
+      listener.onTextAnnotationGutterProviderAdded(provider);
+    }
+  }
+
+  private void fireTextAnnotationGutterProviderRemoved(@NotNull TextAnnotationGutterProvider provider) {
+    for (GutterEventListener listener : myGutterEventListeners) {
+      listener.onTextAnnotationGutterProviderRemoved(provider);
+    }
+  }
+
+  @Override
   public void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider) {
     myTextAnnotationGutters.add(provider);
     myTextAnnotationGutterSizes.add(0);
+    fireTextAnnotationGutterProviderAdded(provider);
     updateSize();
   }
 
@@ -1386,6 +1411,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myTextAnnotationGutters.add(provider);
     myProviderToListener.put(provider, action);
     myTextAnnotationGutterSizes.add(0);
+    fireTextAnnotationGutterProviderAdded(provider);
     updateSize();
   }
 
@@ -1393,6 +1419,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public List<TextAnnotationGutterProvider> getTextAnnotations() {
     return new ArrayList<>(myTextAnnotationGutters);
+  }
+
+  @Override
+  public @Nullable EditorGutterAction getAttachedEditorGutterAction(@NotNull TextAnnotationGutterProvider provider) {
+    return myProviderToListener.get(provider);
   }
 
   private void doPaintFoldingTree(@NotNull Graphics2D g, @NotNull Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
@@ -2179,6 +2210,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         myTextAnnotationGutters.remove(i);
         myTextAnnotationGutterSizes.removeInt(i);
         myProviderToListener.remove(provider);
+        fireTextAnnotationGutterProviderRemoved(provider);
       }
     }
 
@@ -2292,20 +2324,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myLastActionableClick = new ClickInfo(logicalLineAtCursor, info == null ? point : info.iconCenterPosition);
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
-      final List<AnAction> addActions = new ArrayList<>();
-      if (myCanCloseAnnotations) addActions.add(new CloseAnnotationsAction());
-      //if (line >= myEditor.getDocument().getLineCount()) return;
-
-      for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-        final List<AnAction> list = gutterProvider.getPopupActions(logicalLineAtCursor, myEditor);
-        if (list != null) {
-          for (AnAction action : list) {
-            if (! addActions.contains(action)) {
-              addActions.add(action);
-            }
-          }
-        }
-      }
+      final List<AnAction> addActions = getTextAnnotationPopupActions(logicalLineAtCursor);
       if (!addActions.isEmpty()) {
         e.consume();
         DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.messagePointer("editor.annotations.action.group.name"));
@@ -2349,6 +2368,25 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
     }
+  }
+
+  @Override
+  public @NotNull List<AnAction> getTextAnnotationPopupActions(int logicalLineAtCursor) {
+    final List<AnAction> addActions = new ArrayList<>();
+    if (myCanCloseAnnotations) addActions.add(new CloseAnnotationsAction());
+    //if (line >= myEditor.getDocument().getLineCount()) return;
+
+    for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
+      final List<AnAction> list = gutterProvider.getPopupActions(logicalLineAtCursor, myEditor);
+      if (list != null) {
+        for (AnAction action : list) {
+          if (!addActions.contains(action)) {
+            addActions.add(action);
+          }
+        }
+      }
+    }
+    return addActions;
   }
 
   private void addLoadingIconForGutterMark(@NotNull PointInfo info) {
