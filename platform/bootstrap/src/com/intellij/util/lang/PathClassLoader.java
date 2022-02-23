@@ -11,7 +11,7 @@ import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
-  private static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY;
+  static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY;
 
   static {
     if (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows")

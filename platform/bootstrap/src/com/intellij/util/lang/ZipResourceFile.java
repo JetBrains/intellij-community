@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.*;
 import java.nio.ByteBuffer;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -129,17 +130,15 @@ final class ZipResourceFile implements ResourceFile {
   }
 
   private static final class ZipFileResource implements Resource {
-    private final URL baseUrl;
+    private final JarLoader jarLoader;
     private URL url;
     private final String name;
     private final ZipResource entry;
-    private @Nullable("if mimicJarUrlConnection equals to false") final Path path;
 
     private ZipFileResource(@NotNull JarLoader jarLoader, @NotNull ZipResource entry, @NotNull String name) {
-      this.baseUrl = jarLoader.url;
+      this.jarLoader = jarLoader;
       this.entry = entry;
       this.name = name;
-      this.path = jarLoader.configuration.mimicJarUrlConnection ? jarLoader.getPath() : null;
     }
 
     @Override
@@ -151,9 +150,9 @@ final class ZipResourceFile implements ResourceFile {
     public @NotNull URL getURL() {
       URL result = url;
       if (result == null) {
-        URLStreamHandler handler = new MyJarUrlStreamHandler(entry, path);
+        URLStreamHandler handler = new MyJarUrlStreamHandler(entry, jarLoader);
         try {
-          result = new URL(baseUrl, name, handler);
+          result = new URL(jarLoader.url, name, handler);
         }
         catch (MalformedURLException e) {
           throw new RuntimeException(e);
@@ -176,16 +175,16 @@ final class ZipResourceFile implements ResourceFile {
 
   private static final class MyJarUrlStreamHandler extends URLStreamHandler {
     private @NotNull final ZipResource entry;
-    private @Nullable final Path path;
+    private @NotNull final JarLoader jarLoader;
 
-    private MyJarUrlStreamHandler(@NotNull ZipResource entry, @Nullable Path path) {
+    private MyJarUrlStreamHandler(@NotNull ZipResource entry, @NotNull JarLoader jarLoader) {
       this.entry = entry;
-      this.path = path;
+      this.jarLoader = jarLoader;
     }
 
     @Override
     protected URLConnection openConnection(URL url) throws MalformedURLException {
-      return path == null ? new MyUrlConnection(url, entry) : new MyJarUrlConnection(url, entry, path);
+      return jarLoader.configuration.mimicJarUrlConnection ? new MyJarUrlConnection(url, entry, jarLoader) : new MyUrlConnection(url, entry);
     }
   }
 
@@ -228,27 +227,36 @@ final class ZipResourceFile implements ResourceFile {
   }
 
   private static final class MyJarUrlConnection extends JarURLConnection {
-    private final ZipResource entry;
-    private final Path path;
+    private ZipResource effectiveEntry;
+    private final JarLoader jarLoader;
     private byte[] data;
 
-    MyJarUrlConnection(@NotNull URL url, @NotNull ZipResource entry, @NotNull Path path) throws MalformedURLException {
+    MyJarUrlConnection(@NotNull URL url, @NotNull ZipResource entry, @NotNull JarLoader jarLoader) throws MalformedURLException {
       super(url);
-      this.entry = entry;
-      this.path = path;
+      String entryName = getEntryName();
+      effectiveEntry = entryName == null || entryName.equals(entry.getPath()) ? entry : null;
+      this.jarLoader = jarLoader;
     }
 
     private byte[] getData() throws IOException {
       byte[] result = data;
       if (result == null) {
-        result = entry.getData();
+        connect();
+        result = effectiveEntry.getData();
         data = result;
       }
       return result;
     }
 
     @Override
-    public void connect() {
+    public void connect() throws IOException {
+      if (effectiveEntry == null) {
+        Resource resource = jarLoader.zipFile.getResource(getEntryName(), jarLoader);
+        if (resource == null) {
+          throw new NoSuchFileException("Cannot find `" + getEntryName() + "` in " + jarLoader.getPath());
+        }
+        effectiveEntry = ((ZipFileResource)resource).entry;
+      }
     }
 
     @Override
@@ -258,19 +266,31 @@ final class ZipResourceFile implements ResourceFile {
 
     @Override
     public InputStream getInputStream() throws IOException {
-      return entry.getInputStream();
+      connect();
+      return effectiveEntry.getInputStream();
+    }
+
+    @Override
+    public long getContentLengthLong() {
+      return getContentLength();
     }
 
     @Override
     public int getContentLength() {
-      return entry.getUncompressedSize();
+      try {
+        connect();
+      }
+      catch (IOException e) {
+        return -1;
+      }
+      return effectiveEntry.getUncompressedSize();
     }
 
     @Override
     public JarFile getJarFile() throws IOException {
       //noinspection LoggerInitializedWithForeignClass
       Logger.getInstance(ZipResourceFile.class).warn("Do not use URL connection as JarURLConnection");
-      return new JarFile(path.toFile());
+      return new JarFile(jarLoader.getPath().toFile());
     }
   }
 }
