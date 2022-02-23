@@ -92,6 +92,12 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       })
     }
+    customizer.getBinariesToSign(buildContext).each {
+      def path = winDistPath.resolve(it)
+      buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", path.toString()), BuildOptions.WIN_SIGN_STEP) {
+        buildContext.signFile(path, BuildOptions.WIN_SIGN_OPTIONS)
+      }
+    }
   }
 
   @Override
