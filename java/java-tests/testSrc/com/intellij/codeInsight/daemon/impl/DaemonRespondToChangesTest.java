@@ -1390,12 +1390,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public static ProperTextRange makeEditorWindowVisible(@NotNull Point viewPosition, @NotNull Editor editor) {
-    ((EditorImpl)editor).getScrollPane().getViewport().setSize(1000, 1000);
+    EditorImpl impl = (EditorImpl)editor;
+    impl.getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ((EditorImpl)editor).getScrollPane().getViewport().setViewPosition(viewPosition);
-    ((EditorImpl)editor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)editor).getPreferredHeight() - viewPosition.y));
+    impl.getScrollPane().getViewport().setViewPosition(viewPosition);
+    impl.getScrollPane().getViewport().setExtentSize(new Dimension(100, impl.getPreferredHeight() - viewPosition.y));
+    UIUtil.markAsFocused(impl.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+
     return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
   }
 

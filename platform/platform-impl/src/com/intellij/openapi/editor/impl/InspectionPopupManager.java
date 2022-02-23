@@ -265,9 +265,10 @@ final class InspectionPopupManager {
 
   private @NotNull JComponent createDetailsPanel() {
     @Nls StringBuilder text = new StringBuilder();
-    for (int i = 0; i < getAnalyzerStatus().getExpandedStatus().size(); i++) {
-      boolean last = i == getAnalyzerStatus().getExpandedStatus().size() - 1;
-      StatusItem item = getAnalyzerStatus().getExpandedStatus().get(i);
+    List<StatusItem> expandedStatus = getAnalyzerStatus().getExpandedStatus();
+    for (int i = 0; i < expandedStatus.size(); i++) {
+      boolean last = i == expandedStatus.size() - 1;
+      StatusItem item = expandedStatus.get(i);
 
       String detailsText = item.getDetailsText();
       text.append(detailsText != null ? detailsText : item.getText());
