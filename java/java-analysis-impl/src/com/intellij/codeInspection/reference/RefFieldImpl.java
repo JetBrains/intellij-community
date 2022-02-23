@@ -7,14 +7,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+
+import java.util.List;
 
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000;
   private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000;
   private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000;
+
+  private List<RefMethod> myAccessors;
 
   RefFieldImpl(UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
@@ -194,5 +199,16 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   public boolean isSuspicious() {
     if (isEntry()) return false;
     return super.isSuspicious() || isUsedForReading() != isUsedForWriting();
+  }
+
+  public synchronized @Nullable List<RefMethod> getAccessors() {
+    return myAccessors;
+  }
+
+  public synchronized void addAccessor(@NotNull RefMethod accessor) {
+    if (myAccessors == null) {
+      myAccessors = new SmartList<>();
+    }
+    myAccessors.add(accessor);
   }
 }

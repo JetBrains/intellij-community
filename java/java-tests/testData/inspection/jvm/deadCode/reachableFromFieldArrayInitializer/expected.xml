@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<problems>  
+<problems>
+  <!--<problem>-->
+  <!--  <file>Test.kt</file>-->
+  <!--  <line>8</line>-->
+  <!--  <entry_point TYPE="method" FQNAME="Test.Companion void setMyField(int[] value)" />-->
+  <!--  <highlighted_element>var myField = intArrayOf(init())</highlighted_element>-->
+  <!--  <description>Method is never used.</description>-->
+  <!--</problem>-->
 </problems>
 
