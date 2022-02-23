@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
@@ -621,7 +622,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 }
 
-private class LimitedWidthLabel(htmlBuilder: HtmlBuilder, limit: Int) : JLabel() {
+private class LimitedWidthLabel (htmlBuilder: HtmlBuilder, limit: Int) : JLabel() {
   val htmlView: View
 
   init {
@@ -664,7 +665,7 @@ private class LimitedWidthLabel(htmlBuilder: HtmlBuilder, limit: Int) : JLabel()
     val editorKit = GotItEditorKit()
 
     private fun createHTMLView(component: JComponent, html: String): View {
-      val document = editorKit.createDocument(component.font, component.foreground)
+      val document = editorKit.createDocument(component.font, component.foreground ?: UIUtil.getLabelForeground())
       StringReader(html).use { editorKit.read(it, document, 0) }
 
       val factory = editorKit.viewFactory
