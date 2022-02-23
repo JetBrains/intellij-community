@@ -95,4 +95,37 @@ public class UnusedDeclarationKtTest20 extends AbstractUnusedDeclarationTest {
   public void testTopLevelFunction() {
     doTest();
   }
+
+  // TODO enable kotlin properties
+  public void _testNoPropertiesUsage() {
+    doTest();
+  }
+
+  public void _testChildGetterUsage() {
+    doTest();
+  }
+
+  public void _testParentGetterUsage() {
+    doTest();
+  }
+
+  public void _testChildSetterUsage() {
+    doTest();
+  }
+
+  public void _testParentSetterUsage() {
+    doTest();
+  }
+
+  public void _testChildGetterSetterUsage() {
+    doTest();
+  }
+
+  public void _testCustomGetterValUsage() {
+    doTest();
+  }
+
+  public void _testCustomGetterVarUsage() {
+    doTest();
+  }
 }
