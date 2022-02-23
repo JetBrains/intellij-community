@@ -136,21 +136,18 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     assert myGradleBuild != null;
     assert myModelConverter != null;
+    //We only need these later, but need to fetch them before fetching other models because of https://github.com/gradle/gradle/issues/20008
+    final Set<GradleBuild> nestedBuilds = getNestedBuilds(myGradleBuild);
     final MyBuildController wrappedController = new MyBuildController(controller, myGradleBuild);
     fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, myGradleBuild);
     addBuildModels(wrappedController, myAllModels, myGradleBuild, isProjectsLoadedAction);
 
-    if (myIsCompositeBuildsSupported) {
-      forEachNestedBuild(myGradleBuild, new GradleBuildConsumer() {
-        @Override
-        public void accept(@NotNull GradleBuild includedBuild) {
-          if (!isProjectsLoadedAction) {
-            myAllModels.getIncludedBuilds().add(convert(includedBuild));
-          }
-          fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, includedBuild);
-          addBuildModels(wrappedController, myAllModels, includedBuild, isProjectsLoadedAction);
-        }
-      });
+    for (GradleBuild includedBuild : nestedBuilds) {
+      if (!isProjectsLoadedAction) {
+        myAllModels.getIncludedBuilds().add(convert(includedBuild));
+      }
+      fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, includedBuild);
+      addBuildModels(wrappedController, myAllModels, includedBuild, isProjectsLoadedAction);
     }
     if (isProjectsLoadedAction) {
       wrappedController.getModel(TurnOffDefaultTasks.class);
@@ -203,8 +200,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     void accept(@NotNull GradleBuild build);
   }
 
-  private static void forEachNestedBuild(@NotNull GradleBuild rootBuild, @NotNull GradleBuildConsumer buildConsumer) {
+  private Set<GradleBuild> getNestedBuilds(@NotNull GradleBuild rootBuild) {
+    if (!myIsCompositeBuildsSupported) {
+      return Collections.emptySet();
+    }
     Set<String> processedBuildsPaths = new HashSet<String>();
+    Set<GradleBuild> nestedBuilds = new HashSet<GradleBuild>();
     String rootBuildPath = rootBuild.getBuildIdentifier().getRootDir().getPath();
     processedBuildsPaths.add(rootBuildPath);
     Queue<GradleBuild> queue = new LinkedList<GradleBuild>(rootBuild.getIncludedBuilds());
@@ -212,10 +213,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       GradleBuild includedBuild = queue.remove();
       String includedBuildPath = includedBuild.getBuildIdentifier().getRootDir().getPath();
       if (processedBuildsPaths.add(includedBuildPath)) {
-        buildConsumer.accept(includedBuild);
+        nestedBuilds.add(includedBuild);
         queue.addAll(includedBuild.getIncludedBuilds());
       }
     }
+    return nestedBuilds;
   }
 
   private void fetchProjectBuildModels(BuildController controller, final boolean isProjectsLoadedAction, GradleBuild build) {
