@@ -5,6 +5,7 @@ import com.intellij.compiler.impl.*;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
@@ -500,6 +501,7 @@ public class CompilerManagerImpl extends CompilerManager {
           manager = new ExternalJavacManager(
             compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
           );
+          manager.setWslExecutablePath(WSLDistribution.findWslExe());
           manager.start(listenPort);
           myExternalJavacManager = manager;
           IdeEventQueue.getInstance().addIdleListener(new IdleTask(manager), IdleTask.CHECK_PERIOD);
