@@ -366,6 +366,11 @@ open class CodeVisionHost(val project: Project) {
         return@executeOnPooledThread
       }
 
+      if(results.isEmpty() && editor.lensContextOrThrow.hasOnlyPlaceholders()){
+        editor.lensContextOrThrow.discardPending()
+        return@executeOnPooledThread
+      }
+
       if (!inTestSyncMode) {
         application.invokeLater {
           calcLifetime.executeIfAlive { consumer(results, providerWhoWantToUpdate) }
