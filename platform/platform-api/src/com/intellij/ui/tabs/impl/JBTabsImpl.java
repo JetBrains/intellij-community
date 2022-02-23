@@ -1921,21 +1921,7 @@ public class JBTabsImpl extends JComponent
               eComponent.setBounds(new Rectangle());
             }
           }
-          Rectangle moreRect = getMoreRect();
-          JComponent mComponent = myMoreToolbar.getComponent();
-          if (moreRect != null && !moreRect.isEmpty()) {
-            Dimension preferredSize = mComponent.getPreferredSize();
-            Rectangle bounds = new Rectangle(moreRect);
-            int xDiff = (bounds.width - preferredSize.width) / 2;
-            int yDiff = (bounds.height - preferredSize.height) / 2;
-            bounds.x += xDiff + 2;
-            bounds.width -= 2 * xDiff;
-            bounds.y += yDiff;
-            bounds.height -= 2 * yDiff;
-            mComponent.setBounds(bounds);
-          } else {
-            mComponent.setBounds(new Rectangle());
-          }
+          centerizeMoreToolbarPosition();
           Rectangle titleRect = getTitleRect();
           if (titleRect != null && !titleRect.isEmpty()) {
             Dimension preferredSize = myTitleWrapper.getPreferredSize();
@@ -1964,6 +1950,7 @@ public class JBTabsImpl extends JComponent
           //TableLayout does layout 'Title' and 'More' by itself
           myTableLayout.scrollSelectionInView();
           myLastLayoutPass = myTableLayout.layoutTable(visible, myTitleWrapper, myMoreToolbar.getComponent());
+          centerizeMoreToolbarPosition();
           mySingleRowLayout.myLastSingRowLayout = null;
         }
 
@@ -1976,6 +1963,25 @@ public class JBTabsImpl extends JComponent
     }
     finally {
       myForcedRelayout = false;
+    }
+  }
+
+  private void centerizeMoreToolbarPosition() {
+    Rectangle moreRect = getMoreRect();
+    JComponent mComponent = myMoreToolbar.getComponent();
+    if (moreRect != null && !moreRect.isEmpty()) {
+      Dimension preferredSize = mComponent.getPreferredSize();
+      Rectangle bounds = new Rectangle(moreRect);
+      int xDiff = (bounds.width - preferredSize.width) / 2;
+      int yDiff = (bounds.height - preferredSize.height) / 2;
+      bounds.x += xDiff + 2;
+      bounds.width -= 2 * xDiff;
+      bounds.y += yDiff;
+      bounds.height -= 2 * yDiff;
+      mComponent.setBounds(bounds);
+    }
+    else {
+      mComponent.setBounds(new Rectangle());
     }
   }
 
