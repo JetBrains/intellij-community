@@ -101,7 +101,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
-  private static void joinWithTimeout(Future<?>... threads) throws TimeoutException {
+  private static void joinWithTimeout(Future<?> @NotNull ... threads) throws TimeoutException {
     for (Future<?> thread : threads) {
       try {
         thread.get(20, TimeUnit.SECONDS);
