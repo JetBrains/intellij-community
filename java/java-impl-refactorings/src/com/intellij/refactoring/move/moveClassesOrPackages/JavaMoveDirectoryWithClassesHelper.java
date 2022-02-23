@@ -1,8 +1,10 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,17 +28,36 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   @Override
   public void findUsages(Collection<PsiFile> filesToMove,
                          PsiDirectory[] directoriesToMove,
+                         Collection<UsageInfo> result,
+                         boolean searchInComments,
+                         boolean searchInNonJavaFiles,
+                         Project project) { }
+
+  @Override
+  public void findUsages(Map<VirtualFile, MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper> filesToMove,
+                         PsiDirectory[] directoriesToMove,
                          Collection<UsageInfo> usages,
                          boolean searchInComments,
                          boolean searchInNonJavaFiles,
                          Project project) {
     final Set<String> packageNames = new HashSet<>();
-    for (PsiFile psiFile : filesToMove) {
+    PsiManager psiManager = PsiManager.getInstance(project);
+    for (VirtualFile vFile : filesToMove.keySet()) {
+      PsiFile psiFile = psiManager.findFile(vFile);
       if (psiFile instanceof PsiClassOwner) {
+        String packageName = "";
+        MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper targetWrapper = filesToMove.get(vFile);
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetWrapper.getRootDirectory());
+        if (aPackage != null) {
+          String relatedPackageName = targetWrapper.getRelativePathFromRoot().replaceAll("/", ".");
+          packageName =
+            !relatedPackageName.isEmpty() ? StringUtil.getQualifiedName(aPackage.getQualifiedName(), relatedPackageName) 
+                                          : aPackage.getQualifiedName();
+        }
         final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
         for (PsiClass aClass : classes) {
-          Collections
-            .addAll(usages, MoveClassesOrPackagesUtil.findUsages(aClass, searchInComments, searchInNonJavaFiles, aClass.getName()));
+          String newQName = StringUtil.getQualifiedName(packageName, Objects.requireNonNull(aClass.getName()));
+          Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(aClass, searchInComments, searchInNonJavaFiles, newQName));
         }
         packageNames.add(((PsiClassOwner)psiFile).getPackageName());
       }
@@ -148,18 +169,18 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   public void preprocessUsages(Project project,
                                Set<PsiFile> files,
                                UsageInfo[] infos,
-                               PsiDirectory directory,
+                               PsiDirectory targetDirectory,
                                MultiMap<PsiElement, String> conflicts) {
     if (files != null) {
-      final VirtualFile vFile = PsiUtilCore.getVirtualFile(directory);
+      final VirtualFile vFile = PsiUtilCore.getVirtualFile(targetDirectory);
       if (vFile != null) {
         RefactoringConflictsUtil.getInstance().analyzeModuleConflicts(project, files, infos, vFile, conflicts);
       }
     }
 
-    if (directory != null) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-      if (aPackage != null) {
+    if (targetDirectory != null) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
+      if (aPackage != null && files != null) {
         MoveClassesOrPackagesProcessor.detectPackageLocalsUsed(conflicts, files.toArray(PsiElement.EMPTY_ARRAY), new PackageWrapper(aPackage));
       }
     }
