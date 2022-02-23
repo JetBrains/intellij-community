@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionGroupExpander;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ final class ActionGroupExpanderImpl implements ActionGroupExpander {
 
   @Override
   public @NotNull CancellablePromise<List<AnAction>> expandActionGroupAsync(@Nullable Project project,
+                                                                            @NotNull DataContext context,
                                                                             @NotNull String place,
                                                                             @NotNull ActionGroup group,
                                                                             boolean hideDisabled,
