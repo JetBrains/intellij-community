@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -152,7 +153,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     private HeavyProcessLatch.Type heavyProcessType;
     private FileHighlightingSetting minimumLevel = FileHighlightingSetting.FORCE_HIGHLIGHTING;  // by default, full inspect mode is expected
 
-    public DaemonCodeAnalyzerStatus() {
+    DaemonCodeAnalyzerStatus() {
     }
 
     @Override
@@ -394,7 +395,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     @Override
     public @NotNull List<InspectionsLevel> getAvailableLevels() {
-      return inLibrary ? Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX) : Arrays.asList(InspectionsLevel.values());
+      return inLibrary ?
+               Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX) :
+             ApplicationManager.getApplication().isInternal() ?
+               Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX, InspectionsLevel.ESSENTIAL, InspectionsLevel.ALL) :
+               Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX, InspectionsLevel.ALL);
     }
 
     @Override
