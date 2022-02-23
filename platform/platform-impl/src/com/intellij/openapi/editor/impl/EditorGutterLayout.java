@@ -137,6 +137,8 @@ public class EditorGutterLayout {
 
   private List<GutterArea> createExperimentalLayout() {
     return List.of(
+      area(ANNOTATIONS_AREA, () -> 4)
+        .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize == 0 && myEditorGutter.isLineMarkersShown()),
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
         .as(EditorMouseEventArea.LINE_MARKERS_AREA)
         .showIf(() -> myEditorGutter.isLineMarkersShown()),
