@@ -5,7 +5,6 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -17,7 +16,10 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
@@ -527,7 +529,7 @@ final class FileTypeDetectionService implements Disposable {
       if (toLog()) {
         log("F: readSafely(): inputStream.read(" +length+ ") returned "+n+"; retrying with read action. stream="+ streamInfo(stream));
       }
-      n = ReadAction.compute(() -> stream.read(buffer, 0, length));
+      n = stream.read(buffer, 0, length);
       if (toLog()) {
         log("F: readSafely(): under read action inputStream.read(" +length+ ") returned "+n+"; stream="+ streamInfo(stream));
       }
