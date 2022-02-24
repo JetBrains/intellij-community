@@ -546,7 +546,8 @@ public final class MavenProjectReader {
             new MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.getDisabledProfiles()),
             projectData.nativeMavenProject,
             result.problems,
-            result.unresolvedArtifacts));
+            result.unresolvedArtifacts,
+            result.unresolvedProblems));
         }
       }
 
