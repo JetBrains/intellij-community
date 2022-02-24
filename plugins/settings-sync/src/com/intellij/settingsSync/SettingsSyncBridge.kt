@@ -19,7 +19,8 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
                                   private val settingsLog: SettingsLog,
                                   private val ideUpdater: SettingsSyncIdeCommunicator,
                                   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
-                                  private val updateChecker: SettingsSyncUpdateChecker
+                                  private val updateChecker: SettingsSyncUpdateChecker,
+                                  private val activateStreamProvider: () -> Unit
 ) {
 
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
@@ -36,24 +37,36 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     }
   }
 
-  init {
-    queue.queue(object : Update(0) {
-      override fun run() {
-        initializeLog()
-      }
-    })
+  @RequiresBackgroundThread
+  fun initialize(initMode: InitMode) {
+    settingsLog.initialize()
+    // activate the stream provider at this point to correctly process the event from the server (e.g. to synchronize the access to xmls)
+    activateStreamProvider()
 
+    when (initMode) {
+      is InitMode.TakeFromServer -> {
+        pendingEvents.add(initMode.cloudEvent)
+        processPendingEvents()
+      }
+      is InitMode.PushToServer -> {
+        pendingEvents.add(SyncSettingsEvent.MustPushRequest)
+        processPendingEvents()
+      }
+      InitMode.JustInit -> {} // nothing to do
+    }
+
+    // todo copy existing settings again here
+    // because local events could happen between activating the stream provider above and starting processing events here
     SettingsSyncEvents.getInstance().addSettingsChangedListener { event ->
       pendingEvents.add(event)
       queue.queue(updateObject)
     }
   }
 
-  private fun initializeLog() {
-    val newRepository = settingsLog.initialize()
-    if (newRepository) {
-      remoteCommunicator.push(settingsLog.collectCurrentSnapshot()) // todo handle non-successful result
-    }
+  sealed class InitMode {
+    object JustInit : InitMode()
+    class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
+    object PushToServer : InitMode()
   }
 
   @RequiresBackgroundThread

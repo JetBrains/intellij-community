@@ -70,6 +70,7 @@ internal class SettingsSyncTest {
     val controls = SettingsSyncMain.init(application, disposableRule.disposable, settingsSyncStorage, configDir, componentStore, remoteCommunicator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
+    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
   }
 
   @Test

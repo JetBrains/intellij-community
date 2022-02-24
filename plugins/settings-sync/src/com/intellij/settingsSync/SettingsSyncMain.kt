@@ -15,9 +15,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import java.nio.file.Path
 
-@Topic.AppLevel
-internal val SETTINGS_CHANGED_TOPIC: Topic<SettingsChangeListener> = Topic(SettingsChangeListener::class.java)
-
 private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
 internal fun isSettingsSyncEnabledByKey() : Boolean =
@@ -70,10 +67,6 @@ internal class SettingsSyncMain : Disposable {
     }
   }
 
-  fun enableSyncing() {
-    componentStore.storageManager.addStreamProvider(controls.streamProvider, true)
-  }
-
   fun disableSyncing() {
     componentStore.storageManager.removeStreamProvider(controls.streamProvider::class.java)
   }
@@ -100,10 +93,8 @@ internal class SettingsSyncMain : Disposable {
       }
       val ideUpdater = SettingsSyncIdeCommunicator(application, componentStore, appConfigPath)
       val updateChecker = SettingsSyncUpdateChecker(application, remoteCommunicator)
-      val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker)
-
-      componentStore.storageManager.addStreamProvider(ideUpdater, true)
-
+      val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker) {
+                                      componentStore.storageManager.addStreamProvider(ideUpdater, true) }
       return SettingsSyncControls(ideUpdater, updateChecker, bridge, remoteCommunicator)
     }
 

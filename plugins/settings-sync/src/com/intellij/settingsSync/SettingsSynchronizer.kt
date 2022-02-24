@@ -47,20 +47,14 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, FrameState
 
   private fun initializeSyncing(): Runnable = Runnable {
     LOG.info("Initializing settings sync")
-    SettingsSyncMain.getInstance().syncSettings()
+    val settingsSyncMain = SettingsSyncMain.getInstance()
+    settingsSyncMain.controls.bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
+    settingsSyncMain.syncSettings()
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
-    if (syncEnabled) {
-      if (!SettingsSyncMain.isAvailable()) {
-        executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
-      }
-      else {
-        SettingsSyncMain.getInstance().enableSyncing()
-        scheduleSyncing("Syncing settings after enabling")
-      }
-    }
-    else {
+    // syncEnabled part is handled inside SettingsSyncEnabler
+    if (!syncEnabled) {
       stopSyncingByTimer()
       SettingsSyncMain.getInstance().disableSyncing()
     }
