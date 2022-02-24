@@ -125,19 +125,22 @@ open class BrowserLauncherAppless : BrowserLauncher() {
         showError(IdeBundle.message("error.malformed.url", url), project = project)
         return true
       }
-      try {
-        LOG.debug("Trying Desktop#browse")
-        Desktop.getDesktop().browse(uri)
-        return true
-      }
-      catch (e: Exception) {
-        LOG.warn("[$url]", e)
-        if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
-          return true  // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
-        }
-      }
+      return desktopBrowse(project, uri)
     }
     return false
+  }
+
+  protected open fun desktopBrowse(project: Project?, uri: URI): Boolean {
+    try {
+      LOG.debug("Trying Desktop#browse")
+      Desktop.getDesktop().browse(uri)
+      return true
+    }
+    catch (e: Exception) {
+      LOG.warn("[$uri]", e)
+      // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
+      return SystemInfo.isMac && e.message!!.contains("Error code: -10814")
+    }
   }
 
   private fun systemOpen(project: Project?, url: String) {
