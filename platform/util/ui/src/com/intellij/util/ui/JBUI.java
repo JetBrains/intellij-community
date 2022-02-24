@@ -4,10 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
@@ -998,6 +995,9 @@ public final class JBUI {
       public static @NotNull Color listSeparatorColor() {
         return JBColor.namedColor("SearchEverywhere.List.separatorColor", Gray.xDC);
       }
+
+      public static @NotNull Color LIST_SETTINGS_BACKGROUND =
+        JBColor.namedColor("SearchEverywhere.List.settingsBackground", LightColors.SLIGHTLY_GRAY);
 
       public static @NotNull Color listTitleLabelForeground() {
         return JBColor.namedColor("SearchEverywhere.List.separatorForeground", UIUtil.getLabelDisabledForeground());

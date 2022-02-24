@@ -305,6 +305,7 @@
     "SearchEverywhere": {
       "Tab.selectedBackground": "Blue13",
       "SearchField.background": "Grey13",
+      "List.settingsBackground": "Grey12",
       "Advertiser": {
         "foreground": "Grey7",
         "borderInsets": "6,20,6,20"
