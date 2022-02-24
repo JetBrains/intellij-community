@@ -52,7 +52,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     if (suggestion is PopupSuggestion) {
       FeatureSuggesterStatistics.logSuggestionFound(suggester.id)
       if (SuggestingUtils.forceShowSuggestions || suggester.isSuggestionNeeded()) {
-        suggestionPresenter.showSuggestion(project, suggestion)
+        suggestionPresenter.showSuggestion(project, suggestion, disposable = this)
         fireSuggestionFound(suggestion)
         FeatureSuggesterSettings.instance().updateSuggestionShownTime(suggestion.suggesterId)
       }
