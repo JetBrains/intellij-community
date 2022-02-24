@@ -768,15 +768,25 @@ public final class ProjectUtil extends ProjectUtilCore {
 
   public static @Nullable Path getProjectFile(@NotNull String name) {
     Path projectDir = getProjectPath(name);
-    return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)) ? projectDir : null;
+    return isProjectFile(projectDir) ? projectDir : null;
+  }
+
+  private static boolean isProjectFile(@NotNull Path projectDir) {
+    return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER));
   }
 
   public static @Nullable Project openOrCreateProject(@NotNull String name) {
     return openOrCreateProject(name, null);
   }
 
-  public static @Nullable Project openOrCreateProject(@NotNull String name, @Nullable ProjectCreatedCallback  projectCreatedCallback) {
-    return ProgressManager.getInstance().computeInNonCancelableSection(() -> openOrCreateProjectInner(name, projectCreatedCallback));
+  public static @Nullable Project openOrCreateProject(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
+    return openOrCreateProject(name, getProjectPath(name), projectCreatedCallback);
+  }
+
+  public static @Nullable Project openOrCreateProject(@NotNull String name, @NotNull Path file, @Nullable ProjectCreatedCallback projectCreatedCallback) {
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+      return openOrCreateProjectInner(name, file, projectCreatedCallback);
+    });
   }
 
   public interface ProjectCreatedCallback {
@@ -795,7 +805,13 @@ public final class ProjectUtil extends ProjectUtilCore {
   }
 
   private static @Nullable Project openOrCreateProjectInner(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
-    Path existingFile = getProjectFile(name);
+    Path file = getProjectPath(name);
+    return openOrCreateProjectInner(name, file, projectCreatedCallback);
+  }
+
+  @Nullable
+  private static Project openOrCreateProjectInner(@NotNull String name, @NotNull Path file, @Nullable ProjectCreatedCallback projectCreatedCallback) {
+    Path existingFile = isProjectFile(file) ? file : null;
     if (existingFile != null) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       for (Project p : openProjects) {
@@ -807,7 +823,6 @@ public final class ProjectUtil extends ProjectUtilCore {
       return ProjectManagerEx.getInstanceEx().openProject(existingFile, new OpenProjectTask().withRunConfigurators());
     }
 
-    Path file = getProjectPath(name);
     boolean created;
     try {
       created = (!Files.exists(file) && Files.createDirectories(file) != null) || Files.isDirectory(file);
@@ -825,7 +840,7 @@ public final class ProjectUtil extends ProjectUtilCore {
           projectCreatedCallback.projectCreated(project);
         }
         saveAndDisposeProject(project);
-        projectFile = getProjectFile(name);
+        projectFile = file;
       }
     }
     if (projectFile == null) return null;
