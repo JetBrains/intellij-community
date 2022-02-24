@@ -127,7 +127,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 6)
+    private val GROUP = EventLogGroup("git.configuration", 7)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -187,6 +187,24 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       if (remote.urls.any { it.contains("bitbucket") }) return "bitbucket_custom"
 
       return null
+    }
+
+    private val STATUS_REFRESH = GROUP.registerEvent("status_refresh",
+                                                     EventFields.DurationMs,
+                                                     EventFields.Boolean("is_full_refresh"))
+
+    private val UNTRACKED_REFRESH = GROUP.registerEvent("untracked_refresh",
+                                                        EventFields.DurationMs,
+                                                        EventFields.Boolean("is_full_refresh"))
+
+    @JvmStatic
+    fun logStatusRefreshed(startMs: Long, everythingDirty: Boolean) {
+      STATUS_REFRESH.log(System.currentTimeMillis() - startMs, everythingDirty)
+    }
+
+    @JvmStatic
+    fun logUntrackedRefreshed(startMs: Long, everythingDirty: Boolean) {
+      UNTRACKED_REFRESH.log(System.currentTimeMillis() - startMs, everythingDirty)
     }
   }
 }

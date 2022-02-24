@@ -3,15 +3,17 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 
 class VcsStatisticsCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("vcs", 9)
+    val GROUP = EventLogGroup("vcs", 10)
 
     @JvmField
     val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -39,6 +41,15 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     @JvmField
     val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
 
+    private val VCS_FIELD = object : StringEventField("vcs") {
+      override val validationRule: List<String> get() = listOf("{enum#vcs}")
+    }
+
+    private val CLM_REFRESH = GROUP.registerEvent("clm_refresh",
+                                                  EventFields.DurationMs,
+                                                  VCS_FIELD,
+                                                  EventFields.Boolean("is_full_refresh"))
+
     @JvmStatic
     fun logRefreshActionPerformed(project: Project,
                                   changesBefore: Collection<Change>,
@@ -53,6 +64,11 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
                                WAS_UPDATING_BEFORE.with(wasUpdatingBefore),
                                CHANGES_DELTA.with(changesDelta),
                                UNVERSIONED_DELTA.with(unversionedDelta))
+    }
+
+    @JvmStatic
+    fun logClmRefreshed(startMs: Long, vcs: AbstractVcs, everythingDirty: Boolean) {
+      CLM_REFRESH.log(System.currentTimeMillis() - startMs, vcs.name, everythingDirty)
     }
 
     private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {

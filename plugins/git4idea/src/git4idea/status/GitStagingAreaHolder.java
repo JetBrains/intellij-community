@@ -14,6 +14,8 @@ import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitStatisticsCollector;
 import git4idea.commands.GitHandler;
 import git4idea.index.GitFileStatus;
 import git4idea.index.GitIndexStatusUtilKt;
@@ -99,7 +101,10 @@ public class GitStagingAreaHolder {
     RecursiveFilePathSet dirtyScope = new RecursiveFilePathSet(true); // GitVcs#needsCaseSensitiveDirtyScope is true
     dirtyScope.addAll(dirtyPaths);
 
+    long startTime = System.currentTimeMillis();
     List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
+    GitStatisticsCollector.logStatusRefreshed(startTime, dirtyScope.contains(VcsUtil.getFilePath(root)));
+
     rootRecords.removeIf(record -> {
       boolean isUnderDirtyScope = isUnder(record, dirtyScope);
       if (!isUnderDirtyScope) return true;
