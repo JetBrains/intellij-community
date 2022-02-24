@@ -437,8 +437,6 @@ idea.fatal.error.notification=disabled
   private void doBuildDistributions(BuildContext context) {
     checkProductProperties()
     copyDependenciesFile(context)
-    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
-    BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
 
     logFreeDiskSpace("before compilation")
 
@@ -957,8 +955,6 @@ idea.fatal.error.notification=disabled
     checkProductProperties()
 
     BuildContext context = buildContext
-    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
-    BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
 
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(context)
     ProjectStructureMapping projectStructureMapping = distributionJARsBuilder.buildJARs(context)

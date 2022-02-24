@@ -80,8 +80,6 @@ class TestingTasksImpl extends TestingTasks {
       compilationTasks.compileAllModulesAndTests()
     }
 
-    setupTestingDependencies()
-
     String remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
     if (remoteDebugJvmOptions != null) {
       debugTests(remoteDebugJvmOptions, additionalJvmOptions, defaultMainModule, rootExcludeCondition, context)
@@ -824,15 +822,6 @@ class TestingTasksImpl extends TestingTasks {
 
   protected static boolean isUnderTeamCity() {
     System.getenv("TEAMCITY_VERSION") != null
-  }
-
-  static boolean dependenciesInstalled
-  void setupTestingDependencies() {
-    if (!dependenciesInstalled) {
-      dependenciesInstalled = true
-      BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
-      BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
-    }
   }
 
   static boolean taskDefined

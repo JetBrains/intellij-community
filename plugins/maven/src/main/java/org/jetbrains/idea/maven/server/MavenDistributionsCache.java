@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,6 +19,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -105,20 +109,18 @@ public class MavenDistributionsCache {
 
   @NotNull
   public static LocalMavenDistribution resolveEmbeddedMavenHome() {
-    final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final Path root = pluginFileOrDir.getParent();
-    if (Files.isDirectory(pluginFileOrDir)) {
-      Path parentPath = MavenUtil.getMavenPluginParentFile().toPath();
-      Path mavenPath = parentPath.resolve("maven36-server-impl/lib/maven3");
-      if (Files.isDirectory(mavenPath)) {
-        return new LocalMavenDistribution(mavenPath, MavenServerManager.BUNDLED_MAVEN_3);
-      }
+    if (PluginManagerCore.isRunningFromSources()) {
+      BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+      Path mavenPath = BundledMavenDownloader.downloadMavenDistribution(communityRoot);
+      return new LocalMavenDistribution(mavenPath, MavenServerManager.BUNDLED_MAVEN_3);
     }
     else {
+      final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
+      final Path root = pluginFileOrDir.getParent();
+
+      // maven3 folder inside maven plugin layout
       return new LocalMavenDistribution(root.resolve("maven3"), MavenServerManager.BUNDLED_MAVEN_3);
     }
-
-    throw new RuntimeException("run \"Download Bundled Maven\" run configuration. Cannot resolve embedded maven home without it");
   }
 
   @Nullable
