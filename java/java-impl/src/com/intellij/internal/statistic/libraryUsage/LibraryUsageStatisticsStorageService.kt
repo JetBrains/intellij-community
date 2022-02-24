@@ -46,13 +46,13 @@ class LibraryUsageStatisticsStorageService :
   }
 
   fun isVisited(vFile: VirtualFile): Boolean {
-    val fileTime = state.timestamps[vFile.md5Hash()] ?: return false
+    val fileTime = state.timestamps[vFile.pathMd5Hash()] ?: return false
     val currentTime = System.currentTimeMillis()
     return !isDayPassed(lastTime = fileTime, currentTime = currentTime)
   }
 
   fun visit(vFile: VirtualFile) {
-    val hash = vFile.md5Hash()
+    val hash = vFile.pathMd5Hash()
     val currentTime = System.currentTimeMillis()
     state.timestamps[hash] = currentTime
     dropOutdatedPaths(currentTime)
@@ -66,7 +66,7 @@ class LibraryUsageStatisticsStorageService :
     return state.timestamps.values.removeIf { isDayPassed(lastTime = it, currentTime = currentTime) }
   }
 
-  private fun VirtualFile.md5Hash(): String = DigestUtil.md5Hex(path.encodeToByteArray())
+  private fun VirtualFile.pathMd5Hash(): String = DigestUtil.md5Hex(path.encodeToByteArray())
 
   override fun dispose() = Unit
 
