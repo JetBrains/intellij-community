@@ -226,6 +226,10 @@ final class PersistentFSTreeAccessor {
   }
 
   void ensureLoaded() throws IOException {
+    if (myFsRootDataLoader != null) {
+      myFsRootDataLoader.ensureLoaded(getRootsStoragePath());
+    }
+
     myFSConnection.getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action
   }
 
