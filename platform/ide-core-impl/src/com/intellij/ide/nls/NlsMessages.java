@@ -40,7 +40,7 @@ public class NlsMessages {
    * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, and Z" in English locale.
    */
   public static @NotNull @Nls String formatAndList(Collection<?> list) {
-    return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE).format(list);
+    return getFormats().andWideList.format(list);
   }
 
   /**
@@ -50,7 +50,7 @@ public class NlsMessages {
    * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, Z" in English locale.
    */
   public static @NotNull @Nls String formatNarrowAndList(Collection<?> list) {
-    return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.NARROW).format(list);
+    return getFormats().andNarrowList.format(list);
   }
 
   /**
@@ -59,7 +59,7 @@ public class NlsMessages {
    * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, or Z" in English locale.
    */
   public static @NotNull @Nls String formatOrList(Collection<?> list) {
-    return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE).format(list);
+    return getFormats().orWideList.format(list);
   }
 
   /**
@@ -203,14 +203,14 @@ public class NlsMessages {
     int finalCount = Math.min(unitValues.size(), maxFragments);
     if (narrow) {
       List<String> fragments = new ArrayList<>();
-      LocalizedNumberFormatter formatter = NumberFormatter.withLocale(DynamicBundle.getLocale()).unitWidth(NumberFormatter.UnitWidth.SHORT);
+      LocalizedNumberFormatter formatter = getFormats().shortNumber;
       for (i = 0; i < finalCount; i++) {
         fragments.add(formatter.unit(
           TIME_UNITS[unitIndices.getInt(i)]).format(unitValues.getLong(i)).toString().replace(' ', '\u2009'));
       }
       return StringUtil.join(fragments, " ");
     }
-    MeasureFormat format = MeasureFormat.getInstance(DynamicBundle.getLocale(), MeasureFormat.FormatWidth.SHORT);
+    MeasureFormat format = getFormats().shortFormat;
     Measure[] measures = new Measure[finalCount];
     for (i = 0; i < finalCount; i++) {
       measures[i] = new Measure(unitValues.getLong(i), TIME_UNITS[unitIndices.getInt(i)]);
@@ -254,7 +254,7 @@ public class NlsMessages {
       }
     }
     long d = duration;
-    LocalizedNumberFormatter formatter = NumberFormatter.withLocale(DynamicBundle.getLocale()).unitWidth(NumberFormatter.UnitWidth.NARROW);
+    LocalizedNumberFormatter formatter = getFormats().narrowNumber;
     List<FormattedNumber> result = new ArrayList<>();
     for (i -= 1; i >= startPosition - 1; i--) {
       long multiplier = i == TIME_MULTIPLIERS.length - 1 ? 1 : TIME_MULTIPLIERS[i + 1];
@@ -365,5 +365,42 @@ public class NlsMessages {
   @Contract(pure = true)
   public static @NotNull @Nls String formatDateLong(Date date) {
     return DateFormat.getDateInstance(DateFormat.LONG, DynamicBundle.getLocale()).format(date);
+  }
+
+  private static @NotNull CachedFormats getFormats() {
+    CachedFormats formats = ourFormats;
+    Locale locale = DynamicBundle.getLocale();
+    if (formats == null || formats.locale != locale) {
+      // Not a big problem if two identical formats are created concurrently,
+      // so we can skip locking and CAS
+      ourFormats = formats = new CachedFormats(locale);
+    }
+    return formats;
+  }
+
+  private static volatile CachedFormats ourFormats = null;
+
+  /**
+   * Immutable object to store locale-specific immutable formatters.
+   */
+  private static class CachedFormats {
+    final Locale locale;
+    final MeasureFormat shortFormat;
+    final LocalizedNumberFormatter narrowNumber;
+    final LocalizedNumberFormatter shortNumber;
+    final ListFormatter andWideList;
+    final ListFormatter andNarrowList;
+    final ListFormatter orWideList;
+
+    CachedFormats(Locale locale) {
+      this.locale = locale;
+      this.shortFormat = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT);
+      LocalizedNumberFormatter numberFormatter = NumberFormatter.withLocale(locale);
+      this.shortNumber = numberFormatter.unitWidth(NumberFormatter.UnitWidth.SHORT);
+      this.narrowNumber = numberFormatter.unitWidth(NumberFormatter.UnitWidth.NARROW);
+      this.andWideList = ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE);
+      this.orWideList = ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE);
+      this.andNarrowList = ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.NARROW);
+    }
   }
 }
