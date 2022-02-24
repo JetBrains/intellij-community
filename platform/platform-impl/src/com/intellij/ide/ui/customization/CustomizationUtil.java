@@ -78,11 +78,11 @@ public final class CustomizationUtil {
   }
 
 
-  static AnAction [] getReordableChildren(ActionGroup group,
-                                          CustomActionsSchema schema,
-                                          String defaultGroupName,
-                                          String rootGroupName,
-                                          AnActionEvent e) {
+  static AnAction[] getReordableChildren(ActionGroup group,
+                                         CustomActionsSchema schema,
+                                         String defaultGroupName,
+                                         String rootGroupName,
+                                         AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
@@ -199,8 +199,8 @@ public final class CustomizationUtil {
     }
   }
 
-  public static TreePath getPathByUserObjects(JTree tree, TreePath treePath){
-    List<String>  path = new ArrayList<>();
+  public static TreePath getPathByUserObjects(JTree tree, TreePath treePath) {
+    List<String> path = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
@@ -218,7 +218,6 @@ public final class CustomizationUtil {
       if (o instanceof Group) {
         url.getGroupPath().add(((Group)o).getName());
       }
-
     }
 
     final DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
@@ -371,12 +370,10 @@ public final class CustomizationUtil {
    * Returns {@code schema} actions for the group with {@code groupId}.
    *
    * @param groupId action group ID
-   * @param schema schema where actions are
+   * @param schema  schema where actions are
    * @return list of objects
-   *
-   * @see CustomizationUtil#acceptObjectIconAndText(Object, BiConsumer)
-   *
    * @throws IllegalStateException if group is not found
+   * @see CustomizationUtil#acceptObjectIconAndText(Object, BiConsumer)
    */
   public static @NotNull List<Object> getGroupActions(@NotNull String groupId, @NotNull CustomActionsSchema schema) {
     var group = getGroup(groupId, schema);
@@ -390,7 +387,7 @@ public final class CustomizationUtil {
    * Returns {@link  Group} for specified {@code schema}.
    *
    * @param groupId action group ID
-   * @param schema schema where group is
+   * @param schema  schema where group is
    * @return {@link Group} or {@code null} if group isn't found
    */
   public static @Nullable Group getGroup(@NotNull String groupId, @NotNull CustomActionsSchema schema) {
@@ -537,13 +534,14 @@ public final class CustomizationUtil {
         public void actionPerformed(@NotNull AnActionEvent e) {
           resetToDefaults();
         }
+
         @Override
         public void update(@NotNull AnActionEvent e) {
           CustomActionsSchema cleanScheme = new CustomActionsSchema();
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
         }
-      }){
+      }) {
         {
           getTemplatePresentation().setPopupGroup(true);
           getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
@@ -554,7 +552,8 @@ public final class CustomizationUtil {
         public void update(@NotNull AnActionEvent e) {
           CustomActionsSchema cleanScheme = new CustomActionsSchema();
           updateLocalSchema(cleanScheme);
-          e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) || mySelectedSchema.isModified(cleanScheme));
+          e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) ||
+                                         mySelectedSchema.isModified(cleanScheme));
         }
       };
     }
