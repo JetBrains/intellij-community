@@ -579,6 +579,16 @@ public class Splitter extends JPanel implements Splittable {
     return myMaxProp;
   }
 
+  public void setDefaultProportion() {
+    Component first = unwrap(myFirstComponent);
+    Component second = unwrap(mySecondComponent);
+    if (first != null && second != null) {
+      double p1 = Math.max(getDimension(first.getPreferredSize()), getDimension(first.getMinimumSize()));
+      double p2 = Math.max(getDimension(second.getPreferredSize()), getDimension(second.getMinimumSize()));
+      setProportion((float)(p1 / (p1 + p2)));
+    }
+  }
+
   @Override
   public void setProportion(float proportion) {
     myLagProportion = null;
