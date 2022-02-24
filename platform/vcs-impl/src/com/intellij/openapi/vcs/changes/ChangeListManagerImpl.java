@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
@@ -689,7 +690,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {
         builder.setCurrent(scope);
+
+        long startTime = System.currentTimeMillis();
         changeProvider.getChanges(scope, builder, indicator, gate);
+        VcsStatisticsCollector.logClmRefreshed(startTime, vcs, scope.wasEveryThingDirty());
       }
     }
     catch (VcsException e) {
