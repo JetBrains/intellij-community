@@ -67,6 +67,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   }
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
+  private static final VarargEventId CREATE_BY_NEW_FILE = registerFileTypeEvent("create_by_new_file");
   private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_EXTENSION_FIELD);
   private static final VarargEventId OPEN = registerFileTypeEvent(
     "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_IN_READER_MODE, FILE_EXTENSION_FIELD
@@ -84,6 +85,10 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     else {
       logEmptyFile();
     }
+  }
+
+  public static void triggerCreate(@NotNull Project project, @NotNull VirtualFile file) {
+    log(CREATE_BY_NEW_FILE, project, file, false);
   }
 
   public static void triggerOpen(@NotNull Project project, @NotNull FileEditorManager source,
