@@ -68,6 +68,14 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
   fun setUpdateMainBySelected(value: Boolean) {
     state.updateMainBySelected = value
   }
+
+  fun setRunConfigWidth(value: Int) {
+    state.runConfigWidth = value
+  }
+
+  fun getRunConfigWidth(): Int {
+    return state.runConfigWidth
+  }
 }
 
 class RunToolbarState : BaseState() {
@@ -83,4 +91,5 @@ class RunToolbarState : BaseState() {
 
   var moveNewOnTop by property(defaultValue = true)
   var updateMainBySelected by property(defaultValue = true)
+  var runConfigWidth by property(defaultValue = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH_UNSCALED_MIN)
 }
