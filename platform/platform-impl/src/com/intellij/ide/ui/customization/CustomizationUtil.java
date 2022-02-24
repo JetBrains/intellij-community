@@ -3,6 +3,7 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -46,8 +47,10 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -317,8 +320,9 @@ public final class CustomizationUtil {
    *
    * @throws IllegalArgumentException if {@code obj} has wrong type
    */
-  public static void acceptObjectIconAndText(@Nullable Object obj, BiConsumer<@Nls @NotNull String, @Nullable Icon> consumer) {
+  public static void acceptObjectIconAndText(@Nullable Object obj, @NotNull CustomPresentationConsumer consumer) {
     @NotNull String text;
+    @Nullable String description = null;
     Icon icon = null;
     if (obj instanceof Group) {
       Group group = (Group)obj;
@@ -326,6 +330,9 @@ public final class CustomizationUtil {
       @NlsSafe String id = group.getId();
       text = name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group"));
       icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = id;
+      }
     }
     else if (obj instanceof String) {
       String actionId = (String)obj;
@@ -338,6 +345,9 @@ public final class CustomizationUtil {
           icon = actionIcon;
         }
       }
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = actionId;
+      }
     }
     else if (obj instanceof Pair) {
       String actionId = (String)((Pair<?, ?>)obj).first;
@@ -349,12 +359,19 @@ public final class CustomizationUtil {
         actionIcon = action.getTemplatePresentation().getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
       }
       icon = actionIcon;
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = actionId;
+      }
     }
     else if (obj instanceof Separator) {
       text = "-------------";
     }
     else if (obj instanceof QuickList) {
-      text = ((QuickList)obj).getDisplayName();
+      QuickList quickList = (QuickList)obj;
+      text = quickList.getDisplayName();
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = quickList.getActionId();
+      }
     }
     else if (obj == null) {
       //noinspection HardCodedStringLiteral
@@ -363,7 +380,7 @@ public final class CustomizationUtil {
     else {
       throw new IllegalArgumentException("unknown obj: " + obj);
     }
-    consumer.accept(text, icon);
+    consumer.accept(text, description, icon);
   }
 
   /**
@@ -619,5 +636,9 @@ public final class CustomizationUtil {
         }
       });
     }
+  }
+
+  public interface CustomPresentationConsumer {
+    void accept(@NotNull @Nls String text, @Nullable @Nls String description, @Nullable Icon icon);
   }
 }
