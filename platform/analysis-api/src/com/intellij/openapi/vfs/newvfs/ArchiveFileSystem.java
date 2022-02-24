@@ -132,7 +132,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return myAttrGetter.apply(file);
   }
 
-  public @NotNull FileAttributes getDefaultAttributes(@NotNull VirtualFile file) {
+  public @NotNull FileAttributes getArchiveRootAttributes(@NotNull VirtualFile file) {
     // Hack for handler initialization to have a caching e.g. JarFileSystemImpl.getHandler
     getHandler(file);
     return ArchiveHandler.DIRECTORY_ATTRIBUTES;
