@@ -28,7 +28,7 @@ public final class ExternalJavacMessageHandler {
   private volatile boolean myTerminatedSuccessfully;
   private final WslSupport myWslSupport;
 
-  interface WslSupport {
+  public interface WslSupport {
     WslSupport DIRECT = new WslSupport() {
       @Override
       public String convertPath(String path) {
