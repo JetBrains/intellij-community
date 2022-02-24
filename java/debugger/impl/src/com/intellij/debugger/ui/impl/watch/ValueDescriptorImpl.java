@@ -580,9 +580,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     Promise<PsiElement> res;
     try {
-      res = Promises.resolvedPromise(getDescriptorEvaluation(context));
+      PsiElement result = ReadAction.nonBlocking(() -> getDescriptorEvaluation(context)).executeSynchronously();
+      res = Promises.resolvedPromise(result);
     }
-    catch (NeedMarkException e) {
+    catch (Exception wrapper) {
+      if (!(wrapper.getCause() instanceof EvaluateException)) throw wrapper;
+      if (!(wrapper.getCause() instanceof NeedMarkException)) throw (EvaluateException) wrapper.getCause();
+      NeedMarkException e = (NeedMarkException) wrapper.getCause();
+
       XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
       if (markers != null) {
         ValueMarkup existing = markers.getMarkup(value);
