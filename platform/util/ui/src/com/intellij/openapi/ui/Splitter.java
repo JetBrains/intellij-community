@@ -254,8 +254,16 @@ public class Splitter extends JPanel implements Splittable {
 
     final int dividerWidth = getDividerWidth();
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
-      final Dimension firstPrefSize = myFirstComponent.getPreferredSize();
-      final Dimension secondPrefSize = mySecondComponent.getPreferredSize();
+      final Dimension firstPrefSize = unwrap(myFirstComponent).getPreferredSize();
+      final Dimension secondPrefSize = unwrap(mySecondComponent).getPreferredSize();
+      if (myDividerPositionStrategy == DividerPositionStrategy.DISTRIBUTE) {
+        Dimension firstMinSize = unwrap(myFirstComponent).getMinimumSize();
+        Dimension secondMinSize = unwrap(mySecondComponent).getMinimumSize();
+        firstPrefSize.width = Math.max(firstMinSize.width, firstPrefSize.width);
+        firstPrefSize.height = Math.max(firstMinSize.height, firstPrefSize.height);
+        secondPrefSize.width = Math.max(secondMinSize.width, secondPrefSize.width);
+        secondPrefSize.height = Math.max(secondMinSize.height, secondPrefSize.height);
+      }
       return isVertical()
              ? new Dimension(Math.max(firstPrefSize.width, secondPrefSize.width),
                              firstPrefSize.height + dividerWidth + secondPrefSize.height)
@@ -294,11 +302,11 @@ public class Splitter extends JPanel implements Splittable {
         Component first = unwrap(myFirstComponent);
         Component second = unwrap(mySecondComponent);
         myProportion = getDistributeSizeChange(
-          (int)getDimension(first.getSize()),
+          (int)getDimension(myFirstComponent.getSize()),
           (int)getDimension(first.getMinimumSize()),
           (int)getDimension(first.getPreferredSize()),
           (int)getDimension(first.getMaximumSize()),
-          (int)getDimension(second.getSize()),
+          (int)getDimension(mySecondComponent.getSize()),
           (int)getDimension(second.getMinimumSize()),
           (int)getDimension(second.getPreferredSize()),
           (int)getDimension(second.getMaximumSize()),
