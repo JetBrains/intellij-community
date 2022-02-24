@@ -830,12 +830,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
             descriptorBg = ColorUtil.brighter(UIUtil.getListBackground(), 1);
           }
           else {
-            if (ExperimentalUI.isNewUI()) {
-              Color color = JBUI.CurrentTheme.Popup.BACKGROUND;
-              descriptorBg = ColorUtil.isDark(color) ? ColorUtil.brighter(color, 1) : ColorUtil.darker(color, 1);
-            } else {
-              descriptorBg = LightColors.SLIGHTLY_GRAY;
-            }
+            descriptorBg = JBUI.CurrentTheme.BigPopup.LIST_SETTINGS_BACKGROUND;
           }
           panel.setBackground(descriptorBg);
           nameComponent.setBackground(descriptorBg);

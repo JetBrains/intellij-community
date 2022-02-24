@@ -926,6 +926,11 @@
       "description": "Section header text"
     },
     {
+      "key": "SearchEverywhere.List.settingsBackground",
+      "description": "Background of settings in search everywhere results",
+      "since": "2022.2"
+    },
+    {
       "key": "SearchEverywhere.SearchField.background"
     },
     {
