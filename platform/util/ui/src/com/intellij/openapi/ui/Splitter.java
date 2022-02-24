@@ -335,9 +335,16 @@ public class Splitter extends JPanel implements Splittable {
     int delta = totalSize - (size1 + size2);
 
     int[] size = {size1, size2};
-    delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
-    delta = stretchTo(size, pSize1, pSize2, delta, oldProportion);
-    delta = stretchTo(size, mxSize1, mxSize2, delta, oldProportion);
+    if (delta >= 0) {
+      delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
+      delta = stretchTo(size, pSize1, pSize2, delta, oldProportion);
+      delta = stretchTo(size, mxSize1, mxSize2, delta, oldProportion);
+    }
+    else {
+      delta = stretchTo(size, mxSize1, mxSize2, delta, oldProportion);
+      delta = stretchTo(size, pSize1, pSize2, delta, oldProportion);
+      delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
+    }
     if (delta != 0) {
       if (stretchFirst == null) {
         int p0 = computePortion(size, delta, oldProportion);
