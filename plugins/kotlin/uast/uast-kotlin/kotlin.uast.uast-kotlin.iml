@@ -24,6 +24,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="RUNTIME" />
-    <orderEntry type="module" module-name="fe10-analyze.safe-analyze-utils" />
+    <orderEntry type="module" module-name="kotlin.fe10-analyze.safe-analyze-utils" />
   </component>
 </module>
