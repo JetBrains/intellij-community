@@ -17,11 +17,11 @@ public class CollectionBreakpointStorage {
   private static final ConcurrentMap<CollectionWrapper, CollectionHistory> COLLECTION_MODIFICATIONS_STORAGE = new ConcurrentHashMap<CollectionWrapper, CollectionHistory>();
   private static boolean ENABLED = true;
 
-  public static void saveFieldModification(String clsInternalName, String fieldName, Object clsInstance, Object collectionInstance,  boolean shouldSaveStack) {
+  public static void saveFieldModification(String internalClsName, String fieldName, Object clsInstance, Object collectionInstance,  boolean shouldSaveStack) {
     if (!ENABLED) {
       return;
     }
-    String clsName = Type.getObjectType(clsInternalName).getClassName();
+    String clsName = Type.getObjectType(internalClsName).getClassName();
     CapturedField field = new CapturedField(clsName, fieldName, clsInstance);
     FIELD_MODIFICATIONS_STORAGE.putIfAbsent(field, new FieldHistory());
     FieldHistory history = FIELD_MODIFICATIONS_STORAGE.get(field);
