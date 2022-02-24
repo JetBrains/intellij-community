@@ -1,0 +1,27 @@
+#cargo_features=["strip"]
+
+[package]
+name = "xplat_launcher"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.58.1"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+#strip = true  # Automatically strip symbols from the binary.
+opt-level = "z"  # Optimize for size.
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[features]
+
+[dependencies]
+dirs = "4.0.0"
+log = "0.4.14"
+native-dialog = "0.6.3"
+serde = { version="1.0.136", features = ["derive"] }
+serde_json = "1.0.79"
+is_executable = "1.0.1"
+simplelog = "0.11.2"
