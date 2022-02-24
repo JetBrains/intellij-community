@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.google.common.base.Joiner
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -8,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.isFile
+import kotlinx.coroutines.CoroutineName
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID
@@ -115,32 +117,47 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
         }
     }
 
-    private val repositoryDir: File by lazy {
-        val compilerForIdeArtifactFile = PathManager.getJarPathForClass(KtElement::class.java)?.let { File(it) }
+    private fun getRepositoryPath(clazz: Class<*>, groupId: String): File {
+        val artifactFile = PathManager.getJarPathForClass(clazz)?.let { File(it) }
             ?: error("Can't find kotlin-stdlib.jar in Maven Local")
 
-        fun resolutionFailed(): Nothing = error("Maven repository not found for artifact '$compilerForIdeArtifactFile'")
+        fun resolutionFailed(): Nothing = error("Maven repository not found for artifact '$artifactFile'")
 
-        val versionDir = compilerForIdeArtifactFile.parentFile
+        val versionDir = artifactFile.parentFile
         val artifactDir = versionDir?.parentFile
         val artifactGroupDir = artifactDir?.parentFile
 
-        if (artifactGroupDir == null || !compilerForIdeArtifactFile.name.startsWith(artifactDir.name + "-" + versionDir.name)) {
+        if (artifactGroupDir == null || !artifactFile.name.startsWith(artifactDir.name + "-" + versionDir.name)) {
             resolutionFailed()
         }
 
-        KOTLIN_MAVEN_GROUP_ID.split('.').asReversed().fold(artifactGroupDir) { dir, chunk ->
+        return groupId.split('.').asReversed().fold(artifactGroupDir) { dir, chunk ->
             check(dir.name == chunk)
             dir.parentFile ?: resolutionFailed()
         }
     }
 
+    /**
+     * Local Maven repository with unstable Kotlin compiler artifacts.
+     * For 'master' and release branches (e.g. '221') it will likely point to '~/.m2'.
+     * For kt-branches (such as 'kt-master'), it points to a repository inside the compiler build directory (../build/repo).
+     */
+    private val kotlinArtifactRepositoryDir: File by lazy { getRepositoryPath(KtElement::class.java, KOTLIN_MAVEN_GROUP_ID) }
+
+    /**
+     * Local Maven repository for IntelliJ IDEA dependencies. Likely points to '~/.m2'.
+     * Note that 'ideaArtifactRepositoryDir' can contain stable versions of Kotlin compiler artifacts.
+     */
+    private val ideaArtifactRepositoryDir: File by lazy { getRepositoryPath(CoroutineName::class.java, "org.jetbrains.kotlinx") }
+
     private fun resolveKotlinArtifact(artifactId: String): File {
-        val artifact = resolveKotlinMavenArtifact(repositoryDir, artifactId, bundledJpsVersion)
-        check(artifact.exists()) {
-            "Can't find artifact '$KOTLIN_MAVEN_GROUP_ID:$artifactId:$bundledJpsVersion' in Maven Local"
+        val artifacts = sequence {
+            yield(resolveKotlinMavenArtifact(kotlinArtifactRepositoryDir, artifactId, bundledJpsVersion))
+            yield(resolveKotlinMavenArtifact(ideaArtifactRepositoryDir, artifactId, bundledJpsVersion))
         }
-        return artifact
+
+        return artifacts.filter { it.exists() }.firstOrNull()
+            ?: error("Can't find artifact '$KOTLIN_MAVEN_GROUP_ID:$artifactId:$bundledJpsVersion' in Maven Local")
     }
 
     override val kotlinc: File by lazy {
