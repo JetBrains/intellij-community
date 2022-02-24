@@ -14,11 +14,11 @@ class PathClassLoaderTest {
   @Test
   fun `sub url resolve`(@TempDir dir: Path) {
     val file = dir.resolve("plugin.jar")
-    val compressor = Compressor.Zip(file.toFile())
-    compressor.addFile("help/help.html", "<img draggable=\"false\" src=\"screenshot.png\" alt=\"Settings\">".toByteArray(Charsets.UTF_8))
     val expectedData = byteArrayOf(42, 24)
-    compressor.addFile("help/screenshot.png", expectedData)
-    compressor.close()
+    Compressor.Zip(file.toFile()).use { compressor ->
+      compressor.addFile("help/help.html", "<img draggable=\"false\" src=\"screenshot.png\" alt=\"Settings\">".toByteArray(Charsets.UTF_8))
+      compressor.addFile("help/screenshot.png", expectedData)
+    }
     val classPath = ClassPath(listOf(file), UrlClassLoader.Builder(), PathClassLoader.RESOURCE_FILE_FACTORY, true)
     val resource = classPath.findResource("help/help.html")
     assertThat(resource).isNotNull()
