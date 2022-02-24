@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.impl;
 
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSet;
@@ -25,11 +24,6 @@ public final class UnionFileEnumeration implements VirtualFileEnumeration {
       }
     }
     return false;
-  }
-
-  @Override
-  public int[] asInts() {
-    return ((CompactVirtualFileSet)asIterable()).onlyInternalFileIds();
   }
 
   @Override

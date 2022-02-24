@@ -875,13 +875,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int[] asInts() {
-      return myVirtualFile instanceof VirtualFileWithId
-             ? new int[] { ((VirtualFileWithId)myVirtualFile).getId()}
-             : ArrayUtil.EMPTY_INT_ARRAY;
-    }
-
-    @Override
     public @NotNull Iterable<VirtualFile> asIterable() {
       return Collections.singletonList(myVirtualFile);
     }
@@ -938,11 +931,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean contains(int fileId) {
       return ((CompactVirtualFileSet)getFiles()).containsId(fileId);
-    }
-
-    @Override
-    public int[] asInts() {
-      return ((CompactVirtualFileSet)getFiles()).onlyInternalFileIds();
     }
 
     @Override
