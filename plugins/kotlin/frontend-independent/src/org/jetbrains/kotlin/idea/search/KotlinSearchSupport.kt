@@ -138,6 +138,8 @@ interface KotlinSearchUsagesSupport {
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
+    fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean
+
     fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
     fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean

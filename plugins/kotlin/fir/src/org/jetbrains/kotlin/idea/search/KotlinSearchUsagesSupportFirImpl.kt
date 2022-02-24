@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyse
@@ -23,9 +24,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
 import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.core.isInheritable
+import org.jetbrains.kotlin.idea.references.unwrappedTargets
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
+import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.usagesSearch.getDefaultImports
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
@@ -36,8 +41,11 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.resolve.OverridingUtil
+import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
 
-class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
+class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSearchUsagesSupport {
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
         return emptySet()
     }
@@ -54,8 +62,38 @@ class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
         return false
     }
 
+    override fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean {
+        return analyse(subDeclaration) {
+            val subSymbol = subDeclaration.getSymbol() as? KtCallableSymbol ?: return false
+            subSymbol.getAllOverriddenSymbols().any { it.psi == superDeclaration }
+        }
+    }
+
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
-        return false
+        fun KtDeclaration.isTopLevelCallable() = when (this) {
+            is KtNamedFunction -> isTopLevel
+            is KtProperty -> isTopLevel
+            else -> false
+        }
+
+        if (declaration.isTopLevelCallable()) return false
+
+        return reference.unwrappedTargets.any { target ->
+            when (target) {
+                is KtDestructuringDeclarationEntry -> false
+                is KtCallableDeclaration -> {
+                    if (target.isTopLevelCallable()) return@any false
+                    analyse(target) {
+                        val targetSymbol = target.getSymbol() as? KtCallableSymbol ?: return@any false
+                        declaration.getSymbol() in targetSymbol.getAllOverriddenSymbols()
+                    }
+                }
+                is PsiMethod -> {
+                    declaration.toLightMethods().any { superMethod -> MethodSignatureUtil.isSuperMethod(superMethod, target) }
+                }
+                else -> false
+            }
+        }
     }
 
     override fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {

@@ -143,36 +143,6 @@ fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
     }
 }
 
-fun findOverridingMethodsInKotlin(
-    parentClass: PsiClass,
-    baseElement: PsiNamedElement,
-    parameters: OverridingMethodsSearch.SearchParameters,
-    consumer: Processor<in PsiMethod>,
-): Boolean = ClassInheritorsSearch.search(parentClass, parameters.scope, true).forEach(Processor { inheritor: PsiClass ->
-    val found = runReadAction { findOverridingMethod(inheritor, baseElement) }
 
-    found == null || (consumer.process(found) && parameters.isCheckDeep)
-})
 
-private fun findOverridingMethod(inheritor: PsiClass, baseElement: PsiNamedElement): PsiMethod? {
-    // Leave Java classes search to JavaOverridingMethodsSearcher
-    if (inheritor !is KtLightClass) return null
 
-    val name = baseElement.name
-    val methodsByName = inheritor.findMethodsByName(name, false)
-
-    for (lightMethodCandidate in methodsByName) {
-        val candidateDescriptor = (lightMethodCandidate as? KtLightMethod)?.kotlinOrigin?.unsafeResolveToDescriptor() ?: continue
-        if (candidateDescriptor !is CallableMemberDescriptor) continue
-
-        val overriddenDescriptors = candidateDescriptor.getDirectlyOverriddenDeclarations()
-        for (candidateSuper in overriddenDescriptors) {
-            val candidateDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(candidateSuper)
-            if (candidateDeclaration == baseElement) {
-                return lightMethodCandidate
-            }
-        }
-    }
-
-    return null
-}
