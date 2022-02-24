@@ -102,17 +102,17 @@ class CollectionHistoryView(private val myClsName: String?,
         if (myClsName != null && myFieldName != null) {
           val selectionPath = it.path
           val node = selectionPath?.lastPathComponent as? XValueNodeImpl ?: return@invokeInDebuggerThread
-          loadFieldHistory(myClsName, myFieldName, node)
+          val clsType = (node.valueContainer as? JavaValue)?.descriptor?.type?.name() ?: return@invokeInDebuggerThread
+          loadFieldHistory(clsType, myFieldName, node)
         }
       }
-    }
-    )
+    })
 
     myHistoryInstancesTree.addChildren(createChildren(listOf(), null), true)
     if (myClsName == null) return
     invokeInDebuggerThread {
       val virtualMachineProxy = getVirtualMachine() ?: return@invokeInDebuggerThread
-      val classes = virtualMachineProxy.classesByName(myClsName)
+      val classes = virtualMachineProxy.allClasses().filter { it.name().replace("$", ".") == myClsName }
       val instances = classes.flatMap { it.instances(MAX_INSTANCES_NUMBER) }
       invokeLater { myHistoryInstancesTree.addChildren(createChildren(instances, null), true) }
     }
@@ -132,7 +132,10 @@ class CollectionHistoryView(private val myClsName: String?,
         val virtualMachineProxy = getVirtualMachine() ?: return@invokeInDebuggerThread
         val result = if (parentNode == myHistoryTree.root) {
           val descriptor = (myValueNode?.valueContainer as? JavaValue)?.descriptor as? FieldDescriptor
-          val clsName = myClsName ?: descriptor?.field?.declaringType()?.name()
+          var clsName = descriptor?.field?.declaringType()?.name()
+          if (clsName == null) {
+            clsName = (getSelectedNode(myHistoryInstancesTree)?.valueContainer as? JavaValue)?.descriptor?.type?.name()
+          }
           val fieldName = myFieldName ?: descriptor?.field?.name()
 
           val clsNameRef = virtualMachineProxy.mirrorOf(clsName) ?: return@invokeInDebuggerThread

@@ -310,7 +310,8 @@ public class CollectionBreakpointInstrumentor {
   }
 
   @SuppressWarnings("unused")
-  public static void putFieldToCapture(String internalClsName, String fieldName) {
+  public static void putFieldToCapture(String clsTypeDesc, String fieldName) {
+    String internalClsName = getInternalClsName(clsTypeDesc);
     myFieldsToCapture.putIfAbsent(internalClsName, Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>()));
     Set<String> fields = myFieldsToCapture.get(internalClsName);
     fields.add(fieldName);
@@ -318,9 +319,9 @@ public class CollectionBreakpointInstrumentor {
   }
 
   @SuppressWarnings("unused")
-  public static void emulateFieldWatchpoint(String... clsTypesDesc) {
-    for (String clsTypeDesc : clsTypesDesc) {
-      transformClassToCaptureFields(getInternalClsName(clsTypeDesc));
+  public static void emulateFieldWatchpoint(String... clsNames) {
+    for (String clsName : clsNames) {
+      transformClassToCaptureFields(clsName);
     }
   }
 

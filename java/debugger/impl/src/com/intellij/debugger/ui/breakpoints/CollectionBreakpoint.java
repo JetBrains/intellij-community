@@ -48,8 +48,6 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
   private static final String INSTRUMENTOR_CLASS = "com.intellij.rt.debugger.agent.CollectionBreakpointInstrumentor";
   private static final String CONSTRUCTOR_METHOD_NAME = "<init>";
   private static final String STATIC_BLOCK_METHOD_NAME = "<clinit>";
-  private static final String GET_INTERNAL_CLS_NAME_METHOD_NAME = "getInternalClsName";
-  private static final String GET_INTERNAL_CLS_NAME_METHOD_DESCRIPTOR = "(Ljava/lang/String;)Ljava/lang/String;";
   private static final String EMULATE_FIELD_WATCHPOINT_METHOD_NAME = "emulateFieldWatchpoint";
   private static final String EMULATE_FIELD_WATCHPOINT_METHOD_DESCRIPTOR = "([Ljava/lang/String;)V";
   private static final String PUT_FIELD_TO_CAPTURE_METHOD_NAME = "putFieldToCapture";
@@ -61,11 +59,12 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
   private static final String CAPTURE_COLLECTION_MODIFICATION_SPECIAL_METHOD_NAME = "captureCollectionModification";
   private static final String CAPTURE_COLLECTION_MODIFICATION_SPECIAL_METHOD_DESCRIPTOR = "(ZZLjava/lang/Object;Ljava/lang/Object;Z)V";
   private static final long MAX_INSTANCES_NUMBER = 1000000;
-  private final Map<String, String> myUnprocessedClasses = new HashMap<>();
-  private final Map<String, String> myClassesNames = new HashMap<>();
+  private final Set<String> myUnprocessedClasses = new HashSet<>();
+  private final Set<String> myClassesNames = new HashSet<>();
   private volatile boolean myBaseClsPrepared = false;
   private volatile boolean myIsStatic = false;
   private volatile boolean myIsPrivate = false;
+  private String myClsTypeDesc = null;
 
 
   protected CollectionBreakpoint(Project project, XBreakpoint breakpoint) {
@@ -100,6 +99,7 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
     if (myBaseClsPrepared) {
       return;
     }
+    myClsTypeDesc = refType.signature();
     createRequestForClass(debugProcess, refType);
     if (!isPrivate()) {
       createRequestForSubclasses(debugProcess, refType);
@@ -172,9 +172,8 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
 
   private void createRequestForClass(DebugProcessImpl debugProcess, ReferenceType refType) {
     String clsName = refType.name();
-    String signature = refType.signature();
-    myClassesNames.put(clsName, signature);
-    myUnprocessedClasses.put(clsName, signature);
+    myClassesNames.add(clsName);
+    myUnprocessedClasses.add(clsName);
     createMethodEntryRequest(debugProcess, refType);
   }
 
@@ -213,7 +212,7 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
       return;
     }
 
-    List<ReferenceType> classes = myClassesNames.keySet()
+    List<ReferenceType> classes = myClassesNames
       .stream()
       .map(name -> virtualMachineProxy.classesByName(name))
       .flatMap(list -> list.stream())
@@ -365,18 +364,19 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
       return;
     }
 
-    Value clsName = getInternalClsName(debugProcess, context);
-    if (clsName == null) {
+    String clsTypeDesc = myClsTypeDesc;
+    if (clsTypeDesc == null) {
       return;
     }
 
+    Value clsTypeDescRef = frameProxy.getVirtualMachine().mirrorOf(clsTypeDesc);
     Value fieldName = frameProxy.getVirtualMachine().mirrorOf(getFieldName());
     Value shouldSave = frameProxy.getVirtualMachine().mirrorOf(shouldSaveStack);
 
     ArrayList<Value> args = new ArrayList<>();
     args.add(valueToBe);
     args.add(obj);
-    args.add(clsName);
+    args.add(clsTypeDescRef);
     args.add(fieldName);
     args.add(shouldSave);
 
@@ -384,24 +384,6 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
                              CAPTURE_FIELD_MODIFICATION_METHOD_NAME,
                              CAPTURE_FIELD_MODIFICATION_METHOD_DESCRIPTOR,
                              args);
-  }
-
-  private Value getInternalClsName(DebugProcessImpl debugProcess, SuspendContextImpl context) {
-    String clsName = getClassName();
-    String clsTypeDesc = myClassesNames.get(clsName);
-
-    StackFrameProxyImpl frameProxy = context.getFrameProxy();
-
-    if (clsTypeDesc == null || frameProxy == null) {
-      return null;
-    }
-
-    Value clsTypeDescRef = frameProxy.getVirtualMachine().mirrorOf(clsTypeDesc);
-
-    return invokeInstrumentorMethod(debugProcess, context,
-                                    GET_INTERNAL_CLS_NAME_METHOD_NAME,
-                                    GET_INTERNAL_CLS_NAME_METHOD_DESCRIPTOR,
-                                    Collections.singletonList(clsTypeDescRef));
   }
 
   private void emulateFieldWatchpoint(DebugProcessImpl debugProcess, SuspendContextImpl context, Location location) {
@@ -428,15 +410,16 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
       return;
     }
 
-    Value clsName = getInternalClsName(debugProcess, context);
-    if (clsName == null) {
+    String clsTypeDesc = myClsTypeDesc;
+    if (clsTypeDesc == null) {
       return;
     }
 
+    Value clsTypeDescRef = frameProxy.getVirtualMachine().mirrorOf(clsTypeDesc);
     Value fieldName = frameProxy.getVirtualMachine().mirrorOf(getFieldName());
 
     invokeInstrumentorMethod(debugProcess, context, PUT_FIELD_TO_CAPTURE_METHOD_NAME,
-                             PUT_FIELD_TO_CAPTURE_METHOD_DESCRIPTOR, List.of(clsName, fieldName));
+                             PUT_FIELD_TO_CAPTURE_METHOD_DESCRIPTOR, List.of(clsTypeDescRef, fieldName));
   }
 
   private void transformClassesToEmulateFieldWatchpoint(DebugProcessImpl debugProcess,
@@ -446,8 +429,7 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
       return;
     }
 
-    List<Value> args = ContainerUtil.map(myUnprocessedClasses.keySet(),
-                                         clsName -> frameProxy.getVirtualMachine().mirrorOf(myUnprocessedClasses.get(clsName)));
+    List<Value> args = ContainerUtil.map(myUnprocessedClasses, clsName -> frameProxy.getVirtualMachine().mirrorOf(clsName));
     myUnprocessedClasses.clear();
     invokeInstrumentorMethod(debugProcess, context, EMULATE_FIELD_WATCHPOINT_METHOD_NAME,
                              EMULATE_FIELD_WATCHPOINT_METHOD_DESCRIPTOR, args);
