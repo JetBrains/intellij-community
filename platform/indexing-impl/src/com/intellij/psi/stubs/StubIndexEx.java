@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
@@ -28,7 +27,6 @@ import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +143,7 @@ public abstract class StubIndexEx extends StubIndex {
       return false;
     }
 
-    Iterator<VirtualFile> singleFileInScope = extractSingleFileOrEmpty(scope);
+    Iterator<VirtualFile> singleFileInScope = FileBasedIndexEx.extractSingleFileOrEmpty(scope);
     Iterator<VirtualFile> fileStream;
     boolean shouldHaveKeys;
 
@@ -463,29 +461,6 @@ public abstract class StubIndexEx extends StubIndex {
   @ApiStatus.Internal
   static UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> getStubUpdatingIndex() {
     return ((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
-  }
-
-  @SuppressWarnings("unchecked")
-  private static @Nullable Iterator<VirtualFile> extractSingleFileOrEmpty(@Nullable GlobalSearchScope scope) {
-    if (scope == null) return null;
-
-    VirtualFileEnumeration enumeration = VirtualFileEnumeration.extract(scope);
-    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? enumeration.asIterable() :
-                                                scope instanceof Iterable<?> ? (Iterable<VirtualFile>)scope :
-                                                null;
-    if (scopeAsFileIterable == null) return null;
-
-    VirtualFile result = null;
-    boolean isFirst = true;
-    for (VirtualFile file : scopeAsFileIterable) {
-      if (!isFirst) return null;
-      result = file;
-      isFirst = false;
-    }
-
-    return isFirst ? ObjectIterators.emptyIterator() :
-           result instanceof VirtualFileWithId ? ObjectIterators.singleton(result) :
-           null;
   }
 
   private static final class KeyAndFileId<K> {
