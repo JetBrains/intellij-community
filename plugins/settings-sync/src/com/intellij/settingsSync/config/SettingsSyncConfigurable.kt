@@ -177,10 +177,11 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       1,
       Messages.getInformationIcon()
     ) { index: Int, checkbox: JCheckBox ->
-      when {
-        index == 0 -> RESULT_CANCEL
-        checkbox.isSelected -> RESULT_REMOVE_DATA_AND_DISABLE
-        else -> RESULT_DISABLE
+      if (index == 1) {
+        if (checkbox.isSelected) RESULT_REMOVE_DATA_AND_DISABLE else RESULT_DISABLE
+      }
+      else {
+        RESULT_CANCEL
       }
     }
 
