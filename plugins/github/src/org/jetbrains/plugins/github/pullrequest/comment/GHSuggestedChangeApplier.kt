@@ -9,8 +9,6 @@ import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.LocalFilePath
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.SimpleContentRevision
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
 import git4idea.checkin.GitCheckinEnvironment
@@ -19,7 +17,6 @@ import git4idea.index.GitIndexUtil
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import java.nio.charset.Charset
 import java.nio.file.Path
-import kotlin.io.path.isExecutable
 
 class GHSuggestedChangeApplier(
   private val project: Project,
@@ -69,18 +66,14 @@ class GHSuggestedChangeApplier(
 
     val virtualFile = beforeLocalFilePath.virtualFile ?: return ApplyPatchStatus.FAILURE
     val fileContent = GitCheckinEnvironment.convertDocumentContentToBytesWithBOM(repository, appliedPatch.patchedText, virtualFile)
-    val isExecutable = Path.of(beforeLocalFilePath.path).isExecutable()
-    val hash = GitIndexUtil.write(repository, beforeLocalFilePath, fileContent, isExecutable)
-    val suggestedChangeRevision = SimpleContentRevision(appliedPatch.patchedText, afterLocalFilePath, hash.asString())
+    val stagedFile = GitIndexUtil.listStaged(repository, beforeLocalFilePath) ?: return ApplyPatchStatus.FAILURE
+    GitIndexUtil.write(repository, beforeLocalFilePath, fileContent, stagedFile.isExecutable)
 
     // Commit suggested change
-    val changes = ChangeListManager.getInstance(project).defaultChangeList.changes.map {
-      GitCheckinEnvironment.ChangedPath(it.beforeRevision?.file, it.afterRevision?.file)
-    }
-    val suggestedChangedPath = GitCheckinEnvironment.ChangedPath(beforeRevision.file, suggestedChangeRevision.file)
+    val suggestedChangedPath = GitCheckinEnvironment.ChangedPath(beforeLocalFilePath, afterLocalFilePath)
     val commitMessageFile = GitCheckinEnvironment.createCommitMessageFile(project, virtualBaseDir, commitMessage)
     GitCheckinEnvironment.commitUsingIndex(project, repository,
-                                           listOf(suggestedChangedPath), changes.toSet(),
+                                           listOf(suggestedChangedPath), setOf(suggestedChangedPath),
                                            commitMessageFile, GitCommitOptions())
 
     return ApplyPatchStatus.SUCCESS
