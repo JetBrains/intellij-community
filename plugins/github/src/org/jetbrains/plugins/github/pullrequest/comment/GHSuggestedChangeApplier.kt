@@ -59,7 +59,10 @@ class GHSuggestedChangeApplier(
     val afterLocalFilePath = createLocalFilePath(suggestedChangePatch.afterName)
 
     val beforeRevision = GitContentRevision.createRevision(beforeLocalFilePath, GitRevisionNumber.HEAD, project)
-    val appliedPatch = GenericPatchApplier.apply(beforeRevision.content, suggestedChangePatch.hunks)
+    val revisionContent = beforeRevision.content
+    if (revisionContent == null) return ApplyPatchStatus.FAILURE
+
+    val appliedPatch = GenericPatchApplier.apply(revisionContent, suggestedChangePatch.hunks)
     if (appliedPatch == null || appliedPatch.status != ApplyPatchStatus.SUCCESS) {
       return appliedPatch?.status ?: ApplyPatchStatus.FAILURE
     }
