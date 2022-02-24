@@ -52,7 +52,7 @@ class GHSuggestedChangeApplier(
     // Apply patch
     val suggestedChangePatch = createSuggestedChangePatch(suggestedChange, suggestedChangeInfo)
     val patchApplier = PatchApplier(project, virtualBaseDir, listOf(suggestedChangePatch), null, null)
-    val patchStatus = patchApplier.execute(true, true)
+    val patchStatus = patchApplier.execute(true, false)
     if (patchStatus == ApplyPatchStatus.ALREADY_APPLIED) {
       return patchStatus
     }
