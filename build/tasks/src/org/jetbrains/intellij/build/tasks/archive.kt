@@ -59,7 +59,7 @@ fun crossPlatformZip(macX64DistDir: Path,
                      extraFiles: Map<String, Path>,
                      distAllDir: Path) {
   writeNewFile(targetFile) { outFileChannel ->
-    ZipArchiveOutputStream(outFileChannel).use { out ->
+    NoDuplicateZipArchiveOutputStream(outFileChannel).use { out ->
       out.setUseZip64(Zip64Mode.Never)
 
       out.entryToDir(winX64DistDir.resolve("bin/idea.properties"), "bin/win")
