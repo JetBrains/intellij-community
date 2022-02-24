@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -432,9 +432,12 @@ public final class ImportHelper{
     String shortName = PsiNameHelper.getShortClassName(className);
 
     findUnusedSingleImport(file, shortName, className).ifPresent(PsiElement::delete);
-    PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
-    if (conflictSingleRef != null && !forceReimport){
-      return className.equals(conflictSingleRef.getQualifiedName());
+
+    if (!forceReimport) {
+      PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
+      if (conflictSingleRef != null) {
+        return className.equals(conflictSingleRef.getQualifiedName());
+      }
     }
 
     PsiClass curRefClass = helper.resolveReferencedClass(shortName, file);
@@ -634,7 +637,8 @@ public final class ImportHelper{
 
           @Override
           public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-            if (file.getManager().areElementsEquivalent(reference.resolve(), aClass)) {
+            if (shortClassName.equals(reference.getReferenceName()) && 
+                file.getManager().areElementsEquivalent(reference.resolve(), aClass)) {
               foundRef[0] = true;
             }
             super.visitReferenceElement(reference);
