@@ -17,6 +17,9 @@ interface FsRootDataLoader {
   val name: String
 
   @Throws(IOException::class)
+  fun ensureLoaded(storage: Path)
+
+  @Throws(IOException::class)
   fun deleteRootRecord(storage: Path, rootId: Int)
 
   @Throws(IOException::class)
