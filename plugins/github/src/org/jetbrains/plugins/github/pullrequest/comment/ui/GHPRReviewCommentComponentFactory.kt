@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeInfo
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -28,13 +29,14 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
     isOutdated: Boolean,
     suggestedChangeInfo: GHSuggestedChangeInfo,
     reviewDataProvider: GHPRReviewDataProvider,
-    detailsDataProvider: GHPRDetailsDataProvider
+    detailsDataProvider: GHPRDetailsDataProvider,
+    repositoryDataService: GHPRRepositoryDataService
   ): JComponent {
     val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(commentBody, suggestedChangeInfo)
     val content = htmlBody.removePrefix("<body>").removeSuffix("</body>")
     val commentBlocks = collectCommentBlocks(content)
 
-    val suggestedChangeApplier = GHSuggestedChangeApplier(project, commentBody, suggestedChangeInfo)
+    val suggestedChangeApplier = GHSuggestedChangeApplier(project, commentBody, suggestedChangeInfo, repositoryDataService)
     val suggestedChangeComponent = GHPRReviewSuggestedChangeComponentFactory(project, threadId, suggestedChangeApplier,
                                                                              reviewDataProvider, detailsDataProvider)
 
