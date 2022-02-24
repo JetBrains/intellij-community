@@ -634,5 +634,7 @@
                     interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory"/>
     <extensionPoint name="lang.psiDocumentation" dynamic="true"
                     interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetFactory"/>
+    <extensionPoint qualifiedName="com.intellij.properties.files.provider"
+                    interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
