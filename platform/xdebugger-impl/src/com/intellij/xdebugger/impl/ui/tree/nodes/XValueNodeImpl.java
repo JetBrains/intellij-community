@@ -277,7 +277,15 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Override
-  public @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> getAdditionalLinks() {
+  public void appendToComponent(@NotNull ColoredTextContainer component) {
+    super.appendToComponent(component);
+
+    for (XDebuggerTreeNodeHyperlink hyperlink : getAdditionalLinks()) {
+      component.append(hyperlink.getLinkText(), hyperlink.getTextAttributes(), hyperlink);
+    }
+  }
+
+  private @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> getAdditionalLinks() {
     return myAdditionalHyperLinks;
   }
 

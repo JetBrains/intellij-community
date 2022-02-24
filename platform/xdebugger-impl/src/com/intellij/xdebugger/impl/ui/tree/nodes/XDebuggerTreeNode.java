@@ -98,11 +98,6 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   @NotNull
-  public List<@NotNull XDebuggerTreeNodeHyperlink> getAdditionalLinks() {
-    return Collections.emptyList();
-  }
-
-  @NotNull
   public SimpleColoredText getText() {
     return myText;
   }
@@ -190,10 +185,6 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     XDebuggerTreeNodeHyperlink link = getLink();
     if (link != null) {
       component.append(link.getLinkText(), link.getTextAttributes(), link);
-    }
-
-    for (XDebuggerTreeNodeHyperlink hyperlink : getAdditionalLinks()) {
-      component.append(hyperlink.getLinkText(), hyperlink.getTextAttributes(), hyperlink);
     }
   }
 
