@@ -177,7 +177,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     components.add(slot)
   }
 
-  private fun pack() {
+  fun pack() {
     newSlotDetails.isVisible = manager.slotsCount() == 0
 
     slotPane.revalidate()
