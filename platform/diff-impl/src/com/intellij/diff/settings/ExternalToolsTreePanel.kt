@@ -51,7 +51,8 @@ internal class ExternalToolsTreePanel(
     model = treeModel
     addMouseListener(object : MouseAdapter() {
       override fun mousePressed(mouseEvent: MouseEvent) {
-        if (mouseEvent.clickCount == 2 && selectionPath != null) {
+        if (mouseEvent.clickCount == 2 && SwingUtilities.isLeftMouseButton(mouseEvent) && selectionPath != null) {
+          mouseEvent.consume()
           when ((selectionPath.lastPathComponent as DefaultMutableTreeNode).userObject) {
             is ExternalDiffSettings.ExternalToolGroup -> {
               if (isExpanded(selectionPath)) collapsePath(selectionPath)
