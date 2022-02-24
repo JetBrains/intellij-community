@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyseInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -27,7 +29,6 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
@@ -63,7 +64,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         val extensionReceiver = call.partiallyAppliedSymbol.extensionReceiver
         val companionObjectSymbol = companionObject.getSymbol()
         return (dispatchReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol ||
-                    (extensionReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol
+                (extensionReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol
     }
 
     override fun isDataClassComponentFunction(element: KtParameter): Boolean {
@@ -85,11 +86,21 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         val element = psiReference.element
         if (element !is KtElement) return false
 
-        val constructorCalleeExpression = element.getNonStrictParentOfType<KtConstructorCalleeExpression>() ?: return false
-        return withResolvedCall(constructorCalleeExpression) { call ->
+        fun adaptSuperCall(psi: KtElement): KtElement? {
+            if (psi !is KtNameReferenceExpression) return null
+            val userType = psi.parent as? KtUserType ?: return null
+            val typeReference = userType.parent as? KtTypeReference ?: return null
+            return typeReference.parent as? KtConstructorCalleeExpression
+        }
+
+        val psiToResolve = adaptSuperCall(element) ?: element
+
+        return withResolvedCall(psiToResolve) { call ->
             when (call) {
-                is KtDelegatedConstructorCall -> {
-                    val constructedClassSymbol = call.symbol.containingClassIdIfNonLocal?.getCorrespondingToplevelClassOrObjectSymbol()
+                is KtFunctionCall<*> -> {
+                    val constructorSymbol = call.symbol as? KtConstructorSymbol ?: return@withResolvedCall false
+                    val constructedClassSymbol =
+                        constructorSymbol.getContainingSymbol() as? KtClassifierSymbol ?: return@withResolvedCall false
                     constructedClassSymbol == ktClassOrObject.getClassOrObjectSymbol()
                 }
                 else -> false
