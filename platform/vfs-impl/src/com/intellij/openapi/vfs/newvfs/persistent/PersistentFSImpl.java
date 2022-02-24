@@ -1352,7 +1352,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       rootName = localFile.getNameSequence();
       rootPath = afs.getRootPathByLocal(localFile);
       rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), rootPath));
-      attributes = afs.getDefaultAttributes(new StubVirtualFile(fs) {
+      attributes = afs.getArchiveRootAttributes(new StubVirtualFile(fs) {
         @Override public @NotNull String getPath() { return rootPath; }
         @Override public @Nullable VirtualFile getParent() { return null; }
       });
