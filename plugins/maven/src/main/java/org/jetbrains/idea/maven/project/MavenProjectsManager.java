@@ -931,7 +931,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void completeMavenSyncOnImportCompletion() {
     waitForImportCompletion().onProcessed(o -> {
-      MavenResolveResultProcessor.notifyMavenProblems(myProject);
+      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject);
       MavenSyncConsole.finishTransaction(myProject);
     });
   }
