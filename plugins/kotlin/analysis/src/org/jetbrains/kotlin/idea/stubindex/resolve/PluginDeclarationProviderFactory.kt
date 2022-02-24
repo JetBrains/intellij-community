@@ -4,14 +4,12 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.idea.stubindex.SubpackagesIndexService
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
@@ -61,8 +59,8 @@ class PluginDeclarationProviderFactory(
         return StubBasedPackageMemberDeclarationProvider(name, project, indexedFilesScope)
     }
 
-    private fun diagnoseMissingPackageFragmentExactPackageIndexCorruption(message: String): Nothing {
-        throw IllegalStateException("KotlinExactPackageIndex seems corrupted.\n$message")
+    private fun diagnoseMissingPackageFragmentPartialPackageIndexCorruption(message: String): Nothing {
+        throw IllegalStateException("KotlinPartialPackageNamesIndex seems corrupted.\n$message")
     }
 
     private fun diagnoseMissingPackageFragmentPerModulePackageCacheMiss(message: String): Nothing {
@@ -117,7 +115,7 @@ class PluginDeclarationProviderFactory(
             indexedFilesScope != GlobalSearchScope.EMPTY_SCOPE && (file == null || file.virtualFile in indexedFilesScope)
         when {
             scopeNotEmptyAndContainsFile
-                    && !packageExists && oldPackageExists == false -> diagnoseMissingPackageFragmentExactPackageIndexCorruption(message)
+                    && !packageExists && oldPackageExists == false -> diagnoseMissingPackageFragmentPartialPackageIndexCorruption(message)
 
             scopeNotEmptyAndContainsFile
                     && packageExists && cachedPackageExists == false -> diagnoseMissingPackageFragmentPerModulePackageCacheMiss(message)
@@ -134,18 +132,8 @@ class PluginDeclarationProviderFactory(
                       "moduleInfo:$moduleInfo.name", "moduleInfo dependencies: ${moduleInfo.dependencies()}").joinToString("\n")
     }
 
-    private fun oldPackageExists(packageFqName: FqName): Boolean? = try {
-        var result = false
-        StubIndex.getInstance().processElements(
-            KotlinExactPackagesIndex.getInstance().key, packageFqName.asString(), project, indexedFilesScope, KtFile::class.java
-        ) {
-            result = true
-            false
-        }
-        result
-    } catch (e: Throwable) {
-        null
-    }
+    private fun oldPackageExists(packageFqName: FqName): Boolean =
+        PackageIndexUtil.containsFilesWithPartialPackage(packageFqName, indexedFilesScope)
 
     private fun debugInfo(): String {
         if (nonIndexedFiles.isEmpty()) return "-no synthetic files-\n"
