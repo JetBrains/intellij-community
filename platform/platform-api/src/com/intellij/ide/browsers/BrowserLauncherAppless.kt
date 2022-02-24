@@ -112,26 +112,35 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun openWithDefaultBrowser(url: String, project: Project?) {
+    if (desktopBrowse(project, url)) {
+      return
+    }
+    systemOpen(project, url)
+  }
+
+  private fun desktopBrowse(project: Project?, url: String): Boolean {
     if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
       val uri = VfsUtil.toUri(url)
       if (uri == null) {
         showError(IdeBundle.message("error.malformed.url", url), project = project)
-        return
+        return true
       }
-
       try {
         LOG.debug("Trying Desktop#browse")
         Desktop.getDesktop().browse(uri)
-        return
+        return true
       }
       catch (e: Exception) {
         LOG.warn("[$url]", e)
         if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
-          return  // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
+          return true  // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
         }
       }
     }
+    return false
+  }
 
+  private fun systemOpen(project: Project?, url: String) {
     val command = defaultBrowserCommand
     if (command == null) {
       showError(IdeBundle.message("browser.default.not.supported"), project = project)
