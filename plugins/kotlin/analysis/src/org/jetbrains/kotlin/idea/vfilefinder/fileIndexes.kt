@@ -87,7 +87,7 @@ object KotlinPartialPackageNamesIndex: FileBasedIndexExtension<FqName, Void>() {
 
     private val LOG = Logger.getInstance(KotlinPartialPackageNamesIndex::class.java)
 
-    private const val VERSION = 2
+    private const val VERSION = 3
 
     private val KEY: ID<FqName, Void> = ID.create(KotlinPartialPackageNamesIndex::class.java.canonicalName)
 
@@ -158,7 +158,9 @@ object KotlinPartialPackageNamesIndex: FileBasedIndexExtension<FqName, Void>() {
         when (this.fileType) {
             KotlinFileType.INSTANCE -> this.psiFile.safeAs<KtFile>()?.packageFqName
             JavaClassFileType.INSTANCE -> IDEKotlinBinaryClassCache.getInstance()
-                .getKotlinBinaryClassHeaderData(this.file, this.content)?.packageName?.let(::FqName)
+                .getKotlinBinaryClassHeaderData(this.file, this.content)?.let {
+                    it.packageName?.let(::FqName) ?: it.classId.packageFqName
+                }
             KotlinJavaScriptMetaFileType -> this.fqNameFromJsMetadata()
             else -> null
         }
