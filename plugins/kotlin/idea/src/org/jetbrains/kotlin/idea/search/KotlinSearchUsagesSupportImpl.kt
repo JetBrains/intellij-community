@@ -7,7 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
+import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
@@ -18,6 +21,7 @@ import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.ImportPath
 
 class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
@@ -35,6 +39,21 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean =
         reference.isCallableOverrideUsage(declaration)
+
+    override fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean {
+        val candidateDescriptor = subDeclaration.unsafeResolveToDescriptor()
+        if (candidateDescriptor !is CallableMemberDescriptor) return false
+
+        val overriddenDescriptors = candidateDescriptor.getDirectlyOverriddenDeclarations()
+        for (candidateSuper in overriddenDescriptors) {
+            val candidateDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(candidateSuper)
+            if (candidateDeclaration == superDeclaration) {
+                return true
+            }
+
+        }
+        return false
+    }
 
     override fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean =
         reference.isUsageInContainingDeclaration(declaration)
