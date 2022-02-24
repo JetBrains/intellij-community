@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -95,8 +97,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
 
       withArtifact("maven-event-listener", "")
-      withResource("maven36-server-impl/lib/maven3", "lib/maven3")
-      withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       [
         "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
         "commons-beanutils.jar",
@@ -109,6 +109,15 @@ final class CommunityRepositoryModules {
         "intellij.maven.server.m2.impl", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
         "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m2", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31"
       ])
+      withGeneratedResources({ Path targetDir, BuildContext context ->
+        Path targetLib = targetDir.resolve("lib")
+
+        Path mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+        FileUtil.copyDir(mavenLibs.toFile(), targetLib.resolve("maven3-server-lib").toFile())
+
+        Path mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
+        FileUtil.copyDir(mavenDist.toFile(), targetLib.resolve("maven3").toFile())
+      })
     },
     plugin("intellij.gradle") {
       withModule("intellij.gradle.common")
@@ -239,7 +248,7 @@ final class CommunityRepositoryModules {
       mainJarName = "android.jar"
       withCustomVersion({pluginXmlFile, ideVersion, _ ->
         String text = Files.readString(pluginXmlFile)
-        String version = ideVersion;
+        String version = ideVersion
 
         if (text.indexOf("<version>") != -1) {
           def declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length(), text.indexOf("</version>"))

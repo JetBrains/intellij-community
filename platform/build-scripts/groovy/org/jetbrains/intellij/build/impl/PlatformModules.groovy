@@ -122,6 +122,7 @@ final class PlatformModules {
     "intellij.platform.feedback",
     "intellij.platform.warmup",
     "intellij.platform.buildScripts.downloader",
+    "intellij.idea.community.build.dependencies",
     "intellij.platform.usageView.impl",
     )
 
