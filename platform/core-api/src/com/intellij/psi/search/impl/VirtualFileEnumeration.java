@@ -15,10 +15,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Internal
 public interface VirtualFileEnumeration {
-
   boolean contains(int fileId);
-
-  int[] asInts();
 
   @NotNull Iterable<VirtualFile> asIterable();
 
