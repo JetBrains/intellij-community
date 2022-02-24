@@ -96,7 +96,9 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.compiler-plugins.lombok.gradle",
       "intellij.kotlin.compilerPlugins.lombok.maven",
       "intellij.kotlin.compilerPlugins.scripting",
+/* Android Studio: workaround for b/218317110
       "kotlin.compiler-plugins.android-extensions-stubs",
+Android Studio: workaround for b/218317110 */
       "intellij.kotlin.completion.api",
       "kotlin.completion.impl.shared",
       "kotlin.completion.impl.k1",
