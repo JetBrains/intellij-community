@@ -9,10 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.pom.PomManager
 import com.intellij.pom.PomModelAspect
 import com.intellij.pom.event.PomModelEvent
@@ -22,6 +19,8 @@ import com.intellij.pom.tree.events.TreeChangeEvent
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findTopmostParentOfType
+import com.intellij.vfs.AsyncVfsEventsListener
+import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.name.FqName
@@ -58,21 +57,18 @@ class KotlinPackageModificationListener(project: Project): Disposable {
         })
 
         val fileIndex = ProjectFileIndex.SERVICE.getInstance(project)
-        val vfsEventsListener = object : BulkFileListener {
-            override fun after(events: MutableList<out VFileEvent>) {
-                val relatedVfsFileChange = events.any { event ->
-                    event.takeIf { it.isFromRefresh || it is VFileContentChangeEvent }?.file?.let {
-                        it.isKotlinFileType() && fileIndex.isInContent(it)
-                    } ?: false
-                }
-                if (relatedVfsFileChange) {
-                    incModificationCount()
-                }
+        val vfsEventsListener = AsyncVfsEventsListener { events ->
+            val relatedVfsFileChange = events.any { event ->
+                event.takeIf { it.isFromRefresh || it is VFileContentChangeEvent }?.file?.let {
+                    it.isKotlinFileType() && fileIndex.isInContent(it)
+                } ?: false
+            }
+            if (relatedVfsFileChange) {
+                incModificationCount()
             }
         }
 
-        messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, vfsEventsListener)
-        //AsyncVfsEventsPostProcessor.getInstance().addListener(vfsEventsListener, this)
+        AsyncVfsEventsPostProcessor.getInstance().addListener(vfsEventsListener, this)
 
         val treeAspect: TreeAspect = TreeAspect.getInstance(project)
         val model = PomManager.getModel(project)
