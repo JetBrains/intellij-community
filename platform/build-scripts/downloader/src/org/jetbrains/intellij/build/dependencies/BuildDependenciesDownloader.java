@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.dependencies;
 
+import com.google.common.util.concurrent.Striped;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,6 +38,7 @@ final public class BuildDependenciesDownloader {
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
   private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
     .version(HttpClient.Version.HTTP_1_1).build();
+  private static Striped<Lock> fileLocks = Striped.lock(1024);
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
@@ -221,6 +224,8 @@ final public class BuildDependenciesDownloader {
   }
 
   public static void extractFile(Path archiveFile, Path target, BuildDependenciesCommunityRoot communityRoot, BuildDependenciesExtractOptions... options) {
+    final Lock lock = fileLocks.get(target);
+    lock.lock();
     try {
       // Extracting different archive files into the same target should overwrite target each time
       // That's why flagFile should be dependent only on target location
@@ -229,95 +234,104 @@ final public class BuildDependenciesDownloader {
       extractFileWithFlagFileLocation(archiveFile, target, flagFile, options);
     } catch (Exception e) {
       throw new RuntimeException(e);
+    } finally {
+      lock.unlock();
     }
   }
 
   private static void downloadFile(URI uri, Path target) throws Exception {
-    BuildDependenciesTraceEventAttributes attributes = TRACER.createAttributes();
-    attributes.setAttribute("uri", uri.toString());
-    attributes.setAttribute("target", target.toString());
-
-    BuildDependenciesSpan span = TRACER.startSpan("download", attributes);
+    final Lock lock = fileLocks.get(target);
+    lock.lock();
     try {
-      Instant now = Instant.now();
-      if (Files.exists(target)) {
-        span.addEvent("skip downloading because target file already exists", TRACER.createAttributes());
+      BuildDependenciesTraceEventAttributes attributes = TRACER.createAttributes();
+      attributes.setAttribute("uri", uri.toString());
+      attributes.setAttribute("target", target.toString());
 
-        // Update file modification time to maintain FIFO caches i.e.
-        // in persistent cache folder on TeamCity agent
-        Files.setLastModifiedTime(target, FileTime.from(now));
-        return;
-      }
-
-      // save to the same disk to ensure that move will be atomic and not as a copy
-      String tempFileName = target.getFileName() + "-"
-                            + Long.toString(now.getEpochSecond() - 1634886185, 36) + "-"
-                            + Integer.toString(now.getNano(), 36);
-
-      if (tempFileName.length() > 255) {
-        tempFileName = tempFileName.substring(tempFileName.length() - 255);
-      }
-      Path tempFile = target.getParent().resolve(tempFileName);
-
+      BuildDependenciesSpan span = TRACER.startSpan("download", attributes);
       try {
-        HttpRequest request = HttpRequest.newBuilder()
-          .GET()
-          .uri(uri)
-          .setHeader("User-Agent", "Build Script Downloader")
-          .build();
+        Instant now = Instant.now();
+        if (Files.exists(target)) {
+          span.addEvent("skip downloading because target file already exists", TRACER.createAttributes());
 
-        info(" * Downloading " + uri + " -> " + target);
+          // Update file modification time to maintain FIFO caches i.e.
+          // in persistent cache folder on TeamCity agent
+          Files.setLastModifiedTime(target, FileTime.from(now));
+          return;
+        }
 
-        HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
-        if (response.statusCode() != 200) {
-          StringBuilder builder = new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
+        // save to the same disk to ensure that move will be atomic and not as a copy
+        String tempFileName = target.getFileName() + "-"
+                              + Long.toString(now.getEpochSecond() - 1634886185, 36) + "-"
+                              + Integer.toString(now.getNano(), 36);
 
-          Map<String, List<String>> headers = response.headers().map();
-          for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
-            for (String value : headers.get(headerName)) {
-              builder.append("Header: ").append(headerName).append(": ").append(value).append("\n");
+        if (tempFileName.length() > 255) {
+          tempFileName = tempFileName.substring(tempFileName.length() - 255);
+        }
+        Path tempFile = target.getParent().resolve(tempFileName);
+
+        try {
+          HttpRequest request = HttpRequest.newBuilder()
+            .GET()
+            .uri(uri)
+            .setHeader("User-Agent", "Build Script Downloader")
+            .build();
+
+          info(" * Downloading " + uri + " -> " + target);
+
+          HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+          if (response.statusCode() != 200) {
+            StringBuilder builder =
+              new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
+
+            Map<String, List<String>> headers = response.headers().map();
+            for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
+              for (String value : headers.get(headerName)) {
+                builder.append("Header: ").append(headerName).append(": ").append(value).append("\n");
+              }
             }
+
+            builder.append("\n");
+            if (Files.exists(tempFile)) {
+              try (InputStream inputStream = Files.newInputStream(tempFile)) {
+                // yes, not trying to guess encoding
+                // string constructor should be exception free,
+                // so at worse we'll get some random characters
+                builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8));
+              }
+            }
+
+            throw new IllegalStateException(builder.toString());
           }
 
-          builder.append("\n");
-          if (Files.exists(tempFile)) {
-            try (InputStream inputStream = Files.newInputStream(tempFile)) {
-              // yes, not trying to guess encoding
-              // string constructor should be exception free,
-              // so at worse we'll get some random characters
-              builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8));
-            }
+          long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElse(-1);
+          if (contentLength <= 0) {
+            throw new IllegalStateException("Header '" + HTTP_HEADER_CONTENT_LENGTH + "' is missing or zero for " + uri);
           }
 
-          throw new IllegalStateException(builder.toString());
-        }
+          long fileSize = Files.size(tempFile);
+          if (fileSize != contentLength) {
+            throw new IllegalStateException("Wrong file length after downloading uri '" + uri +
+                                            "' to '" + tempFile +
+                                            "': expected length " + contentLength +
+                                            "from Content-Length header, but got " + fileSize + " on disk");
+          }
 
-        long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElse(-1);
-        if (contentLength <= 0) {
-          throw new IllegalStateException("Header '" + HTTP_HEADER_CONTENT_LENGTH + "' is missing or zero for " + uri);
+          Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         }
-
-        long fileSize = Files.size(tempFile);
-        if (fileSize != contentLength) {
-          throw new IllegalStateException("Wrong file length after downloading uri '" + uri +
-                                          "' to '" + tempFile +
-                                          "': expected length " + contentLength +
-                                          "from Content-Length header, but got " + fileSize + " on disk");
+        finally {
+          Files.deleteIfExists(tempFile);
         }
-
-        Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+      }
+      catch (Throwable e) {
+        span.recordException(e);
+        span.setStatus(BuildDependenciesSpan.SpanStatus.ERROR);
+        throw e;
       }
       finally {
-        Files.deleteIfExists(tempFile);
+        span.close();
       }
-    }
-    catch (Throwable e) {
-      span.recordException(e);
-      span.setStatus(BuildDependenciesSpan.SpanStatus.ERROR);
-      throw e;
-    }
-    finally {
-      span.close();
+    } finally {
+      lock.unlock();
     }
   }
 
