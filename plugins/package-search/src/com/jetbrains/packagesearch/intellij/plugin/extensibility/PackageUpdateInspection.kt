@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
@@ -48,6 +49,9 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     @JvmField
     var onlyStable: Boolean = true
 
+    @JvmField
+    var enableRangeWarning: Boolean = true
+
     var excludeList: MutableList<String> = mutableListOf()
 
     companion object {
@@ -64,6 +68,8 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 else -> false
             }
         }
+
+        private fun isRange(version: String) = version.any { !it.isLetter() && !it.isDigit() && it != '_' && it != '.' && it != '-' }
     }
 
     override fun createOptionsPanel(): JPanel {
@@ -71,7 +77,8 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
         val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"), excludeList)
 
-        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), "onlyStable")
+        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), ::onlyStable.name)
+        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.rangeWarning"), ::enableRangeWarning.name)
         panel.addGrowing(injectionListTable.contentPanel)
 
         return panel
@@ -92,6 +99,26 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
         }
 
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
+
+        if (enableRangeWarning) {
+            project.packageSearchProjectService.dependenciesByModuleStateFlow.value
+                .entries
+                .find { it.key.nativeModule == fileModule }
+                ?.value
+                ?.filter { dependency -> dependency.coordinates.version?.let { isRange(it) } ?: false }
+                ?.mapNotNull { coordinates ->
+                    runCatching { getVersionPsiElement(file, coordinates) }.getOrNull()
+                        ?.let { coordinates to it }
+                }
+                ?.forEach { (dependency, psiElement) ->
+
+                    val message = dependency.coordinates.version
+                        ?.let { PackageSearchBundle.message("packagesearch.inspection.upgrade.range.withVersion", it) }
+                        ?: PackageSearchBundle.message("packagesearch.inspection.upgrade.range")
+
+                    problemsHolder.registerProblem(psiElement, message, ProblemHighlightType.WEAK_WARNING)
+                }
+        }
 
         project.packageSearchProjectService.packageUpgradesStateFlow.value
             .getPackagesToUpgrade(onlyStable).upgradesByModule[fileModule]
