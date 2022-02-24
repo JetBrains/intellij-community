@@ -35,9 +35,9 @@ abstract class Java8OverrideImplementTest<T : ClassMember> : AbstractOverrideImp
     fun <L : T> foo(l : L)
 }"""
         )
+        val javaFile = myFixture.configureByFile(getTestName(true) + ".java")
 
         val superClass = (file as KtFile).classes[0]
-        val javaFile = myFixture.configureByFile(getTestName(true) + ".java")
         val psiClass = (javaFile as PsiJavaFile).classes[0]
         val method = superClass.methods[0]
         val substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY)
