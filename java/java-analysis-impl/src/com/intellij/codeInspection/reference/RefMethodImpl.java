@@ -172,7 +172,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
 
     if ("main".equals(psiMethod.getName()) && psiMethod.getParameterList().isEmpty() &&
-        "Kotlin".equals(psiMethod.getContainingFile().getFileType().getName())) return true;
+        psiMethod.getLanguage().isKindOf("kotlin")) return true;
 
     PsiMethod appPremainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppPremainPattern();
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appPremainPattern)) return true;
