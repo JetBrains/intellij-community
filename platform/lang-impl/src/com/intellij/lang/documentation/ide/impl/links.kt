@@ -50,7 +50,7 @@ internal fun openUrl(project: Project, targetPointer: Pointer<out DocumentationT
   if (handleExternal(project, targetPointer, url)) {
     return true
   }
-  return BrowserUtil.browseAbsolute(url)
+  return BrowserUtil.browseAbsolute(project, url)
 }
 
 private fun handleExternal(project: Project, targetPointer: Pointer<out DocumentationTarget>, url: String): Boolean {
