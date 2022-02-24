@@ -22,11 +22,16 @@ import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
+import git4idea.GitStatisticsCollector;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.index.LightFileStatus.StatusRecord;
 import git4idea.status.GitRefreshListener;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -236,7 +241,11 @@ public class GitUntrackedFilesHolder implements Disposable {
 
     BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStarted();
     try {
+      long startTime = System.currentTimeMillis();
       RefreshResult result = refreshFiles(dirtyFiles);
+      GitStatisticsCollector.logUntrackedRefreshed(startTime, dirtyFiles == null ||
+                                                          dirtyFiles.contains(VcsUtil.getFilePath(myRoot)));
+
       removePathsUnderOtherRoots(result.untracked, "unversioned");
       removePathsUnderOtherRoots(result.ignored, "ignored");
 
