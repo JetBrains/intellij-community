@@ -40,7 +40,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   @Test
   public void testDefaultArchetypes() {
-    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-quickstart:RELEASE");
+    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-quickstart:1.1");
   }
 
   @Test
