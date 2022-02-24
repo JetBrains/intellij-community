@@ -132,12 +132,12 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return myAttrGetter.apply(file);
   }
 
+  @ApiStatus.Internal
   public @NotNull FileAttributes getArchiveRootAttributes(@NotNull VirtualFile file) {
     // Hack for handler initialization to have a caching e.g. JarFileSystemImpl.getHandler
     getHandler(file);
     return ArchiveHandler.DIRECTORY_ATTRIBUTES;
   }
-
 
   private final Function<VirtualFile, String[]> myChildrenGetter =
     ManagingFS.getInstance().accessDiskWithCheckCanceled(file -> getHandler(file).list(getRelativePath(file)));
