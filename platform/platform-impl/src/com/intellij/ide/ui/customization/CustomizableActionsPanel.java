@@ -325,8 +325,12 @@ public class CustomizableActionsPanel {
                                       boolean hasFocus) {
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        CustomizationUtil.acceptObjectIconAndText(userObject, (text, icon) -> {
+        CustomizationUtil.acceptObjectIconAndText(userObject, (text, description, icon) -> {
           append(text);
+          if (description != null) {
+            append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
+            append(description, SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
           setIcon(icon);
         });
         setForeground(UIUtil.getTreeForeground(selected, hasFocus));
