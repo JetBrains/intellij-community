@@ -1106,7 +1106,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   public static @Nullable JPopupMenu showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
     if (link.isShowing()) {
-      ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+      ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("NotificationManager", group);
       JPopupMenu component = menu.getComponent();
       component.show(link, JBUIScale.scale(-10), link.getHeight() + JBUIScale.scale(2));
       return component;
