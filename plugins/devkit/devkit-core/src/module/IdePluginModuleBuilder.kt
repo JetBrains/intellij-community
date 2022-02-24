@@ -221,7 +221,8 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
                   "https://jb.gg/plugin-template")
       }
 
-      if (PluginManager.isPluginInstalled(PluginId.findId("org.intellij.scala"))) {
+      val scalaPluginId = PluginId.findId("org.intellij.scala")
+      if (scalaPluginId != null && PluginManager.isPluginInstalled(scalaPluginId)) {
         layout.row {
           hyperLink(DevKitBundle.message("module.builder.scala.github.template.link"),
                     "https://github.com/JetBrains/sbt-idea-plugin")
