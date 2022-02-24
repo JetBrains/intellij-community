@@ -31,6 +31,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComm
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -48,13 +49,17 @@ object GHPRReviewThreadComponent {
              reviewDataProvider: GHPRReviewDataProvider,
              detailsDataProvider: GHPRDetailsDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider,
+             repositoryDataService: GHPRRepositoryDataService,
              currentUser: GHUser): JComponent {
     val panel = JPanel(VerticalLayout(12)).apply {
       isOpaque = false
     }
     panel.add(
-      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, reviewDataProvider, avatarIconsProvider,
-                                                                                      detailsDataProvider, thread)))
+      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(
+        project, thread,
+        reviewDataProvider, detailsDataProvider, avatarIconsProvider,
+        repositoryDataService
+      )))
 
     if (reviewDataProvider.canComment()) {
       panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
@@ -66,9 +71,10 @@ object GHPRReviewThreadComponent {
                      thread: GHPRReviewThreadModel,
                      reviewDataProvider: GHPRReviewDataProvider,
                      detailsDataProvider: GHPRDetailsDataProvider,
-                     selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
-                     diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                      avatarIconsProvider: GHAvatarIconsProvider,
+                     repositoryDataService: GHPRRepositoryDataService,
+                     diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
+                     selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
                      currentUser: GHUser): JComponent {
 
     val collapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover,
@@ -94,8 +100,10 @@ object GHPRReviewThreadComponent {
 
         val commentsComponent = JPanel(VerticalLayout(12)).apply {
           isOpaque = false
-          val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, reviewDataProvider, avatarIconsProvider,
-                                                                          detailsDataProvider, thread, false)
+          val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, thread,
+                                                                          reviewDataProvider, detailsDataProvider, avatarIconsProvider,
+                                                                          repositoryDataService,
+                                                                          false)
           add(GHPRReviewThreadCommentsPanel.create(thread, reviewCommentComponent))
 
           if (reviewDataProvider.canComment()) {
