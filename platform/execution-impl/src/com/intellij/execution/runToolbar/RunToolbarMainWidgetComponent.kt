@@ -109,6 +109,16 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
     (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
       project = it
+
+      RUN_CONFIG_WIDTH = RunToolbarSettings.getInstance(it).getRunConfigWidth()
+
+    }
+  }
+
+  override fun updateWidthHandler() {
+    super.updateWidthHandler()
+    project?.let {
+      RunToolbarSettings.getInstance(it).setRunConfigWidth(RUN_CONFIG_WIDTH)
     }
   }
 
