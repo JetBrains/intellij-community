@@ -18,12 +18,13 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInspection.resources.TestClassPropertyProvider;
+import com.intellij.properties.provider.PropertiesProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -43,6 +44,7 @@ public final class TestUtils {
   private static final String PARAMETERIZED_FQN = "org.junit.runners.Parameterized";
   private static final CallMatcher ASSERT_THROWS =
     CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertThrows");
+  private static final String PER_CLASS_PROPERTY_KEY = "junit.jupiter.testinstance.lifecycle.default";
 
   private TestUtils() { }
 
@@ -174,8 +176,9 @@ public final class TestUtils {
   private static boolean hasPerClassProperty(@NotNull PsiClass containingClass) {
     Module classModule = containingClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(containingClass) : null;
     if (classModule == null) return false;
-    for (TestClassPropertyProvider provider : TestClassPropertyProvider.EP_NAME.getExtensions()) {
-      if (provider.hasTestClassProperty(classModule)) return true;
+    final GlobalSearchScope globalSearchScope = GlobalSearchScope.moduleRuntimeScope(classModule, true);
+    for (PropertiesProvider provider : PropertiesProvider.EP_NAME.getExtensions()) {
+      if (provider.hasProperty(classModule, PER_CLASS_PROPERTY_KEY, "PER_CLASS", globalSearchScope)) return true;
     }
     return false;
   }
