@@ -256,7 +256,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     @Override
     public String toString() {
-      return fileType +" from '"+(pluginDescriptor==WILD_CARD ? "*" : pluginDescriptor.getPluginId() == PluginManagerCore.CORE_ID ? "CORE" : pluginDescriptor)+"'";
+      return fileType + " from '" + (pluginDescriptor==WILD_CARD ? "*" : PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId())
+                                                                         ? "CORE" : pluginDescriptor) + "'";
     }
 
     // equals to all FileTypeWithDescriptor with this fileType
