@@ -91,7 +91,9 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.lombok.gradle",
     "kotlin.compiler-plugins.lombok.maven",
     "kotlin.compiler-plugins.scripting",
+/* Android Studio: workaround for b/218317110
     "kotlin.compiler-plugins.android-extensions-stubs",
+Android Studio: workaround for b/218317110 */
     "kotlin.completion.api",
     "kotlin.completion.impl-shared",
     "kotlin.completion.impl-k1",
