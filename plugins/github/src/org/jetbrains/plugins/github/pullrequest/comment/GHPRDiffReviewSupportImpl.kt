@@ -21,6 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffVi
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangeDiffData
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
@@ -33,8 +34,9 @@ import kotlin.properties.Delegates.observable
 class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val reviewDataProvider: GHPRReviewDataProvider,
                                 private val detailsDataProvider: GHPRDetailsDataProvider,
-                                private val diffData: GHPRChangeDiffData,
                                 private val avatarIconsProvider: GHAvatarIconsProvider,
+                                private val repositoryDataService: GHPRRepositoryDataService,
+                                private val diffData: GHPRChangeDiffData,
                                 private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
 
@@ -73,10 +75,10 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
 
     val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
     val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project,
-                                                                      reviewDataProvider,
-                                                                      detailsDataProvider,
+                                                                      reviewDataProvider, detailsDataProvider, avatarIconsProvider,
+                                                                      repositoryDataService,
                                                                       createCommentParametersHelper,
-                                                                      avatarIconsProvider, currentUser)
+                                                                      currentUser)
     val cumulative = diffData is GHPRChangeDiffData.Cumulative
     when (viewer) {
       is SimpleOnesideDiffViewer ->

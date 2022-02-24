@@ -8,7 +8,6 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.SimpleContentRevision
@@ -17,7 +16,7 @@ import git4idea.GitRevisionNumber
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCommitOptions
 import git4idea.index.GitIndexUtil
-import git4idea.repo.GitRepositoryManager
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import java.nio.charset.Charset
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
@@ -26,12 +25,14 @@ class GHSuggestedChangeApplier(
   private val project: Project,
   private val suggestedChange: String,
   private val suggestedChangeInfo: GHSuggestedChangeInfo,
+  repositoryDataService: GHPRRepositoryDataService
 ) {
-  private val projectDir = project.guessProjectDir()!!
+  private val repository = repositoryDataService.remoteCoordinates.repository
+  private val virtualBaseDir = repository.root
 
   fun applySuggestedChange(): ApplyPatchStatus {
     val suggestedChangePatch = createSuggestedChangePatch(suggestedChange, suggestedChangeInfo)
-    val patchApplier = PatchApplier(project, projectDir, listOf(suggestedChangePatch), null, null)
+    val patchApplier = PatchApplier(project, virtualBaseDir, listOf(suggestedChangePatch), null, null)
 
     return patchApplier.execute(true, false)
   }
@@ -50,7 +51,7 @@ class GHSuggestedChangeApplier(
   fun commitSuggestedChanges(commitMessage: String): ApplyPatchStatus {
     // Apply patch
     val suggestedChangePatch = createSuggestedChangePatch(suggestedChange, suggestedChangeInfo)
-    val patchApplier = PatchApplier(project, projectDir, listOf(suggestedChangePatch), null, null)
+    val patchApplier = PatchApplier(project, virtualBaseDir, listOf(suggestedChangePatch), null, null)
     val patchStatus = patchApplier.execute(true, true)
     if (patchStatus == ApplyPatchStatus.ALREADY_APPLIED) {
       return patchStatus
@@ -66,7 +67,6 @@ class GHSuggestedChangeApplier(
       return appliedPatch?.status ?: ApplyPatchStatus.FAILURE
     }
 
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(projectDir) ?: return ApplyPatchStatus.FAILURE
     val virtualFile = beforeLocalFilePath.virtualFile ?: return ApplyPatchStatus.FAILURE
     val fileContent = GitCheckinEnvironment.convertDocumentContentToBytesWithBOM(repository, appliedPatch.patchedText, virtualFile)
     val isExecutable = Path.of(beforeLocalFilePath.path).isExecutable()
@@ -78,7 +78,7 @@ class GHSuggestedChangeApplier(
       GitCheckinEnvironment.ChangedPath(it.beforeRevision?.file, it.afterRevision?.file)
     }
     val suggestedChangedPath = GitCheckinEnvironment.ChangedPath(beforeRevision.file, suggestedChangeRevision.file)
-    val commitMessageFile = GitCheckinEnvironment.createCommitMessageFile(project, projectDir, commitMessage)
+    val commitMessageFile = GitCheckinEnvironment.createCommitMessageFile(project, virtualBaseDir, commitMessage)
     GitCheckinEnvironment.commitUsingIndex(project, repository,
                                            listOf(suggestedChangedPath), changes.toSet(),
                                            commitMessageFile, GitCommitOptions())
@@ -97,7 +97,7 @@ class GHSuggestedChangeApplier(
     }
   }
 
-  private fun createLocalFilePath(filename: String): LocalFilePath = LocalFilePath(Path.of(projectDir.path, filename), false)
+  private fun createLocalFilePath(filename: String): LocalFilePath = LocalFilePath(Path.of(virtualBaseDir.path, filename), false)
 
   private fun getSuggestedChangeContent(comment: String): List<String> {
     return comment.lines()
