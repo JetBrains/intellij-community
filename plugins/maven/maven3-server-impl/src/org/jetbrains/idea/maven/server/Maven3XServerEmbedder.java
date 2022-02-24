@@ -1143,9 +1143,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   private MavenServerExecutionResult createExecutionResult(@Nullable File file, MavenExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
-    //collectUnresolvedProblems(file, result.getDependencyResolutionResult(), problems);
+
+    Collection<MavenProjectProblem> unresolvedProblems = new HashSet<MavenProjectProblem>();
+    collectUnresolvedArtifactProblems(file, result.getDependencyResolutionResult(), unresolvedProblems);
 
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.<MavenId>emptySet());
@@ -1188,7 +1189,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenServerExecutionResult.ProjectData data =
       new MavenServerExecutionResult.ProjectData(model, MavenModelConverter.convertToMap(mavenProject.getModel()), holder,
                                                  activatedProfiles);
-    return new MavenServerExecutionResult(data, problems, Collections.<MavenId>emptySet());
+    return new MavenServerExecutionResult(data, problems, Collections.<MavenId>emptySet(), unresolvedProblems);
   }
 
   private void collectProblems(@Nullable File file,
@@ -1237,7 +1238,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
         String message = getRootMessage(each);
         MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
-        collector.add(MavenProjectProblem.createArtifactTransferProblem(path, message, true, mavenArtifact));
+        collector.add(MavenProjectProblem.createRepositoryProblem(path, message, true, mavenArtifact));
       }
       else {
         myConsoleWrapper.error("Maven server structure problem", each);
@@ -1274,9 +1275,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  private void collectUnresolvedProblems(@Nullable File file,
-                                         @Nullable DependencyResolutionResult result,
-                                         Collection<MavenProjectProblem> problems) {
+  private void collectUnresolvedArtifactProblems(@Nullable File file,
+                                                 @Nullable DependencyResolutionResult result,
+                                                 Collection<MavenProjectProblem> problems) {
     if (result == null) return;
     String path = file == null ? "" : file.getPath();
     for (Dependency unresolvedDependency : result.getUnresolvedDependencies()) {
@@ -1284,7 +1285,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         String message = getRootMessage(exception);
         Artifact artifact = RepositoryUtils.toArtifact(unresolvedDependency.getArtifact());
         MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(artifact, getLocalRepositoryFile());
-        problems.add(MavenProjectProblem.createArtifactTransferProblem(path, message, true, mavenArtifact));
+        problems.add(MavenProjectProblem.createUnresolvedArtifactProblem(path, message, true, mavenArtifact));
         break;
       }
     }

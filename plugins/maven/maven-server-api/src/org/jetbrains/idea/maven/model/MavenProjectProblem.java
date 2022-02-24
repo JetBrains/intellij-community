@@ -27,7 +27,7 @@ import java.util.LinkedHashSet;
 public class MavenProjectProblem implements Serializable {
   //todo: this enum values are write-only now
   public enum ProblemType {
-    SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES, ARTIFACT_TRANSFER
+    SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES, REPOSITORY
   }
 
   private final boolean myRecoverable;
@@ -56,11 +56,18 @@ public class MavenProjectProblem implements Serializable {
     return new MavenProjectProblem(path, description, type, recoverable);
   }
 
-  public static MavenProjectProblem createArtifactTransferProblem(String path,
-                                                                  String description,
-                                                                  boolean recoverable,
-                                                                  MavenArtifact mavenArtifact) {
-    return new MavenProjectProblem(path, description, ProblemType.ARTIFACT_TRANSFER, recoverable, mavenArtifact);
+  public static MavenProjectProblem createRepositoryProblem(String path,
+                                                            String description,
+                                                            boolean recoverable,
+                                                            MavenArtifact mavenArtifact) {
+    return new MavenProjectProblem(path, description, ProblemType.REPOSITORY, recoverable, mavenArtifact);
+  }
+
+  public static MavenProjectProblem createUnresolvedArtifactProblem(String path,
+                                                                    String description,
+                                                                    boolean recoverable,
+                                                                    MavenArtifact mavenArtifact) {
+    return new MavenProjectProblem(path, description, ProblemType.DEPENDENCY, recoverable, mavenArtifact);
   }
 
   public static Collection<MavenProjectProblem> createProblemsList() {
