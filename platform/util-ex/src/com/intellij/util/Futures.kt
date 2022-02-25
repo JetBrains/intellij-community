@@ -99,12 +99,13 @@ object Futures {
    * @param transformException One may want to wrap the actual exception with
    * [com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments] to additionally provide some diagnostic info
    */
-  inline fun <reified C : Any> CompletableFuture<*>.logIfFailed(
+  inline fun <T> CompletableFuture<T>.logIfFailed(
+    loggingClass: Class<*>,
     crossinline transformException: (Throwable) -> Throwable = { it }
-  ): CompletableFuture<*> {
+  ): CompletableFuture<T> {
     return whenComplete { _, cause ->
       if (cause != null && !isCancellation(cause)) {
-        Logger.getInstance(C::class.java).error(transformException(cause))
+        Logger.getInstance(loggingClass).error(transformException(cause))
       }
     }
   }
