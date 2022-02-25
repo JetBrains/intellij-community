@@ -2,6 +2,9 @@
 
 package com.intellij.execution.actions;
 
+import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.LineMarkerProviders;
+import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -12,10 +15,12 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -172,8 +177,9 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
-    boolean doFullUpdate = !ApplicationManager.getApplication().isDispatchThread() ||
-                           ApplicationManager.getApplication().isUnitTestMode();
+    boolean doFullUpdate = !ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode()
+       // LineMarkerPass calls RunLineMarkerProvider.markRunnable as a side effect of gutters calculation, so if they are switched off we need full update here
+       || !runMarkerGuttersAreEnabled();
     VirtualFile vFile = event.getDataContext().getData(CommonDataKeys.VIRTUAL_FILE);
     ThreeState hadAnythingRunnable = vFile == null ? ThreeState.UNSURE : RunLineMarkerProvider.hadAnythingRunnable(vFile);
     if (doFullUpdate || hadAnythingRunnable == ThreeState.UNSURE) {
@@ -192,6 +198,19 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
       approximatePresentationByPreviousAvailability(event, hadAnythingRunnable);
       event.getPresentation().setPerformGroup(false);
     }
+  }
+
+  private static boolean runMarkerGuttersAreEnabled() {
+    if (!EditorSettingsExternalizable.getInstance().areGutterIconsShown()) {
+      return false;
+    }
+    LineMarkerSettings settings = LineMarkerSettings.getSettings();
+    for (LineMarkerProvider provider : LineMarkerProviders.getInstance().allForLanguageOrAny(Language.ANY)) {
+      if (provider instanceof RunLineMarkerProvider && settings.isEnabled((RunLineMarkerProvider)provider)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean alreadyExceededTimeoutOnSimilarAction() {
