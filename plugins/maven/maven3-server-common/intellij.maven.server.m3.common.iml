@@ -62,8 +62,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.apache.maven.archetype:archetype-common:2.4" type="repository">
-        <properties maven-id="org.apache.maven.archetype:archetype-common:2.4">
+      <library name="org.apache.maven.archetype:archetype-common:2.2" type="repository">
+        <properties maven-id="org.apache.maven.archetype:archetype-common:2.2">
           <exclude>
             <dependency maven-id="net.sourceforge.jchardet:jchardet" />
             <dependency maven-id="org.codehaus.plexus:plexus-component-annotations" />
@@ -80,10 +80,10 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/2.4/archetype-common-2.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/2.4/archetype-catalog-2.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-descriptor/2.4/archetype-descriptor-2.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-registry/2.4/archetype-registry-2.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/2.2/archetype-common-2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/2.2/archetype-catalog-2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-descriptor/2.2/archetype-descriptor-2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-registry/2.2/archetype-registry-2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
