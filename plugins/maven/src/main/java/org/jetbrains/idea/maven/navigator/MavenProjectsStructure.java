@@ -813,7 +813,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateProject() {
-      setErrorLevel(myMavenProject.getProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      setErrorLevel(myMavenProject.getCacheProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
       myLifecycleNode.updateGoalsList();
       myPluginsNode.updatePlugins(myMavenProject);
 
@@ -902,7 +902,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void appendProblems(StringBuilder desc) {
-      List<MavenProjectProblem> problems = myMavenProject.getProblems();
+      List<MavenProjectProblem> problems = myMavenProject.getCacheProblems();
       if (problems.isEmpty()) return;
 
       desc.append("<tr>" +

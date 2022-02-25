@@ -669,6 +669,11 @@ public class MavenProject {
     }
   }
 
+  public @NotNull List<MavenProjectProblem> getCacheProblems() {
+    List<MavenProjectProblem> problemsCache = myState.myProblemsCache;
+    return problemsCache == null ? Collections.emptyList() : problemsCache;
+  }
+
   private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
     List<MavenProjectProblem> result = new ArrayList<>();
 
