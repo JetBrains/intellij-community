@@ -86,6 +86,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -936,13 +937,18 @@ public class MavenUtil {
       return null;
     }
     String[] artifactPath = id.getGroupId().split("\\.");
-    for (String path : artifactPath) {
-      localRepository = localRepository.resolve(path);
+    try {
+      for (String path : artifactPath) {
+        localRepository = localRepository.resolve(path);
+      }
+      return localRepository
+        .resolve(id.getArtifactId())
+        .resolve(id.getVersion())
+        .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
     }
-    return localRepository
-      .resolve(id.getArtifactId())
-      .resolve(id.getVersion())
-      .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
+    catch (InvalidPathException e) {
+      return null;
+    }
   }
 
   @Nullable
