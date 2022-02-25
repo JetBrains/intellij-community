@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.Image
-import java.util.function.Consumer
 import java.util.function.Supplier
 
 internal data class DocumentationContentData internal constructor(
@@ -58,10 +57,10 @@ internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver?
 }
 
 @Suppress("OPT_IN_USAGE")
-internal fun <X> Consumer<in Consumer<in X>>.asFlow(): Flow<X> {
+internal fun DocumentationContentUpdater.asFlow(): Flow<DocumentationContent> {
   val flow = channelFlow {
     blockingContext {
-      accept { content ->
+      updateContent { content ->
         check(trySend(content).isSuccess) // sanity check
       }
     }
