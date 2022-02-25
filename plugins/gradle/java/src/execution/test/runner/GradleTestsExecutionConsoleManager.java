@@ -166,6 +166,10 @@ public class GradleTestsExecutionConsoleManager
     }
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
+      final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
+      if (executeTask.getArguments() == null || !StringUtil.contains(executeTask.getArguments(), GradleConstants.TESTS_ARG_NAME)) {
+        executeTask.appendArguments("--tests *");
+      }
       consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
     }
 
