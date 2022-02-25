@@ -12,13 +12,18 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 class ReplaceQuickFix(val replacements: List<Pair<TextRange, String>>) : LocalQuickFix {
   override fun getFamilyName() = LangBundle.message("inspection.incorrect.formatting.fix.replace")
-  override fun getFileModifierForPreview(target: PsiFile) = this
+  override fun getFileModifierForPreview(target: PsiFile) = ReplaceQuickFix(replacements)
+
+  private val applied = AtomicBoolean(false)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    if (!applied.compareAndSet(false, true)) return
+
     descriptor
       .psiElement
       .containingFile
