@@ -1423,6 +1423,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun balanceType(leftType: KotlinType?, rightType: KotlinType?, forceEqualityByContent: Boolean): KotlinType? = when {
         leftType == null || rightType == null -> null
+        leftType.isNullableNothing() -> rightType.makeNullable()
+        rightType.isNullableNothing() -> leftType.makeNullable()
         !forceEqualityByContent -> balanceType(leftType, rightType)
         leftType.isSubtypeOf(rightType) -> rightType
         rightType.isSubtypeOf(leftType) -> leftType
