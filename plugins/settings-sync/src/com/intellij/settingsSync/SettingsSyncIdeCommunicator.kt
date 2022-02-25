@@ -141,6 +141,11 @@ internal class SettingsSyncIdeCommunicator(private val application: Application,
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     val file = rootConfig.resolve(adjustedSpec)
+    if (!file.exists()) {
+      LOG.debug("File $file doesn't exist, no need to delete")
+      return true
+    }
+
     val deleted = writeUnderLock(adjustedSpec) {
       deleteOrLogError(file)
     }
