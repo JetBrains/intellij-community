@@ -9,33 +9,31 @@ import java.awt.Dimension
 @ApiStatus.Internal
 internal class TabbedPaneHeader : JBTabbedPane() {
 
-  private var preferredSizeCalculation = false
-
   init {
     setUI(HeaderTabbedPaneUI())
   }
 
-  override fun getSize(): Dimension {
-    return if (preferredSizeCalculation) Dimension(2000, 100) else super.getSize()
+  override fun getPreferredSize(): Dimension {
+    val insets = insets
+    val tabbedPaneUI = ui as HeaderTabbedPaneUI
+    return Dimension(tabbedPaneUI.getTabsWidth() + insets.left + insets.right,
+                     tabbedPaneUI.getTabHeight() + insets.top + insets.bottom)
   }
 
-  override fun getPreferredSize(): Dimension {
-    // Allow aligning tabs in large area
-    preferredSizeCalculation = true
-    try {
-      val lastTabBounds = getBoundsAt(tabCount - 1)
-      return Dimension(lastTabBounds.x + lastTabBounds.width, (ui as HeaderTabbedPaneUI).getTabHeight(tabPlacement))
-    }
-    finally {
-      preferredSizeCalculation = false
-    }
+  override fun getMinimumSize(): Dimension {
+    return preferredSize
   }
 }
 
 private class HeaderTabbedPaneUI : DarculaTabbedPaneUI() {
 
-  fun getTabHeight(tabPlacement: Int): Int {
-    return calculateMaxTabHeight(tabPlacement)
+  fun getTabsWidth(): Int {
+    val metrics = tabPane.getFontMetrics(tabPane.font)
+    return (0 until tabPane.tabCount).sumOf { calculateTabWidth(tabPane.tabPlacement, it, metrics) }
+  }
+
+  fun getTabHeight(): Int {
+    return calculateMaxTabHeight(tabPane.tabPlacement)
   }
 
   override fun getOffset(): Int {
