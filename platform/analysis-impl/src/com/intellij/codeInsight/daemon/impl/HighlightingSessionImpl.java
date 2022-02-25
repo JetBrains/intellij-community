@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.TransferToEDTQueue;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -101,7 +102,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                        @Nullable EditorColorsScheme editorColorsScheme,
                                                        @NotNull DaemonProgressIndicator progressIndicator) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ProperTextRange visibleRange = editor == null ? ProperTextRange.create(psiFile.getTextRange()) : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    TextRange fileRange = psiFile.getTextRange();
+    ProperTextRange visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE)) : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     boolean canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
     return createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
   }
