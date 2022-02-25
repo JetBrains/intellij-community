@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -45,6 +46,10 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     EntryPointsManagerBase.getInstance(getProject()).getAdditionalAnnotations();
   }
 
+  private static final Set<String> ignoredTools = Set.of(
+    "IncorrectFormatting"
+  );
+
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     if ("RandomEditingForUnused".equals(getTestName(false))) {
@@ -53,6 +58,9 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     List<InspectionToolWrapper<?, ?>> all = InspectionToolRegistrar.getInstance().createTools();
     List<LocalInspectionTool> locals = new ArrayList<>();
     for (InspectionToolWrapper tool : all) {
+      if (ignoredTools.contains(tool.getShortName())) {
+        continue;
+      }
       if (tool instanceof LocalInspectionToolWrapper) {
         LocalInspectionTool e = ((LocalInspectionToolWrapper)tool).getTool();
         locals.add(e);
@@ -131,17 +139,9 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     //System.out.println("Lengths: "+JobLauncher.lengths);
   }
 
-
-
   public void testRandomEditingPerformance() {
     configureFromFileText("Stress.java", text);
-
-    // TODO: properly exclude IncorrectFormatting inspection from test
-    List<HighlightInfo> oldWarnings = doHighlighting()
-      .stream()
-      .filter(it -> it == null || !"Incorrect whitespace".equals(it.getDescription()))
-      .collect(Collectors.toList());
-
+    List<HighlightInfo> oldWarnings = new ArrayList<>(doHighlighting());
     Comparator<HighlightInfo> infoComparator = (o1, o2) -> {
       if (o1.equals(o2)) return 0;
       if (o1.getActualStartOffset() != o2.getActualStartOffset()) return o1.getActualStartOffset() - o2.getActualStartOffset();
@@ -173,13 +173,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       }
       getEditor().getCaretModel().moveToOffset(offset);
       type("/*--*/");
-
-      // TODO: properly exclude IncorrectFormatting inspection from test
-      List<HighlightInfo> infos = doHighlighting()
-        .stream()
-        .filter(it -> it == null || !"Incorrect whitespace".equals(it.getDescription()))
-        .collect(Collectors.toList());
-
+      List<HighlightInfo> infos = doHighlighting();
       if (oldWarningSize != infos.size()) {
         infos = new ArrayList<>(infos);
         Collections.sort(infos, infoComparator);
