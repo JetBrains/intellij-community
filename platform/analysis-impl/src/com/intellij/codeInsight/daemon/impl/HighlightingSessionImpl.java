@@ -32,6 +32,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private final EditorColorsScheme myEditorColorsScheme;
   private final @NotNull Project myProject;
   private final Document myDocument;
+  @NotNull
   private final ProperTextRange myVisibleRange;
   private final boolean myCanChangeFileSilently;
   private final Long2ObjectMap<RangeMarker> myRanges2markersCache = new Long2ObjectOpenHashMap<>();
@@ -40,7 +41,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                   @NotNull DaemonProgressIndicator progressIndicator,
                                   @Nullable EditorColorsScheme editorColorsScheme,
-                                  @Nullable ProperTextRange visibleRange,
+                                  @NotNull ProperTextRange visibleRange,
                                   boolean canChangeFileSilently) {
     myPsiFile = psiFile;
     myProgressIndicator = progressIndicator;
@@ -86,12 +87,11 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
                                              @NotNull DaemonProgressIndicator progressIndicator,
-                                             @Nullable ProperTextRange visibleRange,
-                                             boolean canChangeFileSilently) {
+                                             @NotNull ProperTextRange visibleRange) {
     Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     HighlightingSession session = map == null ? null : map.get(psiFile);
     if (session == null) {
-      createHighlightingSession(psiFile, progressIndicator, null, visibleRange, canChangeFileSilently);
+      createHighlightingSession(psiFile, progressIndicator, null, visibleRange, false);
     }
   }
 
@@ -101,7 +101,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                        @Nullable EditorColorsScheme editorColorsScheme,
                                                        @NotNull DaemonProgressIndicator progressIndicator) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ProperTextRange visibleRange = editor == null ? null : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange = editor == null ? ProperTextRange.create(psiFile.getTextRange()) : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     boolean canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
     return createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
   }
@@ -110,7 +110,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   static HighlightingSession createHighlightingSession(@NotNull PsiFile psiFile,
                                                        @NotNull DaemonProgressIndicator progressIndicator,
                                                        @Nullable EditorColorsScheme editorColorsScheme,
-                                                       @Nullable ProperTextRange visibleRange,
+                                                       @NotNull ProperTextRange visibleRange,
                                                        boolean canChangeFileSilently) {
     // no assertIsDispatchThread() is necessary
     Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
@@ -196,7 +196,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @Override
-  public ProperTextRange getVisibleRange() {
+  public @NotNull ProperTextRange getVisibleRange() {
     return myVisibleRange;
   }
 
