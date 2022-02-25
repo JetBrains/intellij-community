@@ -425,6 +425,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @TestOnly
   private boolean waitInOtherThread(int millis, boolean canChangeDocument) throws Throwable {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Disposable disposable = Disposer.newDisposable();
     // last hope protection against PsiModificationTrackerImpl.incCounter() craziness (yes, Kotlin)
     myProject.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
@@ -933,7 +934,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     Map<Document, List<FileEditor>> preferredFileEditorMap = createPreferredFileEditorMap(fileEditors);
 
-    // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
+    doSubmit(fileEditors, passesToIgnore, modificationCountBefore, highlighters, progress, preferredFileEditorMap);
+    assert session != null;
+    return session;
+  }
+
+  private void doSubmit(@NotNull Collection<? extends FileEditor> fileEditors,
+                         int @NotNull [] passesToIgnore,
+                         int modificationCountBefore,
+                         Map<FileEditor, BackgroundEditorHighlighter> highlighters,
+                         DaemonProgressIndicator progress,
+                         Map<Document, List<FileEditor>> preferredFileEditorMap) {
     JobLauncher.getInstance().submitToJobThread(() -> {
       if (progress.isCanceled() || myProject.isDisposed()) {
         stopProcess(false, "disposed in queuePassesCreation");
@@ -978,11 +989,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         stopProcess(true, "PCE in queuePassesCreation");
       }
       catch (Throwable e) {
-        LOG.error(e);
+        // make it manifestable in tests
+        PassExecutorService.saveException(e, progress);
+        throw e;
       }
-    }, null);
-    assert session != null;
-    return session;
+    }, future -> ConcurrencyUtil.manifestExceptionsIn(future));
   }
 
   @NotNull

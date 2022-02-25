@@ -3241,5 +3241,64 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       throw violation.get();
     }
   }
+
+  public void testTextEditorHighlightingPassRegistrarMustNotAllowCyclesInPassDeclarationsOrCrazyPassIdsOmgMurphyLawStrikesAgain() {
+    class MyFac1 implements TextEditorHighlightingPassFactory {
+      @Override
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+        return new MyPass1(myProject);
+      }
+
+      final class MyPass1 extends TextEditorHighlightingPass {
+        private MyPass1(Project project) {
+          super(project, getEditor().getDocument(), false);
+        }
+
+        @Override
+        public void doCollectInformation(@NotNull ProgressIndicator progress) {
+        }
+
+        @Override
+        public void doApplyInformationToEditor() {
+        }
+      }
+    }
+    class MyFac2 implements TextEditorHighlightingPassFactory {
+      @Override
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+        return new MyPass2(myProject);
+      }
+
+      final class MyPass2 extends TextEditorHighlightingPass {
+        private MyPass2(Project project) {
+          super(project, getEditor().getDocument(), false);
+        }
+
+        @Override
+        public void doCollectInformation(@NotNull ProgressIndicator progress) {
+        }
+
+        @Override
+        public void doApplyInformationToEditor() {
+        }
+      }
+    }
+    TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
+    int F1 = 254;
+    int F2 = 256;
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not intersect
+      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F2}, new int[]{F2}, false, -1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain forcedId
+      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F1}, new int[]{F2}, false, F1));
+
+    assertThrows(IllegalStateException.class, () -> {
+      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F2}, null, false, F1);
+      registrar.registerTextEditorHighlightingPass(new MyFac2(), new int[]{F1}, null, false, F2);
+      configureByText(JavaFileType.INSTANCE, "class C{}");
+      assertEmpty(highlightErrors());
+    });
+  }
 }
 

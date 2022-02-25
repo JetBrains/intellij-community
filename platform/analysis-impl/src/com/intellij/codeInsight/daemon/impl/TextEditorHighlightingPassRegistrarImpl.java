@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 
 public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
@@ -116,9 +116,17 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                                              boolean runIntentionsPassAfter,
                                                              int forcedPassId) {
     assert !checkedForCycles;
-    PassConfig info = new PassConfig(factory,
-             runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : runAfterCompletionOf,
-             runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : runAfterOfStartingOf);
+    int[] afterCompletionOf = runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : runAfterCompletionOf;
+    int[] afterStartingOf = runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : runAfterOfStartingOf;
+    if (IntStream.of(afterCompletionOf).anyMatch(id->ArrayUtil.indexOf(afterStartingOf, id) != -1)) {
+      throw new IllegalArgumentException("Pass id must not be contained in both 'runAfterCompletionOf' and 'runAfterOfStartingOf' arguments but got " +
+                                         Arrays.toString(afterCompletionOf) + " and " + Arrays.toString(afterStartingOf));
+    }
+    if (ArrayUtil.indexOf(afterCompletionOf, forcedPassId) != -1 || ArrayUtil.indexOf(afterStartingOf, forcedPassId) != -1) {
+      throw new IllegalArgumentException("Neither 'runAfterCompletionOf' nor 'runAfterOfStartingOf' arguments must contain 'forcedPassId'=" + forcedPassId+ " but got " +
+                                         Arrays.toString(afterCompletionOf) + " and " + Arrays.toString(afterStartingOf));
+    }
+    PassConfig info = new PassConfig(factory, afterCompletionOf, afterStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId.incrementAndGet() : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
@@ -161,7 +169,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     List<TextEditorHighlightingPass> result = new ArrayList<>(frozenPassConfigs.length);
     IntList passesRefusedToCreate = new IntArrayList();
     boolean isDumb = DumbService.getInstance(myProject).isDumb();
-    for (int passId = 0; passId < frozenPassConfigs.length; passId++) {
+    for (int passId = 1; passId < frozenPassConfigs.length; passId++) {
       PassConfig passConfig = frozenPassConfigs[passId];
       if (passConfig == null) continue;
       if (ArrayUtil.find(passesToIgnore, passId) != -1) {
@@ -176,14 +184,14 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         // init with editor's colors scheme
         pass.setColorsScheme(editor.getColorsScheme());
 
-        IntList ids = new IntArrayList(passConfig.completionPredecessorIds.length);
+        IntList ids = passConfig.completionPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.completionPredecessorIds.length);
         for (int id : passConfig.completionPredecessorIds) {
           if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
             ids.add(id);
           }
         }
         pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
-        ids = new IntArrayList(passConfig.startingPredecessorIds.length);
+        ids = passConfig.startingPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.startingPredecessorIds.length);
         for (int id : passConfig.startingPredecessorIds) {
           if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
             ids.add(id);
@@ -225,36 +233,34 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   private void checkForCycles() {
-    Int2ObjectMap<IntSet> transitivePredecessors = new Int2ObjectOpenHashMap<>();
-
+    // check that each node of the entire graph with "this pass should start/complete before that pass" edges
+    // doesn't lie inside a cycle
     PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
-    for (int passId = 0; passId < frozenPassConfigs.length; passId++) {
-      PassConfig passConfig = frozenPassConfigs[passId];
-      if (passConfig == null) continue;
-
-      IntSet allPredecessors = new IntOpenHashSet(passConfig.completionPredecessorIds);
-      allPredecessors.addAll(IntArrayList.wrap(passConfig.startingPredecessorIds));
-      transitivePredecessors.put(passId, allPredecessors);
-      allPredecessors.forEach((IntConsumer)predecessorId -> {
-        PassConfig predecessor = predecessorId < frozenPassConfigs.length ? frozenPassConfigs[predecessorId] : null;
-        if (predecessor == null) {
-          return;
-        }
-
-        IntSet transitives = transitivePredecessors.get(predecessorId);
-        if (transitives == null) {
-          transitives = new IntOpenHashSet();
-          transitivePredecessors.put(predecessorId, transitives);
-        }
-        transitives.addAll(IntArrayList.wrap(predecessor.completionPredecessorIds));
-        transitives.addAll(IntArrayList.wrap(predecessor.startingPredecessorIds));
-      });
-    }
-    transitivePredecessors.keySet().forEach((IntConsumer)passId -> {
-      if (transitivePredecessors.get(passId).contains(passId)) {
-        throw new IllegalArgumentException("There is a cycle introduced involving pass " + passId +": "+frozenPassConfigs[passId].passFactory);
+    IntSet visited = new IntOpenHashSet(frozenPassConfigs.length);
+    IntSet finished = new IntOpenHashSet(frozenPassConfigs.length);
+    for (int i = 1; i < frozenPassConfigs.length; i++) {
+      PassConfig passConfig = frozenPassConfigs[i];
+      if (passConfig != null) {
+        dfs(frozenPassConfigs, i, visited, finished);
       }
-    });
+    }
+  }
+
+  private static void dfs(PassConfig @NotNull [] frozenPassConfigs, int passId, @NotNull IntSet visited, @NotNull IntSet finished) {
+    if (finished.contains(passId)) {
+      return;
+    }
+    if (!visited.add(passId)) {
+      throw new IllegalStateException("There is a cycle involving pass id=" + passId +" ("+frozenPassConfigs[passId].passFactory+")");
+    }
+    PassConfig passConfig = frozenPassConfigs[passId];
+    for (int predId : passConfig.completionPredecessorIds) {
+      dfs(frozenPassConfigs, predId, visited, finished);
+    }
+    for (int predId : passConfig.startingPredecessorIds) {
+      dfs(frozenPassConfigs, predId, visited, finished);
+    }
+    finished.add(passId);
   }
 
   @NotNull
