@@ -118,12 +118,17 @@ public final class ValidationFunctions {
    */
   @Deprecated(forRemoval = true)
   public static final TextValidationFunction CHECK_LOCATION_FOR_WARNING = fieldText -> {
-    File file = Paths.get(FileUtil.expandUserHome(fieldText)).toFile();
-    if (file.exists()) {
-      String[] children = file.list();
-      if (children != null && children.length > 0) {
-        return JavaStartersBundle.message("message.directory.not.empty.warning");
+    try {
+      File file = Paths.get(FileUtil.expandUserHome(fieldText)).toFile();
+      if (file.exists()) {
+        String[] children = file.list();
+        if (children != null && children.length > 0) {
+          return JavaStartersBundle.message("message.directory.not.empty.warning");
+        }
       }
+    }
+    catch (InvalidPathException ipe) {
+      return null;
     }
     return null;
   };
@@ -133,12 +138,16 @@ public final class ValidationFunctions {
    */
   public static TextValidationFunction createLocationWarningValidator(GraphProperty<String> locationProperty) {
     return fieldText -> {
-      File file = Paths.get(FileUtil.expandUserHome(FileUtil.join(locationProperty.get(), fieldText))).toFile();
-      if (file.exists()) {
-        String[] children = file.list();
-        if (children != null && children.length > 0) {
-          return JavaStartersBundle.message("message.directory.0.not.empty.warning", file.getAbsolutePath());
+      try {
+        File file = Paths.get(FileUtil.expandUserHome(FileUtil.join(locationProperty.get(), fieldText))).toFile();
+        if (file.exists()) {
+          String[] children = file.list();
+          if (children != null && children.length > 0) {
+            return JavaStartersBundle.message("message.directory.0.not.empty.warning", file.getAbsolutePath());
+          }
         }
+      } catch (InvalidPathException ipe) {
+        return null;
       }
       return null;
     };
