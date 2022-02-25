@@ -114,11 +114,6 @@ public final class FSRecords {
     });
   }
 
-  @Contract("_->fail")
-  static void requestVfsRebuild(@NotNull Throwable e) {
-    handleError(e);
-  }
-
   @NotNull
   public static String diagnosticsForAlreadyCreatedFile(int fileId, int nameId, @NotNull Object existingData) {
     invalidateCaches();
@@ -230,7 +225,7 @@ public final class FSRecords {
     writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId));
   }
 
-  static int @NotNull [] listIds(int fileId) {
+  public static int @NotNull [] listIds(int fileId) {
     return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId));
   }
 
@@ -326,7 +321,7 @@ public final class FSRecords {
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
-  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
+  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     assert parentId > 0: parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
@@ -764,10 +759,6 @@ public final class FSRecords {
   @NotNull
   public static AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
     return ourAttributeAccessor.writeAttribute(fileId, att);
-  }
-
-  public static @NotNull PersistentFSPaths getPersistentFSPaths() {
-    return new PersistentFSPaths(getCachesDir());
   }
 
   static synchronized void dispose() {

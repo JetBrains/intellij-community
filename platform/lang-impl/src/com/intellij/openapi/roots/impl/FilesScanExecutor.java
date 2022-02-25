@@ -170,7 +170,7 @@ public final class FilesScanExecutor {
     ConcurrentLinkedDeque<Object> deque = new ConcurrentLinkedDeque<>();
     ModelBranchImpl.processModifiedFilesInScope(scope, deque::add);
     if (scope instanceof VirtualFileEnumeration) {
-      ContainerUtil.addAll(deque, ((VirtualFileEnumeration)scope).asIterable());
+      ContainerUtil.addAll(deque, FileBasedIndexEx.toFileIterable(((VirtualFileEnumeration)scope).asArray()));
     }
     else {
       deque.addAll(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndexableFilesProviders(project));

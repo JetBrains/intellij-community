@@ -22,6 +22,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -127,7 +128,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       return true;
     };
     if (restrictToFileIt != null) {
-      VirtualFile restrictToFile = restrictToFileIt.next();
+      VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
       if (restrictToFile == null) return Collections.emptyList();
       processValuesInOneFile(indexId, dataKey, restrictToFile, filter, processor);
     }
@@ -229,7 +230,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (project instanceof LightEditCompatible) return Collections.emptyIterator();
     @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
     if (restrictToFileIt != null) {
-      VirtualFile restrictToFile = restrictToFileIt.next();
+      VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
       if (restrictToFile == null) return Collections.emptyIterator();
       return !processValuesInOneFile(indexId, dataKey, restrictToFile, scope, (f, v) -> false) ?
              Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
@@ -428,15 +429,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                                IdFilter filesSet) {
     IntSet set = null;
     if (filter instanceof GlobalSearchScope.FilesScope) {
-      set = new IntOpenHashSet();
       VirtualFileEnumeration hint = VirtualFileEnumeration.extract(filter);
-      if (hint != null) {
-        for (VirtualFile file : hint.asIterable()) {
-          if (file instanceof VirtualFileWithId) {
-            set.add(((VirtualFileWithId)file).getId());
-          }
-        }
-      }
+      set = hint != null ? new IntOpenHashSet(hint.asArray()) : IntSet.of();
     }
 
     //noinspection rawtypes
@@ -800,7 +794,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (scope == null) return null;
 
     VirtualFileEnumeration enumeration = VirtualFileEnumeration.extract(scope);
-    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? enumeration.asIterable() :
+    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? toFileIterable(enumeration.asArray()) :
                                                 scope instanceof Iterable<?> ? (Iterable<VirtualFile>)scope :
                                                 null;
     if (scopeAsFileIterable == null) return null;
@@ -808,6 +802,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     VirtualFile result = null;
     boolean isFirst = true;
     for (VirtualFile file : scopeAsFileIterable) {
+      if (!scope.contains(file)) continue;
       if (!isFirst) return null;
       result = file;
       isFirst = false;
@@ -816,5 +811,18 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return isFirst ? ObjectIterators.emptyIterator() :
            result instanceof VirtualFileWithId ? ObjectIterators.singleton(result) :
            null;
+  }
+
+  public static @NotNull Iterable<VirtualFile> toFileIterable(int @NotNull [] fileIds) {
+    Iterator<VirtualFile> iterator =
+      Arrays.stream(fileIds).mapToObj(id -> VirtualFileManager.getInstance().findFileById(id)).filter(Objects::nonNull).iterator();
+
+    return new Iterable<>() {
+      @NotNull
+      @Override
+      public Iterator<VirtualFile> iterator() {
+        return iterator;
+      }
+    };
   }
 }

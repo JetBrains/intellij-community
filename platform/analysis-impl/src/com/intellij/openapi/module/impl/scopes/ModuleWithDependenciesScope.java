@@ -10,10 +10,17 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
+import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
@@ -23,7 +30,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public final class ModuleWithDependenciesScope extends GlobalSearchScope {
+public final class ModuleWithDependenciesScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
   public static final int COMPILE_ONLY = 0x01;
   public static final int LIBRARIES = 0x02;
   public static final int MODULES = 0x04;
@@ -201,6 +208,32 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope {
     List<VirtualFile> result = new ArrayList<>(myRoots.keySet());
     result.sort(Comparator.comparingInt(myRoots::getInt));
     return result;
+  }
+
+  @Override
+  public @Nullable VirtualFileEnumeration extractFileEnumeration() {
+    // todo might not cheap
+    if (hasOption(MODULES) || hasOption(LIBRARIES)) return null;
+
+    IntSet result = new IntOpenHashSet();
+    for (VirtualFile file : myRoots.keySet()) {
+      if (file instanceof VirtualFileWithId) {
+        int[] children = VirtualFileManager.getInstance().listAllChildIds(((VirtualFileWithId)file).getId());
+        result.addAll(IntList.of(children));
+      }
+    }
+
+    return new VirtualFileEnumeration() {
+      @Override
+      public boolean contains(int fileId) {
+        return result.contains(fileId);
+      }
+
+      @Override
+      public int @NotNull [] asArray() {
+        return result.toIntArray();
+      }
+    };
   }
 
   @Override
