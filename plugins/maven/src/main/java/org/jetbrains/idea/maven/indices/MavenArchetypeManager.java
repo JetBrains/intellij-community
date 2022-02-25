@@ -93,7 +93,59 @@ public class MavenArchetypeManager {
   }
 
   public Collection<MavenArchetype> getInnerArchetypes() {
-    return executeWithMavenEmbedderWrapper(wrapper -> wrapper.getArchetypes());
+    return List.of(
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-archetype",
+                         "1.0", null,
+                         "An archetype which contains a sample archetype."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-j2ee-simple",
+                         "1.0", null,
+                         "An archetype which contains a simplifed sample J2EE application."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-plugin",
+                         "1.2", null,
+                         "An archetype which contains a sample Maven plugin."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-plugin-site",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven plugin site. " +
+                         "This archetype can be layered upon an existing Maven plugin project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-portlet",
+                         "1.0.1", null,
+                         "An archetype which contains a sample JSR-268 Portlet."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-profiles",
+                         "1.0-alpha-4", null, ""),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-quickstart",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-site",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven site which demonstrates some of the supported document types" +
+                         " like APT, XDoc, and FML and demonstrates how to i18n your site. " +
+                         "This archetype can be layered upon an existing Maven project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-site-simple",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven site."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-webapp",
+                         "1.0", null,
+                         "An archetype which contains a sample Maven Webapp project.")
+    );
   }
 
   public Collection<MavenArchetype> getInnerArchetypes(Path path) {
