@@ -22,6 +22,6 @@ UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifie
 UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Kotlin_Light_Value_Parameter: t
 UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
 UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = Unresolved) -> null: null
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Kotlin_Light_Value_Parameter: t
