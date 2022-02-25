@@ -111,7 +111,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   override fun getValues(name: @NonNls String) = getList(name)?.toTypedArray()
 
   override fun setValues(name: @NonNls String, values: Array<String>?) {
-    if (values.isNullOrEmpty()) {
+    if (values == null) {
       unsetValue(name)
     }
     else {
