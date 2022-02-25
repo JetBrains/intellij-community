@@ -8,7 +8,6 @@ import com.intellij.openapi.module.impl.scopes.LibraryScopeBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -32,7 +31,6 @@ import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.caches.resolve.util.enlargedSearchScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.framework.platform
@@ -42,7 +40,6 @@ import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.project.getStableName
 import org.jetbrains.kotlin.idea.project.libraryToSourceAnalysisEnabled
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.util.isInSourceContentWithoutInjected
 import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.name.Name
@@ -172,7 +169,7 @@ data class ModuleProductionSourceInfo internal constructor(
     override val stableName: Name by lazy { module.getStableName() }
 
     override fun contentScope(): GlobalSearchScope {
-        return enlargedSearchScope(ModuleProductionSourceScope(module), module, isTestScope = false)
+        return enlargedSearchScope(module.moduleProductionSourceScope, module, isTestScope = false)
     }
 }
 
@@ -187,7 +184,7 @@ data class ModuleTestSourceInfo internal constructor(override val module: Module
 
     override val stableName: Name by lazy { module.getStableName() }
 
-    override fun contentScope(): GlobalSearchScope = enlargedSearchScope(ModuleTestSourceScope(module), module, isTestScope = true)
+    override fun contentScope(): GlobalSearchScope = enlargedSearchScope(module.moduleTestSourceScope, module, isTestScope = true)
 
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> =
         module.cacheByClassInvalidatingOnRootModifications(KeyForModulesWhoseInternalsAreVisible::class.java) {
@@ -221,45 +218,6 @@ private fun Module.hasTestRoots() =
 
 private fun Module.hasRootsOfType(sourceRootType: JpsModuleSourceRootType<*>): Boolean =
     rootManager.contentEntries.any { it.getSourceFolders(sourceRootType).isNotEmpty() }
-
-abstract class ModuleSourceScope(val module: Module) : GlobalSearchScope(module.project) {
-    override fun compare(file1: VirtualFile, file2: VirtualFile) = 0
-    override fun isSearchInModuleContent(aModule: Module) = aModule == module
-    override fun isSearchInLibraries() = false
-}
-
-@Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
-class ModuleProductionSourceScope(module: Module) : ModuleSourceScope(module) {
-    val moduleFileIndex = ModuleRootManager.getInstance(module).fileIndex
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return (other is ModuleProductionSourceScope && module == other.module)
-    }
-
-    override fun calcHashCode(): Int = 31 * module.hashCode()
-
-    override fun contains(file: VirtualFile) =
-        moduleFileIndex.isInSourceContentWithoutInjected(file) && !moduleFileIndex.isInTestSourceContentKotlinAware(file)
-
-    override fun toString() = "ModuleProductionSourceScope($module)"
-}
-
-@Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
-private class ModuleTestSourceScope(module: Module) : ModuleSourceScope(module) {
-    val moduleFileIndex = ModuleRootManager.getInstance(module).fileIndex
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return (other is ModuleTestSourceScope && module == other.module)
-    }
-
-    override fun calcHashCode(): Int = 37 * module.hashCode()
-
-    override fun contains(file: VirtualFile) = moduleFileIndex.isInTestSourceContentKotlinAware(file)
-
-    override fun toString() = "ModuleTestSourceScope($module)"
-}
 
 abstract class LibraryInfo(override val project: Project, val library: Library) :
     IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class ModuleWithDependenciesScope extends GlobalSearchScope {
+public final class ModuleWithDependenciesScope extends GlobalSearchScope {
   public static final int COMPILE_ONLY = 0x01;
   public static final int LIBRARIES = 0x02;
   public static final int MODULES = 0x04;
