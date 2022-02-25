@@ -92,6 +92,9 @@ data class KotlinBuildSystemPluginIR(
 
     @Suppress("EnumEntryName", "unused", "SpellCheckingInspection")
     enum class Type {
-        jvm, multiplatform, android, js
+        jvm, multiplatform, android, js,
+        nativeCocoapods {
+            override fun toString(): String = "native.cocoapods"
+        }
     }
 }

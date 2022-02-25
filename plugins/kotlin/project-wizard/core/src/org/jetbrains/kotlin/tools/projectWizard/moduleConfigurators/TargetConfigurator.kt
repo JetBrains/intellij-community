@@ -69,7 +69,7 @@ internal fun Module.createTargetAccessIr(
 ) =
     TargetAccessIR(
         moduleSubType,
-        name.takeIf { it != moduleSubType.name },
+        name.takeIf { it != moduleSubType.toString() },
         additionalParams.filterNotNull()
     )
 

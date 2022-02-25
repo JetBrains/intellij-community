@@ -17,6 +17,10 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
     abstract fun createWizard(directory: Path, buildSystem: BuildSystem, projectDirectory: Path): Wizard
 
     fun doTest(directoryPath: String) {
+        doTest(directoryPath, { _, _ -> })
+    }
+
+    fun doTest(directoryPath: String, additionalChecks: ((Path, Path) -> Unit)) {
         val directory = Paths.get(directoryPath)
 
         val testParameters = DefaultTestParameters.fromTestDataOrDefault(directory)
@@ -28,11 +32,11 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
         )
 
         for (buildSystem in buildSystemsToRunFor) {
-            doTest(directory, buildSystem, testParameters)
+            doTest(directory, buildSystem, testParameters, additionalChecks)
         }
     }
 
-    private fun doTest(directory: Path, buildSystem: BuildSystem, testParameters: DefaultTestParameters) {
+    private fun doTest(directory: Path, buildSystem: BuildSystem, testParameters: DefaultTestParameters, additionalChecks: ((Path, Path) -> Unit)) {
         val tempDirectory = Files.createTempDirectory(null)
         val wizard = createWizard(directory, buildSystem, tempDirectory)
         val result = wizard.apply(Services.IDEA_INDEPENDENT_SERVICES, GenerationPhase.ALL)
@@ -62,6 +66,7 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
             ).replace("gradle-${Versions.GRADLE.text}-bin.zip", "gradle-GRADLE_VERSION-bin.zip")
                 .replace("gradle-${Versions.GRADLE_VERSION_FOR_COMPOSE.text}-bin.zip", "gradle-GRADLE_VERSION_FOR_COMPOSE-bin.zip")
         }
+        additionalChecks(expectedDirectory, tempDirectory)
     }
 
     private fun Path.allBuildFiles(buildSystem: BuildSystem) =
