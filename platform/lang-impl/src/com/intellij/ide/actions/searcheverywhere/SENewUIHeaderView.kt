@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -24,7 +25,6 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
     panel = panel {
       row {
         tabbedPane = tabbedPaneHeader()
-          .resizableColumn()
           .verticalAlign(VerticalAlign.BOTTOM)
           .customize(Gaps.EMPTY)
           .applyToComponent {
@@ -34,6 +34,8 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
           }
           .component
         cell(toolbar)
+          .resizableColumn()
+          .horizontalAlign(HorizontalAlign.RIGHT)
       }
     }
 
