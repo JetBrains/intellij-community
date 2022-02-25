@@ -1180,6 +1180,8 @@
              order="after explicitlyImported, before sameLogicalRoot"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ExplicitlyImportedWeigher" id="explicitlyImported"
              order="before openedInEditor"/>
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.AccessibilityWeigher" id="accessibility"
+             order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SamePsiMemberWeigher" id="samePsiMember"
              order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ReferenceListWeigher" id="referenceList"
