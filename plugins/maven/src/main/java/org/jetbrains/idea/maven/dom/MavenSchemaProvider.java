@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 public class MavenSchemaProvider implements StandardResourceProvider {
@@ -31,6 +32,10 @@ public class MavenSchemaProvider implements StandardResourceProvider {
   public static final String MAVEN_SETTINGS_SCHEMA_URL = "http://maven.apache.org/xsd/settings-1.0.0.xsd";
   public static final String MAVEN_SETTINGS_SCHEMA_URL_1_1 = "http://maven.apache.org/xsd/settings-1.1.0.xsd";
   public static final String MAVEN_SETTINGS_SCHEMA_URL_1_2 = "http://maven.apache.org/xsd/settings-1.2.0.xsd";
+
+  public static final List<String>  MAVEN_SETTINGS_SCHEMAS = List.of(MAVEN_SETTINGS_SCHEMA_URL,
+                                                                     MAVEN_SETTINGS_SCHEMA_URL_1_1,
+                                                                     MAVEN_SETTINGS_SCHEMA_URL_1_2);
 
   @Override
   public void registerResources(ResourceRegistrar registrar) {

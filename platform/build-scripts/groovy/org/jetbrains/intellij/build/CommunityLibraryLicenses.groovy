@@ -545,7 +545,7 @@ final class CommunityLibraryLicenses {
                                                 "org.apache.maven.resolver:maven-resolver-transport-file"]).apache(),
     new LibraryLicense(name: "Maven Wrapper", libraryName: "io.takari.maven.wrapper", url: "https://github.com/takari/maven-wrapper").apache(),
     new LibraryLicense(name: "Maven3", attachedTo: "intellij.maven.server.m3.common",
-                       additionalLibraryNames: ["org.apache.maven.shared:maven-dependency-tree:1.2", "org.apache.maven.archetype:archetype-common:2.4"],
+                       additionalLibraryNames: ["org.apache.maven.shared:maven-dependency-tree:1.2", "org.apache.maven.archetype:archetype-common:2.2"],
                        version: "3.6.1", url: "https://maven.apache.org/").apache(),
     new LibraryLicense(name: "Memory File System", libraryName: "memoryfilesystem",
                        url: "https://github.com/marschall/memoryfilesystem").mit(),
