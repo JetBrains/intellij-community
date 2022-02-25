@@ -63,7 +63,7 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     }
   }
 
-  open protected fun updateWidthHandler() {
+  protected open fun updateWidthHandler() {
     preferredSize
     revalidate()
     repaint()
