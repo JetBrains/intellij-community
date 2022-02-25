@@ -184,6 +184,8 @@ public final class ExperimentalUI {
     paths.put("nodes/ideaModule.svg", "expui/fileTypes/ideaModule.svg");
     paths.put("nodes/editorconfig.svg", "/expui/fileTypes/editorConfig.svg");
     paths.put("fileTypes/css.svg", "expui/fileTypes/css.svg");
+    paths.put("fileTypes/custom.svg", "expui/fileTypes/text.svg");
+    paths.put("fileTypes/dtd.svg", "expui/fileTypes/xml.svg");
     paths.put("fileTypes/html.svg", "expui/fileTypes/html.svg");
     paths.put("fileTypes/java.svg", "expui/fileTypes/java.svg");
     paths.put("fileTypes/javaScript.svg", "expui/fileTypes/javascript.svg");
