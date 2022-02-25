@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
@@ -27,6 +27,7 @@ import java.util.List;
 
 public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
+  private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
 
   private @Nullable StatusBar myStatusBar;
 
@@ -101,9 +102,11 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   public static @NotNull Icon getActionCenterNotificationIcon(List<? extends Notification> notifications) {
     for (Notification notification : notifications) {
       if (notification.isSuggestionType() && notification.isImportantSuggestion() || notification.getType() == NotificationType.ERROR) {
+        if (ExperimentalUI.isNewUI()) return NOTIFICATION_ICON.getErrorIcon();
         return AllIcons.Toolwindows.NotificationsNewImportant;
       }
     }
+    if (ExperimentalUI.isNewUI()) return NOTIFICATION_ICON.getInfoIcon(!notifications.isEmpty());
     return notifications.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew;
   }
 
