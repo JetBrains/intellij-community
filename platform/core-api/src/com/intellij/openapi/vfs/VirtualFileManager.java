@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
@@ -208,8 +209,14 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   public abstract long getStructureModificationCount();
 
+  @ApiStatus.Internal
   public VirtualFile findFileById(int id) {
     return null;
+  }
+
+  @ApiStatus.Internal
+  public int[] listAllChildIds(int id) {
+    return ArrayUtil.EMPTY_INT_ARRAY;
   }
 
   @ApiStatus.Internal

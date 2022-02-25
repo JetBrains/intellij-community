@@ -875,8 +875,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public @NotNull Iterable<VirtualFile> asIterable() {
-      return Collections.singletonList(myVirtualFile);
+    public int @NotNull [] asArray() {
+      return myVirtualFile instanceof VirtualFileWithId
+             ? new int[]{((VirtualFileWithId)myVirtualFile).getId()}
+             : ArrayUtil.EMPTY_INT_ARRAY;
     }
   }
 
@@ -934,8 +936,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public @NotNull Iterable<VirtualFile> asIterable() {
-      return Collections.unmodifiableSet(getFiles());
+    public int @NotNull [] asArray() {
+      return ((CompactVirtualFileSet)getFiles()).onlyInternalFileIds();
     }
   }
 
