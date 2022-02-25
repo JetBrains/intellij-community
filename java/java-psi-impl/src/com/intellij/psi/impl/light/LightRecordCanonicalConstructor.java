@@ -125,6 +125,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
 
       return new LightModifierList(getPrototype()) {
         @Override
+        public PsiElement getParent() {
+          return LightRecordConstructorParameter.this;
+        }
+
+        @Override
         public PsiAnnotation @NotNull [] getAnnotations() {
           return recordComponent.getAnnotations();
         }
