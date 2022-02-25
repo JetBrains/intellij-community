@@ -33,7 +33,7 @@ import java.util.List;
 public class ClassCanBeRecordInspection extends BaseInspection {
   private static final List<String> IGNORED_ANNOTATIONS = List.of("io.micronaut.*", "jakarta.*", "javax.*", "org.springframework.*");
 
-  public @NotNull ConversionStrategy myConversionStrategy = ConversionStrategy.SHOW_AFFECTED_MEMBERS;
+  public @NotNull ConversionStrategy myConversionStrategy = ConversionStrategy.DO_NOT_SUGGEST;
   public boolean suggestAccessorsRenaming = true;
   public List<String> myIgnoredAnnotations = new ArrayList<>();
 
@@ -96,7 +96,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
   public @Nullable JComponent createOptionsPanel() {
     JPanel panel = new InspectionOptionsPanel();
     panel.add(new CheckBox(JavaBundle.message("class.can.be.record.suggest.renaming.accessors"), this,
-                           "mySuggestAccessorsRenaming"));
+                           "suggestAccessorsRenaming"));
 
     panel.add(new JLabel(JavaBundle.message("class.can.be.record.conversion.make.member.more.accessible")));
     ButtonGroup butGr = new ButtonGroup();
