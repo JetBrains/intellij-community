@@ -11,9 +11,10 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.StateRestoringCheckBox
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.EmptyIcon
@@ -39,39 +40,46 @@ internal class FindPopupHeader(project: Project, filterContextButton: ActionButt
 
   init {
     panel = panel {
-      row {
-        val titleCell = label(FindBundle.message("find.in.path.dialog.title"))
-          .bold()
-        titleLabel = titleCell.component
-        infoLabel = label("")
-          .gap(RightGap.SMALL)
-          .component
-
-        if (ExperimentalUI.isNewUI()) {
-          titleCell.customize(JBGaps(right = 12))
-          infoLabel.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-        }
-        else {
-          titleCell.gap(RightGap.SMALL)
-          UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, infoLabel)
-        }
-
-        loadingIcon = icon(EmptyIcon.ICON_16)
-          .resizableColumn()
-          .component
-
-        cbFileFilter = cell(createCheckBox(project))
-          .gap(RightGap.SMALL)
-          .component
-        fileMaskField = cell(createFileFilter()).component
-
-        cell(filterContextButton)
-          .gap(RightGap.SMALL)
-        if (!ExperimentalUI.isNewUI()) {
-          cell(createSeparator())
+      customizeSpacingConfiguration(spacingConfiguration = object : IntelliJSpacingConfiguration() {
+        // Remove default vertical gap around cells, so the header can be smaller
+        override val verticalComponentGap: Int
+          get() = if (ExperimentalUI.isNewUI()) 0 else super.verticalComponentGap
+      }) {
+        row {
+          val titleCell = label(FindBundle.message("find.in.path.dialog.title"))
+            .bold()
+          titleLabel = titleCell.component
+          infoLabel = label("")
             .gap(RightGap.SMALL)
+            .component
+
+          if (ExperimentalUI.isNewUI()) {
+            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
+            titleCell.customize(Gaps(top = headerInsets.top, bottom = headerInsets.bottom, right = JBUI.scale(12)))
+            infoLabel.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+          }
+          else {
+            titleCell.gap(RightGap.SMALL)
+            UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, infoLabel)
+          }
+
+          loadingIcon = icon(EmptyIcon.ICON_16)
+            .resizableColumn()
+            .component
+
+          cbFileFilter = cell(createCheckBox(project))
+            .gap(RightGap.SMALL)
+            .component
+          fileMaskField = cell(createFileFilter()).component
+
+          cell(filterContextButton)
+            .gap(RightGap.SMALL)
+          if (!ExperimentalUI.isNewUI()) {
+            cell(createSeparator())
+              .gap(RightGap.SMALL)
+          }
+          actionButton(pinAction)
         }
-        actionButton(pinAction)
       }
     }
   }

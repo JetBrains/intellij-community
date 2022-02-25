@@ -34,6 +34,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
@@ -790,12 +791,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
     toolbarComponent.setOpaque(false);
 
     if (ExperimentalUI.isNewUI()) {
-      Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().getUnscaled();
-      myTextFieldTitle.setBorder(BorderFactory.createEmptyBorder(headerInsets.top, 0, headerInsets.bottom, 0));
+      myTextFieldTitle.setBorder(PopupUtil.getComplexPopupVerticalHeaderBorder());
       toolbarComponent.setBorder(null);
       result.setBorder(JBUI.Borders.compound(
         JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
-        BorderFactory.createEmptyBorder(0, headerInsets.left, 0, headerInsets.right)));
+        PopupUtil.getComplexPopupHorizontalHeaderBorder()));
     }
     else {
       result.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));

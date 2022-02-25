@@ -39,7 +39,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
 
     val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().unscaled
     panel.border = JBUI.Borders.compound(
-      JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
+      JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
       JBUI.Borders.empty(0, headerInsets.left, 0, headerInsets.right))
 
     for (tab in tabs) {

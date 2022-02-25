@@ -233,4 +233,14 @@ public final class PopupUtil {
       component.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
     }
   }
+
+  public static Border getComplexPopupHorizontalHeaderBorder() {
+    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().getUnscaled();
+    return JBUI.Borders.empty(0, headerInsets.left, 0, headerInsets.right);
+  }
+
+  public static Border getComplexPopupVerticalHeaderBorder() {
+    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().getUnscaled();
+    return JBUI.Borders.empty(headerInsets.top, 0, headerInsets.bottom, 0);
+  }
 }
