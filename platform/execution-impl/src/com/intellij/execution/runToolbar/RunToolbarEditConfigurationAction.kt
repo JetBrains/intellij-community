@@ -67,7 +67,7 @@ class RunToolbarMoveToTopAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
-      if (manager.getState().isSinglePlain()) {
+      if (manager.getState().isSinglePlain() && manager.mainSlotData == e.runToolbarData()) {
         manager.activeProcesses.activeSlots.firstOrNull()?.let {
           manager.moveToTop(it.id)
         }
