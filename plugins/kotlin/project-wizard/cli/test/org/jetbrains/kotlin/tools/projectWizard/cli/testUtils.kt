@@ -14,14 +14,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
 
-internal fun Path.readFile() = toFile().readText().trim()
+fun Path.readFile() = toFile().readText().trim()
 
-internal fun Path.listFiles(filter: (Path) -> Boolean) =
+fun Path.listFiles(filter: (Path) -> Boolean) =
     Files.walk(this).filter { path ->
         Files.isRegularFile(path) && filter(path)
     }.collect(Collectors.toList()).sorted()
 
-internal fun compareFilesAndGenerateMissing(
+fun compareFilesAndGenerateMissing(
     expectedFiles: List<Path>, expectedDir: Path,
     actualFiles: List<Path>, actualDir: Path,
     readActualFile: (Path) -> String
