@@ -15,6 +15,7 @@ import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCommitOptions
 import git4idea.index.GitIndexUtil
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
+import org.jetbrains.plugins.github.util.GithubUtil
 import java.nio.charset.Charset
 import java.nio.file.Path
 
@@ -75,9 +76,15 @@ class GHSuggestedChangeApplier(
     // Commit suggested change
     val suggestedChangedPath = GitCheckinEnvironment.ChangedPath(beforeLocalFilePath, afterLocalFilePath)
     val commitMessageFile = GitCheckinEnvironment.createCommitMessageFile(project, virtualBaseDir, commitMessage)
-    GitCheckinEnvironment.commitUsingIndex(project, repository,
-                                           listOf(suggestedChangedPath), setOf(suggestedChangedPath),
-                                           commitMessageFile, GitCommitOptions())
+    val exceptions = GitCheckinEnvironment.commitUsingIndex(project, repository,
+                                                            listOf(suggestedChangedPath), setOf(suggestedChangedPath),
+                                                            commitMessageFile, GitCommitOptions())
+
+    if (exceptions.isNotEmpty()) {
+      val messages = exceptions.flatMap { it.messages.toList() }.toTypedArray()
+      GithubUtil.LOG.error("Failed to commit suggested change", *messages)
+      return ApplyPatchStatus.FAILURE
+    }
 
     return ApplyPatchStatus.SUCCESS
   }
