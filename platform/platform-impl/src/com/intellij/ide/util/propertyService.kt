@@ -123,10 +123,11 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   override fun getList(name: String) = keyToStringList.get(name)
 
   override fun setList(name: String, values: MutableCollection<String>?) {
-    if (values.isNullOrEmpty()) {
+    if (values == null) {
       unsetValue(name)
     }
     else {
+      // for possible backward compatibility to existing usages, allow to store empty collections
       keyToStringList.put(name, java.util.List.copyOf(values))
       tracker.incModificationCount()
     }
