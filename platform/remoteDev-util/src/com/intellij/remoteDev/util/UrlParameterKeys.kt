@@ -16,5 +16,6 @@ class UrlParameterKeys {
     const val buildNumber = "buildNumber"
     const val productCode = "productCode"
     const val remoteId = "remoteId"
+    const val download = "download"
   }
 }
