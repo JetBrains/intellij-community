@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.index
 
-import org.jetbrains.kotlin.idea.caches.project.ModuleProductionSourceScope
 import org.jetbrains.kotlin.idea.stubindex.SubpackagesIndexService
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.name.FqName
@@ -32,7 +31,7 @@ class SubpackageIndexServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             assertTrue("fqName `${it.asString()}` should exist", subpackagesIndex.packageExists(it))
         }
 
-        val scope = ModuleProductionSourceScope(module)
+        val scope = module.moduleProductionSourceScope
 
         listOf(FqName.ROOT, fqName1, fqName2, fqName30, fqName31).forEach {
             assertTrue("fqName `${it.asString()}` should exist", subpackagesIndex.packageExists(it, scope))

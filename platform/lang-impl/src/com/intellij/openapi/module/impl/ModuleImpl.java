@@ -343,6 +343,18 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
   }
 
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleProductionSourceScope() {
+    return myModuleScopeProvider.getModuleProductionSourceScope();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleTestSourceScope() {
+    return myModuleScopeProvider.getModuleTestSourceScope();
+  }
+
   @Override
   public void clearScopesCache() {
     myModuleScopeProvider.clearCache();
