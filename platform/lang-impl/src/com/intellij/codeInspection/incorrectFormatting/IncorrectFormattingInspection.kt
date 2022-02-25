@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ui.InspectionOptionsPanel
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
+import com.intellij.lang.Language
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
@@ -33,6 +34,13 @@ class IncorrectFormattingInspection(
 
     // Doesn't work with external formatters since they modify the file
     if (ExternalFormatProcessor.useExternalFormatter(file)) {
+      return null
+    }
+
+    // Perform only for main PSI tree
+    val baseLanguage: Language = file.getViewProvider().getBaseLanguage()
+    val mainFile = file.getViewProvider().getPsi(baseLanguage)
+    if (file != mainFile) {
       return null
     }
 
