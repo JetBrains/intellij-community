@@ -735,12 +735,13 @@ final class DistributionJARsBuilder {
                              .setAttribute("isUpdateFromSources", isUpdateFromSources), new Supplier<List<DistributionFileEntry>>() {
       @Override
       List<DistributionFileEntry> get() {
-        return ForkJoinTask.invokeAll([
-          new Tuple2(OsFamily.MACOS, JvmArchitecture.x64),
-          new Tuple2(OsFamily.MACOS, JvmArchitecture.aarch64),
-          new Tuple2(OsFamily.WINDOWS, JvmArchitecture.x64),
-          new Tuple2(OsFamily.LINUX, JvmArchitecture.x64)
-        ].findResults { OsFamily osFamily, JvmArchitecture arch ->
+        List<Tuple2> platforms = isUpdateFromSources
+          ? List.of(new Tuple2(OsFamily.currentOs, JvmArchitecture.currentJvmArch))
+          : List.of(new Tuple2(OsFamily.MACOS, JvmArchitecture.x64),
+                    new Tuple2(OsFamily.MACOS, JvmArchitecture.aarch64),
+                    new Tuple2(OsFamily.WINDOWS, JvmArchitecture.x64),
+                    new Tuple2(OsFamily.LINUX, JvmArchitecture.x64))
+        return ForkJoinTask.invokeAll(platforms.findResults { OsFamily osFamily, JvmArchitecture arch ->
           if (!context.shouldBuildDistributionForOS(osFamily.osId)) {
             return null
           }
