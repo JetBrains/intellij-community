@@ -71,14 +71,20 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
       override fun getFont(): Font {
         return UIUtil.getToolbarFont()
       }
+
+      override fun getForeground(): Color {
+        return UIUtil.getLabelForeground()
+      }
     }
 
     private val process = object : JLabel() {
       override fun getFont(): Font {
         return UIUtil.getToolbarFont()
       }
-    }.apply {
-      foreground = UIUtil.getLabelInfoForeground()
+
+      override fun getForeground(): Color {
+        return UIUtil.getLabelInfoForeground()
+      }
     }
 
     init {
