@@ -8,38 +8,13 @@ interface SpacingConfiguration {
 
   companion object {
     @JvmField
-    val EMPTY = object : SpacingConfiguration {
-      override val horizontalSmallGap = 0
-      override val horizontalDefaultGap = 0
-      override val horizontalColumnsGap = 0
-      override val horizontalIndent = 0
-      override val horizontalToggleButtonIndent = 0
-      override val verticalComponentGap = 0
-      override val verticalSmallGap = 0
-      override val verticalMediumGap = 0
-      override val buttonGroupHeaderBottomGap = 0
-      override val segmentedButtonVerticalGap = 0
-      override val segmentedButtonHorizontalGap = 0
-      override val dialogGap = Gaps.EMPTY
-    }
+    @Deprecated("Create EmptySpacingConfiguration directly when needed")
+    val EMPTY = EmptySpacingConfiguration()
 
     @JvmStatic
+    @Deprecated("Create IntelliJSpacingConfiguration directly when needed")
     fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
-      return object : SpacingConfiguration {
-
-        override val horizontalSmallGap = JBUI.scale(6)
-        override val horizontalDefaultGap = JBUI.scale(16)
-        override val horizontalColumnsGap = JBUI.scale(60)
-        override val horizontalIndent = JBUI.scale(20)
-        override val horizontalToggleButtonIndent = JBUI.scale(20)
-        override val verticalComponentGap = JBUI.scale(6)
-        override val verticalSmallGap = JBUI.scale(8)
-        override val verticalMediumGap = JBUI.scale(20)
-        override val buttonGroupHeaderBottomGap = JBUI.scale(2)
-        override val segmentedButtonVerticalGap = JBUI.scale(3)
-        override val segmentedButtonHorizontalGap= JBUI.scale(12)
-        override val dialogGap = Gaps(10, 12, 10, 12)
-      }
+      return IntelliJSpacingConfiguration()
     }
   }
 
@@ -102,4 +77,34 @@ interface SpacingConfiguration {
    * Gaps between dialog content and its content
    */
   val dialogGap: Gaps
+}
+
+open class EmptySpacingConfiguration : SpacingConfiguration {
+  override val horizontalSmallGap = 0
+  override val horizontalDefaultGap = 0
+  override val horizontalColumnsGap = 0
+  override val horizontalIndent = 0
+  override val horizontalToggleButtonIndent = 0
+  override val verticalComponentGap = 0
+  override val verticalSmallGap = 0
+  override val verticalMediumGap = 0
+  override val buttonGroupHeaderBottomGap = 0
+  override val segmentedButtonVerticalGap = 0
+  override val segmentedButtonHorizontalGap = 0
+  override val dialogGap = Gaps.EMPTY
+}
+
+open class IntelliJSpacingConfiguration : SpacingConfiguration {
+  override val horizontalSmallGap = JBUI.scale(6)
+  override val horizontalDefaultGap = JBUI.scale(16)
+  override val horizontalColumnsGap = JBUI.scale(60)
+  override val horizontalIndent = JBUI.scale(20)
+  override val horizontalToggleButtonIndent = JBUI.scale(20)
+  override val verticalComponentGap = JBUI.scale(6)
+  override val verticalSmallGap = JBUI.scale(8)
+  override val verticalMediumGap = JBUI.scale(20)
+  override val buttonGroupHeaderBottomGap = JBUI.scale(2)
+  override val segmentedButtonVerticalGap = JBUI.scale(3)
+  override val segmentedButtonHorizontalGap = JBUI.scale(12)
+  override val dialogGap = Gaps(10, 12, 10, 12)
 }

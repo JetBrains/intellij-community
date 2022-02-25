@@ -117,7 +117,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
 
       if (!(manager == ExternalUpdateManager.TOOLBOX || Registry.`is`("ide.hide.toolbox.promo"))) {
         group(indent = false) {
-          customizeSpacingConfiguration(SpacingConfiguration.EMPTY) {
+          customizeSpacingConfiguration(EmptySpacingConfiguration()) {
             row {
               icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
                 .verticalAlign(VerticalAlign.TOP)

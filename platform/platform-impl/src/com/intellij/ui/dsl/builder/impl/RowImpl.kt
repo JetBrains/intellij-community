@@ -184,7 +184,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
-    val result = PanelImpl(dialogPanelConfig, this)
+    val result = PanelImpl(dialogPanelConfig, parent.spacingConfiguration, this)
     result.init()
     cells.add(result)
     return result
@@ -233,7 +233,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, property, renderer(it)) })
-    val toolbar = SegmentedButtonToolbar(actionGroup, dialogPanelConfig.spacing)
+    val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     return cell(toolbar)
   }
@@ -427,7 +427,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   fun getIndent(): Int {
-    return panelContext.indentCount * dialogPanelConfig.spacing.horizontalIndent
+    return panelContext.indentCount * parent.spacingConfiguration.horizontalIndent
   }
 
   private fun doVisible(isVisible: Boolean) {

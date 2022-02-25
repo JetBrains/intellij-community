@@ -61,7 +61,6 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
-import com.intellij.ui.dsl.builder.SpacingConfiguration;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
@@ -810,12 +809,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     JBInsets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
     if (ExperimentalUI.isNewUI()) {
       Color background = JBUI.CurrentTheme.Popup.BACKGROUND;
-      Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
-      int verticalGap = SpacingConfiguration.createIntelliJSpacingConfiguration().getVerticalComponentGap();
-      headerInsets.top -= verticalGap;
-      headerInsets.bottom -= verticalGap;
-      header.panel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
-                                                   JBUI.Borders.empty(headerInsets)));
+      header.panel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+                                                   PopupUtil.getComplexPopupHorizontalHeaderBorder()));
       header.panel.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       header.cbFileFilter.setOpaque(false);
       setBackground(background);

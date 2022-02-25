@@ -196,19 +196,20 @@ public final class Switcher extends BaseSwitcherAction {
       pathLabel.putClientProperty(SwingTextTrimmer.KEY, SwingTextTrimmer.THREE_DOTS_AT_LEFT);
 
       JPanel header = new JPanel(new HorizontalLayout(5));
-      header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
-      header.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(title)));
+      JLabel titleLabel = RelativeFont.BOLD.install(new JLabel(title));
+      header.add(HorizontalLayout.LEFT, titleLabel);
 
       if (ExperimentalUI.isNewUI()) {
         setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        Insets headerInsets = JBUI.CurrentTheme.Popup.headerInsets().getUnscaled();
-        // Remove size of focus ring insets around checkbox
-        int focusRing = cbShowOnlyEditedFiles == null ? 0 : 3;
+        titleLabel.setBorder(PopupUtil.getComplexPopupVerticalHeaderBorder());
+        header.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
         header.setBorder(
-          JBUI.Borders.empty(headerInsets.top - focusRing, headerInsets.left, headerInsets.bottom - focusRing, headerInsets.right));
+          JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+                                PopupUtil.getComplexPopupHorizontalHeaderBorder()));
       }
       else {
         setBackground(JBColor.background());
+        header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
         header.setBorder(JBUI.Borders.empty(4, 8));
       }
 
