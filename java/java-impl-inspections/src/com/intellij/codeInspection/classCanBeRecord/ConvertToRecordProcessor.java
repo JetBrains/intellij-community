@@ -40,14 +40,14 @@ import static com.intellij.psi.PsiModifier.PRIVATE;
 
 public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   private final RecordCandidate myRecordCandidate;
-  private final boolean myShowWeakenVisibilityMembers;
+  private final boolean myShowAffectedMembers;
 
   private final Map<PsiElement, String> myAllRenames = new LinkedHashMap<>();
 
-  public ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate, boolean showWeakenVisibilityMembers) {
+  public ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate, boolean showAffectedMembers) {
     super(recordCandidate.getProject());
     myRecordCandidate = recordCandidate;
-    myShowWeakenVisibilityMembers = showWeakenVisibilityMembers;
+    myShowAffectedMembers = showAffectedMembers;
   }
 
   @Override
@@ -95,14 +95,14 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (myShowWeakenVisibilityMembers) {
-      usages.addAll(findWeakenVisibilityUsages(myRecordCandidate));
+    if (myShowAffectedMembers) {
+      usages.addAll(findAffectedMembersUsages(myRecordCandidate));
     }
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @NotNull
-  static List<UsageInfo> findWeakenVisibilityUsages(@NotNull RecordCandidate recordCandidate) {
+  static List<UsageInfo> findAffectedMembersUsages(@NotNull RecordCandidate recordCandidate) {
     List<UsageInfo> result = new SmartList<>();
     for (var entry : recordCandidate.getFieldAccessors().entrySet()) {
       PsiField psiField = entry.getKey();
@@ -110,7 +110,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       if (fieldAccessorCandidate == null) {
         if (firstHasWeakerAccess(recordCandidate.getPsiClass(), psiField)) {
           result.add(new BrokenEncapsulationUsageInfo(psiField, JavaRefactoringBundle
-            .message("convert.to.record.weakens.field.visibility", RefactoringUIUtil.getDescription(psiField, true),
+            .message("convert.to.record.field.more.accessible", RefactoringUIUtil.getDescription(psiField, true),
                      VisibilityUtil.getVisibilityStringToDisplay(psiField), VisibilityUtil.toPresentableText(PsiModifier.PUBLIC))));
         }
       }
@@ -118,7 +118,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         PsiMethod accessor = fieldAccessorCandidate.getAccessor();
         if (firstHasWeakerAccess(recordCandidate.getPsiClass(), accessor)) {
           result.add(new BrokenEncapsulationUsageInfo(accessor, JavaRefactoringBundle
-            .message("convert.to.record.weakens.accessor.visibility", RefactoringUIUtil.getDescription(accessor, true),
+            .message("convert.to.record.accessor.more.accessible", RefactoringUIUtil.getDescription(accessor, true),
                      VisibilityUtil.getVisibilityStringToDisplay(accessor),
                      VisibilityUtil.toPresentableText(PsiModifier.PUBLIC))));
         }
@@ -127,7 +127,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     PsiMethod canonicalCtor = recordCandidate.getCanonicalConstructor();
     if (canonicalCtor != null && firstHasWeakerAccess(recordCandidate.getPsiClass(), canonicalCtor)) {
       result.add(new BrokenEncapsulationUsageInfo(canonicalCtor, JavaRefactoringBundle
-        .message("convert.to.record.weakens.ctor.visibility", RefactoringUIUtil.getDescription(canonicalCtor, true),
+        .message("convert.to.record.ctor.more.accessible", RefactoringUIUtil.getDescription(canonicalCtor, true),
                  VisibilityUtil.getVisibilityStringToDisplay(canonicalCtor),
                  VisibilityUtil.getVisibilityStringToDisplay(recordCandidate.getPsiClass()))));
     }
