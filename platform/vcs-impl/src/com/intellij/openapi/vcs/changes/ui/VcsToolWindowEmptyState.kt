@@ -110,25 +110,24 @@ private fun createDataContext(project: Project): DataContext {
 
 
 internal fun hideIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
+  fun updateIdLabel() {
+    val hideIdLabel = if (toolWindow.contentManager.isEmpty) null else "true"
+    if (toolWindow.component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL) != hideIdLabel) {
+      toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideIdLabel)
+      updateContentUi(toolWindow.contentManager)
+    }
+  }
+
   toolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
-      if (toolWindow.contentManager.contentCount != 1) {
-        return
-      }
-
-      toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
-      updateContentUi(toolWindow.contentManager)
+      updateIdLabel()
     }
 
     override fun contentRemoved(event: ContentManagerEvent) {
-      if (!toolWindow.contentManager.isEmpty) {
-        return
-      }
-
-      toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null)
-      updateContentUi(toolWindow.contentManager)
+      updateIdLabel()
     }
   })
+  updateIdLabel()
 }
 
 private fun updateContentUi(contentManager: ContentManager) {
