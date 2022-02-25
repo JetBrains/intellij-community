@@ -152,13 +152,14 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
   @NotNull
   private static List<Pair<PsiFile, HighlightInfo>> runAnnotatorsInGeneralHighlightingPass(@NotNull PsiFile file,
-                                                                                           boolean highlightErrorElements, boolean runAnnotators) {
+                                                                                           boolean highlightErrorElements,
+                                                                                           boolean runAnnotators) {
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return Collections.emptyList();
     ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    HighlightingSessionImpl.getOrCreateHighlightingSession(file, daemonProgressIndicator, null, false);
+    HighlightingSessionImpl.getOrCreateHighlightingSession(file, daemonProgressIndicator, ProperTextRange.create(file.getTextRange()));
     TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
     List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
     List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
