@@ -10,9 +10,9 @@ import java.nio.file.Path
 @CompileStatic
 class BundledMavenDownloader {
   private static List<String> mavenCommonLibs = [
-    'org.apache.maven.archetype:archetype-common:2.4',
-    'org.apache.maven.archetype:archetype-catalog:2.4',
-    'org.apache.maven.archetype:archetype-descriptor:2.4',
+    'org.apache.maven.archetype:archetype-common:2.2',
+    'org.apache.maven.archetype:archetype-catalog:2.2',
+    'org.apache.maven.archetype:archetype-descriptor:2.2',
     'org.apache.maven.shared:maven-dependency-tree:1.2',
     'org.sonatype.nexus:nexus-indexer:3.0.4',
     'org.sonatype.nexus:nexus-indexer-artifact:1.0.1',
