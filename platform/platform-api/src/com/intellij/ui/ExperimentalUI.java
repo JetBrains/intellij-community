@@ -108,6 +108,7 @@ public final class ExperimentalUI {
     paths.put("actions/nextOccurence.svg", "/expui/general/down.svg");
     paths.put("actions/refresh.svg", "/expui/general/refresh.svg");
     paths.put("actions/edit.svg", "/expui/general/edit.svg");
+    paths.put("actions/editSource.svg", "/expui/general/edit.svg");
     paths.put("actions/groupBy.svg", "/expui/general/groups.svg");
     paths.put("general/add.svg", "/expui/general/add.svg");
     paths.put("general/remove.svg", "/expui/general/remove.svg");
