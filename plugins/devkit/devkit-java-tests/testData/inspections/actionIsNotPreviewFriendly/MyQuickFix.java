@@ -6,7 +6,7 @@ class MyQuickFix implements LocalQuickFix {
   int data[];
   boolean b1;
   Class<?> cls;
-  List<?> <warning descr="Field may prevent intention preview to work properly">list</warning>;
+  List<?> <warning descr="Field may prevent intention preview from working properly">list</warning>;
   @SafeFieldForPreview
   List<?> safeList;
 }
