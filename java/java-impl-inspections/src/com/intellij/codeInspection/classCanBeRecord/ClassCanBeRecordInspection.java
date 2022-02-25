@@ -34,7 +34,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
   private static final List<String> IGNORED_ANNOTATIONS = List.of("io.micronaut.*", "jakarta.*", "javax.*", "org.springframework.*");
 
   public @NotNull ConversionStrategy myConversionStrategy = ConversionStrategy.SHOW_AFFECTED_MEMBERS;
-  public boolean mySuggestAccessorsRenaming = true;
+  public boolean suggestAccessorsRenaming = true;
   public List<String> myIgnoredAnnotations = new ArrayList<>();
 
   public ClassCanBeRecordInspection() {
@@ -44,7 +44,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
   @TestOnly
   public ClassCanBeRecordInspection(@NotNull ConversionStrategy conversionStrategy, boolean suggestAccessorsRenaming) {
     myConversionStrategy = conversionStrategy;
-    this.mySuggestAccessorsRenaming = suggestAccessorsRenaming;
+    this.suggestAccessorsRenaming = suggestAccessorsRenaming;
   }
 
   @Override
@@ -59,7 +59,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new ClassCanBeRecordVisitor(myConversionStrategy != ConversionStrategy.DO_NOT_SUGGEST, mySuggestAccessorsRenaming,
+    return new ClassCanBeRecordVisitor(myConversionStrategy != ConversionStrategy.DO_NOT_SUGGEST, suggestAccessorsRenaming,
                                        myIgnoredAnnotations);
   }
 
@@ -71,7 +71,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     List<InspectionGadgetsFix> fixes = new SmartList<>();
-    fixes.add(new ConvertToRecordFix(myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS, mySuggestAccessorsRenaming,
+    fixes.add(new ConvertToRecordFix(myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS, suggestAccessorsRenaming,
                                      myIgnoredAnnotations));
     boolean isOnTheFly = (boolean)infos[0];
     if (isOnTheFly) {
@@ -98,7 +98,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
     panel.add(new CheckBox(JavaBundle.message("class.can.be.record.suggest.renaming.accessors"), this,
                            "mySuggestAccessorsRenaming"));
 
-    panel.add(new JLabel(JavaBundle.message("class.can.be.record.conversion.weakens.member")));
+    panel.add(new JLabel(JavaBundle.message("class.can.be.record.conversion.make.member.more.accessible")));
     ButtonGroup butGr = new ButtonGroup();
     for (ConversionStrategy strategy : ConversionStrategy.values()) {
       JRadioButton radioBut = new JRadioButton(strategy.getMessage(), strategy == myConversionStrategy);
@@ -116,14 +116,14 @@ public class ClassCanBeRecordInspection extends BaseInspection {
   }
 
   private static class ClassCanBeRecordVisitor extends BaseInspectionVisitor {
-    private final boolean myRenameIfWeakenVisibility;
+    private final boolean myRenameMembersThatBecomeMoreAccessible;
     private final boolean mySuggestAccessorsRenaming;
     private final List<String> myIgnoredAnnotations;
 
-    private ClassCanBeRecordVisitor(boolean renameIfWeakenVisibility,
+    private ClassCanBeRecordVisitor(boolean renameMembersThatBecomeMoreAccessible,
                                     boolean suggestAccessorsRenaming,
                                     @NotNull List<String> ignoredAnnotations) {
-      myRenameIfWeakenVisibility = renameIfWeakenVisibility;
+      myRenameMembersThatBecomeMoreAccessible = renameMembersThatBecomeMoreAccessible;
       mySuggestAccessorsRenaming = suggestAccessorsRenaming;
       myIgnoredAnnotations = ignoredAnnotations;
     }
@@ -135,7 +135,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
       if (classIdentifier == null) return;
       RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
-      if (!myRenameIfWeakenVisibility && !ConvertToRecordProcessor.findWeakenVisibilityUsages(recordCandidate).isEmpty()) return;
+      if (!myRenameMembersThatBecomeMoreAccessible && !ConvertToRecordProcessor.findAffectedMembersUsages(recordCandidate).isEmpty()) return;
       registerError(classIdentifier, isOnTheFly(), aClass);
     }
   }
