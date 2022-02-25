@@ -1529,8 +1529,8 @@ public final class HighlightMethodUtil {
     boolean appendImplementMethodFix = true;
     Collection<HierarchicalMethodSignature> visibleSignatures = aClass.getVisibleSignatures();
     if (aClass.getImplementsListTypes().length == 0 && aClass.getExtendsListTypes().length == 0) {
-      // optimization: do not analyze unrelated methods from Object
-      visibleSignatures = ContainerUtil.filter(visibleSignatures, sig -> sig.getMethod().getContainingClass() == aClass);
+      // optimization: do not analyze unrelated methods from Object: in case of no inheritance they can't conflict
+      return null;
     }
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
 
