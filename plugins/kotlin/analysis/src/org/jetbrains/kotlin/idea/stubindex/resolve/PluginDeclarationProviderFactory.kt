@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.idea.stubindex.SubpackagesIndexService
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
@@ -87,6 +88,7 @@ class PluginDeclarationProviderFactory(
                 oldPackageExists = $oldPackageExists,
                 SPI.packageExists = $spiPackageExists, SPI = $subpackagesIndex,
                 OOCB count = ${KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker.modificationCount}
+                PT count = ${KotlinPackageModificationListener.getInstance(project).packageTracker.modificationCount}
                 moduleModificationCount = $moduleModificationCount
             """.trimIndent()
 
@@ -112,10 +114,10 @@ class PluginDeclarationProviderFactory(
         }
 
         val scopeNotEmptyAndContainsFile =
-            indexedFilesScope != GlobalSearchScope.EMPTY_SCOPE && (file == null || file.virtualFile in indexedFilesScope)
+            !GlobalSearchScope.isEmptyScope(indexedFilesScope) && (file == null || file.virtualFile in indexedFilesScope)
         when {
             scopeNotEmptyAndContainsFile
-                    && !packageExists && oldPackageExists == false -> diagnoseMissingPackageFragmentPartialPackageIndexCorruption(message)
+                    && !packageExists && !oldPackageExists -> diagnoseMissingPackageFragmentPartialPackageIndexCorruption(message)
 
             scopeNotEmptyAndContainsFile
                     && packageExists && cachedPackageExists == false -> diagnoseMissingPackageFragmentPerModulePackageCacheMiss(message)
