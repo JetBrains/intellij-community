@@ -23,11 +23,6 @@ class IncorrectFormattingInspectionTest : BasePlatformTestCase() {
     myFixture.testHighlighting(true, false, true, "${getTestName(true)}.$extension")
   }
 
-  fun testBodyExtraSpaceSilent() {
-    myFixture.enableInspections(IncorrectFormattingInspection(false, kotlinOnly = true))
-    myFixture.testHighlighting(true, false, true, "${getTestName(true)}.xml")
-  }
-
   override fun getTestDataPath() =
     getCommunityPath().replace(File.separatorChar, '/') + "/platform/lang-impl/testData/codeInspection/incorrectFormatting/"
 
