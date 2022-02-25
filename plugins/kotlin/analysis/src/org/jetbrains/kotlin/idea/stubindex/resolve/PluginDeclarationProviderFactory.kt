@@ -135,7 +135,7 @@ class PluginDeclarationProviderFactory(
     }
 
     private fun oldPackageExists(packageFqName: FqName): Boolean =
-        PackageIndexUtil.containsFilesWithPartialPackage(packageFqName, indexedFilesScope)
+        PackageIndexUtil.packageExists(packageFqName, indexedFilesScope, project)
 
     private fun debugInfo(): String {
         if (nonIndexedFiles.isEmpty()) return "-no synthetic files-\n"
