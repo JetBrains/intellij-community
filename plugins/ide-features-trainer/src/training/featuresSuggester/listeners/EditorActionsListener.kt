@@ -20,9 +20,9 @@ import training.featuresSuggester.settings.FeatureSuggesterSettings
 class EditorActionsListener : AnActionListener {
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
     FeatureSuggesterSettings.instance().updateWorkingDays()
-    if (!SuggestingUtils.isActionsProcessingEnabled || !action.isSupportedAction()) return
-    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val project = event.getData(CommonDataKeys.PROJECT) ?: return
+    if (!SuggestingUtils.isActionsProcessingEnabled(project) || !action.isSupportedAction()) return
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
     when (action) {
       is CopyAction -> {
@@ -122,9 +122,9 @@ class EditorActionsListener : AnActionListener {
   }
 
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-    if (!SuggestingUtils.isActionsProcessingEnabled || !action.isSupportedAction()) return
-    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val project = event.getData(CommonDataKeys.PROJECT) ?: return
+    if (!SuggestingUtils.isActionsProcessingEnabled(project) || !action.isSupportedAction()) return
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
     when (action) {
       is CopyAction -> {

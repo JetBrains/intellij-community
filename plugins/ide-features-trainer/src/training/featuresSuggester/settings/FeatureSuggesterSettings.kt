@@ -25,6 +25,9 @@ class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettin
   // List of timestamps (millis) of the first IDE session start for the last days
   var workingDays: MutableList<Long> = mutableListOf()
 
+  val isAnySuggesterEnabled: Boolean
+    get() = suggesters.any { it.value }
+
   override fun getState(): FeatureSuggesterSettings {
     return this
   }
