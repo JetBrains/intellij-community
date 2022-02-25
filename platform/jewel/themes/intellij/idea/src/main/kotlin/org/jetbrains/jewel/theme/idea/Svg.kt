@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.theme.intellij
+package org.jetbrains.jewel.theme.idea
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember

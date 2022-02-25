@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.theme.intellij
+package org.jetbrains.jewel.theme.idea
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -48,11 +48,11 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
     @OptIn(ExperimentalComposeUiApi::class)
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         toolWindow.addComposeTab("Compose Demo") {
-            IntelliJTheme(project) {
+            IntelliJTheme {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(IntelliJTheme.palette.background),
+                        .background(org.jetbrains.jewel.theme.intellij.IntelliJTheme.palette.background),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp, alignment = Alignment.CenterVertically)) {
@@ -74,7 +74,10 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
 //                        TextField(textFieldState.value, { textFieldState.value = it })
 
                         val radioState = remember { mutableStateOf(RadioSample.Automatic) }
-                        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(IntelliJTheme.metrics.singlePadding)) {
+                        Column(
+                            Modifier.selectableGroup(),
+                            verticalArrangement = Arrangement.spacedBy(org.jetbrains.jewel.theme.intellij.IntelliJTheme.metrics.singlePadding)
+                        ) {
 //                            RadioButtonRow(radioState, RadioSample.Automatic) {
 //                                Text("Automatic detection of the property", Modifier.alignByBaseline())
 //                            }
@@ -93,7 +96,7 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
             }
         }
         toolWindow.addComposeTab("Compose Demo 2") {
-            IntelliJTheme(project) {
+            IntelliJTheme {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center

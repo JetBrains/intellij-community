@@ -1,85 +1,81 @@
-package org.jetbrains.jewel.theme.intellij
+package org.jetbrains.jewel.theme.idea
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Typeface
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.skiko.toSkikoTypeface
-import javax.swing.UIManager
+import org.jetbrains.jewel.theme.intellij.IntelliJMetrics
+import org.jetbrains.jewel.theme.intellij.IntelliJPainters
+import org.jetbrains.jewel.theme.intellij.IntelliJPalette
+import org.jetbrains.jewel.theme.intellij.IntelliJThemeDefinition
+import org.jetbrains.jewel.theme.intellij.IntelliJTypography
 
 @Suppress("FunctionName")
 fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
+
     val buttonPalette = IntelliJPalette.Button(
-        background = Brush.verticalGradient(retrieveColors("Button.startBackground", "Button.endBackground")),
-        foreground = retrieveColor("Button.foreground"),
-        foregroundDisabled = retrieveColor("Button.disabledText"),
-        shadow = retrieveColorOrNull("Button.default.shadowColor") ?: Color.Unspecified,
-        stroke = Brush.verticalGradient(retrieveColors("Button.startBorderColor", "Button.endBorderColor")),
-        strokeFocused = retrieveColor("Button.focusedBorderColor"),
-        strokeDisabled = retrieveColor("Button.disabledBorderColor"),
+        background = Brush.verticalGradient(retrieveColorsOrUnspecified("Button.startBackground", "Button.endBackground")),
+        foreground = retrieveColorOrUnspecified("Button.foreground"),
+        foregroundDisabled = retrieveColorOrUnspecified("Button.disabledText"),
+        shadow = retrieveColorOrUnspecified("Button.default.shadowColor"),
+        stroke = Brush.verticalGradient(retrieveColorsOrUnspecified("Button.startBorderColor", "Button.endBorderColor")),
+        strokeFocused = retrieveColorOrUnspecified("Button.focusedBorderColor"),
+        strokeDisabled = retrieveColorOrUnspecified("Button.disabledBorderColor"),
         defaultBackground = Brush.verticalGradient(
-            retrieveColors(
+            retrieveColorsOrUnspecified(
                 "Button.default.startBackground",
                 "Button.default.endBackground"
             )
         ),
-        defaultForeground = retrieveColor("Button.default.foreground"),
+        defaultForeground = retrieveColorOrUnspecified("Button.default.foreground"),
         defaultStroke = Brush.verticalGradient(
-            retrieveColors(
+            retrieveColorsOrUnspecified(
                 "Button.default.startBorderColor",
                 "Button.default.endBorderColor"
             )
         ),
-        defaultStrokeFocused = retrieveColor("Button.default.focusedBorderColor"),
-        defaultShadow = retrieveColorOrNull("Button.default.shadowColor") ?: Color.Unspecified
+        defaultStrokeFocused = retrieveColorOrUnspecified("Button.default.focusedBorderColor"),
+        defaultShadow = retrieveColorOrUnspecified("Button.default.shadowColor")
     )
 
     val textFieldPalette = IntelliJPalette.TextField(
-        background = retrieveColor("TextField.background"),
-        backgroundDisabled = retrieveColor("TextField.disabledBackground"),
-        foreground = retrieveColor("TextField.foreground"),
-        foregroundDisabled = retrieveColor("Label.disabledForeground")
+        background = retrieveColorOrUnspecified("TextField.background"),
+        backgroundDisabled = retrieveColorOrUnspecified("TextField.disabledBackground"),
+        foreground = retrieveColorOrUnspecified("TextField.foreground"),
+        foregroundDisabled = retrieveColorOrUnspecified("Label.disabledForeground")
     )
 
     val palette = IntelliJPalette(
         button = buttonPalette,
-        background = retrieveColor("Panel.background"),
-        text = retrieveColor("Panel.foreground"),
-        textDisabled = retrieveColor("Label.disabledForeground"),
-        controlStroke = retrieveColor("Component.borderColor"),
-        controlStrokeDisabled = retrieveColor("Component.disabledBorderColor"),
-        controlStrokeFocused = retrieveColor("Component.focusedBorderColor"),
-        controlFocusHalo = retrieveColor("Component.focusColor"),
-        controlInactiveHaloError = retrieveColor("Component.inactiveErrorFocusColor"),
-        controlInactiveHaloWarning = retrieveColor("Component.inactiveWarningFocusColor"),
-        controlHaloError = retrieveColor("Component.errorFocusColor"),
-        controlHaloWarning = retrieveColor("Component.warningFocusColor"),
+        background = retrieveColorOrUnspecified("Panel.background"),
+        text = retrieveColorOrUnspecified("Panel.foreground"),
+        textDisabled = retrieveColorOrUnspecified("Label.disabledForeground"),
+        controlStroke = retrieveColorOrUnspecified("Component.borderColor"),
+        controlStrokeDisabled = retrieveColorOrUnspecified("Component.disabledBorderColor"),
+        controlStrokeFocused = retrieveColorOrUnspecified("Component.focusedBorderColor"),
+        controlFocusHalo = retrieveColorOrUnspecified("Component.focusColor"),
+        controlInactiveHaloError = retrieveColorOrUnspecified("Component.inactiveErrorFocusColor"),
+        controlInactiveHaloWarning = retrieveColorOrUnspecified("Component.inactiveWarningFocusColor"),
+        controlHaloError = retrieveColorOrUnspecified("Component.errorFocusColor"),
+        controlHaloWarning = retrieveColorOrUnspecified("Component.warningFocusColor"),
         checkbox = IntelliJPalette.Checkbox(
-            background = retrieveColor("CheckBox.background"),
-            foreground = retrieveColor("CheckBox.foreground"),
-            foregroundDisabled = retrieveColor("CheckBox.disabledText")
+            background = retrieveColorOrUnspecified("CheckBox.background"),
+            foreground = retrieveColorOrUnspecified("CheckBox.foreground"),
+            foregroundDisabled = retrieveColorOrUnspecified("CheckBox.disabledText")
         ),
         radioButton = IntelliJPalette.RadioButton(
-            background = retrieveColor("RadioButton.background"),
-            foreground = retrieveColor("RadioButton.foreground"),
-            foregroundDisabled = retrieveColor("RadioButton.disabledText")
+            background = retrieveColorOrUnspecified("RadioButton.background"),
+            foreground = retrieveColorOrUnspecified("RadioButton.foreground"),
+            foregroundDisabled = retrieveColorOrUnspecified("RadioButton.disabledText")
         ),
         textField = textFieldPalette,
         separator = IntelliJPalette.Separator(
-            color = retrieveColor("Separator.foreground"),
-            background = retrieveColorOrNull("Separator.background") ?: Color.Gray
+            color = retrieveColorOrUnspecified("Separator.foreground"),
+            background = retrieveColorOrUnspecified("Separator.background")
         ),
         scrollbar = IntelliJPalette.Scrollbar(
-            thumbHoverColor = retrieveColor("ScrollBar.foreground"),
-            thumbIdleColor = retrieveColor("ScrollBar.thumbHighlight")
+            thumbHoverColor = retrieveColorOrUnspecified("ScrollBar.foreground"),
+            thumbIdleColor = retrieveColorOrUnspecified("ScrollBar.thumbHighlight")
         )
     )
 
