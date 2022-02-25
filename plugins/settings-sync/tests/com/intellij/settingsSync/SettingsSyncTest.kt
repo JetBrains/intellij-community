@@ -32,7 +32,7 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-private val TIMEOUT_UNIT = TimeUnit.MINUTES
+private val TIMEOUT_UNIT = TimeUnit.SECONDS
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncTest {
