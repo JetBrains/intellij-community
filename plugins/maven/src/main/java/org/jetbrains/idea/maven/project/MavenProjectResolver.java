@@ -94,7 +94,6 @@ public class MavenProjectResolver {
 
       MavenUtil.restartConfigHighlightning(project, mavenProjects);
     }
-    if (myTree != null) myTree.resolutionCompleted();
   }
 
 
@@ -155,6 +154,7 @@ public class MavenProjectResolver {
 
       MavenProjectChanges changes = mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
+      mavenProjectCandidate.getProblems(); // need for fill problem cache
       if (result.nativeMavenProject != null) {
         for (MavenImporter eachImporter : mavenProjectCandidate.getSuitableImporters()) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);

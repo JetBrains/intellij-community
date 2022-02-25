@@ -492,6 +492,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       @Override
       public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   @Nullable NativeMavenProjectHolder nativeMavenProject) {
+        forceUpdateSnapshots = false;
         if (nativeMavenProject != null) {
           if (shouldScheduleProject(projectWithChanges)) {
             scheduleForNextImport(projectWithChanges);
@@ -519,11 +520,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         if (shouldScheduleProject(projectWithChanges)) {
           scheduleForNextImport(projectWithChanges);
         }
-      }
-
-      @Override
-      public void resolutionCompleted() {
-        forceUpdateSnapshots = false;
       }
 
       private boolean shouldScheduleProject(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
