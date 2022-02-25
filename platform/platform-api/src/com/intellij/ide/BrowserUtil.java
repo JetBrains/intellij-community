@@ -84,14 +84,6 @@ public final class BrowserUtil {
   }
 
   public static boolean browseAbsolute(@NotNull Project project, @NotNull String url) {
-    return browseAbsoluteInner(project, url);
-  }
-
-  public static boolean browseAbsolute(@NotNull String url) {
-    return browseAbsoluteInner(null, url);
-  }
-
-  private static boolean browseAbsoluteInner(@Nullable Project project, @NotNull String url) {
     if (isAbsoluteURL(url)) {
       browse(url, project);
       return true;
