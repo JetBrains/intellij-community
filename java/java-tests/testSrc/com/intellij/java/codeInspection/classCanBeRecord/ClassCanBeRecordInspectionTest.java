@@ -17,14 +17,6 @@ public class ClassCanBeRecordInspectionTest extends LightQuickFixParameterizedTe
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void testBeforeClassContainsIgnoredAnnotation() {
-    doSingleTest("classContainsIgnoredAnnotation");
-  }
-
-  public void testBeforeClassContainsIgnoredAnnotationPackage() {
-    doSingleTest("classContainsIgnoredAnnotationPackage");
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/classCanBeRecord";
