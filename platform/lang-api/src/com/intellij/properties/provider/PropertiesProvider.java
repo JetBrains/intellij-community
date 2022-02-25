@@ -2,13 +2,13 @@
 package com.intellij.properties.provider;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.Nullable;
 
 public interface PropertiesProvider {
-  ExtensionPointName<PropertiesProvider>
-    EP_NAME = ExtensionPointName.create("com.intellij.properties.files.provider");
+  ExtensionPointName<PropertiesProvider> EP_NAME = ExtensionPointName.create("com.intellij.properties.files.provider");
 
-  boolean hasProperty(@NotNull Module classModule, @NotNull String propertyKey, @NotNull String propertyValue, @NotNull GlobalSearchScope scope);
+  @Nullable PsiElement hasProperty(@NotNull String propertyKey, @NotNull String propertyValue, @NotNull GlobalSearchScope scope);
 }
