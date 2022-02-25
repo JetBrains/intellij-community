@@ -95,7 +95,7 @@ data class ToolWindowDescriptor(
   var contentUiType: ToolWindowContentUiType = ToolWindowContentUiType.TABBED,
 
   val isActiveOnStart: Boolean = false,
-  val isVisible: Boolean = false,
+  var isVisible: Boolean = false,
   val isShowStripeButton: Boolean = true,
 
   var weight: Float = 0.33f,
