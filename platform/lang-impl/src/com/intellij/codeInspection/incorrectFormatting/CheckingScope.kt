@@ -175,15 +175,17 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
       )
     }
 
-  fun createProblemDescriptor(range: TextRange, message: String, vararg fixes: LocalQuickFix) =
-    manager.createProblemDescriptor(
-      file,
-      range,
+  fun createProblemDescriptor(range: TextRange, message: String, vararg fixes: LocalQuickFix): ProblemDescriptor {
+    val element = file.findElementAt(range.startOffset)
+    return manager.createProblemDescriptor(
+      element ?: file,
+      if (element == null) range else null,
       message,
       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
       isOnTheFly,
       *fixes
     )
+  }
 
 }
 
