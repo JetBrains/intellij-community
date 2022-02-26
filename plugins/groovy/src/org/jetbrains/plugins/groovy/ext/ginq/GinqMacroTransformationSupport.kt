@@ -53,7 +53,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       select
     ) = getParsedGinqTree(macroCall) ?: return emptyList()
     val keywords = listOfNotNull(from.fromKw, where?.whereKw, groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw,
-                                 select.selectKw) + join.map(GinqJoinExpression::joinKw)
+                                 select.selectKw) + join.map(GinqJoinExpression::joinKw) + join.mapNotNull { it.onCondition?.onKw }
     return keywords.mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.KEYWORD).create()
     }
@@ -74,10 +74,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       return null
     }
     val tree = getParsedGinqTree(macroCall) ?: return null
-    val fromBinding = tree.fromExpression.aliasExpression
-    if (element.referenceName == fromBinding.referenceName) {
-      return ElementResolveResult(fromBinding)
-    }
-    return null
+    val bindings  = tree.joinExpressions.map { it.aliasExpression } + listOf(tree.fromExpression.aliasExpression)
+    val binding = bindings.find { it.referenceName == element.referenceName }
+    return binding?.let(::ElementResolveResult)
   }
 }

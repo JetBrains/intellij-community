@@ -34,7 +34,7 @@ data class GinqExpression(
   val selectExpression: GinqSelectExpression,
 )
 
-sealed interface GinqQueryPart
+sealed interface GinqQueryFragment
 
 abstract class GinqDataSourceExpression(
   val aliasExpression: GrReferenceExpression,
@@ -45,43 +45,49 @@ class GinqFromExpression(
   val fromKw: PsiElement,
   aliasExpression: GrReferenceExpression,
   dataSourceExpression: GrExpression,
-) : GinqDataSourceExpression(aliasExpression, dataSourceExpression), GinqQueryPart
+) : GinqDataSourceExpression(aliasExpression, dataSourceExpression), GinqQueryFragment
 
 class GinqJoinExpression(
   val joinKw: PsiElement,
   aliasExpression: GrReferenceExpression,
   dataSourceExpression: GrExpression,
-) : GinqDataSourceExpression(aliasExpression, dataSourceExpression), GinqQueryPart
+  val onCondition: GinqOnExpression?,
+) : GinqDataSourceExpression(aliasExpression, dataSourceExpression), GinqQueryFragment
 
-abstract class GinqFilterExpression(val filterExpression: GrExpression) : GinqQueryPart
+abstract class GinqFilterExpression(val filterExpression: GrExpression) : GinqQueryFragment
+
+class GinqOnExpression(
+  val onKw: PsiElement,
+  filterExpression: GrExpression,
+) : GinqFilterExpression(filterExpression), GinqQueryFragment
 
 class GinqWhereExpression(
   val whereKw: PsiElement,
   filterExpression: GrExpression,
-) : GinqFilterExpression(filterExpression), GinqQueryPart
+) : GinqFilterExpression(filterExpression), GinqQueryFragment
 
 class GinqHavingExpression(
   val havingKw: PsiElement,
   filterExpression: GrExpression,
-) : GinqFilterExpression(filterExpression), GinqQueryPart
+) : GinqFilterExpression(filterExpression), GinqQueryFragment
 
 data class GinqGroupByExpression(
   val groupByKw: PsiElement,
   val classifier: GrExpression,
   val having: GinqHavingExpression,
-) : GinqQueryPart
+) : GinqQueryFragment
 
 data class GinqOrderByExpression(
   val orderByKw: PsiElement,
   val orders: GrExpression,
-) : GinqQueryPart
+) : GinqQueryFragment
 
 data class GinqLimitExpression(
   val limitKw: PsiElement,
   val offsetAndSize: GrExpression,
-) : GinqQueryPart
+) : GinqQueryFragment
 
 data class GinqSelectExpression(
   val selectKw: PsiElement,
   val projections: List<GrExpression>,
-) : GinqQueryPart
+) : GinqQueryFragment

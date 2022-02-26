@@ -22,3 +22,24 @@ fun isGinqAvailable(context: PsiElement): Boolean {
   return JavaPsiFacade.getInstance(context.project)
     .findClass(GROOVY_GINQ_TRANSFORM_GQ, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null
 }
+
+val joins : Set<String> = setOf(
+  "join",
+  "innerjoin",
+  "innerhashjoin",
+  "leftjoin",
+  "lefthashjoin",
+  "crossjoin",
+  "rightjoin",
+  "righthashjoin",
+  "fulljoin",
+  "fullhashjoin",
+)
+
+fun isJoin(callName: String) : Boolean = callName in joins
+
+fun foo(bool : Boolean) {
+  when(bool) {
+    in listOf(true, false) -> Unit
+  }
+}
