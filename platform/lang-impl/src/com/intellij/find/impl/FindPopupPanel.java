@@ -169,7 +169,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private AnAction myRegexAction;
   private AnAction myResetFiltersAction;
   private boolean mySuggestRegexHintForEmptyResults = true;
-  private JBSplitter myPreviewSplitter;
+  private OnePixelSplitter myPreviewSplitter;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
@@ -767,7 +767,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         return size;
       }
     };
-    scrollPane.setBorder(JBUI.Borders.empty());
     myPreviewSplitter.setFirstComponent(scrollPane);
     JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 0 0 0 0, fillx, hidemode 3, gap 0"));
     bottomPanel.add(myNewTabCheckbox = new JBCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView()));
@@ -806,7 +805,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     myIsPinned.set(UISettings.getInstance().getPinFindInPath());
 
-    JBInsets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
     if (ExperimentalUI.isNewUI()) {
       Color background = JBUI.CurrentTheme.Popup.BACKGROUND;
       header.panel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
@@ -822,12 +820,15 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       myScopeSelectionToolbar.getComponent().setOpaque(false);
       myScopeDetailsPanel.setOpaque(false);
       UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
-      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(10, 8, 6, 0));
+      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(10, 20, 6, 0));
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
       scopesPanel.setBorder(JBUI.Borders.empty(4, 20));
       myScopeSelectionToolbar.setBorder(JBUI.Borders.empty());
-      myPreviewSplitter.setBorder(JBUI.Borders.empty(0, textFieldBorderInsets.getUnscaled().left, 0, textFieldBorderInsets.getUnscaled().right));
+
+      Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled();
+      myPreviewSplitter.setBlindZone(() -> JBUI.insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
+      scrollPane.setBorder(JBUI.Borders.empty(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
       bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
     } else {
       header.panel.setBorder(JBUI.Borders.empty(2, 5));
@@ -839,6 +840,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         JBUI.Borders.empty(1, 0, 2, 0)));
       scopesPanel.setBorder(JBUI.Borders.empty(3, 5));
       myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
+      scrollPane.setBorder(JBUI.Borders.empty());
       bottomPanel.setBorder(JBUI.Borders.empty(5));
     }
     add(header.panel, "growx, pushx, wrap");
@@ -846,8 +848,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     add(mySearchTextArea, "pushx, growx, wrap");
     add(myReplaceTextArea, "pushx, growx, wrap");
     add(scopesPanel, "pushx, growx, ax left, wrap");
-    add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap" +
-                           (ExperimentalUI.isNewUI() ? ", gap " + textFieldBorderInsets.left + " " + textFieldBorderInsets.right + " 0 0" : ""));
+    add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap");
     add(bottomPanel, "pushx, growx, dock south");
 
     List<Component> focusOrder = new ArrayList<>();
