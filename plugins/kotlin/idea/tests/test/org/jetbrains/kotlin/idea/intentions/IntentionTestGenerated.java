@@ -9423,6 +9423,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertTryFinallyToUseCall/notClose.kt");
         }
 
+        @TestMetadata("notCloseableClose.kt")
+        public void testNotCloseableClose() throws Exception {
+            runTest("testData/intentions/convertTryFinallyToUseCall/notCloseableClose.kt");
+        }
+
         @TestMetadata("notOnlyClose.kt")
         public void testNotOnlyClose() throws Exception {
             runTest("testData/intentions/convertTryFinallyToUseCall/notOnlyClose.kt");
