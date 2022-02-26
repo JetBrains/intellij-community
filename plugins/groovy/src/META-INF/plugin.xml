@@ -187,6 +187,8 @@
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedVariantTransformationSupport"/>
 
+    <macroTransformationSupport implementation="org.jetbrains.plugins.groovy.ext.ginq.GinqMacroTransformationSupport"/>
+
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
                       namedArgsProvider="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider"/>
 
