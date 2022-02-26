@@ -35,11 +35,3 @@ val joins : Set<String> = setOf(
   "fulljoin",
   "fullhashjoin",
 )
-
-fun isJoin(callName: String) : Boolean = callName in joins
-
-fun foo(bool : Boolean) {
-  when(bool) {
-    in listOf(true, false) -> Unit
-  }
-}

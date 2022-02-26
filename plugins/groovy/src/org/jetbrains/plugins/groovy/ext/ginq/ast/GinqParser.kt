@@ -25,19 +25,22 @@ private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpres
   if (container.size < 2) {
     return null
   }
-  val from = container[0] as? GinqFromExpression ?: return null
-  val allowed = listOf(GinqJoinExpression::class.java, GinqWhereExpression::class.java)
-  val joins: MutableList<GinqJoinExpression> = mutableListOf()
+  val from = container[0] as? GinqFromFragment ?: return null
+  val allowed = listOf(GinqJoinFragment::class.java, GinqWhereFragment::class.java, GinqGroupByFragment::class.java)
+  val joins: MutableList<GinqJoinFragment> = mutableListOf()
+  var where: GinqWhereFragment? = null
   var index = 1
+  var allowedIndex = 0
   while (index < container.lastIndex) {
     val currentFragment = container[index]
     when (currentFragment) {
-      is GinqJoinExpression -> joins.add(container[index] as GinqJoinExpression)
+      is GinqJoinFragment -> joins.add(container[index] as GinqJoinFragment)
+      is GinqWhereFragment -> where = currentFragment
     }
     index += 1
   }
-  val select = container[index] as? GinqSelectExpression ?: return null
-  return GinqExpression(from, joins, null, null, null, null, select)
+  val select = container[index] as? GinqSelectFragment ?: return null
+  return GinqExpression(from, joins, where, null, null, null, select)
 }
 
 /**
@@ -54,6 +57,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       recordError(methodCall.invokedExpression, "Expected method call")
       return
     }
+    val callKw = methodCall.refCallIdentifier()
     when (callName) {
       "from", in joins -> {
         val argument = methodCall.getSingleArgument<GrBinaryExpression>()?.takeIf { it.operationTokenType == KW_IN }
@@ -73,25 +77,29 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           return
         }
         val expr = if (callName == "from") {
-          GinqFromExpression(methodCall.invokedExpression, alias, dataSource)
+          GinqFromFragment(callKw, alias, dataSource)
         } else {
-          GinqJoinExpression(methodCall.invokedExpression, alias, dataSource, null)
+          GinqJoinFragment(callKw, alias, dataSource, null)
         }
         container.add(expr)
       }
-      "on" -> {
+      "on", "where" -> {
         val argument = methodCall.getSingleArgument<GrExpression>()
         if (argument == null) {
           recordError(methodCall, "Expected a list of conditions")
           return
         }
-        val last = container.lastOrNull()
-        if (last is GinqJoinExpression && last.onCondition == null) {
-          val newJoin = GinqJoinExpression(last.joinKw, last.aliasExpression, last.dataSourceExpression, GinqOnExpression(methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement ?: methodCall.invokedExpression, argument))
-          container.removeLast()
-          container.add(newJoin)
-        } else {
-          recordError(methodCall, "`on` is expected after `join`")
+        if (callName == "on") {
+          val last = container.lastOrNull()
+          if (last is GinqJoinFragment && last.onCondition == null) {
+            val newJoin = GinqJoinFragment(last.joinKw, last.alias, last.dataSource, GinqOnFragment(callKw, argument))
+            container.removeLast()
+            container.add(newJoin)
+          } else {
+            recordError(methodCall, "`on` is expected after `join`")
+          }
+        } else if (callName == "where") {
+          container.add(GinqWhereFragment(callKw, argument))
         }
       }
       "select" -> {
@@ -100,7 +108,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           recordError(methodCall, "Expected a list of projections")
           return
         }
-        container.add(GinqSelectExpression(methodCall.invokedExpression, arguments))
+        container.add(GinqSelectFragment(callKw, arguments))
       }
       else -> recordError(methodCall, "Unrecognized query")
     }
@@ -116,3 +124,4 @@ private inline fun <reified T : GrExpression> GrMethodCall.getSingleArgument(): 
 private inline fun <reified T : GrExpression> GrMethodCall.getExpressionArguments(): List<T>? =
   this.getArguments()?.filterIsInstance<ExpressionArgument>()?.map { it.expression }?.filterIsInstance<T>()?.takeIf { it.size == getArguments()?.size }
 
+private fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement ?: invokedExpression

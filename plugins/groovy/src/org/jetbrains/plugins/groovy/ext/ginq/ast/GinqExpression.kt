@@ -9,85 +9,96 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  *
  * Represents GINQ expression, which has the following structure:
  * ```
- *     ginq
+ *     GQ, i.e. abbreviation for GINQ
  *     |__ from
- *     |__ [innerjoin/leftjoin/rightjoin/fulljoin/crossjoin]*
- *     |   |__ on
+ *     |   |__ <data_source_alias> in <data_source>
+ *     |__ [join/innerjoin/leftjoin/rightjoin/fulljoin/crossjoin]*
+ *     |   |__ <data_source_alias> in <data_source>
+ *     |   |__ on <condition> ((&& | ||) <condition>)* (NOTE: `crossjoin` does not need `on` clause)
  *     |__ [where]
+ *     |   |__ <condition> ((&& | ||) <condition>)*
  *     |__ [groupby]
+ *     |   |__ <expression> [as <alias>] (, <expression> [as <alias>])*
  *     |   |__ [having]
+ *     |       |__ <condition> ((&& | ||) <condition>)*
  *     |__ [orderby]
+ *     |   |__ <expression> [in (asc|desc)] (, <expression> [in (asc|desc)])*
  *     |__ [limit]
+ *     |   |__ [<offset>,] <size>
  *     |__ select
+ *     |__ <expression> [as <alias>] (, <expression> [as <alias>])*
  * ```
- * (**Note:** [ ] means optional)
+ * (**Note:** [] means the related clause is optional,
+ * `*` means zero or more times, and + means one or more times.
+ * Also, the clauses of GINQ are order sensitive,
+ * so the order of clauses should be kept as the above structure)
  *
  * (**See:** org.apache.groovy.ginq.dsl.expression.GinqExpression)
  */
 data class GinqExpression(
-  val fromExpression: GinqFromExpression,
-  val joinExpressions: List<GinqJoinExpression>,
-  val whereExpression: GinqWhereExpression?,
-  val groupByExpression: GinqGroupByExpression?,
-  val orderByExpression: GinqOrderByExpression?,
-  val limitExpression: GinqLimitExpression?,
-  val selectExpression: GinqSelectExpression,
+  val from: GinqFromFragment,
+  val join: List<GinqJoinFragment>,
+  val where: GinqWhereFragment?,
+  val groupBy: GinqGroupByFragment?,
+  val orderBy: GinqOrderByFragment?,
+  val limit: GinqLimitFragment?,
+  val select: GinqSelectFragment,
 )
 
 sealed interface GinqQueryFragment
 
-abstract class GinqDataSourceExpression(
-  val aliasExpression: GrReferenceExpression,
-  val dataSourceExpression: GrExpression,
+abstract class GinqDataSourceFragment(
+  val alias: GrReferenceExpression,
+  val dataSource: GrExpression,
 )
 
-class GinqFromExpression(
+class GinqFromFragment(
   val fromKw: PsiElement,
-  aliasExpression: GrReferenceExpression,
-  dataSourceExpression: GrExpression,
-) : GinqDataSourceExpression(aliasExpression, dataSourceExpression), GinqQueryFragment
+  alias: GrReferenceExpression,
+  dataSource: GrExpression,
+) : GinqDataSourceFragment(alias, dataSource), GinqQueryFragment
 
-class GinqJoinExpression(
+class GinqJoinFragment(
   val joinKw: PsiElement,
   aliasExpression: GrReferenceExpression,
   dataSourceExpression: GrExpression,
-  val onCondition: GinqOnExpression?,
-) : GinqDataSourceExpression(aliasExpression, dataSourceExpression), GinqQueryFragment
+  val onCondition: GinqOnFragment?,
+) : GinqDataSourceFragment(aliasExpression, dataSourceExpression), GinqQueryFragment
 
-abstract class GinqFilterExpression(val filterExpression: GrExpression) : GinqQueryFragment
+abstract class GinqFilterFragment(val filter: GrExpression) : GinqQueryFragment
 
-class GinqOnExpression(
+class GinqOnFragment(
   val onKw: PsiElement,
   filterExpression: GrExpression,
-) : GinqFilterExpression(filterExpression), GinqQueryFragment
+) : GinqFilterFragment(filterExpression), GinqQueryFragment
 
-class GinqWhereExpression(
+class GinqWhereFragment(
   val whereKw: PsiElement,
   filterExpression: GrExpression,
-) : GinqFilterExpression(filterExpression), GinqQueryFragment
+) : GinqFilterFragment(filterExpression), GinqQueryFragment
 
-class GinqHavingExpression(
+class GinqHavingFragment(
   val havingKw: PsiElement,
   filterExpression: GrExpression,
-) : GinqFilterExpression(filterExpression), GinqQueryFragment
+) : GinqFilterFragment(filterExpression), GinqQueryFragment
 
-data class GinqGroupByExpression(
+data class GinqGroupByFragment(
   val groupByKw: PsiElement,
   val classifier: GrExpression,
-  val having: GinqHavingExpression,
+  val having: GinqHavingFragment,
 ) : GinqQueryFragment
 
-data class GinqOrderByExpression(
+data class GinqOrderByFragment(
   val orderByKw: PsiElement,
   val orders: GrExpression,
 ) : GinqQueryFragment
 
-data class GinqLimitExpression(
+data class GinqLimitFragment(
   val limitKw: PsiElement,
   val offsetAndSize: GrExpression,
 ) : GinqQueryFragment
 
-data class GinqSelectExpression(
+data class GinqSelectFragment(
   val selectKw: PsiElement,
   val projections: List<GrExpression>,
 ) : GinqQueryFragment

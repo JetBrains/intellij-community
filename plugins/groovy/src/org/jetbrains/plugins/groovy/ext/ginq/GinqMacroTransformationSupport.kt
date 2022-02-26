@@ -10,7 +10,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
-import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqJoinExpression
+import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqJoinFragment
 import org.jetbrains.plugins.groovy.ext.ginq.ast.parseGinqBody
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -53,7 +53,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       select
     ) = getParsedGinqTree(macroCall) ?: return emptyList()
     val keywords = listOfNotNull(from.fromKw, where?.whereKw, groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw,
-                                 select.selectKw) + join.map(GinqJoinExpression::joinKw) + join.mapNotNull { it.onCondition?.onKw }
+                                 select.selectKw) + join.map(GinqJoinFragment::joinKw) + join.mapNotNull { it.onCondition?.onKw }
     return keywords.mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.KEYWORD).create()
     }
@@ -62,7 +62,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   override fun processResolve(scope: PsiElement, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
     val name = ResolveUtil.getNameHint(processor) ?: return true
     val tree = scope.parent?.parent?.castSafelyTo<GrCall>()?.let(this::getParsedGinqTree) ?: return true
-    val fromBinding = tree.fromExpression.aliasExpression
+    val fromBinding = tree.from.alias
     if (name == fromBinding.referenceName) {
       return processor.execute(fromBinding, state)
     }
@@ -74,7 +74,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       return null
     }
     val tree = getParsedGinqTree(macroCall) ?: return null
-    val bindings  = tree.joinExpressions.map { it.aliasExpression } + listOf(tree.fromExpression.aliasExpression)
+    val bindings  = tree.join.map { it.alias } + listOf(tree.from.alias)
     val binding = bindings.find { it.referenceName == element.referenceName }
     return binding?.let(::ElementResolveResult)
   }
