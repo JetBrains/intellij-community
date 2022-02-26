@@ -3,8 +3,13 @@ package org.jetbrains.plugins.groovy.transformations.macro
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveState
+import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 
 
 /**
@@ -15,16 +20,26 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
  *
  * **See:** [Groovy macros](https://groovy-lang.org/metaprogramming.html#_macros)
  */
-internal interface GroovyMacroTransformationSupport {
+interface GroovyMacroTransformationSupport {
 
   /**
-   * It is guaranteed that [macroCall] is a call to Groovy macros.
+   * Determines if this class should handle [macroCall]
+   *
+   * It is guaranteed that [macroCall] is a call to a Groovy macro.
+   *
+   * This method should avoid the invocation of heavyweight recursion-dependent services, such as reference resolve or type inference.
+   * Note, that groovy macros always win overload resolution, so if something walks like a macro, quacks like a macro,
+   * then it is likely a macro.
    */
-  fun isApplicable(macroCall: GrCall): Boolean
+  fun isApplicable(macroCall: GrMethodCall): Boolean
 
-  fun getHighlighing(macroCall: GrCall) : List<HighlightInfo> = emptyList()
+  fun computeHighlighing(macroCall: GrCall) : List<HighlightInfo> = emptyList()
 
-  fun getType(macroCall: GrCall) : PsiType = PsiType.NULL
+  fun computeType(macroCall: GrCall) : PsiType = PsiType.NULL
 
-  fun getCompletionVariants(macroCall: GrCall, offset: Int) : List<LookupElement> = emptyList()
+  fun computeCompletionVariants(macroCall: GrCall, offset: Int) : List<LookupElement> = emptyList()
+
+  fun processResolve(scope: PsiElement, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean = true
+
+  fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? = null
 }

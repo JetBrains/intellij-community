@@ -3,12 +3,14 @@ package org.jetbrains.plugins.groovy.transformations.macro
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import com.intellij.psi.util.parentsOfType
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil
 
-internal fun getAvailableMacroSupport(call: GrCall): GroovyMacroTransformationSupport? {
+internal fun getAvailableMacroSupport(call: GrMethodCall): GroovyMacroTransformationSupport? {
   if (!GdkMethodUtil.isMacro(call.resolveMethod())) {
     return null
   }
@@ -20,11 +22,16 @@ internal fun getAvailableMacroSupport(call: GrCall): GroovyMacroTransformationSu
 private val EP_NAME: ExtensionPointName<GroovyMacroTransformationSupport>
 = ExtensionPointName.create("org.intellij.groovy.macroTransformationSupport")
 
-private fun doGetAvailableMacros(call: GrCall): GroovyMacroTransformationSupport? {
+private fun doGetAvailableMacros(call: GrMethodCall): GroovyMacroTransformationSupport? {
   val available = EP_NAME.extensionList.filter { it.isApplicable(call) }
   if (available.size > 1) {
     logger<GroovyMacroTransformationSupport>().error(
       "Multiple handler for the macro ${call.resolveMethod()?.name}: ${available.joinToString { it.javaClass.name }}")
   }
   return available.singleOrNull()
+}
+
+internal fun getMacroHandler(scope: PsiElement) : Pair<GrMethodCall, GroovyMacroTransformationSupport>? {
+  // todo: DEFINITELY GET RID OF RESOLVE
+  return scope.parentsOfType<GrMethodCall>().mapNotNull { getAvailableMacroSupport(it)?.let(it::to) }.firstOrNull()
 }
