@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
-import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.references.canBeResolvedViaImport
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -283,8 +282,8 @@ class CodeToInlineBuilder(
     }
 
     private fun processReferences(codeToInline: MutableCodeToInline, analyze: (KtExpression) -> BindingContext, reformat: Boolean) {
-        val targetDispatchReceiverType = targetCallable.dispatchReceiverParameter?.value?.type
-        val targetExtensionReceiverType = targetCallable.extensionReceiverParameter?.value?.type
+        val targetDispatchReceiverType = targetCallable.dispatchReceiverParameter?.value?.type?.unCapture()
+        val targetExtensionReceiverType = targetCallable.extensionReceiverParameter?.value?.type?.unCapture()
         val isAnonymousFunction = originalDeclaration?.isAnonymousFunction == true
         val isAnonymousFunctionWithReceiver = isAnonymousFunction &&
                 originalDeclaration.cast<KtNamedFunction>().receiverTypeReference != null
@@ -359,9 +358,10 @@ class CodeToInlineBuilder(
                         val resolutionScope = expression.getResolutionScope(bindingContext, resolutionFacade)
                         val receiverExpressionToInline = receiver.asExpression(resolutionScope, psiFactory)
                         val receiverType = receiver.type.unCapture()
-                        val receiverIsUnnecessary = (receiverExpressionToInline as? KtThisExpression)?.labelQualifier != null &&
-                                receiverType == targetCallable.receiverType()
-                        if (receiverExpressionToInline != null && !receiverIsUnnecessary) {
+                        val isSameReceiverType = receiverType == targetDispatchReceiverType || receiverType == targetExtensionReceiverType
+                        val receiverIsUnnecessary =
+                            (receiverExpressionToInline as? KtThisExpression)?.labelQualifier != null && isSameReceiverType
+                       if (receiverExpressionToInline != null && !receiverIsUnnecessary) {
                             codeToInline.addPreCommitAction(expressionToResolve) { expr ->
                                 val expressionToReplace = expr.parent as? KtCallExpression ?: expr
                                 val replaced = codeToInline.replaceExpression(
@@ -375,7 +375,7 @@ class CodeToInlineBuilder(
                                 val thisExpression = replaced?.receiverExpression ?: return@addPreCommitAction
                                 if (isAnonymousFunctionWithReceiver && receiverType == targetExtensionReceiverType) {
                                     thisExpression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, getFirstParameterName())
-                                } else if (receiverType != targetDispatchReceiverType && receiverType != targetExtensionReceiverType) {
+                                } else if (!isSameReceiverType) {
                                     thisExpression.putCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY, Unit)
                                 }
                             }
