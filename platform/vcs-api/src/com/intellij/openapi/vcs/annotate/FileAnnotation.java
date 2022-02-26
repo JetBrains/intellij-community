@@ -282,7 +282,7 @@ public abstract class FileAnnotation {
   }
 
   public interface RevisionChangesProvider {
-    @Nullable
+    @NotNull
     Pair<? extends CommittedChangeList, FilePath> getChangesIn(int lineNumber) throws VcsException;
   }
 
@@ -390,10 +390,14 @@ public abstract class FileAnnotation {
 
     return (lineNumber) -> {
       VcsRevisionNumber revisionNumber = annotation.getLineRevisionNumber(lineNumber);
-      if (revisionNumber == null) return null;
+      if (revisionNumber == null) {
+        throw new IllegalArgumentException(VcsBundle.message("error.annotated.line.out.of.bounds", lineNumber, annotation.getLineCount()));
+      }
 
       Pair<? extends CommittedChangeList, FilePath> pair = changesProvider.getOneList(file, revisionNumber);
-      if (pair == null || pair.getFirst() == null) return null;
+      if (pair == null || pair.getFirst() == null) {
+        throw new VcsException(VcsBundle.message("error.cant.load.affected.files", file.getPath(), revisionNumber.asString()));
+      }
       if (pair.getSecond() == null) return Pair.create(pair.getFirst(), VcsUtil.getFilePath(file));
 
       return pair;

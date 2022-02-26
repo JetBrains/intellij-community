@@ -28,15 +28,11 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
-import git4idea.GitFileRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.log.GitCommitTooltipLinkHandler;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nls;
@@ -532,12 +528,13 @@ public final class GitFileAnnotation extends FileAnnotation {
 
   private class GitRevisionChangesProvider implements RevisionChangesProvider {
     @Override
-    public @Nullable Pair<? extends CommittedChangeList, FilePath> getChangesIn(int lineNumber) throws VcsException {
+    public @NotNull Pair<? extends CommittedChangeList, FilePath> getChangesIn(int lineNumber) throws VcsException {
       LineInfo lineInfo = getLineInfo(lineNumber);
-      if (lineInfo == null) return null;
+      if (lineInfo == null) {
+        throw new IllegalArgumentException(VcsBundle.message("error.annotated.line.out.of.bounds", lineNumber, getLineCount()));
+      }
 
-      GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(lineInfo.getFilePath());
-      if (repository == null) return null;
+      GitRepository repository = GitUtil.getRepositoryForFile(myProject, lineInfo.getFilePath());
 
       // Do not use CommittedChangesProvider#getOneList to avoid unnecessary rename detections (as we know FilePath already).
       GitCommittedChangeList changeList =
