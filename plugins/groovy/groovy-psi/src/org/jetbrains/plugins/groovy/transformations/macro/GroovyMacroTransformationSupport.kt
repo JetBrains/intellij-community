@@ -39,7 +39,13 @@ interface GroovyMacroTransformationSupport {
 
   fun computeCompletionVariants(macroCall: GrCall, offset: Int) : List<LookupElement> = emptyList()
 
+  /**
+   * Runs during the process of heavyweight resolve
+   */
   fun processResolve(scope: PsiElement, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean = true
 
+  /**
+   * Used to mimic a synthetic "variable declaration"
+   */
   fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? = null
 }

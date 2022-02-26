@@ -31,7 +31,7 @@ private fun doGetAvailableMacros(call: GrMethodCall): GroovyMacroTransformationS
   return available.singleOrNull()
 }
 
-internal fun getMacroHandler(scope: PsiElement) : Pair<GrMethodCall, GroovyMacroTransformationSupport>? {
+fun getMacroHandler(scope: PsiElement) : Pair<GrMethodCall, GroovyMacroTransformationSupport>? {
   // todo: DEFINITELY GET RID OF RESOLVE
   return scope.parentsOfType<GrMethodCall>().mapNotNull { getAvailableMacroSupport(it)?.let(it::to) }.firstOrNull()
 }
