@@ -23,6 +23,11 @@ public class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractGenera
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("abstractSuper.kt")
+    public void testAbstractSuper() throws Exception {
+        runTest("testData/codeInsight/generate/equalsWithHashCode/abstractSuper.kt");
+    }
+
     @TestMetadata("annotation.kt")
     public void testAnnotation() throws Exception {
         runTest("testData/codeInsight/generate/equalsWithHashCode/annotation.kt");
