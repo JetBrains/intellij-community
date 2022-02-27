@@ -25,6 +25,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,6 +35,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -72,6 +74,7 @@ import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.animation.AlphaAnimationContext;
@@ -83,7 +86,6 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,7 +190,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
     if (isShowing()) repaint();
   });
-  @NotNull private final List<GutterEventListener> myGutterEventListeners = new ArrayList<>();
+  @NotNull private final EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -1387,25 +1389,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public void addGutterEventListener(@NotNull GutterEventListener listener) {
-    myGutterEventListeners.add(listener);
-  }
-
-  @Override
-  public void removeGutterEventListener(@NotNull GutterEventListener listener) {
-    myGutterEventListeners.remove(listener);
+  public void addEditorGutterListener(@NotNull EditorGutterListener listener, @NotNull Disposable parentDisposable) {
+    myEditorGutterListeners.addListener(listener, parentDisposable);
   }
 
   private void fireTextAnnotationGutterProviderAdded(@NotNull TextAnnotationGutterProvider provider) {
-    for (GutterEventListener listener : myGutterEventListeners) {
-      listener.onTextAnnotationGutterProviderAdded(provider);
-    }
+    myEditorGutterListeners.getMulticaster().onTextAnnotationAdded(provider);
   }
 
   private void fireTextAnnotationGutterProviderRemoved(@NotNull TextAnnotationGutterProvider provider) {
-    for (GutterEventListener listener : myGutterEventListeners) {
-      listener.onTextAnnotationGutterProviderRemoved(provider);
-    }
+    myEditorGutterListeners.getMulticaster().onTextAnnotationRemoved(provider);
   }
 
   @Override
@@ -2383,13 +2376,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public @NotNull List<AnAction> getTextAnnotationPopupActions(int logicalLineAtCursor) {
+  public @NotNull List<AnAction> getTextAnnotationPopupActions(int logicalLine) {
     final List<AnAction> addActions = new ArrayList<>();
     if (myCanCloseAnnotations) addActions.add(new CloseAnnotationsAction());
     //if (line >= myEditor.getDocument().getLineCount()) return;
 
     for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-      final List<AnAction> list = gutterProvider.getPopupActions(logicalLineAtCursor, myEditor);
+      final List<AnAction> list = gutterProvider.getPopupActions(logicalLine, myEditor);
       if (list != null) {
         for (AnAction action : list) {
           if (!addActions.contains(action)) {
