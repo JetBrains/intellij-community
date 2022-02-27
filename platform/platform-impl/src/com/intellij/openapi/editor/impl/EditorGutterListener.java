@@ -4,9 +4,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import org.jetbrains.annotations.NotNull;
 
-public interface GutterEventListener {
+import java.util.EventListener;
 
-  void onTextAnnotationGutterProviderAdded(@NotNull TextAnnotationGutterProvider provider);
+public interface EditorGutterListener extends EventListener {
 
-  void onTextAnnotationGutterProviderRemoved(@NotNull TextAnnotationGutterProvider provider);
+  void onTextAnnotationAdded(@NotNull TextAnnotationGutterProvider provider);
+
+  void onTextAnnotationRemoved(@NotNull TextAnnotationGutterProvider provider);
 }
