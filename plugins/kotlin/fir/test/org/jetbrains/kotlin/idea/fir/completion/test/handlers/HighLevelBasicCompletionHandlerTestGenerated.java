@@ -1045,6 +1045,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../completion/tests/testData/handlers/basic/KT36306.kt");
         }
 
+        @TestMetadata("LocalClassNameWithPackageLevelConflict.kt")
+        public void testLocalClassNameWithPackageLevelConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/LocalClassNameWithPackageLevelConflict.kt");
+        }
+
         @TestMetadata("LocalFunction.kt")
         public void testLocalFunction() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/LocalFunction.kt");
@@ -1053,6 +1058,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
         public void testNestedClassNameWithFileLevelConflict() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/NestedClassNameWithFileLevelConflict.kt");
+        }
+
+        @TestMetadata("NestedClassNameWithPackageLevelConflict.kt")
+        public void testNestedClassNameWithPackageLevelConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/NestedClassNameWithPackageLevelConflict.kt");
         }
 
         @TestMetadata("NestedTypeArg.kt")
