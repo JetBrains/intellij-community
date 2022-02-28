@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.OpenedPackages
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
 import org.jetbrains.intellij.build.io.ZipKt
@@ -179,6 +180,9 @@ final class BuildHelper {
                       Iterable<String> classPath,
                       long timeoutMillis = DEFAULT_TIMEOUT,
                       Path workingDir = null) {
+    if (context.options.bundledRuntimeVersion >= 17) {
+      jvmArgs = OpenedPackages.getCommandLineArguments(context) + jvmArgs
+    }
     ProcessKt.runJava(mainClass, args, jvmArgs, classPath, context.messages, timeoutMillis,
                                                            workingDir)
   }
