@@ -4,8 +4,5 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.asJava.KotlinAsJavaSupport"
                     serviceImplementation="org.jetbrains.kotlin.light.classes.symbol.IDEKotlinAsJavaFirSupport"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.asJava.LightClassGenerationSupport"
-                    serviceImplementation="org.jetbrains.kotlin.idea.asJava.FirLightClassGenerationSupport"/>
   </extensions>
 </idea-plugin>
