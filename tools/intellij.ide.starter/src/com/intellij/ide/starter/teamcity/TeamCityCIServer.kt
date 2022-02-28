@@ -32,12 +32,12 @@ object TeamCityCIServer : CIServer {
 
     val generifiedTestName = generifyErrorMessage(testName)
 
-    logOutput(String.format("##teamcity[testStarted name='%s' flowId='%s']", generifiedTestName, flowId))
+    logOutput(String.format("##teamcity[testStarted name='%s' flowId='%s']", generifiedTestName.processStringForTC(), flowId))
     logOutput(String.format(
       "##teamcity[testFailed name='%s' message='%s' details='%s' flowId='%s']",
-      generifiedTestName, message.processStringForTC(), details.processStringForTC(), flowId
+      generifiedTestName.processStringForTC(), message.processStringForTC(), details.processStringForTC(), flowId
     ))
-    logOutput(String.format("##teamcity[testFinished name='%s' flowId='%s']", generifiedTestName, flowId))
+    logOutput(String.format("##teamcity[testFinished name='%s' flowId='%s']", generifiedTestName.processStringForTC(), flowId))
   }
 
   fun getExistingParameter(name: String): String {
