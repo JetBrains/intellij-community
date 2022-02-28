@@ -716,6 +716,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     @Override
+    public void clearSelection() {
+      super.clearSelection();
+      setAnchorSelectionIndex(-1);
+      setLeadSelectionIndex(-1);
+    }
+
+    @Override
     public void setSelectionInterval(int index0, int index1) {
       if (getSelectionMode() == SINGLE_SELECTION) {
         int index = findSelectableIndex(index0, getLeadSelectionIndex());
