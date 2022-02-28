@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
@@ -356,7 +357,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       return null
     }
 
-    if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())) {
+    if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) ||
+      project.isLoadedFromCacheButHasNoModules()) {
       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project,
                                                                                  options.isProjectCreatedWithWizard)
       options.preparedToOpen?.invoke(module)
