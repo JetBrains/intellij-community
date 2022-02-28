@@ -2,7 +2,7 @@ package com.siyeh.igtest.junit;
 
 import junit.framework.TestCase;
 
-public class <warning descr="Test case 'UnconstructableTestCase1' is not constructable by most test runners">UnconstructableTestCase1</warning> extends TestCase
+public class <warning descr="Test class 'UnconstructableTestCase1' is not constructable because does not have a 'public' no-arg constructor">UnconstructableTestCase1</warning> extends TestCase
 {
     private UnconstructableTestCase1()
     {
