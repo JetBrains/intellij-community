@@ -18,8 +18,8 @@ public class TextFieldWithAutoCompletionWithBrowseButton
     super(TextFieldWithAutoCompletion.create(project, Collections.emptyList(), false, null), null);
   }
 
-  public TextFieldWithAutoCompletionWithBrowseButton(Project project, TextCompletionCache<String> cache, boolean prefixMatchesOnly) {
-    super(TextFieldWithAutoCompletionWithCache.create(cache, prefixMatchesOnly, project, null, false, null), null);
+  public TextFieldWithAutoCompletionWithBrowseButton(Project project, TextCompletionCache<String> cache, boolean prefixMatchesOnly, boolean showBottomPanel) {
+    super(TextFieldWithAutoCompletionWithCache.create(cache, prefixMatchesOnly, project, null, false, null, showBottomPanel), null);
   }
 
   @Override
