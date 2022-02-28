@@ -360,4 +360,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
   }
+  public void testConstructorMethodReferenceNullability() { doTest(); }
 }
