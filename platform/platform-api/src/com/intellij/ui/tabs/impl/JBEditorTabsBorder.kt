@@ -124,6 +124,6 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
   }
 
   companion object {
-    fun hasAnimation() = ExperimentalUI.isNewUI() || Registry.`is`("ide.editor.tab.selection.animation", false)
+    fun hasAnimation() = Registry.`is`("ide.editor.tab.selection.animation", false)
   }
 }
