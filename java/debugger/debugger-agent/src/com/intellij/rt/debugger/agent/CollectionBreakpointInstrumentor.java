@@ -28,7 +28,7 @@ public class CollectionBreakpointInstrumentor {
   private static final String ON_CAPTURE_END_METHOD_NAME = "onCaptureEnd";
   private static final String ON_CAPTURE_END_METHOD_DESC = "(Ljava/lang/Object;)V";
   private static final String CAPTURE_COLLECTION_COPY_METHOD_NAME = "captureCollectionCopy";
-  private static final String CAPTURE_COLLECTION_COPY_METHOD_DESC = "(ZLjava/lang/Object;)Lcom/intellij/rt/debugger/agent/CollectionBreakpointInstrumentor$Multiset;";
+  private static final String CAPTURE_COLLECTION_COPY_METHOD_DESC = "(ZLjava/lang/Object;)" + MULTISET_TYPE;
   private static final String CONSTRUCTOR_METHOD_NAME = "<init>";
   private static final String COLLECTION_INTERFACE_NAME = "java.util.Collection";
   private static final String MAP_INTERFACE_NAME = "java.util.Map";
@@ -96,7 +96,7 @@ public class CollectionBreakpointInstrumentor {
   @SuppressWarnings("unused")
   public static void captureCollectionModification(Multiset oldElements, Object newCollection) {
     try {
-      CollectionInstanceState state = myInstanceFilters.get(newCollection);
+      CollectionInstanceLock state = myInstanceFilters.get(newCollection);
       if (oldElements == null || state == null) {
         return;
       }
@@ -113,9 +113,9 @@ public class CollectionBreakpointInstrumentor {
   @SuppressWarnings("unused")
   public static boolean onCaptureStart(Object collectionObj) {
     try {
-      CollectionInstanceState state = myInstanceFilters.get(collectionObj);
+      CollectionInstanceLock state = myInstanceFilters.get(collectionObj);
       if (state != null && !state.isBlocked()) {
-        state.block();
+        state.lock();
         return true;
       }
       return false;
@@ -129,7 +129,7 @@ public class CollectionBreakpointInstrumentor {
   @SuppressWarnings("unused")
   public static void onCaptureEnd(Object collectionObj) {
     try {
-      CollectionInstanceState state = myInstanceFilters.get(collectionObj);
+      CollectionInstanceLock state = myInstanceFilters.get(collectionObj);
       if (state != null) {
         state.unlock();
       }
@@ -171,8 +171,8 @@ public class CollectionBreakpointInstrumentor {
       Integer newNumber = entry.getValue();
       Integer oldNumber = oldElements.get(entry.getKey());
       Object element = entry.getKey();
-      if (element instanceof Element) {
-        element = ((Element)element).getValue();
+      if (element instanceof Wrapper) {
+        element = ((Wrapper)element).getValue();
       }
       if (!newNumber.equals(oldNumber)) {
         boolean isAddition = oldNumber == null || newNumber > oldNumber;
@@ -183,8 +183,8 @@ public class CollectionBreakpointInstrumentor {
     for (Map.Entry<Object, Integer> entry : oldElements.entrySet()) {
       Integer newNumber = newElements.get(entry.getKey());
       Object element = entry.getKey();
-      if (element instanceof Element) {
-        element = ((Element)element).getValue();
+      if (element instanceof Wrapper) {
+        element = ((Wrapper)element).getValue();
       }
       if (newNumber == null) {
         modifications.add(new Modification(element, false));
@@ -738,19 +738,6 @@ public class CollectionBreakpointInstrumentor {
       return myContainer.get(elem);
     }
 
-    public void remove(Object element) {
-      Integer number = myContainer.get(element);
-      if (number == null) {
-        return;
-      }
-      if (number == 1) {
-        myContainer.remove(element);
-      }
-      else {
-        myContainer.put(element, number - 1);
-      }
-    }
-
     private Set<Map.Entry<Object, Integer>> entrySet() {
       return myContainer.entrySet();
     }
@@ -759,7 +746,7 @@ public class CollectionBreakpointInstrumentor {
       Multiset multiset = new Multiset();
       if (collection instanceof Collection) {
         for (Object element : (Collection<?>)collection) {
-          multiset.add(new Element(element));
+          multiset.add(new Wrapper(element));
         }
       }
       else if (collection instanceof Map) {
@@ -772,14 +759,14 @@ public class CollectionBreakpointInstrumentor {
   }
 
   private static class ConcurrentIdentityHashMap {
-    private final Map<Object, CollectionInstanceState> myContainer = new IdentityHashMap<Object, CollectionInstanceState>();
+    private final Map<Object, CollectionInstanceLock> myContainer = new IdentityHashMap<Object, CollectionInstanceLock>();
     private final ReentrantLock myLock = new ReentrantLock();
 
     public void add(Object obj) {
       myLock.lock();
       try {
         if (!myContainer.containsKey(obj)) {
-          myContainer.put(obj, new CollectionInstanceState());
+          myContainer.put(obj, new CollectionInstanceLock());
         }
       }
       finally {
@@ -787,7 +774,7 @@ public class CollectionBreakpointInstrumentor {
       }
     }
 
-    public CollectionInstanceState get(Object obj) {
+    public CollectionInstanceLock get(Object obj) {
       myLock.lock();
       try {
         return myContainer.get(obj);
@@ -796,36 +783,26 @@ public class CollectionBreakpointInstrumentor {
         myLock.unlock();
       }
     }
-
-    public boolean contains(Object obj) {
-      myLock.lock();
-      try {
-        return myContainer.containsKey(obj);
-      }
-      finally {
-        myLock.unlock();
-      }
-    }
   }
 
-  public static class CollectionInstanceState {
+  public static class CollectionInstanceLock {
     private final ReentrantLock myLock = new ReentrantLock();
-    private volatile boolean myMethodIsCalledNow = false;
+    private volatile boolean myMethodIsCallingNow = false;
 
-    public void block() {
+    public void lock() {
       if (SYNCHRONIZATION_ENABLED) {
         myLock.lock();
       }
-      myMethodIsCalledNow = true;
+      myMethodIsCallingNow = true;
     }
 
     public boolean isBlocked() {
-      return myMethodIsCalledNow;
+      return myMethodIsCallingNow;
     }
 
     public void unlock() {
       try {
-        myMethodIsCalledNow = false;
+        myMethodIsCallingNow = false;
         if (SYNCHRONIZATION_ENABLED) {
           myLock.unlock();
         }
@@ -836,10 +813,10 @@ public class CollectionBreakpointInstrumentor {
     }
   }
 
-  private static class Element {
+  private static class Wrapper {
     private final Object value;
 
-    private Element(Object value) {
+    private Wrapper(Object value) {
       this.value = value;
     }
 
@@ -849,8 +826,8 @@ public class CollectionBreakpointInstrumentor {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof Element &&
-             value == ((Element)obj).value;
+      return obj instanceof Wrapper &&
+             value == ((Wrapper)obj).value;
     }
 
     @Override
