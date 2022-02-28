@@ -123,7 +123,8 @@
       "hoverBackground": "Grey11",
       "hoverBorderColor": "Grey11",
       "pressedBackground": "Grey10",
-      "pressedBorderColor": "Grey10"
+      "pressedBorderColor": "Grey10",
+      "focusedBorderColor": "Blue7"
     },
 
     "Borders.color": "Grey11",
@@ -317,6 +318,8 @@
       "endBackground": "Yellow9"
     },
 
+    "SearchOption.selectedBackground": "Blue14",
+
     "SpeedSearch": {
       "background": "Grey13",
       "borderColor": "Grey10",
@@ -416,6 +419,8 @@
     "OnePixelDivider.background": "Grey11",
 
     "TitlePane": {
+      "background": "Grey2",
+      "inactiveBackground": "Grey3",
       "Button": {
         "hoverBackground": "Grey3",
         "preferredSize": "36,40"

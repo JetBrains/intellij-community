@@ -22,6 +22,7 @@
     <option name="LINE_NUMBERS_COLOR" value="aeb3c2" />
     <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="767a8a" />
     <option name="LOOKUP_COLOR" value="ffffff" />
+    <option name="MATCHED_BRACES_INDENT_GUIDE_COLOR" value="62b3b3" />
     <option name="MODIFIED_LINES_COLOR" value="88adf7" />
     <option name="SELECTED_INDENT_GUIDE" value="aeb3c2" />
     <option name="SELECTION_BACKGROUND" value="a6d2ff" />
@@ -33,7 +34,6 @@
     <option name="VCS_ANNOTATIONS_COLOR_4" value="edf2fa" />
     <option name="VCS_ANNOTATIONS_COLOR_5" value="f7f8fa" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="f7e2cb" />
-    <option name="MATCHED_BRACES_INDENT_GUIDE_COLOR" value="62b3b3" />
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />
@@ -188,8 +188,8 @@
     </option>
     <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="6dcc" />
-        <option name="EFFECT_COLOR" value="6dcc" />
+        <option name="FOREGROUND" value="8552c6" />
+        <option name="EFFECT_COLOR" value="8552c6" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>

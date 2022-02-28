@@ -115,10 +115,11 @@
     },
 
     "ActionButton": {
-      "hoverBackground": "Grey4",
-      "hoverBorderColor": "Grey4",
+      "hoverBackground": "Grey3",
+      "hoverBorderColor": "Grey3",
       "pressedBackground": "Grey5",
-      "pressedBorderColor": "Grey5"
+      "pressedBorderColor": "Grey5",
+      "focusedBorderColor": "Blue6"
     },
 
     "Borders.color": "Grey1",
@@ -303,6 +304,8 @@
       "startBackground": "Yellow5",
       "endBackground": "Yellow5"
     },
+
+    "SearchOption.selectedBackground": "Blue2",
 
     "SpeedSearch": {
       "background": "Grey1",
