@@ -73,10 +73,6 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
   // Collect all formatting changes for the file
   fun getChanges(): List<FormattingChange> {
-    val virtualFile = file.virtualFile ?: return emptyList()
-    val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
-    if (!fileIndex.isInSource(virtualFile)) return emptyList()
-
     if (!LanguageFormatting.INSTANCE.isAutoFormatAllowed(file)) {
       return emptyList()
     }
