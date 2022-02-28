@@ -49,11 +49,16 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmField
     val PROJECT_NEWLY_OPENED = Key.create<Boolean>("PROJECT_NEWLY_OPENED")
 
+    @JvmField
+    val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES = Key.create<Boolean>("PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES")
+
     fun Project.isOpenedByPlatformProcessor(): Boolean = getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
 
     fun Project.isConfiguredByPlatformProcessor(): Boolean = getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
 
     fun Project.isNewProject(): Boolean = getUserData(PROJECT_NEWLY_OPENED) == true
+
+    fun Project.isLoadedFromCacheButHasNoModules(): Boolean = getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
 
     @JvmStatic
     fun getInstance() = getInstanceIfItExists()!!
