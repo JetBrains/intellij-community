@@ -26,8 +26,8 @@ class KotlinSSCountFilterTest : KotlinSSResourceInspectionTest() {
 
         fun main() {
             val a = A.FOO
-            print(Int.hashCode())
-            print(<warning descr="SSR">a</warning>)
+            <warning descr="SSR">print(Int.hashCode())</warning>
+            <warning descr="SSR">print(<warning descr="SSR">a</warning>)</warning>
         }
     """.trimIndent()) }
 
