@@ -498,7 +498,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     LinkLabel<Void> expandAction = null;
 
-    int lines = 3;
+    int lines = 4;
     if (notification.hasTitle()) {
       lines--;
     }
@@ -1357,10 +1357,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
         if (myLayoutData.showMinSize) {
           Point location = getCollapsedTextEndLocation(myText, myLayoutData);
-          if (location != null) {
-            int y = SwingUtilities.convertPoint(myText, location.x, location.y, parent).y;
-            myExpandAction.setBounds(x, y, size.width, size.height);
+          if (location == null) {
+            location = new Point(10, myText.getHeight() - size.height);
           }
+          int y = SwingUtilities.convertPoint(myText, location.x, location.y, parent).y;
+          myExpandAction.setBounds(x, y, size.width, size.height);
         }
         else {
           int y = parent.getHeight() - size.height - myLayoutData.configuration.bottomSpaceHeight;
