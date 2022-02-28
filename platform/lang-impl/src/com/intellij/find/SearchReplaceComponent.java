@@ -201,7 +201,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         closeLabel.addMouseListener(new MouseAdapter() {
           @Override
           public void mousePressed(final MouseEvent e) {
-            close();
+            if (!e.isPopupTrigger() && SwingUtilities.isLeftMouseButton(e)) {
+              close();
+            }
           }
         });
         closeLabel.setToolTipText(FindBundle.message("tooltip.close.search.bar.escape"));
@@ -626,7 +628,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private class CloseAction extends DumbAwareAction implements LightEditCompatible, RightAlignedToolbarAction {
     private final ShortcutSet shortcut = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
     private CloseAction() {
-      getTemplatePresentation().setText(FindBundle.message("find.close.close.button.name"));
+      getTemplatePresentation().setText(FindBundle.message("find.close.button.name"));
       getTemplatePresentation().setIcon(AllIcons.Actions.Close);
     }
 
