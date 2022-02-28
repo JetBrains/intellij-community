@@ -3242,63 +3242,59 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  static class EmptyPassFactory implements TextEditorHighlightingPassFactory {
+    @Override
+    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+      return new EmptyPass(file.getProject(), editor.getDocument());
+    }
+
+    static class EmptyPass extends TextEditorHighlightingPass {
+      private EmptyPass(Project project, @NotNull Document document) {
+        super(project, document, false);
+      }
+
+      @Override
+      public void doCollectInformation(@NotNull ProgressIndicator progress) {
+      }
+
+      @Override
+      public void doApplyInformationToEditor() {
+      }
+    }
+  }
+
   public void testTextEditorHighlightingPassRegistrarMustNotAllowCyclesInPassDeclarationsOrCrazyPassIdsOmgMurphyLawStrikesAgain() {
-    class MyFac1 implements TextEditorHighlightingPassFactory {
-      @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        return new MyPass1(myProject);
-      }
-
-      final class MyPass1 extends TextEditorHighlightingPass {
-        private MyPass1(Project project) {
-          super(project, getEditor().getDocument(), false);
-        }
-
-        @Override
-        public void doCollectInformation(@NotNull ProgressIndicator progress) {
-        }
-
-        @Override
-        public void doApplyInformationToEditor() {
-        }
-      }
-    }
-    class MyFac2 implements TextEditorHighlightingPassFactory {
-      @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        return new MyPass2(myProject);
-      }
-
-      final class MyPass2 extends TextEditorHighlightingPass {
-        private MyPass2(Project project) {
-          super(project, getEditor().getDocument(), false);
-        }
-
-        @Override
-        public void doCollectInformation(@NotNull ProgressIndicator progress) {
-        }
-
-        @Override
-        public void doApplyInformationToEditor() {
-        }
-      }
-    }
-    TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
+    configureByText(JavaFileType.INSTANCE, "class C{}");
+    TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(getProject());
     int F1 = 254;
     int F2 = 256;
+    int F3 = 257;
     assertThrows(IllegalArgumentException.class, () ->
       // afterCompletionOf and afterStartingOf must not intersect
-      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F2}, new int[]{F2}, false, -1));
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{F2}, false, -1));
     assertThrows(IllegalArgumentException.class, () ->
       // afterCompletionOf and afterStartingOf must not contain forcedId
-      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F1}, new int[]{F2}, false, F1));
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F1}, new int[]{F2}, false, F1));
 
     assertThrows(IllegalStateException.class, () -> {
-      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F2}, null, false, F1);
-      registrar.registerTextEditorHighlightingPass(new MyFac2(), new int[]{F1}, null, false, F2);
-      configureByText(JavaFileType.INSTANCE, "class C{}");
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, null, false, F1);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F1}, null, false, F2);
       assertEmpty(highlightErrors());
     });
+    // non-direct cycle
+    assertThrows(IllegalStateException.class, () -> {
+      registrar.reRegisterFactories(); // clear caches from incorrect factories above
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, null, false, F1);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F3}, null, false, F2);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F1}, null, false, F3);
+      assertEmpty(highlightErrors());
+    });
+
+    registrar.reRegisterFactories(); // clear caches from incorrect factories above
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), null, null, false, F1);
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F3}, null, false, F2);
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F1}, null, false, F3);
+    assertEmpty(highlightErrors());
   }
 }
 
