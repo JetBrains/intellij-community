@@ -330,6 +330,20 @@ idea.fatal.error.notification=disabled
                                                                @NotNull JvmArchitecture arch,
                                                                @NotNull Map<Pair<OsFamily, JvmArchitecture>, Path> result,
                                                                @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
+    createDistributionForOsTask(os, arch) { context ->
+      OsSpecificDistributionBuilder builder = factory.apply(context)
+      if (builder != null) {
+        Path osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
+        builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
+        result.put(new Pair(os, arch), osAndArchSpecificDistDirectory)
+      }
+    }
+  }
+
+  @NotNull
+  private static BuildTaskRunnable createDistributionForOsTask(@NotNull OsFamily os,
+                                                               @NotNull JvmArchitecture arch,
+                                                               @NotNull Consumer<BuildContext> buildAction) {
     return BuildTaskRunnable.task("${os.osId} ${arch.name()}", new Consumer<BuildContext>() {
       @Override
       void accept(BuildContext context) {
@@ -337,17 +351,10 @@ idea.fatal.error.notification=disabled
           return
         }
 
-        OsSpecificDistributionBuilder builder = factory.apply(context)
-        if (builder == null) {
-          return
-        }
-
         context.messages.block("build ${os.osName} ${arch.name()} distribution", new Supplier<Void>() {
           @Override
           Void get() {
-            Path osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
-            builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
-            result.put(new Pair(os, arch), osAndArchSpecificDistDirectory)
+            buildAction.accept(context)
             return null
           }
         })
@@ -593,6 +600,40 @@ idea.fatal.error.notification=disabled
       runInParallel(createDistTasks.findAll { it != null }, context)
     }
     return distDirs
+  }
+
+  private static Path findMacZip(Path directory, JvmArchitecture arch, BuildContext context) {
+    Files.walk(directory).withCloseable { stream ->
+      def suffix = "${arch.name()}.zip"
+      stream.filter { "${it.fileName}".endsWith(suffix) }.findFirst().orElseGet {
+        context.messages.error("No file with suffix $suffix is found in $directory")
+      }
+    }
+  }
+
+  @Override
+  void buildDmg(Path macZipDir) {
+    List<BuildTaskRunnable> createDistTasks = List.of(
+      createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, new Consumer<BuildContext>() {
+        @Override
+        void accept(BuildContext context) {
+          context.macDistributionCustomizer?.with {
+            Path macZip = findMacZip(macZipDir, JvmArchitecture.x64, context)
+            (context.getOsDistributionBuilder(OsFamily.MACOS) as MacDistributionBuilder)
+              ?.buildAndSignDmgFromZip(macZip, JvmArchitecture.x64)
+          }
+        }
+      }),
+      createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64, new Consumer<BuildContext>() {
+        @Override
+        void accept(BuildContext context) {
+          Path macZip = findMacZip(macZipDir, JvmArchitecture.aarch64, context)
+          (context.getOsDistributionBuilder(OsFamily.MACOS) as MacDistributionBuilder)
+            ?.buildAndSignDmgFromZip(macZip, JvmArchitecture.aarch64)
+        }
+      })
+    )
+    runInParallel(createDistTasks.findAll { it != null }, buildContext)
   }
 
   @Override

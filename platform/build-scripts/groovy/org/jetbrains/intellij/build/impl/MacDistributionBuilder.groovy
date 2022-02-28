@@ -129,22 +129,22 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                .setAttribute("arch", arch.name()), BuildOptions.MAC_ARTIFACTS_STEP, new Runnable() {
       @Override
       void run() {
-        doBuildArtifacts(osAndArchSpecificDistPath, arch, customizer, buildContext)
+        doBuildArtifacts(osAndArchSpecificDistPath, arch)
       }
     })
   }
 
-  private static void doBuildArtifacts(Path osAndArchSpecificDistPath, JvmArchitecture arch, MacDistributionCustomizer customizer, BuildContext context) {
-    String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-    boolean publishArchive = context.proprietaryBuildTools.macHostProperties == null
+  private void doBuildArtifacts(Path osAndArchSpecificDistPath, JvmArchitecture arch) {
+    String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+    boolean publishArchive = buildContext.proprietaryBuildTools.macHostProperties?.host == null
 
-    List<String> binariesToSign = customizer.getBinariesToSign(context, arch)
+    List<String> binariesToSign = customizer.getBinariesToSign(buildContext, arch)
     if (!binariesToSign.isEmpty()) {
-      context.executeStep(spanBuilder("sign binaries for macOS distribution")
+      buildContext.executeStep(spanBuilder("sign binaries for macOS distribution")
                             .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Runnable() {
         @Override
         void run() {
-          context.signFiles(binariesToSign.collect { osAndArchSpecificDistPath.resolve(it) }, Map.of(
+          buildContext.signFiles(binariesToSign.collect { osAndArchSpecificDistPath.resolve(it) }, Map.of(
             "mac_codesign_options", "runtime",
             "mac_codesign_force", "true",
             "mac_codesign_deep", "true",
@@ -153,28 +153,32 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       })
     }
 
-    Path macZip = ((publishArchive || customizer.publishArchive) ? context.paths.artifactDir : context.paths.tempDir)
+    Path macZip = ((publishArchive || customizer.publishArchive) ? buildContext.paths.artifactDir : buildContext.paths.tempDir)
       .resolve(baseName + ".mac.${arch.name()}.zip")
-    String zipRoot = getZipRoot(context, customizer)
+    String zipRoot = getZipRoot(buildContext, customizer)
     MacKt.buildMacZip(
       macZip,
       zipRoot,
-      generateProductJson(context, null),
-      context.paths.distAllDir,
+      generateProductJson(buildContext, null),
+      buildContext.paths.distAllDir,
       osAndArchSpecificDistPath,
-      context.getDistFiles(),
+      buildContext.getDistFiles(),
       getExecutableFilePatterns(customizer),
       publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED)
-    ProductInfoValidator.checkInArchive(context, macZip, "$zipRoot/Resources")
+    ProductInfoValidator.checkInArchive(buildContext, macZip, "$zipRoot/Resources")
 
     if (publishArchive) {
       Span.current().addEvent("skip DMG artifact producing because a macOS build agent isn't configured")
-      context.notifyArtifactBuilt(macZip)
-      return
+      buildContext.notifyArtifactBuilt(macZip)
     }
+    else {
+      buildAndSignDmgFromZip(macZip, arch)
+    }
+  }
 
+  void buildAndSignDmgFromZip(Path macZip, JvmArchitecture arch) {
     boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
-    createBuildForArchTask(arch, macZip, notarize, customizer, context).invoke()
+    createBuildForArchTask(arch, macZip, notarize, customizer, buildContext).invoke()
     Files.deleteIfExists(macZip)
   }
 

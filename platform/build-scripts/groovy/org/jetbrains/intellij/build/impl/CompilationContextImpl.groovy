@@ -290,8 +290,11 @@ final class CompilationContextImpl implements CompilationContext {
     // defines Ant properties which are used by jetbrains.antlayout.datatypes.IdeaModuleBase class to locate module outputs 
     for (JpsModule module : project.modules) {
       for (boolean test : [true, false]) {
-        [module.name, getOldModuleName(module.name)].findAll { it != null}.each {
-          ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", getOutputPath(module, test))
+        [module.name, getOldModuleName(module.name)].findAll { it != null }.each {
+          def outputPath = getOutputPath(module, test)
+          if (outputPath != null) {
+            ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", outputPath)
+          }
         }
       }
     }
@@ -375,9 +378,9 @@ final class CompilationContextImpl implements CompilationContext {
   private String getOutputPath(JpsModule module, boolean forTests) {
     File outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(module, forTests)
     if (outputDirectory == null) {
-      messages.error("Output directory for '$module.name' isn't set")
+      messages.warning("Output directory for '$module.name' isn't set")
     }
-    return outputDirectory.absolutePath
+    return outputDirectory?.absolutePath
   }
 
   @Override
