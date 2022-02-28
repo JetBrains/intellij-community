@@ -16,7 +16,7 @@ class KotlinSSQualifiedExpressionTest : KotlinSSResourceInspectionTest() {
 
         fun main() {
             val a = <warning descr="SSR">A.FOO</warning>
-            print(Int.hashCode())
+            print(<warning descr="SSR">Int.hashCode()</warning>)
             print(a)
         }
     """.trimIndent()) }
