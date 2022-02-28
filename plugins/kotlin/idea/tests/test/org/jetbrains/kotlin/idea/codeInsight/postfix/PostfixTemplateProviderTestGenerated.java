@@ -231,6 +231,16 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
             runTest("testData/codeInsight/postfix/whenForSealedClass.kt");
         }
 
+        @TestMetadata("whenOnThis.kt")
+        public void testWhenOnThis() throws Exception {
+            runTest("testData/codeInsight/postfix/whenOnThis.kt");
+        }
+
+        @TestMetadata("whenOnThisInExtension.kt")
+        public void testWhenOnThisInExtension() throws Exception {
+            runTest("testData/codeInsight/postfix/whenOnThisInExtension.kt");
+        }
+
         @TestMetadata("while.kt")
         public void testWhile() throws Exception {
             runTest("testData/codeInsight/postfix/while.kt");

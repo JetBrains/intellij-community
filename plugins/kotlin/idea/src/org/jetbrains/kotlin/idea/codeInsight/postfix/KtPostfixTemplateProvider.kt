@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -128,6 +129,8 @@ private class KtExpressionPostfixTemplateSelector(
 
     private fun filterElement(element: PsiElement): Boolean {
         if (element !is KtExpression) return false
+
+        if (element.parent is KtThisExpression) return false
 
         // Can't be independent expressions
         if (element.isSelector || element.parent is KtUserType || element.isOperationReference || element is KtBlockExpression) return false
