@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 
 @RequiresOptIn
