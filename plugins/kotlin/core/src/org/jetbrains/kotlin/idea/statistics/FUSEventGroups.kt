@@ -18,7 +18,8 @@ enum class FUSEventGroups(groupIdSuffix: String, val events: Set<String> = setOf
 }
 
 @Suppress("EnumEntryName")
-enum class GradleStatisticsEvents {
+enum class GradleStatisticsEventGroups {
+    All,
     Environment,
     Kapt,
     CompilerPlugins,
