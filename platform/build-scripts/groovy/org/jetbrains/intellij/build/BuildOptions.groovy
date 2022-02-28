@@ -87,6 +87,7 @@ final class BuildOptions {
   public static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
   /** Build community distributives */
   public static final String COMMUNITY_DIST_STEP = "community_dist"
+  public static final String OS_SPECIFIC_DISTRIBUTIONS_STEP = "os_specific_distributions"
   public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
   public static final String SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
   public static final String VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
