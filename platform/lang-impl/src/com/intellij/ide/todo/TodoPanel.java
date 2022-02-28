@@ -19,10 +19,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -54,6 +55,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -117,15 +119,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       todoTreeBuilder.select(selectableElement);
     }
     return todoTreeBuilder;
-  }
-
-  public static class GroupByActionGroup extends DefaultActionGroup {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
-          .showUnderneathOf(e.getInputEvent().getComponent());
-      }
   }
 
   protected Tree getTree() {
@@ -233,7 +226,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   protected JComponent createCenterComponent() {
     Splitter splitter = new OnePixelSplitter(false);
     splitter.setSecondComponent(myUsagePreviewPanel);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), this, 1000);
+    loadingPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    splitter.setFirstComponent(loadingPanel);
     return splitter;
   }
 
@@ -590,7 +585,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  public static final class MyShowPackagesAction extends ToggleAction {
+  public static final class MyShowPackagesAction extends ToggleAction implements DumbAware {
     public MyShowPackagesAction() {
       super(IdeBundle.messagePointer("action.group.by.packages"), PlatformIcons.GROUP_BY_PACKAGES);
     }
@@ -617,7 +612,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  public static final class MyShowModulesAction extends ToggleAction {
+  public static final class MyShowModulesAction extends ToggleAction implements DumbAware {
     public MyShowModulesAction() {
       super(IdeBundle.messagePointer("action.group.by.modules"), AllIcons.Actions.GroupByModule);
     }
@@ -645,7 +640,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  public static final class MyFlattenPackagesAction extends ToggleAction {
+  public static final class MyFlattenPackagesAction extends ToggleAction implements DumbAware {
     public MyFlattenPackagesAction() {
       super(IdeBundle.messagePointer("action.flatten.view"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
@@ -684,7 +679,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  private final class MyPreviewAction extends ToggleAction {
+  private final class MyPreviewAction extends ToggleAction implements DumbAware {
 
     MyPreviewAction() {
       super(IdeBundle.messagePointer("todo.panel.preview.source.action.text"), Presentation.NULL_STRING, AllIcons.Actions.PreviewDetails);
