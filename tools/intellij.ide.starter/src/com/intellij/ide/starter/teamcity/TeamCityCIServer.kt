@@ -30,14 +30,14 @@ object TeamCityCIServer : CIServer {
   override fun reportTestFailure(testName: String, message: String, details: String) {
     val flowId = UUID.randomUUID().toString()
 
-    val generifiedTestName = generifyErrorMessage(testName)
+    val generifiedTestName = generifyErrorMessage(testName).processStringForTC()
 
-    logOutput(String.format("##teamcity[testStarted name='%s' flowId='%s']", generifiedTestName.processStringForTC(), flowId))
+    logOutput(String.format("##teamcity[testStarted name='%s' flowId='%s']", generifiedTestName, flowId))
     logOutput(String.format(
       "##teamcity[testFailed name='%s' message='%s' details='%s' flowId='%s']",
-      generifiedTestName.processStringForTC(), message.processStringForTC(), details.processStringForTC(), flowId
+      generifiedTestName, message.processStringForTC(), details.processStringForTC(), flowId
     ))
-    logOutput(String.format("##teamcity[testFinished name='%s' flowId='%s']", generifiedTestName.processStringForTC(), flowId))
+    logOutput(String.format("##teamcity[testFinished name='%s' flowId='%s']", generifiedTestName, flowId))
   }
 
   fun getExistingParameter(name: String): String {
