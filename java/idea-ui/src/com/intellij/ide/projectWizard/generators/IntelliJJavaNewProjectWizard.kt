@@ -10,7 +10,9 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.addSampleCode
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.contentRoot
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -64,6 +66,9 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   private class AssetsStep(parent: Step) : AssetsNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = contentRoot
+      if (gitData?.git == true) {
+        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+      }
       if (addSampleCode) {
         withJavaSampleCodeAsset("src", "")
       }
