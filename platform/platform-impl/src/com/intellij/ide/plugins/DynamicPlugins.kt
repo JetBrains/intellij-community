@@ -829,11 +829,15 @@ object DynamicPlugins {
     app.runWriteAction {
       try {
         PluginManagerCore.setPluginSet(pluginSet)
+
         val listenerCallbacks = mutableListOf<Runnable>()
         loadModule(pluginWithContentModules, app, listenerCallbacks)
-        loadOptionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet, listenerCallbacks)
-        clearPluginClassLoaderParentListCache(pluginSet)
+        for (module in optionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet)) {
+          // 4. load into service container
+          loadModule(sequenceOf(module), app, listenerCallbacks)
+        }
 
+        clearPluginClassLoaderParentListCache(pluginSet)
         clearCachedValues()
 
         listenerCallbacks.forEach(Runnable::run)
@@ -993,35 +997,41 @@ private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: Id
 /**
  * Load all sub plugins that depend on specified [dependencyPlugin].
  */
-private fun loadOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDescriptorImpl,
-                                             classLoaderConfigurator: ClassLoaderConfigurator,
-                                             pluginSet: PluginSet,
-                                             listenerCallbacks: MutableList<Runnable>) {
+private fun optionalDependenciesOnPlugin(
+  dependencyPlugin: IdeaPluginDescriptorImpl,
+  classLoaderConfigurator: ClassLoaderConfigurator,
+  pluginSet: PluginSet,
+): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val mainToModule = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
+  val mainToModules = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
+  val modulesToMain = LinkedHashMap<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>()
 
-  processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { mainDescriptor, subDescriptor ->
-    val subDescriptors = mainToModule.computeIfAbsent(mainDescriptor) { mutableListOf() }
-    if (subDescriptors.any { it === subDescriptor }) {
-      throw PluginException("Descriptor has already been added: $subDescriptor", subDescriptor.pluginId)
+  processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
+    val modules = mainToModules.computeIfAbsent(main) {
+      mutableListOf()
     }
-    subDescriptors.add(subDescriptor)
-  }
-
-  if (mainToModule.isEmpty()) {
-    return
-  }
-
-  // 2. setup classloaders
-  classLoaderConfigurator.configureDependenciesIfNeeded(mainToModule)
-
-  val app = ApplicationManager.getApplication() as ApplicationImpl
-  // 3. load into service container
-  for (entry in mainToModule.entries) {
-    for (subDescriptor in entry.value) {
-      loadModule(sequenceOf(subDescriptor), app, listenerCallbacks)
+    if (modules.any { it === module }) {
+      throw PluginException("Descriptor has already been added: $module", module.pluginId)
     }
+
+    modulesToMain[module] = main
+    modules.add(module)
   }
+
+  if (mainToModules.isEmpty()) {
+    return emptySet()
+  }
+
+  // 2. sort topologically
+  val sortedModulesToMain = modulesToMain.toSortedMap(PluginSetBuilder(mainToModules.keys.toList())
+                                                        .moduleGraph
+                                                        .topologicalComparator)
+  // 3. setup classloaders
+  for ((moduleDescriptor, mainDescriptor) in sortedModulesToMain) {
+    classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
+  }
+
+  return sortedModulesToMain.keys
 }
 
 private fun loadModule(modules: Sequence<IdeaPluginDescriptorImpl>,
