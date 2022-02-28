@@ -203,6 +203,7 @@ open class CodeVisionHost(val project: Project) {
 
   open fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
     //todo intellij statistic
+    logger.trace { "Handling click for entry with id: ${entry.providerId}" }
     if (entry.providerId == settingsLensProviderId) {
       openCodeVisionSettings()
       return
