@@ -3,6 +3,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,8 +23,15 @@ public interface PsiTodoSearchHelper {
    * Returns the list of all files in the project which have to do items.
    *
    * @return the list of files with to do items.
+   * @deprecated Use {@link #processFilesWithTodoItems(Processor)} instead.
    */
+  @Deprecated
   PsiFile @NotNull [] findFilesWithTodoItems();
+
+  /**
+   * Processes all files in the project which have to do items.
+   */
+  boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor);
 
   /**
    * Searches the specified file for to do items.
