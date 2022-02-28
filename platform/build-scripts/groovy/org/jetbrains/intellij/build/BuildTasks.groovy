@@ -67,6 +67,8 @@ abstract class BuildTasks {
 
   abstract void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime)
 
+  abstract void buildDmg(Path macZipDir)
+
   static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)
   }
