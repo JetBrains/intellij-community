@@ -702,12 +702,12 @@ object DynamicPlugins {
     val unloadListeners = mutableListOf<Runnable>()
     unregisterUnknownLevelExtensions(module.unsortedEpNameToExtensionElements, module, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
-    for ((epName, epExtensions) in (module.appContainerDescriptor.extensions ?: emptyMap())) {
-      appExtensionArea.unregisterExtensions(epName, module, epExtensions, priorityUnloadListeners, unloadListeners)
+    for (epName in (module.appContainerDescriptor.extensions?.keys ?: emptySet())) {
+      appExtensionArea.unregisterExtensions(epName, module, priorityUnloadListeners, unloadListeners)
     }
-    for ((epName, epExtensions) in (module.projectContainerDescriptor.extensions ?: emptyMap())) {
+    for (epName in (module.projectContainerDescriptor.extensions?.keys ?: emptySet())) {
       for (project in openedProjects) {
-        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, module, epExtensions, priorityUnloadListeners,
+        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, module, priorityUnloadListeners,
                                                                            unloadListeners)
       }
     }
@@ -765,8 +765,8 @@ object DynamicPlugins {
                                                openedProjects: List<Project>,
                                                priorityUnloadListeners: MutableList<Runnable>,
                                                unloadListeners: MutableList<Runnable>) {
-    for ((epName, epExtensions) in (extensionMap ?: return)) {
-      val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, epExtensions, priorityUnloadListeners,
+    for (epName in (extensionMap?.keys ?: return)) {
+      val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners,
                                                                unloadListeners)
       if (isAppLevelEp) {
         continue
@@ -774,11 +774,11 @@ object DynamicPlugins {
 
       for (project in openedProjects) {
         val isProjectLevelEp = (project.extensionArea as ExtensionsAreaImpl)
-          .unregisterExtensions(epName, pluginDescriptor, epExtensions, priorityUnloadListeners, unloadListeners)
+          .unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
         if (!isProjectLevelEp) {
           for (module in ModuleManager.getInstance(project).modules) {
             (module.extensionArea as ExtensionsAreaImpl)
-              .unregisterExtensions(epName, pluginDescriptor, epExtensions, priorityUnloadListeners, unloadListeners)
+              .unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
           }
         }
       }
