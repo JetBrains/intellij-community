@@ -198,7 +198,7 @@ class Stats(
         internal val extraMetricNames = setOf("", "_value", GEOM_MEAN, "mean", "stdDev")
 
         @JvmStatic
-        private val BENCHMARK_STUB = run {
+        val BENCHMARK_STUB = run {
             val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
             simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
 

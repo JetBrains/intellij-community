@@ -1056,6 +1056,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/native/tests/kotlin.native.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/native/tests/kotlin.native.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/performance-tests/kotlin.performance-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/performance-tests/kotlin.performance-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-tests/fe10-project-tests/kotlin.fe10-project-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-tests/fe10-project-tests/kotlin.fe10-project-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-tests/fir-project-tests/kotlin.fir.fir-project-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-tests/fir-project-tests/kotlin.fir.fir-project-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-base/kotlin.project-tests-base.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-base/kotlin.project-tests-base.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-model/kotlin.project-model.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-model/kotlin.project-model.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-wizard-compose/kotlin.project-wizard-compose.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-wizard-compose/kotlin.project-wizard-compose.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-wizard/cli/kotlin.project-wizard.cli.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-wizard/cli/kotlin.project-wizard.cli.iml" />

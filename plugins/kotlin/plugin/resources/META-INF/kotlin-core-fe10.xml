@@ -234,6 +234,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
             serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.fe10.KotlinDeclarationInCompiledFileSearcherFE10Impl"/>
+
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.fe10.plugin.Fe10KotlinPluginKindProvider"/>
   </extensions>
 
 </idea-plugin>
