@@ -90,18 +90,19 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
                                                                            @NotNull PsiSubstitutor substitutor) {
     PsiParameter[] samParameters = sam.getParameterList().getParameters();
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    boolean instanceBound = !isStatic && !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
+    boolean instanceBound = !isStatic && !method.isConstructor() && !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
+    boolean firstParameterIsQualifier = !isStatic && !instanceBound && !method.isConstructor();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     DfaValue[] arguments = new DfaValue[parameters.length];
     Arrays.fill(arguments, interpreter.getFactory().getUnknown());
     for (int i = 0; i < samParameters.length; i++) {
       DfaValue value = interpreter.getFactory().fromDfType(
         typedObject(substitutor.substitute(samParameters[i].getType()), DfaPsiUtil.getFunctionalParameterNullability(methodRef, i)));
-      if (i == 0 && !isStatic && !instanceBound) {
+      if (i == 0 && firstParameterIsQualifier) {
         qualifier = value;
       }
       else {
-        int idx = i - ((isStatic || instanceBound) ? 0 : 1);
+        int idx = i - (firstParameterIsQualifier ? 1 : 0);
         if (idx >= arguments.length) break;
         PsiType parameterType = parameters[idx].getType();
         if (!(parameterType instanceof PsiEllipsisType)) {
