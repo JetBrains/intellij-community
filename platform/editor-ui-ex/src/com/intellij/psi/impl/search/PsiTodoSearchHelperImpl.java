@@ -7,30 +7,41 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.TodoCacheManager;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.searches.IndexPatternSearch;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
-  private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
+  private final Project myProject;
+
   public PsiTodoSearchHelperImpl(@NotNull Project project) {
-    myManager = PsiManagerEx.getInstanceEx(project);
+    myProject = project;
   }
 
   @Override
   public PsiFile @NotNull [] findFilesWithTodoItems() {
-    return TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
+    HashSet<PsiFile> files = new HashSet<>();
+    processFilesWithTodoItems(new CommonProcessors.CollectProcessor<>(files));
+    return PsiUtilCore.toPsiFileArray(files);
+  }
+
+  @Override
+  public boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor) {
+    return TodoCacheManager.SERVICE.getInstance(myProject).processFilesWithTodoItems(processor);
   }
 
   @Override
@@ -87,7 +98,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   public int getTodoItemsCount(@NotNull PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
-      int count = TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(virtualFile, TodoIndexPatternProvider.getInstance());
+      int count = TodoCacheManager.SERVICE.getInstance(myProject).getTodoCount(virtualFile, TodoIndexPatternProvider.getInstance());
       if (count != -1) return count;
     }
     return findTodoItems(file).length;
@@ -98,7 +109,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     VirtualFile virtualFile = file.getVirtualFile();
     int count = 0;
     if (virtualFile != null) {
-      count = TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(virtualFile, pattern.getIndexPattern());
+      count = TodoCacheManager.SERVICE.getInstance(myProject).getTodoCount(virtualFile, pattern.getIndexPattern());
       if (count != -1) return count;
     }
     TodoItem[] items = findTodoItems(file);

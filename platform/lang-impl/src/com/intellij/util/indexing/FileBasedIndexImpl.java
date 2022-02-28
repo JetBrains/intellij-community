@@ -781,6 +781,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (project != null && project.isDefault()) {
       LOG.error("FileBasedIndex should not receive default project");
     }
+    if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) {
+      return true;
+    }
     if (ActionUtil.isDumbMode(project) && getCurrentDumbModeAccessType_NoDumbChecks() == null) {
       handleDumbMode(project);
     }
@@ -1213,7 +1216,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final @NotNull Throwable throwable) {
-    if (!myRegisteredIndexes.isExtensionsDataLoaded()) {
+    if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) {
+      advanceIndexVersion(indexId);
+    }
+    else if (!myRegisteredIndexes.isExtensionsDataLoaded()) {
       IndexDataInitializer.submitGenesisTask(() -> {
         waitUntilIndicesAreInitialized(); // should be always true here since the genesis pool is sequential
         doRequestRebuild(indexId, throwable);
@@ -1397,6 +1403,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
+        ID<?, ?> indexId = affectedIndexCandidates.get(i);
+        if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
         ProgressManager.checkCanceled();
 
         if (fc == null) {
@@ -1409,7 +1417,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           ProgressManager.checkCanceled();
         }
 
-        final ID<?, ?> indexId = affectedIndexCandidates.get(i);
         boolean update;
         boolean acceptedAndRequired = acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired();
         if (acceptedAndRequired) {
