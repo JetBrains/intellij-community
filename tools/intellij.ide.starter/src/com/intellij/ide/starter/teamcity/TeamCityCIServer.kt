@@ -18,6 +18,8 @@ object TeamCityCIServer : CIServer {
 
   override val branchName by lazy { buildParams["teamcity.build.branch"] ?: "" }
 
+  val configName by lazy { systemProperties["teamcity.buildConfName"] }
+
   override val buildParams by lazy {
     loadProperties(systemProperties["teamcity.configuration.properties.file"])
   }
