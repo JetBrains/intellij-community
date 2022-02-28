@@ -1,3 +1,5 @@
+// LANGUAGE_VERSION: 1.6
+
 fun test() {
     foo(<caret>false || !true) ?: return
 }
