@@ -89,6 +89,8 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <!-- fir-specific -->
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.fir.AndroidPluginIncompatibilityCheckerStartupActivity"/>
 
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.FirKotlinPluginKindProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.KtAnalysisSessionProvider"
                         serviceImplementation="org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSessionProvider"/>
