@@ -178,7 +178,7 @@ public final class TestUtils {
     if (classModule == null) return false;
     final GlobalSearchScope globalSearchScope = GlobalSearchScope.moduleRuntimeScope(classModule, true);
     for (PropertiesProvider provider : PropertiesProvider.EP_NAME.getExtensions()) {
-      if (provider.hasProperty(PER_CLASS_PROPERTY_KEY, "PER_CLASS", globalSearchScope) != null) return true;
+      if ("PER_CLASS".equalsIgnoreCase(provider.getPropertyValue(PER_CLASS_PROPERTY_KEY, globalSearchScope))) return true;
     }
     return false;
   }
