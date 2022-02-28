@@ -6,6 +6,8 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ui.InspectionOptionsPanel
+import com.intellij.formatting.service.CoreFormattingService
+import com.intellij.formatting.service.FormattingServiceUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
@@ -32,8 +34,8 @@ class IncorrectFormattingInspection(
     // Skip files we are not able to fix
     if (!file.isWritable) return null
 
-    // Doesn't work with external formatters since they modify the file
-    if (ExternalFormatProcessor.useExternalFormatter(file)) {
+    // Doesn't work with external and async formatters since they modify the file
+    if (FormattingServiceUtil.findService(file, true, true) !is CoreFormattingService) {
       return null
     }
 
