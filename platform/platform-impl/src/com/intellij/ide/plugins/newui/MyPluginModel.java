@@ -1014,6 +1014,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private boolean performUninstall(@NotNull IdeaPluginDescriptorImpl descriptorImpl) {
     boolean needRestartForUninstall = true;
     try {
+      PluginEnabler enabler = PluginEnabler.HEADLESS;
+      if (enabler.isDisabled(descriptorImpl.getPluginId())) {
+        enabler.enable(Collections.singletonList(descriptorImpl));
+      }
       descriptorImpl.setDeleted(true);
       needRestartForUninstall = PluginInstaller.prepareToUninstall(descriptorImpl);
       InstalledPluginsState.getInstance().onPluginUninstall(descriptorImpl, !needRestartForUninstall);
