@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -55,6 +56,9 @@ final class PythonCommunityPluginModules {
       withModule(mainModuleName, mainJarName)
       withGeneratedResources(new HelpersGenerator())
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
+      if (modules.contains("intellij.python.jupyter")) {
+        withProjectLibrary("Java-WebSocket", ProjectLibraryData.PackMode.STANDALONE_MERGED) // Required for intellij.python.jupyter
+      }
       body.delegate = delegate
       body()
     }
