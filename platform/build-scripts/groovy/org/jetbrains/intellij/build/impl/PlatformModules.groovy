@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -288,11 +287,8 @@ final class PlatformModules {
 
     String productPluginSourceModuleName = context.productProperties.applicationInfoModule
     if (productPluginSourceModuleName != null) {
-      List<String> modules = getProductPluginContentModules(context, productPluginSourceModuleName)
-      if (modules != null) {
-        for (String name : modules) {
-          layout.withModule(name, BaseLayout.APP_JAR)
-        }
+      for (String name : getProductPluginContentModules(context, productPluginSourceModuleName)) {
+        layout.withModule(name, BaseLayout.APP_JAR)
       }
     }
 
@@ -320,15 +316,16 @@ final class PlatformModules {
     return layout
   }
 
-  static @Nullable List<String> getProductPluginContentModules(@NotNull BuildContext buildContext,
-                                                               @NotNull String productPluginSourceModuleName) {
+  static @NotNull
+  Set<String> getProductPluginContentModules(@NotNull BuildContext buildContext,
+                                             @NotNull String productPluginSourceModuleName) {
     Path file = buildContext.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
     if (file == null) {
       file = buildContext.findFileInModuleSources(productPluginSourceModuleName,
                                                   "META-INF/" + buildContext.productProperties.platformPrefix + "Plugin.xml")
       if (file == null) {
         buildContext.messages.warning("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
-        return null
+        return Set.of()
       }
     }
 
@@ -337,14 +334,18 @@ final class PlatformModules {
         .parse(it, file.toString()).getDocumentElement().getElementsByTagName("content")
       if (contentList.length != 0) {
         NodeList modules = ((Element)contentList.item(0)).getElementsByTagName("module")
-        List<String> result = new ArrayList<>(modules.length)
+        Set<String> result = new LinkedHashSet<>(modules.length)
         for (int i = 0; i < modules.length; i++) {
-          Element module = (Element)modules.item(i)
-          result.add(module.getAttribute("name"))
+          String rawName = ((Element)modules.item(i))
+            .getAttribute("name")
+
+          int index = rawName.indexOf('/')
+          String name = index == -1 ? rawName : rawName.substring(0, index)
+          result.add(name)
         }
-        return result
+        return Collections.unmodifiableSet(result)
       }
-      return null
+      return Set.<String> of()
     }
   }
 }
