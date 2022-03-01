@@ -1,3 +1,5 @@
+// LANGUAGE_VERSION: 1.6
+
 fun foo(): Int {
 
     fun f() {}
