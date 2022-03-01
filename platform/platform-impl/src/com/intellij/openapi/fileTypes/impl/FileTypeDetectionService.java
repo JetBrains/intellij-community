@@ -112,7 +112,7 @@ final class FileTypeDetectionService implements Disposable {
         VirtualFile file = changeEvent.getFile();
         if (changeEvent.getOldLength() == 0) {
           // when something is written to the empty file, clear the file detection-from-content cache, because the file type can change from Unknown to e.g. Text
-          cacheAutoDetectedFileType(file, null);
+          file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
         }
       }
       ProgressManager.checkCanceled();
@@ -496,7 +496,7 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
-  private boolean wasAutoDetectedBefore(@NotNull VirtualFile file) {
+  boolean wasAutoDetectedBefore(@NotNull VirtualFile file) {
     if (file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY) != null) {
       return true;
     }
