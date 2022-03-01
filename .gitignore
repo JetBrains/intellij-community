@@ -17,4 +17,9 @@ edu/dependencies/.gradle
 edu/dependencies/build
 native/**/build/
 stale_outputs_checked
+
+# For kotlin cooperative development
+**/build.gradle.kts
+!**/testData/**/build.gradle.kts
+!**/testdata/**/build.gradle.kts
 /android
