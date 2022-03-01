@@ -633,6 +633,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         PsiElement element = parseText(myEditor.getDocument().getText());
+        setOriginalFiles(element);
         List<PsiElement> allToParse = new ArrayList<>();
         if (element instanceof PsiFile) {
           allToParse.addAll(((PsiFile)element).getViewProvider().getAllFiles());
@@ -660,7 +661,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     myLastParsedTextHashCode = text.hashCode();
     myNewDocumentHashCode = myLastParsedTextHashCode;
     PsiElement rootElement = parseText(text);
-    ObjectUtils.consumeIfNotNull(rootElement, e->e.getContainingFile().putUserData(PsiFileFactory.ORIGINAL_FILE, myOriginalPsiFile));
+    setOriginalFiles(rootElement);
     focusTree();
     ViewerTreeStructure structure = getTreeStructure();
     structure.setRootPsiElement(rootElement);
@@ -708,6 +709,18 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       Messages.showMessageDialog(myProject, e.getMessage(), "Error", Messages.getErrorIcon());
     }
     return null;
+  }
+
+  private void setOriginalFiles(@Nullable PsiElement root) {
+    if (root != null && myOriginalPsiFile != null) {
+      final PsiFile newPsiFile = root.getContainingFile();
+      newPsiFile.putUserData(PsiFileFactory.ORIGINAL_FILE, myOriginalPsiFile);
+
+      final VirtualFile newVirtualFile = newPsiFile.getVirtualFile();
+      if (newVirtualFile instanceof LightVirtualFile) {
+        ((LightVirtualFile)newVirtualFile).setOriginalFile(myOriginalPsiFile.getVirtualFile());
+      }
+    }
   }
 
 
