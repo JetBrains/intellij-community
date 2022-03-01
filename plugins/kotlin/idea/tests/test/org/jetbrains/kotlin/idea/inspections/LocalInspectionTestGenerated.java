@@ -9247,6 +9247,31 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantOverride/delegatedMemberHidesSuperTypeOverride4.kt");
         }
 
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals.kt");
+        }
+
+        @TestMetadata("equals2.kt")
+        public void testEquals2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals2.kt");
+        }
+
+        @TestMetadata("equals3.kt")
+        public void testEquals3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals3.kt");
+        }
+
+        @TestMetadata("equals4.kt")
+        public void testEquals4() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals4.kt");
+        }
+
+        @TestMetadata("equals5.kt")
+        public void testEquals5() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals5.kt");
+        }
+
         @TestMetadata("getterWithDerivedProperty.kt")
         public void testGetterWithDerivedProperty() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/getterWithDerivedProperty.kt");
@@ -9265,6 +9290,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("getterWithDerivedProperty4.kt")
         public void testGetterWithDerivedProperty4() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/getterWithDerivedProperty4.kt");
+        }
+
+        @TestMetadata("hashCode.kt")
+        public void testHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/hashCode.kt");
         }
 
         @TestMetadata("javaPackagePrivate.kt")
@@ -9310,6 +9340,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("singleExpressionFunction.kt")
         public void testSingleExpressionFunction() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/singleExpressionFunction.kt");
+        }
+
+        @TestMetadata("toString.kt")
+        public void testToString() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/toString.kt");
         }
 
         @TestMetadata("twoInterfaces.kt")
