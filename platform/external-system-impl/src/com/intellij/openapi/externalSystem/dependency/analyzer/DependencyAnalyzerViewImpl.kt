@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
@@ -11,6 +12,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.bind
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -39,7 +41,6 @@ class DependencyAnalyzerViewImpl(
   private val systemId: ProjectSystemId,
   private val parentDisposable: Disposable
 ) : DependencyAnalyzerView {
-  override val component: JComponent
 
   private val iconsProvider = ExternalSystemIconProvider.getExtension(systemId)
   private val contributor = DependencyAnalyzerExtension.EP_NAME.extensionList
@@ -119,8 +120,8 @@ class DependencyAnalyzerViewImpl(
   override fun getData(dataId: String): Any? {
     return when (dataId) {
       DependencyAnalyzerView.VIEW.name -> this
-      DependencyAnalyzerView.PROJECT.name -> project
-      DependencyAnalyzerView.EXTERNAL_SYSTEM_ID.name -> systemId
+      CommonDataKeys.PROJECT.name -> project
+      ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.name -> systemId
       DependencyAnalyzerView.EXTERNAL_PROJECT_PATH.name -> externalProject?.path
       else -> null
     }
@@ -304,7 +305,7 @@ class DependencyAnalyzerViewImpl(
     groupBy { it.data.getGroup() }
       .map { DependencyGroup(it.value) }
 
-  init {
+  fun createComponent(): JComponent {
     val externalProjectSelector = ExternalProjectSelector(externalProjectProperty, externalProjects, iconsProvider)
       .bindEnabled(dependencyLoadingProperty)
     val dataFilterField = SearchTextField(SEARCH_HISTORY_PROPERTY)
@@ -370,7 +371,7 @@ class DependencyAnalyzerViewImpl(
       .asActionButton(ACTION_PLACE)
       .bindEnabled(dependencyLoadingProperty)
 
-    component = toolWindowPanel {
+    return toolWindowPanel {
       toolbar = toolbarPanel {
         addToLeft(horizontalPanel(
           externalProjectSelector,

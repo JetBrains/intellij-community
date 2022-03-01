@@ -17,9 +17,9 @@ abstract class AbstractDependencyAnalyzerAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val systemId = getSystemId(e) ?: return
-    val tab = DependencyAnalyzerEditorTab(project, systemId)
-    setSelectedState(e, tab.view)
-    UIComponentEditorTab.show(project, tab)
+    val dependencyAnalyzerManager = DependencyAnalyzerManager.getInstance(project)
+    val dependencyAnalyzerView = dependencyAnalyzerManager.getOrCreate(systemId)
+    setSelectedState(e, dependencyAnalyzerView)
   }
 
   override fun update(e: AnActionEvent) {
