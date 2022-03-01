@@ -17,6 +17,8 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
+
 import java.nio.file.Path
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.jps.model.module.JpsModule
@@ -31,6 +33,46 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 // TODO: Use separate bundle identifier for EAP and non-EAP
 @CompileStatic
 class AndroidStudioProperties extends BaseIdeaProperties {
+
+  private static final List<String> INHERITED_PLUGINS = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES
+
+  private static final List<String> EXTRA_PLUGINS = List.of(
+    "intellij.toml",  // b/184090375
+    // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
+    // and the structure of CIDR plugins.
+    "intellij.c.clangd",
+    "intellij.c.clangdBridge",
+    "intellij.c.plugin",
+    "intellij.cidr.debugger.plugin",
+    "intellij.cidr.base.plugin",
+    )
+
+  private static final List<String> EXCLUDED_PLUGINS = List.of(
+    "intellij.android.gradle.dsl",
+    "intellij.android.plugin",
+    "intellij.android.smali",
+    "intellij.ant",
+    "intellij.devkit",
+    "intellij.eclipse",
+    "intellij.externalSystem.dependencyUpdater",
+    "intellij.featuresTrainer",
+    "intellij.gradle.dependencyUpdater",
+    "intellij.gradle.java.maven",
+    "intellij.grazie",
+    "intellij.java.byteCodeViewer",
+    "intellij.java.guiForms.designer",
+    "intellij.javaFX.community",
+    "intellij.lombok",
+    "intellij.maven",
+    "intellij.packageSearch",
+    "intellij.platform.tracing.ide",
+    "intellij.searchEverywhereMl",
+    "intellij.statsCollector",
+    "intellij.vcs.git.featuresTrainer",
+    "intellij.xpath",
+    "intellij.xslt.debugger",
+    KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
+  )
 
   AndroidStudioProperties(String home, BuildOptions buildOptions) {
     baseFileName = "studio"
@@ -53,16 +95,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
     productLayout.withAdditionalPlatformJar("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
 
-    productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES + [
-      "intellij.toml",  // b/184090375
-      // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
-      // and the structure of CIDR plugins.
-      "intellij.c.clangd",
-      "intellij.c.clangdBridge",
-      "intellij.c.plugin",
-      "intellij.cidr.debugger.plugin",
-      "intellij.cidr.base.plugin"
-    ]
+    def unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
+    assert unknownExcludedPlugins.empty : "AndroidStudioProperties.EXCLUDED_PLUGINS contains nonexistent plugins: $unknownExcludedPlugins"
+    productLayout.bundledPluginModules = INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS
+
     productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
