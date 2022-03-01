@@ -12,6 +12,6 @@
 
         <toolWindow id="JewelDemo" anchor="bottom" secondary="false"
                     canCloseContents="true"
-                    factoryClass="org.jetbrains.jewel.theme.idea.JewelDemoToolWindow"/>
+                    factoryClass="org.jetbrains.jewel.theme.idea.demo.JewelDemoToolWindow"/>
     </extensions>
 </idea-plugin>
