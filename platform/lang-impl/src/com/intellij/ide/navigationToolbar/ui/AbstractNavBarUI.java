@@ -102,7 +102,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
         if (icon != null) {
           paintIcon = true;
           offset += item.getIpad().left;
-          icon.paintIcon(item, g, offset, rect.y + (rect.height - icon.getIconHeight()) / 2);
+          icon.paintIcon(item, g, offset, rect.y + (rect.height - icon.getIconHeight()) / 2 + item.getVerticalIconOffset());
           offset += icon.getIconWidth();
         }
       }

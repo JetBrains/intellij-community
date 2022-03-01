@@ -47,8 +47,10 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
   private final boolean isPopupElement;
   private final NavBarUI myUI;
   private boolean mouseHovered;
+  private final boolean myIsModule;
 
   public static final Icon CHEVRON_ICON = AllIcons.General.ChevronRight;
+  private static final Icon MODULE_ICON = IconManager.getInstance().getIcon("expui/nodes/module8x8.svg", AllIcons.class);
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
     this(panel, object, idx, parent, false);
@@ -64,13 +66,15 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
     if (object != null) {
       NavBarPresentation presentation = myPanel.getPresentation();
       myText = presentation.getPresentableText(object, inPopup);
-      myIcon = presentation.getIcon(object);
       myAttributes = presentation.getTextAttributes(object, false);
+      myIsModule = presentation.isModule(object);
+      myIcon = ExperimentalUI.isNewUI() && myIsModule ? MODULE_ICON : presentation.getIcon(object);
     }
     else {
       myText = IdeBundle.message("navigation.bar.item.sample");
       myIcon = PlatformIcons.FOLDER_ICON;
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      myIsModule = false;
     }
 
     Disposer.register(parent == null ? panel : parent, this);
@@ -219,11 +223,15 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
 
   @DirtyUI
   public boolean needPaintIcon() {
-    if (Registry.is("navBar.show.icons") || isPopupElement || isLastElement()) {
+    if (Registry.is("navBar.show.icons") || isPopupElement || isLastElement() || ExperimentalUI.isNewUI() && myIsModule) {
       return true;
     }
     Object object = getObject();
     return object instanceof PsiElement && ((PsiElement)object).getContainingFile() != null;
+  }
+
+  public int getVerticalIconOffset() {
+    return myIsModule && ExperimentalUI.isNewUI() ? JBUI.scale(1) : 0;
   }
 
   @NotNull

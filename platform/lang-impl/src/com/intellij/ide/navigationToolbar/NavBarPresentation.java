@@ -174,6 +174,16 @@ public final class NavBarPresentation {
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
+  boolean isModule(Object object) {
+    if (NavBarModel.isValid(object) && object instanceof PsiDirectory &&
+        ReadAction.compute(() -> ((PsiElement)object).isValid()).booleanValue())
+    {
+        VirtualFile vDir = ((PsiDirectory)object).getVirtualFile();
+        return (vDir.getParent() == null || ProjectRootsUtil.isModuleContentRoot(vDir, project));
+    }
+    return false;
+  }
+
   public static boolean wolfHasProblemFilesBeneath(@NotNull PsiElement scope) {
     return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(virtualFile -> {
       if (scope instanceof PsiDirectory) {
