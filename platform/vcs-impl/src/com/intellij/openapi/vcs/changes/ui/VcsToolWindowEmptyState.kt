@@ -78,7 +78,7 @@ internal class ActivateCommitToolWindowAction : ActivateToolWindowAction(ToolWin
     templatePresentation.icon = AllIcons.Toolwindows.ToolWindowCommit
   }
 
-  override fun hasEmptyState(): Boolean = true
+  override fun hasEmptyState(project: Project): Boolean = ChangesViewContentManager.isCommitToolWindowShown(project)
 
   override fun update(e: AnActionEvent) {
     if (e.project?.isTrusted() == false) {
