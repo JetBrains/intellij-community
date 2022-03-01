@@ -193,9 +193,12 @@
         "borderInsets" : "7,10,7,8",
         "background": "Grey13"
       },
-
       "Toolbar" : {
         "borderColor" : "Grey11"
+      },
+      "ToolTip": {
+        "foreground": "Grey1",
+        "background": "Grey13"
       }
     },
 
@@ -375,7 +378,8 @@
 
     "HelpTooltip": {
       "defaultTextBorderInsets": "12,16,16,16",
-      "smallTextBorderInsets": "8,12,9,12"
+      "smallTextBorderInsets": "8,12,9,12",
+      "verticalGap": 6
     },
 
     "ToolWindow": {

@@ -358,7 +358,8 @@
 
     "HelpTooltip": {
       "defaultTextBorderInsets": "12,16,16,16",
-      "smallTextBorderInsets": "8,12,9,12"
+      "smallTextBorderInsets": "8,12,9,12",
+      "verticalGap": 6
     },
 
     "ToolWindow": {
