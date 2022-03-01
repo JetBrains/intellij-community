@@ -62,10 +62,10 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
       if (aClass instanceof PsiTypeParameter) {
         return;
       }
-      if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-        registerClassError(aClass, ProblemType.CLASS_NOT_PUBLIC);
-      }
-      else if (TestUtils.isJUnit4TestClass(aClass, false)) {
+      if (TestUtils.isJUnit4TestClass(aClass, false)) {
+        if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+          registerClassError(aClass, ProblemType.CLASS_NOT_PUBLIC);
+        }
         final PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length != 0) {
           boolean hasPublicNoArgConstructor = false;
@@ -88,7 +88,10 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
           }
         }
       }
-      else if (TestUtils.isJUnitTestClass(aClass)){
+      else if (TestUtils.isJUnitTestClass(aClass)) {
+        if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+          registerClassError(aClass, ProblemType.CLASS_NOT_PUBLIC);
+        }
         final PsiMethod[] constructors = aClass.getConstructors();
         boolean hasStringConstructor = false;
         boolean hasNoArgConstructor = false;

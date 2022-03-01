@@ -17,6 +17,7 @@ public class UnconstructableTestCaseInspectionTest extends LightJavaInspectionTe
   public void testUnconstructableTestCase2() { doTest(); }
   public void testUnconstructableTestCase3() { doTest(); }
   public void testUnconstructableTestCase4() { doTest(); }
+  public void testPlain() { doTest(); }
 
   @Nullable
   @Override
