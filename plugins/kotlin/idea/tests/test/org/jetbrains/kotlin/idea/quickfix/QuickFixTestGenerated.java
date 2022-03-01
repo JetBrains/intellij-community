@@ -5005,9 +5005,29 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createFunction/callableReferences/extensionNoReceiverInCallableRef.kt");
                 }
 
+                @TestMetadata("extensionWithObjectReceiver.kt")
+                public void testExtensionWithObjectReceiver() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/callableReferences/extensionWithObjectReceiver.kt");
+                }
+
                 @TestMetadata("extensionWithReceiverInCallableRef.kt")
                 public void testExtensionWithReceiverInCallableRef() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/callableReferences/extensionWithReceiverInCallableRef.kt");
+                }
+
+                @TestMetadata("extensionWithThisReceiver.kt")
+                public void testExtensionWithThisReceiver() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/callableReferences/extensionWithThisReceiver.kt");
+                }
+
+                @TestMetadata("memberWithObjectReceiver.kt")
+                public void testMemberWithObjectReceiver() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/callableReferences/memberWithObjectReceiver.kt");
+                }
+
+                @TestMetadata("memberWithThisReceiver.kt")
+                public void testMemberWithThisReceiver() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/callableReferences/memberWithThisReceiver.kt");
                 }
 
                 @TestMetadata("noExpectedReturnType.kt")
