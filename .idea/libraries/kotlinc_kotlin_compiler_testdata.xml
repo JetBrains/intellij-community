@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-testdata">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-testdata-for-ide/1.6.255/kotlin-compiler-testdata-for-ide-1.6.255.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-testdata-for-ide/1.7.255/kotlin-compiler-testdata-for-ide-1.7.255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
