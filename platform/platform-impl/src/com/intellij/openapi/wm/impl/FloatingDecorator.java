@@ -36,6 +36,7 @@ import java.awt.event.WindowEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
+@ApiStatus.Internal
 public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker {
   private static final Logger LOG = Logger.getInstance(FloatingDecorator.class);
 
@@ -61,7 +62,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   private float myEndRatio; // start and end alpha ratio for transparency animation
 
   FloatingDecorator(@NotNull JFrame owner, @NotNull InternalDecoratorImpl decorator) {
-    super(owner, decorator.getToolWindow().getStripeTitle());
+    super(owner, decorator.toolWindow.getStripeTitle());
 
     MnemonicHelper.init(getContentPane());
 
@@ -89,7 +90,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(WindowEvent event) {
-        ToolWindowImpl toolWindow = decorator.getToolWindow();
+        ToolWindowImpl toolWindow = decorator.toolWindow;
         toolWindow.getToolWindowManager().resized(decorator);
         toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
       }
@@ -336,6 +337,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     public Dimension getPreferredSize() {
       final Dimension d = super.getPreferredSize();
       if (ANCHOR_TOP == myAnchor || ANCHOR_BOTTOM == myAnchor) {
+        //noinspection SuspiciousNameCombination
         d.height = DIVIDER_WIDTH;
       }
       else {

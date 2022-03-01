@@ -23,14 +23,12 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.ui.plaf.beg.BegResources.m
 import com.intellij.util.MathUtil
 import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
@@ -48,7 +46,7 @@ import javax.swing.border.Border
 
 @ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
-  val toolWindow: ToolWindowImpl,
+  internal @JvmField val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
 ) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {
