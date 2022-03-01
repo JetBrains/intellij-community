@@ -1,3 +1,4 @@
+// ERROR: 'when' expression must be exhaustive, add necessary 'C' branch or 'else' branch instead
 // PROBLEM: none
 
 enum class TestEnum{
