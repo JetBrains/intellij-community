@@ -83,14 +83,6 @@ public final class BrowserUtil {
     getBrowserLauncher().browse(url, null, project);
   }
 
-  public static boolean browseAbsolute(@NotNull Project project, @NotNull String url) {
-    if (isAbsoluteURL(url)) {
-      browse(url, project);
-      return true;
-    }
-    return false;
-  }
-
   private static BrowserLauncher getBrowserLauncher() {
     return ApplicationManager.getApplication() != null ? BrowserLauncher.getInstance() : new BrowserLauncherAppless();
   }
