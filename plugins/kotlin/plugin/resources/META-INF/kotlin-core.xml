@@ -96,7 +96,7 @@
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
-    <pathMacroContributor implementation="org.jetbrains.kotlin.idea.KotlinPluginMacros"/>
+    <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.versions.KotlinUpdatePluginStartupActivity"/>
