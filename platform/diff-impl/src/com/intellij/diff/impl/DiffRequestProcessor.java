@@ -442,9 +442,6 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   protected void setWindowTitle(@NotNull @NlsContexts.DialogTitle String title) {
   }
 
-  protected void onAfterNavigate() {
-  }
-
   @RequiresEdt
   protected void onDispose() {
   }
@@ -457,9 +454,13 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     myContext.putUserData(key, value);
   }
 
+  protected @Nullable Object getData(@NotNull @NonNls String dataId) {
+    return null;
+  }
+
   protected @NotNull List<AnAction> getNavigationActions() {
     List<AnAction> actions = List.of(
-      new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(),
+      new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new OpenInEditorAction(),
       Separator.getInstance(),
       new MyPrevChangeAction(), new MyNextChangeAction());
 
@@ -590,7 +591,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     if (SystemInfo.isMac) { // collect touchbar actions
       myTouchbarActionGroup.removeAll();
       myTouchbarActionGroup.addAll(
-        new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
+        new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new OpenInEditorAction(), Separator.getInstance(),
         new MyPrevChangeAction(), new MyNextChangeAction()
       );
       if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null) {
@@ -1226,17 +1227,6 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   // Helpers
   //
 
-  protected class MyOpenInEditorAction extends OpenInEditorAction {
-
-    public MyOpenInEditorAction() {
-    }
-
-    @Override
-    protected void onAfterEditorOpened() {
-      onAfterNavigate();
-    }
-  }
-
   @ApiStatus.Internal
   public class MyPanel extends JBPanelWithEmptyText implements DataProvider {
     MyPanel() {
@@ -1264,10 +1254,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         if (data != null) return data;
       }
 
-      if (OpenInEditorAction.KEY.is(dataId)) {
-        return new MyOpenInEditorAction();
-      }
-      else if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
+      if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
         return myActiveRequest;
       }
       else if (ACTIVE_DIFF_TOOL.is(dataId)) {
@@ -1302,7 +1289,8 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         data = contextProvider.getData(dataId);
         if (data != null) return data;
       }
-      return null;
+
+      return DiffRequestProcessor.this.getData(dataId);
     }
   }
 
@@ -1662,6 +1650,15 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         return myViewer;
       }
       return null;
+    }
+  }
+
+  /**
+   * @deprecated use {@link OpenInEditorAction}
+   */
+  @Deprecated
+  protected class MyOpenInEditorAction extends OpenInEditorAction {
+    public MyOpenInEditorAction() {
     }
   }
 }

@@ -182,7 +182,8 @@ internal class CombinedOpenInEditorAction(private val path: FilePath) : OpenInEd
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    findNavigatable(project)?.run { openEditor(project, this) }
+    val navigatable = findNavigatable(project) ?: return
+    openEditor(project, navigatable, null)
   }
 
   private fun findNavigatable(project: Project?): Navigatable? {

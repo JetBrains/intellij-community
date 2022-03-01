@@ -368,7 +368,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       if (data != null) return data
 
       return when {
-        OpenInEditorAction.KEY.`is`(dataId) -> OpenInEditorAction()
         DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> model.getCurrentRequest()
         CommonDataKeys.PROJECT.`is`(dataId) -> context.project
         PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> {
