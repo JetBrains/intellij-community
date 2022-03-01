@@ -75,16 +75,16 @@ public class ActivateToolWindowAction extends DumbAwareAction {
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId);
     if (toolWindow == null) {
-      presentation.setEnabledAndVisible(hasEmptyState());
+      presentation.setEnabledAndVisible(hasEmptyState(project));
     }
     else {
       presentation.setVisible(true);
-      presentation.setEnabled(toolWindow.isAvailable() || hasEmptyState());
+      presentation.setEnabled(toolWindow.isAvailable() || hasEmptyState(project));
       updatePresentation(presentation, toolWindow);
     }
   }
 
-  protected boolean hasEmptyState() {
+  protected boolean hasEmptyState(@NotNull Project project) {
     return false;
   }
 
@@ -129,23 +129,23 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
       ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);
       if (toolWindow != null) {
-        if (hasEmptyState() && !toolWindow.isAvailable()) {
+        if (hasEmptyState(project) && !toolWindow.isAvailable()) {
           toolWindow.setAvailable(true);
         }
         if (windowManager instanceof ToolWindowManagerImpl) {
-          ((ToolWindowManagerImpl) windowManager).activateToolWindow(myToolWindowId, null, true, source);
+          ((ToolWindowManagerImpl)windowManager).activateToolWindow(myToolWindowId, null, true, source);
         }
         else {
           toolWindow.activate(null);
         }
       }
-      else if (hasEmptyState()) {
+      else if (hasEmptyState(project)) {
         createEmptyState(project);
       }
     }
     else {
       if (windowManager instanceof ToolWindowManagerImpl) {
-        ((ToolWindowManagerImpl) windowManager).hideToolWindow(myToolWindowId, false, true, false, source);
+        ((ToolWindowManagerImpl)windowManager).hideToolWindow(myToolWindowId, false, true, false, source);
       }
       else {
         ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);
