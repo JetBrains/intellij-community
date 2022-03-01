@@ -1,4 +1,5 @@
 // ERROR: A 'return' expression required in a function with a block body ('{...}')
+// ERROR: 'when' expression must be exhaustive, add necessary 'C' branch or 'else' branch instead
 // PROBLEM: none
 
 enum class TestEnum{
