@@ -3,7 +3,6 @@
 // ACTION: Flip '>'
 // ACTION: Replace '&&' with '||'
 // ACTION: Replace overloaded operator with function call
-// ACTION: Simplify boolean expression
 // ACTION: Expand boolean expression to 'if else'
 // ERROR: Operator call corresponds to a dot-qualified call 'w?.x.compareTo(42)' which is not allowed on a nullable receiver 'w?.x'.
 
