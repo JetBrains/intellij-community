@@ -38,6 +38,22 @@
       "description": "Path to an SVG file which contains the product icon (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.svg'",
       "type": "string"
     },
+    "productVendor": {
+      "description": "Short company name as used in config paths, e.g. ~/.config/JetBrains/...",
+      "type": "string"
+    },
+    "vmOptionsBaseFileName": {
+      "description": "Base name for vm options file, usually a shortened product name in lower case (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip)",
+      "type": "string"
+    },
+    "classPathJars" : {
+      "description": "List of jars to be treated as a classpath in launcher",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minItems": 0
+      }
+    },
     "launch": {
       "description": "Specifies how the IDE can be launched",
       "type": "array",

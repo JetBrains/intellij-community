@@ -73,7 +73,8 @@ impl<'a> Launcher<'a> {
     // fi
     // fi
     fn get_user_jre(&self) -> Option<Box<Path>> {
-
+        // TODO: include this info in product-info.json
+        Option::None
     }
 
     // if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
