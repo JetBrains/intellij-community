@@ -3,6 +3,7 @@
 // COMPILER_ARGUMENTS_AFTER: -version -opt-in=kotlin.RequiresOptIn
 // DISABLE-ERRORS
 // WITH_STDLIB
+// LANGUAGE_VERSION: 1.6
 
 @RequiresOptIn<caret>
 annotation class MyExperimentalAPI
