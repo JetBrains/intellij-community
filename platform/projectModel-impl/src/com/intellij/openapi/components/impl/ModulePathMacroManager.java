@@ -8,22 +8,28 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class ModulePathMacroManager extends PathMacroManager {
-  private final Supplier<@SystemIndependent String> myModuleDirPointer;
+  private final @NotNull Supplier<@Nullable @SystemIndependent String> myProjectPathPointer;
+  private final @NotNull Supplier<@NotNull @SystemIndependent String> myModuleDirPointer;
 
   public ModulePathMacroManager(@NotNull Module module) {
     super(PathMacros.getInstance());
+    myProjectPathPointer = module.getProject()::getBasePath;
     myModuleDirPointer = module::getModuleFilePath;
   }
 
   @NonInjectable
-  private ModulePathMacroManager(Supplier<@SystemIndependent String> moduleDirPointer) {
+  private ModulePathMacroManager(@NotNull Supplier<@SystemIndependent String> projectPathPointer,
+                                 @NotNull Supplier<@SystemIndependent String> moduleDirPointer) {
     super(PathMacros.getInstance());
+    myProjectPathPointer = projectPathPointer;
     myModuleDirPointer = moduleDirPointer;
   }
 
@@ -31,6 +37,12 @@ public class ModulePathMacroManager extends PathMacroManager {
   public @NotNull ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = super.getExpandMacroMap();
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModuleDirPointer.get()));
+    String projectDir = myProjectPathPointer.get();
+    if (projectDir != null) {
+      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectDir).entrySet()) {
+        result.addMacroExpand(entry.getKey(), entry.getValue());
+      }
+    }
     return result;
   }
 
@@ -45,7 +57,8 @@ public class ModulePathMacroManager extends PathMacroManager {
     resetCachedReplacePathMap();
   }
 
-  public static ModulePathMacroManager createInstance(Supplier<@SystemIndependent String> moduleDirPointer) {
-    return new ModulePathMacroManager(moduleDirPointer);
+  public static ModulePathMacroManager createInstance(@NotNull Supplier<@SystemIndependent String> projectPathPointer,
+                                                      @NotNull Supplier<@SystemIndependent String> moduleDirPointer) {
+    return new ModulePathMacroManager(projectPathPointer, moduleDirPointer);
   }
 }
