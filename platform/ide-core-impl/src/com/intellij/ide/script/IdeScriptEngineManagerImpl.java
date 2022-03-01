@@ -13,6 +13,7 @@ import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ThreeState;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,18 +32,18 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManagerImpl.class);
 
+  private final AtomicReference<ThreeState> myFactoriesInitialized = new AtomicReference<>(ThreeState.NO);
   private final ClearableLazyValue<Map<EngineInfo, ScriptEngineFactory>> myFactories = ClearableLazyValue.createAtomic(() -> {
     long start = System.nanoTime();
-    try {
-      return calcFactories();
-    }
-    finally {
-      LOG.info(ScriptEngineManager.class.getName() + " initialized in " + TimeoutUtil.getDurationMillis(start) + " ms");
-    }
+    Map<EngineInfo, ScriptEngineFactory> map = calcFactories();
+    LOG.info(ScriptEngineManager.class.getName() + " initialized in " + TimeoutUtil.getDurationMillis(start) + " ms");
+    myFactoriesInitialized.set(ThreeState.YES);
+    return map;
   });
 
   IdeScriptEngineManagerImpl() {
@@ -97,11 +98,10 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
   @Override
   public boolean isInitialized() {
-    boolean result = myFactories.isCached();
-    if (!result) {
-      AppExecutorUtil.getAppExecutorService().execute(myFactories::getValue);
+    if (myFactoriesInitialized.compareAndSet(ThreeState.NO, ThreeState.UNSURE)) {
+      AppExecutorUtil.getAppExecutorService().execute(this::getFactories);
     }
-    return result;
+    return myFactoriesInitialized.get() == ThreeState.YES;
   }
 
   private @NotNull Map<EngineInfo, ScriptEngineFactory> getFactories() {
@@ -115,7 +115,13 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   private void dropFactories() {
-    myFactories.drop();
+    try {
+      myFactoriesInitialized.set(ThreeState.UNSURE);
+      myFactories.drop();
+    }
+    finally {
+      myFactoriesInitialized.set(ThreeState.NO);
+    }
   }
 
   private static @NotNull Map<EngineInfo, ScriptEngineFactory> calcFactories() {
