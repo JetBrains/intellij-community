@@ -828,7 +828,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       NotificationCollector.getInstance()
         .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
       Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
-    }, action);
+    }, action) {
+      @Override
+      protected Color getTextColor() {
+        return NotificationsUtil.getLinkButtonForeground();
+      }
+    };
   }
 
   private static void addDropDownAction(Notification notification, NotificationActionPanel actionPanel) {
@@ -1093,6 +1098,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           return AllIcons.Ide.Notification.DropTriangle.getIconHeight();
         }
       });
+    }
+
+    @Override
+    protected Color getTextColor() {
+      return NotificationsUtil.getLinkButtonForeground();
     }
   }
 

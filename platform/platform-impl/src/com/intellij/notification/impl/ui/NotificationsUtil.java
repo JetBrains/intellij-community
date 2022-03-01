@@ -168,8 +168,11 @@ public final class NotificationsUtil {
   }
 
   public static void setLinkForeground(@NotNull StyleSheet styleSheet) {
-    JBColor color = JBColor.namedColor("Notification.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
-    styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(color) + "}");
+    styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(getLinkButtonForeground()) + "}");
+  }
+
+  public static @NotNull Color getLinkButtonForeground() {
+    return JBColor.namedColor("Notification.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
   }
 
   public static @NotNull Color getMoreButtonForeground() {
