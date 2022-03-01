@@ -172,7 +172,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, builder -> {
           builder.contentFactory = new ServiceViewToolWindowFactory();
           builder.icon = AllIcons.Toolwindows.ToolWindowServices;
-          if (toolWindowId == ToolWindowId.SERVICES) {
+          if (toolWindowId.equals(ToolWindowId.SERVICES)) {
             builder.stripeTitle = () -> {
               @NlsSafe String title = toolWindowId;
               return title;
