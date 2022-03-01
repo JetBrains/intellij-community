@@ -102,7 +102,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
-    productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+
+    List<PluginLayout> inheritedPluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+    // Remove plugin layouts that reference modules that do not exist in our fork.
+    inheritedPluginLayouts.removeAll {
+      it.mainModule in EXCLUDED_PLUGINS || it.mainModule == "intellij.python.community.plugin"
+    }
+    productLayout.allNonTrivialPlugins = inheritedPluginLayouts + [
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin([]),
       plugin("intellij.cidr.debugger.plugin") {

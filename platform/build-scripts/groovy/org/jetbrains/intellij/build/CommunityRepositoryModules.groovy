@@ -116,14 +116,10 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingProxy")
       withProjectLibrary("Gradle", ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
     },
-/* Android Studio: exclude dependencyUpdater
     plugin("intellij.packageSearch"),
     plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
-Android Studio: exclude dependencyUpdater */
-/* Android Studio: exclude intellij.gradle.dsl
     plugin("intellij.android.gradle.dsl"),
-Android Studio: exclude intellij.gradle.dsl */
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
     },
@@ -158,9 +154,7 @@ Android Studio: exclude intellij.gradle.dsl */
       mainJarName = "java-decompiler.jar"
       withModule("intellij.java.decompiler.engine", mainJarName)
     },
-/* Not relevant in Android Studio:
     javaFXPlugin("intellij.javaFX.community"),
-*/
     plugin("intellij.terminal") {
       withResource("resources/.zshenv", "")
       withResource("resources/jediterm-bash.in", "")
@@ -173,21 +167,15 @@ Android Studio: exclude intellij.gradle.dsl */
       withModule("intellij.textmate.core")
       withResource("lib/bundles", "lib/bundles")
     },
-/* Android Studio: exclude Python
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
-Android Studio: exclude Python */
-/* Android Studio: exclude smali
     plugin("intellij.android.smali"),
-Android Studio: exclude smali */
     plugin("intellij.completionMlRanking"),
     plugin("intellij.completionMlRankingModels") {
       bundlingRestrictions.includeInEapOnly = true
     },
-/* Android Studio: exclude intellij.statsCollector
     plugin("intellij.statsCollector") {
       bundlingRestrictions.includeInEapOnly = true
     },
-Android Studio: exclude intellij.statsCollector */
     plugin("intellij.ml.models.local") {
       withModule("intellij.ml.models.local.java")
       bundlingRestrictions.includeInEapOnly = true
@@ -196,7 +184,6 @@ Android Studio: exclude intellij.statsCollector */
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     },
-/* Android Studio: exclude intellij.android.jpsBuildPlugin
     plugin("intellij.grazie") {
       withModule("intellij.grazie.core")
       withModule("intellij.grazie.java")
@@ -206,7 +193,6 @@ Android Studio: exclude intellij.statsCollector */
       withModule("intellij.grazie.xml")
       withModule("intellij.grazie.yaml")
     },
-Android Studio: exclude intellij.android.jpsBuildPlugin */
     plugin("intellij.java.rareRefactorings"),
     plugin("intellij.toml") {
       withModule("intellij.toml.core")
