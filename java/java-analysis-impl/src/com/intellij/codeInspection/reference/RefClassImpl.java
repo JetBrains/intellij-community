@@ -58,7 +58,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     setDefaultConstructor(null);
 
     UClass uClass = getUastElement();
@@ -518,7 +518,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
 
   @Override
-  public boolean isReferenced() {
+  public synchronized boolean isReferenced() {
     if (super.isReferenced()) return true;
 
     if (isInterface()) {
@@ -564,7 +564,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   /**
-   * typical jvm utility class has only static method or fields. But for example in kotlin utility classes (Objects) follow singleton pattern.
+   * A typical Java utility class has only static methods or fields.
+   * However in Kotlin utility classes (Objects) follow singleton pattern.
    */
   private void setUtilityClass(boolean utilityClass) {
     setFlag(utilityClass, IS_UTILITY_MASK);

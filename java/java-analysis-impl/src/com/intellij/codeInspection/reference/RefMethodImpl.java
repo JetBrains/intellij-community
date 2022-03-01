@@ -90,7 +90,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     UMethod method = (UMethod)getUastElement();
     LOG.assertTrue(method != null);
     PsiElement sourcePsi = method.getSourcePsi();
@@ -313,11 +313,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public void buildReferences() {
-    if (!isInitialized()) {
-      // delay task until initialized.
-      getRefManager().executeTask(() -> buildReferences());
-      return;
-    }
+    waitForInitialized();
 
     // Work on code block to find what we're referencing...
     UMethod method = (UMethod)getUastElement();

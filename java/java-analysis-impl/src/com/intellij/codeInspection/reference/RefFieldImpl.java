@@ -33,7 +33,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     PsiElement psi = getPsiElement();
     LOG.assertTrue(psi != null);
     UField uElement = getUastElement();
