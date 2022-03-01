@@ -42,8 +42,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_TOTAL;
-import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
+import static com.intellij.codeInspection.ProblemHighlightType.*;
 
 public class UnnecessaryDefaultInspection extends BaseInspection {
 
@@ -168,7 +167,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
         highlightType = INFORMATION;
       }
       else {
-        highlightType = GENERIC_ERROR_OR_WARNING;
+        highlightType = LIKE_UNUSED_SYMBOL;
       }
       registerError(defaultStatement.getFirstChild(), highlightType);
     }
