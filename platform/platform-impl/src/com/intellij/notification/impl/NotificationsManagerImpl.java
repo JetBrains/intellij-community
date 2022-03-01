@@ -477,6 +477,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     text.setBorder(null);
 
     JPanel content = new NonOpaquePanel(new BorderLayout());
+    content.setBorder(JBUI.Borders.empty(JBUI.insets("Notification.borderInsets", JBInsets.emptyInsets())));
 
     if (text.getCaret() != null) {
       text.setCaretPosition(0);
