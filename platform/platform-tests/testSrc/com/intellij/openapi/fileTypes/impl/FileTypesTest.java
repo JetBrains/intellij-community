@@ -31,10 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.PersistentFSConstants;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
@@ -1503,5 +1500,15 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     finally {
       Disposer.dispose(disposable);
     }
+  }
+
+  public void testNewFileWithKnownExtensionCreationDoesntEntailAutodetectRun() throws IOException {
+    File dir = createTempDirectory();
+    assertNotNull("HtmlFileType must be in classpath", myFileTypeManager.findFileTypeByName("HTML"));
+    VirtualFile vDir = getVirtualFile(dir);
+    VirtualFile vFile = createChildData(vDir, "X.html");
+    setFileText(vFile, "<c></c>");
+    assertEquals("HTML", getFileType(vFile).getName());
+    assertFalse(myFileTypeManager.myDetectionService.wasAutoDetectedBefore(vFile));
   }
 }

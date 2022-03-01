@@ -84,7 +84,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final ThreadLocal<Pair<VirtualFile, FileType>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<>();
 
   private final Set<FileTypeWithDescriptor> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
-  private final FileTypeDetectionService myDetectionService;
+  final FileTypeDetectionService myDetectionService;
   private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
   FileTypeAssocTable<FileTypeWithDescriptor> myPatternsTable = new FileTypeAssocTable<>();
