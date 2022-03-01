@@ -32,7 +32,7 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   }
 
   override fun desktopBrowse(project: Project?, uri: URI): Boolean {
-    if (project == null || !project.isTrusted()) {
+    if (project != null && !project.isTrusted()) {
       val ok = MessageDialogBuilder.yesNo(
         IdeBundle.message("external.link.confirmation.title"),
         IdeBundle.message("external.link.confirmation.message.0", uri),
