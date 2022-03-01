@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
@@ -25,32 +25,35 @@ public class SerializableCtorInspection extends DevKitInspectionBase {
     return new JavaElementVisitor() {
       @Override
       public void visitClass(PsiClass aClass) {
-        if (!InheritanceUtil.isInheritor(aClass, "java.io.Serializable"))
-          return;
-        if (aClass.findFieldByName(CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME, false) == null)
-          return;
-        PsiMethod[] constructors = aClass.getConstructors();
-        for (PsiMethod constructor : constructors) {
+        if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_IO_SERIALIZABLE)) return;
+        if (aClass.findFieldByName(CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME, false) == null) return;
+        for (PsiMethod constructor : aClass.getConstructors()) {
           if (constructor.getNameIdentifier() != null && constructor.getAnnotation(PROPERTY_MAPPING_ANNOTATION) == null) {
-            @NonNls StringBuilder builder = new StringBuilder("@PropertyMapping({");
-            JvmParameter[] parameters = constructor.getParameters();
-            for (int i = 0; i < parameters.length; i++) {
-              if (i > 0) builder.append(',');
-              String name = Objects.requireNonNull(parameters[i].getName());
-              if (aClass.findFieldByName(name, false) == null) {
-                name = "my" + StringUtil.capitalize(name);
-              }
-              if (aClass.findFieldByName(name, false) == null) {
-                name = "??" + name;
-              }
-              builder.append('"').append(name).append('"');
-            }
-            PsiAnnotation annotation = JavaPsiFacade.getElementFactory(aClass.getProject())
-              .createAnnotationFromText(builder.append("})").toString(), aClass);
             holder.registerProblem(constructor.getNameIdentifier(), DevKitBundle.message("inspection.serializable.constructor.message"),
-                                   new AddAnnotationPsiFix(PROPERTY_MAPPING_ANNOTATION, constructor, annotation.getParameterList().getAttributes()));
+                                   new AddAnnotationPsiFix(PROPERTY_MAPPING_ANNOTATION, constructor,
+                                                           createExpectedAnnotationAttributes(aClass, constructor)));
           }
         }
+      }
+
+      private PsiNameValuePair @NotNull [] createExpectedAnnotationAttributes(PsiClass aClass, PsiMethod constructor) {
+        @NonNls StringBuilder builder = new StringBuilder("@PropertyMapping({");
+        JvmParameter[] parameters = constructor.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+          if (i > 0) builder.append(',');
+          String name = Objects.requireNonNull(parameters[i].getName());
+          if (aClass.findFieldByName(name, false) == null) {
+            name = "my" + StringUtil.capitalize(name);
+          }
+          if (aClass.findFieldByName(name, false) == null) {
+            name = "??" + name;
+          }
+          builder.append('"').append(name).append('"');
+        }
+        builder.append("})");
+        PsiAnnotation annotation = JavaPsiFacade.getElementFactory(aClass.getProject())
+          .createAnnotationFromText(builder.toString(), aClass);
+        return annotation.getParameterList().getAttributes();
       }
     };
   }
