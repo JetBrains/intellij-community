@@ -30,6 +30,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File
 import java.nio.file.Path
+import java.util.function.Supplier
 
 internal val sampleDirBasedProjectFile = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
 internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePath(),
@@ -187,10 +188,11 @@ internal class JpsFileContentWriterImpl(private val baseProjectDir: File) : JpsF
   }
 
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
+    val projectPointerSupplier = { baseProjectDir.systemIndependentPath }
     return if (isModuleFile(JpsPathUtil.urlToFile(fileUrl)))
-      ModulePathMacroManager.createInstance { JpsPathUtil.urlToOsPath(fileUrl) }.replacePathMap
+      ModulePathMacroManager.createInstance(projectPointerSupplier, Supplier { JpsPathUtil.urlToOsPath(fileUrl) }).replacePathMap
     else
-      ProjectPathMacroManager.createInstance({ baseProjectDir.systemIndependentPath }, null).replacePathMap
+      ProjectPathMacroManager.createInstance(projectPointerSupplier, null).replacePathMap
   }
 
   internal fun writeFiles() {
