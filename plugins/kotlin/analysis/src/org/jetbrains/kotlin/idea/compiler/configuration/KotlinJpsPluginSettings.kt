@@ -17,6 +17,9 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
     override fun createSettings() = JpsPluginSettings()
 
     companion object {
+        // Use bundled by default because this will work even without internet connection
+        val DEFAULT_VERSION = KotlinPluginLayout.instance.standaloneCompilerVersion
+
         fun getInstance(project: Project): KotlinJpsPluginSettings? {
             val jpsPluginSettings = project.getServiceSafe<KotlinJpsPluginSettings>()
             if (!isUnbundledJpsExperimentalFeatureEnabled(project)) {
@@ -27,8 +30,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             if (jpsPluginSettings.settings.version.isEmpty()) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
                 jpsPluginSettings.settings = jpsPluginSettings.settings.unfrozen().apply {
-                    // Use bundled by default because this will work even without internet connection
-                    version = KotlinPluginLayout.instance.standaloneCompilerVersion
+                    version = DEFAULT_VERSION
                 }
             }
             return jpsPluginSettings

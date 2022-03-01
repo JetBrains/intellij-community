@@ -12,11 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class ProjectPathMacroManager extends PathMacroManager {
-  private final Supplier<@SystemIndependent String> myBasePathPointer;
-  private final @Nullable Supplier<@SystemIndependent String> myNamePointer;
+  private final @NotNull Supplier<@Nullable @SystemIndependent String> myBasePathPointer;
+  private final @Nullable Supplier<@NotNull @SystemIndependent String> myNamePointer;
 
   public ProjectPathMacroManager(@NotNull Project project) {
     super(PathMacros.getInstance());
@@ -25,34 +26,38 @@ public class ProjectPathMacroManager extends PathMacroManager {
   }
 
   @NonInjectable
-  private ProjectPathMacroManager(Supplier<@SystemIndependent String> basePathPointer,
-                                  @Nullable Supplier<@SystemIndependent String> namePointer) {
+  private ProjectPathMacroManager(@NotNull Supplier<@Nullable @SystemIndependent String> basePathPointer,
+                                  @Nullable Supplier<@NotNull @SystemIndependent String> namePointer) {
     super(PathMacros.getInstance());
     myBasePathPointer = basePathPointer;
     myNamePointer = namePointer;
   }
 
-  @NotNull
   @Override
-  public ExpandMacroToPathMap getExpandMacroMap() {
+  public @NotNull ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = super.getExpandMacroMap();
-    addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, myBasePathPointer.get());
+    String projectDir = myBasePathPointer.get();
+    addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectDir);
     if (myNamePointer != null) {
       result.addMacroExpand(PathMacroUtil.PROJECT_NAME_MACRO_NAME, myNamePointer.get());
+    }
+    if (projectDir != null) {
+      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectDir).entrySet()) {
+        result.addMacroExpand(entry.getKey(), entry.getValue());
+      }
     }
     return result;
   }
 
-  @NotNull
   @Override
-  protected ReplacePathToMacroMap computeReplacePathMap() {
+  protected @NotNull ReplacePathToMacroMap computeReplacePathMap() {
     ReplacePathToMacroMap result = super.computeReplacePathMap();
     addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, myBasePathPointer.get(), null);
     return result;
   }
 
-  public static ProjectPathMacroManager createInstance(Supplier<@SystemIndependent String> basePathPointer,
-                                                       @Nullable Supplier<@SystemIndependent String> namePointer) {
+  public static ProjectPathMacroManager createInstance(@NotNull Supplier<@SystemIndependent @Nullable String> basePathPointer,
+                                                       @Nullable Supplier<@SystemIndependent @NotNull String> namePointer) {
     return new ProjectPathMacroManager(basePathPointer, namePointer);
   }
 }
