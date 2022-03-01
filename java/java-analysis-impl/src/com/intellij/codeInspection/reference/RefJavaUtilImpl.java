@@ -399,10 +399,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitClassLiteralExpression(@NotNull UClassLiteralExpression node) {
-                         final PsiType type = node.getType();
-                         if (type instanceof PsiClassType) {
-                           processClassReference(((PsiClassType)type).resolve(), false, node);
-                         }
+                         processClassReference(PsiUtil.resolveClassInClassTypeOnly(node.getType()), false, node);
                          return false;
                        }
 
