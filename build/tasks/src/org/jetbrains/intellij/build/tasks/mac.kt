@@ -31,7 +31,7 @@ fun buildMacZip(targetFile: Path,
       }
 
       writeNewFile(targetFile) { targetFileChannel ->
-        org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(targetFileChannel).use { zipOutStream ->
+        NoDuplicateZipArchiveOutputStream(targetFileChannel).use { zipOutStream ->
           zipOutStream.setLevel(compressionLevel)
 
           zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson)
