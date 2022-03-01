@@ -1034,7 +1034,10 @@ private class NotificationComponent(val project: Project,
   }
 
   private fun createAction(action: AnAction): JComponent {
-    return LinkLabel(action.templateText, action.templatePresentation.icon, { link, _action -> runAction(_action, link) }, action)
+    return object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon,
+                                        { link, _action -> runAction(_action, link) }, action) {
+      override fun getTextColor() = NotificationsUtil.getLinkButtonForeground()
+    }
   }
 
   private fun doShowSettings() {
