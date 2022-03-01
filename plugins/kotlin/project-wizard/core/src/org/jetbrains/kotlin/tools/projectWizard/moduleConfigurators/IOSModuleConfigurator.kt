@@ -41,8 +41,10 @@ object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleCon
         configurationData: ModulesToIrConversionData,
         module: Module,
         modulePath: Path
-    ): TaskResult<Unit> =
+    ): TaskResult<Unit> = compute {
         GradlePlugin.gradleProperties.addValues("xcodeproj" to "./${module.name}")
+        GradlePlugin.gradleProperties.addValues("kotlin.native.cocoapods.generate.wrapper" to true)
+    }
 
     override fun Reader.createTemplates(
         configurationData: ModulesToIrConversionData,
