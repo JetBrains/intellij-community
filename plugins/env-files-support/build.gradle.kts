@@ -32,15 +32,15 @@ sourceSets {
 }
 
 intellij {
-    version.set("IU-221.3427.89-EAP-SNAPSHOT")
+    version.set("IU-221.4501.155-EAP-SNAPSHOT")
     plugins.set(
         listOf(
-            "com.jetbrains.php:221.3427.92",
+            "com.jetbrains.php:221.4501.163",
             "yaml",
-            "org.jetbrains.plugins.go:221.3427.89",
+            "org.jetbrains.plugins.go:221.4501.155",
             "Docker",
-            "pythonid:221.3427.93",
-            "org.jetbrains.plugins.ruby:221.3427.89",
+            "pythonid:221.4501.155",
+            "org.jetbrains.plugins.ruby:221.4501.155",
             "Kotlin",
             "coverage",
             "CSS",

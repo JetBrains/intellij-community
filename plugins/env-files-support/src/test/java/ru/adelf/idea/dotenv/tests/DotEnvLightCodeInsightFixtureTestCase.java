@@ -7,6 +7,8 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 
@@ -16,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Copy of LaravelLightCodeInsightFixtureTestCase from laravel plugin
  */
+@RunWith(JUnit4.class)
 public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatformTestCase {
 
     protected String basePath = "src/test/java/ru/adelf/idea/dotenv/tests/";

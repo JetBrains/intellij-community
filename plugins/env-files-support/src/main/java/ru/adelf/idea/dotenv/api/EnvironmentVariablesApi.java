@@ -57,7 +57,9 @@ public class EnvironmentVariablesApi {
             return true;
         }, project);
 
-        return keyValues.size() > 0 ? keyValues : secondaryKeyValues;
+        secondaryKeyValues.putAll(keyValues);
+
+        return secondaryKeyValues;
     }
 
     /**

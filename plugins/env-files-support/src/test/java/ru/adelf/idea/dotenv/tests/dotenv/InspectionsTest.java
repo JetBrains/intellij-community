@@ -4,8 +4,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import ru.adelf.idea.dotenv.inspections.*;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
 
@@ -14,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@RunWith(JUnit4.class)
 public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
 
     @Override
@@ -63,7 +60,7 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
     public void testTrailingWhitespaceInspection() {
         doInspectionTest(new TrailingWhitespaceInspection(), Arrays.asList(" ", "    ", "  \n", "   \n\n"));
     }
-    
+
     @Test
     public void testSpaceAroundSeparatorInspection() {
         doInspectionTest(new SpaceAroundSeparatorInspection(), Arrays.asList(" = ", " = ", " =", "= ", " ="));
@@ -91,7 +88,7 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
         List<HighlightInfo> highlightInfoList = myFixture.doHighlighting();
         List<String> actualHighlightedText = new ArrayList<>();
 
-        highlightInfoList.forEach( highlightInfo -> actualHighlightedText.add(highlightInfo.getText()));
+        highlightInfoList.forEach(highlightInfo -> actualHighlightedText.add(highlightInfo.getText()));
 
         assertEquals(expectedHighlightedText, actualHighlightedText);
     }
