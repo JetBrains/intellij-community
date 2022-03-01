@@ -53,6 +53,7 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
             serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner" preload="true"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.KotlinPluginDisposable"/>
