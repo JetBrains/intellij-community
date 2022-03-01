@@ -193,7 +193,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private void initializeSuperReferences(UClass uClass) {
     if (!isSelfInheritor(uClass)) {
         uClass.getUastSuperTypes().stream()
-        .map(t -> PsiUtil.resolveClassInType(t.getType()))
+        .map(t -> PsiUtil.resolveClassInClassTypeOnly(t.getType()))
         .filter(Objects::nonNull)
         .filter(c -> getRefJavaManager().belongsToScope(c))
         .forEach(c -> {
@@ -224,11 +224,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (visited.contains(uClass)) return true;
     visited.add(uClass);
     if (uClass.getUastSuperTypes().stream()
-              .map(t -> PsiUtil.resolveClassInType(t.getType()))
-              .filter(Objects::nonNull)
-              .map(c -> UastContextKt.toUElement(c, UClass.class))
-              .filter(Objects::nonNull)
-              .anyMatch(c -> isSelfInheritor(c, visited))) {
+      .map(t -> PsiUtil.resolveClassInClassTypeOnly(t.getType()))
+      .map(c -> UastContextKt.toUElement(c, UClass.class))
+      .filter(Objects::nonNull)
+      .anyMatch(c -> isSelfInheritor(c, visited))) {
       return true;
     }
 
