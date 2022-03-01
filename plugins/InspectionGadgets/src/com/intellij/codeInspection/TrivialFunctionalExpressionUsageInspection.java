@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -122,7 +122,8 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
         if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
           holder.registerProblem(referenceNameElement,
-                                 InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"), fix);
+                                 InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"),
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
         }
       }
     };
