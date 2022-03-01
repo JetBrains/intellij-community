@@ -1,3 +1,4 @@
+// ERROR: Type mismatch: inferred type is Int? but Int was expected
 // PROBLEM: none
 // WITH_STDLIB
 
