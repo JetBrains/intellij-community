@@ -1,3 +1,4 @@
+// PROBLEM: none
 // WITH_RUNTIME
 fun <T> doIt(p: () -> T): T = p()
 fun Any.doDo() = Unit
