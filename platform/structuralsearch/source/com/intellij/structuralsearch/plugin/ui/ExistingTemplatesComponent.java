@@ -104,6 +104,12 @@ public final class ExistingTemplatesComponent {
     final DumbAwareAction removeAction = new DumbAwareAction(SSRBundle.messagePointer("remove.template"),
                                                              AllIcons.General.Remove) {
       @Override
+      public void update(@NotNull AnActionEvent e) {
+        final DefaultMutableTreeNode selectedNode = getSelectedNode();
+        e.getPresentation().setEnabled(selectedNode != null && selectedNode.isNodeAncestor(myUserTemplatesNode));
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeTemplate(project);
       }
@@ -241,16 +247,12 @@ public final class ExistingTemplatesComponent {
     TreeUtil.selectInTree(node, false, patternTree, false);
   }
 
-  public Configuration getSelectedConfiguration() {
+  public DefaultMutableTreeNode getSelectedNode() {
     final Object selection = patternTree.getLastSelectedPathComponent();
     if (!(selection instanceof DefaultMutableTreeNode)) {
       return null;
     }
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-    if (!(node.getUserObject() instanceof Configuration)) {
-      return null;
-    }
-    return (Configuration)node.getUserObject();
+    return (DefaultMutableTreeNode)selection;
   }
 
   private static Tree createTree(TreeModel treeModel) {
