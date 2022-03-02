@@ -44,6 +44,9 @@ public final class ExistingTemplatesComponent {
   private final JComponent panel;
   private final JComponent myToolbar;
   private Supplier<? extends Configuration> myConfigurationProducer;
+  private Supplier<? extends EditorTextField> mySearchEditorProducer;
+  private Runnable myExportRunnable;
+  private Runnable myImportRunnable;
   private final DefaultMutableTreeNode myRecentNode;
   private final DefaultMutableTreeNode myUserTemplatesNode;
 
@@ -106,11 +109,38 @@ public final class ExistingTemplatesComponent {
       }
     };
 
+    final DumbAwareAction exportAction = new DumbAwareAction(SSRBundle.messagePointer("export.template.action"), AllIcons.ToolbarDecorator.Export) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (mySearchEditorProducer != null) {
+          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchEditorProducer.get().getText()));
+        }
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (myExportRunnable != null) {
+          myExportRunnable.run();
+        }
+      }
+    };
+    final DumbAwareAction importAction = new DumbAwareAction(SSRBundle.messagePointer("import.template.action"), AllIcons.ToolbarDecorator.Import) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (myImportRunnable != null) {
+          myImportRunnable.run();
+        }
+      }
+    };
+
     actionGroup.add(saveGroup);
     actionGroup.add(removeAction);
     actionGroup.add(Separator.getInstance());
     actionGroup.addAll(actionManager.createExpandAllAction(treeExpander, patternTree),
                        actionManager.createCollapseAllAction(treeExpander, patternTree));
+    actionGroup.add(Separator.getInstance());
+    actionGroup.add(exportAction);
+    actionGroup.add(importAction);
 
     final var optionsToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
     optionsToolbar.setTargetComponent(patternTree);
@@ -321,6 +351,18 @@ public final class ExistingTemplatesComponent {
 
   public void setConfigurationProducer(Supplier<? extends Configuration> configurationProducer) {
     myConfigurationProducer = configurationProducer;
+  }
+
+  public void setSearchEditorProducer(Supplier<? extends EditorTextField> editorProducer) {
+    mySearchEditorProducer = editorProducer;
+  }
+
+  public void setExportRunnable(Runnable exportRunnable) {
+    myExportRunnable = exportRunnable;
+  }
+
+  public void setImportRunnable(Runnable importRunnable) {
+    myImportRunnable = importRunnable;
   }
 
   public void updateColors() {
