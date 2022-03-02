@@ -3,7 +3,9 @@ package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
 import com.intellij.lang.Language
@@ -63,11 +65,15 @@ class ParameterInlayProviderSettingsModel(
 
   override fun collectAndApply(editor: Editor, file: PsiFile) {
     val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+    pass.doApplyInformationToEditor()
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
                                                backup.reset()
                                                try {
                                                  apply()
+                                                 val case = CASE_KEY.get(editor)
+                                                 ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, case != null && !case.value)
+                                                 provider.supportedOptions.forEach { it.set(true) }
                                                  pass.collectInformation(ProgressIndicatorBase())
                                                }
                                                finally {
