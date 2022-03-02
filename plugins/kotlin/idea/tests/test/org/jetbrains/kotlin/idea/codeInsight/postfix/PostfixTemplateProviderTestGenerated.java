@@ -136,6 +136,11 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
             runTest("testData/codeInsight/postfix/sout.kt");
         }
 
+        @TestMetadata("soutCompanionClassLiteral.kt")
+        public void testSoutCompanionClassLiteral() throws Exception {
+            runTest("testData/codeInsight/postfix/soutCompanionClassLiteral.kt");
+        }
+
         @TestMetadata("soutInIf.kt")
         public void testSoutInIf() throws Exception {
             runTest("testData/codeInsight/postfix/soutInIf.kt");
