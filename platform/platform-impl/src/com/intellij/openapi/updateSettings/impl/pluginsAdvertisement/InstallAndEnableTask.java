@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -27,6 +28,7 @@ final class InstallAndEnableTask extends Task.Modal {
   private final @NotNull Set<PluginId> myPluginIds;
   private final boolean myShowDialog;
   private final boolean mySelectAllInDialog;
+  private final @Nullable ModalityState myModalityState;
   private @NotNull final Runnable myOnSuccess;
   private @Nullable List<PluginNode> myCustomPlugins;
 
@@ -34,11 +36,13 @@ final class InstallAndEnableTask extends Task.Modal {
                        @NotNull Set<PluginId> pluginIds,
                        boolean showDialog,
                        boolean selectAllInDialog,
+                       @Nullable ModalityState modalityState,
                        @NotNull Runnable onSuccess) {
     super(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true);
     myPluginIds = pluginIds;
     myShowDialog = showDialog;
     mySelectAllInDialog = selectAllInDialog;
+    myModalityState = modalityState;
     myOnSuccess = onSuccess;
   }
 
@@ -80,7 +84,7 @@ final class InstallAndEnableTask extends Task.Modal {
                                 myCustomPlugins,
                                 mySelectAllInDialog,
                                 this::runOnSuccess)
-      .doInstallPlugins(myShowDialog);
+      .doInstallPlugins(myShowDialog, myModalityState);
   }
 
   private void runOnSuccess(boolean onSuccess) {
