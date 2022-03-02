@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.resolve.ideService
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtThrowExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
@@ -111,7 +112,7 @@ internal object KtArgumentPostfixTemplate : ConstantStringBasedPostfixTemplate(
     "arg",
     "functionCall(expr)",
     "\$call$(\$expr$\$END$)",
-    createExpressionSelector(statementsOnly = true)
+    createExpressionSelectorWithComplexFilter { expression, _ -> expression !is KtReturnExpression && expression !is KtThrowExpression }
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
         template.addVariable("call", "", "", true)
