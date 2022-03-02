@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.tree
 
@@ -43,7 +43,7 @@ private class JKListChild<T : JKElement>(val value: Int) : ReadWriteProperty<JKT
 }
 
 
-    abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable {
+abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable {
     override val trailingComments: MutableList<JKComment> = mutableListOf()
     override val leadingComments: MutableList<JKComment> = mutableListOf()
     override var hasTrailingLineBreak = false
@@ -89,15 +89,14 @@ private class JKListChild<T : JKElement>(val value: Int) : ReadWriteProperty<JKT
     }
 
     inline fun forEachChild(block: (JKTreeElement) -> Unit) {
-        children.forEach {
+        children.forEach { child ->
             @Suppress("UNCHECKED_CAST")
-            if (it is JKTreeElement)
-                block(it)
+            if (child is JKTreeElement)
+                block(child)
             else
-                (it as? List<JKTreeElement>)?.forEach { block(it) }
+                (child as? List<JKTreeElement>)?.forEach { block(it) }
         }
     }
-
 
     private var valid: Boolean = true
 
@@ -117,10 +116,10 @@ private class JKListChild<T : JKElement>(val value: Int) : ReadWriteProperty<JKT
     open fun copy(): JKTreeElement {
         val cloned = clone() as JKTreeElement
         val deepClonedChildren =
-            cloned.children.map {
-                when (it) {
-                    is JKTreeElement -> it.copy()
-                    is List<*> -> (it as List<JKTreeElement>).map { it.copy() }
+            cloned.children.map { child ->
+                when (child) {
+                    is JKTreeElement -> child.copy()
+                    is List<*> -> (child as List<JKTreeElement>).map { it.copy() }
                     else -> error("Tree is corrupted")
                 }
             }
@@ -157,4 +156,3 @@ interface JKTypeArgumentListOwner : JKFormattingOwner {
 interface JKTypeParameterListOwner : JKFormattingOwner {
     var typeParameterList: JKTypeParameterList
 }
-

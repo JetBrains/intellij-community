@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.fqName
 
 import com.intellij.psi.PsiElement
@@ -21,7 +18,7 @@ val KotlinType.fqName: FqName?
 
 @Deprecated(
     "For binary compatibility",
-    replaceWith = ReplaceWith("getKotlinFqName", "org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName"),
+    replaceWith = ReplaceWith("getKotlinFqName()", "org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName"),
 )
 fun PsiElement.getKotlinFqName(): FqName? =
     _getKotlinFqName()
