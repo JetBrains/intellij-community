@@ -131,8 +131,21 @@ public class EquivalenceChecker {
     if (statement1 == null || statement2 == null) {
       return Match.exact(statement1 == statement2);
     }
+    if (statement1 == statement2) {
+      return EXACT_MATCH;
+    }
     if (statement1.getClass() != statement2.getClass()) {
-        return EXACT_MISMATCH;
+      if (statement1 instanceof PsiLabeledStatement) {
+        statement1 = ((PsiLabeledStatement)statement1).getStatement();
+        markDeclarationsAsEquivalent(statement1, statement2);
+        return statementsMatch(statement1, statement2);
+      }
+      else if (statement2 instanceof PsiLabeledStatement) {
+        statement2 = ((PsiLabeledStatement)statement2).getStatement();
+        markDeclarationsAsEquivalent(statement1, statement2);
+        return statementsMatch(statement1, statement2);
+      }
+      return EXACT_MISMATCH;
     }
     if (statement1 instanceof PsiAssertStatement) {
       return assertStatementsMatch((PsiAssertStatement)statement1, (PsiAssertStatement)statement2);
@@ -404,8 +417,8 @@ public class EquivalenceChecker {
   protected Match breakStatementsMatch(@NotNull PsiBreakStatement statement1, @NotNull PsiBreakStatement statement2) {
     final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
     final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
-    if (identifier1 == null || identifier2 == null) {
-      return Match.exact(identifier1 == identifier2);
+    if (identifier1 == null && identifier2 == null) {
+      return EXACT_MATCH;
     }
     return Match.exact(equivalentDeclarations(statement1.findExitedStatement(), statement2.findExitedStatement()));
   }
@@ -413,8 +426,8 @@ public class EquivalenceChecker {
   protected Match continueStatementsMatch(@NotNull PsiContinueStatement statement1, @NotNull PsiContinueStatement statement2) {
     final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
     final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
-    if (identifier1 == null || identifier2 == null) {
-      return Match.exact(identifier1 == identifier2);
+    if (identifier1 == null && identifier2 == null) {
+      return EXACT_MATCH;
     }
     return Match.exact(equivalentDeclarations(statement1.findContinuedStatement(), statement2.findContinuedStatement()));
   }
