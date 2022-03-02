@@ -61,13 +61,13 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
       is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item
       is PsiElement -> element
       else -> return emptyMap()
-    }.takeIf { it.isValid } ?: return emptyMap()
+    }
 
     val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
 
     cache as Cache?
     val file = getContainingFile(item)
-    val project = ReadAction.compute<Project, Nothing> { item.project }
+    val project = ReadAction.compute<Project?, Nothing> { item.takeIf { it.isValid }?.project } ?: return emptyMap()
 
     val data = HashMap<String, Any>()
     if (file != null && cache != null) {
@@ -84,7 +84,8 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     ReadAction.compute<VirtualFile?, Nothing> {
       try {
         item.containingFile?.virtualFile
-      } catch (ex: PsiInvalidElementAccessException) {
+      }
+      catch (ex: PsiInvalidElementAccessException) {
         null
       }
     }
