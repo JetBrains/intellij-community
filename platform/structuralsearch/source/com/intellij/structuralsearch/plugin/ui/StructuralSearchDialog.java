@@ -406,9 +406,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myExistingTemplatesComponent.onConfigurationSelected(configuration -> {
       loadConfiguration(configuration);
     });
-    myExistingTemplatesComponent.setConfigurationProducer(() -> {
-      return myConfiguration;
-    });
+    myExistingTemplatesComponent.setConfigurationProducer(() -> myConfiguration);
+    myExistingTemplatesComponent.setSearchEditorProducer(() -> mySearchCriteriaEdit);
+    myExistingTemplatesComponent.setExportRunnable(() -> exportToClipboard());
+    myExistingTemplatesComponent.setImportRunnable(() -> importFromClipboard());
     myMainSplitter = new OnePixelSplitter(false, 0.2f);
     myMainSplitter.setFirstComponent(myExistingTemplatesComponent.getTemplatesPanel());
     myMainSplitter.setSecondComponent(centerPanel);
@@ -466,10 +467,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     // Other actions
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
     mySwitchAction = new SwitchAction();
-    templateActionGroup.addAll(
-      new CopyConfigurationAction(),
-      new PasteConfigurationAction(),
-      Separator.getInstance(),
+    templateActionGroup.add(
       mySwitchAction
     );
 
@@ -1201,6 +1199,17 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myExistingTemplatesComponent.updateColors();
   }
 
+  private void exportToClipboard() {
+    CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(getConfiguration())));
+  }
+
+  private void importFromClipboard() {
+    final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    if (!loadConfiguration(contents)) {
+      reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
+    }
+  }
+
   private static class ErrorBorder implements Border {
     private final Border myErrorBorder;
 
@@ -1266,38 +1275,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                       ? new CompositeShortcutSet(searchShortcutSet, replaceShortcutSet)
                                       : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
       registerCustomShortcutSet(shortcutSet, getRootPane());
-    }
-  }
-
-  private class CopyConfigurationAction extends AnAction implements DumbAware {
-
-    CopyConfigurationAction() {
-      super(SSRBundle.messagePointer("export.template.action"));
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(getConfiguration())));
-    }
-  }
-
-  private class PasteConfigurationAction extends AnAction implements DumbAware {
-
-    PasteConfigurationAction() {
-      super(SSRBundle.messagePointer("import.template.action"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-      if (!loadConfiguration(contents)) {
-        reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
-      }
     }
   }
 
