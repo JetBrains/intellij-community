@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.SingleTargetElementInfo
+import com.intellij.codeInsight.navigation.*
+import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
-import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -54,6 +54,16 @@ private class GTDProviderData(
     }
     else {
       SingleTargetElementInfo(leafElement, singleTarget)
+    }
+  }
+
+  override fun ctrlMouseData(): CtrlMouseData {
+    val singleTarget = targetElements.singleOrNull()
+    if (singleTarget == null) {
+      return multipleTargetsCtrlMouseData(getReferenceRanges(leafElement))
+    }
+    else {
+      return psiCtrlMouseData(leafElement, singleTarget)
     }
   }
 

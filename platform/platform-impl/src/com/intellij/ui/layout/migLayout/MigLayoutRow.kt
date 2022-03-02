@@ -98,8 +98,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private var isTrailingSeparator = false
   private var isComment = false
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     if (title != null) {
       label(title)

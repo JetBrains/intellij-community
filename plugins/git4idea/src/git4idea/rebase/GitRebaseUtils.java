@@ -184,8 +184,7 @@ public final class GitRebaseUtils {
   /**
    * @deprecated Use {@link GitRepository#isRebaseInProgress()}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static boolean isRebaseInTheProgress(@NotNull Project project, @NotNull VirtualFile root) {
     return getRebaseDir(project, root) != null;
   }

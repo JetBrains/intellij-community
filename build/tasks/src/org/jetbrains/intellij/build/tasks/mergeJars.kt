@@ -170,7 +170,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
           }
         }
 
-        source.sizeConsumer?.accept((outChannel.position() - positionBefore).toInt())
+        source.sizeConsumer?.accept((zipCreator.resultStream.getChannelPosition() - positionBefore).toInt())
       }
       packageIndexBuilder.writePackageIndex(zipCreator)
     }
@@ -181,6 +181,8 @@ private fun getIgnoredNames(): Set<String> {
   val set = HashSet<String>()
   // compilation cache on TC
   set.add(".hash")
+  @Suppress("SpellCheckingInspection")
+  set.add(".gitattributes")
   set.add("pom.xml")
   set.add("about.html")
   set.add("module-info.class")

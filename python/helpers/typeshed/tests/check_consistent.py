@@ -17,11 +17,8 @@ import re
 
 import tomli
 
-consistent_files = [
-    {"stdlib/@python2/builtins.pyi", "stdlib/@python2/__builtin__.pyi"},
-    {"stdlib/threading.pyi", "stdlib/_dummy_threading.pyi"},
-]
-metadata_keys = {"version", "python2", "requires", "extra_description", "obsolete_since"}
+consistent_files = [{"stdlib/@python2/builtins.pyi", "stdlib/@python2/__builtin__.pyi"}]
+metadata_keys = {"version", "python2", "requires", "extra_description", "obsolete_since", "stubtest_apt_dependencies"}
 allowed_files = {"README.md"}
 
 
@@ -182,11 +179,10 @@ def check_metadata():
             assert ";" not in dep, f"Semicolons in dependencies are not supported, got {dep}"
             stripped, relation, dep_version = _strip_dep_version(dep)
             if relation:
-                msg = f"Bad version in dependency {dep}"
-                assert relation in {"==", ">", ">=", "<", "<="}, msg
-                assert version.count(".") <= 2, msg
-                for part in version.split("."):
-                    assert part.isnumeric(), msg
+                assert relation in {"==", ">", ">=", "<", "<="}, f"Bad relation '{relation}' in dependency {dep}"
+                assert dep_version.count(".") <= 2, f"Bad version '{dep_version}' in dependency {dep}"
+                for part in dep_version.split("."):
+                    assert part.isnumeric(), f"Bad version '{part}' in dependency {dep}"
 
 
 if __name__ == "__main__":

@@ -303,6 +303,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     Presentation presentation = myTemplatePresentation;
     if (presentation == null) {
       presentation = createTemplatePresentation();
+      LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
       myTemplatePresentation = presentation;
     }
     return presentation;
@@ -310,7 +311,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   @NotNull
   Presentation createTemplatePresentation() {
-    return new Presentation();
+    return Presentation.newTemplatePresentation();
   }
 
   /**
@@ -363,8 +364,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /** @deprecated not used anymore */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean isTransparentUpdate() {
     return this instanceof TransparentUpdate;
   }
@@ -431,8 +431,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /** @deprecated not used anymore */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public interface TransparentUpdate {
   }
 

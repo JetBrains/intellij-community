@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="SSHJ" type="repository">
-    <properties maven-id="com.hierynomus:sshj:0.32.0">
+    <properties maven-id="org.jetbrains.intellij.deps:sshj:0.32.0.1">
       <exclude>
         <dependency maven-id="org.slf4j:slf4j-api" />
         <dependency maven-id="org.bouncycastle:bcprov-jdk15on" />
@@ -9,13 +9,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.32.0/sshj-0.32.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0.32.0.1/sshj-0.32.0.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.32.0/sshj-0.32.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0.32.0.1/sshj-0.32.0.1-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0-sources.jar!/" />
     </SOURCES>

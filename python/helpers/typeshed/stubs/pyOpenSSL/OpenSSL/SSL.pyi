@@ -20,17 +20,15 @@ TLSv1_METHOD: int
 TLSv1_1_METHOD: int
 TLSv1_2_METHOD: int
 
-# To be added in pyOpenSSL 21
+TLS_METHOD: int
+TLS_SERVER_METHOD: int
+TLS_CLIENT_METHOD: int
 
-# TLS_METHOD: int
-# TLS_SERVER_METHOD: int
-# TLS_CLIENT_METHOD: int
-
-# SSL3_VERSION: int
-# TLS1_VERSION: int
-# TLS1_1_VERSION: int
-# TLS1_2_VERSION: int
-# TLS1_3_VERSION: int
+SSL3_VERSION: int
+TLS1_VERSION: int
+TLS1_1_VERSION: int
+TLS1_2_VERSION: int
+TLS1_3_VERSION: int
 
 OP_NO_SSLv2: int
 OP_NO_SSLv3: int
@@ -113,9 +111,9 @@ class SysCallError(Error): ...
 
 def SSLeay_version(type: int) -> str: ...
 
-class Session(object): ...
+class Session: ...
 
-class Connection(object):
+class Connection:
     def __getattr__(self, name: str) -> Any: ...  # incomplete
     def __init__(self, context: Context, socket: socket.socket | None = ...) -> None: ...
     def connect(self, addr: str | bytes | Sequence[str | int]) -> None: ...
@@ -136,7 +134,7 @@ class Connection(object):
     def get_app_data(self) -> Any: ...
     def set_app_data(self, data: Any) -> None: ...
 
-class Context(object):
+class Context:
     def __getattr__(self, name: str) -> Any: ...  # incomplete
     def __init__(self, method: int) -> None: ...
     def load_verify_locations(self, cafile: str | None, capath: str | None = ...) -> None: ...

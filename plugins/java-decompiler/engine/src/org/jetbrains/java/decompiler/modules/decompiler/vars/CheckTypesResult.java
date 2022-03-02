@@ -8,30 +8,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CheckTypesResult {
-  private final List<ExprentTypePair> lstMaxTypeExprents = new ArrayList<>();
-  private final List<ExprentTypePair> lstMinTypeExprents = new ArrayList<>();
+  private final List<ExprentTypePair> maxTypeExprents = new ArrayList<>();
+  private final List<ExprentTypePair> minTypeExprents = new ArrayList<>();
 
   public void addMaxTypeExprent(Exprent exprent, VarType type) {
-    lstMaxTypeExprents.add(new ExprentTypePair(exprent, type));
+    maxTypeExprents.add(new ExprentTypePair(exprent, type));
   }
 
   public void addMinTypeExprent(Exprent exprent, VarType type) {
-    lstMinTypeExprents.add(new ExprentTypePair(exprent, type));
+    minTypeExprents.add(new ExprentTypePair(exprent, type));
   }
 
-  public List<ExprentTypePair> getLstMaxTypeExprents() {
-    return lstMaxTypeExprents;
+  public List<ExprentTypePair> getMaxTypeExprents() {
+    return maxTypeExprents;
   }
 
-  public List<ExprentTypePair> getLstMinTypeExprents() {
-    return lstMinTypeExprents;
+  public List<ExprentTypePair> getMinTypeExprents() {
+    return minTypeExprents;
   }
 
-  public static class ExprentTypePair {
+  static class ExprentTypePair {
     public final Exprent exprent;
     public final VarType type;
 
-    public ExprentTypePair(Exprent exprent, VarType type) {
+    ExprentTypePair(Exprent exprent, VarType type) {
       this.exprent = exprent;
       this.type = type;
     }

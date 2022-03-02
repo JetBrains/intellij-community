@@ -45,8 +45,7 @@ public abstract class RecentProjectsManager {
   /**
    * @deprecated Use {@link RecentProjectListActionProvider#getActions}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public AnAction @NotNull [] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     return getRecentProjectsActions(addClearListItem);
   }

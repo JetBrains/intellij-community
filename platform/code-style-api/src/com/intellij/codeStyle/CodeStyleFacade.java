@@ -9,15 +9,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsFacade;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @deprecated See deprecations for specific methods, use methods of {@link com.intellij.application.options.CodeStyle} instead.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public abstract class CodeStyleFacade {
   public static CodeStyleFacade getInstance() {
     return ApplicationManager.getApplication().getService(CodeStyleFacade.class);
@@ -32,14 +30,13 @@ public abstract class CodeStyleFacade {
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getLineIndent(Editor, Language, int, boolean)} instead.
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract String getLineIndent(@NotNull Document document, int offset);
 
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getLineIndent(Editor, Language, int, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
     return getLineIndent(editor.getDocument(), offset);
@@ -48,31 +45,27 @@ public abstract class CodeStyleFacade {
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getIndentSize(PsiFile)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract int getIndentSize(FileType fileType);
 
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getFacade} and
    * {@link CodeStyleSettingsFacade#getTabSize()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract int getTabSize(final FileType fileType);
 
   /**
    * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).USE_TAB_CHARACTER}. See {@code CodeStyle for more information}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract boolean useTabCharacter(final FileType fileType);
 
   /**
    * @deprecated Use {@code getLineSeparator()} method of {@code CodeStyle.getSettings(PsiFile)} or
    *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract String getLineSeparator();
 
 }

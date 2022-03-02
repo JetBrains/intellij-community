@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +24,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class IOUtil {
-  @SuppressWarnings("SpellCheckingInspection") public static final boolean BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER =
-    Boolean.parseBoolean(System.getProperty("idea.bytebuffers.use.native.byte.order", "true"));
+  @ApiStatus.Internal
+  public static final String BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP = "idea.bytebuffers.use.native.byte.order";
+
+  /**
+   * if false then storages will use {@link java.nio.ByteOrder#BIG_ENDIAN}
+   */
+  @ApiStatus.Internal
+  public static boolean useNativeByteOrderForByteBuffers() {
+    return SystemProperties.getBooleanProperty(BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP, true);
+  }
 
   private static final int STRING_HEADER_SIZE = 1;
   private static final int STRING_LENGTH_THRESHOLD = 255;

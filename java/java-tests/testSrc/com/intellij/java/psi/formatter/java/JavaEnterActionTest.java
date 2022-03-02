@@ -739,4 +739,26 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "}"
     );
   }
+
+  public void testIfElseChain() {
+    doTextTest(
+      "java",
+      "class X {\n" +
+      "  void test(int x) {\n" +
+      "    if(x > 0) {\n" +
+      "    } else if(x == 0) {<caret>else {\n" +
+      "    }\n" +
+      "  }\n" +
+      "}",
+      "class X {\n" +
+      "  void test(int x) {\n" +
+      "    if(x > 0) {\n" +
+      "    } else if(x == 0) {\n" +
+      "        \n" +
+      "    }else {\n" +
+      "    }\n" +
+      "  }\n" +
+      "}"
+    );
+  }
 }

@@ -2,15 +2,13 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface TreeExpander {
   /**
    * @deprecated use {link #isExpandAllVisible} or {link #isCollapseAllVisible} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   default boolean isVisible(@NotNull AnActionEvent event) {
     return true;
   }

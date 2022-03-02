@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.types
 
@@ -115,7 +115,8 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         is PsiLambdaParameterType -> // Probably, means that we have erroneous Java code
             JKNoType
         is PsiLambdaExpressionType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
-        else -> throw Exception("Invalid PSI ${type::class.java}")
+        is PsiMethodReferenceType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
+        else -> JKNoType
     }
 
     private fun createKotlinType(type: KotlinType): JKType {

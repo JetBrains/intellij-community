@@ -62,6 +62,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private final EditorCallback myEditorCallback;
   private final JComponent myPanel = JavaFXPlatformHelper.createJFXPanel();
 
+  private @Nullable PsiClass nodeClass;
   protected EditorController myEditorController;
   private URLClassLoader myClassLoader;
   private volatile Collection<JavaFXPlatformHelper.CustomComponent> myCustomComponents;
@@ -69,7 +70,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private Object myListener;
   private Object mySelectionListener;
   private List<List<SelectionNode>> mySelectionState;
-  @NotNull protected final ClassLoader myParentClassLoader;
+  protected final @NotNull ClassLoader myParentClassLoader;
 
   public SceneBuilderImpl(URL url, Project project, EditorCallback editorCallback, @NotNull ClassLoader loader) {
     myFileURL = url;
@@ -94,6 +95,9 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
     Thread.currentThread().setUncaughtExceptionHandler(SceneBuilderImpl::logUncaughtException);
 
+    nodeClass = ReadAction.nonBlocking(() -> JavaPsiFacade.getInstance(myProject)
+        .findClass("javafx.scene.Node", GlobalSearchScope.allScope(myProject)))
+      .executeSynchronously();
     myEditorController = new EditorController();
     updateCustomLibrary();
     JavaFXPlatformHelper.setupJFXPanel(myPanel, myEditorController);
@@ -145,8 +149,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
     }
-    final PsiClass nodeClass = JavaPsiFacade.getInstance(myProject)
-      .findClass("javafx.scene.Node", GlobalSearchScope.allScope(myProject));
     if (nodeClass == null) {
       return Collections.emptyList();
     }
@@ -254,6 +256,7 @@ public class SceneBuilderImpl implements SceneBuilder {
 
   private void closeImpl() {
     JavaFXPlatformHelper.removeListeners(myEditorController, myListener, mySelectionListener);
+    nodeClass = null;
     myEditorController = null;
     try {
       if (myClassLoader != null) {

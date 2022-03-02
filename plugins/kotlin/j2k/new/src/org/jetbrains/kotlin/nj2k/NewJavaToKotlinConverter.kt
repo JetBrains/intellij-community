@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.conversions.JKResolver
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -49,7 +47,6 @@ class NewJavaToKotlinConverter(
         progress: ProgressIndicator,
         bodyFilter: ((PsiElement) -> Boolean)?,
     ): FilesResult {
-        progress.isIndeterminate = false
         val withProgressProcessor = NewJ2kWithProgressProcessor(progress, files, postProcessor.phasesCount + phasesCount)
         return withProgressProcessor.process {
             val (results, externalCodeProcessing, context) =
@@ -218,6 +215,10 @@ class NewJ2kWithProgressProcessor(
 ) : WithProgressProcessor {
     companion object {
         val DEFAULT = NewJ2kWithProgressProcessor(null, null, 0)
+    }
+
+    init {
+        progress?.isIndeterminate = false
     }
 
     override fun updateState(fileIndex: Int?, phase: Int, description: String) {

@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,8 +92,7 @@ public interface FilePropertyPusher<T> {
   /**
    * @deprecated Please override {@link FilePropertyPusher#acceptsFile(VirtualFile, Project)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   default boolean acceptsFile(@NotNull VirtualFile file) {
     return false;

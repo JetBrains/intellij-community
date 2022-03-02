@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FutureResult;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,8 +78,7 @@ public final class ExecutionHandler {
   }
 
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void runBuild(final AntBuildFileBase buildFile,
                               String[] targets,
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,

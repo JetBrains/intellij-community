@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.TextRange;
@@ -30,9 +30,8 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
     myMacroExpands.putAll(another.myMacroExpands);
   }
 
-  @NotNull
   @Override
-  public String substitute(@NotNull String text, boolean caseSensitive) {
+  public @NotNull String substitute(@NotNull String text, boolean caseSensitive) {
     if (text.indexOf('$') < 0 && text.indexOf('%') < 0) {
       return text;
     }
@@ -50,8 +49,7 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
     return text;
   }
 
-  @NotNull
-  private static String replaceMacro(@NotNull String text, @NotNull String macroName, @NotNull String replacement) {
+  private static @NotNull String replaceMacro(@NotNull String text, @NotNull String macroName, @NotNull String replacement) {
     while (true) {
       int start = findMacroIndex(text, macroName);
       if (start < 0) {

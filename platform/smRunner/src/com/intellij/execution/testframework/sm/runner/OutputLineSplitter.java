@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,8 +17,7 @@ import java.util.List;
 /**
  * @deprecated Use {@link OutputEventSplitter}, remove in 2020
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public abstract class OutputLineSplitter {
   public static final int SM_MESSAGE_PREFIX = 105;
 

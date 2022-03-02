@@ -198,6 +198,9 @@ public class MethodProcessorRunnable implements Runnable {
     // FIXME: new edge type needed
     LabelHelper.replaceContinueWithBreak(root);
 
+    PatternHelper.replaceAssignmentsWithPatternVariables(root, cl);
+    SwitchHelper.simplifySwitchesOnString(root);
+
     mt.releaseResources();
 
     return root;

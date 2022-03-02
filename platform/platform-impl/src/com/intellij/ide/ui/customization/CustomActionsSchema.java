@@ -1,13 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsCategory;
@@ -18,15 +15,14 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
@@ -44,9 +40,17 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"), category = SettingsCategory.UI)
+@State(
+  name = "com.intellij.ide.ui.customization.CustomActionsSchema",
+  storages = @Storage(value = "customization.xml", usePathMacroManager = false),
+  category = SettingsCategory.UI
+)
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
+  /**
+   * Original icon should be saved in template presentation when one customizes action icon
+   */
+  @NonNls public static final Key<Icon> PROP_ORIGINAL_ICON = Key.create("originalIcon");
 
   @NonNls private static final String ACTIONS_SCHEMA = "custom_actions_schema";
   @NonNls private static final String ACTIVE = "active";
@@ -55,79 +59,78 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   @NonNls private static final String ATTRIBUTE_ICON = "icon";
   @NonNls private static final String GROUP = "group";
 
-  private static final Map<String, String> ourAdditionalIdToName = new ConcurrentHashMap<>();
+  private static final Map<String, String> additionalIdToName = new ConcurrentHashMap<>();
 
-  private final Map<String, String> myIconCustomizations = new HashMap<>();
-  private final Map<String, @Nls String> myIdToName = new LinkedHashMap<>();
-  private final Map<String, ActionGroup> myIdToActionGroup = new HashMap<>();
-  private final Set<String> myExtGroupIds = new HashSet<>();
+  private final Map<String, String> iconCustomizations = new HashMap<>();
+  private final Map<String, @Nls String> idToName = new LinkedHashMap<>();
+  private final Map<String, ActionGroup> idToActionGroup = new HashMap<>();
+  private final Set<String> extGroupIds = new HashSet<>();
 
-  private List<ActionUrl> myActions = new ArrayList<>();
+  private final List<ActionUrl> actions = new ArrayList<>();
   private boolean isFirstLoadState = true;
 
-  private int myModificationStamp = 0;
+  private int modificationStamp = 0;
 
   public CustomActionsSchema() {
-    myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle());
+    idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle());
     if (ToolbarSettings.getInstance().isEnabled()) {
-      myIdToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar());
+      idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar());
     }
-    myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMainToolbar());
-    myIdToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.getEditorPopup());
-    myIdToName.put(IdeActions.GROUP_EDITOR_GUTTER, ActionsTreeUtil.getEditorGutterPopupMenu());
-    myIdToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEditorTabPopup());
-    myIdToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.getProjectViewPopup());
-    myIdToName.put(IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionsTreeUtil.getScopeViewPopupMenu());
-    myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.getFavoritesPopup());
-    myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.getCommanderPopup());
-    myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.getJ2EEPopup());
-    myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu());
-    myIdToName.put(IdeActions.GROUP_NAVBAR_TOOLBAR, ActionsTreeUtil.getNavigationBarToolbar());
+    idToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMainToolbar());
+    idToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.getEditorPopup());
+    idToName.put(IdeActions.GROUP_EDITOR_GUTTER, ActionsTreeUtil.getEditorGutterPopupMenu());
+    idToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEditorTabPopup());
+    idToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.getProjectViewPopup());
+    idToName.put(IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionsTreeUtil.getScopeViewPopupMenu());
+    idToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.getFavoritesPopup());
+    idToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.getCommanderPopup());
+    idToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.getJ2EEPopup());
+    idToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu());
+    idToName.put(IdeActions.GROUP_NAVBAR_TOOLBAR, ActionsTreeUtil.getNavigationBarToolbar());
 
     fillExtGroups();
     CustomizableActionGroupProvider.EP_NAME.addChangeListener(this::fillExtGroups, null);
 
-    myIdToName.putAll(ourAdditionalIdToName);
+    idToName.putAll(additionalIdToName);
   }
 
   private void fillExtGroups() {
-    for (String id : myExtGroupIds) {
-      myIdToName.remove(id);
+    for (String id : extGroupIds) {
+      idToName.remove(id);
     }
-    myExtGroupIds.clear();
+    extGroupIds.clear();
 
     List<Pair<String, @Nls String>> extList = new ArrayList<>();
-    CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
-      (groupId, groupTitle) -> {
-        extList.add(Pair.create(groupId, groupTitle));
-      };
-    for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {
+    CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar = (groupId, groupTitle) -> {
+      extList.add(Pair.create(groupId, groupTitle));
+    };
+    for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensionList()) {
       provider.registerGroups(registrar);
     }
-    extList.sort((o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
+    extList.sort((o1, o2) -> NaturalComparator.INSTANCE.compare(o1.second, o2.second));
     for (Pair<String, @Nls String> couple : extList) {
-      myExtGroupIds.add(couple.first);
-      myIdToName.put(couple.first, couple.second);
+      extGroupIds.add(couple.first);
+      idToName.put(couple.first, couple.second);
     }
   }
 
   public static void addSettingsGroup(@NotNull String itemId, @Nls @NotNull String itemName) {
-    ourAdditionalIdToName.put(itemId, itemName);
+    additionalIdToName.put(itemId, itemName);
 
     // Need to sync new items with global instance (if it has been created)
     CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionSchema != null) {
-      customActionSchema.myIdToName.put(itemId, itemName);
+      customActionSchema.idToName.put(itemId, itemName);
     }
   }
 
   public static void removeSettingsGroup(@NotNull String itemId) {
-    ourAdditionalIdToName.remove(itemId);
+    additionalIdToName.remove(itemId);
 
     // Need to sync new items with global instance (if it has been created)
     CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionSchema != null) {
-        customActionSchema.myIdToName.remove(itemId);
+        customActionSchema.idToName.remove(itemId);
     }
   }
 
@@ -135,39 +138,33 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return ApplicationManager.getApplication().getService(CustomActionsSchema.class);
   }
 
-  public void addAction(ActionUrl url) {
-    myActions.add(url);
-    resortActions();
+  public void addAction(@NotNull ActionUrl url) {
+    if (!actions.contains(url) && !actions.remove(url.getInverted())) {
+      actions.add(url);
+    }
   }
 
-  @NotNull
-  public List<ActionUrl> getActions() {
-    return myActions;
+  public @NotNull List<ActionUrl> getActions() {
+    return actions;
   }
 
-  public void setActions(@NotNull List<ActionUrl> actions) {
-    myActions = actions;
-    resortActions();
+  public void setActions(@NotNull List<ActionUrl> newActions) {
+    actions.clear();
+    actions.addAll(newActions);
+    actions.sort(ActionUrlComparator.INSTANCE);
   }
 
   public void copyFrom(CustomActionsSchema result) {
-    myIdToActionGroup.clear();
-    myActions.clear();
-    myIconCustomizations.clear();
+    idToActionGroup.clear();
+    actions.clear();
+    iconCustomizations.clear();
 
-    for (ActionUrl actionUrl : result.myActions) {
-      ActionUrl url = new ActionUrl(new ArrayList<>(actionUrl.getGroupPath()), actionUrl.getComponent(),
-                                    actionUrl.getActionType(), actionUrl.getAbsolutePosition());
-      url.setInitialPosition(actionUrl.getInitialPosition());
-      myActions.add(url);
+    for (ActionUrl actionUrl : result.actions) {
+      addAction(actionUrl.copy());
     }
-    resortActions();
+    actions.sort(ActionUrlComparator.INSTANCE);
 
-    myIconCustomizations.putAll(result.myIconCustomizations);
-  }
-
-  private void resortActions() {
-    myActions.sort(ActionUrlComparator.INSTANCE);
+    iconCustomizations.putAll(result.iconCustomizations);
   }
 
   public boolean isModified(CustomActionsSchema schema) {
@@ -184,8 +181,8 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
         return true;
       }
     }
-    if (schema.myIconCustomizations.size() != myIconCustomizations.size()) return true;
-    for (String actionId : myIconCustomizations.keySet()) {
+    if (schema.iconCustomizations.size() != iconCustomizations.size()) return true;
+    for (String actionId : iconCustomizations.keySet()) {
       if (!Comparing.strEqual(schema.getIconPath(actionId), getIconPath(actionId))) return true;
     }
     return false;
@@ -193,9 +190,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   @Override
   public void loadState(@NotNull Element element) {
-    myIdToActionGroup.clear();
-    myActions.clear();
-    myIconCustomizations.clear();
+    idToActionGroup.clear();
+    actions.clear();
+    iconCustomizations.clear();
     DefaultJDOMExternalizer.readExternal(this, element);
     Element schElement = element;
     String activeName = element.getAttributeValue(ACTIVE);
@@ -213,18 +210,18 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     for (Element groupElement : schElement.getChildren(GROUP)) {
       ActionUrl url = new ActionUrl();
       url.readExternal(groupElement);
-      myActions.add(url);
+      addAction(url);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error(IdeBundle.message("custom.option.testmode", myActions.toString()));
+      LOG.error(IdeBundle.message("custom.option.testmode", actions.toString()));
     }
 
     for (Element action : element.getChildren(ELEMENT_ACTION)) {
       String actionId = action.getAttributeValue(ATTRIBUTE_ID);
       String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
       if (actionId != null) {
-        myIconCustomizations.put(actionId, iconPath);
+        iconCustomizations.put(actionId, iconPath);
       }
     }
 
@@ -266,11 +263,11 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public void incrementModificationStamp() {
-    myModificationStamp++;
+    modificationStamp++;
   }
 
   public int getModificationStamp() {
-    return myModificationStamp;
+    return modificationStamp;
   }
 
   @Override
@@ -278,7 +275,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     Element element = new Element("state");
     //noinspection deprecation
     DefaultJDOMExternalizer.writeExternal(this, element);
-    for (ActionUrl group : myActions) {
+    for (ActionUrl group : actions) {
       Element groupElement = new Element(GROUP);
       group.writeExternal(groupElement);
       element.addContent(groupElement);
@@ -289,20 +286,20 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   @Nullable
   public AnAction getCorrectedAction(String id) {
-    if (!myIdToName.containsKey(id)) {
+    if (!idToName.containsKey(id)) {
       return ActionManager.getInstance().getAction(id);
     }
 
-    ActionGroup existing = myIdToActionGroup.get(id);
+    ActionGroup existing = idToActionGroup.get(id);
     if (existing != null) {
       return existing;
     }
 
     ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
     if (actionGroup != null) { // if a plugin is disabled
-      String name = myIdToName.get(id);
+      String name = idToName.get(id);
       ActionGroup corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true);
-      myIdToActionGroup.put(id, corrected);
+      idToActionGroup.put(id, corrected);
       return corrected;
     }
     return null;
@@ -310,11 +307,11 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   @Nullable
   public String getDisplayName(@NotNull String id) {
-    return myIdToName.get(id);
+    return idToName.get(id);
   }
 
   public void invalidateCustomizedActionGroup(String groupId) {
-    ActionGroup group = myIdToActionGroup.get(groupId);
+    ActionGroup group = idToActionGroup.get(groupId);
     if (group instanceof CustomisedActionGroup) {
       ((CustomisedActionGroup) group).resetChildren();
     }
@@ -324,32 +321,32 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     ActionManager actionManager = ActionManager.getInstance();
     List<String> path = ContainerUtil.newArrayList("root");
 
-    for (Map.Entry<String, @Nls String> entry : myIdToName.entrySet()) {
+    for (Map.Entry<String, @Nls String> entry : idToName.entrySet()) {
       ActionGroup actionGroup = (ActionGroup)actionManager.getAction(entry.getKey());
       if (actionGroup != null) {
-        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createCorrectedGroup(actionGroup, entry.getValue(), path, myActions)));
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createCorrectedGroup(actionGroup, entry.getValue(), path, actions)));
       }
     }
   }
 
   public void fillActionGroups(DefaultMutableTreeNode root) {
     ActionManager actionManager = ActionManager.getInstance();
-    for (String id : myIdToName.keySet()) {
+    for (String id : idToName.keySet()) {
       ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
       if (actionGroup != null) { //J2EE/Commander plugin was disabled
-        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, myIdToName.get(id), null, null, true, null, false)));
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, idToName.get(id), null, null, true, null, false)));
       }
     }
   }
 
   public boolean isCorrectActionGroup(ActionGroup group, String defaultGroupName) {
-    if (myActions.isEmpty()) {
+    if (actions.isEmpty()) {
       return false;
     }
 
     String text = group.getTemplatePresentation().getText();
     if (!StringUtil.isEmpty(text)) {
-      for (ActionUrl url : myActions) {
+      for (ActionUrl url : actions) {
         if (url.getGroupPath().contains(text) || url.getGroupPath().contains(defaultGroupName)) {
           return true;
         }
@@ -370,7 +367,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   public List<ActionUrl> getChildActions(ActionUrl url) {
     ArrayList<ActionUrl> result = new ArrayList<>();
     ArrayList<String> groupPath = url.getGroupPath();
-    for (ActionUrl actionUrl : myActions) {
+    for (ActionUrl actionUrl : actions) {
       int index = 0;
       if (groupPath.size() <= actionUrl.getGroupPath().size()) {
         while (index < groupPath.size()) {
@@ -388,23 +385,23 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public void removeIconCustomization(String actionId) {
-    myIconCustomizations.remove(actionId);
+    iconCustomizations.put(actionId, null);
   }
 
   public void addIconCustomization(String actionId, String iconPath) {
-    myIconCustomizations.put(actionId, iconPath != null ? FileUtil.toSystemIndependentName(iconPath) : null);
+    iconCustomizations.put(actionId, iconPath != null ? FileUtil.toSystemIndependentName(iconPath) : null);
   }
 
   public String getIconPath(String actionId) {
-    String path = myIconCustomizations.get(actionId);
+    String path = iconCustomizations.get(actionId);
     return path == null ? "" : path;
   }
 
   private void writeIcons(Element parent) {
-    for (String actionId : myIconCustomizations.keySet()) {
+    for (String actionId : iconCustomizations.keySet()) {
       Element action = new Element(ELEMENT_ACTION);
       action.setAttribute(ATTRIBUTE_ID, actionId);
-      String icon = myIconCustomizations.get(actionId);
+      String icon = iconCustomizations.get(actionId);
       if (icon != null) {
         action.setAttribute(ATTRIBUTE_ICON, icon);
       }
@@ -412,13 +409,13 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
   }
 
-  private void initActionIcons() {
+  void initActionIcons() {
     ActionManager actionManager = ActionManager.getInstance();
-    for (String actionId : myIconCustomizations.keySet()) {
+    for (String actionId : iconCustomizations.keySet()) {
       AnAction anAction = actionManager.getAction(actionId);
       if (anAction != null) {
-        Icon icon = AllIcons.Toolbar.Unknown;
-        final String iconPath = myIconCustomizations.get(actionId);
+        Icon icon = null;
+        final String iconPath = iconCustomizations.get(actionId);
         if (iconPath != null) {
           final File f = new File(FileUtil.toSystemDependentName(iconPath));
           if (f.exists()) {
@@ -432,9 +429,17 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
               icon = new JBImageIcon(image);
           }
         }
-        anAction.getTemplatePresentation().setIcon(icon);
-        anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));
-        anAction.setDefaultIcon(false);
+        Presentation template = anAction.getTemplatePresentation();
+        if (template.getClientProperty(PROP_ORIGINAL_ICON) == null && anAction.isDefaultIcon()) {
+          ObjectUtils.consumeIfNotNull(template.getIcon(), i -> template.putClientProperty(PROP_ORIGINAL_ICON, i));
+        }
+        if (icon == null && iconCustomizations.containsKey(actionId)) {
+          icon = template.getClientProperty(PROP_ORIGINAL_ICON);
+        }
+        template.setIcon(icon);
+        template.setDisabledIcon(icon != null ? IconLoader.getDisabledIcon(icon) : null);
+        anAction.setDefaultIcon(iconPath == null);
+        PresentationFactory.updatePresentation(anAction);
       }
     }
     ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(null);
@@ -443,7 +448,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
   }
 
-  private static class ActionUrlComparator implements Comparator<ActionUrl> {
+  private static final class ActionUrlComparator implements Comparator<ActionUrl> {
     static final ActionUrlComparator INSTANCE = new ActionUrlComparator();
     static int DELETED = 1;
 

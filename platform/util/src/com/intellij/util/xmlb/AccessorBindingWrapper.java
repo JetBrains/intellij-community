@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
       Element element = (Element)context;
       if (beanStyle == Property.Style.ATTRIBUTE && value instanceof Rectangle) {
         Rectangle bounds = (Rectangle)value;
-        LOG.assertTrue(element != null);
+        assert element != null;
         element.setAttribute("x", Integer.toString(bounds.x));
         element.setAttribute("y", Integer.toString(bounds.y));
         element.setAttribute("width", Integer.toString(bounds.width));

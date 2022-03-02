@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -12,7 +12,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +26,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
-
-class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
+final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
   private final JList<T> myList;
   private final PopupChooserBuilder<T> myBuilder;
   private ListWithFilter<T> myListWithFilter;
@@ -79,7 +78,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
 
   @Nullable
   @Override
-  public BooleanFunction<KeyEvent> getKeyEventHandler() {
+  public Predicate<KeyEvent> getKeyEventHandler() {
     return InputEvent::isConsumed;
   }
 

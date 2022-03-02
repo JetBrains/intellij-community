@@ -28,13 +28,14 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.TreeActions
+import com.intellij.util.containers.ContainerUtil
 import java.awt.event.HierarchyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JTree
 
 class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("commit.interactions", 2)
+    val GROUP = EventLogGroup("commit.interactions", 3)
 
     val FILES_TOTAL = EventFields.RoundedInt("files_total")
     val FILES_INCLUDED = EventFields.RoundedInt("files_included")
@@ -185,18 +186,34 @@ class CommitSessionCollector(val project: Project) {
     }
   }
 
+  /**
+   * See [com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl]
+   */
   internal class MyAnActionListener : AnActionListener {
-    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-      if (!result.isPerformed) return
+    private val ourStats: MutableMap<AnActionEvent, Project> = ContainerUtil.createWeakMap()
+
+    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
       val project = event.project ?: return
       if (action is OpenInEditorAction) {
         val context = event.getData(DiffDataKeys.DIFF_CONTEXT) ?: return
         if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, context)) return
-        getInstance(project).logJumpToSource(event)
+        ourStats[event] = project
       }
       if (action is TreeActions) {
         val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JTree ?: return
         if (component.getClientProperty(ChangesTree.LOG_COMMIT_SESSION_EVENTS) != true) return
+        ourStats[event] = project
+      }
+    }
+
+    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+      val project = ourStats.remove(event) ?: return
+      if (!result.isPerformed) return
+
+      if (action is OpenInEditorAction) {
+        getInstance(project).logJumpToSource(event)
+      }
+      if (action is TreeActions) {
         getInstance(project).logFileSelected(event)
       }
     }

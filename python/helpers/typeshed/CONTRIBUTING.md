@@ -24,20 +24,79 @@ it takes a bit longer. For more details, read below.
 
 ## Preparing the environment
 
-To reformat the code, check for common problems, and
-run the tests, you need to prepare a
-[virtual environment](https://docs.python.org/3/tutorial/venv.html)
-with the necessary libraries installed. To do this, run:
+### Code away!
+
+Typeshed runs continuous integration (CI) on all pull requests. This will
+automatically fix formatting (using `black`, `isort`) and run tests.
+It means you can ignore all local setup on your side, focus on the
+code and rely on the CI to fix everything, or point you to the places that
+need fixing.
+
+### ... Or create a local development environment
+
+If you prefer to run the tests & formatting locally, it's
+possible too. Follow platform-specific instructions below.
+For more information about our available tests, see
+[tests/README.md](tests/README.md).
+
+Whichever platform you're using, you will need a
+virtual environment. If you're not familiar with what it is and how it works,
+please refer to this
+[documentation](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
+
+### Linux/Mac OS
+
+On Linux and Mac OS, you will be able to run the full test suite on Python 3.8
+or 3.9. Running the tests on <=3.7 is not supported, and the pytype tests
+[cannot currently be run on Python 3.10](https://github.com/google/pytype/issues/1022).
+
+To install the necessary requirements, run the following commands from a
+terminal window:
 
 ```
 $ python3 -m venv .venv3
 $ source .venv3/bin/activate
 (.venv3)$ pip install -U pip
-(.venv3)$ pip install -r requirements-tests-py3.txt
+(.venv3)$ pip install -r requirements-tests.txt
 ```
 
-To automatically check your code before committing, copy the file
-`pre-commit` to `.git/hooks/pre-commit`.
+### Windows
+
+If you are using a Windows operating system, you will not be able to run the
+full test suite. One option is to install
+[Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/faq),
+which will allow you to run the full suite of tests. If you choose to install
+WSL, follow the Linux/Mac OS instructions above.
+
+If you do not wish to install WSL, you will not be able to run the pytype
+tests, as pytype
+[does not currently support running on Windows](https://github.com/google/pytype#requirements).
+However, the upside of this is that you will be able to run all
+Windows-compatible tests on Python 3.9, 3.8 or 3.10, as it is only the pytype
+tests that cannot currently be run on 3.10.
+
+To install all non-pytype requirements on Windows without WSL, run the
+following commands from a Windows terminal:
+
+```
+> python3 -m venv .venv3
+> ".venv3/Scripts/activate"
+(.venv3) > python -m pip install -U pip
+(.venv3) > python -m pip install -r requirements-tests.txt
+```
+
+## Code formatting
+
+The code is formatted by `black` and `isort`.
+
+The repository is equipped with a [`pre-commit.ci`](https://pre-commit.ci/)
+configuration file. This means that you don't *need* to do anything yourself to
+run the code formatters. When you push a commit, a bot will run those for you
+right away and add a commit to your PR. Neat, no?
+
+That being said, if you *want* to run the checks locally when you commit, you
+can install the hooks: please refer to the [pre-commit](https://pre-commit.com/)
+documentation.
 
 ## Where to make changes
 
@@ -59,6 +118,8 @@ We accept stubs for third-party packages into typeshed as long as:
 * the package supports any Python version supported by typeshed; and
 * the package does not ship with its own stubs or type annotations.
 
+The fastest way to generate new stubs is to use `scripts/create_baseline_stubs.py` (see below).
+
 Stubs for third-party packages
 go into `stubs`. Each subdirectory there represents a PyPI distribution, and
 contains the following:
@@ -70,11 +131,6 @@ contains the following:
   Stubs outside `@python2` are always used with Python 3,
   and also with Python 2 if `python2 = true` is set in `METADATA.toml` (see below).
 * (Rarely) some docs specific to a given type stub package in `README` file.
-
-The fastest way to generate new stubs is to use [stubgen](https://mypy.readthedocs.io/en/stable/stubgen.html),
-a tool shipped with mypy. Please make sure to use the latest version.
-The generated stubs usually need some trimming of imports. You also need
-to run `black` and `isort` manually on the generated stubs (see below).
 
 When a third party stub is added or
 modified, an updated version of the corresponding distribution will be
@@ -120,6 +176,9 @@ supported:
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
   its own `py.typed` file.
+* `stubtest_apt_dependencies` (default: `[]`): A list of Ubuntu APT packages
+  that need to be installed for stubtest to run successfully. These are
+  usually packages needed to pip install the implementation distribution.
 
 The format of all `METADATA.toml` files can be checked by running
 `python3 ./tests/check_consistent.py`.
@@ -147,6 +206,27 @@ are used to describe the signature of each function or method.
 See [PEP 484](http://www.python.org/dev/peps/pep-0484/) for the exact
 syntax of the stub files and [below](#stub-file-coding-style) for the
 coding style used in typeshed.
+
+### Auto-generating stub files
+
+Typeshed includes `scripts/create_baseline_stubs.py`.
+It generates stubs automatically using a tool called
+[stubgen](https://mypy.readthedocs.io/en/latest/stubgen.html) that comes with mypy.
+
+To get started, fork typeshed, clone your fork, and then
+[create a virtualenv](#-or-create-a-local-development-environment).
+You can then install the library with `pip` into the virtualenv and run the script,
+replacing `libraryname` with the name of the library below:
+
+```
+(.venv3)$ pip install libraryname
+(.venv3)$ python3 scripts/create_baseline_stubs.py libraryname
+```
+
+When the script has finished running, it will print instructions telling you what to do next.
+
+If it has been a while since you set up the virtualenv, make sure you have
+the latest mypy (`pip install -r requirements-tests.txt`) before running the script.
 
 ### Supported type system features
 
@@ -187,10 +267,13 @@ instead in typeshed stubs. This currently affects:
 - `Literal` (new in Python 3.8)
 - `SupportsIndex` (new in Python 3.8)
 - `TypedDict` (new in Python 3.8)
+- `Concatenate` (new in Python 3.10)
+- `ParamSpec` (new in Python 3.10)
 - `TypeGuard` (new in Python 3.10)
 
-An exception is `Protocol`: although it was added in Python 3.8, it
-can be used in stubs regardless of Python version.
+Two exceptions are `Protocol` and `runtime_checkable`: although
+these were added in Python 3.8, they can be used in stubs regardless
+of Python version.
 
 ### What to include
 
@@ -278,15 +361,6 @@ class Foo:
 def bar(x: str, y, *, z=...): ...
 ```
 
-### Using stubgen
-
-Mypy includes a tool called [stubgen](https://mypy.readthedocs.io/en/latest/stubgen.html)
-that auto-generates stubs for Python and C modules using static analysis,
-Sphinx docs, and runtime introspection.  It can be used to get a starting
-point for your stubs.  Note that this generator is currently unable to
-determine most argument and return types and omits them or uses ``Any`` in
-their place.  Fill out manually the types that you know.
-
 ## Stub file coding style
 
 ### Syntax example
@@ -304,7 +378,7 @@ class date:
     @classmethod
     def today(cls: Type[_S]) -> _S: ...
     @classmethod
-    def fromordinal(cls: Type[_S], n: int) -> _S: ...
+    def fromordinal(cls: Type[_S], __n: int) -> _S: ...
     @property
     def year(self) -> int: ...
     def replace(self, year: int = ..., month: int = ..., day: int = ...) -> date: ...
@@ -354,7 +428,9 @@ Some further tips for good type hints:
 * in Python 2, whenever possible, use `unicode` if that's the only
   possible type, and `Text` if it can be either `unicode` or `bytes`;
 * use platform checks like `if sys.platform == 'win32'` to denote
-  platform-dependent APIs.
+  platform-dependent APIs;
+* use mypy error codes for mypy-specific `# type: ignore` annotations,
+  e.g. `# type: ignore[override]` for Liskov Substitution Principle violations.
 
 Imports in stubs are considered private (not part of the exported API)
 unless:
@@ -424,17 +500,6 @@ To format and check your stubs, run the following commands:
 (.venv3)$ isort stdlib stubs
 (.venv3)$ flake8
 ```
-
-
-## Running the tests
-
-The tests are automatically run on every PR and push to the repo.
-Therefore you don't need to run them locally, unless you want to run
-them before making a pull request or you want to debug some problem without
-creating several small commits.
-
-For more information about our available tests, see
-[tests/README.md](tests/README.md).
 
 
 ## Submitting Changes

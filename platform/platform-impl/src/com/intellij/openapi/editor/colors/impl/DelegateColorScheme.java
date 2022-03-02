@@ -95,7 +95,17 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
+  public float getEditorFontSize2D() {
+    return myDelegate.getEditorFontSize2D();
+  }
+
+  @Override
   public void setEditorFontSize(int fontSize) {
+    myDelegate.setEditorFontSize(fontSize);
+  }
+
+  @Override
+  public void setEditorFontSize(float fontSize) {
     myDelegate.setEditorFontSize(fontSize);
   }
 
@@ -172,7 +182,17 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
+  public float getConsoleFontSize2D() {
+    return myDelegate.getConsoleFontSize2D();
+  }
+
+  @Override
   public void setConsoleFontSize(int fontSize) {
+    myDelegate.setConsoleFontSize(fontSize);
+  }
+
+  @Override
+  public void setConsoleFontSize(float fontSize) {
     myDelegate.setConsoleFontSize(fontSize);
   }
 

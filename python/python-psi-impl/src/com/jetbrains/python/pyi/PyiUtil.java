@@ -67,13 +67,20 @@ public final class PyiUtil {
   @Nullable
   public static PsiElement getOriginalElement(@NotNull PyElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file instanceof PyiFile) {
-      final PyFile originalFile = getOriginalFile((PyiFile)file);
-      if (originalFile != null) {
-        return findSimilarElement(element, originalFile);
+    if (!(file instanceof PyiFile)) return null;
+
+    final PyFile originalFile = getOriginalFile((PyiFile)file);
+    if (originalFile == null) return null;
+
+    PsiElement result = findSimilarElement(element, originalFile);
+    if (result == null && element instanceof PyFunction) {
+      PyClass containingClass = PyUtil.turnConstructorIntoClass((PyFunction)element);
+      if (containingClass != null) {
+        result = findSimilarElement(containingClass, originalFile);
       }
     }
-    return null;
+
+    return result;
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.BundleBase;
@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -18,20 +17,17 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Registers notification group.
+ * Registers a notification group.
  * <p>
  * Use {@link com.intellij.notification.NotificationGroupManager#getNotificationGroup(String)} to obtain instance via {@link #id}.
- * </p>
  * <p>
  * See <a href="https://jetbrains.org/intellij/sdk/docs/user_interface_components/notifications.html#top-level-notifications">Top-Level Notifications</a>.
- * </p>
  */
 public final class NotificationGroupEP implements PluginAware {
   static final ExtensionPointName<NotificationGroupEP> EP_NAME = new ExtensionPointName<>("com.intellij.notificationGroup");
@@ -50,7 +46,9 @@ public final class NotificationGroupEP implements PluginAware {
   @Attribute("toolWindowId")
   public String toolWindowId;
 
+  /** @deprecated group icons aren't actually used in the UI; for notifications, please use `Notification#setIcon` instead */
   @Attribute("icon")
+  @Deprecated(forRemoval = true)
   public String icon;
 
   /**
@@ -78,6 +76,14 @@ public final class NotificationGroupEP implements PluginAware {
    */
   @Attribute(value = "notificationIds", converter = IdParser.class)
   public @Nullable List<String> notificationIds;
+
+  /**
+   * If true, the group will not be shown in Settings | Notifications. Should be used for very rarely
+   * shown notifications, where there's no expectation that the user will want to change how the notification
+   * is presented.
+   */
+  @Attribute("hideFromSettings")
+  public boolean hideFromSettings;
 
   private static final class IdParser extends Converter<List<String>> {
     @Override
@@ -111,21 +117,9 @@ public final class NotificationGroupEP implements PluginAware {
       return id;
     }
 
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName,
-                                                                             pluginDescriptor.getClassLoader());
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, pluginDescriptor.getClassLoader());
     return BundleBase.messageOrDefault(resourceBundle, key, null);
   }
-
-  public @Nullable Icon getIcon(@NotNull PluginDescriptor pluginDescriptor) {
-    return icon != null ?
-           IconLoader.findIcon(icon, pluginDescriptor.getClassLoader()) :
-           null;
-  }
-
-  //@Transient
-  //public @NotNull PluginDescriptor getPluginDescriptor() {
-  //  return pluginDescriptor;
-  //}
 
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor value) {
@@ -143,7 +137,6 @@ public final class NotificationGroupEP implements PluginAware {
            ", displayType=" + displayType +
            ", isLogByDefault=" + isLogByDefault +
            ", toolWindowId='" + toolWindowId + '\'' +
-           ", icon='" + icon + '\'' +
            ", bundle='" + bundle + '\'' +
            ", key='" + key + '\'' +
            ", notificationIds='" + notificationIds + '\'' +

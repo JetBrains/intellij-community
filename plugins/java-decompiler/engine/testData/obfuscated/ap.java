@@ -55,21 +55,21 @@ public abstract class ap implements ak {
       while(true) {
          char var10004 = var4[var10003];
          byte var10005;
-         switch(var1 % 5) {
-         case 0:
-            var10005 = 107;
-            break;
-         case 1:
-            var10005 = 35;
-            break;
-         case 2:
-            var10005 = 120;
-            break;
-         case 3:
-            var10005 = 65;
-            break;
-         default:
-            var10005 = 23;
+         switch (var1 % 5) {
+            case 0:
+               var10005 = 107;
+               break;
+            case 1:
+               var10005 = 35;
+               break;
+            case 2:
+               var10005 = 120;
+               break;
+            case 3:
+               var10005 = 65;
+               break;
+            default:
+               var10005 = 23;
          }
 
          var4[var10003] = (char)(var10004 ^ var10005);

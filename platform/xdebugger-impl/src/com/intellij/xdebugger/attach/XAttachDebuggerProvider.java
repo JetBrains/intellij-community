@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,8 +20,7 @@ public interface XAttachDebuggerProvider {
   /**
    * will be removed in 2020.1, right after {@link XLocalAttachDebuggerProvider}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   @NotNull
   static List<XAttachDebuggerProvider> getAttachDebuggerProviders() {
     return ContainerUtil.concat(new ArrayList<>(EP.getExtensionList()),
@@ -52,13 +50,13 @@ public interface XAttachDebuggerProvider {
    *
    * @param contextHolder use this data holder if you need to store temporary data during debuggers collection.
    *                      Lifetime of the data is restricted by a single Attach to Process action invocation.
-   * @param hostInfo host (environment) on which the process is being run
-   * @param process process to attach to
+   * @param attachHost    host (environment) on which the process is being run
+   * @param processInfo   process to attach to
    * @return a list of the debuggers that can attach and debug a given process
    */
   @NotNull
   List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                              @NotNull XAttachHost hostInfo,
-                                              @NotNull ProcessInfo process,
+                                              @NotNull XAttachHost attachHost,
+                                              @NotNull ProcessInfo processInfo,
                                               @NotNull UserDataHolder contextHolder);
 }

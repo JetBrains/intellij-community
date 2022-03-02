@@ -8,7 +8,6 @@ import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -40,8 +39,7 @@ public final class DefaultScopesProvider extends CustomScopesProviderEx {
   /**
    * @deprecated use {@link ProblemsScope#INSTANCE} instead
    */
-  @ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public NamedScope getProblemsScope() {
     return ProblemsScope.INSTANCE;

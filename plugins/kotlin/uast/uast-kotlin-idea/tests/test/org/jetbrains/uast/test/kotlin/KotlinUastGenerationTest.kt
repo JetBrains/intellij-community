@@ -25,8 +25,8 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.refreshed
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.kotlin.generate.KotlinUastElementFactory
-import org.jetbrains.uast.test.env.kotlin.findElementByTextFromPsi
-import org.jetbrains.uast.test.env.kotlin.findUElementByTextFromPsi
+import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import org.jetbrains.uast.test.env.findUElementByTextFromPsi
 import org.jetbrains.uast.visitor.UastVisitor
 import kotlin.test.fail as kfail
 
@@ -519,7 +519,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         ) as KtFile
 
-        val reference = file.findUElementByTextFromPsi<UElement>("println(a)")
+        val reference = file.findUElementByTextFromPsi<UElement>("println(a)", strict = true)
             .findElementByTextFromPsi<UReferenceExpression>("a")
 
         val callExpression = uastElementFactory.createCallExpression(

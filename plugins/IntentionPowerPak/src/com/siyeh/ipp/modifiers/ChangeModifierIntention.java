@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
@@ -42,14 +42,14 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -349,15 +349,15 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (parent instanceof PsiMethod && hasConflicts) {
       PsiMethod method = (PsiMethod)parent;
       //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
-      new ChangeSignatureProcessor(project,
-                                   method,
-                                   false,
-                                   modifier.toPsiModifier(),
-                                   method.getName(),
-                                   method.getReturnType(),
-                                   ParameterInfoImpl.fromMethod(method),
-                                   JavaThrownExceptionInfo.extractExceptions(method))
-        .run();
+      var csp = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
+                                                                   method,
+                                                                   false,
+                                                                   modifier.toPsiModifier(),
+                                                                   method.getName(),
+                                                                   method.getReturnType(),
+                                                                   ParameterInfoImpl.fromMethod(method),
+                                                                   JavaThrownExceptionInfo.extractExceptions(method),null, null, null);
+      csp.run();
       return;
     }
     PsiFile file = modifierList.getContainingFile();
@@ -412,7 +412,8 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       copy.setModifierProperty(modifier.toPsiModifier(), true);
 
       if (member instanceof PsiMethod) {
-        JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, modifier.toPsiModifier());
+        RefactoringConflictsUtil.getInstance().analyzeHierarchyConflictsAfterMethodModifierChange((PsiMethod)member,
+                                                                                                  modifier.toPsiModifier(), conflicts);
       }
 
       final Query<PsiReference> search = ReferencesSearch.search(member, useScope);

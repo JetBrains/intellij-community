@@ -47,8 +47,4 @@ public abstract class GrScopeProcessorWithHints implements PsiScopeProcessor, Na
     assert myName != null : "don't invoke getName if myName is not declared";
     return myName;
   }
-
-  @Override
-  public void handleEvent(@NotNull Event event, @Nullable Object associated) {
-  }
 }

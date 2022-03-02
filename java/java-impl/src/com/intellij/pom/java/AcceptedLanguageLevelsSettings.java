@@ -45,10 +45,12 @@ import java.util.TreeSet;
 )
 public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<AcceptedLanguageLevelsSettings>, StartupActivity {
   private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Accepted language levels", NotificationDisplayType.STICKY_BALLOON, true);
+    NotificationGroupManager.getInstance().getNotificationGroup("Accepted language levels");
 
-  private static final NotificationGroup PREVIEW_NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Java Preview Features");
-  private static final String IGNORE_USED_PREVIEW_FEATURES = "ignore.preview.features.used";
+  private static final NotificationGroup PREVIEW_NOTIFICATION_GROUP =
+    NotificationGroupManager.getInstance().getNotificationGroup("Java Preview Features");
+
+    private static final String IGNORE_USED_PREVIEW_FEATURES = "ignore.preview.features.used";
 
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
   public List<String> acceptedNames = new ArrayList<>();

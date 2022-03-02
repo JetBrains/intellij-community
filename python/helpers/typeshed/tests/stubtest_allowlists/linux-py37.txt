@@ -1,2 +1,6 @@
 ctypes.wintypes
+ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
 pwd.getpwnam
+
+# Exists at runtime, but missing from stubs
+time.pthread_getcpuclockid

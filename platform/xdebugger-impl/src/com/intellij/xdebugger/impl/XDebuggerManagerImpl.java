@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
@@ -68,7 +68,6 @@ import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,8 +83,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   /**
    * @deprecated Use {@link #getNotificationGroup()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @Deprecated(forRemoval = true)
   public static final NotificationGroup NOTIFICATION_GROUP = getNotificationGroup();
 
   private final Project myProject;
@@ -416,17 +414,17 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (!ExperimentalUI.isNewUI()) return;
-        EditorGutter editorGutter = e.getEditor().getGutter();
-        if (editorGutter instanceof EditorGutterComponentEx) {
-          EditorGutterComponentEx gutter = (EditorGutterComponentEx)editorGutter;
-          if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-            gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            updateActiveLineNumberIcon(gutter, hoverIcon, e.getVisualPosition().line);
-          } else {
-            updateActiveLineNumberIcon(gutter, null, null);
-          }
+      EditorGutter editorGutter = e.getEditor().getGutter();
+      if (editorGutter instanceof EditorGutterComponentEx) {
+        EditorGutterComponentEx gutter = (EditorGutterComponentEx)editorGutter;
+        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          updateActiveLineNumberIcon(gutter, hoverIcon, e.getVisualPosition().line);
+        } else {
+          updateActiveLineNumberIcon(gutter, null, null);
         }
       }
+    }
 
     private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
       boolean requireRepaint = false;

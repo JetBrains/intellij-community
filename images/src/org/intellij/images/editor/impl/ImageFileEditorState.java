@@ -92,12 +92,12 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
   public void setTransferableOptions(Map<String, String> options) {
     String o = options.get(BACKGROUND_VISIBLE_OPTION);
     if (o != null) {
-      backgroundVisible = Boolean.valueOf(o);
+      backgroundVisible = Boolean.parseBoolean(o);
     }
 
     o = options.get(GRID_VISIBLE_OPTION);
     if (o != null) {
-      gridVisible = Boolean.valueOf(o);
+      gridVisible = Boolean.parseBoolean(o);
     }
 
     o = options.get(ZOOM_FACTOR_OPTION);
@@ -107,7 +107,7 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
 
     o = options.get(ZOOM_FACTOR_CHANGED_OPTION);
     if (o != null) {
-      zoomFactorChanged = Boolean.valueOf(o);
+      zoomFactorChanged = Boolean.parseBoolean(o);
     }
   }
 }

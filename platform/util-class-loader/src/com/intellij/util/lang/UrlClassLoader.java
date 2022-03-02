@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.util.UrlUtilRt;
@@ -17,10 +17,9 @@ import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.BiPredicate;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -63,11 +62,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   @ApiStatus.Internal
   public final @NotNull ClassPath getClassPath() {
     return classPath;
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Collection<Map.Entry<String, Path>> getLoadedClasses() {
-    return ClassPath.getLoadedClasses();
   }
 
   /**
@@ -186,7 +180,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return Collections.unmodifiableList(files);
   }
 
-  public final boolean hasLoadedClass(String name) {
+  public boolean hasLoadedClass(String name) {
     Class<?> aClass = findLoadedClass(name);
     return aClass != null && aClass.getClassLoader() == this;
   }
@@ -242,10 +236,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return getPackage(packageName) != null;
   }
 
-  protected ProtectionDomain getProtectionDomain() {
-    return null;
-  }
-
   @Override
   public boolean isByteBufferSupported(@NotNull String name) {
     return true;
@@ -258,7 +248,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader) throws IOException {
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader) {
     definePackageIfNeeded(name);
     return super.defineClass(name, data, null);
   }
@@ -337,7 +327,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @ApiStatus.Internal
-  public @Nullable BiPredicate<String, Boolean> resolveScopeManager;
+  public @Nullable BiFunction<String, Boolean, String> resolveScopeManager;
 
   public @Nullable Class<?> loadClassInsideSelf(String name,
                                                 String fileName,
@@ -572,7 +562,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     /**
      * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@link Path}.
      */
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated
     public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {
       List<Path> files = new ArrayList<>(urls.size());

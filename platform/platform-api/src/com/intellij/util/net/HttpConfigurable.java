@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -32,7 +32,10 @@ import com.intellij.util.proxy.SharedProxyConfig;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
@@ -62,6 +65,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public volatile boolean PROXY_AUTHENTICATION;
   public boolean KEEP_PROXY_PASSWORD;
   public transient String LAST_ERROR;
+  public transient String CHECK_CONNECTION_URL = "http://";
 
   private final Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<>();
   private final Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<>();
@@ -148,8 +152,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /** @deprecated use {@link #initializeComponent()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated(forRemoval = true)
   public void initComponent() {
     initializeComponent();
   }
@@ -353,13 +356,13 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void readExternal(Element element) throws InvalidDataException {
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
   /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void writeExternal(Element element) throws WriteExternalException {
     com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
     if (USE_PROXY_PAC && USE_HTTP_PROXY && !ApplicationManager.getApplication().isDisposed()) {
@@ -635,18 +638,15 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link HttpRequests#CONNECTION_TIMEOUT} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated(forRemoval = true)
   public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
 
   /** @deprecated use {@link HttpRequests#READ_TIMEOUT} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated(forRemoval = true)
   public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
 
   /** @deprecated use {@link HttpRequests#REDIRECT_LIMIT} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated(forRemoval = true)
   public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
   //</editor-fold>
 }

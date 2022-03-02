@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +9,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +79,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * @deprecated This method does nothing currently.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
 
   /**
@@ -100,7 +98,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * @deprecated This method does nothing currently
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setTypeaheadEnabled(boolean enabled) {}
 
   /**
@@ -134,54 +132,19 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract void toFront(JComponent c);
 
   public static IdeFocusManager getInstance(@Nullable Project project) {
-    Application app = ApplicationManager.getApplication();
-    if (app == null || app.isHeadlessEnvironment() || app.isUnitTestMode() || project == null || project.isDisposed() || !project.isInitialized()) {
-      return getGlobalInstance();
-    }
-    else {
-      return project.getService(IdeFocusManager.class);
-    }
+    return getGlobalInstance();
   }
 
   public static @NotNull IdeFocusManager findInstanceByContext(@Nullable DataContext context) {
-    IdeFocusManager instance = null;
-    if (context != null) {
-      instance = getInstanceSafe(CommonDataKeys.PROJECT.getData(context));
-    }
-
-    if (instance == null) {
-      instance = findByComponent(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
-    }
-
-    if (instance == null) {
-      instance = getGlobalInstance();
-    }
-
-    return instance;
+    return getGlobalInstance();
   }
 
   public static @NotNull IdeFocusManager findInstanceByComponent(@NotNull Component component) {
-    IdeFocusManager instance = findByComponent(component);
-    return instance == null ? findInstanceByContext(null) : instance;
-  }
-
-  private static @Nullable IdeFocusManager findByComponent(@Nullable Component component) {
-    if (component == null) return null;
-    Component parent = ComponentUtil.findUltimateParent(component);
-    return parent instanceof IdeFrame ? getInstanceSafe(((IdeFrame)parent).getProject()) : null;
-  }
-
-
-  private static @Nullable IdeFocusManager getInstanceSafe(@Nullable Project project) {
-    if (project != null && !project.isDisposed() && project.isInitialized()) {
-      return getInstance(project);
-    }
-    return null;
+    return getGlobalInstance();
   }
 
   public static @NotNull IdeFocusManager findInstance() {
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
+    return getGlobalInstance();
   }
 
   public static @NotNull IdeFocusManager getGlobalInstance() {

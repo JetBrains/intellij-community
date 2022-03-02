@@ -212,6 +212,7 @@ class DelayedProjectSynchronizerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
+    DelayedProjectSynchronizer.backgroundPostStartupProjectLoading(project)
     return project
   }
 

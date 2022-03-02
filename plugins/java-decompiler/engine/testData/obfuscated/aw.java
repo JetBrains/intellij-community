@@ -38,21 +38,21 @@ class aw extends ap {
          var4 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 123;
-            break;
-         case 1:
-            var10008 = 69;
-            break;
-         case 2:
-            var10008 = 40;
-            break;
-         case 3:
-            var10008 = 78;
-            break;
-         default:
-            var10008 = 31;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 123;
+               break;
+            case 1:
+               var10008 = 69;
+               break;
+            case 2:
+               var10008 = 40;
+               break;
+            case 3:
+               var10008 = 78;
+               break;
+            default:
+               var10008 = 31;
          }
       } else {
          var10004 = var10003;
@@ -81,21 +81,21 @@ class aw extends ap {
 
                while(true) {
                   var10007 = var4[var10006];
-                  switch(var1 % 5) {
-                  case 0:
-                     var10008 = 123;
-                     break;
-                  case 1:
-                     var10008 = 69;
-                     break;
-                  case 2:
-                     var10008 = 40;
-                     break;
-                  case 3:
-                     var10008 = 78;
-                     break;
-                  default:
-                     var10008 = 31;
+                  switch (var1 % 5) {
+                     case 0:
+                        var10008 = 123;
+                        break;
+                     case 1:
+                        var10008 = 69;
+                        break;
+                     case 2:
+                        var10008 = 40;
+                        break;
+                     case 3:
+                        var10008 = 78;
+                        break;
+                     default:
+                        var10008 = 31;
                   }
 
                   var4[var10006] = (char)(var10007 ^ var10008);
@@ -138,21 +138,21 @@ class aw extends ap {
 
             while(true) {
                var10007 = var4[var10006];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 123;
-                  break;
-               case 1:
-                  var10008 = 69;
-                  break;
-               case 2:
-                  var10008 = 40;
-                  break;
-               case 3:
-                  var10008 = 78;
-                  break;
-               default:
-                  var10008 = 31;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 123;
+                     break;
+                  case 1:
+                     var10008 = 69;
+                     break;
+                  case 2:
+                     var10008 = 40;
+                     break;
+                  case 3:
+                     var10008 = 78;
+                     break;
+                  default:
+                     var10008 = 31;
                }
 
                var4[var10006] = (char)(var10007 ^ var10008);
@@ -176,21 +176,21 @@ class aw extends ap {
          var4 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 123;
-            break;
-         case 1:
-            var10008 = 69;
-            break;
-         case 2:
-            var10008 = 40;
-            break;
-         case 3:
-            var10008 = 78;
-            break;
-         default:
-            var10008 = 31;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 123;
+               break;
+            case 1:
+               var10008 = 69;
+               break;
+            case 2:
+               var10008 = 40;
+               break;
+            case 3:
+               var10008 = 78;
+               break;
+            default:
+               var10008 = 31;
          }
       }
 
@@ -202,21 +202,21 @@ class aw extends ap {
                var10006 = var2;
                var4 = var10004;
                var10007 = var10004[var2];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 123;
-                  break;
-               case 1:
-                  var10008 = 69;
-                  break;
-               case 2:
-                  var10008 = 40;
-                  break;
-               case 3:
-                  var10008 = 78;
-                  break;
-               default:
-                  var10008 = 31;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 123;
+                     break;
+                  case 1:
+                     var10008 = 69;
+                     break;
+                  case 2:
+                     var10008 = 40;
+                     break;
+                  case 3:
+                     var10008 = 78;
+                     break;
+                  default:
+                     var10008 = 31;
                }
             } else {
                if (var2 <= var1) {
@@ -243,21 +243,21 @@ class aw extends ap {
 
                      while(true) {
                         var10007 = var4[var10006];
-                        switch(var1 % 5) {
-                        case 0:
-                           var10008 = 123;
-                           break;
-                        case 1:
-                           var10008 = 69;
-                           break;
-                        case 2:
-                           var10008 = 40;
-                           break;
-                        case 3:
-                           var10008 = 78;
-                           break;
-                        default:
-                           var10008 = 31;
+                        switch (var1 % 5) {
+                           case 0:
+                              var10008 = 123;
+                              break;
+                           case 1:
+                              var10008 = 69;
+                              break;
+                           case 2:
+                              var10008 = 40;
+                              break;
+                           case 3:
+                              var10008 = 78;
+                              break;
+                           default:
+                              var10008 = 31;
                         }
 
                         var4[var10006] = (char)(var10007 ^ var10008);
@@ -300,21 +300,21 @@ class aw extends ap {
 
                   while(true) {
                      var10007 = var4[var10006];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 123;
-                        break;
-                     case 1:
-                        var10008 = 69;
-                        break;
-                     case 2:
-                        var10008 = 40;
-                        break;
-                     case 3:
-                        var10008 = 78;
-                        break;
-                     default:
-                        var10008 = 31;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 123;
+                           break;
+                        case 1:
+                           var10008 = 69;
+                           break;
+                        case 2:
+                           var10008 = 40;
+                           break;
+                        case 3:
+                           var10008 = 78;
+                           break;
+                        default:
+                           var10008 = 31;
                      }
 
                      var4[var10006] = (char)(var10007 ^ var10008);
@@ -338,21 +338,21 @@ class aw extends ap {
                var4 = var10004;
                var10006 = var1;
                var10007 = var10004[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 123;
-                  break;
-               case 1:
-                  var10008 = 69;
-                  break;
-               case 2:
-                  var10008 = 40;
-                  break;
-               case 3:
-                  var10008 = 78;
-                  break;
-               default:
-                  var10008 = 31;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 123;
+                     break;
+                  case 1:
+                     var10008 = 69;
+                     break;
+                  case 2:
+                     var10008 = 40;
+                     break;
+                  case 3:
+                     var10008 = 78;
+                     break;
+                  default:
+                     var10008 = 31;
                }
             }
          }

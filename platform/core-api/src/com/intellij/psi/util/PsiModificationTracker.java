@@ -57,7 +57,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = MODIFICATION_COUNT;
 
   /**
@@ -66,7 +66,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   Key JAVA_STRUCTURE_MODIFICATION_COUNT = MODIFICATION_COUNT;
 
   /**
@@ -88,7 +88,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   ModificationTracker getJavaStructureModificationTracker();
 

@@ -35,7 +35,10 @@ public interface MultiHostInjector {
    * class MyRegExpToJavaInjector implements MultiHostInjector {
    *   void getLanguagesToInject(MultiHostRegistrar registrar, PsiElement context) {
    *     if (context instanceof PsiLiteralExpression && looksLikeAGoodPlaceToInject(context)) {
-   *       registrar.startInjecting(REGEXP_LANG).addPlace(null,null,context,innerRangeStrippingQuotes(context));
+   *       registrar
+   *         .startInjecting(REGEXP_LANG)
+   *         .addPlace(null,null,context,innerRangeStrippingQuotes(context))
+   *         .doneInjecting();
    *     }
    *   }
    * }

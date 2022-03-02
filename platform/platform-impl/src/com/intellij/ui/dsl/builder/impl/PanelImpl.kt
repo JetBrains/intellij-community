@@ -19,18 +19,14 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
+// todo remove 'open' in version 2022.2
 @ApiStatus.Internal
-internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                         private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
+                              var spacingConfiguration: SpacingConfiguration,
+                              private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
-
-  var spacingConfiguration: SpacingConfiguration? = null
-    private set
-
-  var customGaps: Gaps? = null
-    private set
 
   private var panelContext = PanelContext()
 
@@ -178,8 +174,33 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
         }
       }.verticalAlign(VerticalAlign.FILL)
     }
-    result.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
-    result.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
+    result.internalTopGap = spacingConfiguration.verticalMediumGap
+    result.internalBottomGap = spacingConfiguration.verticalMediumGap
+
+    return result
+  }
+
+  override fun group(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
+    lateinit var result: Panel
+    val separator = createSeparator(title)
+    val row = row {
+      result = panel {
+        row {
+          cell(separator)
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+      }
+    }
+
+    if (indent) {
+      result.indent(init)
+    }
+    else {
+      result.init()
+    }
+
+    setTopGroupGap(row, topGroupGap)
+    setBottomGroupGap(row, bottomGroupGap)
 
     return result
   }
@@ -217,11 +238,48 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
 
     result.expanded = false
-    result.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
-    result.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
+    result.internalTopGap = spacingConfiguration.verticalMediumGap
+    result.internalBottomGap = spacingConfiguration.verticalMediumGap
     _rows.add(result)
 
     return result
+  }
+
+  override fun collapsibleGroup(title: String,
+                                indent: Boolean,
+                                topGroupGap: Boolean?,
+                                bottomGroupGap: Boolean?,
+                                init: Panel.() -> Unit): CollapsiblePanel {
+    val row = row { }
+    val result = CollapsiblePanelImpl(dialogPanelConfig, row, title) {
+      if (indent) {
+        indent(init)
+      }
+      else {
+        init()
+      }
+    }
+
+    result.expanded = false
+    row.cell(result)
+
+    setTopGroupGap(row, topGroupGap)
+    setBottomGroupGap(row, bottomGroupGap)
+
+    return result
+  }
+
+  @Deprecated("Use buttonsGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
+  override fun buttonGroup(title: String?, indent: Boolean, init: Panel.() -> Unit) {
+    buttonsGroup(title, indent, init)
+  }
+
+  @Deprecated("Use buttonsGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
+  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, indent: Boolean, init: Panel.() -> Unit) {
+    buttonsGroup(title, indent, init)
+      .bind(MutableProperty(binding.get, binding.set), type)
   }
 
   override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
@@ -233,7 +291,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
           label(title)
             .applyToComponent { putClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP, true) }
         }
-        row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
+        row.internalBottomGap = spacingConfiguration.buttonGroupHeaderBottomGap
       }
 
       if (indent) {
@@ -265,19 +323,12 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit) {
-    val prevSpacingConfiguration = dialogPanelConfig.spacing
-    dialogPanelConfig.spacing = spacingConfiguration
     this.spacingConfiguration = spacingConfiguration
-    try {
-      this.init()
-    }
-    finally {
-      dialogPanelConfig.spacing = prevSpacingConfiguration
-    }
+    this.init()
   }
 
-  override fun customize(customGaps: Gaps): Panel {
-    this.customGaps = customGaps
+  override fun customize(customGaps: Gaps): PanelImpl {
+    super.customize(customGaps)
     return this
   }
 
@@ -389,7 +440,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun setTopGroupGap(row: RowImpl, topGap: Boolean?) {
     if (topGap == null) {
-      row.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
+      row.internalTopGap = spacingConfiguration.verticalMediumGap
     }
     else {
       row.topGap(if (topGap) TopGap.MEDIUM else TopGap.NONE)
@@ -398,7 +449,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun setBottomGroupGap(row: RowImpl, bottomGap: Boolean?) {
     if (bottomGap == null) {
-      row.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
+      row.internalBottomGap = spacingConfiguration.verticalMediumGap
     }
     else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)

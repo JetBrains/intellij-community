@@ -29,5 +29,7 @@
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
   </component>
 </module>

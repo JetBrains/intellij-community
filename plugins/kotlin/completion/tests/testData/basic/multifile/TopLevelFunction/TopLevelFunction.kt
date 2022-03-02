@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package first
 
 fun firstFun() {
@@ -5,3 +6,4 @@ fun firstFun() {
 }
 
 // EXIST: secondFun
+// ABSENT: secondFunPrivate

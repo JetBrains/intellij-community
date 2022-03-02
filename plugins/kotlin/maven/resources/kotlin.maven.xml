@@ -99,11 +99,14 @@
     <codeInsight.unresolvedReferenceQuickFixProvider
             implementation="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenUnresolvedReferenceQuickFixProvider" />
 
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.maven.MavenImportListener"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.maven.MavenImportStartupActivity"/>
 
     <moduleService serviceImplementation="org.jetbrains.kotlin.idea.maven.KotlinImporterComponent"/>
   </extensions>
-
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.maven.KotlinMavenImportListener"
+              topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+  </projectListeners>
   <actions>
     <group id="KotlinMavenGenerate">
       <separator />

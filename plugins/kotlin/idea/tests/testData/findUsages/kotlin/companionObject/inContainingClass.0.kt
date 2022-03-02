@@ -24,3 +24,5 @@ interface Foo
 
 fun Foo.ext() {
 }
+
+// FIR_COMPARISON

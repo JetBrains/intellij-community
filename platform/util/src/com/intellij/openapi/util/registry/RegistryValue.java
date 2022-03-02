@@ -293,7 +293,12 @@ public class RegistryValue {
   }
 
   public void resetToDefault() {
-    setValue(myRegistry.getBundleValue(myKey));
+    String value = myRegistry.getBundleValueOrNull(myKey);
+    if (value == null) {
+      myRegistry.getUserProperties().remove(myKey);
+    } else {
+      setValue(value);
+    }
   }
 
   public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -7,15 +7,12 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -105,7 +102,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware, UpdateInBackg
       boolean scheduled = process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-          getApplicableRenderers(values, e.getProject())
+          getApplicableRenderers(values, process)
             .whenComplete((renderers, throwable) -> DebuggerUtilsAsync.completeFuture(renderers, throwable, future));
         }
 
@@ -145,7 +142,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware, UpdateInBackg
   }
 
   @NotNull
-  private static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, Project project) {
+  private static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, DebugProcessImpl process) {
     List<CompletableFuture<List<NodeRenderer>>> futures = new ArrayList<>(values.size());
     for (JavaValue value : values) {
       if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
@@ -155,8 +152,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware, UpdateInBackg
       if (!valueDescriptor.isValueValid()) {
         return CompletableFuture.completedFuture(Collections.emptyList());
       }
-      futures.add(DebuggerUtilsImpl.getApplicableRenderers(NodeRendererSettings.getInstance().getAllRenderers(project),
-                                                            valueDescriptor.getType()));
+      futures.add(process.getApplicableRenderers(valueDescriptor.getType()));
     }
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply(__ -> {

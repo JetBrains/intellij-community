@@ -15,6 +15,9 @@
  */
 package git4idea.commands;
 
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
+import com.intellij.externalProcessAuthHelper.XmlRpcHandlerService;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -22,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import git4idea.http.GitAskPassApp;
 import git4idea.http.GitAskPassXmlRpcHandler;
-import git4idea.ssh.GitXmlRpcHandlerService;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -32,7 +34,7 @@ import java.util.UUID;
 /**
  * Provides the authentication mechanism for Git HTTP connections.
  */
-public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttpAuthenticator> {
+public abstract class GitHttpAuthService extends XmlRpcHandlerService<GitHttpAuthenticator> {
 
   protected GitHttpAuthService() {
     super("intellij-git-askpass", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);
@@ -51,8 +53,8 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
   public abstract GitHttpAuthenticator createAuthenticator(@NotNull Project project,
                                                            @NotNull Collection<String> urls,
                                                            @NotNull File workingDirectory,
-                                                           @NotNull GitAuthenticationGate authenticationGate,
-                                                           @NotNull GitAuthenticationMode authenticationMode);
+                                                           @NotNull AuthenticationGate authenticationGate,
+                                                           @NotNull AuthenticationMode authenticationMode);
 
   /**
    * Internal handler implementation class, it is made public to be accessible via XML RPC.

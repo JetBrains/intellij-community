@@ -135,7 +135,7 @@ public final class JDOMExternalizerUtil {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #writeCustomField(Element, String, String)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static Element addElementWithValueAttribute(@NotNull Element parent, @NotNull String childTagName, @Nullable String attrValue) {
     writeCustomField(parent, childTagName, attrValue);
     return parent.getChild(childTagName);
@@ -143,7 +143,7 @@ public final class JDOMExternalizerUtil {
 
   /** @deprecated use {@link #readCustomField(Element, String)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static String getFirstChildValueAttribute(@NotNull Element parent, @NotNull String childTagName) {
     return readCustomField(parent, childTagName);
   }

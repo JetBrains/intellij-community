@@ -42,6 +42,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.intellij.codeInsight.intention.IntentionShortcuts.WRAPPER_PREFIX;
+
 public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
@@ -264,7 +266,7 @@ public final class ActionsTreeUtil {
     List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
 
     for (ActionUrl actionUrl : actionUrls) {
-      if (path.equals(actionUrl.getGroupPath())) {
+      if (areEqual(path, actionUrl)) { //actual path is shorter when we use custom root
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
           if (actionUrl.getActionType() == ActionUrl.ADDED) {
@@ -307,6 +309,16 @@ public final class ActionsTreeUtil {
     path.remove(path.size() - 1);
 
     return group;
+  }
+
+  private static boolean areEqual(@NotNull List<? super String> path, ActionUrl actionUrl) {
+    ArrayList<String> groupPath = actionUrl.getGroupPath();
+    if (path.size() > groupPath.size()) return false;
+    for (int i = 0; i < path.size(); i++) {
+      if (!Objects.equals(path.get(path.size() - 1 - i), groupPath.get(groupPath.size() - 1 - i)))
+        return false;
+    }
+    return true;
   }
 
   private static Group createEditorActionsGroup(Condition<? super AnAction> filtered) {
@@ -354,6 +366,19 @@ public final class ActionsTreeUtil {
     List<String> ids = actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX);
     ids.sort(null);
     Group group = new Group(KeyMapBundle.message("macros.group.title"), null, null);
+    for (String id : ids) {
+      if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
+        group.addActionId(id);
+      }
+    }
+    return group;
+  }
+
+  private static Group createIntentionsGroup(Condition<? super AnAction> filtered) {
+    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    List<String> ids = actionManager.getActionIdList(WRAPPER_PREFIX);
+    ids.sort(null);
+    Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, null);
     for (String id : ids) {
       if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
         group.addActionId(id);
@@ -525,6 +550,7 @@ public final class ActionsTreeUtil {
       }
     }
     mainGroup.addGroup(createMacrosGroup(wrappedFilter));
+    mainGroup.addGroup(createIntentionsGroup(wrappedFilter));
     mainGroup.addGroup(createQuickListsGroup(wrappedFilter, filter, forceFiltering, quickLists));
     mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter));
     mainGroup.addGroup(createOtherGroup(wrappedFilter, mainGroup, keymap));

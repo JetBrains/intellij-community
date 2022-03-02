@@ -3,8 +3,8 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.INTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher

@@ -7,5 +7,14 @@ cgi.parse
 urllib.parse.parse_qs
 urllib.parse.parse_qsl
 
+# pathlib methods that exist on Windows, but always raise NotImplementedError,
+# so are omitted from the stub
+pathlib.WindowsPath.group
+pathlib.WindowsPath.owner
+
 hashlib.scrypt
 os.startfile
+
+# Exists at runtime, but missing from stubs
+asyncio.windows_utils.socketpair
+venv.EnvBuilder.include_binary

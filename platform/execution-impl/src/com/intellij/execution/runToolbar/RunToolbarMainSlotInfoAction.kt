@@ -69,6 +69,7 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
   private class RunToolbarMainSlotInfo(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
+    private val dragArea = DraggablePane()
 
     private val processComponents = mutableListOf<ProcessesByType>()
     private val migLayout = MigLayout("fill, hidemode 3, ins 0, novisualpadding, ay center, flowx, gapx 0")
@@ -77,12 +78,13 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
     init {
       layout = MigLayout("ins 0, fill, ay center")
-      add(JPanel(MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]5[fill]5")).apply {
+      val pane = JPanel(MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]5[fill]5")).apply {
         add(JPanel().apply {
           isOpaque = false
           add(arrow)
           val d = preferredSize
           d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+
           preferredSize = d
         })
         add(JPanel().apply {
@@ -98,11 +100,13 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
           isOpaque = false
         }, "pushx, ay center, wmin 0")
         isOpaque = false
+      }
 
-      }, "growx, wmin 10")
+      add(dragArea, "pos 0 0")
+      add(pane, "growx, wmin 10")
 
       info.isOpaque = false
-      MouseListenerHelper.addListener(this, { doClick() }, { doShiftClick() }, { doRightClick() })
+      MouseListenerHelper.addListener(pane, { doClick() }, { doShiftClick() }, { doRightClick() })
     }
 
     fun doRightClick() {

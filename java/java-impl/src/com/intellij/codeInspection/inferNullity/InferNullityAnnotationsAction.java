@@ -299,9 +299,4 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     myUi.getCheckBox().setSelected(PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
     return myUi.getPanel();
   }
-
-  @Override
-  protected void canceled() {
-    super.canceled();
-  }
 }

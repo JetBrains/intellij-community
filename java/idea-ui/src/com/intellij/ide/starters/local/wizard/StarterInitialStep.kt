@@ -4,30 +4,18 @@ package com.intellij.ide.starters.local.wizard
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.shared.*
-import com.intellij.ide.starters.shared.ValidationFunctions.*
-import com.intellij.ide.util.projectWizard.ModuleNameGenerator
-import com.intellij.ide.util.projectWizard.ModuleWizardStep
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.map
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
-import com.intellij.openapi.roots.ui.configuration.validateSdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
@@ -41,40 +29,21 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
-import javax.swing.JTextField
 
-open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleWizardStep() {
-
+open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonStarterInitialStep(
+  contextProvider.wizardContext,
+  contextProvider.starterContext,
+  contextProvider.moduleBuilder,
+  contextProvider.parentDisposable,
+  contextProvider.settings
+) {
   protected val moduleBuilder: StarterModuleBuilder = contextProvider.moduleBuilder
-  protected val wizardContext: WizardContext = contextProvider.wizardContext
   protected val starterContext: StarterContext = contextProvider.starterContext
-  protected val starterSettings: StarterWizardSettings = contextProvider.settings
-  protected val parentDisposable: Disposable = contextProvider.parentDisposable
   private val starterPackProvider: () -> StarterPack = contextProvider.starterPackProvider
-
-  private val validatedTextComponents: MutableList<JTextField> = mutableListOf()
-
-  protected val propertyGraph: PropertyGraph = PropertyGraph()
-  private val entityNameProperty: GraphProperty<String> = propertyGraph.graphProperty(::suggestName)
-  private val locationProperty: GraphProperty<String> = propertyGraph.graphProperty(::suggestLocationByName)
-  private val groupIdProperty: GraphProperty<String> = propertyGraph.graphProperty { starterContext.group }
-  private val artifactIdProperty: GraphProperty<String> = propertyGraph.graphProperty { entityName }
-  private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
-
-  private val projectTypeProperty: GraphProperty<StarterProjectType?> = propertyGraph.graphProperty { starterContext.projectType }
-  private val languageProperty: GraphProperty<StarterLanguage> = propertyGraph.graphProperty { starterContext.language }
-  private val testFrameworkProperty: GraphProperty<StarterTestRunner?> = propertyGraph.graphProperty { starterContext.testFramework }
-  private val applicationTypeProperty: GraphProperty<StarterAppType?> = propertyGraph.graphProperty { starterContext.applicationType }
-  private val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { starterContext.includeExamples }
-
-  private var entityName: String by entityNameProperty.map { it.trim() }
-  private var location: String by locationProperty
-  private var groupId: String by groupIdProperty.map { it.trim() }
-  private var artifactId: String by artifactIdProperty.map { it.trim() }
 
   private val contentPanel: DialogPanel by lazy { createComponent() }
 
-  private val sdkModel: ProjectSdksModel = ProjectSdksModel()
+  protected lateinit var languageRow: Row
 
   @Volatile
   private var isDisposed: Boolean = false
@@ -84,7 +53,6 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   init {
     Disposer.register(parentDisposable, Disposable {
       isDisposed = true
-      sdkModel.disposeUIResources()
     })
   }
 
@@ -95,16 +63,16 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
     starterContext.artifact = artifactId
     starterContext.testFramework = testFrameworkProperty.get()
     starterContext.includeExamples = exampleCodeProperty.get()
+    starterContext.gitIntegration = gitProperty.get()
 
     wizardContext.projectName = entityName
     wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
     val sdk = sdkProperty.get()
+    moduleBuilder.moduleJdk = sdk
+
     if (wizardContext.project == null) {
       wizardContext.projectJdk = sdk
-    }
-    else {
-      moduleBuilder.moduleJdk = sdk
     }
   }
 
@@ -123,25 +91,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
     updateStartersDependencies(starterPack)
 
     return panel {
-      row(JavaStartersBundle.message("title.project.name.label")) {
-        textField(entityNameProperty)
-          .growPolicy(GrowPolicy.SHORT_TEXT)
-          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
-                                 createLocationWarningValidator(locationProperty))
-          .focused()
-
-        for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
-          val nameGeneratorUi = nameGenerator.getUi(moduleBuilder.builderId) { entityNameProperty.set(it) }
-          if (nameGeneratorUi != null) {
-            component(nameGeneratorUi).constraints(pushX)
-          }
-        }
-      }.largeGapAfter()
-
-      row(JavaStartersBundle.message("title.project.location.label")) {
-        projectLocationField(locationProperty, wizardContext)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
-      }.largeGapAfter()
+      addProjectLocationUi()
 
       addFieldsBefore(this)
 
@@ -149,66 +99,54 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
         row(JavaStartersBundle.message("title.project.app.type.label")) {
           val applicationTypesModel = DefaultComboBoxModel<StarterAppType>()
           applicationTypesModel.addAll(starterSettings.applicationTypes)
-          comboBox(applicationTypesModel, applicationTypeProperty, SimpleListCellRenderer.create("") { it?.title ?: "" })
-            .growPolicy(GrowPolicy.SHORT_TEXT)
-        }.largeGapAfter()
+          comboBox(applicationTypesModel, SimpleListCellRenderer.create("", StarterAppType::title))
+            .bindItem(applicationTypeProperty)
+            .columns(COLUMNS_MEDIUM)
+
+          bottomGap(BottomGap.SMALL)
+        }
       }
 
       if (starterSettings.languages.size > 1) {
         row(JavaStartersBundle.message("title.project.language.label")) {
-          buttonSelector(starterSettings.languages, languageProperty) { it.title }
-        }.largeGapAfter()
+          languageRow = this
+
+          segmentedButton(starterSettings.languages, StarterLanguage::title)
+            .bind(languageProperty)
+
+          bottomGap(BottomGap.SMALL)
+        }
       }
 
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.build.system.label")) {
-          buttonSelector(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
-        }.largeGapAfter()
-      }
+          segmentedButton(starterSettings.projectTypes, StarterProjectType::title)
+            .bind(projectTypeProperty)
 
-      if (starterSettings.testFrameworks.isNotEmpty()) {
-        row(JavaStartersBundle.message("title.project.test.framework.label")) {
-          buttonSelector(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
-        }.largeGapAfter()
-      }
-
-      row(JavaStartersBundle.message("title.project.group.label")) {
-        textField(groupIdProperty)
-          .growPolicy(GrowPolicy.SHORT_TEXT)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_GROUP_FORMAT, CHECK_NO_RESERVED_WORDS)
-      }.largeGapAfter()
-
-      row(JavaStartersBundle.message("title.project.artifact.label")) {
-        textField(artifactIdProperty)
-          .growPolicy(GrowPolicy.SHORT_TEXT)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_ARTIFACT_SIMPLE_FORMAT, CHECK_NO_RESERVED_WORDS)
-      }.largeGapAfter()
-
-      row(JavaStartersBundle.message("title.project.sdk.label")) {
-        sdkComboBox(sdkModel, sdkProperty, wizardContext.project, moduleBuilder)
-          .growPolicy(GrowPolicy.SHORT_TEXT)
-      }.largeGapAfter()
-
-      if (starterSettings.isExampleCodeProvided) {
-        row {
-          checkBox(JavaStartersBundle.message("title.project.examples.label"), exampleCodeProperty)
+          bottomGap(BottomGap.SMALL)
         }
       }
+
+      if (starterSettings.testFrameworks.size > 1) {
+        row(JavaStartersBundle.message("title.project.test.framework.label")) {
+          segmentedButton(starterSettings.testFrameworks, StarterTestRunner::title)
+            .bind(testFrameworkProperty)
+
+          bottomGap(BottomGap.SMALL)
+        }
+      }
+
+      addGroupArtifactUi()
+      addSdkUi()
+      addSampleCodeUi()
 
       addFieldsAfter(this)
     }.withVisualPadding(topField = true)
   }
 
-  protected open fun addFieldsBefore(layout: LayoutBuilder) {}
-
-  protected open fun addFieldsAfter(layout: LayoutBuilder) {}
-
   override fun validate(): Boolean {
     if (!validateFormFields(component, contentPanel, validatedTextComponents)) {
-      return false
-    }
-    if (!validateSdk(sdkProperty, sdkModel)) {
       return false
     }
     if (!validateJavaVersion(sdkProperty, moduleBuilder.getMinJavaVersionInternal()?.toFeatureString(), moduleBuilder.presentableName)) {
@@ -246,19 +184,6 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
       setStarterDependencyUpdates(starter.id, dependencyConfig)
     }
-  }
-
-  private fun suggestName(): String {
-    return suggestName(starterContext.artifact)
-  }
-
-  private fun suggestName(prefix: String): String {
-    val projectFileDirectory = File(wizardContext.projectFileDirectory)
-    return FileUtil.createSequentFileName(projectFileDirectory, prefix, "")
-  }
-
-  private fun suggestLocationByName(): String {
-    return wizardContext.projectFileDirectory // no project name included
   }
 
   @RequiresBackgroundThread
@@ -335,15 +260,4 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   private fun getDependencyConfigUpdatesDirLocation(starterId: String): String = "framework-starters/$starterId/"
 
   private fun getPatchFileName(starterId: String): String = "${starterId}_patch.pom"
-
-  @Suppress("SameParameterValue")
-  private fun <T : JComponent> CellBuilder<T>.withSpecialValidation(vararg errorValidationUnits: TextValidationFunction): CellBuilder<T> =
-    withValidation(this, errorValidationUnits.asList(), null, validatedTextComponents, parentDisposable)
-
-  private fun <T : JComponent> CellBuilder<T>.withSpecialValidation(
-    errorValidationUnits: List<TextValidationFunction>,
-    warningValidationUnit: TextValidationFunction?
-  ): CellBuilder<T> {
-    return withValidation(this, errorValidationUnits, warningValidationUnit, validatedTextComponents, parentDisposable)
-  }
 }

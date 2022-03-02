@@ -6,17 +6,17 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.map
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.validation.CHECK_ARTIFACT_ID_FORMAT
+import com.intellij.openapi.ui.validation.CHECK_GROUP_ID_FORMAT
+import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.text.nullize
 import java.util.Comparator.comparing
 import java.util.function.Function
 import javax.swing.JList
@@ -30,15 +30,15 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
 
   abstract fun findAllParents(): List<Data>
 
-  final override val parentProperty = propertyGraph.graphProperty(::suggestParentByPath)
-  final override val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
-  final override val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
-  final override val versionProperty = propertyGraph.graphProperty(::suggestVersionByParent)
+  final override val parentProperty = propertyGraph.lazyProperty(::suggestParentByPath)
+  final override val groupIdProperty = propertyGraph.lazyProperty(::suggestGroupIdByParent)
+  final override val artifactIdProperty = propertyGraph.lazyProperty(::suggestArtifactIdByName)
+  final override val versionProperty = propertyGraph.lazyProperty(::suggestVersionByParent)
 
   final override var parent by parentProperty
-  final override var groupId by groupIdProperty.map { it.trim() }
-  final override var artifactId by artifactIdProperty.map { it.trim() }
-  final override var version by versionProperty.map { it.trim() }
+  final override var groupId by groupIdProperty.trim()
+  final override var artifactId by artifactIdProperty.trim()
+  final override var version by versionProperty.trim()
 
   val parents by lazy { parentsData.map(::createView) }
   val parentsData by lazy { findAllParents() }
@@ -57,33 +57,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
     versionProperty.dependsOn(parentProperty, ::suggestVersionByParent)
   }
 
-  protected open fun setupAdvancedSettingsUI(panel: Panel) {
-    with(panel) {
-      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
-        textField()
-          .bindText(groupIdProperty)
-          .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateGroupId() }
-          .validationOnInput { validateGroupId() }
-      }.bottomGap(BottomGap.SMALL)
-      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
-        textField()
-          .bindText(artifactIdProperty)
-          .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateArtifactId() }
-          .validationOnInput { validateArtifactId() }
-      }.bottomGap(BottomGap.SMALL)
-      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
-        textField()
-          .bindText(versionProperty)
-          .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateVersion() }
-          .validationOnInput { validateVersion() }
-      }.bottomGap(BottomGap.SMALL)
-    }
-  }
-
-  override fun setupUI(builder: Panel) {
+  protected open fun setupSettingsUI(builder: Panel) {
     with(builder) {
       if (parents.isNotEmpty()) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
@@ -96,20 +70,37 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
             .columns(COLUMNS_MEDIUM)
         }.topGap(TopGap.SMALL)
       }
-      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title")) {
-        setupAdvancedSettingsUI(this)
-      }.topGap(TopGap.MEDIUM)
     }
   }
 
-  protected fun findAllModules(): List<Module> {
-    val project = context.project ?: return emptyList()
-    val moduleManager = ModuleManager.getInstance(project)
-    return moduleManager.modules.toList()
+  protected open fun setupAdvancedSettingsUI(builder: Panel) {
+    with(builder) {
+      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
+        textField()
+          .bindText(groupIdProperty)
+          .columns(COLUMNS_MEDIUM)
+          .textValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID_FORMAT)
+          .validation { validateGroupId() }
+      }.bottomGap(BottomGap.SMALL)
+      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
+        textField()
+          .bindText(artifactIdProperty)
+          .columns(COLUMNS_MEDIUM)
+          .textValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID_FORMAT)
+          .validation { validateArtifactId() }
+      }.bottomGap(BottomGap.SMALL)
+    }
+  }
+
+  override fun setupUI(builder: Panel) {
+    setupSettingsUI(builder)
+    builder.collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title")) {
+      setupAdvancedSettingsUI(this)
+    }.topGap(TopGap.MEDIUM)
   }
 
   private fun suggestParentByPath(): DataView<Data> {
-    val path = parentStep.projectPath.systemIndependentPath
+    val path = "${parentStep.path}/${parentStep.name}"
     return parents.find { FileUtil.isAncestor(it.location, path, true) } ?: EMPTY_VIEW
   }
 
@@ -118,7 +109,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
   }
 
   protected open fun suggestGroupIdByParent(): String {
-    return parent.groupId
+    return parent.groupId.nullize() ?: EMPTY_VIEW.groupId
   }
 
   protected open fun suggestArtifactIdByName(): String {
@@ -136,8 +127,6 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
   protected open fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? = null
 
   protected open fun ValidationInfoBuilder.validateArtifactId(): ValidationInfo? = null
-
-  protected open fun ValidationInfoBuilder.validateVersion(): ValidationInfo? = null
 
   private class ParentRenderer<Data : Any> : SimpleListCellRenderer<DataView<Data>?>() {
     override fun customize(list: JList<out DataView<Data>?>,

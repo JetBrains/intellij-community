@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.application.Application;
@@ -14,7 +14,6 @@ import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -32,13 +31,12 @@ import java.lang.reflect.Method;
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private static final Logger LOG = Logger.getInstance(ButtonlessScrollBarUI.class);
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static JBColor getTrackBackgroundDefault() {
     return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static JBColor getTrackBorderColorDefault() {
     return new JBColor(Gray._230, UIUtil.getListBackground());
   }
@@ -52,7 +50,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private JBColor jbColor(final Color regular, final Color dark) {
-    return new JBColor(() -> isDark() ? dark : regular);
+    return JBColor.lazy(() -> isDark() ? dark : regular);
   }
 
   private int getAnimationColorShift() {
@@ -375,7 +373,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static BasicScrollBarUI createNormal() {
     return new ButtonlessScrollBarUI();
   }

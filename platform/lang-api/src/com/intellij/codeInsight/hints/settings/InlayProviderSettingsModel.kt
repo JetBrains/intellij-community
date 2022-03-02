@@ -69,6 +69,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    */
   abstract fun getCasePreview(case: ImmediateConfigurable.Case?): String?
 
+  abstract fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language?
+
   /**
    * Description for given case
    * @param case case to get description

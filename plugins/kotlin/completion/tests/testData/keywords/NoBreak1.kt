@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo() {
     myFor@
     for (i in 1..10) {

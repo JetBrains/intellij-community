@@ -3,11 +3,15 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -75,6 +79,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private Component myEffectComponent;
 
   private @NlsContexts.StatusBarText String myInfo;
+
+  private @Nullable CurrentEditorProvider myEditorProvider;
 
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
@@ -156,8 +162,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
                                     JBUI.Borders.empty(0, 10, 1, 10)) :
               JBUI.Borders.empty(1, 0, 0, 6));
 
-    myInfoAndProgressPanel = new InfoAndProgressPanel();
+    myInfoAndProgressPanel = new InfoAndProgressPanel(UISettings.getShadowInstance());
     addWidget(myInfoAndProgressPanel, Position.CENTER, "__IGNORED__");
+    Project project = myFrame.getProject();
+    if (project != null) {
+      project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, myInfoAndProgressPanel);
+    }
 
     setOpaque(true);
     updateUI();
@@ -718,6 +728,17 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public Project getProject() {
     return myFrame.getProject();
+  }
+
+  @Nullable
+  @Override
+  public FileEditor getCurrentEditor() {
+    return myEditorProvider != null ? myEditorProvider.getCurrentEditor() : null;
+  }
+
+  @ApiStatus.Internal
+  public void setEditorProvider(@Nullable CurrentEditorProvider provider) {
+    myEditorProvider = provider;
   }
 
   @Override

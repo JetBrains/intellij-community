@@ -52,10 +52,9 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeature
       return null
     }
 
-    val elementFile = element.containingFile.virtualFile
-
     val (openedFileModule, elementModule) = ReadAction.compute<Pair<com.intellij.openapi.module.Module?,
       com.intellij.openapi.module.Module?>, Nothing> {
+      val elementFile = element.containingFile?.virtualFile ?: return@compute Pair(null, null)
       val fileIndex = ProjectRootManager.getInstance(element.project).fileIndex
       return@compute Pair(fileIndex.getModuleForFile(openedFile), fileIndex.getModuleForFile(elementFile))
     }

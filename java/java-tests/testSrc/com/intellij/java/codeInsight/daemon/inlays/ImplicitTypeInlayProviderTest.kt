@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.ImplicitTypeInlayProvider
@@ -26,7 +26,7 @@ class Demo {
 class Demo {
   static String foo() {}
   private static void pure(int x, int y) {
-    var x<# [:  [jar://rt.jar!/java/lang/String.class:888]String] #> = foo();
+    var x<# [:  [jar://rt.jar!/java/lang/String.class:744]String] #> = foo();
   }
 }"""
     testAnnotations(text)
@@ -71,7 +71,7 @@ import java.util.HashMap;
 class Demo {
   private static void main() {
     var map = new HashMap<String, Integer>();
-    var l<# [:  [[jar://rt.jar!/java/util/HashMap.class:583]HashMap [< [[jar://rt.jar!/java/lang/String.class:888]String ,  [jar://rt.jar!/java/lang/Integer.class:229]Integer] >]]] #> = map;
+    var l<# [:  [[jar://rt.jar!/java/util/HashMap.class:555]HashMap [< [[jar://rt.jar!/java/lang/String.class:744]String ,  [jar://rt.jar!/java/lang/Integer.class:229]Integer] >]]] #> = map;
   }
 }"""
     testAnnotations(text)

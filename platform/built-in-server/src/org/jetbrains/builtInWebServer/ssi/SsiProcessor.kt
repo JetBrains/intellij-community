@@ -2,7 +2,6 @@
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SmartList
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
@@ -82,7 +81,7 @@ internal open class SsiProcessor {
           try {
             val virtual = paramName.equals("virtual", ignoreCase = true)
             lastModified = state.ssiExternalResolver.getFileLastModified(substitutedValue, virtual)
-            val file = state.ssiExternalResolver.findFile(substitutedValue, virtual)
+            val file = state.ssiExternalResolver.findFileInProject(substitutedValue, virtual)
             if (file == null) {
               LOG.warn("#include-- Couldn't find file: $substitutedValue")
               return@SsiCommand 0

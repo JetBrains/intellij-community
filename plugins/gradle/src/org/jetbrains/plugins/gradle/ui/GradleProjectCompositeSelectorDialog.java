@@ -95,11 +95,6 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   }
 
   @Override
-  public void doCancelAction() {
-    super.doCancelAction();
-  }
-
-  @Override
   public void dispose() {
     super.dispose();
   }

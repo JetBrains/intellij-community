@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -32,9 +32,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -58,8 +56,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   /**
    * @deprecated Use {@link #getName()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final String NAME = "Sources";
 
   protected ContentEntryTreeEditor myRootTreeEditor;
@@ -181,10 +178,10 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
                      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, JBInsets.create(0, 10), 0, 0));
     contentPanel.add(actionToolbar.getComponent(),
                      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                            JBUI.emptyInsets(), 0, 0));
+                                            JBInsets.emptyInsets(), 0, 0));
     contentPanel.add(splitter,
                      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                            JBUI.emptyInsets(), 0, 0));
+                                            JBInsets.emptyInsets(), 0, 0));
 
     mainPanel.add(contentPanel, BorderLayout.CENTER);
 

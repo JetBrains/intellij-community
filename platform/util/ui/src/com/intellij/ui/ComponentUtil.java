@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +19,6 @@ public final class ComponentUtil {
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
     return ClientProperty.get(component, key);
   }
@@ -30,7 +28,6 @@ public final class ComponentUtil {
    * or {@link ClientProperty#put(JComponent, Key, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
     component.putClientProperty(key, value);
   }

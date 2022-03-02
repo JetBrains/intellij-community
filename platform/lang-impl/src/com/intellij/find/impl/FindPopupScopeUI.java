@@ -20,7 +20,6 @@ import com.intellij.find.FindSettings;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +50,7 @@ public interface FindPopupScopeUI {
     /**
      * @deprecated Use {@link #textComputable} instead
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     public final @NlsContexts.ListItem String text;
     public final Icon icon;
 

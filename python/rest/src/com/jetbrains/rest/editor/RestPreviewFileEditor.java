@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.editor;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -152,21 +151,11 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
   }
 
   @Override
-  public void deselectNotify() {
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
-
-  @Nullable
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
   }
 
   @Nullable

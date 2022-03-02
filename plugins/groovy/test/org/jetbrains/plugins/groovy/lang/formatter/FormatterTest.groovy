@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
@@ -958,6 +958,70 @@ println "--> ${{value}}"
 ''', '''\
 println "--> ${{ value }}"
 ''')
+  }
+
+  void testLongQualifiedName() {
+    groovySettings.RIGHT_MARGIN = 26
+    groovySettings.WRAP_LONG_LINES = true
+    checkFormatting("""\
+def x = new aaaaaaaa.bbbbbbbbb.ccccccccc.foo()
+""", """\
+def x = new aaaaaaaa.
+    bbbbbbbbb.
+    ccccccccc.foo()
+""")
+  }
+
+  void testSpacesAfterHardWrapMargin() {
+    groovySettings.RIGHT_MARGIN = 10
+    groovySettings.WRAP_LONG_LINES = true
+    checkFormatting("""\
+aaaa.bb           
+""", """\
+aaaa.bb           
+""")
+  }
+
+  void testGroovydoc() {
+    checkFormatting("""\
+/** {@code
+ * {
+ *  foo
+ * }}
+ */
+public static void main(String[] args) {
+
+}
+""", """\
+/** {@code
+ * {
+ *  foo
+ * }}
+ */
+public static void main(String[] args) {
+
+}
+""")
+  }
+
+  void testGroovydoc2() {
+    checkFormatting("""\
+class Scratch {
+  /**
+   * {foo}
+   */
+  public static void main(String[] args) {
+
+  }
+}""", """\
+class Scratch {
+  /**
+   * {foo}
+   */
+  public static void main(String[] args) {
+
+  }
+}""")
   }
 
   private void doGeeseTest() {

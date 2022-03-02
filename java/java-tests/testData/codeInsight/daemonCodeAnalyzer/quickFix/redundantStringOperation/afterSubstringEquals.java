@@ -1,4 +1,4 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Redundant 'String' operation' problems in file" "true"
 class X {
     void test(String s, int pos, String s2) {
         if (s.startsWith("xyzt", pos)) { }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 
 import javax.swing.*;
 
@@ -51,7 +52,7 @@ public class GradleGroovyFrameworkSupportProvider extends GradleFrameworkSupport
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
-      .withGroovyPlugin()
+      .withGroovyPlugin(GradleBuildScriptBuilderUtil.getGroovyVersion())
       .withJUnit();
   }
 }

@@ -40,8 +40,7 @@ public abstract class CompletionService {
    * @param text
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text);
 
   /**

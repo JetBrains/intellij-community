@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -17,7 +17,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.*;
+import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -27,7 +30,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
@@ -36,10 +42,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.lang.reflect.Field;
@@ -50,7 +53,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @State(
   name = "FileTypeManager",
@@ -66,7 +68,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc";
+  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg", ".svn", "CVS",
+                                                      "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
 
   static final String FILE_SPEC = "filetypes";
   private static final String ELEMENT_EXTENSION_MAP = "extensionMap";
@@ -85,7 +88,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
   FileTypeAssocTable<FileTypeWithDescriptor> myPatternsTable = new FileTypeAssocTable<>();
-  private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
+  private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet(DEFAULT_IGNORED);
   private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
 
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
@@ -186,8 +189,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myDetectionService = new FileTypeDetectionService(this);
     Disposer.register(this, myDetectionService);
 
-    myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
-
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull FileTypeBean fileTypeBean, @NotNull PluginDescriptor pluginDescriptor) {
@@ -220,7 +221,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }, this);
   }
 
-  static class FileTypeWithDescriptor implements Scheme {
+  @TestOnly
+  void listenAsyncVfsEvents() {
+    VirtualFileManager.getInstance().addAsyncFileListener(myDetectionService::prepareChange, this);
+  }
+
+  static final class MyAsyncVfsListener implements AsyncFileListener {
+    @Override
+    public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      return ((FileTypeManagerImpl)getInstance()).myDetectionService.prepareChange(events);
+    }
+  }
+
+  static final class FileTypeWithDescriptor implements Scheme {
     private static final PluginDescriptor WILD_CARD = new DefaultPluginDescriptor("WILD_CARD");
 
     final @NotNull FileType fileType;
@@ -243,7 +256,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     @Override
     public String toString() {
-      return fileType +" from '"+(pluginDescriptor==WILD_CARD ? "*" : pluginDescriptor)+"'";
+      return fileType + " from '" + (pluginDescriptor==WILD_CARD ? "*" : PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId())
+                                                                         ? "CORE" : pluginDescriptor) + "'";
     }
 
     // equals to all FileTypeWithDescriptor with this fileType
@@ -334,31 +348,37 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @TestOnly
   void clearStandardFileTypesBeforeTest() {
-    myPendingAssociations.clear();
-    myPendingFileTypes.clear();
-    for (Map.Entry<String, StandardFileType> entry : myStandardFileTypes.entrySet()) {
-      String name = entry.getKey();
-      StandardFileType stdType = entry.getValue();
-      FileType type = stdType.fileType;
-      FileTypeWithDescriptor ftd = stdType.getDescriptor();
-      for (FileNameMatcher matcher : stdType.matchers) {
-        removeAssociation(ftd, matcher, false);
+    myPendingInitializationLock.writeLock().lock();
+    try {
+      myPendingAssociations.clear();
+      myPendingFileTypes.clear();
+      for (Map.Entry<String, StandardFileType> entry : myStandardFileTypes.entrySet()) {
+        String name = entry.getKey();
+        StandardFileType stdType = entry.getValue();
+        FileType type = stdType.fileType;
+        FileTypeWithDescriptor ftd = stdType.getDescriptor();
+        for (FileNameMatcher matcher : stdType.matchers) {
+          removeAssociation(ftd, matcher, false);
+        }
+        mySchemeManager.removeScheme(name);
+        removeFromDuplicates(type, ftd.pluginDescriptor);
       }
-      mySchemeManager.removeScheme(name);
-      removeFromDuplicates(type, ftd.pluginDescriptor);
-    }
-    myStandardFileTypes.clear();
-    for (FileTypeWithDescriptor ftd : myDefaultTypes) {
-      String name = ftd.getName();
-      FileType defaultType = ftd.fileType;
-      List<FileNameMatcher> matchers = getAssociations(defaultType);
-      for (FileNameMatcher matcher : matchers) {
-        removeAssociation(ftd, matcher, false);
+      myStandardFileTypes.clear();
+      for (FileTypeWithDescriptor ftd : myDefaultTypes) {
+        String name = ftd.getName();
+        FileType defaultType = ftd.fileType;
+        List<FileNameMatcher> matchers = getAssociations(defaultType);
+        for (FileNameMatcher matcher : matchers) {
+          removeAssociation(ftd, matcher, false);
+        }
+        mySchemeManager.removeScheme(name);
+        removeFromDuplicates(defaultType, ftd.pluginDescriptor);
       }
-      mySchemeManager.removeScheme(name);
-      removeFromDuplicates(defaultType, ftd.pluginDescriptor);
+      myDefaultTypes.clear();
     }
-    myDefaultTypes.clear();
+    finally {
+      myPendingInitializationLock.writeLock().unlock();
+    }
   }
 
   private void removeFromDuplicates(@NotNull FileType type, @NotNull PluginDescriptor pluginDescriptor) {
@@ -682,7 +702,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return PlainTextFileType.INSTANCE.equals(requestedFileType);
     }
     if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      FileType detected = myDetectionService.getOrDetectFromContent(file, null, false);
+      FileType detected = myDetectionService.getOrDetectFromContent(file, null, fileType);
       if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
         return DetectedByContentFileType.INSTANCE.equals(requestedFileType);
       }
@@ -705,21 +725,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      FileType detected = detectFileTypeByFile(file, content);
-      if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
-        return DetectedByContentFileType.INSTANCE;
-      }
-      return detected;
+      fileType = internalContinueToDetectFileTypeByFile(file, content, fileType);
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
   }
 
-  protected @NotNull FileType detectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
+  // do not use
+  @ApiStatus.Internal
+  protected @NotNull FileType internalContinueToDetectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) {
     // should run detectors for 'DetectedByContentFileType' type and if failed, return text
-    return myDetectionService.getOrDetectFromContent(file, content);
+    return myDetectionService.getOrDetectFromContent(file, content, fileTypeByName);
   }
 
   // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
+  @SuppressWarnings("DanglingJavadoc")
   @Override
   public @Nullable FileType getByFile(@NotNull VirtualFile file) {
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
@@ -745,6 +764,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
         return specialType;
       }
+    }
+
+    /**
+      {@link DetectedByContentFileType} is a special SpecialFileType (and not actual {@link FileTypeIdentifiableByVirtualFile} at that):
+      Its {@link DetectedByContentFileType#isMyFileType(VirtualFile)} has to be called after all other {@link FileTypeIdentifiableByVirtualFile#isMyFileType(VirtualFile)}
+      to avoid (mis)detecting some empty special file as DetectedByContentFileType
+     */
+    if (DetectedByContentFileType.isMyFileType(file)) {
+      return DetectedByContentFileType.INSTANCE;
     }
 
     FileType fileType = getFileTypeByFileName(file.getNameSequence());
@@ -904,7 +932,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   public void setIgnoredFilesList(@NotNull String list) {
     makeFileTypesChange("ignored files list updated: " + list, () -> {
-      myIgnoredFileCache.clearCache();
+      clearIgnoredFileCache();
       myIgnoredPatterns.setIgnoreMasks(list);
     });
   }
@@ -1007,9 +1035,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     migrateFromOldVersion(savedVersion);
 
-    myIgnoredFileCache.clearCache();
+    clearIgnoredFileCache();
 
     myDetectionService.loadState(state);
+  }
+
+  void clearIgnoredFileCache() {
+    myIgnoredFileCache.clearCache();
   }
 
   private void migrateFromOldVersion(int savedVersion) {
@@ -1182,14 +1214,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public @NotNull Element getState() {
     Element state = new Element("state");
 
-    String ignoreFiles = myIgnoredPatterns.getIgnoreMasks()
-      .stream()
-      .sorted()
-      .collect(Collectors.joining(";"));
-
-    if (!ignoreFiles.equalsIgnoreCase(DEFAULT_IGNORED)) {
+    List<String> ignoreFiles = new ArrayList<>(myIgnoredPatterns.getIgnoreMasks());
+    ignoreFiles.sort(null);
+    if (!isEqualToDefaultIgnoreMasks(ignoreFiles)) {
       // empty means empty list - we need to distinguish null and empty to apply or not to apply default value
-      state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, ignoreFiles));
+      state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, String.join(";", ignoreFiles)));
     }
 
     Element extensionMap = new Element(ELEMENT_EXTENSION_MAP);
@@ -1242,6 +1271,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     return state;
+  }
+
+  private static boolean isEqualToDefaultIgnoreMasks(@NotNull List<String> newList) {
+    if (newList.size() != DEFAULT_IGNORED.size()) {
+      return false;
+    }
+
+    for (int i = 0, n = DEFAULT_IGNORED.size(); i < n; i++) {
+      if (!DEFAULT_IGNORED.get(i).equalsIgnoreCase(newList.get(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void writeExtensionsMap(@NotNull Element extensionMap, @NotNull FileTypeWithDescriptor ftd, boolean specifyTypeName) {
@@ -1376,7 +1418,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // check that method "getter" returns unique strings across all file types
   private static void checkUnique(@NotNull FileTypeWithDescriptor newFtd,
-                                  @NotNull Map<String, FileTypeWithDescriptor> names,
+                                  @NotNull Map<? super String, FileTypeWithDescriptor> names,
                                   @NotNull String getterName,
                                   @NotNull Function<? super FileType, String> nameExtractor) {
     FileType newFileType = newFtd.fileType;
@@ -1517,7 +1559,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   public void dispose() { }
 
-  void setPatternsTable(@NotNull Set<? extends FileTypeWithDescriptor> fileTypes, @NotNull FileTypeAssocTable<FileTypeWithDescriptor> assocTable) {
+  void setPatternsTable(@NotNull Set<FileTypeWithDescriptor> fileTypes, @NotNull FileTypeAssocTable<FileTypeWithDescriptor> assocTable) {
     Map<FileNameMatcher, FileTypeWithDescriptor> removedMappings = getExtensionMap().getRemovedMappings(assocTable, fileTypes);
     String message = "set patterns table called: file types " + fileTypes + ", ass. table:" + assocTable;
     makeFileTypesChange(message, () -> {

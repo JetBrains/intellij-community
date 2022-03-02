@@ -54,7 +54,6 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
     override fun setUp() {
         super.setUp()
-        repositoryPath = File(myDir, "repo").path
         createStdProjectFolders()
     }
 
@@ -82,7 +81,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         assertNotNull("Kotlin importer component is not present", myTestFixture.module.getServiceSafe<KotlinImporterComponent>())
     }
 
-    class SimpleKotlinProject : AbstractKotlinMavenImporterTest() {
+    class SimpleKotlinProject5 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testSimpleKotlinProject() {
             importProject(
@@ -138,7 +137,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class WithCustomSourceDirs : AbstractKotlinMavenImporterTest() {
+    class WithCustomSourceDirs12 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testWithCustomSourceDirs() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -303,7 +302,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class ImportOfficialCodeStyle : AbstractKotlinMavenImporterTest() {
+    class ImportOfficialCodeStyle8 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testImportOfficialCodeStyle() {
             importProject(
@@ -1030,7 +1029,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class JvmDetectionByGoalWithJvmStdlib : AbstractKotlinMavenImporterTest() {
+    class JvmDetectionByGoalWithJvmStdlib6 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJvmDetectionByGoalWithJvmStdlib() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -1079,7 +1078,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertModules("project")
             assertImporterStatePresent()
 
-            Assert.assertEquals(JvmPlatforms.jvm16, facetSettings.targetPlatform)
+            Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
@@ -1088,7 +1087,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class JvmDetectionByGoalWithJsStdlib : AbstractKotlinMavenImporterTest() {
+    class JvmDetectionByGoalWithJsStdlib15 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJvmDetectionByGoalWithJsStdlib() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -1137,7 +1136,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertModules("project")
             assertImporterStatePresent()
 
-            Assert.assertEquals(JvmPlatforms.jvm16, facetSettings.targetPlatform)
+            Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
         }
     }
 
@@ -1190,7 +1189,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertModules("project")
             assertImporterStatePresent()
 
-            Assert.assertEquals(JvmPlatforms.jvm16, facetSettings.targetPlatform)
+            Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
@@ -1259,7 +1258,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class JsDetectionByGoalWithCommonStdlib : AbstractKotlinMavenImporterTest() {
+    class JsDetectionByGoalWithCommonStdlib15 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJsDetectionByGoalWithCommonStdlib() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -1387,7 +1386,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class CommonDetectionByGoalWithJvmStdlib : AbstractKotlinMavenImporterTest() {
+    class CommonDetectionByGoalWithJvmStdlib1164 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCommonDetectionByGoalWithJvmStdlib() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -1548,7 +1547,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertModules("project")
             assertImporterStatePresent()
 
-            Assert.assertEquals(JvmPlatforms.jvm16, facetSettings.targetPlatform)
+            Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
@@ -2308,7 +2307,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             }
 
             with(facetSettings("my-jvm-module")) {
-                Assert.assertEquals(JvmPlatforms.jvm16, targetPlatform)
+                Assert.assertEquals(JvmPlatforms.jvm6, targetPlatform)
                 Assert.assertEquals(listOf("my-common-module1", "my-common-module2"), implementedModuleNames)
             }
 
@@ -2533,7 +2532,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class NoArgDuplication : AbstractKotlinMavenImporterTest() {
+    class NoArgDuplication6 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testNoArgDuplication() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -2589,7 +2588,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class InternalArgumentsFacetImporting : AbstractKotlinMavenImporterTest() {
+    class InternalArgumentsFacetImporting8 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testInternalArgumentsFacetImporting() {
             importProject(
@@ -2724,7 +2723,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class JavaParameters : AbstractKotlinMavenImporterTest() {
+    class JavaParameters20 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJavaParameters() {
             createProjectSubDirs("src/main/kotlin")
@@ -2901,7 +2900,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class CommonDetectionByGoalWithJsStdlib : AbstractKotlinMavenImporterTest() {
+    class CommonDetectionByGoalWithJsStdlib24 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCommonDetectionByGoalWithJsStdlib() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")

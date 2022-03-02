@@ -11,14 +11,15 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isChar
 
@@ -29,7 +30,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             ?.filter { it.filter(call) && it.transformation.isApplicable(call) }
             ?.takeIf { it.isNotEmpty() }
             ?.let { list ->
-                val context = call.analyze(BodyResolveMode.PARTIAL)
+                val context = call.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                 val callDescriptor = call.getResolvedCall(context) ?: return
                 list.filter {
                     callDescriptor.isCalling(FqName(it.javaMethodFqName)) && it.transformation.isApplicableInContext(

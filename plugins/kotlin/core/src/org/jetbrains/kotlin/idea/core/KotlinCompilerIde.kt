@@ -132,7 +132,7 @@ class KotlinCompilerIde(
         }
 
         val codegenFactory = when {
-            configuration.getBoolean(JVMConfigurationKeys.IR) -> JvmIrCodegenFactory(PhaseConfig(jvmPhases))
+            configuration.getBoolean(JVMConfigurationKeys.IR) -> JvmIrCodegenFactory(configuration, PhaseConfig(jvmPhases))
             else -> DefaultCodegenFactory
         }
 

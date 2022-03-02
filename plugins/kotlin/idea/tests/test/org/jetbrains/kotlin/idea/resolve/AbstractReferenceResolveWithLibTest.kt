@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.test.AstAccessControl.execute
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTest() {

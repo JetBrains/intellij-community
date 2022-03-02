@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection
 import com.intellij.java.JavaBundle
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -26,6 +26,9 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
   fun testReplaceOthers() = doTest(replace("substr", "s.substring(s.length() - 9)"))
   fun testIntroduceVariableOtherVariableNotInScope() = doTest(introduce("s.substring(s.length() - 9)"))
   fun testVariableNotInScopeCantReplaceOthers() = doNegativeTest(replace("substr", "s.substring(s.length() - 9)"))
+  fun testIntroducePathVariableTwoPathOf() = doTest(introduce("Path.of(fileName)"))
+  fun testIntroducePathVariableTwoPathsGet() = doTest(introduce("Paths.get(fileName)"))
+  fun testIntroducePathVariablePathOfPathsGet() = doTest(introduce("Paths.get(fileName)"))
 
   private fun doTest(message: String, threshold: Int = 50) =
     withThreshold(threshold) {
@@ -50,6 +53,10 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
     finally {
       inspection.complexityThreshold = oldThreshold
     }
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_11
   }
 
   private fun introduce(expr: String) =

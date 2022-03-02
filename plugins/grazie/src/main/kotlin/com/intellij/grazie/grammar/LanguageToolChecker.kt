@@ -13,11 +13,11 @@ import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.html.*
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.VisibleForTesting
 import org.languagetool.JLanguageTool
 import org.languagetool.Languages
 import org.languagetool.markup.AnnotatedTextBuilder
@@ -26,7 +26,6 @@ import org.languagetool.rules.RuleMatch
 import org.slf4j.LoggerFactory
 import java.util.*
 
-@VisibleForTesting
 open class LanguageToolChecker : TextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
@@ -35,7 +34,13 @@ open class LanguageToolChecker : TextChecker() {
     return grammarRules(LangTool.getTool(lang), lang)
   }
 
-  override fun check(extracted: TextContent): @NotNull List<TextProblem> {
+  override fun check(extracted: TextContent): List<TextProblem> {
+    return CachedValuesManager.getManager(extracted.containingFile.project).getCachedValue(extracted) {
+      CachedValueProvider.Result.create(doCheck(extracted), extracted.containingFile)
+    }
+  }
+
+  private fun doCheck(extracted: TextContent): List<TextProblem> {
     val str = extracted.toString()
     if (str.isBlank()) return emptyList()
 
@@ -54,7 +59,10 @@ open class LanguageToolChecker : TextChecker() {
             .map { Problem(it, lang, extracted, this is TestChecker) }
             .filterNot { isGitCherryPickedFrom(it.match, extracted) }
             .filterNot { isKnownLTBug(it.match, extracted) }
-            .filterNot { extracted.hasUnknownFragmentsIn(it.patternRange) }
+            .filterNot {
+              val range = if (it.fitsGroup(RuleGroup.CASING)) includeSentenceBounds(extracted, it.patternRange) else it.patternRange
+              extracted.hasUnknownFragmentsIn(range)
+            }
             .toList()
         }
       }
@@ -64,9 +72,18 @@ open class LanguageToolChecker : TextChecker() {
         throw ProcessCanceledException()
       }
 
-      logger.warn("Got exception during check for typos by LanguageTool", e)
+      logger.warn("Got exception from LanguageTool", e)
       emptyList()
     }
+  }
+
+  private fun includeSentenceBounds(text: CharSequence, range: TextRange): TextRange {
+    var start = range.startOffset
+    var end = range.endOffset
+
+    while (start > 0 && text[start - 1].isWhitespace()) start--
+    while (end < text.length && text[end].isWhitespace()) end++
+    return TextRange(start, end)
   }
 
   private class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)
@@ -81,11 +98,12 @@ open class LanguageToolChecker : TextChecker() {
 
     override fun getTooltipTemplate(): String = toTooltipTemplate(match)
 
-    override fun getReplacementRange() = highlightRange
+    override fun getReplacementRange(): TextRange = highlightRanges[0]
     override fun getCorrections(): List<String> = match.suggestedReplacements
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
     override fun fitsGroup(group: RuleGroup): Boolean {
+      val highlightRange = highlightRanges[0]
       val ruleId = match.rule.id
       if (RuleGroup.INCOMPLETE_SENTENCE in group.rules) {
         if (highlightRange.startOffset == 0 &&

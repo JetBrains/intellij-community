@@ -626,6 +626,11 @@ class Intf {
     void setEverywhere(boolean state) {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
+
+    @Override
+    String getSearchProviderId() {
+      return "ClassSearchEverywhereContributor"
+    }
   }
 
   private static class TestFileContributor extends FileSearchEverywhereContributor {
@@ -637,6 +642,11 @@ class Intf {
     void setEverywhere(boolean state) {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
+
+    @Override
+    String getSearchProviderId() {
+      return "FileSearchEverywhereContributor"
+    }
   }
 
   private static class TestSymbolContributor extends SymbolSearchEverywhereContributor {
@@ -647,6 +657,11 @@ class Intf {
 
     void setEverywhere(boolean state) {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
+    }
+
+    @Override
+    String getSearchProviderId() {
+      return "SymbolSearchEverywhereContributor"
     }
   }
 }

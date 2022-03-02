@@ -217,11 +217,11 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     setMethodName(methodName);
 
     try {
-      getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "WATCH_ENTRY"));
+      getProperties().WATCH_ENTRY = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "WATCH_ENTRY"));
     } catch (Exception ignored) {
     }
     try {
-      getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "WATCH_EXIT"));
+      getProperties().WATCH_EXIT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "WATCH_EXIT"));
     } catch (Exception ignored) {
     }
 

@@ -9,11 +9,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -30,16 +31,21 @@ class MavenImportingManager(val project: Project) {
 
   private val waitingPromises = ArrayList<AsyncPromise<MavenImportFinishedContext>>()
 
+  fun linkAndImportFile(pom: VirtualFile): Promise<MavenImportFinishedContext> {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val manager = MavenProjectsManager.getInstance(project);
+    val importPath = if(pom.isDirectory) RootPath(pom) else FilesList(pom)
+    return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings, MavenImportSpec.EXPLICIT_IMPORT);
+  }
+
   fun openProjectAndImport(importPaths: ImportPaths,
                            importingSettings: MavenImportingSettings,
-                           generalSettings: MavenGeneralSettings): Promise<MavenImportFinishedContext> {
+                           generalSettings: MavenGeneralSettings,
+                           spec: MavenImportSpec): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (currentContext != null) {
-      if (currentContext !is MavenImportFinishedContext) {
-        throw IllegalStateException("Importing is in progress already")
-      }
-    }
+    assertNoCurrentImport()
     MavenUtil.setupProjectSdk(project)
+    currentContext = MavenStartedImport(project)
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().run(object : Task.Backgroundable(project, MavenProjectBundle.message("maven.project.importing")) {
         override fun run(indicator: ProgressIndicator) {
@@ -48,15 +54,21 @@ class MavenImportingManager(val project: Project) {
               MavenProgressIndicator(project, indicator, null),
               importPaths,
               generalSettings,
-              importingSettings
+              importingSettings,
+              spec
             )
-            val promises = getAndClearWaitingPromises()
+            val promises = getAndClearWaitingPromises(finishedContext)
             promises.forEach { it.setResult(finishedContext) }
           }
           catch (e: Throwable) {
-            MavenLog.LOG.error(e)
-            val promises = getAndClearWaitingPromises()
-            promises.forEach { it.setError(e) }
+            val promises = getAndClearWaitingPromises(MavenImportFinishedContext(e, project))
+            if (indicator.isCanceled) {
+              promises.forEach { it.setError("Cancelled") }
+            }
+            else {
+              MavenLog.LOG.error(e)
+              promises.forEach { it.setError(e) }
+            }
           }
         }
       })
@@ -65,14 +77,24 @@ class MavenImportingManager(val project: Project) {
     return getImportFinishPromise()
   }
 
+  private fun assertNoCurrentImport() {
+    if (currentContext != null) {
+      if (currentContext !is MavenImportFinishedContext) {
+        throw IllegalStateException("Importing is in progress already")
+      }
+    }
+  }
+
   private fun doImport(indicator: MavenProgressIndicator,
                        importPaths: ImportPaths,
                        generalSettings: MavenGeneralSettings,
-                       importingSettings: MavenImportingSettings): MavenImportFinishedContext {
+                       importingSettings: MavenImportingSettings,
+                       spec: MavenImportSpec
+  ): MavenImportFinishedContext {
 
     val flow = MavenImportFlow()
 
-    return runSync {
+    return runSync(spec) {
       @Suppress("HardCodedStringLiteral")
       console.addWarning("New Maven importing flow is enabled", "New Maven importing flow is enabled, it is experimental feature. " +
                                                                 "\n\n" +
@@ -82,38 +104,47 @@ class MavenImportingManager(val project: Project) {
       currentContext = initialImport
 
       val readMavenFiles = doTask(MavenProjectBundle.message("maven.reading")) {
+        currentContext?.indicator?.checkCanceled()
         flow.readMavenFiles(initialImport)
       }
+
       val dependenciesContext = doTask(MavenProjectBundle.message("maven.resolving")) {
+        currentContext?.indicator?.checkCanceled()
         flow.resolveDependencies(readMavenFiles)
       }
       val resolvePlugins = doTask(MavenProjectBundle.message("maven.downloading.plugins")) {
+        currentContext?.indicator?.checkCanceled()
         flow.resolvePlugins(dependenciesContext)
       }
 
       val foldersResolved = doTask(MavenProjectBundle.message("maven.updating.folders")) {
+        currentContext?.indicator?.checkCanceled()
         flow.resolveFolders(dependenciesContext)
       }
 
       val importContext = doTask(MavenProjectBundle.message("maven.project.importing")) {
+        currentContext?.indicator?.checkCanceled()
         flow.commitToWorkspaceModel(dependenciesContext)
       }
 
       return@runSync doTask(MavenProjectBundle.message("maven.post.processing")) {
+        currentContext?.indicator?.checkCanceled()
         flow.runPostImportTasks(importContext)
         flow.updateProjectManager(readMavenFiles)
+        flow.configureMavenProject(importContext)
         return@doTask MavenImportFinishedContext(importContext)
       }
     }.also { it.context?.let(flow::runImportExtensions) }
 
   }
 
-  private fun getAndClearWaitingPromises(): List<AsyncPromise<MavenImportFinishedContext>> {
+  private fun getAndClearWaitingPromises(finishedContext: MavenImportFinishedContext): List<AsyncPromise<MavenImportFinishedContext>> {
     val ref = Ref<ArrayList<AsyncPromise<MavenImportFinishedContext>>>()
     ApplicationManager.getApplication().invokeAndWait {
       val result = ArrayList(waitingPromises)
       ref.set(result)
       waitingPromises.clear()
+      currentContext = finishedContext
     }
     return ref.get()
   }
@@ -133,13 +164,13 @@ class MavenImportingManager(val project: Project) {
     return result
   }
 
-  fun sheduleImportAll(): Promise<MavenImportFinishedContext> {
+  fun scheduleImportAll(spec: MavenImportSpec): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val manager = MavenProjectsManager.getInstance(project)
     val settings = MavenWorkspaceSettingsComponent.getInstance(project)
     return openProjectAndImport(FilesList(manager.collectAllAvailablePomFiles()),
                                 settings.settings.getImportingSettings(),
-                                settings.settings.getGeneralSettings())
+                                settings.settings.getGeneralSettings(), spec)
   }
 
 
@@ -148,8 +179,8 @@ class MavenImportingManager(val project: Project) {
     return console.runTask(message, init).also { currentContext = it }
   }
 
-  private fun runSync(init: () -> MavenImportFinishedContext): MavenImportFinishedContext {
-    console.startImport(project.getService(SyncViewManager::class.java))
+  private fun runSync(spec: MavenImportSpec, init: () -> MavenImportFinishedContext): MavenImportFinishedContext {
+    console.startImport(project.getService(SyncViewManager::class.java), spec)
     try {
       return init()
     }
@@ -160,6 +191,10 @@ class MavenImportingManager(val project: Project) {
     finally {
       console.finishImport()
     }
+  }
+
+  fun forceStopImport() {
+    currentContext?.let { it.indicator.cancel() }
   }
 
   companion object {

@@ -13,6 +13,7 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
@@ -32,9 +33,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-action-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.1.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.1.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/0.1.1/find-action-model-0.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/0.1.2/find-action-model-0.1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -42,9 +43,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-file-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:0.0.2" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:0.1.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/0.0.2/find-file-model-0.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/0.1.1/find-file-model-0.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

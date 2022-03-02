@@ -31,6 +31,11 @@ interface NewProjectWizardStep {
   val propertyGraph: PropertyGraph
 
   /**
+   * The keywords that are used for search field input pattern matching
+   */
+  val keywords: Keywords
+
+  /**
    * Data holder that needed to share step data.
    *
    * Convention:
@@ -56,10 +61,27 @@ interface NewProjectWizardStep {
    * ```
    * See also: `https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl.html`
    */
-  fun setupUI(builder: Panel)
+  @JvmDefault
+  fun setupUI(builder: Panel) {}
 
   /**
    * Applies data from UI into project model or settings.
    */
-  fun setupProject(project: Project)
+  @JvmDefault
+  fun setupProject(project: Project) {}
+
+  /**
+   * See related doc for [NewProjectWizardStep.keywords].
+   */
+  class Keywords {
+    private val keywords = HashMap<Any, Set<String>>()
+
+    fun toSet(): Set<String> {
+      return keywords.values.flatten().toSet()
+    }
+
+    fun add(owner: Any, keywords: Iterable<String>) {
+      this.keywords[owner] = keywords.toSet()
+    }
+  }
 }

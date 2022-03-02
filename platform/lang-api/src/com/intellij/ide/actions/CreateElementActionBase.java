@@ -49,7 +49,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     super(text, description, icon);
   }
 
-  protected CreateElementActionBase(Supplier<String> dynamicText, Supplier<String> dynamicDescription, Icon icon) {
+  protected CreateElementActionBase(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 
@@ -60,7 +60,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * {@link CreateElementActionBase#invokeDialog(Project, PsiDirectory, Consumer)} instead
    */
   @Deprecated
-  protected PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory) {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -69,14 +69,14 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * adapted for asynchronous calls
    * @param elementsConsumer describes actions with created elements
    */
-  protected void invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull Consumer<PsiElement[]> elementsConsumer) {
+  protected void invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull Consumer<? super PsiElement[]> elementsConsumer) {
     elementsConsumer.accept(invokeDialog(project, directory));
   }
 
   /**
    * @return created elements. Never null.
    */
-  protected abstract PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception;
+  protected abstract @NotNull PsiElement @NotNull [] create(@NotNull String newName, @NotNull PsiDirectory directory) throws Exception;
 
   @NlsContexts.DialogTitle
   protected abstract String getErrorTitle();
@@ -90,7 +90,8 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
   }
 
   @NlsContexts.Command
-  protected abstract String getActionName(PsiDirectory directory, String newName);
+  @NotNull
+  protected abstract String getActionName(@NotNull PsiDirectory directory, @NotNull String newName);
 
   @Override
   public final void actionPerformed(@NotNull final AnActionEvent e) {
@@ -123,14 +124,16 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
   }
 
   protected class MyInputValidator extends ElementCreator implements InputValidator {
+    @NotNull
     private final PsiDirectory myDirectory;
-    private PsiElement[] myCreatedElements = PsiElement.EMPTY_ARRAY;
+    private @NotNull PsiElement @NotNull [] myCreatedElements = PsiElement.EMPTY_ARRAY;
 
-    public MyInputValidator(final Project project, final PsiDirectory directory) {
+    public MyInputValidator(final Project project, @NotNull PsiDirectory directory) {
       super(project, getErrorTitle());
       myDirectory = directory;
     }
 
+    @NotNull
     public PsiDirectory getDirectory() {
       return myDirectory;
     }
@@ -141,7 +144,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     }
 
     @Override
-    public PsiElement[] create(@NotNull String newName) throws Exception {
+    public PsiElement @NotNull [] create(@NotNull String newName) throws Exception {
       return CreateElementActionBase.this.create(newName, myDirectory);
     }
 
@@ -151,7 +154,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     }
 
     @Override
-    public String getActionName(String newName) {
+    public @NotNull String getActionName(@NotNull String newName) {
       return CreateElementActionBase.this.getActionName(myDirectory, newName);
     }
 

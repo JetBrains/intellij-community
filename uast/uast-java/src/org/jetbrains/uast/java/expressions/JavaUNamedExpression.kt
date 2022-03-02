@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java.expressions
 
 import com.intellij.psi.PsiNameValuePair
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UNamedExpression
@@ -24,6 +25,7 @@ import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
 import org.jetbrains.uast.java.lz
 
+@ApiStatus.Internal
 class JavaUNamedExpression(
   override val sourcePsi: PsiNameValuePair,
   givenParent: UElement?

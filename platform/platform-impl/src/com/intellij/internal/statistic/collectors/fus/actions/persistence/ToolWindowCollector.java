@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.build.BuildContentManager;
@@ -21,8 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAllowlistEP;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
-import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
+import com.intellij.toolWindow.ToolWindowEventSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public final class ToolWindowCollector {
     return Holder.INSTANCE;
   }
 
-  private static class Holder {
+  private static final class Holder {
     private static final ToolWindowCollector INSTANCE = new ToolWindowCollector();
   }
 
@@ -142,8 +142,7 @@ public final class ToolWindowCollector {
     event.log(project, data.toArray(new EventPair[0]));
   }
 
-  @NotNull
-  private static ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId) {
+  private static @NotNull ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId) {
     if (ourToolwindowWhitelist.containsKey(toolWindowId)) {
       return ourToolwindowWhitelist.get(toolWindowId);
     }
@@ -158,8 +157,7 @@ public final class ToolWindowCollector {
     return info != null ? info : UNKNOWN;
   }
 
-  @Nullable
-  public static ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId, ToolWindowEP @NotNull [] toolWindows) {
+  public static @Nullable ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId, ToolWindowEP @NotNull [] toolWindows) {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
         PluginDescriptor pluginDescriptor = ep.getPluginDescriptor();
@@ -169,16 +167,14 @@ public final class ToolWindowCollector {
     return null;
   }
 
-  public static class ToolWindowUtilValidator extends CustomValidationRule {
-
+  static final class ToolWindowUtilValidator extends CustomValidationRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "toolwindow".equals(ruleId);
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
 
       if (hasPluginField(context)) {
@@ -189,7 +185,7 @@ public final class ToolWindowCollector {
     }
   }
 
-  public static final class ToolWindowInfo {
+  private static final class ToolWindowInfo {
     private final String myRecordedId;
     private final PluginInfo myPluginInfo;
 

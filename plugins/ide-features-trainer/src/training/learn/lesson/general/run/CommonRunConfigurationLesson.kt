@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.run
 
 import com.intellij.execution.ExecutionBundle
@@ -45,7 +45,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
       showWarningIfRunConfigurationsHidden()
 
       task {
-        triggerByUiComponentAndHighlight<JButton> { ui ->
+        triggerAndFullHighlight().component { ui: JButton ->
           ui.text == demoConfigurationName
         }
       }
@@ -54,7 +54,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         .dropMnemonic()
       task {
         text(LessonsBundle.message("run.configuration.temporary.to.permanent"))
-        triggerByListItemAndHighlight { item ->
+        triggerAndBorderHighlight().listItem { item ->
           item.toString() == saveConfigurationItemName
         }
         test {
@@ -83,7 +83,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         text(LessonsBundle.message("run.configuration.edit.configuration",
                                    strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic()),
                                    action(it)))
-        triggerByUiComponentAndHighlight<JBCheckBox>(highlightInside = false) { ui ->
+        triggerAndBorderHighlight().component { ui: JBCheckBox ->
           ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
         }
         test {
@@ -112,10 +112,10 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
   private fun LessonContext.showWarningIfRunConfigurationsHidden() {
     task {
       val step = stateCheck {
-        UISettings.instance.run { showNavigationBar || showMainToolbar }
+        UISettings.getInstance().run { showNavigationBar || showMainToolbar }
       }
       val callbackId = LearningUiManager.addCallback {
-        UISettings.instance.apply {
+        UISettings.getInstance().apply {
           showNavigationBar = true
           fireUISettingsChanged()
         }
@@ -126,15 +126,15 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
                                         strong(ActionsBundle.message("group.ViewMenu.text").dropMnemonic()),
                                         strong(ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic()),
                                         callbackId)) {
-        UISettings.instance.run { !showNavigationBar && !showMainToolbar }
+        UISettings.getInstance().run { !showNavigationBar && !showMainToolbar }
       }
     }
   }
 
   private fun LessonContext.restoreUiInformer() {
-    if (UISettings.instance.run { showNavigationBar || showMainToolbar }) return
+    if (UISettings.getInstance().run { showNavigationBar || showMainToolbar }) return
     restoreChangedSettingsInformer {
-      UISettings.instance.apply {
+      UISettings.getInstance().apply {
         showNavigationBar = false
         showMainToolbar = false
         fireUISettingsChanged()

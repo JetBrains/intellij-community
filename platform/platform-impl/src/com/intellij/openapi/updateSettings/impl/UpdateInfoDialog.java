@@ -246,7 +246,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
           String downloadUrl = UpdateInfoPanel.downloadUrl(myLoadedResult.getNewBuild(), myLoadedResult.getUpdatedChannel());
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl);
-          UpdateChecker.getNotificationGroup()
+          UpdateChecker.getNotificationGroupForIdeUpdateResults()
             .createNotification(title, message, NotificationType.ERROR)
             .setListener(NotificationListener.URL_OPENING_LISTENER)
             .setDisplayId("ide.patch.download.failed")
@@ -266,7 +266,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           else {
             String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
             String message = IdeBundle.message("update.ready.message");
-            UpdateChecker.getNotificationGroup()
+            UpdateChecker.getNotificationGroupForIdeUpdateResults()
               .createNotification(title, message, NotificationType.INFORMATION)
               .setListener(new NotificationListener.Adapter() {
                 @Override

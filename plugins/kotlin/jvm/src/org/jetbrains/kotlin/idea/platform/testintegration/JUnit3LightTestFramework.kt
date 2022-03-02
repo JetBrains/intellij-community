@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.platform.testintegration
 
 import com.intellij.execution.junit.JUnitUtil
@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
-import org.jetbrains.kotlin.psi.psiUtil.isPublic
 
 class JUnit3LightTestFramework: AbstractLightTestFramework() {
 
@@ -17,7 +16,8 @@ class JUnit3LightTestFramework: AbstractLightTestFramework() {
     override fun detectFramework(namedDeclaration: KtNamedDeclaration): LightTestFrameworkResult {
         if (!hasClass(JUnitUtil.TEST_CASE_CLASS, namedDeclaration) ||
             // @Test is from junit4
-            hasClass(JUnitUtil.TEST_ANNOTATION, namedDeclaration)
+            hasClass(JUnitUtil.TEST_ANNOTATION, namedDeclaration) ||
+            hasClass(JUnitUtil.TEST5_ANNOTATION, namedDeclaration)
         ) return UnsureLightTestFrameworkResult
 
         return internalDetectFramework(namedDeclaration)
@@ -28,8 +28,7 @@ class JUnit3LightTestFramework: AbstractLightTestFramework() {
             isPrivate() ||
                     isAnnotation() ||
                     // no super class and no methods
-                    superTypeListEntries.filterIsInstance<KtSuperTypeCallEntry>().isEmpty() &&
-                    declarations.filterIsInstance<KtNamedFunction>().none { it.isPublic }
+                    superTypeListEntries.filterIsInstance<KtSuperTypeCallEntry>().isEmpty()
         }
 
     override fun isAUnitTestClass(namedDeclaration: KtClassOrObject): Boolean? {

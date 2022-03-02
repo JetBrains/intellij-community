@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import com.intellij.psi.PsiNewExpression
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
 import org.jetbrains.kotlin.nj2k.isEquals
@@ -9,6 +10,9 @@ import org.jetbrains.kotlin.nj2k.parenthesizeIfBinaryExpression
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.isUnresolved
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.ARITHMETIC_OPERATORS
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.BITWISE_LOGICAL_OPERATORS
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.SHIFT_OPERATORS
 import org.jetbrains.kotlin.nj2k.types.*
 
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
@@ -19,46 +23,80 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         when (element) {
             is JKVariable -> convertVariable(element)
             is JKCallExpression -> convertMethodCallExpression(element)
+            is JKNewExpression -> convertNewExpression(element)
             is JKBinaryExpression -> return recurse(convertBinaryExpression(element))
             is JKKtAssignmentStatement -> convertAssignmentStatement(element)
         }
         return recurse(element)
     }
 
-
     private fun convertBinaryExpression(binaryExpression: JKBinaryExpression): JKExpression {
-        fun JKBinaryExpression.convertBinaryOperationWithChar(): JKBinaryExpression {
+        fun JKBinaryExpression.convert(): JKBinaryExpression {
             val leftType = left.calculateType(typeFactory)?.asPrimitiveType() ?: return this
             val rightType = right.calculateType(typeFactory)?.asPrimitiveType() ?: return this
-
-            val leftOperandCastedCasted by lazy(LazyThreadSafetyMode.NONE) {
+            val leftOperandCasted by lazy(LazyThreadSafetyMode.NONE) {
                 JKBinaryExpression(
                     ::left.detached().let { it.castTo(rightType, strict = true) ?: it },
                     ::right.detached(),
                     operator
-                )
+                ).withFormattingFrom(this)
             }
-
-            val rightOperandCastedCasted by lazy(LazyThreadSafetyMode.NONE) {
+            val rightOperandCasted by lazy(LazyThreadSafetyMode.NONE) {
                 JKBinaryExpression(
                     ::left.detached(),
                     ::right.detached().let { it.castTo(leftType, strict = true) ?: it },
                     operator
-                )
+                ).withFormattingFrom(this)
             }
 
             return when {
+                leftType.isBoolean() || rightType.isBoolean() -> this
+
+                operator.token in SHIFT_OPERATORS -> {
+                    val newLeftType = if (leftType.isLong()) JKJavaPrimitiveType.LONG else JKJavaPrimitiveType.INT
+                    JKBinaryExpression(
+                        ::left.detached().let { it.castTo(newLeftType, strict = true) ?: it },
+                        ::right.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
+                        operator
+                    ).withFormattingFrom(this)
+                }
+
+                operator.token in BITWISE_LOGICAL_OPERATORS -> {
+                    val commonSupertype = if (leftType.isLong() || rightType.isLong()) {
+                        JKJavaPrimitiveType.LONG
+                    } else {
+                        JKJavaPrimitiveType.INT
+                    }
+                    JKBinaryExpression(
+                        ::left.detached().let { it.castTo(commonSupertype, strict = true) ?: it },
+                        ::right.detached().let { it.castTo(commonSupertype, strict = true) ?: it },
+                        operator
+                    ).withFormattingFrom(this)
+                }
+
+                leftType.isChar() && rightType.isChar() && operator.token in ARITHMETIC_OPERATORS -> {
+                    JKBinaryExpression(
+                        ::left.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
+                        ::right.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
+                        operator
+                    ).withFormattingFrom(this)
+                }
+
                 leftType.jvmPrimitiveType == rightType.jvmPrimitiveType -> this
-                leftType.jvmPrimitiveType == JvmPrimitiveType.CHAR -> leftOperandCastedCasted
-                rightType.jvmPrimitiveType == JvmPrimitiveType.CHAR -> rightOperandCastedCasted
+
+                leftType.isChar() -> leftOperandCasted
+
+                rightType.isChar() -> rightOperandCasted
+
                 operator.isEquals() ->
-                    if (rightType isStrongerThan leftType) leftOperandCastedCasted
-                    else rightOperandCastedCasted
+                    if (rightType isStrongerThan leftType) leftOperandCasted
+                    else rightOperandCasted
+
                 else -> this
             }
         }
 
-        return binaryExpression.convertBinaryOperationWithChar()
+        return binaryExpression.convert()
     }
 
     private fun convertVariable(variable: JKVariable) {
@@ -75,17 +113,26 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         }
     }
 
+    private fun convertNewExpression(expression: JKNewExpression) {
+        val constructor = expression.psi.safeAs<PsiNewExpression>()?.resolveConstructor() ?: return
+        val methodSymbol = context.symbolProvider.provideDirectSymbol(constructor) as? JKMethodSymbol ?: return
+        convertArguments(methodSymbol, expression.arguments.arguments)
+    }
 
     private fun convertMethodCallExpression(expression: JKCallExpression) {
-        if (expression.identifier.isUnresolved) return
-        val parameterTypes = expression.identifier.parameterTypesWithLastArgumentUnfoldedAsVararg() ?: return
-        val newArguments = expression.arguments.arguments.mapIndexed { argumentIndex, argument ->
+        convertArguments(expression.identifier, expression.arguments.arguments)
+    }
+
+    private fun convertArguments(methodSymbol: JKMethodSymbol, arguments: List<JKArgument>) {
+        if (methodSymbol.isUnresolved) return
+        val parameterTypes = methodSymbol.parameterTypesWithLastArgumentUnfoldedAsVararg() ?: return
+        val newArguments = arguments.mapIndexed { argumentIndex, argument ->
             val toType = parameterTypes.getOrNull(argumentIndex) ?: parameterTypes.last()
             argument.value.castTo(toType)
         }
         val needUpdate = newArguments.any { it != null }
         if (needUpdate) {
-            for ((newArgument, oldArgument) in newArguments zip expression.arguments.arguments) {
+            for ((newArgument, oldArgument) in newArguments zip arguments) {
                 if (newArgument != null) {
                     oldArgument.value = newArgument.copyTreeAndDetach()
                 }
@@ -105,7 +152,6 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
                 JKTypeArgumentList()
             )
         )
-
     }
 
     private fun JKExpression.castTo(toType: JKType, strict: Boolean = false): JKExpression? {
@@ -122,4 +168,8 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         val lastArrayType = realParameterTypes.lastOrNull()?.arrayInnerType() ?: return realParameterTypes
         return realParameterTypes.subList(0, realParameterTypes.lastIndex) + lastArrayType
     }
+
+    private fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
+    private fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
+    private fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
 }

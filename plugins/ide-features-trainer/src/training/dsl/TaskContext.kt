@@ -139,6 +139,26 @@ abstract class TaskContext : LearningDslBase {
   /** [action] What should be done to pass the current task */
   open fun test(waitEditorToBeReady: Boolean = true, action: TaskTestContext.() -> Unit) = Unit
 
+  fun triggerAndFullHighlight(parameters: HighlightTriggerParametersContext.() -> Unit = {}): HighlightingTriggerMethods {
+    return triggerUI {
+      highlightBorder = true
+      highlightInside = true
+      parameters()
+    }
+  }
+
+  fun triggerAndBorderHighlight(parameters: HighlightTriggerParametersContext.() -> Unit = {}): HighlightingTriggerMethods {
+    return triggerUI {
+      highlightBorder = true
+      parameters()
+    }
+  }
+
+  open fun triggerUI(parameters: HighlightTriggerParametersContext.() -> Unit = {}): HighlightingTriggerMethods {
+    return object : HighlightingTriggerMethods() {}
+  }
+
+  @Deprecated("Use triggerAndBorderHighlight().treeItem")
   fun triggerByFoundPathAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
                                      usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                      checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {
@@ -154,25 +174,23 @@ abstract class TaskContext : LearningDslBase {
   protected open fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                                     checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) = Unit
 
+  @Deprecated("Use triggerAndBorderHighlight().componentPart")
   inline fun <reified T : Component> triggerByPartOfComponent(highlightBorder: Boolean = true, highlightInside: Boolean = false,
                                                               usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                                               noinline selector: ((candidates: Collection<T>) -> T?)? = null,
                                                               crossinline rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
-    val componentClass = T::class.java
+    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
     @Suppress("DEPRECATION")
-    triggerByFoundPathAndHighlightImpl(componentClass, highlightBorder, highlightInside,
-      usePulsation, clearPreviousHighlights, selector) { rectangle(it) }
+    triggerByPartOfComponentImpl(T::class.java, options, selector) { rectangle(it) }
   }
 
   @Deprecated("Use inline version")
-  open fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
-                                                              highlightBorder: Boolean,
-                                                              highlightInside: Boolean,
-                                                              usePulsation: Boolean,
-                                                              clearPreviousHighlights: Boolean,
-                                                              selector: ((candidates: Collection<T>) -> T?)?,
-                                                              rectangle: TaskRuntimeContext.(T) -> Rectangle?) = Unit
+  open fun <T : Component> triggerByPartOfComponentImpl(componentClass: Class<T>,
+                                                        options: LearningUiHighlightingManager.HighlightingOptions,
+                                                        selector: ((candidates: Collection<T>) -> T?)?,
+                                                        rectangle: TaskRuntimeContext.(T) -> Rectangle?) = Unit
 
+  @Deprecated("Use triggerAndBorderHighlight().listItem")
   fun triggerByListItemAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
                                     usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                     checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
@@ -186,25 +204,22 @@ abstract class TaskContext : LearningDslBase {
   protected open fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                                         checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) = Unit
 
+  @Deprecated("Use triggerAndFullHighlight().component")
   inline fun <reified ComponentType : Component> triggerByUiComponentAndHighlight(
     highlightBorder: Boolean = true, highlightInside: Boolean = true,
     usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
     noinline selector: ((candidates: Collection<ComponentType>) -> ComponentType?)? = null,
     crossinline finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean
   ) {
-    val componentClass = ComponentType::class.java
+    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
     @Suppress("DEPRECATION")
-    triggerByUiComponentAndHighlightImpl(componentClass, highlightBorder, highlightInside,
-      usePulsation, clearPreviousHighlights, selector) { finderFunction(it) }
+    triggerByUiComponentAndHighlightImpl(ComponentType::class.java, options, selector) { finderFunction(it) }
   }
 
   @Deprecated("Use inline version")
   open fun <ComponentType : Component>
     triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
-                                         highlightBorder: Boolean,
-                                         highlightInside: Boolean,
-                                         usePulsation: Boolean,
-                                         clearPreviousHighlights: Boolean,
+                                         options: LearningUiHighlightingManager.HighlightingOptions,
                                          selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                          finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) = Unit
 

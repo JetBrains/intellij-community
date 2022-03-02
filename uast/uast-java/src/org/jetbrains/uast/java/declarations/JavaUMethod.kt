@@ -6,10 +6,12 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.util.castSafelyTo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.convertOrReport
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
+@ApiStatus.Internal
 open class JavaUMethod(
   override val javaPsi: PsiMethod,
   uastParent: UElement?
@@ -29,7 +31,7 @@ open class JavaUMethod(
     UastFacade.findPlugin(body)?.convertElement(body, this) as? UExpression
   }
 
-  override val uAnnotations: List<JavaUAnnotation> by lz { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uAnnotations: List<UAnnotation> by lz { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
 
   override val uastParameters: List<UParameter> by lz {
     javaPsi.parameterList.parameters.mapNotNull { convertOrReport(it, this) }
@@ -91,6 +93,7 @@ private class JavaRecordConstructorUMethod(
 internal fun canBeSourcePsi(psiMethod: PsiMethod): Boolean =
   psiMethod.isPhysical || psiMethod is PsiMethodImpl && psiMethod.containingClass != null
 
+@ApiStatus.Internal
 class JavaUAnnotationMethod(
   override val javaPsi: PsiAnnotationMethod,
   languagePlugin: UastLanguagePlugin,

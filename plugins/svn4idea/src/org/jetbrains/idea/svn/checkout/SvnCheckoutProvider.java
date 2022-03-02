@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
@@ -21,7 +20,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +62,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   /**
    * @deprecated use {@link #doCheckout(Project, File, Url, Revision, Depth, boolean, Listener)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final Revision revision,
                                 final Depth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
     doCheckout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener);
@@ -94,21 +91,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return vcs.getFactoryFromSettings();
   }
 
-
-  /**
-   * @deprecated use {@link #checkout(Project, File, Url, Revision, Depth, boolean, Listener, WorkingCopyFormat)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void checkout(final Project project,
-                              final File target,
-                              final String url,
-                              final Revision revision,
-                              final Depth depth,
-                              final boolean ignoreExternals,
-                              final Listener listener, final WorkingCopyFormat selectedFormat) {
-    checkout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener, selectedFormat);
-  }
 
   public static void checkout(Project project,
                               File target,

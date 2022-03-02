@@ -660,7 +660,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static InplaceButton createSettingsButton(@NotNull Project project,
                                                     @NotNull Runnable cancelAction,
                                                     @NotNull Runnable showDialogAndFindUsagesRunnable) {
-    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+    KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     String tooltip = shortcut == null
                      ? FindBundle.message("show.usages.settings.tooltip")
                      : FindBundle.message("show.usages.settings.tooltip.shortcut", KeymapUtil.getShortcutText(shortcut));
@@ -723,7 +723,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Disposable contentDisposable = Disposer.newDisposable();
     AtomicReference<AbstractPopup> popupRef = new AtomicReference<>();
 
-    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+    KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     if (shortcut != null) {
       new DumbAwareAction() {
         @Override
@@ -1174,18 +1174,22 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Insets contentInsets = popup.getContent().getInsets();
     JBInsets.removeFrom(d, contentInsets);
 
-    Component toolbarComponent = ((BorderLayout)popup.getContent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
+    Component toolbarComponent = ((BorderLayout)popup.getComponent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
     Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
     Dimension headerSize = popup.getHeaderPreferredSize();
 
-    int width = Math.max(d.width, calcMaxWidth(table));
-    width = Math.max(Math.max(headerSize.width, width), toolbarSize.width);
-    width = Math.max(minWidth.get(), width);
+    var newWidth = 0;
+    if(calcMaxWidth(table) < minWidth.get()){
+      newWidth = calcMaxWidth(table);
+    } else {
+      int width = Math.max(d.width, calcMaxWidth(table));
+      width = Math.max(Math.max(headerSize.width, width), toolbarSize.width);
+      width = Math.max(minWidth.get(), width);
 
-    int delta = minWidth.get() == -1 ? 0 : width - minWidth.get();
-    int newWidth = Math.max(width, d.width + delta);
-
-    minWidth.set(newWidth);
+      int delta = minWidth.get() == -1 ? 0 : width - minWidth.get();
+      newWidth = Math.max(width, d.width + delta);
+      minWidth.set(newWidth);
+    }
 
     int minHeight = headerSize.height + toolbarSize.height;
 
@@ -1364,7 +1368,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
         protected @Nullable String getShortcutText() {
-          KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+          KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
           return shortcut != null ? KeymapUtil.getShortcutText(shortcut) : null;
         }
       };

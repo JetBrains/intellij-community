@@ -74,9 +74,6 @@ public final class DomReflectionUtil {
     catch (IllegalArgumentException e) {
       throw new RuntimeException("Calling method " + method + " on object " + object + " with arguments " + Arrays.asList(args), e);
     }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof ProcessCanceledException) {

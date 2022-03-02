@@ -9,19 +9,17 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
 @CompileStatic
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
-  @CompileStatic(TypeCheckingMode.SKIP)
   PyCharmCommunityProperties(String communityHome) {
     platformPrefix = "PyCharmCore"
     customProductCode = "PC"
     applicationInfoModule = "intellij.pycharm.community"
-    brandingResourcePaths = ["$communityHome/python/resources"]
+    brandingResourcePaths = ["$communityHome/python/resources".toString()]
     scrambleMainJar = false
     buildSourcesArchive = true
 
     productLayout.mainModules = ["intellij.pycharm.community.main"]
     productLayout.productApiModules = ["intellij.xml.dom"]
     productLayout.productImplementationModules = [
-      "intellij.notebooks.visualization",
       "intellij.xml.dom.impl",
       "intellij.platform.main",
       "intellij.pycharm.community"
@@ -120,7 +118,7 @@ class PyCharmCommunityMacDistributionCustomizer extends PyCharmMacDistributionCu
   PyCharmCommunityMacDistributionCustomizer(projectHome) {
     icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
     icnsPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.icns"
-    bundleIdentifier = "com.jetbrains.pycharm"
+    bundleIdentifier = "com.jetbrains.pycharm.ce"
     dmgImagePath = "$projectHome/python/build/dmg_background.tiff"
   }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.test
 
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.*
+import org.jetbrains.kotlin.idea.test.util.ignored
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -35,7 +36,19 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         PlatformVersion.getCurrent() ?: throw AssertionError("Version should not be null")
     }
 
+
+    /**
+     *  This test is disabled in kt-212-[master|1.6.0] because it is stable fails here, because
+     *  KotlinPluginUtil.getPluginVersion() == "212-1.6.20-dev-4868-IJSNAPSHOT" and SNAPSHOT idea version is not supported in version parser.
+     *  That is happening because on teamcity, when tests are running there is no `kotlin.plugin.version` parameter and
+     *  KotlinPluginUtil.getPluginVersion() fallbacks to reading version from plugin.xml.
+     *  But this version is set by another logic: org.jetbrains.intellij.build.kotlin.KotlinPluginKind#version and it is reading
+     *  IDEA version from the file community/build.txt (212-SNAPSHOT is stored there)
+     *  In 211 and 213 branches test are ok because logic there is different somehow
+     */
     fun testCurrentPluginVersionParsing() {
+        if (ignored("see above")) return
+
         val pluginVersion = KotlinPluginUtil.getPluginVersion()
         if (pluginVersion == "@snapshot@") return
 
@@ -49,7 +62,7 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
 
         assertEquals("1.4.20", version.kotlinVersion)
         assertEquals("dev", version.status)
-        assertEquals("4575", version.kotlinBuildNumber)
+        assertEquals(4575, version.kotlinVersionVerbose.buildNumber)
         assertEquals("45", version.buildNumber)
         assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
         assertEquals("203.1234", version.platformVersion.version)
@@ -89,6 +102,19 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
         assertEquals("2020.1", version.platformVersion.version)
         assertEquals("1", version.patchNumber)
+    }
+
+    fun testKotlinVersionVerbose() {
+        assertKotlinVersionVerbose("1.5.0")
+        assertKotlinVersionVerbose("1.3.10-M1-8132")
+        assertKotlinVersionVerbose("1.4.32-release")
+        assertKotlinVersionVerbose("1.4.32-dev-333")
+        assertKotlinVersionVerbose("1.4.32-333")
+        assertKotlinVersionVerbose("1.4.32-SNAPSHOT")
+    }
+
+    private fun assertKotlinVersionVerbose(version: String, expected: String = version) {
+        assertEquals(expected, KotlinVersionVerbose.parse(version)?.toString())
     }
 
     private fun testVersion(

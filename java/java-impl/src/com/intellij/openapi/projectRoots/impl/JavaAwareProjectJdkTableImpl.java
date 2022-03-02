@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -53,8 +52,7 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
    * @deprecated Bundled JDK must not be used. See IDEA-225960"
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
       Path javaHome = Paths.get(SystemProperties.getJavaHome());

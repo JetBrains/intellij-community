@@ -206,9 +206,14 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("foo", myFixture);
     doTest();
   }
+  public void testStreamFindFirstExpectNotNull() { doTest(); }
   public void testStreamAnyMatchIsNull() { doTest(); }
   public void testStreamCustomSumMethod() { doTest(); }
   public void testStreamReduceLogicalAnd() { doTest(); }
+  public void testStreamSingleElementReduce() { doTest(); }
+  public void testRequireNonNullMethodRef() {
+    doTestWith(dfa -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
+  }
 
   public void testMapGetWithValueNullability() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }

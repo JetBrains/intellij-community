@@ -4,7 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.openapi.GitRepositoryInitializer
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
+import java.nio.file.Path
 
 class GitNewProjectWizardStep(
   parent: NewProjectWizardBaseStep
@@ -20,7 +21,8 @@ class GitNewProjectWizardStep(
     NewProjectWizardBaseData by parent,
     GitNewProjectWizardData {
 
-  override val gitProperty = propertyGraph.graphProperty { false }
+  override val gitProperty = propertyGraph.property(false)
+    .bindBooleanStorage("NewProjectWizard.gitState")
 
   override var git by gitProperty
 
@@ -35,7 +37,7 @@ class GitNewProjectWizardStep(
 
   override fun setupProject(project: Project) {
     if (git) {
-      val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
+      val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(path, name))
       if (projectBaseDirectory != null) {
         runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
           GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)

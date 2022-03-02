@@ -8,7 +8,10 @@ class TerminalRunSmartCommandAction : TerminalExecutorAction()
 class TerminalDebugSmartCommandAction : TerminalExecutorAction()
 
 abstract class TerminalExecutorAction : AnAction() {
-  init { templatePresentation.isEnabled = false; }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = false
+  }
 
   override fun actionPerformed(e: AnActionEvent) {}
 }

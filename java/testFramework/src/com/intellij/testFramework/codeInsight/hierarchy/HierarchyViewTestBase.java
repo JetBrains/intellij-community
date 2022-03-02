@@ -17,15 +17,18 @@ package com.intellij.testFramework.codeInsight.hierarchy;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import groovy.lang.GroovyObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.function.Supplier;
 
 /**
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
@@ -43,11 +46,12 @@ public abstract class HierarchyViewTestBase extends DaemonAnalyzerTestCase {
 
   protected abstract String getBasePath();
 
-  protected void doHierarchyTest(@NotNull Computable<? extends HierarchyTreeStructure> treeStructureComputable,
+  protected void doHierarchyTest(@NotNull Supplier<? extends HierarchyTreeStructure> treeStructure,
+                                 @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                                  String @NotNull ... fileNames) throws IOException {
     configure(fileNames);
     String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/verification.xml";
-    HierarchyViewTestFixture.doHierarchyTest(treeStructureComputable.compute(), new File(verificationFilePath));
+    HierarchyViewTestFixture.doHierarchyTest(treeStructure.get(), comparator, new File(verificationFilePath));
   }
 
   private void configure(String @NotNull [] fileNames) {

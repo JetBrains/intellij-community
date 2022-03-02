@@ -263,8 +263,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   /**
    * @deprecated use {@link #getPresentation()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected String getToolTip() {
     return getPresentation().getTooltip();
   }

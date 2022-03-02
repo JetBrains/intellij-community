@@ -6,7 +6,7 @@ package com.siyeh.igtest.numeric.unnecessary_explicit_numeric_cast;
 public class UnnecessaryExplicitNumericCast {
 
     void a(byte b) {
-        double d = (<warning descr="'1' unnecessarily cast to 'double'">double</warning>) 1;
+        double d = (<warning descr="'1' unnecessarily cast to 'double'"><caret>double</warning>) 1;
         d = (<warning descr="'1.0f' unnecessarily cast to 'double'">double</warning>) 1.0f;
         d = (<warning descr="'b' unnecessarily cast to 'double'">double</warning>) b;
         char c = (<warning descr="'1' unnecessarily cast to 'char'">char</warning>) 1;
@@ -80,6 +80,14 @@ public class UnnecessaryExplicitNumericCast {
       }
       System.out.println(result);
     }
+  }
+
+  public static long negate(int x) {
+    return -(long)x;
+  }
+
+  public static int negate2(int x) {
+      return -(<warning descr="'x' unnecessarily cast to 'int'">int</warning>)x;
   }
 
 }

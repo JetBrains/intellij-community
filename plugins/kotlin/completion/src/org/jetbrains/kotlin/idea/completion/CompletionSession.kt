@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -15,20 +15,22 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
 import org.jetbrains.kotlin.idea.caches.project.OriginCapability
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
@@ -76,7 +78,8 @@ abstract class CompletionSession(
     protected val resolutionFacade = file.getResolutionFacade()
     protected val moduleDescriptor = resolutionFacade.moduleDescriptor
     protected val project = position.project
-    protected val isJvmModule = TargetPlatformDetector.getPlatform(originalParameters.originalFile as KtFile).isJvm()
+    protected val isJvmModule = moduleDescriptor.platform.isJvm()
+    protected val allowExpectedDeclarations = moduleDescriptor.platform.isMultiPlatform()
     protected val isDebuggerContext = file is KtCodeFragment
 
     protected val nameExpression: KtSimpleNameExpression?
@@ -109,7 +112,7 @@ abstract class CompletionSession(
         originalParameters.offset,
         kotlinIdentifierPartPattern or singleCharPattern('@'),
         kotlinIdentifierStartPattern
-    )!!
+    )
 
     protected val prefixMatcher = CamelHumpMatcher(prefix)
 
@@ -128,6 +131,29 @@ abstract class CompletionSession(
         NotPropertiesService.getNotProperties(position)
     )
 
+    protected val shadowedFilter: ((Collection<DeclarationDescriptor>) -> Collection<DeclarationDescriptor>)? by lazy {
+        ShadowedDeclarationsFilter.create(
+            bindingContext = bindingContext,
+            resolutionFacade = resolutionFacade,
+            context = nameExpression!!,
+            callTypeAndReceiver = callTypeAndReceiver,
+        )?.createNonImportedDeclarationsFilter(
+            importedDeclarations = referenceVariantsCollector!!.allCollected.imported,
+            allowExpectedDeclarations = allowExpectedDeclarations,
+        )
+    }
+
+    protected inline fun <reified T : DeclarationDescriptor> processWithShadowedFilter(descriptor: T, processor: (T) -> Unit) {
+        val shadowedFilter = shadowedFilter
+        val element = if (shadowedFilter != null) {
+            shadowedFilter(listOf(descriptor)).singleOrNull()?.let { it as T }
+        } else {
+            descriptor
+        }
+
+        element?.let(processor)
+    }
+
     protected val callTypeAndReceiver =
         if (nameExpression == null) CallTypeAndReceiver.UNKNOWN else CallTypeAndReceiver.detect(nameExpression)
     protected val receiverTypes = nameExpression?.let { detectReceiverTypes(bindingContext, nameExpression, callTypeAndReceiver) }
@@ -142,7 +168,7 @@ abstract class CompletionSession(
             { CompletionBenchmarkSink.instance.onFlush(this) },
             prefixMatcher, originalParameters, resultSet,
             createSorter(), (file as? KtCodeFragment)?.extraCompletionFilter,
-            moduleDescriptor.platform.isMultiPlatform()
+            allowExpectedDeclarations,
         )
     }
 
@@ -163,7 +189,7 @@ abstract class CompletionSession(
 
     private fun isVisibleDescriptor(descriptor: DeclarationDescriptor, completeNonAccessible: Boolean): Boolean {
         if (!configuration.javaClassesNotToBeUsed && descriptor is ClassDescriptor) {
-            if (descriptor.importableFqName?.let(::isJavaClassNotToBeUsedInKotlin) == true) return false
+            if (descriptor.importableFqName?.isJavaClassNotToBeUsedInKotlin() == true) return false
         }
 
         if (descriptor is TypeParameterDescriptor && !isTypeParameterVisible(descriptor)) return false
@@ -246,7 +272,9 @@ abstract class CompletionSession(
 
     protected abstract val expectedInfos: Collection<ExpectedInfo>
 
-    protected val importableFqNameClassifier = ImportableFqNameClassifier(file)
+    protected val importableFqNameClassifier = ImportableFqNameClassifier(file) {
+        ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
+    }
 
     @Suppress("InvalidBundleOrProperty") //workaround to avoid false-positive: KTIJ-19892
     protected open fun createSorter(): CompletionSorter {
@@ -309,9 +337,16 @@ abstract class CompletionSession(
 
     protected val referenceVariantsCollector = if (nameExpression != null) {
         ReferenceVariantsCollector(
-            referenceVariantsHelper, indicesHelper(true), prefixMatcher,
-            nameExpression, callTypeAndReceiver, resolutionFacade, bindingContext,
-            importableFqNameClassifier, configuration
+            referenceVariantsHelper = referenceVariantsHelper,
+            indicesHelper = indicesHelper(true),
+            prefixMatcher = prefixMatcher,
+            nameExpression = nameExpression,
+            callTypeAndReceiver = callTypeAndReceiver,
+            resolutionFacade = resolutionFacade,
+            bindingContext = bindingContext,
+            importableFqNameClassifier = importableFqNameClassifier,
+            configuration = configuration,
+            allowExpectedDeclarations = allowExpectedDeclarations,
         )
     } else {
         null
@@ -330,7 +365,7 @@ abstract class CompletionSession(
     }
 
     protected fun getRuntimeReceiverTypeReferenceVariants(lookupElementFactory: LookupElementFactory): Pair<ReferenceVariants, LookupElementFactory>? {
-        val evaluator = file.getCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) ?: return null
+        val evaluator = file.getCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) ?: return null
         val referenceVariants = referenceVariantsCollector?.allCollected ?: return null
 
         val explicitReceiver = callTypeAndReceiver.receiver as? KtExpression ?: return null
@@ -342,10 +377,19 @@ abstract class CompletionSession(
 
         val expressionReceiver = ExpressionReceiver.create(explicitReceiver, runtimeType, bindingContext)
         val (variants, notImportedExtensions) = ReferenceVariantsCollector(
-            referenceVariantsHelper, indicesHelper(true), prefixMatcher,
-            nameExpression!!, callTypeAndReceiver, resolutionFacade, bindingContext,
-            importableFqNameClassifier, configuration, runtimeReceiver = expressionReceiver
+            referenceVariantsHelper = referenceVariantsHelper,
+            indicesHelper = indicesHelper(true),
+            prefixMatcher = prefixMatcher,
+            nameExpression = nameExpression!!,
+            callTypeAndReceiver = callTypeAndReceiver,
+            resolutionFacade = resolutionFacade,
+            bindingContext = bindingContext,
+            importableFqNameClassifier = importableFqNameClassifier,
+            configuration = configuration,
+            allowExpectedDeclarations = allowExpectedDeclarations,
+            runtimeReceiver = expressionReceiver,
         ).collectReferenceVariants(descriptorKindFilter!!)
+
         val filteredVariants = filterVariantsForRuntimeReceiverType(variants, referenceVariants.imported)
         val filteredNotImportedExtensions =
             filterVariantsForRuntimeReceiverType(notImportedExtensions, referenceVariants.notImportedExtensions)
@@ -376,15 +420,9 @@ abstract class CompletionSession(
         return callTypeAndReceiver.receiver == null
     }
 
-    protected fun processTopLevelCallables(processor: (CallableDescriptor) -> Unit) {
-        val shadowedFilter = ShadowedDeclarationsFilter.create(bindingContext, resolutionFacade, nameExpression!!, callTypeAndReceiver)
-            ?.createNonImportedDeclarationsFilter<CallableDescriptor>(referenceVariantsCollector!!.allCollected.imported)
+    protected fun processTopLevelCallables(processor: (DeclarationDescriptor) -> Unit) {
         indicesHelper(true).processTopLevelCallables({ prefixMatcher.prefixMatches(it) }) {
-            if (shadowedFilter != null) {
-                shadowedFilter(listOf(it)).singleOrNull()?.let(processor)
-            } else {
-                processor(it)
-            }
+            processWithShadowedFilter(it, processor)
         }
     }
 

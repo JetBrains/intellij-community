@@ -37,9 +37,6 @@ interface GHPRDetailsDataProvider {
   fun addDetailsLoadedListener(disposable: Disposable, listener: () -> Unit)
 
   @RequiresEdt
-  fun getDescriptionMarkdownBody(indicator: ProgressIndicator): CompletableFuture<String>
-
-  @RequiresEdt
   fun updateDetails(indicator: ProgressIndicator, title: String? = null, description: String? = null): CompletableFuture<GHPullRequest>
 
   @RequiresEdt

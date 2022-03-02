@@ -23,8 +23,10 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.replaceService
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.awt.Component
+import java.io.File.separator
 import com.intellij.openapi.externalSystem.util.use as utilUse
 
 interface ExternalSystemSetupProjectTestCase {
@@ -40,11 +42,11 @@ interface ExternalSystemSetupProjectTestCase {
 
   fun assertDefaultProjectState(project: Project) {}
 
-  fun attachProject(project: Project, projectFile: VirtualFile)
+  fun attachProject(project: Project, projectFile: VirtualFile): Project
 
-  fun attachProjectFromScript(project: Project, projectFile: VirtualFile)
+  fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project
 
-  fun <R> waitForImport(action: () -> R): R
+  fun waitForImport(action: () -> Project): Project
 
   fun openPlatformProjectFrom(projectDirectory: VirtualFile): Project {
     return ProjectManagerEx.getInstanceEx()
@@ -67,19 +69,14 @@ interface ExternalSystemSetupProjectTestCase {
   }
 
   fun assertModules(project: Project, vararg projectInfo: ProjectInfo) {
-    val expectedNames = projectInfo.flatMap { it.modules }.toSet()
+    val expectedNames = projectInfo.flatMap { it.modules }.toList().sorted()
     val actual = ModuleManager.getInstance(project).modules
-    val actualNames = actual.map { it.name }.toSet()
-    val truePositive = expectedNames.intersect(actualNames)
-    val falseNegative = expectedNames.minus(actualNames)
-    val falsePositive = actualNames.minus(expectedNames)
-    val hasErrors = falseNegative.isEmpty() && falsePositive.isEmpty()
-    assertTrue("""
-        Found unexpected or not found expected modules
-        TP: $truePositive
-        FN: $falseNegative
-        FP: $falsePositive
-      """.trimIndent(), hasErrors)
+    val actualNames = actual.map { it.name }.toList().sorted()
+
+    assertEquals(
+      expectedNames.joinToString(separator = System.lineSeparator()),
+      actualNames.joinToString(separator = System.lineSeparator())
+    )
   }
 
   fun AnAction.perform(project: Project? = null, selectedFile: VirtualFile? = null) {

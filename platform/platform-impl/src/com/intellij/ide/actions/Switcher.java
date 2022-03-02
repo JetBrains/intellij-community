@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -17,11 +17,11 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -29,9 +29,11 @@ import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -40,10 +42,11 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.render.RenderingUtil;
+import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -81,8 +84,7 @@ public final class Switcher extends BaseSwitcherAction {
   /**
    * @deprecated Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
     Project project = e.getProject();
@@ -178,6 +180,7 @@ public final class Switcher extends BaseSwitcherAction {
         registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
       }
       else {
+        registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
         registerSwingAction(ListActions.Up.ID, "KP_UP", "UP");
         registerSwingAction(ListActions.Down.ID, "KP_DOWN", "DOWN");
         registerSwingAction(ListActions.Left.ID, "KP_LEFT", "LEFT");
@@ -190,13 +193,25 @@ public final class Switcher extends BaseSwitcherAction {
       }
 
       setBorder(JBUI.Borders.empty());
-      setBackground(JBColor.background());
       pathLabel.putClientProperty(SwingTextTrimmer.KEY, SwingTextTrimmer.THREE_DOTS_AT_LEFT);
 
       JPanel header = new JPanel(new HorizontalLayout(5));
-      header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
-      header.setBorder(JBUI.Borders.empty(4, 8));
-      header.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(title)));
+      JLabel titleLabel = RelativeFont.BOLD.install(new JLabel(title));
+      header.add(HorizontalLayout.LEFT, titleLabel);
+
+      if (ExperimentalUI.isNewUI()) {
+        setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+        titleLabel.setBorder(PopupUtil.getComplexPopupVerticalHeaderBorder());
+        header.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
+        header.setBorder(
+          JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+                                PopupUtil.getComplexPopupHorizontalHeaderBorder()));
+      }
+      else {
+        setBackground(JBColor.background());
+        header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
+        header.setBorder(JBUI.Borders.empty(4, 8));
+      }
 
       if (cbShowOnlyEditedFiles != null) {
         cbShowOnlyEditedFiles.setOpaque(false);
@@ -241,13 +256,14 @@ public final class Switcher extends BaseSwitcherAction {
       toolWindows.setCellRenderer(renderer);
       toolWindows.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
       toolWindows.addKeyListener(onKeyRelease);
+      PopupUtil.applyNewUIBackground(toolWindows);
       ScrollingUtil.installActions(toolWindows);
       ListHoverListener.DEFAULT.addTo(toolWindows);
       myClickListener.installOn(toolWindows);
 
-      final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
-                                                        toolWindows.getItemsCount(), recent);
-      CollectionListModel<SwitcherVirtualFile> filesModel = new CollectionListModel<>(wrap(filesToShow));
+      CollectionListModel<SwitcherVirtualFile> filesModel = new CollectionListModel<>();
+      List<SwitcherVirtualFile> filesToShow = getFilesToShow(project, onlyEdited, toolWindows.getItemsCount(), recent);
+      resetListModelAndUpdateNames(filesModel, filesToShow);
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         private @NlsSafe String getTitle2Text(@Nullable String fullText) {
@@ -288,6 +304,7 @@ public final class Switcher extends BaseSwitcherAction {
       files.setCellRenderer(renderer);
       files.setBorder(JBUI.Borders.empty(5, 0));
       files.addKeyListener(onKeyRelease);
+      PopupUtil.applyNewUIBackground(files);
       ScrollingUtil.installActions(files);
       ListHoverListener.DEFAULT.addTo(files);
       myClickListener.installOn(files);
@@ -371,74 +388,65 @@ public final class Switcher extends BaseSwitcherAction {
       myHint = null;
     }
 
-    static @NotNull List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
+    private static @NotNull List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
       return onlyEdited ? IdeDocumentHistory.getInstance(project).getChangedFiles() : getRecentFiles(project);
     }
 
-    static @NotNull List<SwitcherVirtualFile> wrap(@NotNull List<FileInfo> list) {
-      return ContainerUtil.map(list, info -> {
-        SwitcherVirtualFile svf = new SwitcherVirtualFile(info.myProject, info.first, info.second);
-        svf.setMainText(info.getNameForRendering());
-        return svf;
-      });
-    }
-
     @NotNull
-    static List<FileInfo> getFilesToShow(@NotNull Project project, @NotNull List<? extends VirtualFile> filesForInit,
-                                         int toolWindowsCount, boolean pinned) {
+    private static List<SwitcherVirtualFile> getFilesToShow(@NotNull Project project, boolean onlyEdited, int toolWindowsCount, boolean pinned) {
       FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-      List<FileInfo> filesData = new ArrayList<>();
-      ArrayList<FileInfo> editors = new ArrayList<>();
+      List<SwitcherVirtualFile> filesData = new ArrayList<>();
+      ArrayList<SwitcherVirtualFile> editors = new ArrayList<>();
       Set<VirtualFile> addedFiles = new LinkedHashSet<>();
       if (!pinned) {
         for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-          editors.add(new FileInfo(pair.first, pair.second, project));
+          editors.add(new SwitcherVirtualFile(project, pair.first, pair.second));
         }
       }
 
       if (!pinned) {
-        for (FileInfo editor : editors) {
-          addedFiles.add(editor.first);
+        for (SwitcherVirtualFile editor : editors) {
+          addedFiles.add(editor.getFile());
           filesData.add(editor);
           if (filesData.size() >= SWITCHER_ELEMENTS_LIMIT) break;
         }
       }
 
       if (filesData.size() <= 1) {
+        List<? extends VirtualFile> filesForInit = collectFiles(project, onlyEdited);
         if (!filesForInit.isEmpty()) {
-          int editorsFilesCount = (int) editors.stream().map(info -> info.first).distinct().count();
+          int editorsFilesCount = (int)editors.stream().map(info -> info.getFile()).distinct().count();
           int maxFiles = Math.max(editorsFilesCount, filesForInit.size());
           int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
           for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
 
-            FileInfo info = new FileInfo(filesForInit.get(i), null, project);
+            SwitcherVirtualFile info = new SwitcherVirtualFile(project, filesForInit.get(i), null);
             boolean add = true;
             if (pinned) {
-              for (FileInfo fileInfo : filesData) {
-                if (fileInfo.first.equals(info.first)) {
+              for (SwitcherVirtualFile fileInfo : filesData) {
+                if (fileInfo.getFile().equals(info.getFile())) {
                   add = false;
                   break;
                 }
               }
             }
             if (add) {
-              if (addedFiles.add(info.first)) {
+              if (addedFiles.add(info.getFile())) {
                 filesData.add(info);
               }
             }
           }
         }
-        if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
-          if (addedFiles.add(editors.get(0).first)) {
+        if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFile().equals(filesData.get(0).getFile()))) {
+          if (addedFiles.add(editors.get(0).getFile())) {
             filesData.add(0, editors.get(0));
           }
         }
       }
-
       return filesData;
     }
 
-    static int getFilesSelectedIndex(Project project, JList<?> filesList, boolean forward) {
+    static int getFilesSelectedIndex(@NotNull Project project, @NotNull JList<?> filesList, boolean forward) {
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       EditorWindow currentWindow = editorManager.getCurrentWindow();
       VirtualFile currentFile = currentWindow != null ? currentWindow.getSelectedFile() : null;
@@ -463,13 +471,8 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private static boolean isTheSameTab(EditorWindow currentWindow, VirtualFile currentFile, Object element) {
-      if (element instanceof FileInfo) return isTheSameTab(currentWindow, currentFile, (FileInfo)element);
       SwitcherVirtualFile svf = element instanceof SwitcherVirtualFile ? (SwitcherVirtualFile)element : null;
       return svf != null && svf.getFile().equals(currentFile) && (svf.getWindow() == null || svf.getWindow().equals(currentWindow));
-    }
-
-    private static boolean isTheSameTab(EditorWindow currentWindow, VirtualFile currentFile, FileInfo fileInfo) {
-      return fileInfo.first.equals(currentFile) && (fileInfo.second == null || fileInfo.second.equals(currentWindow));
     }
 
     @NotNull
@@ -654,12 +657,8 @@ public final class Switcher extends BaseSwitcherAction {
       boolean onlyEdited = ItemEvent.SELECTED == event.getStateChange();
       final boolean listWasSelected = files.getSelectedIndex() != -1;
 
-      final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
-                                                        toolWindows.getItemsCount(), recent);
-
-      ListModel<SwitcherVirtualFile> model = files.getModel();
-      ListUtil.removeAllItems(model);
-      ListUtil.addAllItems(model, wrap(filesToShow));
+      List<SwitcherVirtualFile> filesToShow = getFilesToShow(project, onlyEdited, toolWindows.getItemsCount(), recent);
+      resetListModelAndUpdateNames((CollectionListModel<SwitcherVirtualFile>)((FilteringListModel<SwitcherVirtualFile>)files.getModel()).getOriginalModel(), filesToShow);
 
       int selectionIndex = getFilesSelectedIndex(project, files, true);
       if (selectionIndex > -1 && listWasSelected) {
@@ -673,6 +672,26 @@ public final class Switcher extends BaseSwitcherAction {
         ((NameFilteringListModel<?>)toolWindowsModel).refilter();
       }
       toolWindows.repaint();
+    }
+
+    private void resetListModelAndUpdateNames(CollectionListModel<SwitcherVirtualFile> model, List<SwitcherVirtualFile> items) {
+      for (SwitcherVirtualFile datum : items) {
+        datum.setMainText(datum.getFile().getPresentableName());
+      }
+      model.removeAll();
+      model.addAll(0, items);
+      ReadAction.nonBlocking(() -> ContainerUtil.map2Map(
+          items, o -> Pair.create(o.getFile(), VfsPresentationUtil.getUniquePresentableNameForUI(o.getProject(), o.getFile())))
+        )
+        .expireWith(this)
+        .finishOnUiThread(ModalityState.any(), map -> {
+          for (SwitcherVirtualFile item : items) {
+            item.setMainText(map.get(item.getFile()));
+          }
+          files.invalidate();
+          files.repaint();
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
 
     void navigate(final InputEvent e) {
@@ -789,28 +808,17 @@ public final class Switcher extends BaseSwitcherAction {
       final EditorWindow[] windows = window.getOwner().getWindows();
       return ArrayUtil.contains(window, windows) ? window : windows.length > 0 ? windows[0] : null;
     }
-  }
 
-  static class FileInfo extends Pair<VirtualFile, EditorWindow> {
-    final Project myProject;
-    private String myNameForRendering;
-
-    FileInfo(VirtualFile first, EditorWindow second, Project project) {
-      super(first, second);
-      myProject = project;
+    @TestOnly
+    static List<VirtualFile> getFilesToShowForTest(@NotNull Project project) {
+      return ContainerUtil.map2List(getFilesToShow(project, false, 10, true), SwitcherVirtualFile::getFile);
     }
 
-    @NlsSafe String getNameForRendering() {
-      if (myNameForRendering == null) {
-        // Recently changed files would also be taken into account (not only open 'visible' files)
-        myNameForRendering = SlowOperations.allowSlowOperations(
-          () -> EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first)
-        );
-      }
-      return myNameForRendering;
+    @TestOnly
+    static int getFilesSelectedIndexForTest(@NotNull Project project, boolean goForward) {
+      return getFilesSelectedIndex(project, new JBList<>(getFilesToShow(project, false, 10, true)), goForward);
     }
   }
-
 
   private static final class SwitcherScrollPane extends JBScrollPane {
     private int width;

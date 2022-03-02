@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
@@ -20,7 +20,7 @@ import com.intellij.util.PlatformUtils
 
 internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(
   LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
-  private val settings get() = ReaderModeSettings.instance(project)
+  private val settings get() = ReaderModeSettings.getInstance(project)
 
   private val cdInlays get() = CheckboxDescriptor(LangBundle.message("checkbox.inlays"), settings::showInlaysHints)
   private val cdRenderedDocs get() = CheckboxDescriptor(LangBundle.message("checkbox.rendered.docs"), settings::showRenderedDocs)

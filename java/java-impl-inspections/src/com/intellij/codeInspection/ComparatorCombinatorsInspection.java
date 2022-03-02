@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection;
+import com.intellij.codeInsight.intention.impl.RemoveRedundantParameterTypesFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,16 +13,17 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -345,7 +346,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     else {
       String parameterName = leftVar.getName();
       PsiTypeElement typeElement = leftVar.getTypeElement();
-      String typeText = typeElement == null ? leftVar.getType().getCanonicalText() : typeElement.getText();
+      if (typeElement != null && PsiUtilCore.hasErrorElementChild(typeElement)) return null;
+      String typeText = typeElement == null ? GenericsUtil.getVariableTypeByExpressionType(leftVar.getType()).getCanonicalText() :
+                        typeElement.getText();
       String parameterDeclaration = "(" + typeText + " " + parameterName + ")";
       text = "java.util.Comparator." + methodName + "(" +
              (parameterDeclaration + " -> " + left.getText()) + ")";
@@ -579,7 +582,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
             parameter.setName(name);
           }
         if (!keepParameterTypes) {
-          RedundantLambdaParameterTypeInspection.removeLambdaParameterTypesIfPossible(lambda);
+          RemoveRedundantParameterTypesFix.removeLambdaParameterTypesIfPossible(lambda);
         }
       }
     }

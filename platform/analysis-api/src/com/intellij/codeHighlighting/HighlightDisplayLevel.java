@@ -16,7 +16,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.ColorizeProxyIcon;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +48,7 @@ public class HighlightDisplayLevel {
   /**
    * @deprecated use {@link #WEAK_WARNING} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, createIconByKey(DO_NOT_SHOW_KEY));
 
   public static final HighlightDisplayLevel WEAK_WARNING =
@@ -88,7 +86,7 @@ public class HighlightDisplayLevel {
     return null;
   }
 
-  public static HighlightDisplayLevel find(HighlightSeverity severity) {
+  public static HighlightDisplayLevel find(@NotNull HighlightSeverity severity) {
     return ourMap.get(severity);
   }
 
@@ -116,10 +114,12 @@ public class HighlightDisplayLevel {
     return mySeverity.getName();
   }
 
+  @NotNull
   public Icon getIcon() {
     return myIconPair.first;
   }
 
+  @NotNull
   public Icon getOutlineIcon() {
     return myIconPair.second;
   }

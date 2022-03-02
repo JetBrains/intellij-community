@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.DaemonTooltipsUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -113,10 +112,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-    if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) {
-      return;
-    }
-    @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
+    List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
     if (toolWrappers.isEmpty()) {
       return;
     }
@@ -137,7 +133,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                                  afterInsideProcessedCallback,
                                                                                  afterOutsideProcessedCallback);
     ProgressManager.checkCanceled();
-
     myInfos = createHighlightsFromContexts(contexts);
   }
 
@@ -212,7 +207,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile file = psiElement.getContainingFile();
     Document thisDocument = Objects.requireNonNull(documentManager.getDocument(file));
 
-    HighlightSeverity severity = myProfileWrapper.getErrorLevel(tool.getDisplayKey(), file).getSeverity();
+    HighlightDisplayKey displayKey = tool.getDisplayKey();
+    if (displayKey == null) {
+      LOG.error("getDisplayKey() is null for " + tool + " (" + tool.getTool() + " ; " + tool.getTool().getClass() + ")");
+      return;
+    }
+    HighlightSeverity severity = myProfileWrapper.getErrorLevel(displayKey, file).getSeverity();
     
     ArrayList<HighlightInfo> newInfos = new ArrayList<>(2);
     createHighlightsForDescriptor(newInfos, emptyActionRegistered, file, thisDocument, tool, severity, descriptor, psiElement);

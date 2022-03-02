@@ -35,7 +35,7 @@ public abstract class GroovyApplicabilityProvider {
     return null;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static Applicability checkProviders(PsiType @NotNull [] argumentTypes, @NotNull PsiMethod method) {
     return checkProviders(ContainerUtil.map(argumentTypes, JustTypeArgument::new), method);

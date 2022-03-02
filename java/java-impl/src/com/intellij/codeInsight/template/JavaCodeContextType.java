@@ -142,6 +142,28 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       return statement != null && statement.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
     }
   }
+
+  public static class ElsePlace extends JavaCodeContextType {
+    public ElsePlace() {
+      super("JAVA_ELSE_PLACE", JavaBundle.message("live.template.context.else"), Generic.class);
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      if (isAfterExpression(element) || JavaStringContextType.isStringLiteral(element)) return false;
+      PsiExpressionStatement parent =
+        PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, true, PsiCodeBlock.class, PsiLambdaExpression.class);
+      if (parent == null) return false;
+      PsiIfStatement previous = ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent), PsiIfStatement.class);
+      if (previous == null) return false;
+      PsiStatement elseBranch = previous.getElseBranch();
+      while (elseBranch instanceof PsiIfStatement) {
+        elseBranch = ((PsiIfStatement)elseBranch).getElseBranch();
+      }
+      return elseBranch == null;
+    }
+  }
+
   public static class Expression extends JavaCodeContextType {
     public Expression() {
       super("JAVA_EXPRESSION", JavaBundle.message("live.template.context.expression"), Generic.class);

@@ -1,17 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.LogModel;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationsToolWindowFactory;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -30,6 +27,7 @@ import java.util.List;
 
 public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
+  private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
 
   private @Nullable StatusBar myStatusBar;
 
@@ -78,7 +76,13 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     if (project == null || project.isDisposed()) {
       return;
     }
-    List<Notification> notifications = EventLog.getLogModel(project).getNotifications();
+    List<Notification> notifications;
+    if (ActionCenter.isEnabled()) {
+      notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
+    }
+    else {
+      notifications = EventLog.getLogModel(project).getNotifications();
+    }
     updateIconOnStatusBar(notifications);
 
     int count = notifications.size();
@@ -87,7 +91,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   }
 
   private void updateIconOnStatusBar(List<? extends Notification> notifications) {
-    if (Registry.is("ide.notification.action.center", false)) {
+    if (ActionCenter.isEnabled()) {
       setIcon(getActionCenterNotificationIcon(notifications));
     }
     else {
@@ -98,9 +102,11 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   public static @NotNull Icon getActionCenterNotificationIcon(List<? extends Notification> notifications) {
     for (Notification notification : notifications) {
       if (notification.isSuggestionType() && notification.isImportantSuggestion() || notification.getType() == NotificationType.ERROR) {
+        if (ExperimentalUI.isNewUI()) return NOTIFICATION_ICON.getErrorIcon();
         return AllIcons.Toolwindows.NotificationsNewImportant;
       }
     }
+    if (ExperimentalUI.isNewUI()) return NOTIFICATION_ICON.getInfoIcon(!notifications.isEmpty());
     return notifications.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew;
   }
 

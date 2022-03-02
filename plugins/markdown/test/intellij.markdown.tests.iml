@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/data" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
+    <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="jcef" level="project" />
+  </component>
+</module>

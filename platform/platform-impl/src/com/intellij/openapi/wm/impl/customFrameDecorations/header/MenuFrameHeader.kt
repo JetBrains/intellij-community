@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
+import com.jetbrains.CustomWindowDecoration.*
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import java.awt.Rectangle
@@ -20,7 +21,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.ChangeListener
 import kotlin.math.roundToInt
 
-internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle, val myIdeMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame) {
+internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle, val myIdeMenu: IdeMenuBar) : FrameHeader(frame), MainFrameCustomHeader {
   private val menuHolder: JComponent
   private var changeListener: ChangeListener
 
@@ -57,16 +58,18 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
 
     mainMenuUpdater = UISettingsListener {
-      menuHolder.isVisible = UISettings.instance.showMainMenu
+      menuHolder.isVisible = UISettings.getInstance().showMainMenu
       SwingUtilities.invokeLater { updateCustomDecorationHitTestSpots() }
     }
 
-    menuHolder.isVisible = UISettings.instance.showMainMenu
+    menuHolder.isVisible = UISettings.getInstance().showMainMenu
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {
     myIdeMenu.updateMenuActions(forceRebuild)
   }
+
+  override fun getComponent(): JComponent = this
 
   override fun updateActive() {
     super.updateActive()
@@ -79,7 +82,7 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
     Disposer.register(ApplicationManager.getApplication(), disp)
 
     ApplicationManager.getApplication().messageBus.connect(disp).subscribe(UISettingsListener.TOPIC, mainMenuUpdater)
-    mainMenuUpdater.uiSettingsChanged(UISettings.instance)
+    mainMenuUpdater.uiSettingsChanged(UISettings.getInstance())
     disposable = disp
 
     super.installListeners()
@@ -96,7 +99,7 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
     super.uninstallListeners()
   }
 
-  override fun getHitTestSpots(): List<RelativeRectangle> {
+  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
     val hitTestSpots = super.getHitTestSpots().toMutableList()
     if (menuHolder.isVisible) {
       val menuRect = Rectangle(menuHolder.size)
@@ -107,9 +110,9 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
         menuRect.y += topGap
         menuRect.height -= topGap
       }
-      hitTestSpots.add(RelativeRectangle(menuHolder, menuRect))
+      hitTestSpots.add(Pair(RelativeRectangle(menuHolder, menuRect), MENU_BAR))
     }
-    hitTestSpots.addAll(headerTitle.getBoundList())
+    hitTestSpots.addAll(headerTitle.getBoundList().map { Pair(it, OTHER_HIT_SPOT) })
     return hitTestSpots
   }
 }

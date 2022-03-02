@@ -471,6 +471,62 @@ abstract class KotlinInjectionTest : AbstractInjectionTest() {
                 ShredInfo(range(3, 23), hostRange = range(13, 16), prefix = "missingValue", suffix = "check")
             )
         )
+
+        fun testMutation() = doInjectionPresentTest(
+            """
+            @org.intellij.lang.annotations.Language("HTML")
+            var html = ""
+
+            fun test() {
+              html = "<ht<caret>ml></html>"
+            }
+            """,
+            languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+            injectedText = "<html></html>"
+        )
+
+        fun testMutationNested() = doInjectionPresentTest(
+            """
+            class A { val b: B = B() }
+            class B {
+                @org.intellij.lang.annotations.Language("HTML")
+                var html = ""
+            }
+            fun test() {
+                val a = A()
+                a.b.html = "<ht<caret>ml></html>"
+            }
+            """,
+            languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+            injectedText = "<html></html>"
+        )
+
+        fun testMutationAbstract() = doInjectionPresentTest(
+            """
+            abstract class A {
+                @org.intellij.lang.annotations.Language("HTML")
+                var html: String
+            }
+            fun A.test() {
+              html = "<ht<caret>ml></html>"
+            }
+            """,
+            languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+            injectedText = "<html></html>"
+        )
+
+        fun testPlusEqMutation() = doInjectionPresentTest(
+            """
+            @org.intellij.lang.annotations.Language("TEXT")
+            var text = "hello"
+
+            fun test() {
+              text += "wor<caret>ld"
+            }
+            """,
+            languageId = PlainTextLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+            injectedText = "world"
+        )
     }
 
     class TestBucket3 : KotlinInjectionTest() {

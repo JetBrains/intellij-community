@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 @TestRoot("idea/tests")
 @TestMetadata("testData/asJava/fileLightClass")
 @RunWith(JUnit38ClassRunner::class)
-class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
+class LightClassFromTextTest8 : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
     fun testSimple() {

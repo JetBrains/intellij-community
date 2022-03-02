@@ -6,13 +6,14 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.combineWhenConditions
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -27,7 +28,10 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
         if (entries.any { it != lastEntry && it.isElse }) return null
         if (entries.all { it.isElse }) return null // 'when' with only 'else' branch is not supported
         if (element.subjectExpression is KtProperty) return null
-        if (!lastEntry.isElse && element.isUsedAsExpression(element.analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return null
+        if (!lastEntry.isElse) {
+            val bindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
+            if (bindingContext == BindingContext.EMPTY || element.isUsedAsExpression(bindingContext)) return null
+        }
         return element.whenKeyword.textRange
     }
 

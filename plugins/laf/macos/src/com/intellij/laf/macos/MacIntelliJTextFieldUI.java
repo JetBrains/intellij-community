@@ -18,7 +18,7 @@ import static com.intellij.laf.macos.MacIntelliJTextBorder.MINIMUM_HEIGHT;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
+public final class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(final JComponent c) {
     return new MacIntelliJTextFieldUI();

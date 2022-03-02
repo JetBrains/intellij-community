@@ -1,143 +1,95 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards
 
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.chain
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.util.io.systemIndependentPath
-import org.jetbrains.idea.maven.indices.MavenIndicesManager
-import org.jetbrains.idea.maven.model.MavenArchetype
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil
-import javax.swing.JList
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override val name = MAVEN
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
-  class Step(parent: JavaNewProjectWizard.Step) : MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
+  class Step(parent: JavaNewProjectWizard.Step) :
+    MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),
+    BuildSystemJavaNewProjectWizardData by parent {
 
-    private val archetypeProperty = propertyGraph.graphProperty<MavenArchetype?> { null }
+    private val addSampleCodeProperty = propertyGraph.property(false)
+      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
-    override fun setupAdvancedSettingsUI(panel: Panel) {
-      super.setupAdvancedSettingsUI(panel)
-      with(panel) {
-        row(MavenWizardBundle.message("maven.new.project.wizard.archetype.label")) {
-          val archetypes = CollectionComboBoxModel<MavenArchetype?>()
-          val comboBox = comboBox(archetypes, ArchetypeRenderer())
-            .applyToComponent { setSwingPopup(false) }
-            .bindItem(archetypeProperty)
-            .columns(COLUMNS_MEDIUM)
-          archetypes.add(null)
-          parentStep.whenStepSelected(MAVEN) {
-            loadArchetypes(archetypes)
-          }
-          button(MavenWizardBundle.message("maven.new.project.wizard.add.archetype.button")) {
-            addArchetype(comboBox.component, archetypes)
-          }
-        }
-      }
-    }
+    var addSampleCode by addSampleCodeProperty
 
-    private fun loadArchetypes(archetypes: CollectionComboBoxModel<MavenArchetype?>) {
-      val indicesManager = getIndicesManager()
-      BackgroundTaskUtil.executeOnPooledThread(context.disposable) {
-        archetypes.add(indicesManager.archetypes.sortedBy { it.groupId })
-      }
-    }
-
-    private fun addArchetype(comboBox: ComboBox<MavenArchetype?>, archetypes: CollectionComboBoxModel<MavenArchetype?>) {
-      val dialog = MavenAddArchetypeDialog(comboBox)
-      if (dialog.showAndGet()) {
-        val archetype = dialog.archetype
-        archetypes.add(archetype)
-        comboBox.selectedItem = archetype
-        addArchetypeIntoIndices(archetype)
-      }
-    }
-
-    private fun addArchetypeIntoIndices(archetype: MavenArchetype) {
-      val indicesManager = getIndicesManager()
-      ApplicationManager.getApplication().executeOnPooledThread {
-        indicesManager.addArchetype(archetype)
-      }
-    }
-
-    private fun getIndicesManager(): MavenIndicesManager {
-      val project = context.project ?: ProjectManager.getInstance().defaultProject
-      return MavenIndicesManager.getInstance(project)
+    override fun setupSettingsUI(builder: Panel) {
+      super.setupSettingsUI(builder)
+      builder.row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+      }.topGap(TopGap.SMALL)
     }
 
     override fun setupProject(project: Project) {
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name
-        contentEntryPath = parentStep.projectPath.systemIndependentPath
+        contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
         parentProject = parentData
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
         isInheritGroupId = parentData?.mavenId?.groupId == groupId
         isInheritVersion = parentData?.mavenId?.version == version
-
-        archetype = archetypeProperty.get()
-        propertiesToCreateByArtifact = LinkedHashMap<String, String>().apply {
-          put("groupId", groupId)
-          put("artifactId", artifactId)
-          put("version", version)
-
-          archetypeProperty.get()?.let { archetype ->
-            put("archetypeGroupId", archetype.groupId)
-            put("archetypeArtifactId", archetype.artifactId)
-            put("archetypeVersion", archetype.version)
-            if (archetype.repository != null) {
-              put("archetypeRepository", archetype.repository)
-            }
-          }
-        }
       }
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
+
+      logSdkFinished(sdk)
+    }
+
+    init {
+      sdkProperty.afterChange { logSdkChanged(it) }
+      parentProperty.afterChange { logParentChanged(!it.isPresent) }
+      groupIdProperty.afterChange { logGroupIdChanged() }
+      artifactIdProperty.afterChange { logArtifactIdChanged() }
+      versionProperty.afterChange { logVersionChanged() }
     }
   }
 
-  private class ArchetypeRenderer : ColoredListCellRenderer<MavenArchetype?>() {
-    override fun customizeCellRenderer(
-      list: JList<out MavenArchetype?>,
-      value: MavenArchetype?,
-      index: Int,
-      selected: Boolean,
-      hasFocus: Boolean
-    ) {
-      if (value == null) {
-        append(MavenWizardBundle.message("maven.new.project.wizard.no.archetype.label"))
+  private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
+      if (gitData?.git == true) {
+        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
       }
-      else if (index == -1) {
-        append(value.artifactId + ":" + value.version)
-      }
-      else {
-        append(value.groupId + ":", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-        append(value.artifactId + ":" + value.version)
+      if (parent.addSampleCode) {
+        withJavaSampleCodeAsset("src/main/java", parent.groupId)
       }
     }
   }
 
   companion object {
-    private val MAVEN = MavenUtil.SYSTEM_ID.readableName
+    @JvmField
+    val MAVEN = MavenUtil.SYSTEM_ID.readableName
   }
 }

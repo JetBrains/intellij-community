@@ -154,12 +154,17 @@ class ClassSource(name: String, private val topLevel: Boolean = true) : Abstract
 class FunSource(val name: String) : AbstractSource() {
     private val params = mutableMapOf<String, String>()
     private var openFunction: Boolean = false
+    private var overrideFunction: Boolean = false
     private var returnType: String? = null
 
     override fun intendLevel(): Int = 1
 
     fun openFunction() {
         this.openFunction = true
+    }
+
+    fun overrideFunction() {
+        this.overrideFunction = true
     }
 
     fun param(name: String, type: String) {
@@ -171,8 +176,10 @@ class FunSource(val name: String) : AbstractSource() {
     }
 
     private fun modifiers(): String {
-        val s = if (openFunction) "open" else ""
-        return if (s.isEmpty()) s else "$s "
+        val modifiers = mutableListOf<String>()
+        if (openFunction) modifiers.add("open")
+        if (overrideFunction) modifiers.add("override")
+        return if (modifiers.isEmpty()) "" else "${modifiers.joinToString(" ")} "
     }
 
     private fun retType(): String {
@@ -284,7 +291,7 @@ class MavenLibraryDescription(name: String, val mavenArtefact: String, scope: De
         }
         val libraryProperties = RepositoryLibraryProperties(libraryGroupId, libraryArtifactId, version, true, emptyList())
         val orderRoots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null, null)
-        //val libraryDescription = RepositoryLibraryDescription.findDescription(libraryGroupId, libraryArtifactId)
+
         ConfigLibraryUtil.addLibrary(module, name, kind = REPOSITORY_LIBRARY_KIND) {
             val modifiableLibrary = cast<LibraryEx.ModifiableModelEx>()
             val realLibraryProperties = modifiableLibrary.properties.cast<RepositoryLibraryProperties>()
@@ -294,27 +301,6 @@ class MavenLibraryDescription(name: String, val mavenArtefact: String, scope: De
                 addRoot(orderRoot.file, orderRoot.type)
             }
         }
-
-        //val model = RepositoryLibraryPropertiesModel(version, false, false)
-        //val modifiableModelsProvider = IdeaModifiableModelsProvider()
-        //val modifiableModel: ModifiableRootModel = modifiableModelsProvider.getModuleModifiableModel(module)!!
-        //val librarySupport = RepositoryLibrarySupport(module.project, libraryDescription, model)
-        //librarySupport.addSupport(
-        //    module,
-        //    modifiableModel,
-        //    modifiableModelsProvider,
-        //    scope
-        //)
-        //runWriteAction { modifiableModel.commit() }
-        //
-        //val sleepMs = 500L
-        //val timeoutMs = TimeUnit.MINUTES.toMillis(2)
-        //for(attempt in 0..(timeoutMs / sleepMs).toInt()) {
-        //    UIUtil.dispatchAllInvocationEvents()
-        //    if (!JarRepositoryManager.hasRunningTasks()) break
-        //    Thread.sleep(sleepMs)
-        //}
-        //check(!JarRepositoryManager.hasRunningTasks()) { "$this has not been downloaded" }
     }
 
     override fun toString(): String {

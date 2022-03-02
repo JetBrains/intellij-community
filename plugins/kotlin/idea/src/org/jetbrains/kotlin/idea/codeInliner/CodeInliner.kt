@@ -8,6 +8,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.LocalSearchScope
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -27,13 +28,15 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.CompileTimeConstantUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -46,6 +49,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CodeInliner<TCallElement : KtElement>(
+    private val languageVersionSettings: LanguageVersionSettings,
     private val usageExpression: KtSimpleNameExpression?,
     private val bindingContext: BindingContext,
     private val resolvedCall: ResolvedCall<out CallableDescriptor>,
@@ -204,10 +208,10 @@ class CodeInliner<TCallElement : KtElement>(
         lexicalScope: LexicalScope,
         endOfScope: Int,
     ) {
-        val validator = CollectingNameValidator { !it.nameHasConflictsInScope(lexicalScope) }
+        val validator = CollectingNameValidator { !it.nameHasConflictsInScope(lexicalScope, languageVersionSettings) }
         for (declaration in declarations) {
             val oldName = declaration.name
-            if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope)) {
+            if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope, languageVersionSettings)) {
                 val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
                 for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
                     if (reference.element.startOffset < endOfScope) {

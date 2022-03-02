@@ -1,15 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.ide.IdeDeprecatedMessagesBundle;
 import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.*;
 
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
-
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class CommonBundle extends DynamicBundle {
@@ -81,8 +80,7 @@ public final class CommonBundle extends DynamicBundle {
   /**
    * @deprecated Use more informative title instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public static @DialogTitle String getWarningTitle() {
     return message("title.warning");
   }
@@ -115,7 +113,7 @@ public final class CommonBundle extends DynamicBundle {
     return message("button.close");
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Button String getNoForAllButtonText() {
     return message("button.no.for.all");
   }
@@ -129,18 +127,18 @@ public final class CommonBundle extends DynamicBundle {
   }
 
   public static @DialogTitle String settingsTitle() {
-    return SystemInfo.isMac ? message("title.settings.mac") : message("title.settings");
+    return SystemInfoRt.isMac ? message("title.settings.mac") : message("title.settings");
   }
 
   public static @Nls String settingsAction() {
-    return SystemInfo.isMac ? message("action.settings.mac") : message("action.settings");
+    return SystemInfoRt.isMac ? message("action.settings.mac") : message("action.settings");
   }
 
   public static @Nls String settingsActionDescription() {
-    return SystemInfo.isMac ? message("action.settings.description.mac") : message("action.settings.description");
+    return SystemInfoRt.isMac ? message("action.settings.description.mac") : message("action.settings.description");
   }
 
   public static @Nls String settingsActionPath() {
-    return SystemInfo.isMac ? message("action.settings.path.mac") : message("action.settings.path");
+    return SystemInfoRt.isMac ? message("action.settings.path.mac") : message("action.settings.path");
   }
 }

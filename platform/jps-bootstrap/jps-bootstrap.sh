@@ -5,7 +5,7 @@ set -eu
 
 JPS_BOOTSTRAP_DIR="$(cd "$(dirname "$0")"; pwd)"
 JPS_BOOTSTRAP_COMMUNITY_HOME="$(cd "$JPS_BOOTSTRAP_DIR/../.."; pwd)"
-JPS_BOOTSTRAP_WORK_DIR=${JPS_BOOTSTRAP_WORK_DIR:-$JPS_BOOTSTRAP_COMMUNITY_HOME/out/jps-bootstrap}
+JPS_BOOTSTRAP_PREPARE_DIR="$JPS_BOOTSTRAP_COMMUNITY_HOME/out/jps-bootstrap"
 
 SCRIPT_VERSION=jps-bootstrap-cmd-v1
 
@@ -27,7 +27,9 @@ case "$(uname)" in
     ;;
 esac
 
+ZULU_BASE=https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin
 ZULU_PREFIX=zulu11.50.19-ca-jdk11.0.12
+
 if [ "$darwin" = "true" ]; then
     case $(uname -m) in
       x86_64)
@@ -46,23 +48,25 @@ else
         ZULU_ARCH=linux_x64
         ;;
       aarch64)
-        ZULU_ARCH=aarch64
+        ZULU_ARCH=linux_aarch64
+        ZULU_BASE="https://cache-redirector.jetbrains.com/cdn.azul.com/zulu-embedded/bin"
         ;;
       *)
         die "Unknown architecture $(uname -m)"
         ;;
     esac
 fi
-JVM_URL=https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/$ZULU_PREFIX-$ZULU_ARCH.tar.gz
-JVM_TARGET_DIR="$JPS_BOOTSTRAP_WORK_DIR/jvm/$ZULU_PREFIX-$ZULU_ARCH-$SCRIPT_VERSION"
 
-mkdir -p "$JPS_BOOTSTRAP_WORK_DIR/jvm"
+JVM_URL="$ZULU_BASE/$ZULU_PREFIX-$ZULU_ARCH.tar.gz"
+JVM_TARGET_DIR="$JPS_BOOTSTRAP_PREPARE_DIR/jvm/$ZULU_PREFIX-$ZULU_ARCH-$SCRIPT_VERSION"
+
+mkdir -p "$JPS_BOOTSTRAP_PREPARE_DIR/jvm"
 
 if [ -e "$JVM_TARGET_DIR/.flag" ] && [ -n "$(ls "$JVM_TARGET_DIR")" ] && [ "x$(cat "$JVM_TARGET_DIR/.flag")" = "x${JVM_URL}" ]; then
     # Everything is up-to-date in $JVM_TARGET_DIR, do nothing
     true
 else
-  JVM_TEMP_FILE=$(mktemp "$JPS_BOOTSTRAP_WORK_DIR/jvm.tar.gz.XXXXXXXXX")
+  JVM_TEMP_FILE=$(mktemp "$JPS_BOOTSTRAP_PREPARE_DIR/jvm.tar.gz.XXXXXXXXX")
   trap 'echo "Removing $JVM_TEMP_FILE"; rm -f "$JVM_TEMP_FILE"; trap - EXIT' EXIT INT HUP
 
   warn "Downloading $JVM_URL to $JVM_TEMP_FILE"
@@ -100,8 +104,16 @@ fi
 
 set -x
 
-"$JAVA_HOME/bin/java" -Daether.connector.resumeDownloads=false -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_WORK_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
+# Download and compile jps-bootstrap
+"$JAVA_HOME/bin/java" -ea -Daether.connector.resumeDownloads=false -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_PREPARE_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
 
+_java_args_file="$JPS_BOOTSTRAP_PREPARE_DIR/java.args.$$.txt"
+# shellcheck disable=SC2064
+trap "rm -f '$_java_args_file'" EXIT INT HUP
+
+# Run jps-bootstrap and produce java args file to run actual user class
 export JPS_BOOTSTRAP_COMMUNITY_HOME
-export JPS_BOOTSTRAP_WORK_DIR
-exec "$JAVA_HOME/bin/java" -Xmx2g -Djava.awt.headless=true -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "$@"
+"$JAVA_HOME/bin/java" -ea -Xmx4g -Djava.awt.headless=true -classpath "$JPS_BOOTSTRAP_PREPARE_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=$_java_args_file" "$@"
+
+# Run user class via wrapper from platform to correctly capture and report exception to TeamCity build log
+"$JAVA_HOME/bin/java" "@$_java_args_file"

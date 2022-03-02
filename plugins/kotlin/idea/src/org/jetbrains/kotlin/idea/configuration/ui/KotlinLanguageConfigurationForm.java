@@ -2,16 +2,13 @@
 
 package org.jetbrains.kotlin.idea.configuration.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinPluginUtil;
-import org.jetbrains.kotlin.idea.PlatformVersion;
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeaturesPanel;
-import org.jetbrains.kotlin.idea.util.VersioningKt;
 
 import javax.swing.*;
 import java.util.List;
@@ -27,8 +24,6 @@ public class KotlinLanguageConfigurationForm {
     private JLabel verifierDisabledText;
     private JPanel pluginVersionPanel;
     private JTextPane currentVersion;
-    private JPanel bundledCompilerVersionPanel;
-    private JTextPane compilerVersion;
     public ExperimentalFeaturesPanel experimentalFeaturesPanel;
     private JPanel experimentalFeaturesPanelContainer;
 
@@ -46,16 +41,7 @@ public class KotlinLanguageConfigurationForm {
             currentVersion.setText(pluginVersion);
         }
 
-        if (ApplicationManager.getApplication().isInternal()) {
-            @NlsSafe
-            String buildNumber = VersioningKt.getBuildNumber();
-            compilerVersion.setText(buildNumber);
-        } else {
-            bundledCompilerVersionPanel.setVisible(false);
-        }
-
         currentVersion.setBackground(pluginVersionPanel.getBackground());
-        compilerVersion.setBackground(bundledCompilerVersionPanel.getBackground());
     }
 
     public void initChannels(List<@NlsSafe String> channels) {
@@ -113,11 +99,5 @@ public class KotlinLanguageConfigurationForm {
         else {
             verifierDisabledText.setText("");
         }
-    }
-
-    private static boolean isAndroidStudio() {
-        PlatformVersion platformVersion = PlatformVersion.Companion.getCurrent();
-        if (platformVersion == null) return false;
-        return platformVersion.getPlatform().equals(PlatformVersion.Platform.ANDROID_STUDIO);
     }
 }

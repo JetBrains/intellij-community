@@ -82,23 +82,27 @@ class PluginChunkDataSource(
       LOG.warn("Empty range: request '$newPluginUrl' range '$range'")
     }
     else {
-      HttpRequests.requestWithRange(newPluginUrl, range).productNameAsUserAgent().connect { request ->
-        val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
-        request.inputStream.buffered().use { input ->
-          when {
-            chunkSequences.size > 1 -> {
-              for (sequence in chunkSequences) {
-                parseHttpMultirangeHeaders(input, boundary)
-                parseHttpRangeBody(input, sequence, result)
+      HttpRequests
+        .requestWithRange(newPluginUrl, range)
+        .productNameAsUserAgent()
+        .setHeadersViaTuner()
+        .connect { request ->
+          val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
+          request.inputStream.buffered().use { input ->
+            when {
+              chunkSequences.size > 1 -> {
+                for (sequence in chunkSequences) {
+                  parseHttpMultirangeHeaders(input, boundary)
+                  parseHttpRangeBody(input, sequence, result)
+                }
               }
-            }
-            chunkSequences.size == 1 -> parseHttpRangeBody(input, chunkSequences[0], result)
-            else -> {
-              LOG.warn("Zero chunks: request '$newPluginUrl' range '$range'")
+              chunkSequences.size == 1 -> parseHttpRangeBody(input, chunkSequences[0], result)
+              else -> {
+                LOG.warn("Zero chunks: request '$newPluginUrl' range '$range'")
+              }
             }
           }
         }
-      }
     }
     return result
   }

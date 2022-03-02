@@ -346,20 +346,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     private final boolean myFromPopup;
 
     MyAddAction(boolean fromPopup) {
-      super(IdeBundle.message("add.scope.popup.title"), true);
+      super(IdeBundle.message("add.scope.popup.title"), !fromPopup);
       myFromPopup = fromPopup;
-      final Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
+      getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
-    }
-
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (myFromPopup) {
-        setPopup(false);
-      }
     }
 
     @Override

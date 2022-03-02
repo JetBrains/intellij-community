@@ -5,7 +5,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.*;
@@ -17,7 +16,7 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
+public final class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   public static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(22));
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {

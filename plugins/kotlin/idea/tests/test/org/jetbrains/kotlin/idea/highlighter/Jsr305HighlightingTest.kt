@@ -13,13 +13,12 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
-import org.jetbrains.kotlin.utils.ReportLevel
+import org.jetbrains.kotlin.load.java.ReportLevel
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.io.File
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.idea.test.TestRoot
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/highlighterJsr305/project")
@@ -42,7 +41,7 @@ class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
         ) {
             override fun configureModule(module: Module, model: ModifiableRootModel) {
                 super.configureModule(module, model)
-                module.createFacet(JvmPlatforms.jvm18)
+                module.createFacet(JvmPlatforms.jvm8)
                 val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
 
                 facetSettings?.apply {

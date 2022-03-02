@@ -14,7 +14,6 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentInstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,20 +60,6 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * Register an implementation class to provide additional functionality for DOM elements.
-   *
-   * @param domElementClass     interface class.
-   * @param implementationClass abstract implementation class.
-   * @see #initializeFileDescription()
-   * @deprecated use dom.implementation extension point instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final <Dom extends DomElement> void registerImplementation(Class<Dom> domElementClass, Class<? extends Dom> implementationClass) {
-    myImplementations.put(domElementClass, implementationClass);
-  }
-
-  /**
    * Map namespace key, call from {@link #initializeFileDescription()}.
    *
    * @param namespaceKey namespace identifier
@@ -115,8 +100,7 @@ public class DomFileDescription<T> {
    * index is rebuilt correctly.
    * @deprecated use "domVersion" attribute of {@code com.intellij.dom.fileMetaData} extension instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public int getVersion() {
     return myRootTagName.hashCode();
   }

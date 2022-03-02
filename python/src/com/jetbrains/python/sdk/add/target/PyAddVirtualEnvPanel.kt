@@ -3,24 +3,24 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.fixHighlightingOfUiDslComponents
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
@@ -28,13 +28,16 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.*
+import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
+import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
+import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
+import com.jetbrains.python.sdk.add.addInterpretersAsync
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import icons.PythonIcons
 import java.awt.BorderLayout
-import java.awt.event.ActionListener
 import java.util.function.Supplier
 
 /**
@@ -59,12 +62,16 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   private val baseInterpreterCombobox: PySdkPathChoosingComboBox
 
-  private val inheritSitePackagesCheckBox: JBCheckBox
+  private var isCreateNewVirtualenv: Boolean = false
+
+  private var isInheritSitePackages: Boolean = false
 
   /**
    * Encapsulates the work with the files synchronization options.
    */
   private var projectSync: ProjectSync? = null
+
+  private lateinit var isNewEnvironmentMode: () -> Boolean
 
   override var newProjectPath: String? = null
     set(value) {
@@ -76,10 +83,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   init {
     layout = BorderLayout()
-    val newVirtualenvItem: NewPySdkComboBoxItem? =
-      if (allowAddNewVirtualenv && isMutableTarget) NewPySdkComboBoxItem("<New Virtualenv>") else null
-    interpreterCombobox = PySdkPathChoosingComboBox(newPySdkComboBoxItem = newVirtualenvItem,
-                                                    targetEnvironmentConfiguration = targetEnvironmentConfiguration)
+    interpreterCombobox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
     locationField = TextFieldWithBrowseButton().apply {
       val targetEnvironmentConfiguration = targetEnvironmentConfiguration
       if (targetEnvironmentConfiguration == null) {
@@ -90,40 +94,49 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
         text = when {
           projectBasePath.isNullOrEmpty() -> config.userHome
           // TODO [run.targets] ideally we want to use '/' or '\' file separators based on the target's OS (which is not available yet)
-          else -> joinTargetPaths(config.userHome, PathUtil.getFileName(projectBasePath), fileSeparator = '/')
+          else -> joinTargetPaths(config.userHome, DEFAULT_VIRTUALENVS_DIR, PathUtil.getFileName(projectBasePath), fileSeparator = '/')
         }
       }
       addBrowseFolderListener(PySdkBundle.message("python.venv.location.chooser"), project, targetEnvironmentConfiguration,
                               FileChooserDescriptorFactory.createSingleFolderDescriptor())
     }
     baseInterpreterCombobox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
-    inheritSitePackagesCheckBox = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
     val panel = panel {
-      row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) { interpreterCombobox() }
-      val rowsForNewVirtualenvCase = listOf(
-        row(PyBundle.message("sdk.create.venv.dialog.location.label")) { locationField() },
-        row(PyBundle.message("sdk.create.venv.dialog.base.interpreter.label")) { baseInterpreterCombobox() },
-        row { inheritSitePackagesCheckBox() }
-      )
+      lateinit var newEnvironmentModeSelected: ComponentPredicate
 
-      // add listeners
-      fun updateComponentsVisibility() {
-        val newVirtualenvIsSelected = interpreterCombobox.selectedItem is NewPySdkComboBoxItem
-        rowsForNewVirtualenvCase.forEach { it.visible = newVirtualenvIsSelected }
+      if (allowAddNewVirtualenv && isMutableTarget) {
+        isCreateNewVirtualenv = true
+        buttonsGroup {
+          row {
+            label(PyBundle.message("sdk.create.venv.environment.label"))
+            radioButton(PyBundle.message("sdk.create.venv.existing.option.label"), false)
+            val newEnvironmentRadioButton = radioButton(PyBundle.message("sdk.create.venv.new.option.label"), true)
+            newEnvironmentModeSelected = newEnvironmentRadioButton.selected
+          }
+        }.bind(getter = { isCreateNewVirtualenv }, setter = { isCreateNewVirtualenv = it })
+      }
+      else {
+        newEnvironmentModeSelected = ConstantComponentPredicate.FALSE
       }
 
-      updateComponentsVisibility()
+      row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) {
+        cell(interpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+      }.visibleIf(newEnvironmentModeSelected.not())
 
-      interpreterCombobox.childComponent.addActionListener(ActionListener { updateComponentsVisibility() })
-
-      targetEnvironmentConfiguration?.let {
-        projectSync = PythonInterpreterTargetEnvironmentFactory.findProjectSync(project, it)
-          ?.also { projectSync -> projectSync.extendDialogPanelWithOptionalFields(this) }
+      row(PyBundle.message("sdk.create.venv.dialog.location.label")) {
+        cell(locationField).horizontalAlign(HorizontalAlign.FILL)
+      }.visibleIf(newEnvironmentModeSelected)
+      row(PyBundle.message("sdk.create.venv.dialog.base.interpreter.label")) {
+        cell(baseInterpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+      }.visibleIf(newEnvironmentModeSelected)
+      row {
+        checkBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
+          .bindSelected(::isInheritSitePackages)
       }
+        .visibleIf(newEnvironmentModeSelected)
+
+      projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
     }
-
-    // workarounds the issue with cropping the focus highlighting
-    panel.fixHighlightingOfUiDslComponents()
 
     add(panel, BorderLayout.NORTH)
 
@@ -153,10 +166,10 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   override fun validateAll(): List<ValidationInfo> =
     if (isUnderLocalTarget) {
-      when (interpreterCombobox.selectedItem) {
-        is NewPySdkComboBoxItem -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField),
-                                                 validateSdkComboBox(baseInterpreterCombobox, this))
-        else -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
+      when (isCreateNewVirtualenv) {
+        true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField),
+                              validateSdkComboBox(baseInterpreterCombobox, this))
+        false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
       }
     }
     else emptyList()
@@ -168,11 +181,11 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     // TODO [targets] Refactor this workaround
     applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
 
-    return when (val item = interpreterCombobox.selectedItem) {
-      is NewPySdkComboBoxItem -> createNewVirtualenvSdk(targetEnvironmentConfiguration)
-      is ExistingPySdkComboBoxItem -> configureExistingVirtualenvSdk(targetEnvironmentConfiguration, item.sdk)
-      null -> null
-    }
+    if (isCreateNewVirtualenv) return createNewVirtualenvSdk(targetEnvironmentConfiguration)
+
+    val item = interpreterCombobox.selectedItem
+    // there should *not* be other items other than `ExistingPySdkComboBoxItem`
+    return if (item is ExistingPySdkComboBoxItem) configureExistingVirtualenvSdk(targetEnvironmentConfiguration, item.sdk) else null
   }
 
   /**
@@ -202,7 +215,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
         indicator.isIndeterminate = true
         try {
           val packageManager = PyPackageManager.getInstance(baseSdk)
-          return packageManager.createVirtualEnv(root, inheritSitePackagesCheckBox.isSelected)
+          return packageManager.createVirtualEnv(root, isInheritSitePackages)
         }
         finally {
           // this fixes the issue with unsuccessful attempts to create the new SDK after removing the underlying Web Deployment
@@ -227,8 +240,13 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     if (!shared) {
       sdk.associateWithModule(module, newProjectPath)
     }
-    moduleToExcludeSdkFrom(root, project)?.excludeInnerVirtualEnv(sdk)
-    PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
+    project.excludeInnerVirtualEnv(sdk)
+    if (isUnderLocalTarget) {
+      // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
+      // target (e.g. a path from SSH machine or a Docker image) ends up with a meaningless default for the local machine.
+      // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
+      PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
+    }
     return sdk
   }
 
@@ -249,17 +267,27 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     }
   }
 
-  private fun moduleToExcludeSdkFrom(path: String, project: Project?): Module? {
-    val possibleProjects = if (project != null) listOf(project) else ProjectManager.getInstance().openProjects.asList()
-    val rootFile = StandardFileSystems.local().refreshAndFindFileByPath(path) ?: return null
-    return possibleProjects
-      .asSequence()
-      .map { ModuleUtil.findModuleForFile(rootFile, it) }
-      .filterNotNull()
-      .firstOrNull()
-  }
-
   private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
     if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
+  }
+
+  private class ConstantComponentPredicate(private val value: Boolean) : ComponentPredicate() {
+    override fun addListener(listener: (Boolean) -> Unit) = Unit
+
+    override fun invoke(): Boolean = value
+
+    companion object {
+      val FALSE = ConstantComponentPredicate(value = false)
+    }
+  }
+
+  companion object {
+    /**
+     * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
+     * environments.
+     *
+     * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
+     */
+    private const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
   }
 }

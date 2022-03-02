@@ -45,6 +45,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.dependency.display.name"
                      implementationClass="com.intellij.codeInspection.DependencyInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="ERROR" shortName="IllegalDependencyOnInternalPackage"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.dependency.on.internal.display.name"
+                     implementationClass="com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="ERROR" shortName="JUnitRule"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.junit.rule.display.name"
@@ -78,7 +82,7 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.display.name"
                      implementationClass="com.intellij.codeInspection.javaapi.JavaApiUsageInspection"/>
-    <notificationGroup id="UAST" displayType="BALLOON"/>
+    <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.codeInspection.sourceToSink.CheckerQualExternalLibraryResolver"/>

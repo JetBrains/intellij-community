@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.ui.tree.FieldDescriptor
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor
 import com.intellij.debugger.ui.tree.NodeDescriptor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -20,6 +21,7 @@ import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.load.java.possibleGetMethodNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -28,7 +30,6 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.synthetic.JavaSyntheticPropertiesScope.Companion.possibleGetMethodNames
 
 class KotlinSourcePositionProvider : SourcePositionProvider() {
     override fun computeSourcePosition(
@@ -37,7 +38,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
-        if (context.frameProxy == null) return null
+        if (context.frameProxy == null || DumbService.isDumb(project)) return null
 
         return when(descriptor) {
             is FieldDescriptor -> computeSourcePosition(descriptor, context, nearest)

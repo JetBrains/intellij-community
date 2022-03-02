@@ -35,9 +35,21 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Lattice:
+ *     UNKNOWN
+ *     |      \
+ * MUTABLE   MUST_NOT_MODIFY
+ *     |       |
+ *     |     UNMODIFIABLE_VIEW
+ *     |       |
+ *     |     UNMODIFIABLE
+ *     \      /
+ *     BOTTOM (null)
+ */
 public enum Mutability {
   /**
-   * Mutability is not known; probably value can be mutated
+   * Mutability is not known; probably value can be mutated; TOP
    */
   UNKNOWN("mutability.unknown", null),
   /**
@@ -96,23 +108,28 @@ public enum Mutability {
   }
 
   @NotNull
-  public Mutability unite(Mutability other) {
+  public Mutability join(@NotNull Mutability other) {
     if (this == other) return this;
     if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
-    if (this == MUTABLE || other == MUTABLE) return MUTABLE;
+    if (this == MUTABLE || other == MUTABLE) return UNKNOWN;
     if (this == MUST_NOT_MODIFY || other == MUST_NOT_MODIFY) return MUST_NOT_MODIFY;
     if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
     return UNMODIFIABLE;
   }
 
-  @NotNull
-  public Mutability intersect(Mutability other) {
+  /**
+   * @param other mutability to meet
+   * @return resulting mutability; null if bottom
+   */
+  @Nullable
+  public Mutability meet(@NotNull Mutability other) {
     if (this == other) return this;
+    if (this == UNKNOWN) return other;
+    if (other == UNKNOWN) return this;
+    if (this == MUTABLE || other == MUTABLE) return null;
     if (this == UNMODIFIABLE || other == UNMODIFIABLE) return UNMODIFIABLE;
     if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
-    if (this == MUST_NOT_MODIFY || other == MUST_NOT_MODIFY) return MUST_NOT_MODIFY;
-    if (this == MUTABLE || other == MUTABLE) return MUTABLE;
-    return UNKNOWN;
+    return MUST_NOT_MODIFY;
   }
 
   @Nullable
@@ -197,7 +214,7 @@ public enum Mutability {
             newMutability = method == null ? UNKNOWN : getMutability(method);
           }
         }
-        mutability = mutability.unite(newMutability);
+        mutability = mutability.join(newMutability);
         if (!mutability.isUnmodifiable()) break;
       }
       return mutability;

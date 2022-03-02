@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -32,7 +33,7 @@ public class PagedFileStorage implements Forceable {
 
   @NotNull
   private final static ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
-  private static final StorageLockContext ourDefaultContext = new StorageLockContext(true, false);
+  private static final StorageLockContext ourDefaultContext = new StorageLockContext(false);
 
   @NotNull
   public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
@@ -120,6 +121,19 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
+  public <R> @NotNull R readChannel(@NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer) throws IOException {
+    synchronized (myInputStreamLock) {
+      try {
+        return useChannel(ch -> {
+          ch.position(0);
+          return consumer.fun(ch);
+        }, true);
+      }
+      catch (NoSuchFileException ignored) {
+        return consumer.fun(Channels.newChannel(new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY)));
+      }
+    }
+  }
 
   <R> R useChannel(@NotNull OpenChannelsCache.ChannelProcessor<R> processor, boolean read) throws IOException {
     if (myStorageLockContext.useChannelCache()) {
@@ -254,7 +268,7 @@ public class PagedFileStorage implements Forceable {
   }
 
   private void unmapAll() {
-    myStorageLockContext.getBufferCache().unmapBuffersForOwner(myStorageIndex, myStorageLockContext);
+    myStorageLockContext.getBufferCache().unmapBuffersForOwner(myStorageLockContext);
     myLastAccessedBufferCache.clear();
   }
 
@@ -270,7 +284,7 @@ public class PagedFileStorage implements Forceable {
     if (oldSize == newSize && oldSize == length()) return;
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    myStorageLockContext.getBufferCache().invalidateBuffer(myStorageIndex | (int)(oldSize / myPageSize)); // TODO long page
+    myStorageLockContext.getBufferCache().invalidateBuffer(myStorageIndex | (int)(oldSize / myPageSize), myStorageLockContext); // TODO long page
     final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
 
     resizeFile(newSize);
@@ -377,13 +391,7 @@ public class PagedFileStorage implements Forceable {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
     if (isDirty) {
-      myStorageLockContext.getBufferCache().flushBuffersForOwner(myStorageIndex, myStorageLockContext);
-      if (!myReadOnly) {
-        //useChannel(ch -> {
-        //  ch.force(true);
-        //  return null;
-        //}, false);
-      }
+      myStorageLockContext.getBufferCache().flushBuffersForOwner(myStorageLockContext);
       isDirty = false;
     }
 

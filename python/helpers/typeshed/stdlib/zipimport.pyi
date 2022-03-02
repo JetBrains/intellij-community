@@ -1,5 +1,6 @@
 import os
 import sys
+from importlib.machinery import ModuleSpec
 from types import CodeType, ModuleType
 from typing import Any
 
@@ -8,7 +9,7 @@ if sys.version_info >= (3, 7):
 
 class ZipImportError(ImportError): ...
 
-class zipimporter(object):
+class zipimporter:
     archive: str
     prefix: str
     def __init__(self, path: str | bytes | os.PathLike[Any]) -> None: ...
@@ -19,6 +20,10 @@ class zipimporter(object):
     def get_filename(self, fullname: str) -> str: ...
     if sys.version_info >= (3, 7):
         def get_resource_reader(self, fullname: str) -> ResourceReader | None: ...  # undocumented
+
     def get_source(self, fullname: str) -> str | None: ...
     def is_package(self, fullname: str) -> bool: ...
     def load_module(self, fullname: str) -> ModuleType: ...
+    if sys.version_info >= (3, 10):
+        def find_spec(self, fullname: str, target: ModuleType | None = ...) -> ModuleSpec | None: ...
+        def invalidate_caches(self) -> None: ...

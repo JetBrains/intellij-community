@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.execution
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
+import org.jetbrains.plugins.gradle.importing.createBuildFile
+import org.jetbrains.plugins.gradle.importing.createSettingsFile
+import org.jetbrains.plugins.gradle.importing.importProject
 import org.junit.Test
 
 class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
@@ -18,10 +20,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     createTestJavaClass("ClassE")
     createTestJavaClass("ClassF")
     createTestJavaClass("ClassG")
-    val buildScript = createBuildScriptBuilder()
-      .withJavaPlugin()
-      .withJUnit4()
-    importProject(buildScript.generate())
+    importProject {
+      withJavaPlugin()
+      withJUnit4()
+    }
 
     val wcCompletions = arrayOf(
       "gradle test --tests *ClassA",
@@ -71,11 +73,11 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test single project`() {
-    importProject(createBuildScriptBuilder().generate())
+    importProject {}
     withVariantsFor("") {
       assertCollection(it, getGradleOptions(), getCommonTasks(), getCommonTasks(":"))
     }
-    importProject(createBuildScriptBuilder().withTask("my-task").generate())
+    importProject { withTask("my-task") }
     withVariantsFor("") {
       assertCollection(it, getGradleOptions(), getCommonTasks(), getCommonTasks(":"))
       assertCollection(it, "my-task", ":my-task")
@@ -93,12 +95,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test multi-module project`() {
-    createProjectSubFile("build.gradle", createBuildScriptBuilder().withTask("taskP").generate())
-    createProjectSubFile("module/build.gradle", createBuildScriptBuilder().withTask("taskM").generate())
-    createProjectSubFile("composite/build.gradle", createBuildScriptBuilder().withTask("taskC").generate())
-    createProjectSubFile("composite/module/build.gradle", createBuildScriptBuilder().withTask("taskCM").generate())
-    createProjectSubFile("settings.gradle", GradleSettingScriptBuilder("project").withModule("module").withBuild("composite").generate())
-    createProjectSubFile("composite/settings.gradle", GradleSettingScriptBuilder("composite").withModule("module").generate())
+    createBuildFile { withTask("taskP") }
+    createBuildFile("module") { withTask("taskM") }
+    createBuildFile("composite") { withTask("taskC") }
+    createBuildFile("composite/module") { withTask("taskCM") }
+    createSettingsFile { include("module").includeBuild("composite") }
+    createSettingsFile("composite") { include("module") }
     importProject()
     withVariantsFor("") {
       assertCollection(it, getGradleOptions())
@@ -136,21 +138,20 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     }
     withVariantsFor("", "project.module") {
       assertCollection(it, getGradleOptions())
-      assertCollection(it, !getRootProjectTasks(), !getRootProjectTasks(":"))
+      assertCollection(it, !getRootProjectTasks(), getRootProjectTasks(":"))
       assertCollection(it, !getRootProjectTasks("module:"), !getRootProjectTasks(":module:"))
-      assertCollection(it, !getRootProjectTasks("composite:"), !getRootProjectTasks(":composite:"))
+      assertCollection(it, !getRootProjectTasks("composite:"), getRootProjectTasks(":composite:"))
       assertCollection(it, !getRootProjectTasks("composite:module:"), !getRootProjectTasks(":composite:module:"))
       assertCollection(it, getCommonTasks(), getCommonTasks(":"))
-      assertCollection(it, !getCommonTasks("module:"), !getCommonTasks(":module:"))
-      assertCollection(it, !getCommonTasks("composite:module:"), !getCommonTasks(":composite:module:"))
-      assertCollection(it, !getCommonTasks("composite:"), !getCommonTasks(":composite:"))
-      assertCollection(it, !getCommonTasks("composite:module:"), !getCommonTasks(":composite:module:"))
-      assertCollection(it, !"taskP", !":taskP", !"module:taskP", !":module:taskP")
-      assertCollection(it, "taskM", ":taskM", !"module:taskM", !":module:taskM")
+      assertCollection(it, !getCommonTasks("module:"), getCommonTasks(":module:"))
+      assertCollection(it, !getCommonTasks("composite:"), getCommonTasks(":composite:"))
+      assertCollection(it, !getCommonTasks("composite:module:"), getCommonTasks(":composite:module:"))
+      assertCollection(it, !"taskP", ":taskP", !"module:taskP", !":module:taskP")
+      assertCollection(it, "taskM", !":taskM", !"module:taskM", ":module:taskM")
       assertCollection(it, !"taskC", !":taskC", !"module:taskC", !":module:taskC")
       assertCollection(it, !"taskCM", !":taskCM", !"module:taskCM", !":module:taskCM")
-      assertCollection(it, !"composite:taskC", !":composite:taskC", !"composite:module:taskC", !":composite:module:taskC")
-      assertCollection(it, !"composite:taskCM", !":composite:taskCM", !"composite:module:taskCM", !":composite:module:taskCM")
+      assertCollection(it, !"composite:taskC", ":composite:taskC", !"composite:module:taskC", !":composite:module:taskC")
+      assertCollection(it, !"composite:taskCM", !":composite:taskCM", !"composite:module:taskCM", ":composite:module:taskCM")
     }
     withVariantsFor("", "composite") {
       assertCollection(it, getGradleOptions())
@@ -171,18 +172,18 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     }
     withVariantsFor("", "composite.module") {
       assertCollection(it, getGradleOptions())
-      assertCollection(it, !getRootProjectTasks(), !getRootProjectTasks(":"))
+      assertCollection(it, !getRootProjectTasks(), getRootProjectTasks(":"))
       assertCollection(it, !getRootProjectTasks("module:"), !getRootProjectTasks(":module:"))
       assertCollection(it, !getRootProjectTasks("composite:"), !getRootProjectTasks(":composite:"))
       assertCollection(it, !getRootProjectTasks("composite:module:"), !getRootProjectTasks(":composite:module:"))
       assertCollection(it, getCommonTasks(), getCommonTasks(":"))
-      assertCollection(it, !getCommonTasks("module:"), !getCommonTasks(":module:"))
+      assertCollection(it, !getCommonTasks("module:"), getCommonTasks(":module:"))
       assertCollection(it, !getCommonTasks("composite:"), !getCommonTasks(":composite:"))
       assertCollection(it, !getCommonTasks("composite:module:"), !getCommonTasks(":composite:module:"))
       assertCollection(it, !"taskP", !":taskP", !"module:taskP", !":module:taskP")
       assertCollection(it, !"taskM", !":taskM", !"module:taskM", !":module:taskM")
-      assertCollection(it, !"taskC", !":taskC", !"module:taskC", !":module:taskC")
-      assertCollection(it, "taskCM", ":taskCM", !"module:taskCM", !":module:taskCM")
+      assertCollection(it, !"taskC", ":taskC", !"module:taskC", !":module:taskC")
+      assertCollection(it, "taskCM", !":taskCM", !"module:taskCM", ":module:taskCM")
       assertCollection(it, !"composite:taskC", !":composite:taskC", !"composite:module:taskC", !":composite:module:taskC")
       assertCollection(it, !"composite:taskCM", !":composite:taskCM", !"composite:module:taskCM", !":composite:module:taskCM")
     }
@@ -190,18 +191,20 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test running commands with build options and tasks arguments`() {
-    importProject(
-      "tasks.create('taskWithArgs', ArgsTask) {\n" +
-      "    doLast {\n" +
-      "        println myArgs\n" +
-      "    }\n" +
-      "}\n" +
-      "class ArgsTask extends DefaultTask {\n" +
-      "    @Input\n" +
-      "    @Option(option = 'my_args', description = '')\n" +
-      "    String myArgs\n" +
-      "}"
-    )
+    importProject {
+      withTask("taskWithArgs", "ArgsTask") {
+        call("doLast") {
+          call("println", code("myArgs"))
+        }
+      }
+      addPostfix("""
+        class ArgsTask extends DefaultTask {
+            @Input
+            @Option(option = 'my_args', description = '')
+            String myArgs
+        }
+      """.trimIndent())
+    }
     executeAndWait("help")
       .assertExecutionTree(
         "-\n" +
@@ -277,11 +280,11 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
           assertThat(it).matches(
             "> Task :taskWithArgs\n" +
             "Caching disabled for task ':taskWithArgs' because:\n" +
-            "  Build cache is disabled\n" +
+            " {2}Build cache is disabled\n" +
             "Task ':taskWithArgs' is not up-to-date because:\n" +
-            "  Task has not declared any outputs despite executing actions.\n" +
+            " {2}Task has not declared any outputs despite executing actions.\n" +
             "test args\n" +
-            ":taskWithArgs \\(Thread\\[.*\\]\\) completed. Took (\\d+).(\\d+) secs.\n\n"
+            ":taskWithArgs \\(Thread\\[.*]\\) completed. Took (\\d+).(\\d+) secs.\n\n"
           )
         }
       )

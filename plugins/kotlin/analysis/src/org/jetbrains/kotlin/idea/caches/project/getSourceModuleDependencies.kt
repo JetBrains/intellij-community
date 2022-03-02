@@ -9,9 +9,10 @@ import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.project.isHMPPEnabled
 import org.jetbrains.kotlin.platform.TargetPlatform
 
-internal fun Module.getSourceModuleDependencies(
+fun Module.getSourceModuleDependencies(
     forProduction: Boolean,
-    platform: TargetPlatform
+    platform: TargetPlatform,
+    includeTransitiveDependencies: Boolean = true,
 ): List<IdeaModuleInfo> {
     // Use StringBuilder so that all lines are written into the log atomically (otherwise
     // logs of call to getIdeaModelDependencies for several different modules interleave, leading
@@ -19,7 +20,7 @@ internal fun Module.getSourceModuleDependencies(
     val debugString: StringBuilder? = if (LOG.isDebugEnabled) StringBuilder() else null
     debugString?.appendLine("Building idea model dependencies for module ${this}, platform=${platform}, forProduction=$forProduction")
 
-    val allIdeaModuleInfoDependencies = resolveDependenciesFromOrderEntries(debugString, forProduction)
+    val allIdeaModuleInfoDependencies = resolveDependenciesFromOrderEntries(debugString, forProduction, includeTransitiveDependencies)
     val supportedModuleInfoDependencies = filterSourceModuleDependencies(debugString, platform, allIdeaModuleInfoDependencies)
 
     LOG.debug(debugString?.toString())
@@ -30,11 +31,15 @@ internal fun Module.getSourceModuleDependencies(
 private fun Module.resolveDependenciesFromOrderEntries(
     debugString: StringBuilder?,
     forProduction: Boolean,
+    includeTransitiveDependencies: Boolean,
 ): Set<IdeaModuleInfo> {
 
     //NOTE: lib dependencies can be processed several times during recursive traversal
     val result = LinkedHashSet<IdeaModuleInfo>()
-    val dependencyEnumerator = ModuleRootManager.getInstance(this).orderEntries().compileOnly().recursively().exportedOnly()
+    val dependencyEnumerator = ModuleRootManager.getInstance(this).orderEntries().compileOnly()
+    if (includeTransitiveDependencies) {
+        dependencyEnumerator.recursively().exportedOnly()
+    }
     if (forProduction && getBuildSystemType() == BuildSystemType.JPS) {
         dependencyEnumerator.productionOnly()
     }

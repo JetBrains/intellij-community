@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated Use {@link WriteAction#run(ThrowableRunnable)} or {@link ReadAction#run(ThrowableRunnable)} or similar method instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public abstract class BaseActionRunnable<T> {
   protected abstract void run(@NotNull Result<? super T> result) throws Throwable;
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.*;
@@ -8,8 +9,12 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
+import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,15 +25,15 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     @Override
     public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
         int startOffset = highlighter.getStartOffset();
-        final Document doc = highlighter.getDocument();
+        Document doc = highlighter.getDocument();
         if (startOffset >= doc.getTextLength()) return;
 
-        final int endOffset = highlighter.getEndOffset();
+        int endOffset = highlighter.getEndOffset();
 
         int off;
         int startLine = doc.getLineNumber(startOffset);
 
-        final CharSequence chars = doc.getCharsSequence();
+        CharSequence chars = doc.getCharsSequence();
         do {
             int start = doc.getLineStartOffset(startLine);
             int end = doc.getLineEndOffset(startLine);
@@ -37,8 +42,8 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         }
         while (startLine > 1 && off < doc.getTextLength() && chars.charAt(off) == '\n');
 
-        final VisualPosition startPosition = editor.offsetToVisualPosition(off);
-        final VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
+        VisualPosition startPosition = editor.offsetToVisualPosition(off);
+        VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
         paint(editor, startPosition, endPosition, off, endOffset, doc, g);
     }
 
@@ -61,15 +66,16 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         int indentColumn = lineStartPosition.column;
         if (indentColumn <= 0) return;
 
-        final FoldingModel foldingModel = editor.getFoldingModel();
+        FoldingModel foldingModel = editor.getFoldingModel();
         if (foldingModel.isOffsetCollapsed(startOffset)) return;
 
-        final FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(startOffset)));
-        final FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
+        FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(startOffset)));
+        FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
 
         if (tailRegion != null && tailRegion == headerRegion) return;
 
-        final boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
+        boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
+        Color color = getIndentColor(editor, startOffset, selected);
 
         int lineHeight = editor.getLineHeight();
         Point start = editor.visualPositionToXY(lineStartPosition);
@@ -91,8 +97,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         if (start.y >= maxY) return;
 
         int targetX = Math.max(0, start.x + EditorPainter.getIndentGuideShift(editor));
-        final EditorColorsScheme scheme = editor.getColorsScheme();
-        g.setColor(scheme.getColor(selected ? EditorColors.SELECTED_INDENT_GUIDE_COLOR : EditorColors.INDENT_GUIDE_COLOR));
+        g.setColor(color);
         // There is a possible case that indent line intersects soft wrap-introduced text. Example:
         //     this is a long line <soft-wrap>
         // that| is soft-wrapped
@@ -142,15 +147,35 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
 
     }
 
-    protected boolean isSelected(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
-        final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
+  private static Color getIndentColor(Editor editor, int startOffset, boolean selected) {
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    if (ExperimentalUI.isNewUI()) {
+      List<RangeHighlighter> highlighters = ContainerUtil.filter(editor.getMarkupModel().getAllHighlighters(),
+                                                                 x -> x.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer);
+      if (!highlighters.isEmpty()) {
+        DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighters.get(0).getLineMarkerRenderer();
+        assert renderer != null;
+        if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighters.get(0).getStartOffset(), false)) {
+          Color color = renderer.getColor();
+          if (color != null) {
+            Color matched = scheme.getColor(EditorColors.MATCHED_BRACES_INDENT_GUIDE_COLOR);
+            return ObjectUtils.notNull(matched, color);
+          }
+        }
+      }
+    }
+    return scheme.getColor(selected ? EditorColors.SELECTED_INDENT_GUIDE_COLOR : EditorColors.INDENT_GUIDE_COLOR);
+  }
+
+  protected boolean isSelected(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
+        IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
         if (guide == null) return false;
         return isCaretOnGuide(editor, endOffset, off, indentColumn);
     }
 
     protected final boolean isCaretOnGuide(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
-        final CaretModel caretModel = editor.getCaretModel();
-        final int caretOffset = caretModel.getOffset();
+        CaretModel caretModel = editor.getCaretModel();
+        int caretOffset = caretModel.getOffset();
         return caretOffset >= off && caretOffset < endOffset && caretModel.getLogicalPosition().column == indentColumn;
     }
 }

@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider;
+import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.beans.MetricEventUtilKt;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.editor.actions.CaretStopBoundary;
@@ -17,26 +20,36 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBooleanMetric;
-import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
-import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffers;
+import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "editor.settings.ide";
-  }
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 8);
+  private static final EnumEventField<Settings> SETTING_ID = EventFields.Enum("setting_id", Settings.class, it -> it.internalName);
+  private static final IntEventField INT_VALUE_FIELD = EventFields.Int("value");
+  private static final StringEventField TRAILING_SPACES_FIELD = EventFields.String("value", List.of("Whole", "Changed", "None"));
+  private static final EnumEventField<SmartBackspaceMode> BACKSPACE_MODE = EventFields.Enum("value", SmartBackspaceMode.class);
+  private static final EnumEventField<CaretStopBoundaries> CARET_STOP_BOUNDARIES = EventFields.Enum("value", CaretStopBoundaries.class);
+  private static final VarargEventId SETTING = GROUP.registerVarargEvent("not.default",
+                                                                         EventFields.Enabled,
+                                                                         SETTING_ID,
+                                                                         EventFields.LanguageById,
+                                                                         INT_VALUE_FIELD,
+                                                                         TRAILING_SPACES_FIELD,
+                                                                         BACKSPACE_MODE,
+                                                                         CARET_STOP_BOUNDARIES);
 
   @Override
-  public int getVersion() {
-    return 7;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -46,147 +59,287 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
 
     EditorSettingsExternalizable es = EditorSettingsExternalizable.getInstance();
     EditorSettingsExternalizable esDefault = new EditorSettingsExternalizable(new EditorSettingsExternalizable.OsSpecificState());
-    addBoolIfDiffers(set, es, esDefault, s -> s.isVirtualSpace(), "caretAfterLineEnd");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isCaretInsideTabs(), "caretInsideTabs");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isAdditionalPageAtBottom(), "virtualSpaceAtFileBottom");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR), "softWraps");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE), "softWraps.console");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isUseSoftWraps(SoftWrapAppliancePlaces.PREVIEW), "softWraps.preview");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isUseCustomSoftWrapIndent(), "softWraps.relativeIndent");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isAllSoftWrapsShown(), "softWraps.showAll");
-    addIfDiffers(set, es, esDefault, s -> s.getStripTrailingSpaces(), "stripTrailingSpaces");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isEnsureNewLineAtEOF(), "ensureNewlineAtEOF");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isShowQuickDocOnMouseOverElement(), "quickDocOnMouseHover");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isBlinkCaret(), "blinkingCaret");
-    addIfDiffers(set, es, esDefault, s -> s.getBlinkPeriod(), "blinkPeriod");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isBlockCursor(), "blockCaret");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isRightMarginShown(), "rightMargin");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isLineNumbersShown(), "lineNumbers");
-    addBoolIfDiffers(set, es, esDefault, s -> s.areGutterIconsShown(), "gutterIcons");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isFoldingOutlineShown(), "foldingOutline");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isLeadingWhitespacesShown(), "showLeadingWhitespace");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isInnerWhitespacesShown(), "showInnerWhitespace");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isTrailingWhitespacesShown(), "showTrailingWhitespace");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isIndentGuidesShown(), "indentGuides");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isSmoothScrolling(), "animatedScroll");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isDndEnabled(), "dragNDrop");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isWheelFontChangeEnabled(), "wheelZoom");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isMouseClickSelectionHonorsCamelWords(), "mouseCamel");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isVariableInplaceRenameEnabled(), "inplaceRename");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isPreselectRename(), "preselectOnRename");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isShowInlineLocalDialog(), "inlineDialog");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isRefrainFromScrolling(), "minimizeScrolling");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isShowNotificationAfterReformat(), "afterReformatNotification");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isShowNotificationAfterOptimizeImports(), "afterOptimizeNotification");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isSmartHome(), "smartHome");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isCamelWords(), "camelWords");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isShowParameterNameHints(), "editor.inlay.parameter.hints");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsAbove(), "breadcrumbsAbove");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShown(), "all.breadcrumbs");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionBulb(), "intentionBulb");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isDocCommentRenderingEnabled(), "renderDoc");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionPreview(), "intentionPreview");
-    addBoolIfDiffers(set, es, esDefault, s -> s.isUseEditorFontInInlays(), "useEditorFontInInlays");
+    addBoolIfDiffers(set, es, esDefault, s -> s.isVirtualSpace(), Settings.CARET_AFTER_LINE_END);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isCaretInsideTabs(), Settings.CARET_INSIDE_TABS);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isAdditionalPageAtBottom(), Settings.VIRTUAL_SPACE_AT_FILE_BOTTOM);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR), Settings.SOFT_WRAPS);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE), Settings.SOFT_WRAPS_CONSOLE);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isUseSoftWraps(SoftWrapAppliancePlaces.PREVIEW), Settings.SOFT_WRAPS_PREVIEW);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isUseCustomSoftWrapIndent(), Settings.SOFT_WRAPS_RELATIVE_INDENT);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isAllSoftWrapsShown(), Settings.SOFT_WRAPS_SHOW_ALL);
+    addIfDiffers(set, es, esDefault, s -> s.getStripTrailingSpaces(), Settings.STRIP_TRAILING_SPACES, TRAILING_SPACES_FIELD);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isEnsureNewLineAtEOF(), Settings.ENSURE_NEWLINE_AT_EOF);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isShowQuickDocOnMouseOverElement(), Settings.QUICK_DOC_ON_MOUSE_HOVER);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isBlinkCaret(), Settings.BLINKING_CARET);
+    addIfDiffers(set, es, esDefault, s -> s.getBlinkPeriod(), Settings.BLINK_PERIOD, INT_VALUE_FIELD);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isBlockCursor(), Settings.BLOCK_CARET);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isRightMarginShown(), Settings.RIGHT_MARGIN);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isLineNumbersShown(), Settings.LINE_NUMBERS);
+    addBoolIfDiffers(set, es, esDefault, s -> s.areGutterIconsShown(), Settings.GUTTER_ICONS);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isFoldingOutlineShown(), Settings.FOLDING_OUTLINE);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isLeadingWhitespacesShown(), Settings.SHOW_LEADING_WHITESPACE);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isInnerWhitespacesShown(), Settings.SHOW_INNER_WHITESPACE);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isTrailingWhitespacesShown(), Settings.SHOW_TRAILING_WHITESPACE);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isIndentGuidesShown(), Settings.INDENT_GUIDES);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isSmoothScrolling(), Settings.ANIMATED_SCROLL);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isDndEnabled(), Settings.DRAG_N_DROP);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isWheelFontChangeEnabled(), Settings.WHEEL_ZOOM);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isMouseClickSelectionHonorsCamelWords(), Settings.MOUSE_CAMEL);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isVariableInplaceRenameEnabled(), Settings.INPLACE_RENAME);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isPreselectRename(), Settings.PRESELECT_ON_RENAME);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isShowInlineLocalDialog(), Settings.INLINE_DIALOG);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isRefrainFromScrolling(), Settings.MINIMIZE_SCROLLING);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isShowNotificationAfterReformat(), Settings.AFTER_REFORMAT_NOTIFICATION);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isShowNotificationAfterOptimizeImports(), Settings.AFTER_OPTIMIZE_NOTIFICATION);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isSmartHome(), Settings.SMART_HOME);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isCamelWords(), Settings.CAMEL_WORDS);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isShowParameterNameHints(), Settings.EDITOR_INLAY_PARAMETER_HINTS);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsAbove(), Settings.BREADCRUMBS_ABOVE);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShown(), Settings.ALL_BREADCRUMBS);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionBulb(), Settings.INTENTION_BULB);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isDocCommentRenderingEnabled(), Settings.RENDER_DOC);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionPreview(), Settings.INTENTION_PREVIEW);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isUseEditorFontInInlays(), Settings.USE_EDITOR_FONT_IN_INLAYS);
 
     for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
-      final FeatureUsageData data = new FeatureUsageData().addLanguage(language);
-      addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShownFor(language), "breadcrumbs", data);
+      addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShownFor(language), Settings.BREADCRUMBS,
+                       EventFields.LanguageById.with(language));
     }
 
     RichCopySettings rcs = RichCopySettings.getInstance();
     RichCopySettings rcsDefault = new RichCopySettings();
-    addBoolIfDiffers(set, rcs, rcsDefault, s -> s.isEnabled(), "richCopy");
+    addBoolIfDiffers(set, rcs, rcsDefault, s -> s.isEnabled(), Settings.RICH_COPY);
 
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     CodeInsightSettings cisDefault = new CodeInsightSettings();
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTO_POPUP_PARAMETER_INFO, "parameterAutoPopup");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTO_POPUP_JAVADOC_INFO, "javadocAutoPopup");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTO_POPUP_COMPLETION_LOOKUP, "completionAutoPopup");
-    addIfDiffers(set, cis, cisDefault, s -> s.COMPLETION_CASE_SENSITIVE, "completionCaseSensitivity");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.isSelectAutopopupSuggestionsByChars(), "autoPopupCharComplete");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTOCOMPLETE_ON_CODE_COMPLETION, "autoCompleteBasic");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION, "autoCompleteSmart");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO, "parameterInfoFullSignature");
-    addIfDiffers(set, cis, cisDefault, s -> s.getBackspaceMode(), "smartBackspace");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.SMART_INDENT_ON_ENTER, "indentOnEnter");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.INSERT_BRACE_ON_ENTER, "braceOnEnter");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.JAVADOC_STUB_ON_ENTER, "javadocOnEnter");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.INSERT_SCRIPTLET_END_ON_ENTER, "scriptletEndOnEnter");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.SMART_END_ACTION, "smartEnd");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.JAVADOC_GENERATE_CLOSING_TAG, "autoCloseJavadocTags");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.SURROUND_SELECTION_ON_QUOTE_TYPED, "surroundByQuoteOrBrace");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTOINSERT_PAIR_BRACKET, "pairBracketAutoInsert");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTOINSERT_PAIR_QUOTE, "pairQuoteAutoInsert");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.REFORMAT_BLOCK_ON_RBRACE, "reformatOnRBrace");
-    addIfDiffers(set, cis, cisDefault, s -> s.REFORMAT_ON_PASTE, "reformatOnPaste");
-    addIfDiffers(set, cis, cisDefault, s -> s.ADD_IMPORTS_ON_PASTE, "importsOnPaste");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_BRACES, "bracesHighlight");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_SCOPE, "scopeHighlight");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_IDENTIFIER_UNDER_CARET, "identifierUnderCaretHighlight");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY, "autoAddImports");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION, "completionHints");
-    addBoolIfDiffers(set, cis, cisDefault, s -> s.TAB_EXITS_BRACKETS_AND_QUOTES, "tabExitsBracketsAndQuotes");
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTO_POPUP_PARAMETER_INFO, Settings.PARAMETER_AUTO_POPUP);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTO_POPUP_JAVADOC_INFO, Settings.JAVADOC_AUTO_POPUP);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTO_POPUP_COMPLETION_LOOKUP, Settings.COMPLETION_AUTO_POPUP);
+    addIfDiffers(set, cis, cisDefault, s -> s.COMPLETION_CASE_SENSITIVE, Settings.COMPLETION_CASE_SENSITIVITY, INT_VALUE_FIELD);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.isSelectAutopopupSuggestionsByChars(), Settings.AUTO_POPUP_CHAR_COMPLETE);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTOCOMPLETE_ON_CODE_COMPLETION, Settings.AUTO_COMPLETE_BASIC);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION, Settings.AUTO_COMPLETE_SMART);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO, Settings.PARAMETER_INFO_FULL_SIGNATURE);
+    addIfDiffers(set, cis, cisDefault, s -> s.getBackspaceMode(), Settings.SMART_BACKSPACE, BACKSPACE_MODE);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.SMART_INDENT_ON_ENTER, Settings.INDENT_ON_ENTER);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.INSERT_BRACE_ON_ENTER, Settings.BRACE_ON_ENTER);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.JAVADOC_STUB_ON_ENTER, Settings.JAVADOC_ON_ENTER);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.INSERT_SCRIPTLET_END_ON_ENTER, Settings.SCRIPTLET_END_ON_ENTER);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.SMART_END_ACTION, Settings.SMART_END);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.JAVADOC_GENERATE_CLOSING_TAG, Settings.AUTO_CLOSE_JAVADOC_TAGS);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.SURROUND_SELECTION_ON_QUOTE_TYPED, Settings.SURROUND_BY_QUOTE_OR_BRACE);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTOINSERT_PAIR_BRACKET, Settings.PAIR_BRACKET_AUTO_INSERT);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.AUTOINSERT_PAIR_QUOTE, Settings.PAIR_QUOTE_AUTO_INSERT);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.REFORMAT_BLOCK_ON_RBRACE, Settings.REFORMAT_ON_R_BRACE);
+    addIfDiffers(set, cis, cisDefault, s -> s.REFORMAT_ON_PASTE, Settings.REFORMAT_ON_PASTE, INT_VALUE_FIELD);
+    addIfDiffers(set, cis, cisDefault, s -> s.ADD_IMPORTS_ON_PASTE, Settings.IMPORTS_ON_PASTE, INT_VALUE_FIELD);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_BRACES, Settings.BRACES_HIGHLIGHT);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_SCOPE, Settings.SCOPE_HIGHLIGHT);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_IDENTIFIER_UNDER_CARET, Settings.IDENTIFIER_UNDER_CARET_HIGHLIGHT);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY, Settings.AUTO_ADD_IMPORTS);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION, Settings.COMPLETION_HINTS);
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.TAB_EXITS_BRACKETS_AND_QUOTES, Settings.TAB_EXITS_BRACKETS_AND_QUOTES);
     addTooltipActionsMetricIfDiffers(set);
 
     DaemonCodeAnalyzerSettings dcas = DaemonCodeAnalyzerSettings.getInstance();
     DaemonCodeAnalyzerSettings dcasDefault = new DaemonCodeAnalyzerSettings();
-    addBoolIfDiffers(set, dcas, dcasDefault, s -> s.isNextErrorActionGoesToErrorsFirst(), "nextErrorActionGoesToErrorsFirst");
-    addIfDiffers(set, dcas, dcasDefault, s -> s.getAutoReparseDelay(), "autoReparseDelay");
-    addIfDiffers(set, dcas, dcasDefault, s -> s.getErrorStripeMarkMinHeight(), "errorStripeMarkMinHeight");
-    addBoolIfDiffers(set, dcas, dcasDefault, s -> s.isSuppressWarnings(), "suppressWarnings");
-    addBoolIfDiffers(set, dcas, dcasDefault, s -> s.isImportHintEnabled(), "importHintEnabled");
-    addBoolIfDiffers(set, dcas, dcasDefault, s -> s.SHOW_METHOD_SEPARATORS, "showMethodSeparators");
+    addBoolIfDiffers(set, dcas, dcasDefault, s -> s.isNextErrorActionGoesToErrorsFirst(), Settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST);
+    addIfDiffers(set, dcas, dcasDefault, s -> s.getAutoReparseDelay(), Settings.AUTO_REPARSE_DELAY, INT_VALUE_FIELD);
+    addIfDiffers(set, dcas, dcasDefault, s -> s.getErrorStripeMarkMinHeight(), Settings.ERROR_STRIPE_MARK_MIN_HEIGHT, INT_VALUE_FIELD);
+    addBoolIfDiffers(set, dcas, dcasDefault, s -> s.isSuppressWarnings(), Settings.SUPPRESS_WARNINGS);
+    addBoolIfDiffers(set, dcas, dcasDefault, s -> s.isImportHintEnabled(), Settings.IMPORT_HINT_ENABLED);
+    addBoolIfDiffers(set, dcas, dcasDefault, s -> s.SHOW_METHOD_SEPARATORS, Settings.SHOW_METHOD_SEPARATORS);
 
     final CaretStopOptionsTransposed defaultCaretStop = CaretStopOptionsTransposed.fromCaretStopOptions(new CaretStopOptions());
     final CaretStopOptionsTransposed caretStop = CaretStopOptionsTransposed.fromCaretStopOptions(es.getCaretStopOptions());
-    addIfDiffers(set, caretStop.getLineBoundary(), defaultCaretStop.getLineBoundary(), s -> toCaretStopValue(s), "caret.movement.line");
-    addIfDiffers(set, caretStop.getWordBoundary(), defaultCaretStop.getWordBoundary(), s -> toCaretStopValue(s), "caret.movement.word");
+    addIfDiffers(set, caretStop.getLineBoundary(), defaultCaretStop.getLineBoundary(), s -> toCaretStopValue(s),
+                 Settings.CARET_MOVEMENT_WORD, CARET_STOP_BOUNDARIES);
+    addIfDiffers(set, caretStop.getWordBoundary(), defaultCaretStop.getWordBoundary(), s -> toCaretStopValue(s),
+                 Settings.CARET_MOVEMENT_LINE, CARET_STOP_BOUNDARIES);
 
     if (!FileColorManagerImpl._isEnabled()) {
-      set.add(newBooleanMetric("fileColorsEnabled", false));
+      set.add(SETTING.metric(SETTING_ID.with(Settings.FILE_COLORS_ENABLED), EventFields.Enabled.with(false)));
     }
     if (!FileColorManagerImpl._isEnabledForProjectView()) {
-      set.add(newBooleanMetric("fileColorsEnabledForProjectView", false));
+      set.add(SETTING.metric(SETTING_ID.with(Settings.FILE_COLORS_ENABLED_FOR_PROJECT_VIEW), EventFields.Enabled.with(false)));
     }
     if (!FileColorManagerImpl._isEnabledForTabs()) {
-      set.add(newBooleanMetric("fileColorsEnabledForTabs", false));
+      set.add(SETTING.metric(SETTING_ID.with(Settings.FILE_COLORS_ENABLED_FOR_TABS), EventFields.Enabled.with(false)));
     }
 
     UISettings uiSettings = UISettings.getInstance();
     UISettings uiSettingsDefault = new UISettings();
-    addBoolIfDiffers(set, uiSettings, uiSettingsDefault, s -> s.getOpenTabsInMainWindow(), "openTabsInMainWindow");
+    addBoolIfDiffers(set, uiSettings, uiSettingsDefault, s -> s.getOpenTabsInMainWindow(), Settings.OPEN_TABS_IN_MAIN_WINDOW);
 
     return set;
   }
 
-  @NotNull
-  private static String toCaretStopValue(@NotNull CaretStopBoundary boundary) {
-    if (boundary.equals(CaretStopBoundary.NONE)) return "NONE";
-    else if (boundary.equals(CaretStopBoundary.CURRENT)) return "CURRENT";
-    else if (boundary.equals(CaretStopBoundary.NEIGHBOR)) return "NEIGHBOR";
-    else if (boundary.equals(CaretStopBoundary.START)) return "START";
-    else if (boundary.equals(CaretStopBoundary.END)) return "END";
-    else if (boundary.equals(CaretStopBoundary.BOTH)) return "BOTH";
-    return "OTHER";
+  private static <T> void addBoolIfDiffers(@NotNull Set<MetricEvent> set,
+                                           @NotNull T settingsBean,
+                                           @NotNull T defaultSettingsBean,
+                                           @NotNull Function<T, Boolean> valueFunction,
+                                           @NotNull Settings setting,
+                                           EventPair<?> @NotNull ... pairs) {
+    Boolean value = valueFunction.apply(settingsBean);
+    Boolean defaultValue = valueFunction.apply(defaultSettingsBean);
+    if (!Comparing.equal(value, defaultValue)) {
+      List<EventPair<?>> values = new ArrayList<>(Arrays.asList(pairs));
+      values.add(SETTING_ID.with(setting));
+      values.add(EventFields.Enabled.with(value));
+      set.add(SETTING.metric(values));
+    }
+  }
+
+  private static <T, V> void addIfDiffers(@NotNull Set<MetricEvent> set,
+                                          @NotNull T settingsBean,
+                                          @NotNull T defaultSettingsBean,
+                                          @NotNull Function<T, V> valueFunction,
+                                          @NotNull Settings setting,
+                                          @NotNull EventField<V> field) {
+    V value = valueFunction.apply(settingsBean);
+    V defaultValue = valueFunction.apply(defaultSettingsBean);
+    if (!Comparing.equal(value, defaultValue)) {
+      set.add(SETTING.metric(SETTING_ID.with(setting), field.with(value)));
+    }
+  }
+
+  private static CaretStopBoundaries toCaretStopValue(@NotNull CaretStopBoundary boundary) {
+    if (boundary.equals(CaretStopBoundary.NONE)) {
+      return CaretStopBoundaries.NONE;
+    }
+    else if (boundary.equals(CaretStopBoundary.CURRENT)) {
+      return CaretStopBoundaries.CURRENT;
+    }
+    else if (boundary.equals(CaretStopBoundary.NEIGHBOR)) {
+      return CaretStopBoundaries.NEIGHBOR;
+    }
+    else if (boundary.equals(CaretStopBoundary.START)) {
+      return CaretStopBoundaries.START;
+    }
+    else if (boundary.equals(CaretStopBoundary.END)) {
+      return CaretStopBoundaries.END;
+    }
+    else if (boundary.equals(CaretStopBoundary.BOTH)) return CaretStopBoundaries.BOTH;
+    return CaretStopBoundaries.OTHER;
   }
 
   private static void addTooltipActionsMetricIfDiffers(@NotNull Set<MetricEvent> set) {
     boolean value = TooltipActionProvider.isShowActions();
     if (value != TooltipActionProvider.SHOW_FIXES_DEFAULT_VALUE) {
-      set.add(newBooleanMetric("show.actions.in.tooltip", value));
+      set.add(SETTING.metric(SETTING_ID.with(Settings.SHOW_ACTIONS_IN_TOOLTIP), EventFields.Enabled.with(value)));
     }
   }
 
+  private enum CaretStopBoundaries {
+    NONE,
+    CURRENT,
+    NEIGHBOR,
+    START,
+    END,
+    BOTH,
+    OTHER
+  }
+
+  private enum Settings {
+    CARET_AFTER_LINE_END("caretAfterLineEnd"),
+    CARET_INSIDE_TABS("caretInsideTabs"),
+    VIRTUAL_SPACE_AT_FILE_BOTTOM("virtualSpaceAtFileBottom"),
+    SOFT_WRAPS("softWraps"),
+    SOFT_WRAPS_CONSOLE("softWraps.console"),
+    SOFT_WRAPS_PREVIEW("softWraps.preview"),
+    SOFT_WRAPS_RELATIVE_INDENT("softWraps.relativeIndent"),
+    SOFT_WRAPS_SHOW_ALL("softWraps.showAll"),
+    ENSURE_NEWLINE_AT_EOF("ensureNewlineAtEOF"),
+    QUICK_DOC_ON_MOUSE_HOVER("quickDocOnMouseHover"),
+    BLINKING_CARET("blinkingCaret"),
+    BLOCK_CARET("blockCaret"),
+    RIGHT_MARGIN("rightMargin"),
+    LINE_NUMBERS("lineNumbers"),
+    GUTTER_ICONS("gutterIcons"),
+    FOLDING_OUTLINE("foldingOutline"),
+    SHOW_LEADING_WHITESPACE("showLeadingWhitespace"),
+    SHOW_INNER_WHITESPACE("showInnerWhitespace"),
+    SHOW_TRAILING_WHITESPACE("showTrailingWhitespace"),
+    INDENT_GUIDES("indentGuides"),
+    ANIMATED_SCROLL("animatedScroll"),
+    DRAG_N_DROP("dragNDrop"),
+    WHEEL_ZOOM("wheelZoom"),
+    MOUSE_CAMEL("mouseCamel"),
+    INPLACE_RENAME("inplaceRename"),
+    PRESELECT_ON_RENAME("preselectOnRename"),
+    INLINE_DIALOG("inlineDialog"),
+    MINIMIZE_SCROLLING("minimizeScrolling"),
+    AFTER_REFORMAT_NOTIFICATION("afterReformatNotification"),
+    AFTER_OPTIMIZE_NOTIFICATION("afterOptimizeNotification"),
+    SMART_HOME("smartHome"),
+    CAMEL_WORDS("camelWords"),
+    EDITOR_INLAY_PARAMETER_HINTS("editor.inlay.parameter.hints"),
+    BREADCRUMBS_ABOVE("breadcrumbsAbove"),
+    ALL_BREADCRUMBS("all.breadcrumbs"),
+    INTENTION_BULB("intentionBulb"),
+    RENDER_DOC("renderDoc"),
+    INTENTION_PREVIEW("intentionPreview"),
+    USE_EDITOR_FONT_IN_INLAYS("useEditorFontInInlays"),
+    BREADCRUMBS("breadcrumbs"),
+    RICH_COPY("richCopy"),
+    PARAMETER_AUTO_POPUP("parameterAutoPopup"),
+    JAVADOC_AUTO_POPUP("javadocAutoPopup"),
+    COMPLETION_AUTO_POPUP("completionAutoPopup"),
+    AUTO_POPUP_CHAR_COMPLETE("autoPopupCharComplete"),
+    AUTO_COMPLETE_BASIC("autoCompleteBasic"),
+    AUTO_COMPLETE_SMART("autoCompleteSmart"),
+    PARAMETER_INFO_FULL_SIGNATURE("parameterInfoFullSignature"),
+    INDENT_ON_ENTER("indentOnEnter"),
+    BRACE_ON_ENTER("braceOnEnter"),
+    JAVADOC_ON_ENTER("javadocOnEnter"),
+    SCRIPTLET_END_ON_ENTER("scriptletEndOnEnter"),
+    SMART_END("smartEnd"),
+    AUTO_CLOSE_JAVADOC_TAGS("autoCloseJavadocTags"),
+    SURROUND_BY_QUOTE_OR_BRACE("surroundByQuoteOrBrace"),
+    PAIR_BRACKET_AUTO_INSERT("pairBracketAutoInsert"),
+    PAIR_QUOTE_AUTO_INSERT("pairQuoteAutoInsert"),
+    REFORMAT_ON_R_BRACE("reformatOnRBrace"),
+    BRACES_HIGHLIGHT("bracesHighlight"),
+    SCOPE_HIGHLIGHT("scopeHighlight"),
+    IDENTIFIER_UNDER_CARET_HIGHLIGHT("identifierUnderCaretHighlight"),
+    AUTO_ADD_IMPORTS("autoAddImports"),
+    COMPLETION_HINTS("completionHints"),
+    TAB_EXITS_BRACKETS_AND_QUOTES("tabExitsBracketsAndQuotes"),
+    NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST("nextErrorActionGoesToErrorsFirst"),
+    SUPPRESS_WARNINGS("suppressWarnings"),
+    IMPORT_HINT_ENABLED("importHintEnabled"),
+    SHOW_METHOD_SEPARATORS("showMethodSeparators"),
+    OPEN_TABS_IN_MAIN_WINDOW("openTabsInMainWindow"),
+
+    STRIP_TRAILING_SPACES("stripTrailingSpaces"),
+    BLINK_PERIOD("blinkPeriod"),
+    COMPLETION_CASE_SENSITIVITY("completionCaseSensitivity"),
+    SMART_BACKSPACE("smartBackspace"),
+    REFORMAT_ON_PASTE("reformatOnPaste"),
+    IMPORTS_ON_PASTE("importsOnPaste"),
+    AUTO_REPARSE_DELAY("autoReparseDelay"),
+    ERROR_STRIPE_MARK_MIN_HEIGHT("errorStripeMarkMinHeight"),
+    CARET_MOVEMENT_WORD("caret.movement.word"),
+    CARET_MOVEMENT_LINE("caret.movement.line"),
+
+    FILE_COLORS_ENABLED("fileColorsEnabled"),
+    FILE_COLORS_ENABLED_FOR_PROJECT_VIEW("fileColorsEnabledForProjectView"),
+    FILE_COLORS_ENABLED_FOR_TABS("fileColorsEnabledForTabs"),
+    SHOW_ACTIONS_IN_TOOLTIP("show.actions.in.tooltip"),
+    ;
+
+    public final String internalName;
+
+    Settings(String internalName) { this.internalName = internalName; }
+  }
+
   public static class ProjectUsages extends ProjectUsagesCollector {
-    @NotNull
-    @Override
-    public String getGroupId() {
-      return "editor.settings.project";
-    }
+    private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.project", 3);
+    private static final VarargEventId AUTO_OPTIMIZE_IMPORTS = GROUP.registerVarargEvent("autoOptimizeImports", EventFields.Enabled);
 
     @Override
-    public int getVersion() {
-      return 2;
+    public EventLogGroup getGroup() {
+      return GROUP;
     }
 
     @NotNull
@@ -195,7 +348,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
       Set<MetricEvent> set = new HashSet<>();
       CodeInsightWorkspaceSettings ciws = CodeInsightWorkspaceSettings.getInstance(project);
       CodeInsightWorkspaceSettings ciwsDefault = new CodeInsightWorkspaceSettings();
-      addBoolIfDiffers(set, ciws, ciwsDefault, s -> s.isOptimizeImportsOnTheFly(), "autoOptimizeImports");
+      MetricEventUtilKt.addBoolIfDiffers(set, ciws, ciwsDefault, s -> s.isOptimizeImportsOnTheFly(), AUTO_OPTIMIZE_IMPORTS);
       return set;
     }
   }

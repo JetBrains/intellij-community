@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -19,11 +19,11 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.calls.callUtil.getValueArgumentsInParentheses
+import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 import kotlin.reflect.KClass
 
 class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
-    override fun isShownByDefault(): Boolean = !UISettings.instance.showMembersInNavigationBar
+    override fun isShownByDefault(): Boolean = !UISettings.getInstance().showMembersInNavigationBar
 
     private abstract class ElementHandler<TElement : KtElement>(val type: KClass<TElement>) {
         abstract fun elementInfo(element: TElement): String

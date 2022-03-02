@@ -96,12 +96,12 @@ abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
             "kotlin2js" to "kotlin-platform-js"
         )
         val kotlinPluginIds = listOf("kotlin", "kotlin2js", "kotlin-android")
-        val ABSTRACT_KOTLIN_COMPILE_CLASS = "org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile"
+        const val ABSTRACT_KOTLIN_COMPILE_CLASS = "org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile"
 
-        val kotlinProjectExtensionClass = "org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension"
-        val kotlinSourceSetClass = "org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet"
+        const val kotlinProjectExtensionClass = "org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension"
+        const val kotlinSourceSetClass = "org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet"
 
-        val kotlinPluginWrapper = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt"
+        const val kotlinPluginWrapper = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt"
 
         private val propertyClassPresent = GradleVersion.current() >= GradleVersion.version("4.3")
 
@@ -253,8 +253,8 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val detachableMapper = masterMapper.branchOffDetachable(project.name == "buildSrc")
 
         val kotlinCompileTasks = target?.let { it.compilations ?: emptyList() }
-            ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
-            ?: (project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList())
+                ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
+                ?: (project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList())
 
         kotlinCompileTasks.forEach { compileTask ->
             if (compileTask.javaClass.name !in kotlinCompileTaskClasses) return@forEach

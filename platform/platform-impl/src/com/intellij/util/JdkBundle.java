@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.ExecutionException;
@@ -8,10 +8,9 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -24,7 +23,6 @@ import java.io.File;
  * {@link PathManager#getBundledRuntimePath()}, and {@link JdkVersionDetector}.
  */
 @Deprecated(forRemoval = true)
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @SuppressWarnings("ALL")
 public final class JdkBundle {
   private static final String BUNDLED_JDK_DIR_NAME = "jbr";
@@ -49,10 +47,6 @@ public final class JdkBundle {
 
   public @NotNull JavaVersion getBundleVersion() {
     return myVersionInfo.version;
-  }
-
-  public @NotNull Bitness getBitness() {
-    return myVersionInfo.bitness;
   }
 
   public boolean isBoot() {
@@ -142,7 +136,7 @@ public final class JdkBundle {
 
     JdkVersionInfo versionInfo;
     if (boot) {
-      versionInfo = new JdkVersionInfo(JavaVersion.current(), SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32, null);
+      versionInfo = new JdkVersionInfo(JavaVersion.current(), null, CpuArch.CURRENT);
     }
     else {
       versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(actualHome.getPath());

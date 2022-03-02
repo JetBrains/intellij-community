@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.jr.ob.JSON;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.ImageDataByPathLoader;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
@@ -19,15 +17,11 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.IconUIResource;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -121,19 +115,17 @@ public final class UITheme {
   }
 
   // it caches classes - must be not extracted to util class
-  private static final NotNullLazyValue<JSON> JSON_READER = NotNullLazyValue.atomicLazy(() -> {
-    // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important
-    // for example, button label font color for light theme is not white, but black
-    return JSON.builder()
-      .enable(JSON.Feature.READ_ONLY)
-      .build();
-  });
+  // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important
+  // for example, button label font color for light theme is not white, but black
+  private static final JSON JSON_READER = JSON.builder()
+    .enable(JSON.Feature.READ_ONLY)
+    .build();
 
   public static @NotNull UITheme loadFromJson(@NotNull InputStream stream,
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
-    UITheme theme = JSON_READER.getValue().beanFrom(UITheme.class, stream);
+    UITheme theme = JSON_READER.beanFrom(UITheme.class, stream);
     theme.id = themeId;
     return loadFromJson(theme, provider, iconsMapper);
   }
@@ -142,7 +134,7 @@ public final class UITheme {
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
-    UITheme theme = JSON_READER.getValue().beanFrom(UITheme.class, data);
+    UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
     theme.id = themeId;
     return loadFromJson(theme, provider, iconsMapper);
   }
@@ -152,7 +144,7 @@ public final class UITheme {
                                                @NotNull Function<? super String, String> iconsMapper)
     throws IllegalStateException {
     if (provider != null) {
-      theme.providerClassLoader = provider;
+      theme.setProviderClassLoader(provider);
     }
 
     initializeNamedColors(theme);
@@ -175,9 +167,8 @@ public final class UITheme {
 
     if (theme.icons != null && !theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
-        @Nullable
         @Override
-        public String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+        public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
           if (classLoader instanceof PluginAwareClassLoader) {
             String pluginId = ((PluginAwareClassLoader)classLoader).getPluginId().getIdString();
             Object icons = theme.icons.get(pluginId);
@@ -205,7 +196,6 @@ public final class UITheme {
 
       Object palette = theme.icons.get("ColorPalette");
       if (palette instanceof Map) {
-
         @SuppressWarnings("rawtypes")
         Map colors = (Map)palette;
         PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
@@ -229,7 +219,7 @@ public final class UITheme {
               alpha = value.substring(7);
               value = value.substring(0, 7);
             }
-            if (ColorUtil.fromHex(key, null) != null && ColorUtil.fromHex(value, null) != null) {
+            if (ColorHexUtil.fromHex(key, null) != null && ColorHexUtil.fromHex(value, null) != null) {
               scope.newPalette.put(key, value);
               int fillTransparency = -1;
               if (alpha != null) {
@@ -361,8 +351,7 @@ public final class UITheme {
     return id;
   }
 
-  @Nullable
-  public String getEditorScheme() {
+  public @Nullable String getEditorScheme() {
     return editorScheme;
   }
 
@@ -412,8 +401,18 @@ public final class UITheme {
     return selectionColorPatcher;
   }
 
+  @ApiStatus.Internal
   public @NotNull ClassLoader getProviderClassLoader() {
+    if (providerClassLoader == null) {
+      throw new RuntimeException("The theme classloader has already been detached");
+    }
+
     return providerClassLoader;
+  }
+
+  @ApiStatus.Internal
+  public void setProviderClassLoader(@Nullable ClassLoader providerClassLoader) {
+    this.providerClassLoader = providerClassLoader;
   }
 
   private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {
@@ -421,7 +420,8 @@ public final class UITheme {
       @SuppressWarnings("unchecked") Map<String, Object> map = (Map<String, Object>)value;
       if (isOSCustomization(map)) {
         applyOSCustomizations(theme, map, key, defaults);
-      } else {
+      }
+      else {
         for (Map.Entry<String, Object> o : map.entrySet()) {
           apply(theme, createUIKey(key, o.getKey()), o.getValue(), defaults);
         }
@@ -430,11 +430,14 @@ public final class UITheme {
     else {
       String valueStr = value.toString();
       Color color = null;
-      if (theme.colors != null && theme.colors.containsKey(valueStr)) {
-        color = parseColor(String.valueOf(theme.colors.get(valueStr)));
-        if (color != null && !key.startsWith("*")) {
-          defaults.put(key, color);
-          return;
+      if (theme.colors != null) {
+        Object obj = theme.colors.get(valueStr);
+        if (obj != null) {
+          color = parseColor(obj.toString());
+          if (color != null && !key.startsWith("*")) {
+            defaults.put(key, color);
+            return;
+          }
         }
       }
       value = color == null ? parseValue(key, valueStr) : color;
@@ -442,7 +445,7 @@ public final class UITheme {
         String tail = key.substring(1);
         addPattern(key, value, defaults);
 
-        for (Object k : new ArrayList<>(defaults.keySet())) {
+        for (Object k : defaults.keySet().toArray()) {
           if (k instanceof String && ((String)k).endsWith(tail)) {
             defaults.put(k, value);
           }
@@ -454,11 +457,11 @@ public final class UITheme {
     }
   }
 
-  @NotNull
-  private static String createUIKey(String key, String propertyName) {
+  private static @NotNull String createUIKey(String key, String propertyName) {
     if ("UI".equals(propertyName)) {
       return key + propertyName;
-    } else {
+    }
+    else {
       return key + "." + propertyName;
     }
   }
@@ -500,75 +503,82 @@ public final class UITheme {
   }
 
   public static Object parseValue(String key, @NotNull String value, @NotNull ClassLoader classLoader) {
-    switch (value) {
-      case "null":
-        return null;
-      case "true":
-        return Boolean.TRUE;
-      case "false":
-        return Boolean.FALSE;
-    }
-
-    if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, classLoader);
-      if (icon != null) {
-        return icon;
+    try {
+      switch (value) {
+        case "null":
+          return null;
+        case "true":
+          return Boolean.TRUE;
+        case "false":
+          return Boolean.FALSE;
       }
-    }
 
-    if (key.endsWith("Insets") || key.endsWith("padding")) {
-      return parseInsets(value);
-    }
-    else if (key.endsWith("Border") || key.endsWith("border")) {
-      try {
-        String[] ints = value.split(",");
-        if (ints.length == 4) {
-          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+      if (value.endsWith(".png") || value.endsWith(".svg")) {
+        Icon icon = ImageDataByPathLoader.findIcon(value, classLoader, null);
+        if (icon != null) {
+          return icon;
         }
-        else if (ints.length == 5) {
-          return JBUI.asUIResource(JBUI.Borders.customLine(ColorUtil.fromHex(ints[4]),
-                                                           Integer.parseInt(ints[0]),
-                                                           Integer.parseInt(ints[1]),
-                                                           Integer.parseInt(ints[2]),
-                                                           Integer.parseInt(ints[3])));
+      }
+
+      if (key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding")) {
+        return parseInsets(value);
+      }
+      else if (key.endsWith("Border") || key.endsWith("border")) {
+        try {
+          String[] ints = value.split(",");
+          if (ints.length == 4) {
+            return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+          }
+          else if (ints.length == 5) {
+            return JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(ints[4]),
+                                                             Integer.parseInt(ints[0]),
+                                                             Integer.parseInt(ints[1]),
+                                                             Integer.parseInt(ints[2]),
+                                                             Integer.parseInt(ints[3])));
+          }
+          Color color = ColorHexUtil.fromHexOrNull(value);
+          if (color == null) {
+            Class<?> aClass = classLoader.loadClass(value);
+            Constructor<?> constructor = aClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+          }
+          else {
+            return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
+          }
         }
-        Color color = ColorHexUtil.fromHexOrNull(value);
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
+      else if (key.endsWith("Size")) {
+        return parseSize(value);
+      }
+      else if (key.endsWith("Width") || key.endsWith("Height")) {
+        return getIntegerOrFloat(value, key);
+      }
+      else if (key.endsWith("grayFilter")) {
+        return parseGrayFilter(value);
+      }
+      else if (value.startsWith("AllIcons.")) {
+        return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
+      }
+      else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
+        return getIntegerOrFloat(value, key);
+      }
+      else {
+        Color color = parseColor(value);
         if (color != null) {
-          return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
+          return new ColorUIResource(color);
         }
-        else {
-          Class<?> aClass = classLoader.loadClass(value);
-          Constructor<?> constructor = aClass.getDeclaredConstructor();
-          constructor.setAccessible(true);
-          return constructor.newInstance();
+        Integer intVal = getInteger(value, null);
+        if (intVal != null) {
+          return intVal;
         }
       }
-      catch (Exception e) {
-        LOG.warn(e);
-      }
     }
-    else if (key.endsWith("Size")) {
-      return parseSize(value);
-    }
-    else if (key.endsWith("Width") || key.endsWith("Height")) {
-      return getInteger(value, key);
-    }
-    else if (key.endsWith("grayFilter")) {
-      return parseGrayFilter(value);
-    }
-    else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
-      if (icon != null) {
-        return new IconUIResource(icon);
-      }
-      Color color = parseColor(value);
-      if (color != null) {
-        return new ColorUIResource(color);
-      }
-      Integer intVal = getInteger(value, null);
-      if (intVal != null) {
-        return intVal;
-      }
+    catch (Exception e) {
+      LOG.warn("Can't parse '" + value +"' for key '" + key + "'");
     }
 
     return value;
@@ -604,7 +614,7 @@ public final class UITheme {
         value = value.substring(1);
       }
       if (value.length() == 8) {
-        Color color = ColorUtil.fromHex(value.substring(0, 6));
+        Color color = ColorHexUtil.fromHex(value.substring(0, 6));
         try {
           int alpha = Integer.parseInt(value.substring(6, 8), 16);
           return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
@@ -627,10 +637,24 @@ public final class UITheme {
     }
     catch (NumberFormatException e) {
       if (key != null) {
-        LOG.warn(key + " = " + value);
+        LOG.warn("Can't parse: " + key + " = " + value);
       }
       return null;
     }
+  }
+
+  private static Number getIntegerOrFloat(String value, @Nullable String key) {
+    if (value.contains(".")) {
+      try {
+        return Float.parseFloat(value);
+      } catch (NumberFormatException e) {
+        if (key != null) {
+          LOG.warn("Can't parse: " + key + " = " + value);
+        }
+        return null;
+      }
+    }
+    return getInteger(value, key);
   }
 
   private static Dimension parseSize(@NotNull String value) {
@@ -703,7 +727,7 @@ public final class UITheme {
     }
 
     @Nullable PaletteScope getScopeByPath(@Nullable String path) {
-      if (path != null && path.contains("/com/intellij/ide/ui/laf/icons/")) {
+      if (path != null && (path.contains("com/intellij/ide/ui/laf/icons/") || path.contains("/com/intellij/ide/ui/laf/icons/"))) {
         String file = path.substring(path.lastIndexOf('/') + 1);
         if (file.equals("treeCollapsed.svg") || file.equals("treeExpanded.svg")) return trees;
         if (file.startsWith("check")) return checkBoxes;

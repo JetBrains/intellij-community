@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.Disposable;
@@ -16,8 +17,12 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
@@ -42,17 +47,17 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
 
+  static final Key<Boolean> SUPPRESS_SUBMENU_IMPL = Key.create("SUPPRESS_SUBMENU_IMPL");
+
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
 
-  private final boolean myModalContext;
   private final PresentationFactory myPresentationFactory;
   private final DataContext myDataContext;
   private final String myPlace;
@@ -63,7 +68,6 @@ final class ActionUpdater {
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
   private final Map<ActionGroup, List<AnAction>> myGroupChildren = new ConcurrentHashMap<>();
-  private final Map<ActionGroup, Boolean> myCanBePerformedCache = new ConcurrentHashMap<>();
   private final UpdateStrategy myRealUpdateStrategy;
   private final UpdateStrategy myCheapStrategy;
 
@@ -75,17 +79,18 @@ final class ActionUpdater {
   private final Consumer<Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
 
-  ActionUpdater(boolean isInModalContext,
-                @NotNull PresentationFactory presentationFactory,
+  private int myEDTCallsCount;
+  private long myEDTWaitNanos;
+
+  ActionUpdater(@NotNull PresentationFactory presentationFactory,
                 @NotNull DataContext dataContext,
                 @NotNull String place,
                 boolean isContextMenuAction,
                 boolean isToolbarAction) {
-    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, null, null);
+    this(presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, null, null);
   }
 
-  ActionUpdater(boolean isInModalContext,
-                @NotNull PresentationFactory presentationFactory,
+  ActionUpdater(@NotNull PresentationFactory presentationFactory,
                 @NotNull DataContext dataContext,
                 @NotNull String place,
                 boolean isContextMenuAction,
@@ -93,7 +98,6 @@ final class ActionUpdater {
                 @Nullable Function<AnActionEvent, AnActionEvent> eventTransform,
                 @Nullable Consumer<Runnable> laterInvocator) {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
-    myModalContext = isInModalContext;
     myPresentationFactory = presentationFactory;
     myDataContext = dataContext;
     myPlace = place;
@@ -103,29 +107,35 @@ final class ActionUpdater {
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
-    Op updateOp = myEventTransform == null || Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") ?
-                  Op.update : Op.beforeActionPerformedUpdate;
     myRealUpdateStrategy = new UpdateStrategy(
-      action -> updateActionReal(action, updateOp),
-      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))),
-      group -> callAction(group, Op.canBePerformed, () -> doCanBePerformed(group, myDataContext)));
-    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null), group -> true);
-
-    LOG.assertTrue(updateOp != Op.beforeActionPerformedUpdate || ActionPlaces.isShortcutPlace(myPlace),
-                   "beforeActionPerformed requested in '" + myPlace + "'");
+      action -> updateActionReal(action),
+      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))));
+    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null));
 
     myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) || ActionPlaces.isShortcutPlace(myPlace) ?
                         0 : Registry.intValue("actionSystem.update.actions.async.test.delay", 0);
   }
 
-  private @Nullable Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
+  private @Nullable Presentation updateActionReal(@NotNull AnAction action) {
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
-    boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
     if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
-    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(presentation), isBeforePerformed);
-    boolean success = callAction(action, operation, doUpdate);
+    boolean wasPopup = action instanceof ActionGroup && ((ActionGroup)action).isPopup(myPlace);
+    presentation.setPopupGroup(action instanceof ActionGroup && (presentation.isPopupGroup() || wasPopup));
+    Supplier<Boolean> doUpdate = () -> doUpdate(action, createActionEvent(presentation));
+    boolean success = callAction(action, Op.update, doUpdate);
+    if (success) assertActionGroupPopupStateIsNotChanged(action, myPlace, wasPopup, presentation);
     return success ? presentation : null;
+  }
+
+  static void assertActionGroupPopupStateIsNotChanged(@NotNull AnAction action, @NotNull String place,
+                                                      boolean wasPopup, @NotNull Presentation presentation) {
+    if (action instanceof ActionGroup && wasPopup != ((ActionGroup)action).isPopup(place)) {
+      presentation.setPopupGroup(!wasPopup); // keep the old logic for a while
+      String operationName = action.getClass().getSimpleName() + "#" + Op.update + " (" + action.getClass().getName() + ")";
+      LOG.warn("Calling `setPopup()` in " + operationName + ". " +
+               "Please use `event.getPresentation().setPopupGroup()` instead.");
+    }
   }
 
   void applyPresentationChanges() {
@@ -139,7 +149,7 @@ final class ActionUpdater {
         // 2. presentation factory may be just reset, do not reuse component from a copy
         customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
       }
-      orig.copyFrom(copy, customComponent);
+      orig.copyFrom(copy, customComponent, true);
       if (customComponent != null && orig.isVisible()) {
         ((CustomComponentAction)action).updateCustomComponent(customComponent, orig);
       }
@@ -156,38 +166,46 @@ final class ActionUpdater {
     if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
       LOG.error("Calling on EDT " + operationName + (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
     }
-    if (myPreCacheSlowDataKeys && !isEDT &&
-        (shallEDT || Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false))) {
-      ApplicationManagerEx.getApplicationEx().tryRunReadAction(this::ensureSlowDataKeysPreCached);
-    }
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-
-    long start0 = System.nanoTime();
     if (isEDT || !shallEDT) {
-      try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
+      long start = System.nanoTime();
+      try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
         return call.get();
       }
       finally {
-        long elapsed = TimeoutUtil.getDurationMillis(start0);
+        long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 1000) {
-          LOG.warn(elapsed + " ms to call on BGT " + operationName);
+          LOG.warn(elapsedReport(elapsed, isEDT, operationName));
         }
       }
     }
+    if (myPreCacheSlowDataKeys) {
+      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(operationName));
+    }
+    return computeOnEdt(operationName, call);
+  }
 
+  <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call) {
+    long start0 = System.nanoTime();
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
-    return computeOnEdt(() -> {
-      long elapsed0 = TimeoutUtil.getDurationMillis(start0);
-      if (elapsed0 > 200) {
-        LOG.warn(elapsed0 + " ms to grab EDT for " + operationName);
+    ConcurrentList<String> warns = ContainerUtil.createConcurrentList();
+    Supplier<? extends T> supplier = () -> {
+      {
+        long curNanos = System.nanoTime();
+        myEDTCallsCount++;
+        myEDTWaitNanos += curNanos - start0;
+        long elapsed = TimeUnit.NANOSECONDS.toMillis(curNanos - start0);
+        if (elapsed > 200) {
+          warns.add(elapsed + " ms to grab EDT for " + operationName);
+        }
       }
       long start = System.nanoTime();
       myInEDTActionOperation = operationName;
       try {
         return ProgressManager.getInstance().runProcess(() -> {
-          try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
+          try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
             return call.get();
           }
         }, ProgressWrapper.wrap(progress));
@@ -196,10 +214,18 @@ final class ActionUpdater {
         myInEDTActionOperation = null;
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          LOG.warn(elapsed + " ms to call on EDT " + operationName + " - speed it up and/or implement UpdateInBackground.");
+          warns.add(elapsedReport(elapsed, true, operationName) + ". Use `UpdateInBackground`.");
         }
       }
-    });
+    };
+    try {
+      return computeOnEdt(supplier);
+    }
+    finally {
+      for (String warn : warns) {
+        LOG.warn(warn);
+      }
+    }
   }
 
   /**
@@ -258,13 +284,24 @@ final class ActionUpdater {
   @NotNull
   CancellablePromise<List<AnAction>> expandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     ComponentManager disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
+    ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
 
     AsyncPromise<List<AnAction>> promise = newPromise(myPlace);
-    ProgressIndicator indicator = new EmptyProgressIndicator();
     promise.onError(__ -> {
       indicator.cancel();
       ApplicationManager.getApplication().invokeLater(
         this::applyPresentationChanges, ModalityState.any(), disposableParent.getDisposed());
+    });
+    myEDTCallsCount = 0;
+    myEDTWaitNanos = 0;
+    promise.onProcessed(__ -> {
+      long edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(myEDTWaitNanos);
+      if (myLaterInvocator == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
+        boolean noFqn = group.getClass() == DefaultActionGroup.class;
+        LOG.warn(edtWaitMillis + " ms total to grab EDT " + myEDTCallsCount + " times at '" + myPlace + "' to expand " +
+                 group.getClass().getSimpleName() + (noFqn ? "" : " (" + group.getClass().getName() + ")") + ". Use `UpdateInBackground`.");
+      }
     });
 
     if (myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK)) {
@@ -279,9 +316,6 @@ final class ActionUpdater {
 
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
-      if (Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false)) {
-        ensureSlowDataKeysPreCached();
-      }
       if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
       return () -> { // invoked outside the read-action
@@ -352,17 +386,18 @@ final class ActionUpdater {
   private void waitTheTestDelay() {
     if (myTestDelayMillis <= 0) return;
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     while (true) {
       progress.checkCanceled();
-      if (System.currentTimeMillis() - start > myTestDelayMillis) break;
+      if (TimeoutUtil.getDurationMillis(start) > myTestDelayMillis) break;
       TimeoutUtil.sleep(1);
     }
   }
 
-  private void ensureSlowDataKeysPreCached() {
+  private void ensureSlowDataKeysPreCached(@NotNull String targetOperationName) {
     if (!myPreCacheSlowDataKeys) return;
-    long start = System.currentTimeMillis();
+    String operationName = "ensureSlowDataKeysPreCached for " + targetOperationName;
+    long start = System.nanoTime();
     for (DataKey<?> key : DataKey.allKeys()) {
       try {
         myDataContext.getData(key);
@@ -375,9 +410,12 @@ final class ActionUpdater {
       }
     }
     myPreCacheSlowDataKeys = false;
-    long time = System.currentTimeMillis() - start;
-    if (time > 500) {
-      LOG.debug("ensureSlowDataKeysPreCached() took: " + time + " ms");
+    long elapsed = TimeoutUtil.getDurationMillis(start);
+    if (elapsed > 3000) {
+      LOG.warn(elapsedReport(elapsed, false, operationName));
+    }
+    else if (elapsed > 500 && LOG.isDebugEnabled()) {
+      LOG.debug(elapsedReport(elapsed, false, operationName));
     }
   }
 
@@ -442,7 +480,7 @@ final class ActionUpdater {
     if (child instanceof ActionGroup) {
       ActionGroup actionGroup = (ActionGroup)child;
 
-      boolean isPopup = actionGroup.isPopup(myPlace);
+      boolean isPopup = presentation.isPopupGroup();
       boolean hasEnabled = false, hasVisible = false;
 
       if (child instanceof AlwaysVisibleActionGroup) {
@@ -467,9 +505,11 @@ final class ActionUpdater {
         return Collections.emptyList();
       }
       if (isPopup) {
-        boolean canBePerformed = canBePerformed(actionGroup, strategy);
-        boolean performOnly = canBePerformed && (actionGroup instanceof AlwaysPerformingActionGroup || !hasVisible);
-        presentation.putClientProperty("actionGroup.perform.only", performOnly ? true : null);
+        boolean canBePerformed = presentation.isPerformGroup();
+        boolean performOnly = canBePerformed && (
+          !hasVisible || Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
+          actionGroup instanceof AlwaysPerformingActionGroup);
+        presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
 
         if (!hasVisible && actionGroup.disableIfNoVisibleChildren()) {
           if (actionGroup.hideIfNoVisibleChildren()) {
@@ -490,10 +530,6 @@ final class ActionUpdater {
     }
 
     return Collections.singletonList(child);
-  }
-
-  private boolean canBePerformed(ActionGroup group, UpdateStrategy strategy) {
-    return myCanBePerformedCache.computeIfAbsent(group, __ -> strategy.canBePerformed.test(group));
   }
 
   private Presentation orDefault(AnAction action, Presentation presentation) {
@@ -537,7 +573,7 @@ final class ActionUpdater {
   UpdateSession asFastUpdateSession(@Nullable Consumer<? super String> missedKeys,
                                     @Nullable Consumer<Runnable> laterInvocator) {
     DataContext frozenContext = Utils.freezeDataContext(myDataContext, missedKeys);
-    ActionUpdater updater = new ActionUpdater(myModalContext, myPresentationFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
+    ActionUpdater updater = new ActionUpdater(myPresentationFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
                                               myEventTransform, Objects.requireNonNull(ObjectUtils.coalesce(laterInvocator, myLaterInvocator)));
     updater.myPreCacheSlowDataKeys = false;
     return updater.asUpdateSession();
@@ -558,7 +594,7 @@ final class ActionUpdater {
       if (presentation == null || !presentation.isVisible()) {
         return null;
       }
-      if ((oo.isPopup(myPlace) || strategy.canBePerformed.test(oo))) {
+      if (presentation.isPopupGroup() || presentation.isPerformGroup()) {
         return null;
       }
       return getGroupChildren(oo, strategy);
@@ -567,6 +603,10 @@ final class ActionUpdater {
       .unique()
       .traverse(TreeTraversal.LEAVES_DFS)
       .filter(o -> !isDumb || o.isDumbAware());
+  }
+
+  private static @NotNull String elapsedReport(long elapsed, boolean isEDT, @NotNull String operationName) {
+    return elapsed + (isEDT ? " ms to call on EDT " : " ms to call on BGT ") + operationName;
   }
 
   private static void handleException(@NotNull Op op, @NotNull AnAction action, @Nullable AnActionEvent event, @NotNull Throwable ex) {
@@ -593,16 +633,21 @@ final class ActionUpdater {
   }
 
   // returns false if exception was thrown and handled
-  static boolean doUpdate(boolean isInModalContext,
-                          AnAction action,
-                          AnActionEvent e,
-                          boolean beforeActionPerformed) {
+  static boolean doUpdate(@NotNull AnAction action, @NotNull AnActionEvent e) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
     try {
-      return !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, beforeActionPerformed);
+      boolean result = !ActionUtil.performDumbAwareUpdate(action, e, false);
+      if (result) {
+        Presentation presentation = e.getPresentation();
+        // to be removed when ActionGroup#canBePerformed is dropped
+        presentation.setPerformGroup(
+          action instanceof ActionGroup && presentation.isPopupGroup() &&
+          (presentation.isPerformGroup() || doCanBePerformed((ActionGroup)action, e.getDataContext())));
+      }
+      return result;
     }
     catch (Throwable ex) {
-      handleException(beforeActionPerformed ? Op.beforeActionPerformedUpdate : Op.update, action, e, ex);
+      handleException(Op.update, action, e, ex);
       return false;
     }
   }
@@ -663,14 +708,11 @@ final class ActionUpdater {
   private static class UpdateStrategy {
     final NullableFunction<? super AnAction, Presentation> update;
     final NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren;
-    final Predicate<? super ActionGroup> canBePerformed;
 
     UpdateStrategy(NullableFunction<? super AnAction, Presentation> update,
-                   NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren,
-                   Predicate<? super ActionGroup> canBePerformed) {
+                   NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren) {
       this.update = update;
       this.getChildren = getChildren;
-      this.canBePerformed = canBePerformed;
     }
   }
 
@@ -707,6 +749,11 @@ final class ActionUpdater {
       T existing = updater.myUserDataHolder.getUserData(key);
       return existing != null ? existing :
              updater.myUserDataHolder.putUserDataIfAbsent(key, provider.get());
+    }
+
+    @Override
+    public <T> @NotNull T computeOnEdt(@NotNull String operationName, @NotNull Supplier<T> supplier) {
+      return updater.computeOnEdt(operationName, supplier);
     }
   }
 }

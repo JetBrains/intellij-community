@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
@@ -6,8 +6,7 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.facetSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
-class AssociateCompilationImportAndHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
-
+class AssociateCompilationImportAndHighlightingTest3 : MultiplePluginVersionGradleImportingTestCase() {
     @Test
     @PluginTargetVersions(pluginVersion = "1.4+")
     fun testAssociateCompilationIntegrationTest() {

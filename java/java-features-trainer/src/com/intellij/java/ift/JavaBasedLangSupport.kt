@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl
 import com.intellij.openapi.roots.ui.configuration.SdkLookup
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.lang.JavaVersion
 import training.lang.AbstractLangSupport
@@ -90,4 +91,6 @@ abstract class JavaBasedLangSupport : AbstractLangSupport() {
   }
 
   override fun checkSdk(sdk: Sdk?, project: Project) {}
+
+  override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean = true
 }

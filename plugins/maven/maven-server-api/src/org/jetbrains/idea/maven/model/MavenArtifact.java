@@ -28,7 +28,7 @@ import java.io.Serializable;
 
 public class MavenArtifact implements Serializable, MavenCoordinate {
 
-  static long serialVersionUID = 6389627095309274357L;
+  static final long serialVersionUID = 6389627095309274357L;
 
   public static final String MAVEN_LIB_PREFIX = "Maven: ";
 
@@ -48,9 +48,10 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   private final boolean myResolved;
   private final boolean myStubbed;
 
+  private transient volatile boolean myFileUnresolved;
   private transient volatile String myLibraryNameCache;
-
   private transient volatile long myLastFileCheckTimeStamp; // File.exists() is a slow operation, don't run it more than once a second
+
   private static final Condition<File> ourDefaultFileExists = new Condition<File>() {
     @Override
     public boolean value(File f) {
@@ -165,6 +166,10 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     }
 
     return false;
+  }
+
+  public boolean isResolvedArtifact() {
+    return myResolved;
   }
 
   @NotNull
@@ -338,6 +343,14 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
 
   public String getDisplayStringForLibraryName() {
     return getLibraryName().substring(MAVEN_LIB_PREFIX.length());
+  }
+
+  public boolean isFileUnresolved() {
+    return myFileUnresolved;
+  }
+
+  public void setFileUnresolved(boolean fileUnresolved) {
+    myFileUnresolved = fileUnresolved;
   }
 
   public static boolean isMavenLibrary(@Nullable String libraryName) {

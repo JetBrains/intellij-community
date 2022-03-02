@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ActivityTracker;
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
@@ -39,21 +38,24 @@ import java.util.*;
 class TabContentLayout extends ContentLayout implements MorePopupAware {
   static final int MORE_ICON_BORDER = 6;
   public static final int TAB_LAYOUT_START = 4;
-  JLabel myDropOverPlaceholder;
-  LayoutData myLastLayout;
 
-  ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
-  final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
+  private JLabel dropOverPlaceholder;
+  private LayoutData lastLayout;
 
-  List<AnAction> myDoubleClickActions = new ArrayList<>();
+  final List<ContentTabLabel> tabs = new ArrayList<>();
+  private final Map<Content, ContentTabLabel> contentToTabs = new HashMap<>();
+
+  List<AnAction> doubleClickActions = new ArrayList<>();
 
   TabContentLayout(@NotNull ToolWindowContentUi ui) {
     super(ui);
 
-    new BaseButtonBehavior(myUi.getTabComponent()) {
+    new BaseButtonBehavior(ui.getTabComponent()) {
       @Override
-      protected void execute(final MouseEvent e) {
-        if (!myUi.isCurrent(TabContentLayout.this)) return;
+      protected void execute(MouseEvent e) {
+        if (!TabContentLayout.this.ui.isCurrent(TabContentLayout.this)) {
+          return;
+        }
         Rectangle moreRect = getMoreRect();
         if (moreRect != null) {
           showMorePopup();
@@ -66,13 +68,13 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   public void init(@NotNull ContentManager contentManager) {
     reset();
 
-    myIdLabel = new BaseLabel(myUi, Registry.is("ide.experimental.ui")) {
+    idLabel = new BaseLabel(ui, ExperimentalUI.isNewUI()) {
       @Override
       protected boolean allowEngravement() {
         return myUi.window.isActive();
       }
     };
-    myDropOverPlaceholder = new JLabel() {
+    dropOverPlaceholder = new JLabel() {
       @Override
       public void paint(Graphics g) {
         g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
@@ -81,11 +83,10 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(myUi.myDropOverWidth, 1);
+        return new Dimension(TabContentLayout.this.ui.dropOverWidth, 1);
       }
     };
-    MouseDragHelper.setComponentDraggable(myIdLabel, true);
-
+    MouseDragHelper.setComponentDraggable(idLabel, true);
 
     for (int i = 0; i < contentManager.getContentCount(); i++) {
       contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));
@@ -94,23 +95,22 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   @Override
   public void reset() {
-    myTabs.clear();
-    myContent2Tabs.clear();
-    myIdLabel = null;
-    myDropOverPlaceholder = null;
+    tabs.clear();
+    contentToTabs.clear();
+    idLabel = null;
+    dropOverPlaceholder = null;
   }
 
   void setTabDoubleClickActions(@NotNull List<AnAction> actions) {
-    myDoubleClickActions = actions;
+    doubleClickActions = actions;
   }
 
   private Rectangle getMoreRect() {
-    if (myLastLayout == null) return null;
-    return myLastLayout.moreRect;
+    return lastLayout == null ? null : lastLayout.moreRect;
   }
 
   public void dropCaches() {
-    myLastLayout = null;
+    lastLayout = null;
   }
 
   @Override
@@ -121,26 +121,28 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   @Override
   public void showMorePopup() {
     Rectangle rect = getMoreRect();
-    if (rect == null) return;
-    List<? extends ContentTabLabel> tabs = ContainerUtil.filter(myTabs, myLastLayout.toDrop::contains);
+    if (rect == null) {
+      return;
+    }
+    List<? extends ContentTabLabel> tabs = ContainerUtil.filter(this.tabs, lastLayout.toDrop::contains);
     final List<Content> contentsToShow = ContainerUtil.map(tabs, ContentTabLabel::getContent);
     final SelectContentStep step = new SelectContentStep(contentsToShow);
-    RelativePoint point = new RelativePoint(myUi.getTabComponent(), new Point(rect.x, rect.y + rect.height));
+    RelativePoint point = new RelativePoint(ui.getTabComponent(), new Point(rect.x, rect.y + rect.height));
     JBPopupFactory.getInstance().createListPopup(step).show(point);
   }
 
   @Override
   public void layout() {
-    Rectangle bounds = myUi.getTabComponent().getBounds();
-    ContentManager manager = myUi.getContentManager();
-    LayoutData data = new LayoutData(myUi);
+    Rectangle bounds = ui.getTabComponent().getBounds();
+    ContentManager manager = ui.getContentManager();
+    LayoutData data = new LayoutData(ui);
 
     data.eachX = getTabLayoutStart();
     data.eachY = 0;
 
     if (isIdVisible()) {
-      myIdLabel.setBounds(data.eachX, data.eachY, myIdLabel.getPreferredSize().width, bounds.height);
-      data.eachX += myIdLabel.getPreferredSize().width;
+      idLabel.setBounds(data.eachX, data.eachY, idLabel.getPreferredSize().width, bounds.height);
+      data.eachX += idLabel.getPreferredSize().width;
     }
     int tabsStart = data.eachX;
 
@@ -151,43 +153,44 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       selected = manager.getContents()[0];
     }
 
-    if (myLastLayout != null &&
-        myLastLayout.layoutSize.equals(bounds.getSize()) &&
-        myLastLayout.contentCount == manager.getContentCount() &&
-        ContainerUtil.all(myTabs, Component::isValid)) {
-      for (ContentTabLabel each : myTabs) {
+    if (lastLayout != null &&
+        (idLabel == null || idLabel.isValid()) &&
+        lastLayout.layoutSize.equals(bounds.getSize()) &&
+        lastLayout.contentCount == manager.getContentCount() &&
+        ContainerUtil.all(tabs, Component::isValid)) {
+      for (ContentTabLabel each : tabs) {
         if (each.getContent() == selected && each.getBounds().width != 0) {
-          data = myLastLayout;
+          data = lastLayout;
           data.fullLayout = false;
         }
       }
     }
 
     if (data.fullLayout) {
-      for (JLabel eachTab : myTabs) {
+      for (JLabel eachTab : tabs) {
         final Dimension eachSize = eachTab.getPreferredSize();
         data.requiredWidth += eachSize.width;
         data.toLayout.add(eachTab);
       }
 
-      if (myUi.myDropOverIndex != -1) {
-        data.requiredWidth += myUi.myDropOverWidth;
-        data.toLayout.add(myUi.myDropOverIndex - 1, myDropOverPlaceholder);
+      if (ui.dropOverIndex != -1) {
+        data.requiredWidth += ui.dropOverWidth;
+        data.toLayout.add(Math.max(0, ui.dropOverIndex - 1), dropOverPlaceholder);
       }
 
       data.toFitWidth = bounds.getSize().width - data.eachX;
 
-      final ContentTabLabel selectedTab = myContent2Tabs.get(selected);
+      final ContentTabLabel selectedTab = contentToTabs.get(selected);
       while (true) {
         if (data.requiredWidth <= data.toFitWidth) break;
         if (data.toLayout.size() <= 1) break;
 
         JLabel firstLabel = data.toLayout.get(0);
         JLabel lastLabel = data.toLayout.get(data.toLayout.size() - 1);
-        if (firstLabel != selectedTab && firstLabel != myDropOverPlaceholder) {
+        if (firstLabel != selectedTab && firstLabel != dropOverPlaceholder) {
           dropTab(data, firstLabel);
         }
-        else if (lastLabel != selectedTab && lastLabel != myDropOverPlaceholder) {
+        else if (lastLabel != selectedTab && lastLabel != dropOverPlaceholder) {
           dropTab(data, lastLabel);
         }
         else {
@@ -228,17 +231,17 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
     boolean toolbarUpdateNeeded;
     if (data.toDrop.size() > 0) {
-      toolbarUpdateNeeded = myLastLayout != null && myLastLayout.moreRect == null;
+      toolbarUpdateNeeded = lastLayout != null && lastLayout.moreRect == null;
       data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, /*getMoreToolbarWidth()*/16, bounds.height);
     }
     else {
-      toolbarUpdateNeeded = myLastLayout != null && myLastLayout.moreRect != null;
+      toolbarUpdateNeeded = lastLayout != null && lastLayout.moreRect != null;
       data.moreRect = null;
     }
 
     Rectangle moreRect = data.moreRect == null ? null : new Rectangle(data.eachX, 0, /*getMoreToolbarWidth()*/16+MORE_ICON_BORDER, bounds.height);
-    myUi.isResizableArea = p -> moreRect == null || !moreRect.contains(p);
-    myLastLayout = data;
+    ui.isResizableArea = p -> moreRect == null || !moreRect.contains(p);
+    lastLayout = data;
     if (toolbarUpdateNeeded) {
       ActivityTracker.getInstance().inc();
     }
@@ -247,27 +250,26 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   @Override
   public int getMinimumWidth() {
     int result = 0;
-    if (myIdLabel != null && isIdVisible()) {
-      result += myIdLabel.getPreferredSize().width;
-      Insets insets = myIdLabel.getInsets();
+    if (idLabel != null && isIdVisible()) {
+      result += idLabel.getPreferredSize().width;
+      Insets insets = idLabel.getInsets();
       if (insets != null) {
         result += insets.left + insets.right;
       }
     }
 
-    ContentManager contentManager = myUi.getContentManager();
+    ContentManager contentManager = ui.getContentManager();
     Content selected = contentManager.getSelectedContent();
-    if (selected == null && contentManager.getContents().length > 0) {
+    if (selected == null && contentManager.getContentCount() > 0) {
       selected = contentManager.getContents()[0];
     }
 
-    result += selected != null ? myContent2Tabs.get(selected).getMinimumSize().width : 0;
-
+    result += selected == null ? 0 : contentToTabs.get(selected).getMinimumSize().width;
     return result;
   }
 
   @Nullable ContentTabLabel findTabLabelByContent(@Nullable Content content) {
-    return myContent2Tabs.get(content);
+    return contentToTabs.get(content);
   }
 
   static void dropTab(LayoutData data, JLabel toDropLabel) {
@@ -278,12 +280,12 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   @NotNull
   TabContentLayout.TabsDrawMode isToDrawTabs() {
-    int size = myTabs.size();
+    int size = tabs.size();
     if (size > 1) {
       return TabsDrawMode.PAINT_ALL;
     }
     else if (size == 1) {
-      ContentTabLabel tabLabel = myTabs.get(0);
+      ContentTabLabel tabLabel = tabs.get(0);
       Content content = tabLabel.getContent();
       if (!StringUtil.isEmptyOrSpaces(content.getToolwindowTitle())) {
         if (Boolean.TRUE.equals(content.getUserData(Content.SIMPLIFIED_TAB_RENDERING_KEY))) return TabsDrawMode.PAINT_SIMPLIFIED;
@@ -326,7 +328,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     if (toDrawTabs == TabsDrawMode.HIDE) return;
 
     Graphics2D g2d = (Graphics2D)g.create();
-    for (ContentTabLabel each : myTabs) {
+    for (ContentTabLabel each : tabs) {
       //TODO set borderThickness
       int borderThickness = JBUIScale.scale(1);
       Rectangle r = each.getBounds();
@@ -336,11 +338,11 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       if (toDrawTabs == TabsDrawMode.PAINT_ALL) {
         if (each.isSelected()) {
           tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(),
-                                      myUi.window.isActive(), each.isHovered());
+                                      ui.window.isActive(), each.isHovered());
         }
         else {
           tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(),
-                              myUi.window.isActive(), each.isHovered());
+                              ui.window.isActive(), each.isHovered());
         }
       }
     }
@@ -349,48 +351,49 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   @Override
   public void update() {
-    for (ContentTabLabel each : myTabs) {
+    for (ContentTabLabel each : tabs) {
       each.update();
     }
 
-    updateIdLabel(myIdLabel);
+    updateIdLabel(idLabel);
   }
 
   @Override
   public void rebuild() {
-    myUi.getTabComponent().removeAll();
+    ui.getTabComponent().removeAll();
 
-    myUi.getTabComponent().add(myIdLabel);
-    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
+    ui.getTabComponent().add(idLabel);
+    ToolWindowContentUi.initMouseListeners(idLabel, ui, true);
 
-    for (ContentTabLabel each : myTabs) {
-      myUi.getTabComponent().add(each);
-      ToolWindowContentUi.initMouseListeners(each, myUi, false);
+    for (ContentTabLabel each : tabs) {
+      ui.getTabComponent().add(each);
+      ToolWindowContentUi.initMouseListeners(each, ui, false);
     }
-    if (myUi.myDropOverIndex >= 0 && !myTabs.isEmpty()) {
-      myUi.getTabComponent().add(myDropOverPlaceholder, myUi.myDropOverIndex);
+    if (ui.dropOverIndex >= 0 && !tabs.isEmpty()) {
+      ui.getTabComponent().add(dropOverPlaceholder, ui.dropOverIndex);
     }
   }
 
   @Override
-  public void contentAdded(ContentManagerEvent event) {
-    final Content content = event.getContent();
-    final ContentTabLabel tab;
+  public void contentAdded(@NotNull ContentManagerEvent event) {
+    Content content = event.getContent();
+    ContentTabLabel tab;
     if (content instanceof TabbedContent) {
       tab = new TabbedContentTabLabel((TabbedContent)content, this);
-    } else {
+    }
+    else {
       tab = new ContentTabLabel(content, this);
     }
-    myTabs.add(event.getIndex(), tab);
-    myContent2Tabs.put(content, tab);
+    tabs.add(event.getIndex(), tab);
+    contentToTabs.put(content, tab);
 
     DnDTarget target = getDnDTarget(content);
     if (target != null) {
       DnDSupport.createBuilder(tab)
-                .setDropHandler(target)
-                .setTargetChecker(target)
-                .setCleanUpOnLeaveCallback(() -> target.cleanUpOnLeave())
-                .install();
+        .setDropHandler(target)
+        .setTargetChecker(target)
+        .setCleanUpOnLeaveCallback(() -> target.cleanUpOnLeave())
+        .install();
     }
   }
 
@@ -402,22 +405,23 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   @Override
-  public void contentRemoved(ContentManagerEvent event) {
-    final ContentTabLabel tab = myContent2Tabs.get(event.getContent());
+  public void contentRemoved(@NotNull ContentManagerEvent event) {
+    final ContentTabLabel tab = contentToTabs.get(event.getContent());
     if (tab != null) {
-      myTabs.remove(tab);
-      myContent2Tabs.remove(event.getContent());
+      tabs.remove(tab);
+      contentToTabs.remove(event.getContent());
     }
   }
 
   @Override
   public void showContentPopup(ListPopup listPopup) {
-    Content selected = myUi.getContentManager().getSelectedContent();
+    Content selected = ui.getContentManager().getSelectedContent();
     if (selected != null) {
-      ContentTabLabel tab = myContent2Tabs.get(selected);
+      ContentTabLabel tab = contentToTabs.get(selected);
       listPopup.showUnderneathOf(tab);
-    } else {
-      listPopup.showUnderneathOf(myIdLabel);
+    }
+    else {
+      listPopup.showUnderneathOf(idLabel);
     }
   }
 
@@ -448,6 +452,6 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   public static int getTabLayoutStart(){
-    return ExperimentalUI.isNewToolWindowsStripes() ? 0 : TAB_LAYOUT_START;
+    return ExperimentalUI.isNewUI() ? 0 : TAB_LAYOUT_START;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -11,10 +11,13 @@ data class JsonProjectIndexingHistoryTimes(
   val wasFullIndexing: Boolean = false,
   val totalUpdatingTime: JsonDuration = JsonDuration(),
   val indexingTime: JsonDuration = JsonDuration(),
-  val contentLoadingTime: JsonDuration = JsonDuration(),
+  val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
+  val creatingIteratorsTime: JsonDuration = JsonDuration(),
   val scanFilesTime: JsonDuration = JsonDuration(),
   val pushPropertiesTime: JsonDuration = JsonDuration(),
   val indexExtensionsTime: JsonDuration = JsonDuration(),
+  val isAppliedAllValuesSeparately: Boolean = true,
+  val separateApplyingIndexesVisibleTime: JsonDuration = JsonDuration(),
 
   val updatingStart: JsonDateTime = JsonDateTime(),
   val updatingEnd: JsonDateTime = JsonDateTime(),

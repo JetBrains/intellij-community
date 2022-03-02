@@ -4,7 +4,7 @@ package com.jetbrains.python.testing.pytestLegacy;
 /**
  * @deprecated This class is here only because it is used by some plugins. It will be removed soon
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class PyTestConfigurationProducer {
   private PyTestConfigurationProducer() {
   }

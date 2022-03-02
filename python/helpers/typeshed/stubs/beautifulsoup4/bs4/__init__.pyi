@@ -1,8 +1,8 @@
 from _typeshed import Self, SupportsRead
-from typing import Any, Sequence, Type
+from typing import Any, Sequence
 
 from .builder import TreeBuilder
-from .element import PageElement, SoupStrainer, Tag
+from .element import PageElement, SoupStrainer as SoupStrainer, Tag as Tag
 from .formatter import Formatter
 
 class GuessedAtParserWarning(UserWarning): ...
@@ -23,11 +23,11 @@ class BeautifulSoup(Tag):
         self,
         markup: str | bytes | SupportsRead[str] | SupportsRead[bytes] = ...,
         features: str | Sequence[str] | None = ...,
-        builder: TreeBuilder | Type[TreeBuilder] | None = ...,
+        builder: TreeBuilder | type[TreeBuilder] | None = ...,
         parse_only: SoupStrainer | None = ...,
         from_encoding: str | None = ...,
         exclude_encodings: Sequence[str] | None = ...,
-        element_classes: dict[Type[PageElement], Type[Any]] | None = ...,
+        element_classes: dict[type[PageElement], type[Any]] | None = ...,
         **kwargs,
     ) -> None: ...
     def __copy__(self: Self) -> Self: ...

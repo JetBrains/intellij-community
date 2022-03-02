@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -58,7 +58,7 @@ public class DataPoint {
       VarType var = md.params[i];
 
       point.setVariable(k++, var);
-      if (var.stackSize == 2) {
+      if (var.getStackSize() == 2) {
         point.setVariable(k++, new VarType(CodeConstants.TYPE_GROUP2EMPTY));
       }
     }

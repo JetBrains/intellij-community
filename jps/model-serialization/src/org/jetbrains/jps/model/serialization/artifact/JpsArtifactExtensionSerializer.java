@@ -45,7 +45,7 @@ public abstract class JpsArtifactExtensionSerializer<E extends JpsElement> {
    * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public void saveExtension(@NotNull E extension, @NotNull Element optionsTag) {
   }
 }

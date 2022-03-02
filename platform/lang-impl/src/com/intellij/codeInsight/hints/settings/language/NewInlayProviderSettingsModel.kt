@@ -43,6 +43,7 @@ class NewInlayProviderSettingsModel<T : Any>(
   }
 
   override fun collectAndApply(editor: Editor, file: PsiFile) {
+    providerWithSettings.provider.preparePreview(editor, file, providerWithSettings.settings)
     providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.let { collectorWrapperFor ->
       ReadAction.nonBlocking {
         collectorWrapperFor.collectTraversingAndApplyOnEdt(editor, file, isEnabled)
@@ -59,6 +60,10 @@ class NewInlayProviderSettingsModel<T : Any>(
 
   override fun getCasePreview(case: ImmediateConfigurable.Case?): String? {
     return getCasePreview(providerWithSettings.language, providerWithSettings.provider, case)
+  }
+
+  override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language {
+    return providerWithSettings.language
   }
 
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {

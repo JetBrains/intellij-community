@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -56,7 +56,7 @@ class KotlinIndicesHelper(
 
     private val moduleDescriptor = resolutionFacade.moduleDescriptor
     private val project = resolutionFacade.project
-    private val scopeWithoutKotlin = scope.excludeKotlinSources() as GlobalSearchScope
+    private val scopeWithoutKotlin = scope.excludeKotlinSources(project) as GlobalSearchScope
 
     @OptIn(FrontendInternals::class)
     private val descriptorFilter: (DeclarationDescriptor) -> Boolean = filter@{

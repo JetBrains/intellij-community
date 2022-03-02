@@ -104,6 +104,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
                                           () -> logUi.getRefresher().onRefresh(), logUi::requestMore, disposable);
+    String vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.getProject(), logData.getLogProviders().values());
+    myGraphTable.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.table.accessible.name", vcsDisplayName));
+
     PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.POPUP_ACTION_GROUP, ActionPlaces.VCS_LOG_TABLE_PLACE);
 
     myDetailsPanel = new CommitDetailsListPanel(logData.getProject(), this, () -> {
@@ -118,6 +121,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCommitData(index);
     }, withEditorDiffPreview, this);
+    myChangesBrowser.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.changes.accessible.name"));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                                            ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
@@ -232,6 +236,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
+    String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
+    textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
 
     DefaultActionGroup rightCornerGroup =
       new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));

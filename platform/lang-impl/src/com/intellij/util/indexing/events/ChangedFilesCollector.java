@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -217,7 +218,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         Application app = ApplicationManager.getApplication();
         if (!app.isHeadlessEnvironment()  /*avoid synchronous ensureUpToDate to prevent deadlock*/ &&
             app.isDispatchThread() &&
-            !LaterInvocator.isInModalContext()) {
+            !LaterInvocator.isInModalContext() &&
+            !NoAccessDuringPsiEvents.isInsideEventProcessing()) {
           startDumbMode.run();
         }
         else {

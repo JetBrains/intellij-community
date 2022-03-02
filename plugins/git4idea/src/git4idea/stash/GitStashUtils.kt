@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitStashUtils")
 
 package git4idea.stash
@@ -37,6 +37,7 @@ import git4idea.commands.*
 import git4idea.config.GitConfigUtil
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT
 import git4idea.history.GitCommitRequirements.DiffRenameLimit.NoRenames
 import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
@@ -115,7 +116,7 @@ object GitStashOperations {
       ChangelistData(changes, null)
     }
 
-    ChangeListViewerDialog.show(project, GitBundle.message("unstash.view.dialog.title", stash.stash), panel)
+    ChangeListViewerDialog.show(project, GitBundle.message("unstash.view.dialog.title", stash.stash), panel, null, false)
   }
 
   @RequiresBackgroundThread
@@ -127,11 +128,11 @@ object GitStashOperations {
     val stashCommits = mutableListOf<GitCommit>()
     GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()) + parentHashes.map { it.asString() },
                                         GitCommitRequirements(true, // untracked changes commit has no parents
-                                                              diffInMergeCommits = DIFF_TO_PARENTS),
+                                                              diffInMergeCommits = FIRST_PARENT), // only changes to the branch head are needed
                                         Consumer { stashCommits.add(it) })
     if (stashCommits.isEmpty()) throw VcsException(GitBundle.message("stash.load.changes.error", root.name, hash.asString()))
     return Pair(stashCommits.first().getChanges(0), // returning changes to the branch head
-                stashCommits.subList(1, stashCommits.size))
+                stashCommits.drop(1))
   }
 
   @JvmStatic
@@ -272,7 +273,7 @@ private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : M
 }
 
 @Deprecated("use the simpler overloading method which returns a list")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<StashInfo>) {
   for (stash in loadStashStack(project, root)) {
     consumer.consume(stash)
@@ -281,7 +282,9 @@ fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<Stash
 
 @Throws(VcsException::class)
 fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
-  val options = arrayOf(GitLogOption.HASH, GitLogOption.PARENTS, GitLogOption.SHORT_REF_LOG_SELECTOR, GitLogOption.SUBJECT)
+  val options = arrayOf(GitLogOption.HASH, GitLogOption.PARENTS, GitLogOption.AUTHOR_TIME, GitLogOption.SHORT_REF_LOG_SELECTOR,
+                        GitLogOption.SUBJECT) // subject should be the last
+  val indexedOptions = options.withIndex().associate { Pair(it.value, it.index) }
   val charset = Charset.forName(GitConfigUtil.getLogEncoding(project, root))
 
   val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
@@ -299,19 +302,20 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
       continue
     }
 
-    val parents = parts[1].split(" ")
+    val parents = parts[indexedOptions.getValue(GitLogOption.PARENTS)].split(" ")
     if (parents.isEmpty()) {
       logger<GitUtil>().error("Can't parse stash record parents: ${line}")
       continue
     }
 
-    val hash = HashImpl.build(parts[0])
+    val hash = HashImpl.build(parts[indexedOptions.getValue(GitLogOption.HASH)])
     val parentHashes = parents.subList(1, parents.size).map { HashImpl.build(it) }
-    val stash = parts[2]
-    val branch = if (parts.size == options.size) null else parts[3].trim()
+    val authorTime = GitLogUtil.parseTime(parts[indexedOptions.getValue(GitLogOption.AUTHOR_TIME)])
+    val stash = parts[indexedOptions.getValue(GitLogOption.SHORT_REF_LOG_SELECTOR)]
+    val branch = if (parts.size == options.size) null else parts[indexedOptions.getValue(GitLogOption.SUBJECT)].trim()
     val message = parts.last().trim()
 
-    result.add(StashInfo(root, hash, parentHashes, stash, branch, message))
+    result.add(StashInfo(root, hash, parentHashes, authorTime, stash, branch, message))
   }
   return result
 }

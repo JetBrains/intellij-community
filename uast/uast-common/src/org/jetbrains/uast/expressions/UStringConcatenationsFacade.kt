@@ -133,7 +133,7 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
     }
 
     @JvmStatic
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("doesn't support concatenation for Kotlin", ReplaceWith("createFromUExpression"))
     fun create(context: PsiElement?): UStringConcatenationsFacade? {
       if (context == null || context !is PsiLanguageInjectionHost && context.firstChild !is PsiLanguageInjectionHost) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.util;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ public final class ExecutionErrorDialog {
     textArea.setEditable(false);
     textArea.setForeground(UIUtil.getLabelForeground());
     textArea.setBackground(UIUtil.getLabelBackground());
-    textArea.setFont(UIUtil.getLabelFont());
+    textArea.setFont(StartupUiUtil.getLabelFont());
     textArea.setText(message);
     textArea.setWrapStyleWord(false);
     textArea.setLineWrap(true);

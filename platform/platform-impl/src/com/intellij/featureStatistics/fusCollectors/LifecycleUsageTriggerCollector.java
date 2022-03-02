@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -27,7 +27,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 60);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 61);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -44,6 +44,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened");
   private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed");
   private static final EventId PROJECT_MODULE_ATTACHED = LIFECYCLE.registerEvent("project.module.attached");
+  private static final EventId PROTOCOL_OPEN_COMMAND_HANDLED = LIFECYCLE.registerEvent("protocol.open.command.handled");
   private static final EventId FRAME_ACTIVATED = LIFECYCLE.registerEvent("frame.activated");
   private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
   private static final EventField<String> DURATION_GROUPED = new DurationEventField();
@@ -108,6 +109,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void onProjectModuleAttached(@NotNull Project project) {
     PROJECT_MODULE_ATTACHED.log(project);
+  }
+
+  public static void onProtocolOpenCommandHandled(@Nullable Project project) {
+    PROTOCOL_OPEN_COMMAND_HANDLED.log(project);
   }
 
   public static void onFrameActivated(@Nullable Project project) {
@@ -195,7 +200,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     PROJECT_FRAME_SELECTED.log(optionValue);
   }
 
-  private static class DurationEventField extends PrimitiveEventField<String> {
+  private static final class DurationEventField extends PrimitiveEventField<String> {
     @NotNull
     @Override
     public List<String> getValidationRule() {

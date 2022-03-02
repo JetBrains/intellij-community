@@ -36,10 +36,18 @@ public abstract class CoverageViewExtension {
     myCoverageViewManager = CoverageViewManager.getInstance(myProject);
   }
 
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
   @Nullable
+  @Deprecated
   public abstract @Nls String getSummaryForNode(@NotNull AbstractTreeNode<?> node);
 
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
   @Nullable
+  @Deprecated
   public abstract @Nls String getSummaryForRootNode(@NotNull AbstractTreeNode<?> childNode);
 
   @Nullable

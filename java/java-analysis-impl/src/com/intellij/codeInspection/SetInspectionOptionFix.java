@@ -6,10 +6,9 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.ui.InspectionOptionContainer;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
-import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
@@ -103,9 +102,8 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
       InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, previewDescriptor.getPsiElement());
     if (tool == null) return IntentionPreviewInfo.EMPTY;
     JComponent panel = tool.getTool().createOptionsPanel();
-    if (!(panel instanceof InspectionOptionsPanel)) return IntentionPreviewInfo.EMPTY;
-    String label = ((InspectionOptionsPanel)panel).getLabelForCheckbox(myProperty);
-    if (label == null) return IntentionPreviewInfo.EMPTY;
+    if (!(panel instanceof InspectionOptionContainer)) return IntentionPreviewInfo.EMPTY;
+    HtmlChunk label = ((InspectionOptionContainer)panel).getLabelForCheckbox(myProperty);
     HtmlChunk.Element checkbox = HtmlChunk.tag("input").attr("type", "checkbox").attr("readonly", "true");
     if (myValue) {
       checkbox = checkbox.attr("checked", "true");
@@ -113,7 +111,7 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
     HtmlChunk info = HtmlChunk.tag("table")
       .child(HtmlChunk.tag("tr").children(
         HtmlChunk.tag("td").child(checkbox),
-        HtmlChunk.tag("td").addText(label)
+        HtmlChunk.tag("td").child(label)
       ));
     return new IntentionPreviewInfo.Html(
       new HtmlBuilder().append(myValue ? QuickFixBundle.message("set.inspection.option.description.check")

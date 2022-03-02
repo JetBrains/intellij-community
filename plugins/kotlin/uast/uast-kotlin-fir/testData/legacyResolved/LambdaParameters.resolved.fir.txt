@@ -1,0 +1,5 @@
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = buildString) -> FUN: buildString
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:append) -> USimpleNameReferenceExpression (identifier = append) -> PsiMethod:append: append
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = let) -> FUN: let
+        UReturnExpression -> USimpleNameReferenceExpression (identifier = it) -> FUNCTION_LITERAL: <anonymous>

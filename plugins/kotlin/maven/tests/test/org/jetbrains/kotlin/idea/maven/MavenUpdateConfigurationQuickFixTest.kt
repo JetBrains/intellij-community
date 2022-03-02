@@ -21,7 +21,7 @@ import java.io.File
 import kotlin.reflect.KMutableProperty0
 
 @RunWith(JUnit38ClassRunner::class)
-class MavenUpdateConfigurationQuickFixTest : KotlinMavenImportingTestCase() {
+class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
 
     private fun getTestDataPath(): String {

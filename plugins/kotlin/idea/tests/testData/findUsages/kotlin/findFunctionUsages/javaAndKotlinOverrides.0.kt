@@ -38,3 +38,5 @@ open class B : A<String>() {
         a.foo(0, "")
     }
 }
+
+// FIR_COMPARISON

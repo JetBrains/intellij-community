@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.diagnostic.LoadingState;
@@ -46,12 +46,12 @@ public final class MacOSApplicationProvider {
 
   private MacOSApplicationProvider() { }
 
-  public static void initApplication() {
+  public static void initApplication(Logger log) {
     try {
       Worker.initMacApplication();
     }
     catch (Throwable t) {
-      LOG.warn(t);
+      log.warn(t);
     }
   }
 
@@ -87,7 +87,9 @@ public final class MacOSApplicationProvider {
 
       desktop.setOpenFileHandler(event -> {
         List<File> files = event.getFiles();
-        if (files.isEmpty()) return;
+        if (files.isEmpty()) {
+          return;
+        }
 
         List<Path> list = ContainerUtil.map(files, file -> file.toPath());
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {

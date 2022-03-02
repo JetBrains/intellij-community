@@ -51,6 +51,7 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_INSERT_MODE = "insertMode";
   @NonNls String PROP_COLUMN_MODE = "columnMode";
   @NonNls String PROP_FONT_SIZE = "fontSize";
+  @NonNls String PROP_FONT_SIZE_2D = "fontSize2D";
   @NonNls String PROP_ONE_LINE_MODE = "oneLineMode";
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
@@ -157,6 +158,10 @@ public interface EditorEx extends Editor {
   boolean processKeyTyped(@NotNull KeyEvent e);
 
   void setFontSize(int fontSize);
+
+  default void setFontSize(float fontSize) {
+    setFontSize((int)(fontSize + 0.5));
+  }
 
   @NotNull
   Color getBackgroundColor();

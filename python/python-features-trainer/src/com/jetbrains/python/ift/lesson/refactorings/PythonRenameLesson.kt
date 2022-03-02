@@ -60,13 +60,13 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
     var dynamicItem: String? = null
     task("RenameElement") {
       text(PythonLessonsBundle.message("python.rename.press.rename", action(it), code("teams"), code("teams_number")))
-      triggerByUiComponentAndHighlight(false, false) { ui: NameSuggestionsField ->
+      triggerUI().component { ui: NameSuggestionsField ->
         ui.addDataChangedListener {
           replace = ui.enteredName
         }
         true
       }
-      triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
+      triggerAndBorderHighlight().treeItem { _: JTree, path: TreePath ->
         val pathStr = path.getPathComponent(1).toString()
         if (path.pathCount == 2 && pathStr.contains(dynamicWord)) {
           dynamicItem = pathStr
@@ -94,7 +94,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       text(PythonLessonsBundle.message("python.rename.expand.dynamic.references",
                                        code("teams"), strong(dynamicReferencesString)))
 
-      triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
+      triggerAndBorderHighlight().treeItem { _: JTree, path: TreePath ->
         path.pathCount == 6 && path.getPathComponent(5).isToStringContains("company_members")
       }
       showWarningIfFindToolbarClosed()
@@ -138,7 +138,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
 
     val confirmRefactoringButton = RefactoringBundle.message("usageView.doAction").dropMnemonic()
     task {
-      triggerByUiComponentAndHighlight(highlightInside = false) { button: JButton ->
+      triggerAndBorderHighlight().component { button: JButton ->
         button.text.isToStringContains(confirmRefactoringButton)
       }
     }

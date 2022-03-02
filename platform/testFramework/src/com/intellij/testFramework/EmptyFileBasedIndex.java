@@ -1,16 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
+import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +25,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 public final class EmptyFileBasedIndex extends FileBasedIndexEx {
+  private static final Logger LOG = Logger.getInstance(EmptyFileBasedIndex.class);
+
   @Override
   public void registerProjectFileSets(@NotNull Project project) {
   }
@@ -31,18 +36,28 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
+  public @Nullable VirtualFile findFileById(int id) {
+    return PersistentFS.getInstance().findFileByIdIfCached(id);
+  }
+
+  @Override
+  public @NotNull Logger getLogger() {
+    return LOG;
+  }
+
+  @Override
   public @Nullable VirtualFile getFileBeingCurrentlyIndexed() {
+    return null;
+  }
+
+  @Override
+  public @Nullable IndexWritingFile getFileWritingCurrentlyIndexes() {
     return null;
   }
 
   @Override
   public VirtualFile findFileById(Project project, int id) {
     return null;
-  }
-
-  @Override
-  public void requestRebuild(@NotNull ID<?, ?> indexId) {
-    super.requestRebuild(indexId);
   }
 
   @Override
@@ -67,16 +82,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
-                                      @NotNull K dataKey,
-                                      @Nullable VirtualFile inFile,
-                                      @NotNull ValueProcessor<? super V> processor,
-                                      @NotNull GlobalSearchScope filter,
-                                      @Nullable IdFilter idFilter) {
-    return super.processValues(indexId, dataKey, inFile, processor, filter, idFilter);
-  }
-
-  @Override
   public <K, V> long getIndexModificationStamp(@NotNull ID<K, V> indexId, @NotNull Project project) {
     return 0;
   }
@@ -87,6 +92,16 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
                                                       @NotNull GlobalSearchScope filter,
                                                       @Nullable Condition<? super V> valueChecker,
                                                       @NotNull Processor<? super VirtualFile> processor) {
+    return true;
+  }
+
+  @Override
+  public <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                     @NotNull Collection<? extends K> dataKeys,
+                                                     @NotNull GlobalSearchScope filter,
+                                                     @Nullable IdFilter idFilter,
+                                                     @Nullable Condition<? super V> valueChecker,
+                                                     @NotNull Processor<? super VirtualFile> processor) {
     return true;
   }
 
@@ -129,14 +144,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId,
-                                    @NotNull Processor<? super K> processor,
-                                    @NotNull GlobalSearchScope scope,
-                                    @Nullable IdFilter idFilter) {
-    return super.processAllKeys(indexId, processor, scope, idFilter);
-  }
-
-  @Override
   public @NotNull <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
     return Collections.emptyMap();
   }
@@ -175,11 +182,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
 
   @NotNull
   @Override
-  public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
+  public <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId) {
     return EmptyIndex.getInstance();
   }
 
-  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent> {
+  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, UpdatableIndex.EmptyData> {
     @SuppressWarnings("rawtypes")
     private static final EmptyIndex INSTANCE = new EmptyIndex();
     private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -205,6 +212,21 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     @Override
     public @NotNull Map<Key, Value> getIndexedFileData(int fileId) {
       return Collections.emptyMap();
+    }
+
+    @Override
+    public @NotNull UpdatableIndex.EmptyData instantiateFileData() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void writeData(@NotNull UpdatableIndex.EmptyData unused, @NotNull IndexedFile file) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setIndexedStateForFileOnCachedData(int fileId, @NotNull UpdatableIndex.EmptyData unused) {
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -270,6 +292,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
 
     @Override
     public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
       throw new UnsupportedOperationException();
     }
 

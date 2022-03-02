@@ -8,36 +8,50 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.CompilerSettings
-import org.jetbrains.kotlin.config.additionalArgumentsAsList
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
-import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
 import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.fqNameIsExisting
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.projectStructure.module
+import org.jetbrains.kotlin.idea.versions.fromString
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.checkers.ExperimentalUsageChecker
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
+/**
+ * A quick fix that adds an opt-in compiler argument to the current module configuration facet (JPS only).
+ */
 open class MakeModuleExperimentalFix(
     file: KtFile,
     private val module: Module,
-    private val annotationFqName: FqName
+    annotationFqName: FqName
 ) : KotlinQuickFixAction<KtFile>(file) {
-    private val experimentalPrefix = if (module.toDescriptor()?.fqNameIsExisting(ExperimentalUsageChecker.REQUIRES_OPT_IN_FQ_NAME) == true)
-        "opt-in"
-    else
-        "use-experimental"
+
+    // The actual name of the opt-in compiler argument depends on the Kotlin compiler version
+    // `-opt-in` (since Kotlin 1.6) https://youtrack.jetbrains.com/issue/KT-47099
+    // `-Xopt-in` (before Kotlin 1.6) https://blog.jetbrains.com/kotlin/2020/03/kotlin-1-3-70-released/
+    // `-Xuse-experimental` (before Kotlin 1.3.70), a fallback if `RequireOptIn` annotation does not exist
+
+    private val kotlinCompilerVersion =
+        KotlinVersion.fromString(KotlinPluginLayout.instance.standaloneCompilerVersion) ?: KotlinVersion.CURRENT
+
+    private val experimentalPrefix = when {
+        module.toDescriptor()?.fqNameIsExisting(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == false -> "-Xuse-experimental"
+        kotlinCompilerVersion.isAtLeast(1, 6, 0) -> "-opt-in"
+        else -> "-Xopt-in"
+    }
+
+    private val compilerArgument = "$experimentalPrefix=$annotationFqName"
 
     override fun getText(): String = KotlinBundle.message("add.0.to.module.1.compiler.arguments", compilerArgument, module.name)
 
     override fun getFamilyName(): String = KotlinBundle.message("add.an.opt.in.requirement.marker.compiler.argument")
-
-    private val compilerArgument = "-X$experimentalPrefix=$annotationFqName"
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
@@ -58,17 +72,9 @@ open class MakeModuleExperimentalFix(
     }
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        if (module.getBuildSystemType() != BuildSystemType.JPS) return false
-        val facet = KotlinFacet.get(module) ?: return true
-        val facetSettings = facet.configuration.settings
-        val compilerSettings = facetSettings.compilerSettings ?: return true
-        return if (annotationFqName != ExperimentalUsageChecker.REQUIRES_OPT_IN_FQ_NAME && annotationFqName != ExperimentalUsageChecker.OLD_EXPERIMENTAL_FQ_NAME) {
-            compilerArgument !in compilerSettings.additionalArgumentsAsList
-        } else {
-            compilerSettings.additionalArgumentsAsList.none {
-                it.startsWith("-Xopt-in=") || it.startsWith("-Xuse-experimental=") || it.startsWith("-Xexperimental=")
-            }
-        }
+        // This fix can be used for JPS only as it changes facet settings,
+        // and Gradle and Maven facets are reset when the project is reloaded.
+        return module.getBuildSystemType() == BuildSystemType.JPS
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -78,9 +84,9 @@ open class MakeModuleExperimentalFix(
             return MakeModuleExperimentalFix(
                 containingKtFile,
                 module,
-                ExperimentalUsageChecker.REQUIRES_OPT_IN_FQ_NAME.takeIf {
+                OptInNames.REQUIRES_OPT_IN_FQ_NAME.takeIf {
                     module.toDescriptor()?.fqNameIsExisting(it) == true
-                } ?: ExperimentalUsageChecker.OLD_EXPERIMENTAL_FQ_NAME
+                } ?: OptInNames.OLD_EXPERIMENTAL_FQ_NAME
             )
         }
     }

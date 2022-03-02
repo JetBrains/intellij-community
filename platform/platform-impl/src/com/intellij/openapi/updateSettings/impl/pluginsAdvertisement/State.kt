@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceGetOrSet")
+
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -15,16 +17,16 @@ import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
-import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
+import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.mapSmartSet
-import com.intellij.util.xmlb.annotations.Tag
-import com.intellij.util.xmlb.annotations.XMap
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -36,38 +38,19 @@ data class PluginAdvertiserExtensionsData(
   val plugins: Set<PluginData> = emptySet(),
 )
 
-@State(
-  name = "PluginAdvertiserExtensions",
-  storages = [Storage(StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED)]
-)
+@State(name = "PluginAdvertiserExtensions", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.APP)
-class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<PluginAdvertiserExtensionsStateService.State>(
+class PluginAdvertiserExtensionsStateService : SerializablePersistentStateComponent<PluginAdvertiserExtensionsStateService.State>(
   State()
 ) {
+  private val tracker = SimpleModificationTracker()
 
-  @Tag("pluginAdvertiserExtensions")
-  class State : BaseState() {
+  @Serializable
+  data class State(val plugins: MutableMap<String, PluginData> = HashMap())
 
-    @get:XMap
-    val plugins by linkedMap<String, PluginData>()
-
-    operator fun set(fileNameOrExtension: String, descriptor: PluginDescriptor) {
-      plugins[fileNameOrExtension] = PluginData(descriptor)
-
-      // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
-      // so, mod count will be not incremented too often
-      incrementModificationCount()
-    }
-
-    operator fun get(fileNameOrExtension: String): PluginAdvertiserExtensionsData? {
-      return plugins[fileNameOrExtension]?.let {
-        PluginAdvertiserExtensionsData(fileNameOrExtension, setOf(it))
-      }
-    }
-  }
+  override fun getStateModificationCount() = tracker.modificationCount
 
   companion object {
-
     private val LOG = logger<PluginAdvertiserExtensionsStateService>()
 
     @JvmStatic
@@ -138,7 +121,11 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
   fun createExtensionDataProvider(project: Project) = ExtensionDataProvider(project)
 
   fun registerLocalPlugin(matcher: FileNameMatcher, descriptor: PluginDescriptor) {
-    state[matcher.presentableString] = descriptor
+    state.plugins.put(matcher.presentableString, PluginData(descriptor))
+
+    // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
+    // so, mod count will be not incremented too often
+    tracker.incModificationCount()
   }
 
   @RequiresBackgroundThread
@@ -148,17 +135,13 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       return false
     }
 
-    val knownExtensions = PluginFeatureCacheService.instance.extensions
+    val knownExtensions = PluginFeatureCacheService.getInstance().extensions
     if (knownExtensions == null) {
       LOG.debug("No known extensions loaded")
       return false
     }
 
-    val compatiblePlugins = requestCompatiblePlugins(
-      extensionOrFileName,
-      knownExtensions[extensionOrFileName]
-    )
-
+    val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
     updateCache(extensionOrFileName, compatiblePlugins)
     return true
   }
@@ -183,6 +166,12 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       cache.invalidate(extensionOrFileName)
     }
 
+    private fun getByFilenameOrExt(fileNameOrExtension: String): PluginAdvertiserExtensionsData? {
+      return state.plugins[fileNameOrExtension]?.let {
+        PluginAdvertiserExtensionsData(fileNameOrExtension, setOf(it))
+      }
+    }
+
     fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserExtensionsData? {
       val fullExtension = getFullExtension(fileName)
       if (fullExtension != null && isIgnored(fullExtension)) {
@@ -200,17 +189,17 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
 
       // Check if there's a plugin matching the exact file name
 
-      state[fileName]?.let {
+      getByFilenameOrExt(fileName)?.let {
         return it
       }
 
-      val knownExtensions = PluginFeatureCacheService.instance.extensions
+      val knownExtensions = PluginFeatureCacheService.getInstance().extensions
       if (knownExtensions == null) {
         LOG.debug("No known extensions loaded")
         return null
       }
 
-      val plugin = findEnabledPlugin(knownExtensions[fileName].map { it.pluginIdString }.toSet())
+      val plugin = findEnabledPlugin(knownExtensions.get(fileName).mapTo(HashSet()) { it.pluginIdString })
       if (plugin != null) {
         // Plugin supporting the exact file name is installed and enabled, no advertiser is needed
         return null
@@ -220,7 +209,7 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       if (pluginsForExactFileName != null && pluginsForExactFileName.plugins.isNotEmpty()) {
         return pluginsForExactFileName
       }
-      if (knownExtensions[fileName].isNotEmpty()) {
+      if (knownExtensions.get(fileName).isNotEmpty()) {
         // there is a plugin that can support the exact file name, but we don't know a compatible version,
         // return null to force request to update cache
         return null
@@ -228,13 +217,13 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
 
       // Check if there's a plugin matching the extension
 
-      fullExtension?.let { state[it] }?.let {
+      fullExtension?.let { getByFilenameOrExt(it) }?.let {
         return it
       }
 
       if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
         return fullExtension?.let { cache.getIfPresent(it) }
-               ?: if (fullExtension?.let { knownExtensions[it] }?.isNotEmpty() == true) {
+               ?: if (fullExtension?.let { knownExtensions.get(it) }?.isNotEmpty() == true) {
                  // there is a plugin that can support the file type, but we don't know a compatible version,
                  // return null to force request to update cache
                  null

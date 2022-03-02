@@ -12,110 +12,88 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
-abstract class GradleConfiguratorPlatformSpecificTest : KotlinGradleImportingTestCase() {
-    class EnableFeatureSupportMultiplatform : GradleConfiguratorPlatformSpecificTest() {
-        @TargetVersions("4.7+")
-        @Test
-        fun testEnableFeatureSupportMultiplatform() = doTestEnableFeatureSupportMultiplatform()
-    }
+class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() {
+    @TargetVersions("4.7+")
+    @Test
+    fun testEnableFeatureSupportMultiplatform() = doTestEnableFeatureSupportMultiplatform()
 
-    class EnableFeatureSupportMultiplatformWithXFlag : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testEnableFeatureSupportMultiplatformWithXFlag() = doTestEnableFeatureSupportMultiplatform()
-    }
+    @Test
+    @TargetVersions("4.7+")
+    fun testEnableFeatureSupportMultiplatformWithXFlag() = doTestEnableFeatureSupportMultiplatform()
 
-    class EnableFeatureSupportMultiplatform2 : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testEnableFeatureSupportMultiplatform2() {
-            val files = importProjectFromTestData()
+    @Test
+    @TargetVersions("4.7+")
+    fun testEnableFeatureSupportMultiplatform2() {
+        val files = importProjectFromTestData()
 
-            runInEdtAndWait {
-                myTestFixture.project.executeWriteCommand("") {
-                    KotlinWithGradleConfigurator.changeFeatureConfiguration(
-                        myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
-                    )
-                }
-
-                checkFiles(files)
+        runInEdtAndWait {
+            myTestFixture.project.executeWriteCommand("") {
+                KotlinWithGradleConfigurator.changeFeatureConfiguration(
+                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
+                )
             }
+
+            checkFiles(files)
         }
     }
 
-    class EnableFeatureSupportMultiplatformToExistentArguments : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testEnableFeatureSupportMultiplatformToExistentArguments() {
-            val files = importProjectFromTestData()
+    @Test
+    @TargetVersions("4.7+")
+    fun testEnableFeatureSupportMultiplatformToExistentArguments() {
+        val files = importProjectFromTestData()
 
-            runInEdtAndWait {
-                myTestFixture.project.executeWriteCommand("") {
-                    KotlinWithGradleConfigurator.changeFeatureConfiguration(
-                        myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
-                    )
-                }
-
-                checkFiles(files)
+        runInEdtAndWait {
+            myTestFixture.project.executeWriteCommand("") {
+                KotlinWithGradleConfigurator.changeFeatureConfiguration(
+                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
+                )
             }
+
+            checkFiles(files)
         }
     }
 
-    class EnableFeatureSupportMultiplatformKts : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testEnableFeatureSupportMultiplatformKts() {
-            val files = importProjectFromTestData()
+    @Test
+    @TargetVersions("4.7+")
+    fun testEnableFeatureSupportMultiplatformKts() {
+        val files = importProjectFromTestData()
 
-            runInEdtAndWait {
-                myTestFixture.project.executeWriteCommand("") {
-                    KotlinWithGradleConfigurator.changeFeatureConfiguration(
-                        myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
-                    )
-                }
-
-                checkFiles(files)
+        runInEdtAndWait {
+            myTestFixture.project.executeWriteCommand("") {
+                KotlinWithGradleConfigurator.changeFeatureConfiguration(
+                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
+                )
             }
+
+            checkFiles(files)
         }
     }
 
-    class AddLibraryMultiplatform : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testAddLibraryMultiplatform() = doTestAddLibrary()
-    }
+    @Test
+    @TargetVersions("4.7+")
+    fun testAddLibraryMultiplatform() = doTestAddLibrary()
 
-    class AddLibraryMultiplatformGSK : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testAddLibraryMultiplatformGSK() = doTestAddLibrary()
-    }
+    @Test
+    @TargetVersions("4.7+")
+    fun testAddLibraryMultiplatformGSK() = doTestAddLibrary()
 
-    class AddLibraryMultiplatformGSK2 : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testAddLibraryMultiplatformGSK2() = doTestAddLibrary()
-    }
+    @Test
+    @TargetVersions("4.7+")
+    fun testAddLibraryMultiplatformGSK2() = doTestAddLibrary()
 
-    class AddLibraryMultiplatformGSK3 : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testAddLibraryMultiplatformGSK3() = doTestAddLibrary()
-    }
+    @Test
+    @TargetVersions("4.7+")
+    fun testAddLibraryMultiplatformGSK3() = doTestAddLibrary()
 
-    class AddLibraryMultiplatformGSK4 : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testAddLibraryMultiplatformGSK4() = doTestAddLibrary()
-    }
+    @Test
+    @TargetVersions("4.7+")
+    fun testAddLibraryMultiplatformGSK4() = doTestAddLibrary()
 
-    class AddLibraryMultiplatformGSK5 : GradleConfiguratorPlatformSpecificTest() {
-        @Test
-        @TargetVersions("4.7+")
-        fun testAddLibraryMultiplatformGSK5() = doTestAddLibrary()
-    }
+    @Test
+    @TargetVersions("4.7+")
+    fun testAddLibraryMultiplatformGSK5() = doTestAddLibrary()
 
-    protected fun doTestAddLibrary() {
+    private fun doTestAddLibrary() {
         val files = importProjectFromTestData()
 
         runInEdtAndWait {
@@ -134,7 +112,7 @@ abstract class GradleConfiguratorPlatformSpecificTest : KotlinGradleImportingTes
         }
     }
 
-    protected fun doTestEnableFeatureSupportMultiplatform() {
+    private fun doTestEnableFeatureSupportMultiplatform() {
         val files = importProjectFromTestData()
 
         runInEdtAndWait {

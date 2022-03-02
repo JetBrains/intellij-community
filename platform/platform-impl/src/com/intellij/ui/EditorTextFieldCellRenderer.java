@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -35,7 +35,6 @@ import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +55,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   private final boolean myInheritFontFromLaF;
 
   /** @deprecated Use {@link EditorTextFieldCellRenderer#EditorTextFieldCellRenderer(Project, Language, Disposable)}*/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
     this(project, fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType), true, parent);
   }
@@ -180,7 +178,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
                                 : colorsScheme.getDefaultBackground());
       if (inheritFontFromLaF) {
         ((EditorImpl)editor).setUseEditorAntialiasing(false);
-        Font font = UIUtil.getLabelFont();
+        Font font = StartupUiUtil.getLabelFont();
         colorsScheme.setEditorFontName(font.getFontName());
         colorsScheme.setEditorFontSize(font.getSize());
       }

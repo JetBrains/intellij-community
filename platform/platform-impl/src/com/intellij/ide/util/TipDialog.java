@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.GotItTooltipService;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +80,7 @@ public final class TipDialog extends DialogWrapper {
   public static boolean canBeShownAutomaticallyNow(@NotNull Project project) {
     if (!GeneralSettings.getInstance().isShowTipsOnStartup() ||
         DISABLE_TIPS_FOR_PROJECT.get(project, false) ||
+        GotItTooltipService.Companion.getInstance().isFirstRun() ||
         (ourInstance != null && ourInstance.isVisible())) {
       return false;
     }

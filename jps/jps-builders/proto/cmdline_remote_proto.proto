@@ -66,6 +66,7 @@ message Message {
       repeated TargetTypeBuildScope scope = 4;
       repeated string file_path = 5;
       repeated KeyValuePair builder_parameter = 6;
+      optional CacheDownloadSettings cache_download_settings = 7;
     }
 
     message ConstantSearchResult {
@@ -73,6 +74,15 @@ message Message {
       required string field_name = 2;
       required bool is_success = 3;
       repeated string path = 4;
+    }
+
+    message CacheDownloadSettings {
+      map<string, string> auth_headers = 1;
+      required string download_commit = 2;
+      required int32 commits_count_latest_build = 3;
+      required string server_url = 4;
+      required int64 decompression_speed = 5;
+      required int64 deletion_speed = 6;
     }
 
     required Type type = 1;
@@ -87,6 +97,9 @@ message Message {
       BUILD_EVENT = 2;
       COMPILE_MESSAGE = 3;
       CONSTANT_SEARCH_TASK = 4;
+      CACHE_DOWNLOAD_MESSAGE = 5;
+      SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE = 6;
+      SAVE_LATEST_BUILT_COMMIT_MESSAGE = 7;
     }
 
     message BuildEvent {
@@ -151,10 +164,23 @@ message Message {
       optional bool is_field_removed = 5  [default = false];
     }
 
+    message CacheDownloadMessage {
+      required string description_text = 2;
+      optional float  done = 9;
+    }
+
+    message CommitAndDownloadStatistics {
+      required string commit = 1;
+      optional int64 decompression_speed = 2;
+      optional int64 deletion_speed = 3;
+    }
+
     required Type type = 1;
     optional BuildEvent build_event = 2;
     optional CompileMessage compile_message = 3;
     optional ConstantSearchTask constant_search_task = 4;
+    optional CacheDownloadMessage cache_download_message = 5;
+    optional CommitAndDownloadStatistics commit_and_download_statistics = 6;
   }
 
   required UUID session_id = 1;

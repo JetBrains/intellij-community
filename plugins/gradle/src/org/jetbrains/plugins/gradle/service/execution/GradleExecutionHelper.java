@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -24,10 +24,12 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -36,6 +38,7 @@ import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -43,10 +46,12 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleProperties;
+import org.jetbrains.plugins.gradle.util.GradlePropertiesUtil;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.awt.geom.IllegalPathStateException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -59,6 +64,8 @@ import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
+import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
+import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY;
 
 /**
  * @author Denis Zhdanov
@@ -239,6 +246,11 @@ public class GradleExecutionHelper {
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+      try {
+        // if autoimport is active, it should be notified of new files creation as early as possible,
+        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
+        VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(projectPath, "gradle").toFile());
+      } catch (IllegalPathStateException ignore) {}
     }
   }
 
@@ -374,15 +386,7 @@ public class GradleExecutionHelper {
       settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
 
-    final Application application = ApplicationManager.getApplication();
-    if (application != null && application.isUnitTestMode()) {
-      var arguments = settings.getArguments();
-      var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
-      var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
-      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
-        settings.withArgument("--info");
-      }
-    }
+    setupLogging(settings, buildEnvironment);
 
     List<String> filteredArgs = new ArrayList<>();
     if (!settings.getArguments().isEmpty()) {
@@ -434,18 +438,61 @@ public class GradleExecutionHelper {
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     if (forTestLauncher) {
       operation.addProgressListener(gradleProgressListener,
+                                    OperationType.FILE_DOWNLOAD,
                                     OperationType.TASK,
                                     OperationType.TEST,
                                     OperationType.TEST_OUTPUT);
     } else {
       operation.addProgressListener(gradleProgressListener,
-                                    OperationType.TASK);
+                                    OperationType.TASK,
+                                    OperationType.FILE_DOWNLOAD);
     }
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
     if (inputStream != null) {
       operation.setStandardInput(inputStream);
+    }
+  }
+
+  private static void setupLogging(@NotNull GradleExecutionSettings settings,
+                                   @Nullable BuildEnvironment buildEnvironment) {
+    var arguments = settings.getArguments();
+    var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
+    var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
+
+    // workaround for https://github.com/gradle/gradle/issues/19340
+    // when using TAPI, user-defined log level option in gradle.properties is ignored by Gradle.
+    // try to read this file manually and apply log level explicitly
+    if (buildEnvironment == null) {
+      return;
+    }
+    GradleProperties properties = GradlePropertiesUtil.getGradleProperties(settings.getServiceDirectory(),
+                                                                           buildEnvironment.getBuildIdentifier().getRootDir().toPath());
+    GradleProperties.GradleProperty<String> loggingLevelProperty = properties.getGradleLoggingLevel();
+    @NonNls String gradleLogLevel = loggingLevelProperty != null ? loggingLevelProperty.getValue() : null;
+
+    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
+        && gradleLogLevel != null) {
+          try {
+            LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
+            switch(logLevel) {
+              case DEBUG: settings.withArgument("-d"); break;
+              case INFO: settings.withArgument("-i"); break;
+              case WARN: settings.withArgument("-w"); break;
+              case QUIET: settings.withArgument("-q"); break;
+            }
+          } catch (IllegalArgumentException e) {
+            LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
+          }
+    }
+
+    // Default logging level for integration tests
+    final Application application = ApplicationManager.getApplication();
+    if (application != null && application.isUnitTestMode()) {
+      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+        settings.withArgument("--info");
+      }
     }
   }
 
@@ -611,6 +658,19 @@ public class GradleExecutionHelper {
       }
       return false;
     });
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static Map<String, String> getConfigurationInitScripts(@NonNls GradleRunConfiguration configuration) {
+    final String initScript = configuration.getUserData(INIT_SCRIPT_KEY);
+    if (StringUtil.isNotEmpty(initScript)) {
+      String prefix = Objects.requireNonNull(configuration.getUserData(INIT_SCRIPT_PREFIX_KEY), "init script file prefix is required");
+      Map<String, String> map = new LinkedHashMap<>();
+      map.put(prefix, initScript);
+      return map;
+    }
+    return Collections.emptyMap();
   }
 
   @ApiStatus.Internal

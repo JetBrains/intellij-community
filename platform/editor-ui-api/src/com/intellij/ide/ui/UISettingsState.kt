@@ -9,7 +9,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import javax.swing.SwingConstants
-import kotlin.math.roundToInt
 
 class UISettingsState : BaseState() {
   companion object {
@@ -19,8 +18,8 @@ class UISettingsState : BaseState() {
      * @return the default scaled font size
      */
     @JvmStatic
-    val defFontSize: Int
-      get() = (JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale).roundToInt()
+    val defFontSize: Float
+      get() = JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale
   }
 
   @get:OptionTag("FONT_FACE")
@@ -208,6 +207,9 @@ class UISettingsState : BaseState() {
   var pinFindInPath by property(false)
   @get:OptionTag("SHOW_INPLACE_COMMENTS")
   var showInplaceComments by property(false)
+
+  @get:OptionTag("SHOW_VISUAL_FORMATTING_LAYER")
+  var showVisualFormattingLayer by property(false)
 
   @Suppress("FunctionName")
   fun _incrementModificationCount() = incrementModificationCount()

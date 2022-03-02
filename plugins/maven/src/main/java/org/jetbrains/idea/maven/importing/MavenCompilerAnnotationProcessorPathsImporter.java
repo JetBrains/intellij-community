@@ -6,9 +6,11 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -102,8 +104,15 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
       }
     }
 
-    List<MavenArtifact> annotationProcessors = embedder.resolveTransitively(externalArtifacts, mavenProject.getRemoteRepositories());
-    mavenProject.addAnnotationProcessors(annotationProcessors);
+    try {
+      List<MavenArtifact> annotationProcessors = embedder.resolveTransitively(externalArtifacts, mavenProject.getRemoteRepositories());
+      mavenProject.addAnnotationProcessors(annotationProcessors);
+    }
+    catch (Exception e) {
+      String message = e.getMessage() != null ? e.getMessage() : ExceptionUtil.getThrowableText(e);
+      MavenProjectsManager.getInstance(project).getSyncConsole()
+        .addWarning(SyncBundle.message("maven.sync.annotation.processor.problem"), message);
+    }
   }
 
   @NotNull

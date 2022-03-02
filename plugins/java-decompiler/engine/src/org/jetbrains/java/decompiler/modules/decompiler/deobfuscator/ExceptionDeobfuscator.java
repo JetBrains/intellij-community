@@ -13,7 +13,6 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -42,7 +41,7 @@ public final class ExceptionDeobfuscator {
     for (ExceptionRangeCFG range : graph.getExceptions()) {
       boolean found = false;
       for (Range arr : lstRanges) {
-        if (arr.handler == range.getHandler() && InterpreterUtil.equalObjects(range.getUniqueExceptionsString(), arr.uniqueStr)) {
+        if (arr.handler == range.getHandler() && Objects.equals(range.getUniqueExceptionsString(), arr.uniqueStr)) {
           arr.protectedRange.addAll(range.getProtectedRange());
           found = true;
           break;

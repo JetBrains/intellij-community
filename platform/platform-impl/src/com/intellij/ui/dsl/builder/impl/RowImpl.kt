@@ -7,9 +7,11 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -24,10 +26,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.components.DslLabel
-import com.intellij.ui.dsl.builder.components.DslLabelType
-import com.intellij.ui.dsl.builder.components.SegmentedButtonAction
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.ui.dsl.builder.components.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
@@ -90,17 +89,24 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
+  override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): Row {
+    this.rowComment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+    return this
+  }
+
   override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int, action: HyperlinkEventAction): RowImpl {
     this.rowComment = createComment(comment, maxLineLength, action)
     return this
   }
 
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
-    return cell(component, viewComponent, null)
+    val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
+    cells.add(result)
+    return result
   }
 
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
-    return cell(component, component, null)
+    return cell(component, component)
   }
 
   override fun cell() {
@@ -108,7 +114,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
-    return cell(component, JBScrollPane(component), null)
+    return cell(component, JBScrollPane(component))
   }
 
   fun cell(cell: CellBaseImpl<*>) {
@@ -178,7 +184,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
-    val result = PanelImpl(dialogPanelConfig, this)
+    val result = PanelImpl(dialogPanelConfig, parent.spacingConfiguration, this)
     result.init()
     cells.add(result)
     return result
@@ -186,6 +192,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun checkBox(@NlsContexts.Checkbox text: String): CellImpl<JBCheckBox> {
     return cell(JBCheckBox(text))
+  }
+
+  override fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton> {
+    return radioButton(text, null)
   }
 
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
@@ -211,21 +221,36 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun actionButton(action: AnAction, actionPlace: String): Cell<ActionButton> {
-    val component = ActionButton(action, action.templatePresentation, actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    val component = ActionButton(action, action.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     return cell(component)
   }
 
   override fun actionsButton(vararg actions: AnAction, actionPlace: String, icon: Icon): Cell<ActionButton> {
     val actionGroup = PopupActionGroup(arrayOf(*actions))
     actionGroup.templatePresentation.icon = icon
-    return cell(ActionButton(actionGroup, actionGroup.templatePresentation, actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
+    return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, property, renderer(it)) })
-    val toolbar = SegmentedButtonToolbar(actionGroup, true, dialogPanelConfig.spacing)
+    val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     return cell(toolbar)
+  }
+
+  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String): SegmentedButton<T> {
+    val result = SegmentedButtonImpl(this, renderer)
+    result.items(items)
+    cells.add(result)
+    return result
+  }
+
+  override fun tabbedPaneHeader(items: Collection<String>): Cell<JBTabbedPane> {
+    val tabbedPaneHeader = TabbedPaneHeader()
+    for (item in items) {
+      tabbedPaneHeader.add(item, JPanel())
+    }
+    return cell(tabbedPaneHeader)
   }
 
   override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {
@@ -245,15 +270,28 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(Label(text))
   }
 
+  override fun labelHtml(@NlsContexts.Label text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
+    return text(removeHtml(text), MAX_LINE_LENGTH_WORD_WRAP, action)
+  }
+
   override fun text(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): Cell<JEditorPane> {
     val dslLabel = DslLabel(DslLabelType.LABEL)
     dslLabel.action = action
-    dslLabel.setHtmlText(text, maxLineLength)
+    dslLabel.maxLineLength = maxLineLength
+    dslLabel.text = text
     return cell(dslLabel)
+  }
+
+  override fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int): Cell<JLabel> {
+    return cell(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }
 
   override fun comment(comment: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
     return cell(createComment(comment, maxLineLength, action))
+  }
+
+  override fun commentNoWrap(text: String): Cell<JLabel> {
+    return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
   override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
@@ -357,17 +395,24 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     textArea.columns = COLUMNS_SHORT
     textArea.font = JBFont.regular()
     textArea.emptyText.setFont(JBFont.regular())
-    return cell(textArea, JBScrollPane(textArea), Gaps.EMPTY)
+    textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+    return cell(textArea, JBScrollPane(textArea))
   }
 
-  override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+  override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(model)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }
 
-  override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+  override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(DefaultComboBoxModel(Vector(items)))
+    component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
+    return cell(component)
+  }
+
+  override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+    val component = ComboBox(items)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }
@@ -382,7 +427,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   fun getIndent(): Int {
-    return panelContext.indentCount * dialogPanelConfig.spacing.horizontalIndent
+    return panelContext.indentCount * parent.spacingConfiguration.horizontalIndent
   }
 
   private fun doVisible(isVisible: Boolean) {
@@ -398,30 +443,18 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
     rowComment?.let { it.isEnabled = isEnabled }
   }
-
-  private fun <T : JComponent> cell(component: T, viewComponent: JComponent, visualPaddings: Gaps?): CellImpl<T> {
-    val result = CellImpl(dialogPanelConfig, component, this, viewComponent, visualPaddings = visualPaddings)
-    cells.add(result)
-    return result
-  }
 }
 
-private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup() {
+private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup(), DumbAware {
 
   private val popupState = PopupState.forPopup()
 
   init {
     isPopup = true
+    templatePresentation.isPerformGroup = actions.isNotEmpty()
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-    actions
-
-  override fun isDumbAware(): Boolean =
-    true
-
-  override fun canBePerformed(context: DataContext): Boolean =
-    actions.isNotEmpty()
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
 
   override fun actionPerformed(e: AnActionEvent) {
     if (popupState.isRecentlyHidden) {

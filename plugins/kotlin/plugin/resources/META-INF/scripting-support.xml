@@ -76,7 +76,7 @@
     <java.elementFinder implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder" order="last"/>
 
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
-    <indexedRootsProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesIndexableSetContributor"/>
+    <additionalLibraryRootsProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesLibraryRootProvider"/>
     <psi.clsCustomNavigationPolicy implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
@@ -84,6 +84,11 @@
     <registryKey key="kotlin.resolve.scripting.limit.dependency.element.finder"
                  description="Limit applicability of an element finder for scripting dependencies"
                  defaultValue="true"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.scripting.fs.roots.storage.enabled"
+                 description="Cache resolved dependencies paths across all scripts"
+                 defaultValue="false"
                  restartRequired="true"/>
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"

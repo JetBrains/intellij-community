@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,8 +99,7 @@ public final class InjectedLanguage {
       if (ourLanguageCache == null || ourLanguageCount != Language.getRegisteredLanguages().size()) {
         initLanguageCache();
       }
-      final Collection<Language> keys = ourLanguageCache.values();
-      return keys.toArray(new Language[0]);
+      return StreamEx.of(ourLanguageCache.values()).distinct().toArray(Language[]::new);
     }
   }
 

@@ -12,6 +12,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.tree.TreeVisitor
+import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.swing.exception.ComponentLookupException
 import org.assertj.swing.exception.WaitTimedOutError
 import org.intellij.lang.annotations.Language
@@ -292,13 +294,61 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     })
   }
 
+  override fun triggerUI(parameters: HighlightTriggerParametersContext.() -> Unit): HighlightingTriggerMethods {
+    val p = HighlightTriggerParametersContext()
+    p.apply(parameters)
+    val options = LearningUiHighlightingManager.HighlightingOptions(p.highlightBorder,
+                                                                    p.highlightInside,
+                                                                    p.usePulsation,
+                                                                    p.clearPreviousHighlights)
+    return object : HighlightingTriggerMethods() {
+      override fun treeItem(checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {
+        triggerByFoundPathAndHighlight(options) { tree ->
+          TreeUtil.visitVisibleRows(tree, TreeVisitor { path ->
+            if (checkPath(tree, path)) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
+          })
+        }
+      }
+
+      override fun listItem(checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
+        triggerByFoundListItemAndHighlight(options) { ui: JList<*> ->
+          LessonUtil.findItem(ui) { checkList(it) }
+        }
+      }
+
+      @Suppress("OverridingDeprecatedMember")
+      override fun <ComponentType : Component> explicitComponentDetection(
+        componentClass: Class<ComponentType>,
+        selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+        finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean
+      ) {
+        @Suppress("DEPRECATION")
+        triggerByUiComponentAndHighlightImpl(
+          componentClass,
+          options,
+          selector,
+          finderFunction
+        )
+      }
+
+      @Suppress("OverridingDeprecatedMember")
+      override fun <ComponentType : Component> explicitComponentPartDetection(componentClass: Class<ComponentType>,
+                                                                              rectangle: TaskRuntimeContext.(ComponentType) -> Rectangle?) {
+        @Suppress("DEPRECATION")
+        triggerByPartOfComponentImpl(
+          componentClass,
+          options,
+          null,
+          rectangle
+        )
+      }
+    }
+  }
+
   @Suppress("OverridingDeprecatedMember")
   override fun <ComponentType : Component>
     triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
-                                         highlightBorder: Boolean,
-                                         highlightInside: Boolean,
-                                         usePulsation: Boolean,
-                                         clearPreviousHighlights: Boolean,
+                                         options: LearningUiHighlightingManager.HighlightingOptions,
                                          selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                          finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
     triggerByUiComponentAndHighlight l@{
@@ -306,8 +356,6 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         finderFunction(it)
       }
       if (component != null) {
-        val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside,
-          usePulsation, clearPreviousHighlights)
         taskInvokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightComponent(component, options)
         }
@@ -317,14 +365,10 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
-                                                                  highlightBorder: Boolean,
-                                                                  highlightInside: Boolean,
-                                                                  usePulsation: Boolean,
-                                                                  clearPreviousHighlights: Boolean,
-                                                                  selector: ((candidates: Collection<T>) -> T?)?,
-                                                                  rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
-    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
+  override fun <T : Component> triggerByPartOfComponentImpl(componentClass: Class<T>,
+                                                            options: LearningUiHighlightingManager.HighlightingOptions,
+                                                            selector: ((candidates: Collection<T>) -> T?)?,
+                                                            rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     triggerByUiComponentAndHighlight l@{
       val whole = LearningUiUtil.findComponentOrNull(project, componentClass, selector) {
         rectangle(it) != null
@@ -344,8 +388,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       val list = LearningUiUtil.findComponentOrNull(project, JList::class.java) l@{
         val index = checkList(it) ?: return@l false
         val itemRect = it.getCellBounds(index, index)
-        val listRect = it.visibleRect
-        itemRect.y < listRect.y + listRect.height && itemRect.y + itemRect.height > listRect.y  // intersection condition
+        it.visibleRect.intersects(itemRect)
       }
       if (list != null) {
         taskInvokeLater(ModalityState.any()) {

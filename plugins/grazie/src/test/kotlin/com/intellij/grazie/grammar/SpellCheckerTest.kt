@@ -11,6 +11,11 @@ class SpellCheckerTest : GrazieTestBase() {
   }
 
   @Test
+  fun `test emoji`() {
+    assertTrue(GrazieSpellchecker.isCorrect("\uD83D\uDE4B\uD83C\uDFFF") ?: false)
+  }
+
+  @Test
   fun `test alien word`() {
     assertNull(GrazieSpellchecker.isCorrect("例子"))
   }

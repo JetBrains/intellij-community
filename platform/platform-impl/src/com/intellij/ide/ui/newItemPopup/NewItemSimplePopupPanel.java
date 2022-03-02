@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
@@ -18,6 +18,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -142,7 +143,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return checkError(c) ? errorDelegateBorder.getBorderInsets(c) : JBUI.emptyInsets();
+      return checkError(c) ? errorDelegateBorder.getBorderInsets(c) : JBInsets.emptyInsets();
     }
 
     @Override

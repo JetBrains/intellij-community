@@ -34,9 +34,6 @@ public final class JavaTargetDependentParameters {
   }
 
   public void setTargetEnvironment(@NotNull TargetEnvironment environment) {
-    if (myEnvironment != null) {
-      throw new IllegalStateException("environment was provided twice");
-    }
     myEnvironment = environment;
   }
 

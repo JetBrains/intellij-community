@@ -9,7 +9,6 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.VersionView
 import org.jetbrains.kotlin.idea.compiler.configuration.Version
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -78,6 +77,9 @@ fun getDefaultLanguageLevel(
 
 fun String?.toLanguageVersion(): LanguageVersion = when {
     this == null -> LanguageVersion.LATEST_STABLE
+    startsWith("1.9") -> LanguageVersion.KOTLIN_1_9
+    startsWith("1.8") -> LanguageVersion.KOTLIN_1_8
+    startsWith("1.7") -> LanguageVersion.KOTLIN_1_7
     startsWith("1.6") -> LanguageVersion.KOTLIN_1_6
     startsWith("1.5") -> LanguageVersion.KOTLIN_1_5
     startsWith("1.4") -> LanguageVersion.KOTLIN_1_4

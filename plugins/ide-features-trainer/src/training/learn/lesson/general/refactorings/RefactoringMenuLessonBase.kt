@@ -21,7 +21,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
       showPopupTaskId = taskId
       text(LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it)))
       val refactorThisTitle = RefactoringBundle.message("refactor.this.title")
-      triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
+      triggerUI().component { ui: EngravedLabel ->
         ui.text.isToStringContains(refactorThisTitle)
       }
       restoreIfModifiedOrMoved()
@@ -39,7 +39,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
     if (!adaptToNotNativeLocalization) {
       task(ActionsBundle.message("action.IntroduceParameter.text").dropMnemonic()) {
         text(LessonsBundle.message("refactoring.menu.introduce.parameter.eng", strong(it)))
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JList<*> ->
+        triggerUI().component { ui: JList<*> ->
           ui.model.size > 0 && ui.model.getElementAt(0).isToStringContains(it)
         }
         restoreByUi(restoreId = showPopupTaskId, delayMillis = defaultRestoreDelay)

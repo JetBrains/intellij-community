@@ -5,7 +5,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import icons.RestIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -41,7 +40,6 @@ public final class RestFileType extends LanguageFileType {
   }
 
   @Override
-  @Nullable
   public Icon getIcon() {
     return RestIcons.Rst;
   }

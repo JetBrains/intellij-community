@@ -123,6 +123,15 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
   boolean intersectsRange(TextRange rangeInFile);
 
   /**
+   * @return all sub-ranges of {@code rangeInFile} which this text maps into; the same as the intersections of {@code rangeInFile} and {@link #getRangesInFile()}.
+   * Empty ranges are also included.
+   */
+  @Contract(pure = true)
+  default List<TextRange> intersection(TextRange rangeInFile) {
+    return ContainerUtil.mapNotNull(getRangesInFile(), r -> r.intersection(rangeInFile));
+  }
+
+  /**
    * @return a copy of this text content with all leading and trailing whitespace characters removed
    * (as in {@link Character#isWhitespace(int)} and {@link Character#isSpaceChar(char)}),
    * or {@code null} if the text consists only of whitespace.
@@ -133,6 +142,10 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
   /** For each line of the text, remove the prefix consisting of the given characters. */
   @Contract(pure = true)
   TextContent removeIndents(Set<Character> indentChars);
+
+  /** For each line of the text, remove the suffix consisting of the given characters. */
+  @Contract(pure = true)
+  TextContent removeLineSuffixes(Set<Character> suffixChars);
 
   enum TextDomain {
     /** String literals of a programming language */

@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public interface RegExpMatcherProvider {
    * @param elementInHost  the host language element the regexp is injected in
    * @param sampleText  the text to match on
    * @param timeoutMillis  stop the matching after this time, if the regexp engine is interruptible in some way
-   *                       (see e.g. {@link com.intellij.openapi.util.text.StringUtil#newBombedCharSequence(java.lang.CharSequence, long)}
+   *                       (see e.g. {@link StringUtil#newBombedCharSequence(java.lang.CharSequence, long)}
    * @return the result of the match
    */
   @NotNull

@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.textmate.plist;
 
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.XmlDomReader;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlDomReader;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

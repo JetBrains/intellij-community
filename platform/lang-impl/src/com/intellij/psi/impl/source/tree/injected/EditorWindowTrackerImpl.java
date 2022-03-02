@@ -330,6 +330,11 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     }
 
     @Override
+    public void setFontSize(final float fontSize) {
+      myDelegate.setFontSize(fontSize);
+    }
+
+    @Override
     public void setHighlighter(@NotNull final EditorHighlighter highlighter) {
       myDelegate.setHighlighter(highlighter);
     }

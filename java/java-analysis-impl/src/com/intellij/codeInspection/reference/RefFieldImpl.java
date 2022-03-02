@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,14 +7,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+
+import java.util.List;
 
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000;
   private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000;
   private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000;
+
+  private List<RefMethod> myAccessors;
 
   RefFieldImpl(UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
@@ -161,7 +166,12 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   public String getExternalName() {
     return ReadAction.compute(() -> {
       UField uField = getUastElement();
-      if (uField == null) return null;
+      if (uField == null) {
+        WritableRefEntity owner = getOwner();
+        String parentName = owner != null ? owner.getName() : "no parent class";
+        LOG.error("No uField found for psi: " + getPsiElement() + ", name: " + getName() + ", " + parentName);
+        return null;
+      }
       return PsiFormatUtil.getExternalName((PsiModifierListOwner)uField.getJavaPsi());
     });
   }
@@ -189,5 +199,16 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   public boolean isSuspicious() {
     if (isEntry()) return false;
     return super.isSuspicious() || isUsedForReading() != isUsedForWriting();
+  }
+
+  public synchronized @Nullable List<RefMethod> getAccessors() {
+    return myAccessors;
+  }
+
+  public synchronized void addAccessor(@NotNull RefMethod accessor) {
+    if (myAccessors == null) {
+      myAccessors = new SmartList<>();
+    }
+    myAccessors.add(accessor);
   }
 }

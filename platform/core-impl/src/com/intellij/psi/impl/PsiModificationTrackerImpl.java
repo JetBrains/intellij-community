@@ -58,7 +58,7 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
    * @see PsiManager#dropPsiCaches()
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public void incCounter() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     incCountersInner();
@@ -70,7 +70,7 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
    * @see PsiManager#dropPsiCaches()
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public void incOutOfCodeBlockModificationCounter() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     incCountersInner();

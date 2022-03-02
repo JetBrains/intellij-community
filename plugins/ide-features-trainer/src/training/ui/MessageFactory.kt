@@ -67,8 +67,7 @@ internal object MessageFactory {
         val outputter = XMLOutputter()
         var type = MessagePart.MessageType.TEXT_REGULAR
         val text: String = StringUtil.unescapeXmlEntities(outputter.outputString(content.content))
-        var textFn = { text }
-        var splitter: (() -> List<IntRange>)? = null
+        var textAndSplitFn: (() -> Pair<String, List<IntRange>?>)? = null
         var link: String? = null
         var runnable: Runnable? = null
         when (content.name) {
@@ -98,37 +97,28 @@ internal object MessageFactory {
           "action" -> {
             type = MessagePart.MessageType.SHORTCUT
             link = text
-            val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
-            val (visualText, split) = if (shortcutByActionId != null) {
-              KeymapUtil.getKeyStrokeData(shortcutByActionId)
-            }
-            else {
-              KeymapUtil.getGotoActionData(text)
-            }
-            textFn = {
-              visualText
-            }
-            splitter = {
-              split
+            textAndSplitFn = {
+              val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
+              if (shortcutByActionId != null) {
+                KeymapUtil.getKeyStrokeData(shortcutByActionId)
+              }
+              else {
+                KeymapUtil.getGotoActionData(text)
+              }
             }
           }
           "raw_shortcut" -> {
             type = MessagePart.MessageType.SHORTCUT
-            val (visualText, split) = KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
-            textFn = {
-              visualText
-            }
-            splitter = {
-              split
+            textAndSplitFn = {
+              KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
             }
           }
           "ide" -> {
             type = MessagePart.MessageType.TEXT_REGULAR
-            textFn = { LessonUtil.productName }
+            textAndSplitFn = { LessonUtil.productName to null }
           }
         }
-        val message = MessagePart(type, textFn)
-        splitter?.let { message.splitter = it }
+        val message = MessagePart(type, textAndSplitFn ?: { text to null })
         message.link = link
         message.runnable = runnable
         list.add(message)

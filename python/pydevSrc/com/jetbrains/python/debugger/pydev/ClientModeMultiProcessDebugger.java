@@ -461,6 +461,11 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setUserTypeRenderers(@NotNull List<@NotNull PyUserTypeRenderer> renderers) {
+    allDebuggers().forEach(d -> d.setUserTypeRenderers(renderers));
+  }
+
+  @Override
   public void setShowReturnValues(boolean isShowReturnValues) {
     allDebuggers().forEach(d -> d.setShowReturnValues(isShowReturnValues));
   }

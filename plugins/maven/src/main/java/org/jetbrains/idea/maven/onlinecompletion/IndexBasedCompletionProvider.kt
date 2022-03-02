@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.openapi.util.text.StringUtil
@@ -13,8 +13,7 @@ import java.util.function.Consumer
 /**
  * This class is used as a solution to support completion from repositories, which do not support online completion
  */
-class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : DependencySearchProvider {
-
+internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : DependencySearchProvider {
   override fun fulltextSearch(searchString: String,
                               consumer: Consumer<RepositoryArtifactData>) {
     val mavenId = MavenId(searchString)
@@ -29,7 +28,7 @@ class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : Dependency
 
   private fun search(consumer: Consumer<RepositoryArtifactData>, mavenId: MavenId) {
     for (groupId in myIndex.groupIds) {
-      if (groupId == null) continue;
+      if (groupId == null) continue
       if (!mavenId.groupId.isNullOrEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
         continue
       }
@@ -37,7 +36,7 @@ class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : Dependency
         if (!mavenId.artifactId.isNullOrEmpty() && !nonExactMatches(artifactId, mavenId.artifactId!!)) {
           continue
         }
-        if (artifactId == null) continue;
+        if (artifactId == null) continue
         val info = MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId))
         consumer.accept(info)
       }
@@ -45,8 +44,8 @@ class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : Dependency
   }
 
   private fun nonExactMatches(template: String, real: String): Boolean {
-    val splittedTemplate = template.split(delimiters = *charArrayOf('-', '.'))
-    val splittedReal = real.split(delimiters = *charArrayOf('-', '.'))
+    val splittedTemplate = template.split(delimiters = charArrayOf('-', '.'))
+    val splittedReal = real.split(delimiters = charArrayOf('-', '.'))
     if (splittedTemplate.size == 1 || splittedReal.size == 1) {
       return StringUtil.startsWith(template, real) || StringUtil.startsWith(
         real, template)
@@ -66,6 +65,4 @@ class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : Dependency
 
   val index: MavenSearchIndex
     get() = myIndex
-
-
 }

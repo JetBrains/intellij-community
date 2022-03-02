@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 
 public final class AppUIUtil {
@@ -226,12 +225,13 @@ public final class AppUIUtil {
     }
   }
 
-  public static void updateFrameClass(@NotNull Toolkit toolkit) {
+  public static void updateFrameClass() {
     if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
       return;
     }
 
     try {
+      Toolkit toolkit = Toolkit.getDefaultToolkit();
       Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
         ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
@@ -274,37 +274,24 @@ public final class AppUIUtil {
     return null;
   }
 
-  public static boolean needToShowUsageStatsConsent() {
-    return ConsentOptions.getInstance().getConsents(ConsentOptions.condUsageStatsConsent()).getSecond();
-  }
-
-  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {
-    return showConsentsAgreementIfNeeded(log, __ -> true);
-  }
-  
-  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log, Predicate<Consent> filter) {
-    return showConsentsAgreementIfNeeded(command -> {
-      if (EventQueue.isDispatchThread()) {
-        command.run();
-      }
-      else {
-        try {
-          EventQueue.invokeAndWait(command);
-        }
-        catch (InterruptedException | InvocationTargetException e) {
-          log.warn(e);
-        }
-      }
-    }, filter);
-  }
-
-  private static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor, Predicate<Consent> filter) {
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log, @NotNull Predicate<Consent> filter) {
     Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents(filter);
-    Ref<Boolean> result = new Ref<>(Boolean.FALSE);
-    if (consentsToShow.getSecond()) {
-      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.getFirst())));
+    if (!consentsToShow.getSecond()) {
+      return false;
     }
-    return result.get();
+    else if (EventQueue.isDispatchThread()) {
+      return confirmConsentOptions(consentsToShow.getFirst());
+    }
+    else {
+      Ref<Boolean> result = new Ref<>(Boolean.FALSE);
+      try {
+        EventQueue.invokeAndWait(() -> result.set(confirmConsentOptions(consentsToShow.getFirst())));
+      }
+      catch (InterruptedException | InvocationTargetException e) {
+        log.warn(e);
+      }
+      return result.get();
+    }
   }
 
   public static void updateForDarcula(boolean isDarcula) {
@@ -435,18 +422,17 @@ public final class AppUIUtil {
   }
 
   /**
-   * Targets the component to a (screen) device before showing.
-   * In case the component is already a part of UI hierarchy (and is thus bound to a device)
-   * the method does nothing.
+   * Targets the component to a (screen) device before showing. In case the component is already a part of UI hierarchy
+   * (and is thus bound to a device), the method does nothing.
    * <p>
-   * The prior targeting to a device is required when there's a need to calculate preferred
-   * size of a compound component (such as JEditorPane, for instance) which is not yet added
-   * to a hierarchy. The calculation in that case may involve device-dependent metrics
-   * (such as font metrics) and thus should refer to a particular device in multi-monitor env.
+   * The prior targeting to a device is required when there's a need to calculate the preferred size of a compound component
+   * (such as {@code JEditorPane}, for instance) which is not yet added to a hierarchy.
+   * The calculation in that case may involve device-dependent metrics (such as font metrics)
+   * and thus should refer to a particular device in multi-monitor env.
    * <p>
-   * Note that if after calling this method the component is added to another hierarchy,
-   * bound to a different device, AWT will throw IllegalArgumentException. To avoid that,
-   * the device should be reset by calling {@code targetToDevice(comp, null)}.
+   * Note that if after calling this method the component is added to another hierarchy bound to a different device,
+   * AWT will throw {@code IllegalArgumentException}.
+   * To avoid that, the device should be reset by calling {@code targetToDevice(comp, null)}.
    *
    * @param target the component representing the UI hierarchy and the target device
    * @param comp the component to target

@@ -3,10 +3,8 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.CellRendererPanel;
-import com.intellij.ui.SeparatorComponent;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +48,6 @@ class GroupedListFactory extends SEResultsListFactory {
         if (component == null) {
           assert contributor != null : "Null contributor is not allowed here";
           ListCellRenderer<? super Object> renderer = myRenderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
-          //noinspection ConstantConditions
           component = renderer.getListCellRendererComponent(list, value, index, isSelected, true);
         }
 
@@ -62,6 +59,11 @@ class GroupedListFactory extends SEResultsListFactory {
         }
         AppUIUtil.targetToDevice(component, list);
         component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
+
+        if (!isSelected && component.getBackground() == UIUtil.getListBackground()) {
+          PopupUtil.applyNewUIBackground(component);
+        }
+
         if (!header.getSelectedTab().isSingleContributor() && groupedModel.isGroupFirstItem(index)) {
           //noinspection ConstantConditions
           component = myGroupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
@@ -76,7 +78,7 @@ class GroupedListFactory extends SEResultsListFactory {
 
   private static class GroupTitleRenderer extends CellRendererPanel {
 
-    final SimpleColoredComponent titleLabel = new SimpleColoredComponent();
+    private final SimpleColoredComponent titleLabel = new SimpleColoredComponent();
 
     GroupTitleRenderer() {
       setLayout(new BorderLayout());
@@ -87,7 +89,7 @@ class GroupedListFactory extends SEResultsListFactory {
         .addToCenter(separatorComponent)
         .addToLeft(titleLabel)
         .withBorder(JBUI.Borders.empty(1, 7))
-        .withBackground(UIUtil.getListBackground());
+        .withBackground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground());
       add(topPanel, BorderLayout.NORTH);
     }
 

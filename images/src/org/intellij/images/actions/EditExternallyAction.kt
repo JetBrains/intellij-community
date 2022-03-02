@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.actions
 
 import com.intellij.execution.ExecutionException
@@ -78,7 +78,7 @@ internal class EditExternallyAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
     val enabled = file != null && ImageFileTypeManager.getInstance().isImage(file)
-    if (e.place == ActionPlaces.PROJECT_VIEW_POPUP) {
+    if (ActionPlaces.isPopupPlace(e.place)) {
       e.presentation.isVisible = enabled
     }
 

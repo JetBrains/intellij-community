@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public class LocalFilePath implements FilePath {
   private VirtualFile myCachedFile;
 
   public LocalFilePath(@NotNull String path, boolean isDirectory) {
-    myPath = FileUtil.toCanonicalPath(path);
+    myPath = path.contains(URLUtil.SCHEME_SEPARATOR) ? path : FileUtil.toCanonicalPath(path);
     myIsDirectory = isDirectory;
   }
 
@@ -114,10 +115,20 @@ public class LocalFilePath implements FilePath {
     VirtualFile cachedFile = myCachedFile;
     if (cachedFile == null ||
         !cachedFile.isValid() ||
-        !(cachedFile.isCaseSensitive() ? cachedFile.getPath().equals(myPath) : cachedFile.getPath().equalsIgnoreCase(myPath))) {
-      myCachedFile = cachedFile = LocalFileSystem.getInstance().findFileByPath(myPath);
+        !(cachedFile.isCaseSensitive() ? getPath(cachedFile).equals(myPath) : getPath(cachedFile).equalsIgnoreCase(myPath))) {
+      myCachedFile = cachedFile = findFile(myPath);
     }
     return cachedFile;
+  }
+
+  @Nullable
+  protected VirtualFile findFile(@NotNull String path) {
+    return LocalFileSystem.getInstance().findFileByPath(path);
+  }
+
+  @NotNull
+  protected @NonNls String getPath(@NotNull VirtualFile cachedFile) {
+    return cachedFile.getPath();
   }
 
   @Override
@@ -168,7 +179,7 @@ public class LocalFilePath implements FilePath {
     String path = myPath;
     while ((file == null || !file.isValid()) && !path.isEmpty()) {
       path = PathUtil.getParentPath(path);
-      file = LocalFileSystem.getInstance().findFileByPath(path);
+      file = findFile(path);
     }
     if (file != null) {
       return file.getCharset();

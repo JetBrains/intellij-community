@@ -41,7 +41,7 @@ public abstract class UnixAttachOSHandler extends AttachOSHandler {
       String uid = myHost.getProcessOutput(commandLine).getStdout().trim();
 
       try {
-        return Integer.valueOf(uid);
+        return Integer.parseInt(uid);
       }
       catch (NumberFormatException e) {
         LOGGER.warn("Error while parsing user id from " + uid, e);

@@ -14,6 +14,7 @@ import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.migLayout.*
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.CC
 import net.miginfocom.swing.MigLayout
@@ -85,7 +86,7 @@ class GrazieScopeTab : GrazieUIComponent {
 
     add(
       panel {
-        border = border(msg("grazie.settings.grammar.scope.file-types.text"), false, JBUI.emptyInsets(), false)
+        border = border(msg("grazie.settings.grammar.scope.file-types.text"), false, JBInsets.emptyInsets(), false)
         add(ScrollPaneFactory.createScrollPane(languageList))
       }, CC().grow().width("180px").height("50%").alignX("left")
     )

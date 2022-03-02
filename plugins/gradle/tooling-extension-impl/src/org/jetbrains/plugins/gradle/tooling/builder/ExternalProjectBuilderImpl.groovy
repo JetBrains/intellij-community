@@ -32,6 +32,9 @@ import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
 
@@ -44,12 +47,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   public static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
   public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
+  public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
 
-  static final DataProvider<Map<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<Map<Project, ExternalProject>>() {
+  static final DataProvider<ConcurrentMap<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<ConcurrentMap<Project, ExternalProject>>() {
     @NotNull
     @Override
-    Map<Project, ExternalProject> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
-      return new HashMap<Project, ExternalProject>()
+    ConcurrentMap<Project, ExternalProject> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
+      return new ConcurrentHashMap<Project, ExternalProject>()
     }
   }
 
@@ -74,7 +78,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   @Nullable
   private static Object doBuild(final String modelName,
                                 final Project project,
-                                Map<Project, ExternalProject> cache,
+                                ConcurrentMap<Project, ExternalProject> cache,
                                 TasksFactory tasksFactory,
                                 SourceSetCachedFinder sourceSetFinder) {
     ExternalProject externalProject = cache[project]
@@ -118,9 +122,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
     }
     defaultExternalProject.setChildProjects(childProjects)
-    cache.put(project, defaultExternalProject)
-
-    defaultExternalProject
+    def calculatedProject = cache.putIfAbsent(project, defaultExternalProject)
+    return calculatedProject != null ? calculatedProject : defaultExternalProject
   }
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
@@ -204,13 +207,23 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def downloadJavadoc = false
     def downloadSources = true
 
+    def testSourceSets = []
+    if (is74OrBetter && project.hasProperty("testing")) {
+      testSourceSets = project.testing.suites.collect { it.getSources() }
+    }
+
     if (ideaPluginModule) {
       generatedSourceDirs =
         ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs) : null
       ideaSourceDirs = new LinkedHashSet<>(ideaPluginModule.sourceDirs)
       ideaResourceDirs = ideaPluginModule.hasProperty("resourceDirs") ? new LinkedHashSet<>(ideaPluginModule.resourceDirs) : []
-      ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
-      ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
+      if (is74OrBetter) {
+        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSources.files)
+        ideaTestResourceDirs = new LinkedHashSet<>(ideaPluginModule.testResources.files)
+      } else {
+        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
+        ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
+      }
       downloadJavadoc = ideaPluginModule.downloadJavadoc
       downloadSources = ideaPluginModule.downloadSources
     }
@@ -238,7 +251,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     if (generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
       additionalIdeaGenDirs.addAll(generatedSourceDirs)
     }
-    sourceSets.all { SourceSet sourceSet ->
+    sourceSets.each { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
 
@@ -359,8 +372,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
       else {
         boolean isTestSourceSet = false
+        boolean explicitlyMarkedAsTests = ideaTestSourceDirs && (ideaTestSourceDirs as Collection).containsAll(javaDirectorySet.srcDirs)
+        boolean knownTestingSourceSet = testSourceSets.contains(sourceSet)
         if (!inheritOutputDirs && resolveSourceSetDependencies && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name
-          && ideaTestSourceDirs && (ideaTestSourceDirs as Collection).containsAll(javaDirectorySet.srcDirs)) {
+          && (explicitlyMarkedAsTests || knownTestingSourceSet)) {
           javaDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/classes")
           resourcesDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/resources")
           sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)

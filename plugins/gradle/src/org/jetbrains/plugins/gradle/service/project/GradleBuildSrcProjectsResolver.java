@@ -120,7 +120,7 @@ public final class GradleBuildSrcProjectsResolver {
 
     Stream<Build> builds = new ToolingModelsProviderImpl(myResolverContext.getModels()).builds();
     builds.forEach(build -> {
-      String buildPath = build.getBuildIdentifier().getRootDir().getPath();
+      String buildPath = FileUtil.toSystemIndependentName(build.getBuildIdentifier().getRootDir().getPath());
       Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes = buildClasspathNodesMap.getModifiable(Paths.get(buildPath));
 
       GradleExecutionSettings buildSrcProjectSettings;

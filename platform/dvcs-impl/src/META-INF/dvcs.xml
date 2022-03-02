@@ -64,7 +64,6 @@
     </action>
 
     <action id="CheckIgnoredAndNotExcludedDirectories" class="com.intellij.dvcs.ignore.CheckIgnoredToExcludeAction"/>
-
   </actions>
 
   <projectListeners>
@@ -73,18 +72,17 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
-    <projectService serviceImplementation="com.intellij.dvcs.cherrypick.VcsCherryPickManager"/>
 
     <changesGroupingPolicy key="repository" id="repository"
                            implementationClass="com.intellij.dvcs.ui.RepositoryChangesGroupingPolicy$Factory"/>
 
     <editorTabTitleProvider implementation="com.intellij.openapi.vcs.changes.VcsEditorTabTitleProvider"/>
 
-    <projectService serviceImplementation="com.intellij.dvcs.repo.VcsRepositoryManager"/>
     <vcsStartupActivity implementation="com.intellij.dvcs.repo.VcsRepositoryManager$MyStartupActivity"/>
     <iconDescriptionBundle resourceBundle="messages.DvcsBundle"/>
 
     <editorNotificationProvider implementation="com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.dvcs.DvcsNotificationIdsHolder"/>
   </extensions>
 </idea-plugin>
 

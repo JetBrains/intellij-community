@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ConcurrencyUtil;
@@ -144,7 +145,7 @@ public abstract class BaseDataReader {
      * @deprecated use {@link #NON_BLOCKING} instead
      */
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @ApiStatus.ScheduledForRemoval
     SleepingPolicy SIMPLE = NON_BLOCKING;
   }
 
@@ -175,7 +176,9 @@ public abstract class BaseDataReader {
       }
     }
     catch (Exception e) {
-      LOG.error(e);
+      if (!(e instanceof ControlFlowException)) {
+        LOG.error(e);
+      }
     }
     finally {
       flush();

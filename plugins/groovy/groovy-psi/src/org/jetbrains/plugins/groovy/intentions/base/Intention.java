@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 
 
 public abstract class Intention implements IntentionAction {
+  @SafeFieldForPreview
   private final PsiElementPredicate predicate;
 
   /**

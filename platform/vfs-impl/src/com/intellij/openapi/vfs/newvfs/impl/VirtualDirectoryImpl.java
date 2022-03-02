@@ -416,21 +416,22 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       else {
         files = new VirtualFile[children.size()];
-        int[] errorsCount = {0};
+        int[] errorCount = {0};
         children.sort((o1, o2) -> {
           CharSequence name1 = o1.getName();
           CharSequence name2 = o2.getName();
           int cmp = compareNames(name1, name2, isCaseSensitive);
-          if (cmp == 0 && name1 != name2 && errorsCount[0] < 10) {
-            LOG.error(ourPersistence + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
-                      " caseSensitive: " + isCaseSensitive +
-                      " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
-                      " isCaseSensitive(): " + isCaseSensitive +
-                      " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
-                      " wasChildrenLoaded: " + wasChildrenLoaded +
-                      " in the dir: " + this + "; " + children.size() +
-                      " children: " + StringUtil.first(children.toString(), 300, true));
-            errorsCount[0]++;
+          if (cmp == 0 && name1 != name2) {
+            if (errorCount[0]++ == 0) {
+              LOG.error(ourPersistence + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
+                        " caseSensitive: " + isCaseSensitive +
+                        " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
+                        " isCaseSensitive(): " + isCaseSensitive +
+                        " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
+                        " wasChildrenLoaded: " + wasChildrenLoaded +
+                        " in the dir: " + this + "; " + children.size() +
+                        " children: " + StringUtil.first(children.toString(), 300, true));
+            }
             if (!isCaseSensitive) {
               // Sometimes file system rules for case insensitive comparison differ from Java rules.
               // E.g. on NTFS files named \u1E9B (small long S with dot) and \u1E60 (capital S with dot)

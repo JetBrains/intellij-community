@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -17,10 +16,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -56,8 +51,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   protected boolean myStartupActivityPerformed;
   private boolean myStateLoaded;
-
-  private final RootProvider.RootSetChangedListener myRootProviderChangeListener = new RootProviderChangeListener();
 
   @ApiStatus.Internal
   public abstract class BatchSession<Change, ChangeList> {
@@ -194,7 +187,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public ProjectRootManagerImpl(@NotNull Project project) {
     myProject = project;
     myRootsCache = getOrderRootsCache(project);
-    myJdkTableMultiListener = new JdkTableMultiListener(project);
+    project.getMessageBus().connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
+      @Override
+      public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
+        String currentName = getProjectSdkName();
+        if (previousName.equals(currentName)) {
+          // if already had jdk name and that name was the name of the jdk just changed
+          myProjectSdkName = jdk.getName();
+          myProjectSdkType = jdk.getSdkType().getName();
+        }
+      }
+    });
   }
 
   @Override
@@ -487,224 +490,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   private ModuleManager getModuleManager() {
     return ModuleManager.getInstance(myProject);
-  }
-
-  void subscribeToRootProvider(@NotNull OrderEntry owner, @NotNull RootProvider provider) {
-    synchronized (myRegisteredRootProviders) {
-      Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
-      if (owners == null) {
-        owners = new HashSet<>();
-        myRegisteredRootProviders.put(provider, owners);
-        provider.addRootSetChangedListener(myRootProviderChangeListener);
-      }
-      owners.add(owner);
-    }
-  }
-
-  void unsubscribeFromRootProvider(@NotNull OrderEntry owner, @NotNull RootProvider provider) {
-    synchronized (myRegisteredRootProviders) {
-      Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
-      if (owners != null) {
-        owners.remove(owner);
-        if (owners.isEmpty()) {
-          provider.removeRootSetChangedListener(myRootProviderChangeListener);
-          myRegisteredRootProviders.remove(provider);
-        }
-      }
-    }
-  }
-
-  void addListenerForTable(@NotNull LibraryTable.Listener libraryListener, @NotNull LibraryTable libraryTable) {
-    synchronized (myLibraryTableListenersLock) {
-      LibraryTableMultiListener multiListener = myLibraryTableMultiListeners.get(libraryTable);
-      if (multiListener == null) {
-        multiListener = new LibraryTableMultiListener();
-        libraryTable.addListener(multiListener);
-        myLibraryTableMultiListeners.put(libraryTable, multiListener);
-      }
-      multiListener.addListener(libraryListener);
-    }
-  }
-
-  void removeListenerForTable(@NotNull LibraryTable.Listener libraryListener, @NotNull LibraryTable libraryTable) {
-    synchronized (myLibraryTableListenersLock) {
-      LibraryTableMultiListener multiListener = myLibraryTableMultiListeners.get(libraryTable);
-      if (multiListener != null) {
-        boolean last = multiListener.removeListener(libraryListener);
-        if (last) {
-          libraryTable.removeListener(multiListener);
-          myLibraryTableMultiListeners.remove(libraryTable);
-        }
-      }
-    }
-  }
-
-  private final Object myLibraryTableListenersLock = new Object();
-  private final Map<LibraryTable, LibraryTableMultiListener> myLibraryTableMultiListeners = new HashMap<>();
-
-  private static class ListenerContainer<T> {
-    private final Set<T> myListeners = new LinkedHashSet<>();
-    private final T @NotNull [] myEmptyArray;
-    private T[] myListenersArray;
-
-    private ListenerContainer(T @NotNull [] emptyArray) {
-      myEmptyArray = emptyArray;
-    }
-
-    synchronized void addListener(@NotNull T listener) {
-      myListeners.add(listener);
-      myListenersArray = null;
-    }
-
-    synchronized boolean removeListener(@NotNull T listener) {
-      myListeners.remove(listener);
-      myListenersArray = null;
-      return myListeners.isEmpty();
-    }
-
-    synchronized T @NotNull [] getListeners() {
-      if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(myEmptyArray);
-      }
-      return myListenersArray;
-    }
-  }
-
-  private final class LibraryTableMultiListener extends ListenerContainer<LibraryTable.Listener> implements LibraryTable.Listener {
-    private LibraryTableMultiListener() {
-      super(new LibraryTable.Listener[0]);
-    }
-
-    @Override
-    public void afterLibraryAdded(@NotNull final Library newLibrary) {
-      incModificationCount();
-      mergeRootsChangesDuring(() -> {
-        for (LibraryTable.Listener listener : getListeners()) {
-          listener.afterLibraryAdded(newLibrary);
-        }
-      });
-    }
-
-    @Override
-    public void afterLibraryRenamed(@NotNull Library library, @Nullable String oldName) {
-      incModificationCount();
-      mergeRootsChangesDuring(() -> {
-        for (LibraryTable.Listener listener : getListeners()) {
-          listener.afterLibraryRenamed(library, oldName);
-        }
-      });
-    }
-
-    @Override
-    public void beforeLibraryRemoved(@NotNull final Library library) {
-      incModificationCount();
-      mergeRootsChangesDuring(() -> {
-        for (LibraryTable.Listener listener : getListeners()) {
-          listener.beforeLibraryRemoved(library);
-        }
-      });
-    }
-
-    @Override
-    public void afterLibraryRemoved(@NotNull final Library library) {
-      incModificationCount();
-      mergeRootsChangesDuring(() -> {
-        for (LibraryTable.Listener listener : getListeners()) {
-          listener.afterLibraryRemoved(library);
-        }
-      });
-    }
-  }
-
-  private final JdkTableMultiListener myJdkTableMultiListener;
-
-  private final class JdkTableMultiListener extends ListenerContainer<ProjectJdkTable.Listener> implements ProjectJdkTable.Listener {
-    private JdkTableMultiListener(@NotNull Project project) {
-      super(new ProjectJdkTable.Listener[0]);
-
-      project.getMessageBus().connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this);
-    }
-
-    @Override
-    public void jdkAdded(@NotNull final Sdk jdk) {
-      mergeRootsChangesDuring(() -> {
-        for (ProjectJdkTable.Listener listener : getListeners()) {
-          listener.jdkAdded(jdk);
-        }
-      });
-    }
-
-    @Override
-    public void jdkRemoved(@NotNull final Sdk jdk) {
-      mergeRootsChangesDuring(() -> {
-        for (ProjectJdkTable.Listener listener : getListeners()) {
-          listener.jdkRemoved(jdk);
-        }
-      });
-    }
-
-    @Override
-    public void jdkNameChanged(@NotNull final Sdk jdk, @NotNull final String previousName) {
-      mergeRootsChangesDuring(() -> {
-        for (ProjectJdkTable.Listener listener : getListeners()) {
-          listener.jdkNameChanged(jdk, previousName);
-        }
-      });
-      String currentName = getProjectSdkName();
-      if (previousName.equals(currentName)) {
-        // if already had jdk name and that name was the name of the jdk just changed
-        myProjectSdkName = jdk.getName();
-        myProjectSdkType = jdk.getSdkType().getName();
-      }
-    }
-  }
-
-  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new IdentityHashMap<>();
-
-  void addJdkTableListener(@NotNull ProjectJdkTable.Listener jdkTableListener, @NotNull Disposable parent) {
-    myJdkTableMultiListener.addListener(jdkTableListener);
-    Disposer.register(parent, () -> myJdkTableMultiListener.removeListener(jdkTableListener));
-  }
-
-  @Override
-  public void assertListenersAreDisposed() {
-    synchronized (myRegisteredRootProviders) {
-      if (!myRegisteredRootProviders.isEmpty()) {
-        StringBuilder details = new StringBuilder();
-        int count = 0;
-        for (Map.Entry<RootProvider, Set<OrderEntry>> entry : myRegisteredRootProviders.entrySet()) {
-          if (count++ >= 10) {
-            details.append(myRegisteredRootProviders.entrySet().size() - 10).append(" more providers.\n");
-            break;
-          }
-          details.append(" ").append(entry.getKey()).append(" referenced by ").append(entry.getValue().size()).append(" order entries:\n");
-          for (OrderEntry orderEntry : entry.getValue()) {
-            details.append("   ").append(orderEntry);
-            details.append("\n");
-          }
-        }
-        LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers in " + myProject + " aren't disposed:" + details);
-        for (RootProvider provider : myRegisteredRootProviders.keySet()) {
-          provider.removeRootSetChangedListener(myRootProviderChangeListener);
-        }
-      }
-    }
-  }
-
-  private class RootProviderChangeListener implements RootProvider.RootSetChangedListener {
-    private boolean myInsideRootsChange;
-
-    @Override
-    public void rootSetChanged(@NotNull final RootProvider wrapper) {
-      if (myInsideRootsChange) return;
-      myInsideRootsChange = true;
-      try {
-        makeRootsChange(EmptyRunnable.INSTANCE, false, true);
-      }
-      finally {
-        myInsideRootsChange = false;
-      }
-    }
   }
 
   @Override

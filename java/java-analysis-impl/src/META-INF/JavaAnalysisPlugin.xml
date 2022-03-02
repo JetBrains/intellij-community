@@ -174,6 +174,11 @@
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.DeprecatedIsStillUsedInspection"
                      key="inspection.deprecated.is.still.used.display.name" bundle="messages.JavaAnalysisBundle"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantScheduledForRemovalAnnotation"
+                     groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.deprecation.RedundantScheduledForRemovalAnnotationInspection"
+                     key="inspection.name.redundant.scheduled.for.removal.annotation" bundle="messages.JavaAnalysisBundle"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="removal" shortName="MarkedForRemoval"
                      key="inspection.marked.for.removal.display.name" bundle="messages.AnalysisBundle"
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
@@ -253,6 +258,7 @@
     <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ThrowableNeverThrownInspectionMerger"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
+    <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaNamesHighlightVisitor"/>
     <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.DefaultInferredAnnotationProvider"/>
     <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.ProtobufInferredAnnotationProvider"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"

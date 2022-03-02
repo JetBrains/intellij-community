@@ -290,7 +290,8 @@ public class JBPopupMenu extends JPopupMenu {
           String place = target instanceof PlaceProvider ? ((PlaceProvider)target).getPlace() : null;
           String itemText = component instanceof AbstractButton ?
                             "\"" + ((AbstractButton)component).getText() + "\"" : component.getClass().getName();
-          LOG.error("Invisible menu item " + itemText + (place != null ? " in '" + place + "'" : ""));
+          LOG.error("Invisible menu item " + itemText + (place != null ? " in '" + place + "'" : "") +
+                    " ("  + component.getClass().getName() + " in " + target.getClass().getName() + ")");
           continue;
         }
         int height = component.getPreferredSize().height;

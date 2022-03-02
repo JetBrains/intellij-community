@@ -5,9 +5,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
@@ -57,10 +59,30 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   protected abstract ListCellRenderer<Object> createCellRenderer();
 
   @NotNull
-  protected abstract JPanel createTopLeftPanel();
+  protected JComponent createHeader() {
+    JPanel header = new JPanel(new BorderLayout());
+    header.add(createTopLeftPanel(), BorderLayout.WEST);
+    header.add(createSettingsPanel(), BorderLayout.EAST);
+    return header;
+  }
 
+  /**
+   * @deprecated Override createHeader and remove implementation of this method at all
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
-  protected abstract JPanel createSettingsPanel();
+  protected JPanel createTopLeftPanel() {
+    return new JPanel(); // not used
+  }
+
+  /**
+   * @deprecated Override createHeader and remove implementation of this method at all
+   */
+  @Deprecated(forRemoval = true)
+  @NotNull
+  protected JPanel createSettingsPanel() {
+    return new JPanel(); // not used
+  }
 
 
   @NotNull
@@ -84,11 +106,17 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
   protected static class SearchField extends ExtendableTextField {
     public SearchField() {
-      Insets insets = JBUI.CurrentTheme.BigPopup.searchFieldInsets();
-      Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
-      Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0);
-      setBorder(JBUI.Borders.merge(empty, topLine, true));
-      setBackground(JBUI.CurrentTheme.BigPopup.searchFieldBackground());
+      if (ExperimentalUI.isNewUI()) {
+        setOpaque(false);
+        setBorder(PopupUtil.createComplexPopupTextFieldBorder());
+      }
+      else {
+        Insets insets = JBUI.CurrentTheme.BigPopup.searchFieldInsets();
+        Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
+        Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0);
+        setBorder(JBUI.Borders.merge(empty, topLine, true));
+        setBackground(JBUI.CurrentTheme.BigPopup.searchFieldBackground());
+      }
       setFocusTraversalKeysEnabled(false);
 
       if (Registry.is("new.search.everywhere.use.editor.font")) {
@@ -118,12 +146,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   }
 
   public void init() {
-    withBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
-
     myResultsList = createList();
 
-    JPanel topLeftPanel = createTopLeftPanel();
-    JPanel settingsPanel = createSettingsPanel();
     mySearchField = createSearchField();
     suggestionsPanel = createSuggestionsPanel();
 
@@ -137,10 +161,10 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
     installScrollingActions();
 
+    JComponent header = createHeader();
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.setOpaque(false);
-    topPanel.add(topLeftPanel, BorderLayout.WEST);
-    topPanel.add(settingsPanel, BorderLayout.EAST);
+    topPanel.add(header, BorderLayout.NORTH);
     topPanel.add(mySearchField, BorderLayout.SOUTH);
 
     WindowMoveListener moveListener = new WindowMoveListener(this);
@@ -150,6 +174,20 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     addToTop(topPanel);
     addToCenter(suggestionsPanel);
 
+    if (ExperimentalUI.isNewUI()) {
+      setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+      if (header.getBorder() == null) {
+        header.setBorder(
+          JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
+                                JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.headerInsets())));
+      }
+      header.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
+      myResultsList.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
+    else {
+      suggestionsPanel.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0));
+      setBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
+    }
     getAccessibleContext().setAccessibleName(getAccessibleName());
   }
 
@@ -191,10 +229,14 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   private JPanel createSuggestionsPanel() {
     JPanel pnl = new JPanel(new BorderLayout());
     pnl.setOpaque(false);
-    pnl.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0));
 
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
-    resultsScroll.setBorder(null);
+    if (ExperimentalUI.isNewUI()) {
+      resultsScroll.setBorder(JBUI.Borders.empty(PopupUtil.createComplexPopupTextFieldInsets(0, 0)));
+    }
+    else {
+      resultsScroll.setBorder(null);
+    }
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     ComponentUtil.putClientProperty(resultsScroll.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
 
@@ -248,6 +290,10 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     Dimension size = super.getPreferredSize();
     if (viewType == ViewType.SHORT) {
       size.height -= suggestionsPanel.getPreferredSize().height;
+      if (ExperimentalUI.isNewUI()) {
+        size.height -= JBUI.scale(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled().bottom +
+                                  JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT);
+      }
     }
     return size;
   }

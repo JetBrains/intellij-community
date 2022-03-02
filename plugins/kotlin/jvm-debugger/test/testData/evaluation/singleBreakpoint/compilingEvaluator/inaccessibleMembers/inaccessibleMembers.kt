@@ -22,7 +22,7 @@ fun main() {
 }
 
 // EXPRESSION: block { Foo("foo") }
-// RESULT: Method threw 'java.lang.IllegalAccessError' exception.
+// RESULT: instance of test.Foo(id=ID): Ltest/Foo;
 
 // EXPRESSION: block { Foo.Nested(1, -5, "x") }
 // RESULT: instance of test.Foo$Nested(id=ID): Ltest/Foo$Nested;

@@ -196,7 +196,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
       final String fqn = stub.getQualifiedName();
       if (fqn != null) {
-        sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn.hashCode());
+        sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn);
       }
     }
   }

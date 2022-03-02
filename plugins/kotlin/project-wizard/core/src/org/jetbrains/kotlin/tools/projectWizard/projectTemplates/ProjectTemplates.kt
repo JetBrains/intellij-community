@@ -70,7 +70,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
 
     companion object {
         val ALL = listOf(
-            ConsoleApplicationProjectTemplate,
+            ConsoleApplicationProjectTemplateWithSample,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
@@ -106,7 +106,7 @@ private fun ModuleType.createDefaultTarget(name: String = this.name, permittedTe
     MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets(), permittedTemplateIds)
 
 
-object ConsoleApplicationProjectTemplate : ProjectTemplate() {
+open class ConsoleApplicationProjectTemplate(private val addSampleCode: Boolean) : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.description")
     override val id = "consoleApplication"
@@ -123,11 +123,14 @@ object ConsoleApplicationProjectTemplate : ProjectTemplate() {
                     createDefaultSourceSets(),
                     permittedTemplateIds = setOf(ConsoleJvmApplicationTemplate.id)
                 ).apply {
-                    withTemplate(ConsoleJvmApplicationTemplate)
+                    if (addSampleCode)
+                        withTemplate(ConsoleJvmApplicationTemplate)
                 }
             )
         )
 }
+
+object ConsoleApplicationProjectTemplateWithSample : ConsoleApplicationProjectTemplate(addSampleCode = true)
 
 object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.lib.title")
@@ -407,7 +410,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                     Module(
                         "desktop",
                         JvmTargetConfigurator,
-                        template = null,
+                        template = ComposeCommonDesktopTemplate(),
                         sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<JvmTargetConfigurator> {
@@ -429,7 +432,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
             +Module(
                 "desktop",
                 MppModuleConfigurator,
-                template = null,
+                template = ComposeCommonDesktopTemplate(),
                 sourceSets = createDefaultSourceSets(),
                 subModules = listOf(
                     Module(

@@ -1,4 +1,4 @@
-expect class <!LINE_MARKER("descr='Has actuals in JVM'")!>Expect<!>
+expect class <!LINE_MARKER("descr='Has actuals in jvm module'")!>Expect<!>
 
 interface <!LINE_MARKER("descr='Is implemented by Derived  Click or press ... to navigate'")!>Base<!> {
     fun <!LINE_MARKER("descr='Is implemented in Derived'")!>expectInReturnType<!>(): Expect

@@ -10,9 +10,10 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.*
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -240,5 +241,19 @@ object InlayHintsUtils {
     if (key != newPresentation.key) return false
     @Suppress("UNCHECKED_CAST")
     return update(newPresentation.content as Content, editor, factory)
+  }
+
+  fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
+    val start = SyntaxTraverser.psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
+
+    return TextRange.create(start.startOffset, element.endOffset)
+  }
+
+  @JvmStatic
+  fun isFirstInLine(element: PsiElement): Boolean {
+    val prevSibling = element.prevSibling
+    return prevSibling is PsiWhiteSpace &&
+           (prevSibling.textContains('\n') || prevSibling.getTextRange().startOffset == 0) ||
+           element.textRange.startOffset == 0
   }
 }

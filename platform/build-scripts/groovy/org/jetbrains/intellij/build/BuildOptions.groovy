@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 
 @CompileStatic
 final class BuildOptions {
@@ -29,11 +30,11 @@ final class BuildOptions {
    * Specifies for which operating systems distributions should be built.
    */
   String targetOS
-  static final String OS_LINUX = "linux"
-  static final String OS_WINDOWS = "windows"
-  static final String OS_MAC = "mac"
-  static final String OS_ALL = "all"
-  static final String OS_CURRENT = "current"
+  public static final String OS_LINUX = "linux"
+  public static final String OS_WINDOWS = "windows"
+  public static final String OS_MAC = "mac"
+  public static final String OS_ALL = "all"
+  public static final String OS_CURRENT = "current"
 
   /**
    * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
@@ -55,39 +56,40 @@ final class BuildOptions {
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
   public static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   public static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
-  static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
+  public static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   public static final String GENERATE_JAR_ORDER_STEP = "jar_order"
-  static final String SOURCES_ARCHIVE_STEP = "sources_archive"
+  public static final String SOURCES_ARCHIVE_STEP = "sources_archive"
   public static final String SCRAMBLING_STEP = "scramble"
   public static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
   /** Build Maven artifacts for IDE modules. */
-  static final String MAVEN_ARTIFACTS_STEP = "maven_artifacts"
+  public static final String MAVEN_ARTIFACTS_STEP = "maven_artifacts"
   /** Build macOS artifacts. */
-  static final String MAC_ARTIFACTS_STEP = "mac_artifacts"
+  public static final String MAC_ARTIFACTS_STEP = "mac_artifacts"
   /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
-  static final String MAC_DMG_STEP = "mac_dmg"
+  public static final String MAC_DMG_STEP = "mac_dmg"
   /** Sign additional binary files in macOS distribution. */
-  static final String MAC_SIGN_STEP = "mac_sign"
+  public static final String MAC_SIGN_STEP = "mac_sign"
   /** Build Linux artifacts. */
-  static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
+  public static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
   /** Build Linux tar.gz artifact without bundled JRE. */
-  static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
+  public static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
-  static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
+  public static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Sign *.exe files in Windows distribution. */
-  static final String WIN_SIGN_STEP = "windows_sign"
-  static final Map<String,String> WIN_SIGN_OPTIONS =
+  public static final String WIN_SIGN_STEP = "windows_sign"
+  public static final Map<String,String> WIN_SIGN_OPTIONS =
     System.getProperty("intellij.build.win.sign.options", "").tokenize(';')*.tokenize('=').collectEntries()
   /** Build Frankenstein artifacts. */
-  static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
+  public static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */
-  static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
+  public static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
   /** Generate files containing lists of used third-party libraries */
-  static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
+  public static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
   /** Build community distributives */
-  static final String COMMUNITY_DIST_STEP = "community_dist"
+  public static final String COMMUNITY_DIST_STEP = "community_dist"
   public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
   public static final String SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
+  public static final String VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
   /**
    * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
    * Comprises many small publication steps.
@@ -102,12 +104,7 @@ final class BuildOptions {
   /**
    * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
    */
-  static final String REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
-
-  /**
-   * May be useful to skip this step in TeamCity build to use experimental JBR provided via artifact dependency.
-   */
-  static final String RUNTIME_DOWNLOADING_STEP = "runtime_downloading_step"
+  public static final String REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
@@ -222,16 +219,9 @@ final class BuildOptions {
   String bundledRuntimePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
-   * Directory path to unpack JetBrains Runtime builds into
+   * Enables fastdebug runtime
    */
-  static final String JBR_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
-  String jbrTargetDir = System.getProperty(JBR_TARGET_DIR_OPTION)
-
-  /**
-   * Specifies JetBrains Runtime version to be used as project SDK, 11 by default.
-   */
-  static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
-  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "11").toInteger()
+  boolean runtimeDebug = System.getProperty("intellij.build.bundled.jre.debug", "false").toBoolean()
 
   /**
    * Specifies an algorithm to build distribution checksums.
@@ -243,6 +233,9 @@ final class BuildOptions {
    */
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
+
+  @ApiStatus.Internal
+  public boolean compressNonBundledPluginArchive = true
 
   /**
    * Max attempts of dependencies resolution on fault. "1" means no retries.
@@ -261,6 +254,11 @@ final class BuildOptions {
   long resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
 
   static final String TARGET_OS = "intellij.build.target.os"
+
+  /**
+   * See https://reproducible-builds.org/specs/source-date-epoch/
+   */
+  long buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLong() ?: System.currentTimeSeconds()
 
   BuildOptions() {
     targetOS = System.getProperty(TARGET_OS)

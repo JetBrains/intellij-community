@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 class VfsCodeBlockModificationListener: StartupActivity.Background {
     override fun runActivity(project: Project) {
         val disposable = KotlinPluginDisposable.getInstance(project)
-        val kotlinOCBModificationListener = KotlinCodeBlockModificationListener.getInstance(project)
+        val ocbModificationListener = KotlinCodeBlockModificationListener.getInstance(project)
         val vfsEventsListener = AsyncVfsEventsListener { events: List<VFileEvent> ->
             val projectRelatedVfsFileChange = events.any { event ->
                 val file = event.takeIf { it.isFromRefresh || it is VFileContentChangeEvent }?.file ?: return@any false
@@ -30,13 +30,13 @@ class VfsCodeBlockModificationListener: StartupActivity.Background {
             }
             if (projectRelatedVfsFileChange) {
                 if (isDispatchThread()) {
-                    kotlinOCBModificationListener.incModificationCount()
+                    ocbModificationListener.incModificationCount()
                 } else {
                     // it is not fully correct - OCB has to be triggered ASAP as we detect VFS-change out of IJ that
                     // can affect Kotlin resolve, we can't do that properly before Kotlin 1.6.0
                     // see [org.jetbrains.kotlin.descriptors.InvalidModuleNotifier]
                     invokeLater {
-                        kotlinOCBModificationListener.incModificationCount()
+                        ocbModificationListener.incModificationCount()
                     }
                 }
             }

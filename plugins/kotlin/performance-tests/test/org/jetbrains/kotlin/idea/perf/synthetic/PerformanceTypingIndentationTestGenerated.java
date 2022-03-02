@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,76 +19,154 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class PerformanceTypingIndentationTestGenerated extends AbstractPerformanceTypingIndentationTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/indentationOnNewline")
+    @TestMetadata("../idea/tests/testData/editor/enterHandler")
     public abstract static class DirectSettings extends AbstractPerformanceTypingIndentationTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace")
         public static class AfterUnmatchedBrace extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AtEndOfFile.after.kt")
+            public void testAtEndOfFile() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/AtEndOfFile.after.kt");
+            }
+
             @TestMetadata("LambdaArgumentBeforeFunctionInitializer.after.kt")
             public void testLambdaArgumentBeforeFunctionInitializer() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/LambdaArgumentBeforeFunctionInitializer.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/LambdaArgumentBeforeFunctionInitializer.after.kt");
             }
 
             @TestMetadata("LambdaArgumentBeforeLocalPropertyInitializer.after.kt")
             public void testLambdaArgumentBeforeLocalPropertyInitializer() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/LambdaArgumentBeforeLocalPropertyInitializer.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/LambdaArgumentBeforeLocalPropertyInitializer.after.kt");
             }
 
             @TestMetadata("LambdaArgumentBeforeMemberPropertyInitializer.after.kt")
             public void testLambdaArgumentBeforeMemberPropertyInitializer() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/LambdaArgumentBeforeMemberPropertyInitializer.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/LambdaArgumentBeforeMemberPropertyInitializer.after.kt");
             }
 
             @TestMetadata("LambdaArgumentBeforeTopLevelPropertyInitializer.after.kt")
             public void testLambdaArgumentBeforeTopLevelPropertyInitializer() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/LambdaArgumentBeforeTopLevelPropertyInitializer.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/LambdaArgumentBeforeTopLevelPropertyInitializer.after.kt");
             }
 
             @TestMetadata("NotApplicableOnInitializer.after.kt")
             public void testNotApplicableOnInitializer() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/NotApplicableOnInitializer.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/NotApplicableOnInitializer.after.kt");
             }
 
             @TestMetadata("NotApplicableOnInitializer2.after.kt")
             public void testNotApplicableOnInitializer2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/NotApplicableOnInitializer2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/NotApplicableOnInitializer2.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaInCode.after.kt")
+            public void testUnfinishedLambdaInCode() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaInCode.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaInCodeAsVarInitiailzer.after.kt")
+            public void testUnfinishedLambdaInCodeAsVarInitiailzer() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaInCodeAsVarInitiailzer.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaIsLastElement.after.kt")
+            public void testUnfinishedLambdaIsLastElement() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaIsLastElement.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaWithCommentInCode.after.kt")
+            public void testUnfinishedLambdaWithCommentInCode() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaWithCommentInCode.after.kt");
             }
 
             @TestMetadata("WhenBeforeLocalPropertyInitializer.after.kt")
             public void testWhenBeforeLocalPropertyInitializer() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/WhenBeforeLocalPropertyInitializer.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/WhenBeforeLocalPropertyInitializer.after.kt");
             }
 
             @TestMetadata("WhenBeforeMemberPropertyInitializer.after.kt")
             public void testWhenBeforeMemberPropertyInitializer() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/WhenBeforeMemberPropertyInitializer.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/WhenBeforeMemberPropertyInitializer.after.kt");
             }
 
             @TestMetadata("WhenBeforeTopLevelPropertyInitializer.after.kt")
             public void testWhenBeforeTopLevelPropertyInitializer() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/WhenBeforeTopLevelPropertyInitializer.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/WhenBeforeTopLevelPropertyInitializer.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/arrayAccess")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/arrayAccess")
         public static class ArrayAccess extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
-            @TestMetadata("listAccess.after.kt")
+            @TestMetadata("ListAccess.after.kt")
             public void testListAccess() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/arrayAccess/listAccess.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/arrayAccess/ListAccess.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/controlFlowConstructions")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/commenter")
+        public static class Commenter extends AbstractPerformanceTypingIndentationTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AfterLineComment.after.kt")
+            public void testAfterLineComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/AfterLineComment.after.kt");
+            }
+
+            @TestMetadata("GenerateBlockComment.after.kt")
+            public void testGenerateBlockComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/GenerateBlockComment.after.kt");
+            }
+
+            @TestMetadata("GenerateDocComment.after.kt")
+            public void testGenerateDocComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/GenerateDocComment.after.kt");
+            }
+
+            @TestMetadata("InBlockComment.after.kt")
+            public void testInBlockComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InBlockComment.after.kt");
+            }
+
+            @TestMetadata("InBlockCommentBeforeText.after.kt")
+            public void testInBlockCommentBeforeText() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InBlockCommentBeforeText.after.kt");
+            }
+
+            @TestMetadata("InDocComment.after.kt")
+            public void testInDocComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InDocComment.after.kt");
+            }
+
+            @TestMetadata("InDocCommentBeforeText.after.kt")
+            public void testInDocCommentBeforeText() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InDocCommentBeforeText.after.kt");
+            }
+
+            @TestMetadata("InLineComment.after.kt")
+            public void testInLineComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InLineComment.after.kt");
+            }
+
+            @TestMetadata("InTag.after.kt")
+            public void testInTag() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InTag.after.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/controlFlowConstructions")
         public static class ControlFlowConstructions extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -96,257 +174,257 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("BetweenOpenBraceAndParenthesis.after.kt")
             public void testBetweenOpenBraceAndParenthesis() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/BetweenOpenBraceAndParenthesis.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/BetweenOpenBraceAndParenthesis.after.kt");
             }
 
             @TestMetadata("Catch.after.kt")
             public void testCatch() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Catch.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Catch.after.kt");
             }
 
             @TestMetadata("Catch2.after.kt")
             public void testCatch2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Catch2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Catch2.after.kt");
             }
 
             @TestMetadata("Catch3.after.kt")
             public void testCatch3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Catch3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Catch3.after.kt");
             }
 
             @TestMetadata("Catch4.after.kt")
             public void testCatch4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Catch4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Catch4.after.kt");
             }
 
             @TestMetadata("Do2.after.kt")
             public void testDo2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Do2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Do2.after.kt");
             }
 
             @TestMetadata("DoInFun.after.kt")
             public void testDoInFun() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoInFun.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoInFun.after.kt");
             }
 
             @TestMetadata("DoWhile.after.kt")
             public void testDoWhile() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWhile.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWhile.after.kt");
             }
 
             @TestMetadata("DoWhile2.after.kt")
             public void testDoWhile2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWhile2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWhile2.after.kt");
             }
 
             @TestMetadata("DoWhile3.after.kt")
             public void testDoWhile3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWhile3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWhile3.after.kt");
             }
 
             @TestMetadata("DoWhile4.after.kt")
             public void testDoWhile4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWhile4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWhile4.after.kt");
             }
 
             @TestMetadata("DoWhile5.after.kt")
             public void testDoWhile5() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWhile5.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWhile5.after.kt");
             }
 
             @TestMetadata("DoWhile6.after.kt")
             public void testDoWhile6() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWhile6.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWhile6.after.kt");
             }
 
             @TestMetadata("DoWhile7.after.kt")
             public void testDoWhile7() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWhile7.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWhile7.after.kt");
             }
 
             @TestMetadata("DoWithBraces.after.kt")
             public void testDoWithBraces() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWithBraces.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWithBraces.after.kt");
             }
 
             @TestMetadata("DoWithBraces2.after.kt")
             public void testDoWithBraces2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/DoWithBraces2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/DoWithBraces2.after.kt");
             }
 
             @TestMetadata("ElseIf.after.kt")
             public void testElseIf() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ElseIf.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ElseIf.after.kt");
             }
 
             @TestMetadata("ElseInWhenWithOption.after.kt")
             public void testElseInWhenWithOption() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ElseInWhenWithOption.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ElseInWhenWithOption.after.kt");
             }
 
             @TestMetadata("ElseInWhenWithoutOption.after.kt")
             public void testElseInWhenWithoutOption() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ElseInWhenWithoutOption.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ElseInWhenWithoutOption.after.kt");
             }
 
             @TestMetadata("ElseWithBrace.after.kt")
             public void testElseWithBrace() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ElseWithBrace.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ElseWithBrace.after.kt");
             }
 
             @TestMetadata("ElseWithBraceAndComment.after.kt")
             public void testElseWithBraceAndComment() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ElseWithBraceAndComment.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ElseWithBraceAndComment.after.kt");
             }
 
             @TestMetadata("ElseWithBraceAndComment2.after.kt")
             public void testElseWithBraceAndComment2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ElseWithBraceAndComment2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ElseWithBraceAndComment2.after.kt");
             }
 
             @TestMetadata("ElseWithoutBrace.after.kt")
             public void testElseWithoutBrace() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ElseWithoutBrace.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ElseWithoutBrace.after.kt");
             }
 
             @TestMetadata("ElseWithoutBrace2.after.kt")
             public void testElseWithoutBrace2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ElseWithoutBrace2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ElseWithoutBrace2.after.kt");
             }
 
             @TestMetadata("Finally.after.kt")
             public void testFinally() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Finally.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Finally.after.kt");
             }
 
             @TestMetadata("Finally2.after.kt")
             public void testFinally2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Finally2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Finally2.after.kt");
             }
 
             @TestMetadata("Finally3.after.kt")
             public void testFinally3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Finally3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Finally3.after.kt");
             }
 
             @TestMetadata("Finally4.after.kt")
             public void testFinally4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Finally4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Finally4.after.kt");
             }
 
             @TestMetadata("For.after.kt")
             public void testFor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/For.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/For.after.kt");
             }
 
             @TestMetadata("ForWithBlock.after.kt")
             public void testForWithBlock() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ForWithBlock.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ForWithBlock.after.kt");
             }
 
             @TestMetadata("ForWithCondition.after.kt")
             public void testForWithCondition() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ForWithCondition.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ForWithCondition.after.kt");
             }
 
             @TestMetadata("ForWithoutCondition.after.kt")
             public void testForWithoutCondition() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/ForWithoutCondition.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/ForWithoutCondition.after.kt");
             }
 
             @TestMetadata("If.after.kt")
             public void testIf() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/If.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/If.after.kt");
             }
 
             @TestMetadata("IfBeforeCondition.after.kt")
             public void testIfBeforeCondition() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition.after.kt");
             }
 
             @TestMetadata("IfBeforeCondition2.after.kt")
             public void testIfBeforeCondition2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition2.after.kt");
             }
 
             @TestMetadata("IfBeforeCondition3.after.kt")
             public void testIfBeforeCondition3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition3.after.kt");
             }
 
             @TestMetadata("IfBeforeCondition4.after.kt")
             public void testIfBeforeCondition4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition4.after.kt");
             }
 
             @TestMetadata("IfWithBraces.after.kt")
             public void testIfWithBraces() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/IfWithBraces.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/IfWithBraces.after.kt");
             }
 
             @TestMetadata("IfWithBraces2.after.kt")
             public void testIfWithBraces2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/IfWithBraces2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/IfWithBraces2.after.kt");
             }
 
             @TestMetadata("Try.after.kt")
             public void testTry() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Try.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Try.after.kt");
             }
 
             @TestMetadata("Try2.after.kt")
             public void testTry2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Try2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Try2.after.kt");
             }
 
             @TestMetadata("WhenWithCondition.after.kt")
             public void testWhenWithCondition() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/WhenWithCondition.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition.after.kt");
             }
 
             @TestMetadata("WhenWithCondition2.after.kt")
             public void testWhenWithCondition2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/WhenWithCondition2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition2.after.kt");
             }
 
             @TestMetadata("WhenWithoutCondition.after.kt")
             public void testWhenWithoutCondition() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/WhenWithoutCondition.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenWithoutCondition.after.kt");
             }
 
             @TestMetadata("While.after.kt")
             public void testWhile() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/While.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/While.after.kt");
             }
 
             @TestMetadata("While2.after.kt")
             public void testWhile2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/While2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/While2.after.kt");
             }
 
             @TestMetadata("While3.after.kt")
             public void testWhile3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/While3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/While3.after.kt");
             }
 
             @TestMetadata("WhileWithBlock.after.kt")
             public void testWhileWithBlock() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/WhileWithBlock.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhileWithBlock.after.kt");
             }
 
             @TestMetadata("WhileWithCondition.after.kt")
             public void testWhileWithCondition() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/WhileWithCondition.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhileWithCondition.after.kt");
             }
 
             @TestMetadata("WhileWithoutCondition.after.kt")
             public void testWhileWithoutCondition() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/WhileWithoutCondition.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhileWithoutCondition.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/elvis")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -354,32 +432,32 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("AfterElvis.after.kt")
             public void testAfterElvis() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/AfterElvis.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/AfterElvis.after.kt");
             }
 
             @TestMetadata("AfterElvis2.after.kt")
             public void testAfterElvis2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/AfterElvis2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/AfterElvis2.after.kt");
             }
 
             @TestMetadata("AfterElvisInBinaryExpression.after.kt")
             public void testAfterElvisInBinaryExpression() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/AfterElvisInBinaryExpression.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/AfterElvisInBinaryExpression.after.kt");
             }
 
             @TestMetadata("BeforeElvis.after.kt")
             public void testBeforeElvis() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/BeforeElvis.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/BeforeElvis.after.kt");
             }
 
             @TestMetadata("BeforeElvisInBinaryExpression.after.kt")
             public void testBeforeElvisInBinaryExpression() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/BeforeElvisInBinaryExpression.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/BeforeElvisInBinaryExpression.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/emptyBraces")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyBraces")
         public static class EmptyBraces extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -387,52 +465,52 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("ClassWithConstructor.after.kt")
             public void testClassWithConstructor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/ClassWithConstructor.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithConstructor.after.kt");
             }
 
             @TestMetadata("ClassWithConstructor2.after.kt")
             public void testClassWithConstructor2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/ClassWithConstructor2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithConstructor2.after.kt");
             }
 
             @TestMetadata("ClassWithoutConstructor.after.kt")
             public void testClassWithoutConstructor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/ClassWithoutConstructor.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithoutConstructor.after.kt");
             }
 
             @TestMetadata("FunctionBlock.after.kt")
             public void testFunctionBlock() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/FunctionBlock.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBlock.after.kt");
             }
 
             @TestMetadata("FunctionBlock2.after.kt")
             public void testFunctionBlock2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/FunctionBlock2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBlock2.after.kt");
             }
 
             @TestMetadata("FunctionBody3.after.kt")
             public void testFunctionBody3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/FunctionBody3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBody3.after.kt");
             }
 
             @TestMetadata("FunctionBody4.after.kt")
             public void testFunctionBody4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/FunctionBody4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBody4.after.kt");
             }
 
             @TestMetadata("FunctionBodyInsideClass.after.kt")
             public void testFunctionBodyInsideClass() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/FunctionBodyInsideClass.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBodyInsideClass.after.kt");
             }
 
             @TestMetadata("FunctionBodyInsideClass2.after.kt")
             public void testFunctionBodyInsideClass2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyBraces/FunctionBodyInsideClass2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBodyInsideClass2.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/emptyParameters")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyParameters")
         public static class EmptyParameters extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -440,292 +518,292 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("EmptyArgumentInCallByArrayAccess.after.kt")
             public void testEmptyArgumentInCallByArrayAccess() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByArrayAccess.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByArrayAccess.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByArrayAccess2.after.kt")
             public void testEmptyArgumentInCallByArrayAccess2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByArrayAccess2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByArrayAccess2.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByDeclaration.after.kt")
             public void testEmptyArgumentInCallByDeclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByDeclaration.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByDeclaration.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByDeclaration2.after.kt")
             public void testEmptyArgumentInCallByDeclaration2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByDeclaration2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByDeclaration2.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByReference.after.kt")
             public void testEmptyArgumentInCallByReference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReference.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReference.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByReference2.after.kt")
             public void testEmptyArgumentInCallByReference2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReference2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReference2.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByReferenceInSuperType.after.kt")
             public void testEmptyArgumentInCallByReferenceInSuperType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperType.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperType.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByReferenceInSuperType2.after.kt")
             public void testEmptyArgumentInCallByReferenceInSuperType2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperType2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperType2.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt")
             public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt")
             public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments.after.kt")
             public void testEmptyArgumentInCallByReferenceWithTypeArguments() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt")
             public void testEmptyArgumentInCallByReferenceWithTypeArguments2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInThisAsClassicFunction.after.kt")
             public void testEmptyArgumentInThisAsClassicFunction() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsClassicFunction.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsClassicFunction.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInThisAsConstructor.after.kt")
             public void testEmptyArgumentInThisAsConstructor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsConstructor.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsConstructor.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInThisAsConstructor2.after.kt")
             public void testEmptyArgumentInThisAsConstructor2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsConstructor2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsConstructor2.after.kt");
             }
 
             @TestMetadata("EmptyConditionInCatch.after.kt")
             public void testEmptyConditionInCatch() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInCatch.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInCatch.after.kt");
             }
 
             @TestMetadata("EmptyConditionInCatch2.after.kt")
             public void testEmptyConditionInCatch2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInCatch2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInCatch2.after.kt");
             }
 
             @TestMetadata("EmptyConditionInDoWhile.after.kt")
             public void testEmptyConditionInDoWhile() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInDoWhile.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInDoWhile.after.kt");
             }
 
             @TestMetadata("EmptyConditionInFor.after.kt")
             public void testEmptyConditionInFor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInFor.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInFor.after.kt");
             }
 
             @TestMetadata("EmptyConditionInIf.after.kt")
             public void testEmptyConditionInIf() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInIf.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInIf.after.kt");
             }
 
             @TestMetadata("EmptyConditionInWhen.after.kt")
             public void testEmptyConditionInWhen() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInWhen.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInWhen.after.kt");
             }
 
             @TestMetadata("EmptyConditionInWhile.after.kt")
             public void testEmptyConditionInWhile() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInWhile.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInWhile.after.kt");
             }
 
             @TestMetadata("EmptyParameterInAnnonymousFunction.after.kt")
             public void testEmptyParameterInAnnonymousFunction() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunction.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunction.after.kt");
             }
 
             @TestMetadata("EmptyParameterInAnnonymousFunction2.after.kt")
             public void testEmptyParameterInAnnonymousFunction2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunction2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunction2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt")
             public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt");
             }
 
             @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt")
             public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver.after.kt")
             public void testEmptyParameterInAnnonymousFunctionWithReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver.after.kt");
             }
 
             @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt")
             public void testEmptyParameterInAnnonymousFunctionWithReceiver2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInDestructuringDeclaration.after.kt")
             public void testEmptyParameterInDestructuringDeclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration.after.kt");
             }
 
             @TestMetadata("EmptyParameterInDestructuringDeclaration2.after.kt")
             public void testEmptyParameterInDestructuringDeclaration2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInDestructuringDeclaration3.after.kt")
             public void testEmptyParameterInDestructuringDeclaration3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration3.after.kt");
             }
 
             @TestMetadata("EmptyParameterInExplicitPrimaryConstructor.after.kt")
             public void testEmptyParameterInExplicitPrimaryConstructor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInExplicitPrimaryConstructor.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInExplicitPrimaryConstructor.after.kt");
             }
 
             @TestMetadata("EmptyParameterInExplicitPrimaryConstructor2.after.kt")
             public void testEmptyParameterInExplicitPrimaryConstructor2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInExplicitPrimaryConstructor2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInExplicitPrimaryConstructor2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunction.after.kt")
             public void testEmptyParameterInFunction() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunction.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunction.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunction2.after.kt")
             public void testEmptyParameterInFunction2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunction2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunction2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunctionWithReceiver.after.kt")
             public void testEmptyParameterInFunctionWithReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithReceiver.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunctionWithReceiver2.after.kt")
             public void testEmptyParameterInFunctionWithReceiver2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithReceiver2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithReceiver2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunctionWithTypeParameters.after.kt")
             public void testEmptyParameterInFunctionWithTypeParameters() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParameters.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParameters.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunctionWithTypeParameters2.after.kt")
             public void testEmptyParameterInFunctionWithTypeParameters2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParameters2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParameters2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt")
             public void testEmptyParameterInFunctionWithTypeParametersAndReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt")
             public void testEmptyParameterInFunctionWithTypeParametersAndReceiver2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt")
             public void testEmptyParameterInFunctionWithTypeParametersAndReceiver3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt");
             }
 
             @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt")
             public void testEmptyParameterInFunctionWithTypeParametersAndReceiver4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt");
             }
 
             @TestMetadata("EmptyParameterInGetter.after.kt")
             public void testEmptyParameterInGetter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInGetter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInGetter.after.kt");
             }
 
             @TestMetadata("EmptyParameterInGetter2.after.kt")
             public void testEmptyParameterInGetter2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInGetter2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInGetter2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInImplicitPrimaryConstructor.after.kt")
             public void testEmptyParameterInImplicitPrimaryConstructor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructor.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructor.after.kt");
             }
 
             @TestMetadata("EmptyParameterInImplicitPrimaryConstructor2.after.kt")
             public void testEmptyParameterInImplicitPrimaryConstructor2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructor2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructor2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt")
             public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt");
             }
 
             @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt")
             public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInInnerAnnonymousFunction.after.kt")
             public void testEmptyParameterInInnerAnnonymousFunction() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInInnerAnnonymousFunction.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInInnerAnnonymousFunction.after.kt");
             }
 
             @TestMetadata("EmptyParameterInInnerAnnonymousFunction2.after.kt")
             public void testEmptyParameterInInnerAnnonymousFunction2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInInnerAnnonymousFunction2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInInnerAnnonymousFunction2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInSecondaryConstructor.after.kt")
             public void testEmptyParameterInSecondaryConstructor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInSecondaryConstructor.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInSecondaryConstructor.after.kt");
             }
 
             @TestMetadata("EmptyParameterInSecondaryConstructor2.after.kt")
             public void testEmptyParameterInSecondaryConstructor2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInSecondaryConstructor2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInSecondaryConstructor2.after.kt");
             }
 
             @TestMetadata("EmptyParameterInSetter.after.kt")
             public void testEmptyParameterInSetter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInSetter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInSetter.after.kt");
             }
 
             @TestMetadata("EmptyParameterInSetter2.after.kt")
             public void testEmptyParameterInSetter2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInSetter2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInSetter2.after.kt");
             }
 
             @TestMetadata("EmptyParameters.after.kt")
             public void testEmptyParameters() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameters.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameters.after.kt");
             }
 
             @TestMetadata("EmptyParameters2.after.kt")
             public void testEmptyParameters2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameters2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameters2.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
         public static class EmptyParenthesisInBinaryExpression extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -733,77 +811,77 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("AssignmentAfterEq.after.kt")
             public void testAssignmentAfterEq() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/AssignmentAfterEq.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/AssignmentAfterEq.after.kt");
             }
 
             @TestMetadata("BinaryWithTypeExpressions.after.kt")
             public void testBinaryWithTypeExpressions() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/BinaryWithTypeExpressions.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/BinaryWithTypeExpressions.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByArrayAccess.after.kt")
             public void testEmptyArgumentInCallByArrayAccess() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/EmptyArgumentInCallByArrayAccess.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/EmptyArgumentInCallByArrayAccess.after.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByDeclaration.after.kt")
             public void testEmptyArgumentInCallByDeclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/EmptyArgumentInCallByDeclaration.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/EmptyArgumentInCallByDeclaration.after.kt");
             }
 
             @TestMetadata("InBinaryExpressionInMiddle.after.kt")
             public void testInBinaryExpressionInMiddle() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InBinaryExpressionInMiddle.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionInMiddle.after.kt");
             }
 
             @TestMetadata("InBinaryExpressionUnfinished.after.kt")
             public void testInBinaryExpressionUnfinished() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinished.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinished.after.kt");
             }
 
             @TestMetadata("InBinaryExpressionUnfinishedInIf.after.kt")
             public void testInBinaryExpressionUnfinishedInIf() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIf.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIf.after.kt");
             }
 
             @TestMetadata("InBinaryExpressionsBeforeCloseParenthesis.after.kt")
             public void testInBinaryExpressionsBeforeCloseParenthesis() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesis.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesis.after.kt");
             }
 
             @TestMetadata("InExpressionsParentheses.after.kt")
             public void testInExpressionsParentheses() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InExpressionsParentheses.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InExpressionsParentheses.after.kt");
             }
 
             @TestMetadata("InExpressionsParentheses2.after.kt")
             public void testInExpressionsParentheses2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InExpressionsParentheses2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InExpressionsParentheses2.after.kt");
             }
 
             @TestMetadata("InExpressionsParentheses3.after.kt")
             public void testInExpressionsParentheses3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InExpressionsParentheses3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InExpressionsParentheses3.after.kt");
             }
 
             @TestMetadata("InExpressionsParentheses4.after.kt")
             public void testInExpressionsParentheses4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InExpressionsParentheses4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InExpressionsParentheses4.after.kt");
             }
 
             @TestMetadata("InExpressionsParenthesesBeforeOperand.after.kt")
             public void testInExpressionsParenthesesBeforeOperand() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InExpressionsParenthesesBeforeOperand.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InExpressionsParenthesesBeforeOperand.after.kt");
             }
 
             @TestMetadata("IsExpressionAfterIs.after.kt")
             public void testIsExpressionAfterIs() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/IsExpressionAfterIs.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/IsExpressionAfterIs.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/expressionBody")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/expressionBody")
         public static class ExpressionBody extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -811,97 +889,429 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("AfterFunctionWithExplicitType.after.kt")
             public void testAfterFunctionWithExplicitType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterFunctionWithExplicitType.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterFunctionWithExplicitType.after.kt");
             }
 
             @TestMetadata("AfterFunctionWithInference.after.kt")
             public void testAfterFunctionWithInference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterFunctionWithInference.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterFunctionWithInference.after.kt");
             }
 
             @TestMetadata("AfterFunctionWithTypeParameter.after.kt")
             public void testAfterFunctionWithTypeParameter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterFunctionWithTypeParameter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterFunctionWithTypeParameter.after.kt");
             }
 
             @TestMetadata("AfterMultideclaration.after.kt")
             public void testAfterMultideclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterMultideclaration.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterMultideclaration.after.kt");
             }
 
             @TestMetadata("AfterMutableProperty.after.kt")
             public void testAfterMutableProperty() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterMutableProperty.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterMutableProperty.after.kt");
             }
 
             @TestMetadata("AfterPropertyWithExplicitType.after.kt")
             public void testAfterPropertyWithExplicitType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterPropertyWithExplicitType.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterPropertyWithExplicitType.after.kt");
             }
 
             @TestMetadata("AfterPropertyWithInference.after.kt")
             public void testAfterPropertyWithInference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterPropertyWithInference.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterPropertyWithInference.after.kt");
             }
 
             @TestMetadata("AfterPropertyWithReceiver.after.kt")
             public void testAfterPropertyWithReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterPropertyWithReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterPropertyWithReceiver.after.kt");
             }
 
             @TestMetadata("AfterPropertyWithTypeParameterReceiver.after.kt")
             public void testAfterPropertyWithTypeParameterReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterPropertyWithTypeParameterReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterPropertyWithTypeParameterReceiver.after.kt");
             }
 
             @TestMetadata("FunctionWithExplicitType.after.kt")
             public void testFunctionWithExplicitType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/FunctionWithExplicitType.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/FunctionWithExplicitType.after.kt");
             }
 
             @TestMetadata("FunctionWithInference.after.kt")
             public void testFunctionWithInference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/FunctionWithInference.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/FunctionWithInference.after.kt");
             }
 
             @TestMetadata("FunctionWithTypeParameter.after.kt")
             public void testFunctionWithTypeParameter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/FunctionWithTypeParameter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/FunctionWithTypeParameter.after.kt");
             }
 
             @TestMetadata("Multideclaration.after.kt")
             public void testMultideclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/Multideclaration.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/Multideclaration.after.kt");
             }
 
             @TestMetadata("MutableProperty.after.kt")
             public void testMutableProperty() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/MutableProperty.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/MutableProperty.after.kt");
             }
 
             @TestMetadata("PropertyWithExplicitType.after.kt")
             public void testPropertyWithExplicitType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithExplicitType.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/PropertyWithExplicitType.after.kt");
             }
 
             @TestMetadata("PropertyWithInference.after.kt")
             public void testPropertyWithInference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithInference.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/PropertyWithInference.after.kt");
             }
 
             @TestMetadata("PropertyWithReceiver.after.kt")
             public void testPropertyWithReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/PropertyWithReceiver.after.kt");
             }
 
             @TestMetadata("PropertyWithTypeParameterReceiver.after.kt")
             public void testPropertyWithTypeParameterReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithTypeParameterReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/PropertyWithTypeParameterReceiver.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/script")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/multilineString")
+        public abstract static class MultilineString extends AbstractPerformanceTypingIndentationTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../idea/tests/testData/editor/enterHandler/multilineString/spaces")
+            public static class Spaces extends AbstractPerformanceTypingIndentationTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("DontAddMarginCharWhenMultilineWithoutMargins.after.kt")
+                public void testDontAddMarginCharWhenMultilineWithoutMargins() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontAddMarginCharWhenMultilineWithoutMargins.after.kt");
+                }
+
+                @TestMetadata("DontAddMarginWhenItIsUnused.after.kt")
+                public void testDontAddMarginWhenItIsUnused() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontAddMarginWhenItIsUnused.after.kt");
+                }
+
+                @TestMetadata("DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt")
+                public void testDontAddMarginWhenItIsUnusedWithEmptyPrevious() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt");
+                }
+
+                @TestMetadata("DontAddTrimCallWhenAlreadyMultiline.after.kt")
+                public void testDontAddTrimCallWhenAlreadyMultiline() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontAddTrimCallWhenAlreadyMultiline.after.kt");
+                }
+
+                @TestMetadata("DontAddTrimCallWhenAlreadyMultilineFirstLine.after.kt")
+                public void testDontAddTrimCallWhenAlreadyMultilineFirstLine() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontAddTrimCallWhenAlreadyMultilineFirstLine.after.kt");
+                }
+
+                @TestMetadata("DontInsertTrimMargin1.after.kt")
+                public void testDontInsertTrimMargin1() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin1.after.kt");
+                }
+
+                @TestMetadata("DontInsertTrimMargin2.after.kt")
+                public void testDontInsertTrimMargin2() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin2.after.kt");
+                }
+
+                @TestMetadata("DontInsertTrimMargin3.after.kt")
+                public void testDontInsertTrimMargin3() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin3.after.kt");
+                }
+
+                @TestMetadata("DontInsertTrimMargin4.after.kt")
+                public void testDontInsertTrimMargin4() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin4.after.kt");
+                }
+
+                @TestMetadata("EnterAfterOpenningBrace.after.kt")
+                public void testEnterAfterOpenningBrace() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterAfterOpenningBrace.after.kt");
+                }
+
+                @TestMetadata("EnterBeforeLongEntryOneLine.after.kt")
+                public void testEnterBeforeLongEntryOneLine() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterBeforeLongEntryOneLine.after.kt");
+                }
+
+                @TestMetadata("EnterBeforeMarginChar.after.kt")
+                public void testEnterBeforeMarginChar() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterBeforeMarginChar.after.kt");
+                }
+
+                @TestMetadata("EnterBeforeShortEntryOneLine.after.kt")
+                public void testEnterBeforeShortEntryOneLine() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterBeforeShortEntryOneLine.after.kt");
+                }
+
+                @TestMetadata("EnterInInfixMargin.after.kt")
+                public void testEnterInInfixMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInInfixMargin.after.kt");
+                }
+
+                @TestMetadata("EnterInInjectedFragment.after.kt")
+                public void testEnterInInjectedFragment() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInInjectedFragment.after.kt");
+                }
+
+                @TestMetadata("EnterInLineWithMarginOnNotMargedLine.after.kt")
+                public void testEnterInLineWithMarginOnNotMargedLine() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInLineWithMarginOnNotMargedLine.after.kt");
+                }
+
+                @TestMetadata("EnterInMethodCallMargin.after.kt")
+                public void testEnterInMethodCallMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInMethodCallMargin.after.kt");
+                }
+
+                @TestMetadata("EnterInOneLineAfterSpaces.after.kt")
+                public void testEnterInOneLineAfterSpaces() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInOneLineAfterSpaces.after.kt");
+                }
+
+                @TestMetadata("EnterInTwoLinesNoMarginCall.after.kt")
+                public void testEnterInTwoLinesNoMarginCall() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInTwoLinesNoMarginCall.after.kt");
+                }
+
+                @TestMetadata("EnterInsideBraces.after.kt")
+                public void testEnterInsideBraces() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces.after.kt");
+                }
+
+                @TestMetadata("EnterInsideBraces1.after.kt")
+                public void testEnterInsideBraces1() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces1.after.kt");
+                }
+
+                @TestMetadata("EnterInsideBraces2.after.kt")
+                public void testEnterInsideBraces2() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces2.after.kt");
+                }
+
+                @TestMetadata("EnterInsideTextMargin.after.kt")
+                public void testEnterInsideTextMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterInsideTextMargin.after.kt");
+                }
+
+                @TestMetadata("EnterMLSimpleMargin.after.kt")
+                public void testEnterMLSimpleMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterMLSimpleMargin.after.kt");
+                }
+
+                @TestMetadata("EnterMLStartOnSameLineMargin.after.kt")
+                public void testEnterMLStartOnSameLineMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterMLStartOnSameLineMargin.after.kt");
+                }
+
+                @TestMetadata("EnterOnFirstLineWithPresentTrimMargin.after.kt")
+                public void testEnterOnFirstLineWithPresentTrimMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterOnFirstLineWithPresentTrimMargin.after.kt");
+                }
+
+                @TestMetadata("EnterOnFirstLineWithPresentTrimMarginAndLine.after.kt")
+                public void testEnterOnFirstLineWithPresentTrimMarginAndLine() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterOnFirstLineWithPresentTrimMarginAndLine.after.kt");
+                }
+
+                @TestMetadata("EnterOnFirstNonEmptyLineWithPresentTrimMargin.after.kt")
+                public void testEnterOnFirstNonEmptyLineWithPresentTrimMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterOnFirstNonEmptyLineWithPresentTrimMargin.after.kt");
+                }
+
+                @TestMetadata("EnterOnNewLine.after.kt")
+                public void testEnterOnNewLine() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterOnNewLine.after.kt");
+                }
+
+                @TestMetadata("EnterSimple.after.kt")
+                public void testEnterSimple() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterSimple.after.kt");
+                }
+
+                @TestMetadata("EnterWithTextMargin.after.kt")
+                public void testEnterWithTextMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterWithTextMargin.after.kt");
+                }
+
+                @TestMetadata("EnterWithTextOnNewLineMargin.after.kt")
+                public void testEnterWithTextOnNewLineMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/EnterWithTextOnNewLineMargin.after.kt");
+                }
+
+                @TestMetadata("InsertCustomMargin.after.kt")
+                public void testInsertCustomMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/InsertCustomMargin.after.kt");
+                }
+
+                @TestMetadata("InsertCustomMarginInLineStart.after.kt")
+                public void testInsertCustomMarginInLineStart() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/InsertCustomMarginInLineStart.after.kt");
+                }
+
+                @TestMetadata("InsertDefaultMargin.after.kt")
+                public void testInsertDefaultMargin() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/InsertDefaultMargin.after.kt");
+                }
+
+                @TestMetadata("NoTrimIndentInAnnotations.after.kt")
+                public void testNoTrimIndentInAnnotations() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInAnnotations.after.kt");
+                }
+
+                @TestMetadata("NoTrimIndentInConst.after.kt")
+                public void testNoTrimIndentInConst() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInConst.after.kt");
+                }
+
+                @TestMetadata("RestoreIndentFromEmptyLine.after.kt")
+                public void testRestoreIndentFromEmptyLine() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/multilineString/spaces/RestoreIndentFromEmptyLine.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../idea/tests/testData/editor/enterHandler/multilineString/withTabs")
+            public abstract static class WithTabs extends AbstractPerformanceTypingIndentationTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2")
+                public static class Tabs2 extends AbstractPerformanceTypingIndentationTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("DontInsertTrimMarginCall.after.kt")
+                    public void testDontInsertTrimMarginCall() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/DontInsertTrimMarginCall.after.kt");
+                    }
+
+                    @TestMetadata("EnterInMethodCallMargin.after.kt")
+                    public void testEnterInMethodCallMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterInMethodCallMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterInTwoLinesNoMarginCall.after.kt")
+                    public void testEnterInTwoLinesNoMarginCall() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterInTwoLinesNoMarginCall.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideBraces.after.kt")
+                    public void testEnterInsideBraces() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterInsideBraces.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideText.after.kt")
+                    public void testEnterInsideText() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterInsideText.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLSimpleMargin.after.kt")
+                    public void testEnterMLSimpleMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterMLSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLStartOnSameLineMargin.after.kt")
+                    public void testEnterMLStartOnSameLineMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterMLStartOnSameLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterOnNewLineMargin.after.kt")
+                    public void testEnterOnNewLineMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterOnNewLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterSimpleMargin.after.kt")
+                    public void testEnterSimpleMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextMargin.after.kt")
+                    public void testEnterWithTextMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterWithTextMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextOnNewLineMargin.after.kt")
+                    public void testEnterWithTextOnNewLineMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2/EnterWithTextOnNewLineMargin.after.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4")
+                public static class Tabs4 extends AbstractPerformanceTypingIndentationTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("DontInsertTrimMarginCall.after.kt")
+                    public void testDontInsertTrimMarginCall() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/DontInsertTrimMarginCall.after.kt");
+                    }
+
+                    @TestMetadata("EnterInMethodCallMargin.after.kt")
+                    public void testEnterInMethodCallMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterInMethodCallMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideBraces.after.kt")
+                    public void testEnterInsideBraces() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterInsideBraces.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideText.after.kt")
+                    public void testEnterInsideText() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterInsideText.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLSimpleMargin.after.kt")
+                    public void testEnterMLSimpleMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterMLSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLStartOnSameLineMargin.after.kt")
+                    public void testEnterMLStartOnSameLineMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterMLStartOnSameLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterOnNewLineMargin.after.kt")
+                    public void testEnterOnNewLineMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterOnNewLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterSimpleMargin.after.kt")
+                    public void testEnterSimpleMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTabsAfterMarginChar.after.kt")
+                    public void testEnterWithTabsAfterMarginChar() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterWithTabsAfterMarginChar.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextMargin.after.kt")
+                    public void testEnterWithTextMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterWithTextMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextOnNewLineMargin.after.kt")
+                    public void testEnterWithTextOnNewLineMargin() throws Exception {
+                        runTest("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4/EnterWithTextOnNewLineMargin.after.kt");
+                    }
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/script")
         public static class Script extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -909,37 +1319,37 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("ScriptAfterClosingBrace.after.kts")
             public void testScriptAfterClosingBrace() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/script/ScriptAfterClosingBrace.after.kts");
+                runTest("../idea/tests/testData/editor/enterHandler/script/ScriptAfterClosingBrace.after.kts");
             }
 
             @TestMetadata("ScriptAfterExpression.after.kts")
             public void testScriptAfterExpression() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/script/ScriptAfterExpression.after.kts");
+                runTest("../idea/tests/testData/editor/enterHandler/script/ScriptAfterExpression.after.kts");
             }
 
             @TestMetadata("ScriptAfterFun.after.kts")
             public void testScriptAfterFun() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/script/ScriptAfterFun.after.kts");
+                runTest("../idea/tests/testData/editor/enterHandler/script/ScriptAfterFun.after.kts");
             }
 
             @TestMetadata("ScriptAfterImport.after.kts")
             public void testScriptAfterImport() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/script/ScriptAfterImport.after.kts");
+                runTest("../idea/tests/testData/editor/enterHandler/script/ScriptAfterImport.after.kts");
             }
 
             @TestMetadata("ScriptBetweenFunctionCalls.after.kts")
             public void testScriptBetweenFunctionCalls() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/script/ScriptBetweenFunctionCalls.after.kts");
+                runTest("../idea/tests/testData/editor/enterHandler/script/ScriptBetweenFunctionCalls.after.kts");
             }
 
             @TestMetadata("ScriptInsideFun.after.kts")
             public void testScriptInsideFun() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/script/ScriptInsideFun.after.kts");
+                runTest("../idea/tests/testData/editor/enterHandler/script/ScriptInsideFun.after.kts");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/templates")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/templates")
         public static class Templates extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -947,122 +1357,122 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("LargeFileWithStringTemplate.after.kt")
             public void testLargeFileWithStringTemplate() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/LargeFileWithStringTemplate.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/LargeFileWithStringTemplate.after.kt");
             }
 
             @TestMetadata("TemplateEntryClose.after.kt")
             public void testTemplateEntryClose() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryClose.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryClose.after.kt");
             }
 
             @TestMetadata("TemplateEntryClose2.after.kt")
             public void testTemplateEntryClose2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryClose2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryClose2.after.kt");
             }
 
             @TestMetadata("TemplateEntryClose3.after.kt")
             public void testTemplateEntryClose3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryClose3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryClose3.after.kt");
             }
 
             @TestMetadata("TemplateEntryClose4.after.kt")
             public void testTemplateEntryClose4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryClose4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryClose4.after.kt");
             }
 
             @TestMetadata("TemplateEntryClose5.after.kt")
             public void testTemplateEntryClose5() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryClose5.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryClose5.after.kt");
             }
 
             @TestMetadata("TemplateEntryClose6.after.kt")
             public void testTemplateEntryClose6() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryClose6.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryClose6.after.kt");
             }
 
             @TestMetadata("TemplateEntryClose7.after.kt")
             public void testTemplateEntryClose7() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryClose7.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryClose7.after.kt");
             }
 
             @TestMetadata("TemplateEntryCloseInMultilineString.after.kt")
             public void testTemplateEntryCloseInMultilineString() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString.after.kt");
             }
 
             @TestMetadata("TemplateEntryCloseInMultilineString2.after.kt")
             public void testTemplateEntryCloseInMultilineString2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString2.after.kt");
             }
 
             @TestMetadata("TemplateEntryCloseInMultilineString3.after.kt")
             public void testTemplateEntryCloseInMultilineString3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString3.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpen.after.kt")
             public void testTemplateEntryOpen() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpen.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpen.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpen2.after.kt")
             public void testTemplateEntryOpen2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpen2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpen2.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenInMultilineString.after.kt")
             public void testTemplateEntryOpenInMultilineString() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenInMultilineString2.after.kt")
             public void testTemplateEntryOpenInMultilineString2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString2.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenInMultilineString3.after.kt")
             public void testTemplateEntryOpenInMultilineString3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString3.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenWithComment.after.kt")
             public void testTemplateEntryOpenWithComment() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenWithComment.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenWithComment.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenWithComment2.after.kt")
             public void testTemplateEntryOpenWithComment2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenWithComment2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenWithComment2.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenWithoutContent.after.kt")
             public void testTemplateEntryOpenWithoutContent() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenWithoutContent2.after.kt")
             public void testTemplateEntryOpenWithoutContent2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent2.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenWithoutContent3.after.kt")
             public void testTemplateEntryOpenWithoutContent3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent3.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenWithoutContent4.after.kt")
             public void testTemplateEntryOpenWithoutContent4() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent4.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent4.after.kt");
             }
 
             @TestMetadata("TemplateEntryOpenWithoutContent5.after.kt")
             public void testTemplateEntryOpenWithoutContent5() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent5.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent5.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler")
         public static class Uncategorized extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
@@ -1070,261 +1480,381 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("AfterCatch.after.kt")
             public void testAfterCatch() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterCatch.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterCatch.after.kt");
             }
 
             @TestMetadata("AfterClassNameBeforeFun.after.kt")
             public void testAfterClassNameBeforeFun() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterClassNameBeforeFun.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterClassNameBeforeFun.after.kt");
             }
 
             @TestMetadata("AfterExtensionPropertyGetter.after.kt")
             public void testAfterExtensionPropertyGetter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterExtensionPropertyGetter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterExtensionPropertyGetter.after.kt");
             }
 
             @TestMetadata("AfterExtensionPropertySetter.after.kt")
             public void testAfterExtensionPropertySetter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterExtensionPropertySetter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterExtensionPropertySetter.after.kt");
             }
 
             @TestMetadata("AfterFinally.after.kt")
             public void testAfterFinally() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterFinally.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterFinally.after.kt");
             }
 
             @TestMetadata("AfterImport.after.kt")
             public void testAfterImport() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterImport.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterImport.after.kt");
             }
 
             @TestMetadata("AfterPropertyGetter.after.kt")
             public void testAfterPropertyGetter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterPropertyGetter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterPropertyGetter.after.kt");
             }
 
             @TestMetadata("AfterPropertySetter.after.kt")
             public void testAfterPropertySetter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterPropertySetter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterPropertySetter.after.kt");
             }
 
             @TestMetadata("AfterTry.after.kt")
             public void testAfterTry() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AfterTry.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AfterTry.after.kt");
             }
 
             @TestMetadata("Annotation.after.kt")
             public void testAnnotation() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/Annotation.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/Annotation.after.kt");
             }
 
             @TestMetadata("AnnotationInDeclaration.after.kt")
             public void testAnnotationInDeclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/AnnotationInDeclaration.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/AnnotationInDeclaration.after.kt");
             }
 
             @TestMetadata("ArgumentListNormalIndent.after.kt")
             public void testArgumentListNormalIndent() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/ArgumentListNormalIndent.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/ArgumentListNormalIndent.after.kt");
+            }
+
+            @TestMetadata("AutoIndentInWhenClause.after.kt")
+            public void testAutoIndentInWhenClause() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/AutoIndentInWhenClause.after.kt");
             }
 
             @TestMetadata("BlockCommentAfterCatch.after.kt")
             public void testBlockCommentAfterCatch() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/BlockCommentAfterCatch.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/BlockCommentAfterCatch.after.kt");
             }
 
             @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
             public void testConsecutiveCallsAfterDot() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsAfterDot.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/ConsecutiveCallsAfterDot.after.kt");
             }
 
             @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.kt")
             public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSaeCallsMiddle.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/ConsecutiveCallsInSaeCallsMiddle.after.kt");
             }
 
             @TestMetadata("ConsecutiveCallsInSafeCallsEnd.after.kt")
             public void testConsecutiveCallsInSafeCallsEnd() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/ConsecutiveCallsInSafeCallsEnd.after.kt");
+            }
+
+            @TestMetadata("EnterInFunctionWithExpressionBody.after.kt")
+            public void testEnterInFunctionWithExpressionBody() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/EnterInFunctionWithExpressionBody.after.kt");
+            }
+
+            @TestMetadata("EnterInMultiDeclaration.after.kt")
+            public void testEnterInMultiDeclaration() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/EnterInMultiDeclaration.after.kt");
+            }
+
+            @TestMetadata("EnterInVariableDeclaration.after.kt")
+            public void testEnterInVariableDeclaration() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/EnterInVariableDeclaration.after.kt");
             }
 
             @TestMetadata("EoLCommentAfterCatch.after.kt")
             public void testEoLCommentAfterCatch() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterCatch.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/EoLCommentAfterCatch.after.kt");
             }
 
             @TestMetadata("EoLCommentAfterFor.after.kt")
             public void testEoLCommentAfterFor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterFor.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/EoLCommentAfterFor.after.kt");
             }
 
             @TestMetadata("EoLCommentAfterIf.after.kt")
             public void testEoLCommentAfterIf() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterIf.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/EoLCommentAfterIf.after.kt");
             }
 
             @TestMetadata("FunctionBlock.after.kt")
             public void testFunctionBlock() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/FunctionBlock.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/FunctionBlock.after.kt");
             }
 
             @TestMetadata("HigherOrderFunction.after.kt")
             public void testHigherOrderFunction() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/HigherOrderFunction.after.kt");
             }
 
             @TestMetadata("HigherOrderFunction2.after.kt")
             public void testHigherOrderFunction2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/HigherOrderFunction2.after.kt");
             }
 
             @TestMetadata("HigherOrderFunction3.after.kt")
             public void testHigherOrderFunction3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/HigherOrderFunction3.after.kt");
             }
 
             @TestMetadata("InDelegationListAfterColon.after.kt")
             public void testInDelegationListAfterColon() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterColon.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InDelegationListAfterColon.after.kt");
             }
 
             @TestMetadata("InDelegationListAfterComma.after.kt")
             public void testInDelegationListAfterComma() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterComma.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InDelegationListAfterComma.after.kt");
             }
 
             @TestMetadata("InDelegationListNotEmpty.after.kt")
             public void testInDelegationListNotEmpty() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListNotEmpty.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InDelegationListNotEmpty.after.kt");
+            }
+
+            @TestMetadata("InElseBlockBeforeParenthesis.after.kt")
+            public void testInElseBlockBeforeParenthesis() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/InElseBlockBeforeParenthesis.after.kt");
             }
 
             @TestMetadata("InEnumAfterSemicolon.after.kt")
             public void testInEnumAfterSemicolon() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InEnumAfterSemicolon.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InEnumAfterSemicolon.after.kt");
             }
 
             @TestMetadata("InEnumInitializerListAfterComma.after.kt")
             public void testInEnumInitializerListAfterComma() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListAfterComma.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InEnumInitializerListAfterComma.after.kt");
             }
 
             @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
             public void testInEnumInitializerListNotEmpty() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InEnumInitializerListNotEmpty.after.kt");
+            }
+
+            @TestMetadata("InIfBlockBeforeParenthesis.after.kt")
+            public void testInIfBlockBeforeParenthesis() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/InIfBlockBeforeParenthesis.after.kt");
             }
 
             @TestMetadata("InLabmdaAfterArrow.after.kt")
             public void testInLabmdaAfterArrow() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InLabmdaAfterArrow.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InLabmdaAfterArrow.after.kt");
             }
 
             @TestMetadata("InLambdaAfterArrowWithSpaces.after.kt")
             public void testInLambdaAfterArrowWithSpaces() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InLambdaAfterArrowWithSpaces.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InLambdaAfterArrowWithSpaces.after.kt");
             }
 
             @TestMetadata("InLambdaBeforeParams.after.kt")
             public void testInLambdaBeforeParams() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InLambdaBeforeParams.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InLambdaBeforeParams.after.kt");
             }
 
             @TestMetadata("InLambdaInsideChainCallSameLine.after.kt")
             public void testInLambdaInsideChainCallSameLine() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallSameLine.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InLambdaInsideChainCallSameLine.after.kt");
             }
 
             @TestMetadata("InLambdaInsideChainCallSameLineWithSpaces.after.kt")
             public void testInLambdaInsideChainCallSameLineWithSpaces() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
             }
 
             @TestMetadata("InLambdaInsideChainCallWithNewLine.after.kt")
             public void testInLambdaInsideChainCallWithNewLine() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallWithNewLine.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InLambdaInsideChainCallWithNewLine.after.kt");
             }
 
             @TestMetadata("InLambdaInsideChainCallWithNewLineWithSpaces.after.kt")
             public void testInLambdaInsideChainCallWithNewLineWithSpaces() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallWithNewLineWithSpaces.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InLambdaInsideChainCallWithNewLineWithSpaces.after.kt");
             }
 
             @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
             public void testInMultilineLambdaAfterArrow() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InMultilineLambdaAfterArrow.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InMultilineLambdaAfterArrow.after.kt");
+            }
+
+            @TestMetadata("IndentBeforeElseWithBlock.after.kt")
+            public void testIndentBeforeElseWithBlock() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/IndentBeforeElseWithBlock.after.kt");
+            }
+
+            @TestMetadata("IndentBeforeElseWithoutBlock.after.kt")
+            public void testIndentBeforeElseWithoutBlock() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/IndentBeforeElseWithoutBlock.after.kt");
+            }
+
+            @TestMetadata("IndentNotFinishedVariableEndAfterEquals.after.kt")
+            public void testIndentNotFinishedVariableEndAfterEquals() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/IndentNotFinishedVariableEndAfterEquals.after.kt");
+            }
+
+            @TestMetadata("IndentOnFinishedVariableEndAfterEquals.after.kt")
+            public void testIndentOnFinishedVariableEndAfterEquals() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/IndentOnFinishedVariableEndAfterEquals.after.kt");
             }
 
             @TestMetadata("KT20783.after.kt")
             public void testKT20783() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/KT20783.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/KT20783.after.kt");
             }
 
             @TestMetadata("LambdaInArguments.after.kt")
             public void testLambdaInArguments() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/LambdaInArguments.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/LambdaInArguments.after.kt");
             }
 
             @TestMetadata("LambdaInArguments2.after.kt")
             public void testLambdaInArguments2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/LambdaInArguments2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/LambdaInArguments2.after.kt");
             }
 
             @TestMetadata("LargeFile.after.kt")
             public void testLargeFile() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/LargeFile.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/LargeFile.after.kt");
             }
 
             @TestMetadata("LiteralExpression.after.kt")
             public void testLiteralExpression() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/LiteralExpression.after.kt");
             }
 
             @TestMetadata("LiteralExpression2.after.kt")
             public void testLiteralExpression2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/LiteralExpression2.after.kt");
             }
 
             @TestMetadata("LiteralExpression3.after.kt")
             public void testLiteralExpression3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression3.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/LiteralExpression3.after.kt");
             }
 
             @TestMetadata("ModifierListInUnfinishedDeclaration.after.kt")
             public void testModifierListInUnfinishedDeclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/ModifierListInUnfinishedDeclaration.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/ModifierListInUnfinishedDeclaration.after.kt");
             }
 
             @TestMetadata("NotFirstParameter.after.kt")
             public void testNotFirstParameter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/NotFirstParameter.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/NotFirstParameter.after.kt");
+            }
+
+            @TestMetadata("ReindentOnUnmatchedBrace.after.kt")
+            public void testReindentOnUnmatchedBrace() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/ReindentOnUnmatchedBrace.after.kt");
             }
 
             @TestMetadata("ReturnContinue.after.kt")
             public void testReturnContinue() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/ReturnContinue.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/ReturnContinue.after.kt");
             }
 
             @TestMetadata("Semicolon.after.kt")
             public void testSemicolon() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/Semicolon.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/Semicolon.after.kt");
             }
 
             @TestMetadata("Semicolon2.after.kt")
             public void testSemicolon2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/Semicolon2.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/Semicolon2.after.kt");
             }
 
             @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
             public void testSettingAlignMultilineParametersInCalls() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/SettingAlignMultilineParametersInCalls.after.kt");
+            }
+
+            @TestMetadata("SmartEnterBetweenOpeningAndClosingBrackets.after.kt")
+            public void testSmartEnterBetweenOpeningAndClosingBrackets() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterBetweenOpeningAndClosingBrackets.after.kt");
+            }
+
+            @TestMetadata("SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt")
+            public void testSmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsInMethodParameters.after.kt")
+            public void testSmartEnterWithTabsInMethodParameters() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterWithTabsInMethodParameters.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsOnConstructorParameters.after.kt")
+            public void testSmartEnterWithTabsOnConstructorParameters() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterWithTabsOnConstructorParameters.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt")
+            public void testSmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt")
+            public void testSmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt")
+            public void testSmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnter.after.kt")
+            public void testSplitStringByEnter() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnter.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterAddParentheses.after.kt")
+            public void testSplitStringByEnterAddParentheses() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterAddParentheses.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterBeforeEscapeSequence.after.kt")
+            public void testSplitStringByEnterBeforeEscapeSequence() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterBeforeEscapeSequence.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterBeforeSubstitution.after.kt")
+            public void testSplitStringByEnterBeforeSubstitution() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterBeforeSubstitution.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterEmpty.after.kt")
+            public void testSplitStringByEnterEmpty() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterEmpty.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterExistingParentheses.after.kt")
+            public void testSplitStringByEnterExistingParentheses() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterExistingParentheses.after.kt");
             }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/indentationOnNewline")
+    @TestMetadata("../idea/tests/testData/editor/enterHandler")
     public abstract static class InvertedSettings extends AbstractPerformanceTypingIndentationTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/elvis")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
@@ -1332,32 +1862,32 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("AfterElvis.after.inv.kt")
             public void testAfterElvis() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/AfterElvis.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/AfterElvis.after.inv.kt");
             }
 
             @TestMetadata("AfterElvis2.after.inv.kt")
             public void testAfterElvis2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/AfterElvis2.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/AfterElvis2.after.inv.kt");
             }
 
             @TestMetadata("AfterElvisInBinaryExpression.after.inv.kt")
             public void testAfterElvisInBinaryExpression() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/AfterElvisInBinaryExpression.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/AfterElvisInBinaryExpression.after.inv.kt");
             }
 
             @TestMetadata("BeforeElvis.after.inv.kt")
             public void testBeforeElvis() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/BeforeElvis.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/BeforeElvis.after.inv.kt");
             }
 
             @TestMetadata("BeforeElvisInBinaryExpression.after.inv.kt")
             public void testBeforeElvisInBinaryExpression() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/elvis/BeforeElvisInBinaryExpression.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/elvis/BeforeElvisInBinaryExpression.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/emptyParameters")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyParameters")
         public static class EmptyParameters extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
@@ -1365,47 +1895,47 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("EmptyConditionInDoWhile.after.inv.kt")
             public void testEmptyConditionInDoWhile() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInDoWhile.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInDoWhile.after.inv.kt");
             }
 
             @TestMetadata("EmptyConditionInFor.after.inv.kt")
             public void testEmptyConditionInFor() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInFor.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInFor.after.inv.kt");
             }
 
             @TestMetadata("EmptyConditionInIf.after.inv.kt")
             public void testEmptyConditionInIf() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInIf.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInIf.after.inv.kt");
             }
 
             @TestMetadata("EmptyConditionInWhen.after.inv.kt")
             public void testEmptyConditionInWhen() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInWhen.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInWhen.after.inv.kt");
             }
 
             @TestMetadata("EmptyConditionInWhile.after.inv.kt")
             public void testEmptyConditionInWhile() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyConditionInWhile.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyConditionInWhile.after.inv.kt");
             }
 
             @TestMetadata("EmptyParameterInDestructuringDeclaration.after.inv.kt")
             public void testEmptyParameterInDestructuringDeclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration.after.inv.kt");
             }
 
             @TestMetadata("EmptyParameterInDestructuringDeclaration2.after.inv.kt")
             public void testEmptyParameterInDestructuringDeclaration2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration2.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration2.after.inv.kt");
             }
 
             @TestMetadata("EmptyParameterInDestructuringDeclaration3.after.inv.kt")
             public void testEmptyParameterInDestructuringDeclaration3() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration3.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration3.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
         public static class EmptyParenthesisInBinaryExpression extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
@@ -1413,57 +1943,57 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("AssignmentAfterEq.after.inv.kt")
             public void testAssignmentAfterEq() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/AssignmentAfterEq.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/AssignmentAfterEq.after.inv.kt");
             }
 
             @TestMetadata("BinaryWithTypeExpressions.after.inv.kt")
             public void testBinaryWithTypeExpressions() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/BinaryWithTypeExpressions.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/BinaryWithTypeExpressions.after.inv.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByArrayAccess.after.inv.kt")
             public void testEmptyArgumentInCallByArrayAccess() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/EmptyArgumentInCallByArrayAccess.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/EmptyArgumentInCallByArrayAccess.after.inv.kt");
             }
 
             @TestMetadata("EmptyArgumentInCallByDeclaration.after.inv.kt")
             public void testEmptyArgumentInCallByDeclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/EmptyArgumentInCallByDeclaration.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/EmptyArgumentInCallByDeclaration.after.inv.kt");
             }
 
             @TestMetadata("InBinaryExpressionInMiddle.after.inv.kt")
             public void testInBinaryExpressionInMiddle() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InBinaryExpressionInMiddle.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionInMiddle.after.inv.kt");
             }
 
             @TestMetadata("InBinaryExpressionUnfinished.after.inv.kt")
             public void testInBinaryExpressionUnfinished() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinished.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinished.after.inv.kt");
             }
 
             @TestMetadata("InBinaryExpressionUnfinishedInIf.after.inv.kt")
             public void testInBinaryExpressionUnfinishedInIf() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIf.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIf.after.inv.kt");
             }
 
             @TestMetadata("InBinaryExpressionsBeforeCloseParenthesis.after.inv.kt")
             public void testInBinaryExpressionsBeforeCloseParenthesis() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesis.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesis.after.inv.kt");
             }
 
             @TestMetadata("InExpressionsParenthesesBeforeOperand.after.inv.kt")
             public void testInExpressionsParenthesesBeforeOperand() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/InExpressionsParenthesesBeforeOperand.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InExpressionsParenthesesBeforeOperand.after.inv.kt");
             }
 
             @TestMetadata("IsExpressionAfterIs.after.inv.kt")
             public void testIsExpressionAfterIs() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/IsExpressionAfterIs.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/IsExpressionAfterIs.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline/expressionBody")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/expressionBody")
         public static class ExpressionBody extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
@@ -1471,97 +2001,97 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("AfterFunctionWithExplicitType.after.inv.kt")
             public void testAfterFunctionWithExplicitType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterFunctionWithExplicitType.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterFunctionWithExplicitType.after.inv.kt");
             }
 
             @TestMetadata("AfterFunctionWithInference.after.inv.kt")
             public void testAfterFunctionWithInference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterFunctionWithInference.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterFunctionWithInference.after.inv.kt");
             }
 
             @TestMetadata("AfterFunctionWithTypeParameter.after.inv.kt")
             public void testAfterFunctionWithTypeParameter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterFunctionWithTypeParameter.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterFunctionWithTypeParameter.after.inv.kt");
             }
 
             @TestMetadata("AfterMultideclaration.after.inv.kt")
             public void testAfterMultideclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterMultideclaration.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterMultideclaration.after.inv.kt");
             }
 
             @TestMetadata("AfterMutableProperty.after.inv.kt")
             public void testAfterMutableProperty() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterMutableProperty.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterMutableProperty.after.inv.kt");
             }
 
             @TestMetadata("AfterPropertyWithExplicitType.after.inv.kt")
             public void testAfterPropertyWithExplicitType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterPropertyWithExplicitType.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterPropertyWithExplicitType.after.inv.kt");
             }
 
             @TestMetadata("AfterPropertyWithInference.after.inv.kt")
             public void testAfterPropertyWithInference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterPropertyWithInference.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterPropertyWithInference.after.inv.kt");
             }
 
             @TestMetadata("AfterPropertyWithReceiver.after.inv.kt")
             public void testAfterPropertyWithReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterPropertyWithReceiver.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterPropertyWithReceiver.after.inv.kt");
             }
 
             @TestMetadata("AfterPropertyWithTypeParameterReceiver.after.inv.kt")
             public void testAfterPropertyWithTypeParameterReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/AfterPropertyWithTypeParameterReceiver.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/AfterPropertyWithTypeParameterReceiver.after.inv.kt");
             }
 
             @TestMetadata("FunctionWithExplicitType.after.inv.kt")
             public void testFunctionWithExplicitType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/FunctionWithExplicitType.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/FunctionWithExplicitType.after.inv.kt");
             }
 
             @TestMetadata("FunctionWithInference.after.inv.kt")
             public void testFunctionWithInference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/FunctionWithInference.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/FunctionWithInference.after.inv.kt");
             }
 
             @TestMetadata("FunctionWithTypeParameter.after.inv.kt")
             public void testFunctionWithTypeParameter() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/FunctionWithTypeParameter.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/FunctionWithTypeParameter.after.inv.kt");
             }
 
             @TestMetadata("Multideclaration.after.inv.kt")
             public void testMultideclaration() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/Multideclaration.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/Multideclaration.after.inv.kt");
             }
 
             @TestMetadata("MutableProperty.after.inv.kt")
             public void testMutableProperty() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/MutableProperty.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/MutableProperty.after.inv.kt");
             }
 
             @TestMetadata("PropertyWithExplicitType.after.inv.kt")
             public void testPropertyWithExplicitType() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithExplicitType.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/PropertyWithExplicitType.after.inv.kt");
             }
 
             @TestMetadata("PropertyWithInference.after.inv.kt")
             public void testPropertyWithInference() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithInference.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/PropertyWithInference.after.inv.kt");
             }
 
             @TestMetadata("PropertyWithReceiver.after.inv.kt")
             public void testPropertyWithReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithReceiver.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/PropertyWithReceiver.after.inv.kt");
             }
 
             @TestMetadata("PropertyWithTypeParameterReceiver.after.inv.kt")
             public void testPropertyWithTypeParameterReceiver() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithTypeParameterReceiver.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/expressionBody/PropertyWithTypeParameterReceiver.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/indentationOnNewline")
+        @TestMetadata("../idea/tests/testData/editor/enterHandler")
         public static class Uncategorized extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
@@ -1569,47 +2099,47 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
             @TestMetadata("ArgumentListNormalIndent.after.inv.kt")
             public void testArgumentListNormalIndent() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/ArgumentListNormalIndent.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/ArgumentListNormalIndent.after.inv.kt");
             }
 
             @TestMetadata("HigherOrderFunction2.after.inv.kt")
             public void testHigherOrderFunction2() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction2.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/HigherOrderFunction2.after.inv.kt");
             }
 
             @TestMetadata("InDelegationListAfterColon.after.inv.kt")
             public void testInDelegationListAfterColon() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterColon.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InDelegationListAfterColon.after.inv.kt");
             }
 
             @TestMetadata("InDelegationListAfterComma.after.inv.kt")
             public void testInDelegationListAfterComma() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterComma.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InDelegationListAfterComma.after.inv.kt");
             }
 
             @TestMetadata("InDelegationListNotEmpty.after.inv.kt")
             public void testInDelegationListNotEmpty() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListNotEmpty.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InDelegationListNotEmpty.after.inv.kt");
             }
 
             @TestMetadata("InEnumAfterSemicolon.after.inv.kt")
             public void testInEnumAfterSemicolon() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InEnumAfterSemicolon.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InEnumAfterSemicolon.after.inv.kt");
             }
 
             @TestMetadata("InEnumInitializerListAfterComma.after.inv.kt")
             public void testInEnumInitializerListAfterComma() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListAfterComma.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InEnumInitializerListAfterComma.after.inv.kt");
             }
 
             @TestMetadata("InEnumInitializerListNotEmpty.after.inv.kt")
             public void testInEnumInitializerListNotEmpty() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/InEnumInitializerListNotEmpty.after.inv.kt");
             }
 
             @TestMetadata("SettingAlignMultilineParametersInCalls.after.inv.kt")
             public void testSettingAlignMultilineParametersInCalls() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.inv.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/SettingAlignMultilineParametersInCalls.after.inv.kt");
             }
         }
     }

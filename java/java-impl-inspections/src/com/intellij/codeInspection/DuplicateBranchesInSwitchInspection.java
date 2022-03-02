@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -20,11 +20,11 @@ import com.intellij.refactoring.util.duplicates.ReturnValue;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.migration.TryWithIdenticalCatchesInspection;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
-import gnu.trove.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
@@ -35,13 +35,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.siyeh.ig.migration.TryWithIdenticalCatchesInspection.collectCommentTexts;
-import static com.siyeh.ig.migration.TryWithIdenticalCatchesInspection.getCommentText;
-
 /**
  * @author Pavel.Dolgov
  */
-public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
+public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(DuplicateBranchesInSwitchInspection.class);
 
   @NotNull
@@ -87,17 +84,17 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       }
     }
 
-    void registerProblems(List<? extends BranchBase> branches) {
+    void registerProblems(List<? extends BranchBase<?>> branches) {
       int size = branches.size();
       if (size > 1) {
         boolean[] isDuplicate = new boolean[size];
 
         int defaultIndex = ContainerUtil.indexOf(branches, BranchBase::isDefault);
         if (defaultIndex >= 0) {
-          BranchBase defaultBranch = branches.get(defaultIndex);
+          BranchBase<?> defaultBranch = branches.get(defaultIndex);
           for (int index = 0; index < size; index++) {
             if (index != defaultIndex) {
-              BranchBase branch = branches.get(index);
+              BranchBase<?> branch = branches.get(index);
               if (areDuplicates(defaultBranch, branch)) {
                 isDuplicate[index] = isDuplicate[defaultIndex] = true;
                 highlightDefaultDuplicate(branch);
@@ -109,12 +106,12 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         int compareCount = 0;
         for (int index = 0; index < size - 1; index++) {
           if (isDuplicate[index]) continue;
-          BranchBase branch = branches.get(index);
+          BranchBase<?> branch = branches.get(index);
 
           for (int otherIndex = index + 1; otherIndex < size; otherIndex++) {
             if (isDuplicate[otherIndex]) continue;
             if (++compareCount > 200) return; // avoid quadratic loop over too large list, but at least try to do something in that case
-            BranchBase otherBranch = branches.get(otherIndex);
+            BranchBase<?> otherBranch = branches.get(otherIndex);
 
             if (areDuplicates(branch, otherBranch)) {
               isDuplicate[otherIndex] = true;
@@ -125,7 +122,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       }
     }
 
-    private static boolean isMergeCasesFixAvailable(@NotNull BranchBase duplicate, @NotNull BranchBase original) {
+    private static boolean isMergeCasesFixAvailable(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
       if (duplicate.myIsGuardedOrParenthesizedPattern || original.myIsGuardedOrParenthesizedPattern) return false;
       if (duplicate.myIsTypeTestPattern != original.myIsTypeTestPattern) {
         return duplicate.myIsNull || original.myIsNull;
@@ -134,7 +131,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
 
 
-    private void highlightDuplicate(@NotNull BranchBase duplicate, @NotNull BranchBase original) {
+    private void highlightDuplicate(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
       LocalQuickFix fix = isMergeCasesFixAvailable(duplicate, original) ? original.newMergeCasesFix() : null;
       registerProblem(duplicate, duplicate.getCaseBranchMessage(), fix);
     }
@@ -163,13 +160,13 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     List<String> commentTexts = new ArrayList<>();
     for (PsiElement element = switchBody.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (!(element instanceof PsiSwitchLabeledRuleStatement)) {
-        collectCommentTexts(element, commentTexts);
+        TryWithIdenticalCatchesInspection.collectCommentTexts(element, commentTexts);
         continue;
       }
       PsiSwitchLabeledRuleStatement ruleStatement = (PsiSwitchLabeledRuleStatement)element;
       PsiStatement body = ruleStatement.getBody();
       if (body != null) {
-        collectCommentTexts(ruleStatement, commentTexts);
+        TryWithIdenticalCatchesInspection.collectCommentTexts(ruleStatement, commentTexts);
         Rule rule = new Rule(ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
         commentTexts.clear();
         int hash = rule.hash();
@@ -188,7 +185,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     Comments comments = new Comments();
 
     Branch previousBranch = null;
-    TIntObjectHashMap<List<Branch>> branchesByHash = new TIntObjectHashMap<>();
+    Int2ObjectMap<List<Branch>> branchesByHash = new Int2ObjectOpenHashMap<>();
     for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiSwitchLabelStatement) {
         PsiSwitchLabelStatement switchLabel = (PsiSwitchLabelStatement)child;
@@ -211,14 +208,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
 
     addBranchToMap(branchesByHash, statementList, true, comments, previousBranch);
-
-    Collection<List<Branch>> result = new ArrayList<>();
-    branchesByHash.forEachValue(result::add); // mini-hack: ArrayList.add() always returns true
-    return result;
+    return List.copyOf(branchesByHash.values());
   }
 
   @Nullable
-  private static Branch addBranchToMap(@NotNull TIntObjectHashMap<List<Branch>> branchesByHash,
+  private static Branch addBranchToMap(@NotNull Int2ObjectMap<List<Branch>> branchesByHash,
                                        @Nullable List<PsiStatement> statementList,
                                        boolean hasImplicitBreak,
                                        @NotNull Comments comments,
@@ -277,7 +271,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   @Contract("_,null -> false")
   private static boolean isRedundantComment(@NotNull Set<String> existingComments, @Nullable PsiElement element) {
     if (element instanceof PsiComment) {
-      String text = getCommentText((PsiComment)element);
+      String text = TryWithIdenticalCatchesInspection.getCommentText((PsiComment)element);
       return text.isEmpty() || existingComments.contains(text);
     }
     return false;
@@ -551,7 +545,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     abstract LocalQuickFix newMergeWithDefaultFix();
 
     @Nullable
-    Match match(BranchBase other) {
+    Match match(BranchBase<?> other) {
       return getFinder().isDuplicate(other.myStatements[0], true);
     }
 
@@ -804,10 +798,10 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       // The comments followed by a switch label are attached to that switch label.
       // They're pending until we know if the next statement is a label or not.
       for (PsiElement pending : myPending) {
-        collectCommentTexts(pending, myTexts);
+        TryWithIdenticalCatchesInspection.collectCommentTexts(pending, myTexts);
       }
       myPending.clear();
-      collectCommentTexts(statement, myTexts);
+      TryWithIdenticalCatchesInspection.collectCommentTexts(statement, myTexts);
     }
 
     public void addPending(PsiElement element) {

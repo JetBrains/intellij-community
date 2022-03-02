@@ -8,4 +8,14 @@ cgi.parse_multipart
 urllib.parse.parse_qs
 urllib.parse.parse_qsl
 
+# pathlib methods that exist on Windows, but always raise NotImplementedError,
+# so are omitted from the stub
+pathlib.WindowsPath.group
+pathlib.WindowsPath.owner
+pathlib.Path.is_mount
+pathlib.WindowsPath.is_mount
+
 os.startfile
+
+# Exists at runtime, but missing from stubs
+socket.MsgFlag.MSG_ERRQUEUE

@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -114,7 +115,9 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       file.accept(visitor);
     }
     else {
-      ProgressManager.getInstance().runProcess(() -> file.accept(visitor), new DaemonProgressIndicator());
+      DaemonProgressIndicator progress = new DaemonProgressIndicator();
+      HighlightingSessionImpl.createHighlightingSession(file, progress, null, ProperTextRange.create(file.getTextRange()), false);
+      ProgressManager.getInstance().runProcess(() -> file.accept(visitor), progress);
     }
     return visitor.result;
   }
@@ -149,13 +152,14 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
   @NotNull
   private static List<Pair<PsiFile, HighlightInfo>> runAnnotatorsInGeneralHighlightingPass(@NotNull PsiFile file,
-                                                                                           boolean highlightErrorElements, boolean runAnnotators) {
+                                                                                           boolean highlightErrorElements,
+                                                                                           boolean runAnnotators) {
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return Collections.emptyList();
     ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
-    GlobalInspectionContextBase.assertUnderDaemonProgress();
-
+    DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
+    HighlightingSessionImpl.getOrCreateHighlightingSession(file, daemonProgressIndicator, ProperTextRange.create(file.getTextRange()));
     TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
     List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
     List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);

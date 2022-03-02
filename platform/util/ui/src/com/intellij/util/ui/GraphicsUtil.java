@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -11,10 +11,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 
-/**
- * @author Konstantin Bulenkov
- */
 public final class GraphicsUtil {
+  @SuppressWarnings("SpellCheckingInspection") private static final String DESKTOP_HINTS = "awt.font.desktophints";
+
   private static final MethodInvocator ourSafelyGetGraphicsMethod = new MethodInvocator(JComponent.class, "safelyGetGraphics", Component.class);
 
   @SuppressWarnings("UndesirableClassUsage")
@@ -29,7 +28,7 @@ public final class GraphicsUtil {
    */
   public static void applyRenderingHints(@NotNull Graphics2D g) {
     Toolkit tk = Toolkit.getDefaultToolkit();
-    Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
+    Map<?, ?> map = (Map<?, ?>)tk.getDesktopProperty(DESKTOP_HINTS);
     if (map != null) {
       g.addRenderingHints(map);
     }
@@ -60,7 +59,7 @@ public final class GraphicsUtil {
     if (g2 instanceof Graphics2D) {
       Graphics2D g = (Graphics2D)g2;
       Toolkit tk = Toolkit.getDefaultToolkit();
-      @SuppressWarnings("SpellCheckingInspection") Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
+      Map<?, ?> map = (Map<?, ?>)tk.getDesktopProperty(DESKTOP_HINTS);
       if (map != null && !ignoreSystemSettings) {
         g.addRenderingHints(map);
       }
@@ -100,7 +99,7 @@ public final class GraphicsUtil {
    * nor this method unless you really need to perform some drawing.</p>
    *
    * <p>Under the hood, "getGraphics" is actually "createGraphics" - it creates a new object instance and allocates native resources,
-   * that should be subsequently released by calling {@link Graphics#dispose()} (called from {@link Graphics#finalize()},
+   * that should be subsequently released by calling {@link Graphics#dispose()} (called from {@code finalize()},
    * but there's no need to retain resources unnecessarily).</p>
    *
    * <p>If you need {@link GraphicsConfiguration}, rely on {@link Component#getGraphicsConfiguration()},
@@ -115,15 +114,15 @@ public final class GraphicsUtil {
     return ourSafelyGetGraphicsMethod.isAvailable() ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c) : c.getGraphics();
   }
 
-  public static Object getAntialiasingType(@NotNull JComponent component) {
-    return AATextInfo.getClientProperty(component);
-  }
-
   public static void setAntialiasingType(@NotNull JComponent component, @Nullable Object type) {
     AATextInfo.putClientProperty(type, component);
   }
 
   public static Object createAATextInfo(@NotNull Object hint) {
     return AATextInfo.create(hint, UIUtil.getLcdContrastValue());
+  }
+
+  public static boolean isProjectorEnvironment() {
+    return GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName().equals("PGraphicsEnvironment");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -22,6 +22,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.frame.XStringValueModifier;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +34,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
  * Class SetValueAction
  * @author Jeka
  */
-public abstract class JavaValueModifier extends XValueModifier {
+public abstract class JavaValueModifier extends XValueModifier implements XStringValueModifier {
   private final JavaValue myJavaValue;
 
   public JavaValueModifier(JavaValue javaValue) {
@@ -253,5 +255,10 @@ public abstract class JavaValueModifier extends XValueModifier {
 
     progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
     evaluationContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
+  }
+
+  @Override
+  public @NotNull XExpression stringToXExpression(@NotNull String text) {
+    return XExpressionImpl.fromText(StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(text)));
   }
 }

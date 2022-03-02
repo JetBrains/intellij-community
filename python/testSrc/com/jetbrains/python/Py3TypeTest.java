@@ -274,7 +274,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAnext() {
-    doTest("Awaitable[int]",
+    doTest("Coroutine[Any, Any, int]",
            "async def asyncgen():\n" +
            "    yield 42\n" +
            "expr = asyncgen().__anext__()");
@@ -291,7 +291,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorAsend() {
-    doTest("Awaitable[int]",
+    doTest("Coroutine[Any, Any, int]",
            "async def asyncgen():\n" +
            "    yield 42\n" +
            "expr = asyncgen().asend(\"hello\")");
@@ -467,7 +467,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-21692
   public void testSumResult() {
-    doTest("int",
+    doTest("int | Literal[0]",
            "expr = sum([1, 2, 3])");
   }
 
@@ -1321,6 +1321,46 @@ public class Py3TypeTest extends PyTestCase {
            "\n" +
            "\n" +
            "expr = transform(bar)");
+  }
+
+  // PY-51329
+  public void testBitwiseOrOperatorOverloadUnion() {
+    doTest("UnionType",
+           "class MyMeta(type):\n" +
+           "    def __or__(self, other) -> Any:\n" +
+           "        return other\n" +
+           "\n" +
+           "class Foo(metaclass=MyMeta):\n" +
+           "    ...\n" +
+           "\n" +
+           "expr = Foo | None");
+  }
+
+  // PY-51329
+  public void testBitwiseOrOperatorOverloadUnionTypeAlias() {
+    doTest("Any",
+           "class MyMeta(type):\n" +
+           "    def __or__(self, other) -> Any:\n" +
+           "        return other\n" +
+           "\n" +
+           "class Foo(metaclass=MyMeta):\n" +
+           "    ...\n" +
+           "\n" +
+           "Alias = Foo | None\n" +
+           "expr: Alias");
+  }
+
+  // PY-51329
+  public void testBitwiseOrOperatorOverloadUnionTypeAnnotation() {
+    doTest("Any",
+           "class MyMeta(type):\n" +
+           "    def __or__(self, other) -> Any:\n" +
+           "        return other\n" +
+           "\n" +
+           "class Foo(metaclass=MyMeta):\n" +
+           "    ...\n" +
+           "\n" +
+           "expr: Foo | None");
   }
 
   /**

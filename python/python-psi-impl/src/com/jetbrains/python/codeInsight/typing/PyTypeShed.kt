@@ -41,15 +41,33 @@ object PyTypeShed {
   private val stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels = mapOf(
     // name to python versions when this name was introduced and removed
     "_bootlocale" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON39),
+    "_dummy_thread" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON38),
+    "_dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
     "_py_abc" to (LanguageLevel.PYTHON37 to null),
+    "asyncio.mixins" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
+    "asyncio.compat" to (LanguageLevel.PYTHON34 to LanguageLevel.PYTHON36),  // likely it is ignored now
+    "asyncio.exceptions" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncio.format_helpers" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "asyncio.runners" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "asyncio.staggered" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncio.threads" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "asyncio.trsock" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "binhex" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),
     "contextvars" to (LanguageLevel.PYTHON37 to null),
     "dataclasses" to (LanguageLevel.PYTHON37 to null),
+    "distutils.command.bdist_msi" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),  // likely it is ignored now
+    "dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
     "formatter" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
     "graphlib" to (LanguageLevel.PYTHON39 to null),
     "importlib.metadata" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "importlib.metadata._meta" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
     "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
     "macpath" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON37),
+    "macurl2path" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON36),
     "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "symbol" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "unittest._log" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "unittest.async_case" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "zoneinfo" to (LanguageLevel.PYTHON39 to null)
   )
 

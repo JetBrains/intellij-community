@@ -1,14 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.CachedIntentions;
-import com.intellij.codeInsight.intention.impl.EditIntentionSettingsAction;
-import com.intellij.codeInsight.intention.impl.EnableDisableIntentionAction;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -25,10 +22,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,25 +54,21 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
    * @param queryIntentionActions true if {@link IntentionManager} must be asked for all registered {@link IntentionAction} and {@link IntentionAction#isAvailable(Project, Editor, PsiFile)} must be called on each
    *                              Usually, this expensive process should be executed only once per highlighting session
    */
-  ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, boolean queryIntentionActions) {
-    super(project, editor.getDocument(), false);
+  ShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull Editor editor, boolean queryIntentionActions) {
+    super(psiFile.getProject(), editor.getDocument(), false);
     myQueryIntentionActions = queryIntentionActions;
     myPassIdToShowIntentionsFor = -1;
-    ApplicationManager.getApplication().assertIsDispatchThread();
 
     myEditor = editor;
-
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-
-    myFile = documentManager.getPsiFile(myEditor.getDocument());
+    myFile = psiFile;
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
   }
 
-  public static @NotNull List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(final @NotNull Editor editor,
-                                                                                         final @NotNull PsiFile file,
-                                                                                         final int passId,
+  public static @NotNull List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull Editor editor,
+                                                                                         @NotNull PsiFile file,
+                                                                                         int passId,
                                                                                          int offset) {
-    final Project project = file.getProject();
+    Project project = file.getProject();
 
     List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
@@ -87,9 +80,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   public static boolean markActionInvoked(@NotNull Project project,
-                                          final @NotNull Editor editor,
+                                          @NotNull Editor editor,
                                           @NotNull IntentionAction action) {
-    final int offset = ((EditorEx)editor).getExpectedCaretOffset();
+    int offset = ((EditorEx)editor).getExpectedCaretOffset();
 
     List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
@@ -135,7 +128,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
       int start = range.getStartOffset();
       int end = range.getEndOffset();
-      final Project project = file.getProject();
+      Project project = file.getProject();
       if (start > offset || offset > end) {
         continue;
       }
@@ -297,19 +290,19 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   /**
    * Collects intention actions from providers intended to be invoked in a background thread.
    */
-  public static void getActionsToShow(final @NotNull Editor hostEditor,
-                                      final @NotNull PsiFile hostFile,
-                                      final @NotNull IntentionsInfo intentions,
+  public static void getActionsToShow(@NotNull Editor hostEditor,
+                                      @NotNull PsiFile hostFile,
+                                      @NotNull IntentionsInfo intentions,
                                       int passIdToShowIntentionsFor) {
     getActionsToShow(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, true);
   }
-  private static void getActionsToShow(final @NotNull Editor hostEditor,
-                                       final @NotNull PsiFile hostFile,
-                                       final @NotNull IntentionsInfo intentions,
+  private static void getActionsToShow(@NotNull Editor hostEditor,
+                                       @NotNull PsiFile hostFile,
+                                       @NotNull IntentionsInfo intentions,
                                        int passIdToShowIntentionsFor,
                                        boolean queryIntentionActions) {
     int offset = hostEditor.getCaretModel().getOffset();
-    final PsiElement psiElement = hostFile.findElementAt(offset);
+    PsiElement psiElement = hostFile.findElementAt(offset);
     if (psiElement != null) PsiUtilCore.ensureValid(psiElement);
 
     intentions.setOffset(offset);
@@ -324,7 +317,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       highestPriorityInfoFinder.process(info);
     }
 
-    @Nullable HighlightInfo infoAtCursor = highestPriorityInfoFinder.getResult();
+    HighlightInfo infoAtCursor = highestPriorityInfoFinder.getResult();
     intentions.setHighlightInfoType(infoAtCursor != null ? infoAtCursor.type : null);
     if (infoAtCursor == null) {
       intentions.errorFixesToShow.addAll(fixes);
@@ -336,7 +329,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
     if (queryIntentionActions) {
-      PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, offset);
+      PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
       for (IntentionAction action : IntentionManager.getInstance().getAvailableIntentions()) {
         if (indicator != null) {
           indicator.setText(action.getFamilyName());
@@ -349,6 +342,13 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
           List<IntentionAction> enableDisableIntentionAction = new ArrayList<>();
           enableDisableIntentionAction.add(new EnableDisableIntentionAction(action));
           enableDisableIntentionAction.add(new EditIntentionSettingsAction(action));
+          if (IntentionShortcutManager.getInstance().hasShortcut(action)) {
+            enableDisableIntentionAction.add(new EditShortcutToIntentionAction(action));
+            enableDisableIntentionAction.add(new RemoveIntentionActionShortcut(action));
+          }
+          else {
+            enableDisableIntentionAction.add(new AssignShortcutToIntentionAction(action));
+          }
           HighlightInfo.IntentionActionDescriptor descriptor =
             new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null);
           if (!fixes.contains(descriptor)) {
@@ -376,7 +376,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor,
                                                         @NotNull IntentionsInfo intentions,
                                                         @NotNull List<? extends HighlightInfo.IntentionActionDescriptor> fixes) {
-    final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
+    boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
     for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
       if (fix.isError() && isError) {
         intentions.errorFixesToShow.add(fix);

@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -17,32 +19,21 @@ import java.util.Collections;
 /**
  * @author Eugene Zhuravlev
  */
-public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet> {
+public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, IntSet> {
   private final PathRelativizerService myRelativizer;
 
-  private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {
+  private static final DataExternalizer<IntSet> DATA_EXTERNALIZER = new DataExternalizer<IntSet>() {
     @Override
-    public void save(@NotNull final DataOutput out, TIntHashSet value) throws IOException {
-      final Ref<IOException> exRef = Ref.create(null);
-      value.forEach(value1 -> {
-        try {
-          out.writeInt(value1);
-        }
-        catch (IOException e) {
-          exRef.set(e);
-          return false;
-        }
-        return true;
-      });
-      final IOException error = exRef.get();
-      if (error != null) {
-        throw error;
+    public void save(@NotNull final DataOutput out, IntSet value) throws IOException {
+      IntIterator iterator = value.iterator();
+      while (iterator.hasNext()) {
+        out.writeInt(iterator.nextInt());
       }
     }
 
     @Override
-    public TIntHashSet read(@NotNull DataInput in) throws IOException {
-      final TIntHashSet result = new TIntHashSet();
+    public IntSet read(@NotNull DataInput in) throws IOException {
+      final IntSet result = new IntOpenHashSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         result.add(in.readInt());
@@ -61,10 +52,10 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
   }
 
   void addMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
-    final TIntHashSet set = new TIntHashSet();
+    final IntSet set = new IntOpenHashSet();
     set.add(buildTargetId);
     for (String outputPath : outputPaths) {
-      appendData(FileUtil.pathHashCode(relativePath(outputPath)), set);
+      appendData(pathHashCode(outputPath), set);
     }
   }
 
@@ -77,9 +68,9 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
       return;
     }
     for (String outputPath : outputPaths) {
-      final int key = FileUtil.pathHashCode(relativePath(outputPath));
+      final int key = pathHashCode(outputPath);
       synchronized (myDataLock) {
-        final TIntHashSet state = getState(key);
+        final IntSet state = getState(key);
         if (state != null) {
           final boolean removed = state.remove(buildTargetId);
           if (state.isEmpty()) {
@@ -102,9 +93,9 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     }
     final Collection<String> result = new ArrayList<>(size);
     for (String outputPath : outputPaths) {
-      final int key = FileUtil.pathHashCode(relativePath(outputPath));
+      final int key = pathHashCode(outputPath);
       synchronized (myDataLock) {
-        final TIntHashSet associatedTargets = getState(key);
+        final IntSet associatedTargets = getState(key);
         if (associatedTargets == null || associatedTargets.size() != 1) {
           continue;
         }
@@ -116,8 +107,12 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     return result;
   }
 
-  @NotNull
-  private String relativePath(@NotNull String path) {
-    return myRelativizer.toRelative(path);
+  private int pathHashCode(@NotNull String path) {
+    String relativePath = myRelativizer.toRelative(path);
+    // On case-insensitive OS hash calculated from path converted to lower case
+    if (ProjectStamps.PORTABLE_CACHES) {
+      return StringUtil.isEmpty(relativePath) ? 0 : FileUtil.toCanonicalPath(relativePath).hashCode();
+    }
+    return FileUtil.pathHashCode(relativePath);
   }
 }

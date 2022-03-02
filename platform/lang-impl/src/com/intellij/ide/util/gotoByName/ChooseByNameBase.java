@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -75,7 +75,10 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -367,10 +370,14 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     JPanel caption2Tools = new JPanel(new BorderLayout());
 
-    if (myModel.getPromptText() != null) {
-      JLabel label = new JLabel(myModel.getPromptText());
-      label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    String promptText = myModel.getPromptText();
+    if (promptText != null) {
+      JLabel label = new JLabel(promptText);
+      label.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
       caption2Tools.add(label, BorderLayout.WEST);
+    }
+
+    if (promptText != null || isCheckboxVisible()) {
       caption2Tools.add(hBox, BorderLayout.EAST);
     }
 
@@ -434,6 +441,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseByNameBase", group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     final JComponent toolbarComponent = actionToolbar.getComponent();
+    actionToolbar.setTargetComponent(toolbarComponent);
     toolbarComponent.setBorder(null);
 
     if (myToolArea == null) {
@@ -1050,8 +1058,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean hasPostponedAction() {
     return false;
   }

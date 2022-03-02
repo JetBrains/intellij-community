@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.icons.AllIcons;
@@ -37,7 +37,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
     return isPopupElement ? JBInsets.create(1, 2) :
-           ExperimentalUI.isNewUI() ? JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1)) : JBUI.emptyInsets();
+           ExperimentalUI.isNewUI() ? JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1)) : JBInsets.emptyInsets();
   }
 
   @Override
@@ -57,7 +57,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
-    Font font = UIUtil.getLabelFont();
+    Font font = StartupUiUtil.getLabelFont();
     return !ExperimentalUI.isNewUI() && UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
   }
 
@@ -295,7 +295,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getWrapperPanelInsets(Insets insets) {
-    final JBInsets result = JBUI.insets(insets);
+    final JBInsets result = JBInsets.create(insets);
     if (shouldPaintWrapperPanel()) {
       result.top += JBUIScale.scale(1);
     }

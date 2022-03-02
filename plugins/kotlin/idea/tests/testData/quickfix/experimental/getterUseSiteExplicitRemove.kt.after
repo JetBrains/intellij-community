@@ -1,0 +1,8 @@
+// "Remove annotation" "true"
+// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// WITH_STDLIB
+
+@RequiresOptIn
+annotation class SomeOptInAnnotation
+
+val someProperty: Int = 5

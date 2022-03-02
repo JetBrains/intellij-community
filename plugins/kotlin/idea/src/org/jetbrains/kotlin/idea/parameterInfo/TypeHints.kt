@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.refactoring.getLineNumber
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -70,7 +70,7 @@ fun provideTypeHint(element: KtCallableDeclaration, offset: Int): InlayInfoDetai
 
     return if (isUnclearType(type, element)) {
         val settings = element.containingKtFile.kotlinCustomSettings
-        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(element.analyze(), element).renderTypeIntoInlayInfo(type)
+        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(element.safeAnalyzeNonSourceRootCode(), element).renderTypeIntoInlayInfo(type)
         val prefix = buildString {
             if (settings.SPACE_BEFORE_TYPE_COLON) {
                 append(" ")

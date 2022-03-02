@@ -2,15 +2,20 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
-import com.intellij.openapi.observable.properties.transform
-import com.intellij.openapi.ui.whenTextModified
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.observable.util.whenTextChanged
+import com.intellij.openapi.ui.validation.DialogValidation
+import com.intellij.openapi.ui.validation.forTextComponent
 import com.intellij.ui.dsl.ValidationException
+import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
 import com.intellij.ui.layout.*
-import com.intellij.util.lockOrSkip
+import com.intellij.util.containers.map2Array
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
 import javax.swing.text.JTextComponent
@@ -33,43 +38,40 @@ const val COLUMNS_MEDIUM = 25
 
 const val COLUMNS_LARGE = 36
 
-fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
-  return bind(JTextComponent::getText, JTextComponent::setText, binding)
-}
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval
+fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
 
-fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>): Cell<T> {
-  component.text = property.get()
-  return graphProperty(property)
-    .applyToComponent { bind(property) }
+fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
+  installValidationRequestor(property)
+  return applyToComponent { bind(property) }
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
-  return bindText(prop.toBinding())
+  return bindText(prop.toMutableProperty())
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(getter: () -> String, setter: (String) -> Unit): Cell<T> {
-  return bindText(PropertyBinding(getter, setter))
+  return bindText(MutableProperty(getter, setter))
 }
 
-fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cell<T> {
-  return bindText({ binding.get().toString() },
-                  { value -> catchValidationException { binding.set(component.getValidatedIntValue(value)) } })
-}
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval
+fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> = bindIntText(property)
 
-fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> {
-  component.text = property.get().toString()
-  return graphProperty(property)
-    .applyToComponent {
-      bind(property.transform({ it.toString() }, { component.getValidatedIntValue(it) }))
-    }
+fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty<Int>): Cell<T> {
+  installValidationRequestor(property)
+  return applyToComponent {
+    bind(property.transform({ it.toString() }, { component.getValidatedIntValue(it) }))
+  }
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
-  return bindIntText(prop.toBinding())
+  return bindIntText(prop.toMutableProperty())
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) -> Unit): Cell<T> {
-  return bindIntText(PropertyBinding(getter, setter))
+  return bindIntText(MutableProperty(getter, setter))
 }
 
 fun <T : JTextComponent> Cell<T>.text(text: String): Cell<T> {
@@ -101,7 +103,8 @@ private fun JTextComponent.getValidatedIntValue(value: String): Int {
   return result
 }
 
-private fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
+private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
+  text = property.get()
   // See: IDEA-238573 removed cyclic update of UI components that bound with properties
   val mutex = AtomicBoolean()
   property.afterChange {
@@ -109,7 +112,7 @@ private fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
       text = it
     }
   }
-  whenTextModified {
+  whenTextChanged {
     mutex.lockOrSkip {
       // Catch transformed GraphProperties, e.g. for intTextField
       catchValidationException {
@@ -118,3 +121,15 @@ private fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
     }
   }
 }
+
+private fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
+  return bind(JTextComponent::getText, JTextComponent::setText, prop)
+}
+
+private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
+  return bindText({ prop.get().toString() },
+                  { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
+}
+
+fun <T : JTextComponent> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+  validation(*validations.map2Array { it.forTextComponent() })

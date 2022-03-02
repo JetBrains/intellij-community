@@ -17,14 +17,14 @@ import javax.swing.ButtonGroup
 
 open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     builder.withButtonGroup(buttonGroup, body)
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun buttonGroup(crossinline elementActionListener: () -> Unit, crossinline init: LayoutBuilder.() -> Unit): ButtonGroup {
     val group = ButtonGroup()
 
@@ -42,25 +42,25 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
   @Suppress("PropertyName")
   @PublishedApi
   @get:Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @get:ApiStatus.ScheduledForRemoval
   internal val `$`: LayoutBuilderImpl
     get() = builder
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 class CellBuilderWithButtonGroupProperty<T : Any>
 @PublishedApi internal constructor(private val prop: PropertyBinding<T>)  {
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun Cell.radioButton(@NlsContexts.RadioButton text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
     return component(comment = comment).bindValue(value)
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun CellBuilder<JBRadioButton>.bindValue(value: T): CellBuilder<JBRadioButton> = bindValueToProperty(prop, value)
 }
 

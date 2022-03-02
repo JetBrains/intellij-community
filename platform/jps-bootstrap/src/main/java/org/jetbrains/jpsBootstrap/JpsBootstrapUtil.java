@@ -4,7 +4,6 @@ package org.jetbrains.jpsBootstrap;
 import jetbrains.buildServer.messages.serviceMessages.Message;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
-import org.jetbrains.annotations.Contract;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -59,15 +58,12 @@ public class JpsBootstrapUtil {
     }
   }
 
-  @Contract("_->fail")
   public static void fatal(String message) {
     if (underTeamCity) {
       System.out.println(new Message(message, "FAILURE", null).asString());
     } else {
       System.err.println("\nFATAL: " + message);
     }
-
-    System.exit(1);
   }
 
   public static void setVerboseEnabled(boolean verboseEnabled) {

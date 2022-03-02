@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.idea.maven.dom.MavenDomTestCase;
+import com.intellij.maven.testFramework.MavenDomTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;

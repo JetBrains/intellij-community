@@ -36,7 +36,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EmptyIcon;
@@ -49,9 +49,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Rustam Vishnyakov
- */
+import static java.util.Arrays.stream;
+
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
@@ -389,13 +388,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     if (language == null) return PredefinedCodeStyle.EMPTY_ARRAY;
 
     PredefinedCodeStyle[] predefinedStyles = PredefinedCodeStyle.EP_NAME.getExtensions();
-    JBIterable<PredefinedCodeStyle> styles = JBIterable.of(predefinedStyles).filter(s -> s.isApplicableToLanguage(language));
-
-    if (styles.single() == null && styles.filter(Weighted.class).isNotEmpty()) {
-      styles = styles.sort(WEIGHTED_COMPARATOR);
+    PredefinedCodeStyle[] styles = stream(predefinedStyles)
+      .filter(s -> s.isApplicableToLanguage(language))
+      .toArray(n -> new PredefinedCodeStyle[n]);
+    if (styles.length >= 2 && ContainerUtil.exists(styles, s -> s instanceof Weighted)) {
+      Arrays.sort(styles, WEIGHTED_COMPARATOR);
     }
     
-    return styles.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
+    return styles;
   }
 
   private static final class WeightedComparator implements Comparator<Object> {

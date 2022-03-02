@@ -33,8 +33,7 @@ import javax.swing.JList
 import javax.swing.JPanel
 
 abstract class RunAnythingChooseContextAction(private val containingPanel: JPanel) : CustomComponentAction, DumbAware, ActionGroup() {
-  override fun canBePerformed(context: DataContext): Boolean = true
-  override fun isPopup(): Boolean = true
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = EMPTY_ARRAY
 
   abstract var selectedContext: RunAnythingContext?
@@ -46,6 +45,8 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
   }
 
   override fun update(e: AnActionEvent) {
+    e.presentation.isPopupGroup = true
+    e.presentation.isPerformGroup = true
     if (availableContexts.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -173,7 +174,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
                                         actionItem: PopupFactoryImpl.ActionItem,
                                         isSelected: Boolean) {
           val event = ActionUtil.createEmptyEvent()
-          ActionUtil.performDumbAwareUpdate(true, actionItem.action, event, false)
+          ActionUtil.performDumbAwareUpdate(actionItem.action, event, false)
 
           val description = event.presentation.description
           if (description != null) {

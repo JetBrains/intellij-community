@@ -3,10 +3,12 @@ package git4idea.index
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
+import com.intellij.AppTopics
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor
@@ -29,9 +31,15 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     super.setUp()
     VcsConfiguration.StandardConfirmation.ADD.doNothing()
     repo.untrackedFilesHolder.createWaiter().waitFor()
-    _tracker = object: GitStageTracker(project) {
+    _tracker = object : GitStageTracker(project) {
       override fun isStagingAreaAvailable() = true
     }
+    project.messageBus.connect(tracker).subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : GitStageFileDocumentManagerListener() {
+      override fun getTrackers(): List<GitStageTracker> = listOf(tracker)
+    })
+    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : GitStageDocumentListener() {
+      override fun getTrackers(): List<GitStageTracker> = listOf(tracker)
+    }, tracker)
   }
 
   override fun tearDown() {
@@ -137,6 +145,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   private fun <T> runWithTrackerUpdate(name: String, function: () -> T): T {
     return tracker.futureUpdate(name).let { futureUpdate ->
       val result = function()
+      changeListManager.waitEverythingDoneInTestMode()
       futureUpdate.waitOrCancel()
       return@let result
     }

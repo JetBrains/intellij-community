@@ -33,7 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.customPasteProvider");
@@ -126,12 +128,35 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
+  private static class ProcessorAndData<Data extends TextBlockTransferableData> {
+    final CopyPastePostProcessor<Data> processor;
+    final List<Data> data;
+
+    private ProcessorAndData(@NotNull CopyPastePostProcessor<Data> processor, @NotNull List<Data> data) {
+      this.processor = processor;
+      this.data = data;
+    }
+
+    void process(Project project, Editor editor, RangeMarker bounds, int caretOffset, Ref<Boolean> skipIndentation) {
+      processor.processTransferableData(project, editor, bounds, caretOffset, skipIndentation, data);
+    }
+
+    static <T extends TextBlockTransferableData> @Nullable ProcessorAndData<T> create(
+      @NotNull CopyPastePostProcessor<T> processor,
+      @NotNull Transferable content
+    ) {
+      List<T> data = processor.extractTransferableData(content);
+      if (data.isEmpty()) return null;
+      return new ProcessorAndData<>(processor, data);
+    }
+  }
+
   private static void doPasteAction(final Editor editor,
-                              final Project project,
-                              final PsiFile file,
-                              final Document document,
-                              @NotNull final Transferable content,
-                              @NotNull final TypingActionsExtension typingActionsExtension) {
+                                    final Project project,
+                                    final PsiFile file,
+                                    final Document document,
+                                    @NotNull final Transferable content,
+                                    @NotNull final TypingActionsExtension typingActionsExtension) {
     CopyPasteManager.getInstance().stopKillRings();
 
     String text = null;
@@ -150,14 +175,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<>();
+    final List<ProcessorAndData<?>> extraData = new ArrayList<>();
     final Collection<TextBlockTransferableData> allValues = new ArrayList<>();
 
     for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
-      List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
-      if (!data.isEmpty()) {
-        extraData.put(processor, data);
-        allValues.addAll(data);
+      ProcessorAndData<? extends TextBlockTransferableData> data = ProcessorAndData.create(processor, content);
+      if (data != null) {
+        extraData.add(data);
+        allValues.addAll(data.data);
       }
     }
 
@@ -219,11 +244,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     // Any value, except `null` is a signal that the text was transformed.
     // For the `CopyPasteFoldingProcessor` it means that folding data is not valid and cannot be applied.
     final Ref<Boolean> skipIndentation = new Ref<>(pastedTextWasChanged ? Boolean.FALSE : null);
-    for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
-      //noinspection unchecked
-      SlowOperations.allowSlowOperations(
-        () -> e.getKey().processTransferableData(project, editor, bounds, caretOffset, skipIndentation, e.getValue())
-      );
+    for (ProcessorAndData<?> data : extraData) {
+      SlowOperations.allowSlowOperations(() -> {
+        data.process(project, editor, bounds, caretOffset, skipIndentation);
+      });
     }
 
     boolean pastedTextContainsWhiteSpacesOnly =

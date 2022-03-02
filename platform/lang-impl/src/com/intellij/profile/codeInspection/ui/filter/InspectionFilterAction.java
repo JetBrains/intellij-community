@@ -164,7 +164,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     private final HighlightSeverity mySeverity;
 
-    private ShowWithSpecifiedSeverityInspectionsAction(final HighlightSeverity severity) {
+    private ShowWithSpecifiedSeverityInspectionsAction(@NotNull HighlightSeverity severity) {
       super(SingleInspectionProfilePanel.renderSeverity(severity),
             null,
             HighlightDisplayLevel.find(severity).getIcon());

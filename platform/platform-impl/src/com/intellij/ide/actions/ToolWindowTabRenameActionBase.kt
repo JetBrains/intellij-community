@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -18,8 +18,9 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingHelper
-import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.Point
 import java.awt.event.FocusAdapter
@@ -50,11 +51,12 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
   }
 
   private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content, project: Project) {
-    val textField = JTextField(content.displayName)
+    val defaultPopupValue = getContentDisplayNameToEdit(content, project)
+    val textField = JTextField(defaultPopupValue)
     textField.selectAll()
 
     val label = JBLabel(labelText)
-    label.font = UIUtil.getLabelFont().deriveFont(Font.BOLD)
+    label.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD)
 
     val panel = SwingHelper.newLeftAlignedVerticalPanel(label, Box.createVerticalStrut(JBUI.scale(2)), textField)
     panel.addFocusListener(object : FocusAdapter() {
@@ -83,8 +85,7 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
               textField.repaint()
               return
             }
-            content.displayName = textField.text
-            contentNameUpdated(content, project)
+            applyContentDisplayName(content, project, textField.text)
           }
           balloon.hide()
         }
@@ -104,5 +105,9 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
   }
 
-  open fun contentNameUpdated(content: Content, project: Project) {}
+  open fun getContentDisplayNameToEdit(content: Content, project: Project): @NlsContexts.TabTitle String = content.displayName
+
+  open fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
+    content.displayName = newContentName
+  }
 }

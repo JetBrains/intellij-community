@@ -8,25 +8,26 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetPlatform
-import com.intellij.execution.target.TargetedCommandLine
-import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.*
+import com.intellij.execution.target.TargetEnvironment.TargetPath
+import com.intellij.execution.target.TargetEnvironment.UploadRoot
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remote.RemoteSdkPropertiesPaths
+import com.intellij.util.io.isAncestor
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkType
-import kotlin.jvm.Throws
+import java.nio.file.Path
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
@@ -107,19 +108,24 @@ private const val PYTHONPATH_ENV = "PYTHONPATH"
  */
 fun PythonExecution.applyHelperPackageToPythonPath(helperPackage: HelperPackage,
                                                    helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
+  return applyHelperPackageToPythonPath(helperPackage.pythonPathEntries, helpersAwareTargetRequest)
+}
+
+fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<String>,
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
   val localHelpersRootPath = PythonHelpersLocator.getHelpersRoot().absolutePath
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
   val targetUploadPath = helpersAwareTargetRequest.preparePyCharmHelpers()
   val targetPathSeparator = targetPlatform.platform.pathSeparator
-  val uploads = helperPackage.pythonPathEntries.map {
+  val uploads = pythonPathEntries.map {
     // TODO [Targets API] Simplify the paths resolution
     val relativePath = FileUtil.getRelativePath(localHelpersRootPath, it, Platform.current().fileSeparator)
                        ?: throw IllegalStateException("Helpers PYTHONPATH entry '$it' cannot be resolved" +
                                                       " against the root path of PyCharm helpers '$localHelpersRootPath'")
     Upload(it, targetUploadPath.getRelativeTargetPath(relativePath))
   }
-  val pythonPathEntries = uploads.map { it.targetPath }
-  val pythonPathValue = pythonPathEntries.joinToStringFunction(separator = targetPathSeparator.toString())
+  val pythonPathEntriesOnTarget = uploads.map { it.targetPath }
+  val pythonPathValue = pythonPathEntriesOnTarget.joinToStringFunction(separator = targetPathSeparator.toString())
   appendToPythonPath(pythonPathValue, targetPlatform)
   return uploads
 }
@@ -194,4 +200,14 @@ fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndic
     throw PyExecutionException("", fullCommand[0], fullCommand.drop(1), output)
   }
   return output
+}
+
+/**
+ * Checks whether the base directory of [project] is registered in [this] request. Adds it if it is not.
+ */
+fun TargetEnvironmentRequest.ensureProjectDirIsOnTarget(project: Project) {
+  val basePath = project.basePath?.let { Path.of(it) } ?: return
+  if (uploadVolumes.none { it.localRootPath.isAncestor(basePath) }) {
+    uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
+  }
 }

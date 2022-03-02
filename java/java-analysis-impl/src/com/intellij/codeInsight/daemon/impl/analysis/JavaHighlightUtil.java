@@ -6,7 +6,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -19,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,12 +41,9 @@ public final class JavaHighlightUtil {
   public static boolean isSerializationRelatedMethod(@NotNull PsiMethod method, @Nullable PsiClass containingClass) {
     if (containingClass == null) return false;
     if (method.isConstructor()) {
-      if (isSerializable(containingClass, "java.io.Externalizable") &&
-          method.getParameterList().isEmpty() &&
-          method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return true;
-      }
-      return false;
+      return isSerializable(containingClass, "java.io.Externalizable") &&
+             method.getParameterList().isEmpty() &&
+             method.hasModifierProperty(PsiModifier.PUBLIC);
     }
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     @NonNls String name = method.getName();
@@ -98,7 +99,7 @@ public final class JavaHighlightUtil {
   public static PsiType sameType(PsiExpression @NotNull [] expressions) {
     PsiType type = null;
     for (PsiExpression expression : expressions) {
-      final PsiType currentType;
+      PsiType currentType;
       if (expression instanceof PsiArrayInitializerExpression) {
         currentType = getArrayInitializerType((PsiArrayInitializerExpression)expression);
       }
@@ -125,15 +126,11 @@ public final class JavaHighlightUtil {
     if (!(statement instanceof PsiExpressionStatement)) return false;
     PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
     if (!(expression instanceof PsiMethodCallExpression)) return false;
-    final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
     if (testForSuper) {
       if ("super".equals(methodExpression.getText())) return true;
     }
-    if (testForThis) {
-      if ("this".equals(methodExpression.getText())) return true;
-    }
-
-    return false;
+    return testForThis && "this".equals(methodExpression.getText());
   }
 
   /**
@@ -143,7 +140,7 @@ public final class JavaHighlightUtil {
    */
   @NotNull
   public static List<PsiMethod> getChainedConstructors(@NotNull PsiMethod constructor) {
-    final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
+    ConstructorVisitorInfo info = new ConstructorVisitorInfo();
     visitConstructorChain(constructor, info);
     if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
     return ObjectUtils.notNull(info.visitedConstructors, Collections.emptyList());
@@ -202,6 +199,35 @@ public final class JavaHighlightUtil {
       return JavaAnalysisBundle.message("message.class.inaccessible", className);
     }
     return JavaAnalysisBundle.message("message.class.inaccessible.from.module", className, module.getName());
+  }
+
+  /**
+   * @return true if file correspond to the shebang script
+   */
+  public static boolean isJavaHashBangScript(@NotNull PsiFile containingFile) {
+    if (!(containingFile instanceof PsiJavaFile)) return false;
+    if (containingFile instanceof PsiFileEx && !((PsiFileEx)containingFile).isContentsLoaded()) {
+      VirtualFile vFile = containingFile.getVirtualFile();
+      if (vFile.isInLocalFileSystem()) {
+        try {
+          // don't build PSI when not yet loaded -> time for scanning scope from 18 seconds to 8 seconds on IntelliJ project
+          return VfsUtilCore.loadText(vFile, 5).startsWith("#!");
+        }
+        catch (IOException e) {
+          return false;
+        }
+      }
+    }
+    PsiElement firstChild = containingFile.getFirstChild();
+    if (firstChild instanceof PsiImportList && firstChild.getTextLength() == 0) {
+      PsiElement sibling = firstChild.getNextSibling();
+      if (sibling instanceof PsiClass) {
+        firstChild = sibling.getFirstChild();
+      }
+    }
+    return firstChild instanceof PsiComment &&
+           ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT &&
+           firstChild.getText().startsWith("#!");
   }
 
   static class ConstructorVisitorInfo {

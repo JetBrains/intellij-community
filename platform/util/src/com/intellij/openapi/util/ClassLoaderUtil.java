@@ -37,7 +37,7 @@ public final class ClassLoaderUtil {
 
   /** @deprecated Use {@link ClassLoaderUtil#computeWithClassLoader(ClassLoader, ThrowableComputable)} instead. */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static <T> T runWithClassLoader(ClassLoader classLoader, Computable<T> computable) {
     return computeWithClassLoader(classLoader, () -> computable.compute());
   }

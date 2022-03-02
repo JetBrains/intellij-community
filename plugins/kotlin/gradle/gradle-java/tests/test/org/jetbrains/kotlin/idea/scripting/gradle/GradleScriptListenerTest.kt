@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsMana
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants

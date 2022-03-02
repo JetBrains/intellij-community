@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
@@ -34,8 +34,7 @@ public final class EditorConfigNavigationActionsFactory {
   private EditorConfigNavigationActionsFactory() {
   }
 
-  @NotNull
-  public List<AnAction> getNavigationActions(@NotNull Project project, @NotNull VirtualFile sourceFile) {
+  public @NotNull List<AnAction> getNavigationActions(@NotNull Project project, @NotNull VirtualFile sourceFile) {
     final List<AnAction> actions = new ArrayList<>();
     synchronized (myEditorConfigFilePaths) {
       List<VirtualFile> editorConfigFiles = Utils.pathsToFiles(myEditorConfigFilePaths);
@@ -66,15 +65,12 @@ public final class EditorConfigNavigationActionsFactory {
     }
   }
 
-  @NotNull
-  @Nls
-  private static String getActionName(@NotNull VirtualFile file, boolean withFolder) {
+  private static @NotNull @Nls String getActionName(@NotNull VirtualFile file, boolean withFolder) {
     final String fileName = EditorConfigPresentationUtil.getFileName(file, withFolder);
     return !withFolder ? EditorConfigBundle.message("action.open.file") : fileName;
   }
 
-  @Nullable
-  public static EditorConfigNavigationActionsFactory getInstance(@NotNull PsiFile psiFile) {
+  public static @Nullable EditorConfigNavigationActionsFactory getInstance(@NotNull PsiFile psiFile) {
     final Project project = psiFile.getProject();
     final VirtualFile file = psiFile.getVirtualFile();
     synchronized (INSTANCE_LOCK) {

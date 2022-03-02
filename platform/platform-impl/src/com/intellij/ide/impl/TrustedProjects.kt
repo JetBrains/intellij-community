@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("TrustedProjects")
 @file:ApiStatus.Experimental
 
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
@@ -25,6 +26,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Consumer
 import kotlin.io.path.isDirectory
+import kotlin.io.path.pathString
 
 /**
  * Shows the "Trust this project?" dialog, if the user wasn't asked yet if they trust this project,
@@ -52,14 +54,17 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boo
   }
 }
 
-private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
-  projectDir,
-  IdeBundle.message("untrusted.project.open.dialog.title"),
-  IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
-  IdeBundle.message("untrusted.project.dialog.trust.button"),
-  IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-  IdeBundle.message("untrusted.project.open.dialog.cancel.button")
-)
+private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice {
+  val fileName = projectDir.fileName ?: projectDir.pathString
+  return confirmOpeningUntrustedProject(
+    projectDir,
+    IdeBundle.message("untrusted.project.open.dialog.title", fileName),
+    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
+    IdeBundle.message("untrusted.project.dialog.trust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+  )
+}
 
 private fun confirmOpeningUntrustedProject(
   projectDir: Path,
@@ -73,11 +78,12 @@ private fun confirmOpeningUntrustedProject(
     return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.TRUST_AND_OPEN
   }
 
+  val doNotAskOption = projectDir.parent?.let { createDoNotAskOptionForLocation(it) }
   val choice = MessageDialogBuilder.Message(title, message)
     .buttons(trustButtonText, distrustButtonText, cancelButtonText)
     .defaultButton(trustButtonText)
     .focusedButton(distrustButtonText)
-    .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent))
+    .doNotAsk(doNotAskOption)
     .asWarning()
     .help(TRUSTED_PROJECTS_HELP_TOPIC)
     .show()
@@ -125,7 +131,7 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
-fun Project.isTrusted() = getTrustedState() == ThreeState.YES
+fun Project.isTrusted() = LightEdit.owns(this) || getTrustedState () == ThreeState.YES
 
 @ApiStatus.Internal
 fun Project.getTrustedState(): ThreeState {
@@ -141,6 +147,7 @@ fun Project.getTrustedState(): ThreeState {
     return ThreeState.YES
   }
 
+  @Suppress("DEPRECATION")
   return this.service<TrustedProjectSettings>().trustedState
 }
 
@@ -175,27 +182,33 @@ private fun createDoNotAskOptionForLocation(projectLocation: Path): DoNotAskOpti
   }
 }
 
-private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
-                                       ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                       java.lang.Boolean.getBoolean("idea.is.integration.test") ||
-                                       java.lang.Boolean.getBoolean("idea.trust.all.projects")
-                                       
+@ApiStatus.Internal
+fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
+                               ApplicationManager.getApplication().isHeadlessEnvironment ||
+                               java.lang.Boolean.getBoolean("idea.is.integration.test") ||
+                               java.lang.Boolean.getBoolean("idea.trust.all.projects")
+
+private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")
+
 
 private fun isProjectImplicitlyTrusted(project: Project): Boolean =
   isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) }, project)
 
 @JvmOverloads
 @ApiStatus.Internal
-fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
-  if (isTrustedCheckDisabled()) {
+fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean {
+  if (isTrustedCheckDisabled() || isTrustedCheckDisabledForProduct()) {
     return true
   }
-  if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
+  if (projectDir != null && isPathTrustedInSettings(projectDir)) {
     TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(project)
     return true
   }
   return false
 }
+
+@ApiStatus.Internal
+fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isPathTrusted(path)
 
 /**
  * Per-project "is this project trusted" setting from the previous version of the trusted API.
@@ -204,6 +217,7 @@ fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Bo
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
+@Deprecated("Use TrustedPaths instead")
 class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
 
   class State : BaseState() {
@@ -212,7 +226,7 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
   }
 
   var trustedState: ThreeState
-    get() = if (isTrustedCheckDisabled()) ThreeState.YES else state.isTrusted
+    get() = state.isTrusted
     set(value) {
       state.isTrusted = value
     }

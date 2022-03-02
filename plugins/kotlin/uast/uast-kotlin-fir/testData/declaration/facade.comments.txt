@@ -1,0 +1,14 @@
+KotlinUFile(
+    KotlinUClass(
+        KotlinUMethod(
+            UComment(// Single-line comment bound to fun foo)
+        )
+        KotlinUMethod(
+            UComment(/*
+             * Multi-line comment bound to extension fun buzz
+             */)
+            KotlinReceiverUParameter(
+            )
+        )
+    )
+)

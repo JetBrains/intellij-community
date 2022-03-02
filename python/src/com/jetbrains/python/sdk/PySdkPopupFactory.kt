@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -14,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.SwingHelper
 import com.jetbrains.python.PyBundle
@@ -74,14 +74,14 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     }
 
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
-    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
+    if (Registry.get("python.use.targets.api").asBoolean()) {
       val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
       addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(it, currentSdk) })
       group.add(addNewInterpreterPopupGroup)
       group.addSeparator()
     }
     group.add(InterpreterSettingsAction())
-    if (!Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
+    if (!Registry.get("python.use.targets.api").asBoolean()) {
       group.add(AddInterpreterAction(currentSdk))
     }
 

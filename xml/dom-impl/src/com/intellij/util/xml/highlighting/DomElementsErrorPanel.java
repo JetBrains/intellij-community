@@ -155,7 +155,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     @Override
     protected void fillDaemonCodeAnalyzerErrorsStatus(@NotNull DaemonCodeAnalyzerStatus status,
                                                       @NotNull SeverityRegistrar severityRegistrar) {
-      for (int i = 0; i < status.errorCount.length; i++) {
+      for (int i = 0; i < status.errorCounts.length; i++) {
         final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(i);
         if (minSeverity == null) {
           continue;
@@ -167,7 +167,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
           sum += (SeverityRegistrar.getSeverityRegistrar(getProject()).compare(minSeverity, HighlightSeverity.WARNING) >= 0 ? holder
             .getProblems(element, true, true) : holder.getProblems(element, true, minSeverity)).size();
         }
-        status.errorCount[i] = sum;
+        status.errorCounts[i] = sum;
       }
     }
 

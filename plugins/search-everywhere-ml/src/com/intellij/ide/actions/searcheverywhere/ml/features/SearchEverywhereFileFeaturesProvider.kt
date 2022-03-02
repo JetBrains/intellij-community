@@ -4,6 +4,8 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.favoritesTreeView.FavoritesManager
 import com.intellij.navigation.TargetPresentation
@@ -17,7 +19,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.Time.*
 
 internal class SearchEverywhereFileFeaturesProvider
-  : SearchEverywhereClassOrFileFeaturesProvider(FileSearchEverywhereContributor::class.java) {
+  : SearchEverywhereClassOrFileFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
   companion object {
     internal const val IS_DIRECTORY_DATA_KEY = "isDirectory"
     internal const val FILETYPE_DATA_KEY = "fileType"
@@ -28,6 +30,11 @@ internal class SearchEverywhereFileFeaturesProvider
     internal const val PRIORITY_DATA_KEY = "priority"
     internal const val IS_EXACT_MATCH_DATA_KEY = "isExactMatch"
     internal const val FILETYPE_MATCHES_QUERY_DATA_KEY = "fileTypeMatchesQuery"
+
+    internal const val STATISTICIAN_USE_COUNT_DATA_KEY = "statUseCount"
+    internal const val STATISTICIAN_IS_MOST_POPULAR_DATA_KEY = "statIsMostPopular"
+    internal const val STATISTICIAN_RECENCY_DATA_KEY = "statRecency"
+    internal const val STATISTICIAN_IS_MOST_RECENT_DATA_KEY = "statIsMostRecent"
 
     internal const val TIME_SINCE_LAST_MODIFICATION_DATA_KEY = "timeSinceLastModification"
     internal const val WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY = "wasModifiedInLastMinute"
@@ -52,6 +59,7 @@ internal class SearchEverywhereFileFeaturesProvider
       SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY to searchQuery.length,
     )
 
+    data.putAll(getStatisticianStats(item))
 
     val nameOfItem = item.virtualFile.nameWithoutExtension
     // Remove the directory and the extension if they are present
@@ -76,6 +84,19 @@ internal class SearchEverywhereFileFeaturesProvider
   private fun isFavorite(item: PsiFileSystemItem): Boolean {
     val favoritesManager = FavoritesManager.getInstance(item.project)
     return ReadAction.compute<Boolean, Nothing> { favoritesManager.getFavoriteListName(null, item.virtualFile) != null }
+  }
+
+  private fun getStatisticianStats(item: PsiFileSystemItem): Map<String, Any> {
+    val statisticianService = SearchEverywhereStatisticianService.getInstance(item.project)
+
+    return statisticianService.getCombinedStats(item)?.let { stats ->
+      mapOf<String, Any>(
+        STATISTICIAN_USE_COUNT_DATA_KEY to stats.useCount,
+        STATISTICIAN_IS_MOST_POPULAR_DATA_KEY to stats.isMostPopular,
+        STATISTICIAN_RECENCY_DATA_KEY to stats.recency,
+        STATISTICIAN_IS_MOST_RECENT_DATA_KEY to stats.isMostRecent,
+      )
+    } ?: emptyMap()
   }
 
   private fun isOpened(item: PsiFileSystemItem): Boolean {

@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.roots
 
 import com.intellij.conversion.*
 import com.intellij.conversion.impl.ConversionContextImpl
-import com.intellij.conversion.impl.ModuleSettingsImpl
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryKind
+import com.intellij.openapi.roots.libraries.LibraryKindRegistry
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.vfs.JarFileSystem
@@ -26,7 +24,6 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.kotlin.config.getFacetPlatformByConfigurationElement
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.toVirtualFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.JsLibraryStdDetectionUtil
@@ -38,30 +35,29 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.utils.PathUtil
+import java.util.*
 
-class KotlinNonJvmSourceRootConverterProvider : ConverterProvider("kotlin-non-jvm-source-roots") {
-    companion object {
-        private val rootTypesToMigrate: List<JpsModuleSourceRootType<*>> = listOf(
-            JavaSourceRootType.SOURCE,
-            JavaSourceRootType.TEST_SOURCE,
-            JavaResourceRootType.RESOURCE,
-            JavaResourceRootType.TEST_RESOURCE
-        )
+private val rootTypesToMigrate: List<JpsModuleSourceRootType<*>> = listOf(
+    JavaSourceRootType.SOURCE,
+    JavaSourceRootType.TEST_SOURCE,
+    JavaResourceRootType.RESOURCE,
+    JavaResourceRootType.TEST_RESOURCE
+)
 
-        // TODO(dsavvinov): review how it behaves in HMPP environment
-        private val PLATFORM_TO_STDLIB_DETECTORS: Map<TargetPlatform, (Array<VirtualFile>) -> Boolean> = mapOf(
-            JvmPlatforms.unspecifiedJvmPlatform to { roots: Array<VirtualFile> ->
-                JavaRuntimeDetectionUtil.getRuntimeJar(roots.toList()) != null
-            },
-            JsPlatforms.defaultJsPlatform to { roots: Array<VirtualFile> ->
-                JsLibraryStdDetectionUtil.getJsStdLibJar(roots.toList()) != null
-            },
-            CommonPlatforms.defaultCommonPlatform to { roots: Array<VirtualFile> ->
-                getLibraryJar(roots, PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN) != null
-            }
-        )
+// TODO(dsavvinov): review how it behaves in HMPP environment
+private val PLATFORM_TO_STDLIB_DETECTORS: Map<TargetPlatform, (Array<VirtualFile>) -> Boolean> = mapOf(
+    JvmPlatforms.unspecifiedJvmPlatform to { roots: Array<VirtualFile> ->
+        JavaRuntimeDetectionUtil.getRuntimeJar(roots.toList()) != null
+    },
+    JsPlatforms.defaultJsPlatform to { roots: Array<VirtualFile> ->
+        JsLibraryStdDetectionUtil.getJsStdLibJar(roots.toList()) != null
+    },
+    CommonPlatforms.defaultCommonPlatform to { roots: Array<VirtualFile> ->
+        getLibraryJar(roots, PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN) != null
     }
+)
 
+internal class KotlinNonJvmSourceRootConverterProvider : ConverterProvider() {
     sealed class LibInfo {
         class ByXml(
             private val element: Element,
@@ -69,15 +65,22 @@ class KotlinNonJvmSourceRootConverterProvider : ConverterProvider("kotlin-non-jv
             private val moduleSettings: ModuleSettings
         ) : LibInfo() {
             override val explicitKind: PersistentLibraryKind<*>?
-                get() = LibraryKind.findById(element.getAttributeValue("type")) as? PersistentLibraryKind<*>
+                get() = LibraryKindRegistry.getInstance().findKindById(element.getAttributeValue("type")) as? PersistentLibraryKind<*>
 
             override fun getRoots(): Array<VirtualFile> {
                 val contextImpl = conversionContext as? ConversionContextImpl ?: return VirtualFile.EMPTY_ARRAY
-                val moduleSettingsImpl = moduleSettings as? ModuleSettingsImpl ?: return VirtualFile.EMPTY_ARRAY
-                return contextImpl
-                    .getClassRoots(element, moduleSettingsImpl)
-                    .mapNotNull { it.toVirtualFile()?.let { file -> JarFileSystem.getInstance().getJarRootForLocalFile(file) } }
-                    .toTypedArray()
+                val classRoots = contextImpl.getClassRootUrls(element, moduleSettings)
+                val jarFileSystem = JarFileSystem.getInstance()
+                return classRoots
+                    .map {
+                        if (it.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
+                            jarFileSystem.findFileByPath(it.substring(JarFileSystem.PROTOCOL_PREFIX.length))
+                        } else {
+                            null
+                        }
+                    }
+                    .filter(Objects::nonNull)
+                    .toArray{ arrayOfNulls<VirtualFile>(it) }
             }
         }
 
@@ -136,18 +139,19 @@ class KotlinNonJvmSourceRootConverterProvider : ConverterProvider("kotlin-non-jv
 
         override fun createModuleFileConverter(): ConversionProcessor<ModuleSettings> {
             return object : ConversionProcessor<ModuleSettings>() {
-                private fun ModuleSettings.detectPlatformByFacet() =
-                    getFacetElement(KotlinFacetType.ID)
+                private fun ModuleSettings.detectPlatformByFacet(): TargetPlatform? {
+                    return getFacetElement(KotlinFacetType.ID)
                         ?.getChild(JpsFacetSerializer.CONFIGURATION_TAG)
                         ?.getFacetPlatformByConfigurationElement()
+                }
 
 
-                private fun ModuleSettings.detectPlatformByDependencies(): TargetPlatform? {
+                private fun detectPlatformByDependencies(moduleSettings: ModuleSettings): TargetPlatform? {
                     var hasCommonStdlib = false
 
-                    orderEntries
+                    moduleSettings.orderEntries
                         .asSequence()
-                        .mapNotNull { createLibInfo(it, this) }
+                        .mapNotNull { createLibInfo(it, moduleSettings) }
                         .forEach {
                             val stdlibPlatform = it.stdlibPlatform
                             if (stdlibPlatform != null) {
@@ -164,7 +168,7 @@ class KotlinNonJvmSourceRootConverterProvider : ConverterProvider("kotlin-non-jv
 
                 private fun ModuleSettings.detectPlatform(): TargetPlatform {
                     return detectPlatformByFacet()
-                        ?: detectPlatformByDependencies()
+                        ?: detectPlatformByDependencies(this)
                         ?: JvmPlatforms.unspecifiedJvmPlatform
                 }
 
@@ -202,9 +206,8 @@ class KotlinNonJvmSourceRootConverterProvider : ConverterProvider("kotlin-non-jv
                     for (sourceFolder in settings.getSourceFolderElements()) {
                         val contentRoot = sourceFolder.parent as? Element ?: continue
                         val oldSourceRoot = loadSourceRoot(sourceFolder)
-                        val url = sourceFolder.getAttributeValue(URL_ATTRIBUTE)
-
                         val (newRootType, data) = oldSourceRoot.getMigratedSourceRootTypeWithProperties() ?: continue
+                        val url = sourceFolder.getAttributeValue(URL_ATTRIBUTE)!!
                         @Suppress("UNCHECKED_CAST")
                         val newSourceRoot = JpsElementFactory.getInstance().createModuleSourceRoot(url, newRootType, data)
                                 as? JpsTypedModuleSourceRoot<JpsElement> ?: continue

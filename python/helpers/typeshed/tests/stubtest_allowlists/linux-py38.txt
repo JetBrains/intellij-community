@@ -1,1 +1,6 @@
 select.epoll.register
+
+# Exists at runtime, but missing from stubs
+os.copy_file_range
+posix.copy_file_range
+time.pthread_getcpuclockid

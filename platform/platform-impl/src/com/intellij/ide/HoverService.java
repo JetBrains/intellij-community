@@ -1,23 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.hover.HoverListener;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.SwingUtilities;
-import java.awt.AWTEvent;
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 final class HoverService {
   private static final Logger LOG = Logger.getInstance(HoverService.class);
-  private final SmartList<ComponentPoint> hierarchy = new SmartList<>();
+  private final List<ComponentPoint> hierarchy = new ArrayList<>();
 
   void process(@NotNull AWTEvent event) {
     if (event instanceof MouseEvent) {
@@ -30,7 +30,7 @@ final class HoverService {
     if (MouseEvent.MOUSE_EXITED != event.getID()) {
       Component parent = event.getComponent();
       if (parent != null && parent.isShowing()) {
-        Component component = SwingUtilities.getDeepestComponentAt(parent, event.getX(), event.getY());
+        Component component = getDeepestComponentAt(parent, event.getX(), event.getY());
         while (component != null && !(component instanceof Window)) {
           if (!HoverListener.getAll(component).isEmpty()) components.add(0, component);
           component = component.getParent();
@@ -53,6 +53,31 @@ final class HoverService {
         point.mouseEntered(event);
       }
     }
+  }
+
+  /**
+   * @param parent the component to begin the search
+   * @param x      the x target location
+   * @param y      the y target location
+   * @return the deepest visible descendent component of {@code parent}
+   * that contains the location {@code x}, {@code y}; or {@code null},
+   * if it does not contain the specified location
+   * @see SwingUtilities#getDeepestComponentAt
+   */
+  private static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
+    if (!parent.contains(x, y)) return null; // parent does not contain the specified location
+    if (parent instanceof Container) {
+      for (Component child : ((Container)parent).getComponents()) {
+        if (child != null && child.isVisible()) {
+          Component deepest = child instanceof Container
+                              ? getDeepestComponentAt(child, x - child.getX(), y - child.getY())
+                              : child.getComponentAt(x - child.getX(), y - child.getY());
+          if (deepest != null && deepest.isVisible()) return deepest; // the deepest component that contains the specified location
+        }
+      }
+    }
+    // do not allow returning visible glass pane without components
+    return parent instanceof IdeGlassPane ? null : parent;
   }
 
 

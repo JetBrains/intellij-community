@@ -163,11 +163,9 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext getDataContext(Component component) {
-    if (Registry.is("actionSystem.dataContextAssertions")) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      if (ourGetDataLevel.get()[0] > 0) {
-        LOG.error("DataContext shall not be created and queried inside another getData() call.");
-      }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ourGetDataLevel.get()[0] > 0) {
+      LOG.error("DataContext shall not be created and queried inside another getData() call.");
     }
     return IdeUiService.getInstance().createUiDataContext(component);
   }
@@ -253,7 +251,8 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data) {
-    if (dataContext instanceof UserDataHolder && !DataContextUtils.isFrozenDataContext(dataContext)) {
+    if (dataContext instanceof UserDataHolder &&
+        !((dataContext instanceof FreezingDataContext) && ((FreezingDataContext)dataContext).isFrozenDataContext())) {
       ((UserDataHolder)dataContext).putUserData(dataKey, data);
     }
   }

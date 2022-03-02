@@ -156,10 +156,10 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     DomElement domElement = myManager.getDomElement(context);
     if (domElement == null) return XmlAttributeDescriptor.EMPTY;
 
-    final List<? extends DomAttributeChildDescription> descriptions = domElement.getGenericInfo().getAttributeChildrenDescriptions();
+    final List<? extends DomAttributeChildDescription<?>> descriptions = domElement.getGenericInfo().getAttributeChildrenDescriptions();
     List<XmlAttributeDescriptor> descriptors = new ArrayList<>();
 
-    for (DomAttributeChildDescription description : descriptions) {
+    for (DomAttributeChildDescription<?> description : descriptions) {
       descriptors.add(new DomAttributeXmlDescriptor(description, myManager.getProject()));
     }
     List<? extends CustomDomChildrenDescription> customs = domElement.getGenericInfo().getCustomNameChildrenDescription();
@@ -181,7 +181,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     DomElement domElement = myManager.getDomElement(context);
     if (domElement == null) return null;
 
-    for (DomAttributeChildDescription description : domElement.getGenericInfo().getAttributeChildrenDescriptions()) {
+    for (DomAttributeChildDescription<?> description : domElement.getGenericInfo().getAttributeChildrenDescriptions()) {
       if (attributeName.equals(DomAttributeXmlDescriptor.getQualifiedAttributeName(context, description.getXmlName()))) {
         return new DomAttributeXmlDescriptor(description, myManager.getProject());
       }

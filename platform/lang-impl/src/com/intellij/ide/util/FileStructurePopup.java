@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -128,8 +129,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
    * @noinspection unused
    * @deprecated use {@link #FileStructurePopup(Project, FileEditor, StructureViewModel)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public FileStructurePopup(@NotNull Project project,
                             @NotNull FileEditor fileEditor,
                             @NotNull StructureView structureView,
@@ -192,6 +192,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
+    PopupUtil.applyNewUIBackground(myTree);
 
     ModelListener modelListener = () -> rebuild(false);
     myTreeModel.addModelListener(modelListener);

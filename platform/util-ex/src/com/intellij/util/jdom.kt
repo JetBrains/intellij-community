@@ -45,7 +45,7 @@ fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
 
 @Throws(IOException::class, JDOMException::class)
 @Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(stream)", "com.intellij.openapi.util.JDOMUtil"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 fun loadElement(stream: InputStream): Element = JDOMUtil.load(stream)
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)

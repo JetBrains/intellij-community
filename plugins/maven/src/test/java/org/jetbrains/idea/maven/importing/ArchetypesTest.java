@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
-import org.jetbrains.idea.maven.MavenTestCase;
+import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.execution.*;
 import org.junit.Assert;
 

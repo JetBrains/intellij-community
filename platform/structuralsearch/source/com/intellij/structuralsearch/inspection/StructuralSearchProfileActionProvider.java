@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -98,7 +98,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
       inspection.removeConfigurationsWithUuid(UUID.fromString(shortName));
-      profile.removeTool(shortName);
+      profile.removeTool(selectedTool);
       profile.setModified(true);
       InspectionProfileUtil.fireProfileChanged(profile);
     }
@@ -187,7 +187,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     private final JTextField mySuppressIdTextField;
 
     InspectionDataDialog(Project project, @NotNull SSBasedInspection inspection, @NotNull Configuration configuration, boolean newInspection) {
-      super(null);
+      super((Project)null);
       myInspection = inspection;
 
       myConfiguration = configuration;

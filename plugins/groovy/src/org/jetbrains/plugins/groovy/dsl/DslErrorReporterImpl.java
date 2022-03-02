@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.notification.Notification;
@@ -40,8 +40,9 @@ public class DslErrorReporterImpl extends DslErrorReporter {
       return;
     }
 
+    String errorMessage = e.getMessage();
     String content = new HtmlBuilder().append(
-      HtmlChunk.p().addText(e.getMessage())
+      HtmlChunk.p().addText(errorMessage == null ? e.toString() : errorMessage)
     ).append(
       HtmlChunk.p().child(
         HtmlChunk.link("", GroovyBundle.message("gdsl.investigate.link.label"))

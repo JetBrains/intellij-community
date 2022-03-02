@@ -158,7 +158,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }, this);
 
-    busConnection.subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateChangeListAvailability());
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateChangeListAvailability());
     Registry.get("vcs.disable.changelists").addListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
@@ -783,8 +783,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   /**
    * @deprecated use {@link #getUnversionedFilesPaths}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public List<VirtualFile> getUnversionedFiles() {
     return mapNotNull(getUnversionedFilesPaths(), FilePath::getVirtualFile);

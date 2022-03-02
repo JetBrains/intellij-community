@@ -52,7 +52,7 @@ class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpres
         commentSaver.restore(result)
     }
 
-    private fun KtExpression.callExpression(): KtCallExpression? = getPossiblyQualifiedCallExpression() ?: safeAs()
+    private fun KtExpression.callExpression(): KtCallExpression? = getPossiblyQualifiedCallExpression() ?: safeAs<KtCallExpression>()
 
     private fun KtForExpression.createForEachExpression(psiFactory: KtPsiFactory = KtPsiFactory(this)): KtExpression? {
         val body = body ?: return null
@@ -83,7 +83,7 @@ class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpres
     }
 
     private fun KtExpression.calleeText(): String? {
-        val callExpression = safeAs<KtQualifiedExpression>()?.callExpression ?: safeAs() ?: return ""
+        val callExpression = safeAs<KtQualifiedExpression>()?.callExpression ?: safeAs<KtCallExpression>() ?: return ""
         return callExpression.calleeExpression?.text
     }
 

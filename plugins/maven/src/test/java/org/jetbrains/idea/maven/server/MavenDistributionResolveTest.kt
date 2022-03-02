@@ -10,7 +10,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.ZipUtil
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.junit.Test

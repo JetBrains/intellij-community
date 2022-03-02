@@ -222,10 +222,7 @@ public class GitExecutableManager {
         GitExecutable executable = getExecutable(project);
         return identifyVersion(executable);
       }
-      catch (ProcessCanceledException e) {
-        return null;
-      }
-      catch (GitVersionIdentificationException e) {
+      catch (ProcessCanceledException | GitVersionIdentificationException e) {
         return null;
       }
     });
@@ -238,10 +235,7 @@ public class GitExecutableManager {
       try {
         return identifyVersion(executable);
       }
-      catch (ProcessCanceledException e) {
-        return null;
-      }
-      catch (GitVersionIdentificationException e) {
+      catch (ProcessCanceledException | GitVersionIdentificationException e) {
         return null;
       }
     });

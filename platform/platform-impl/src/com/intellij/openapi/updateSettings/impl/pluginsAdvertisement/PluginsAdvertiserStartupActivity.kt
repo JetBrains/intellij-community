@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
-import com.intellij.ide.plugins.DependencyCollectorBean
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
@@ -20,7 +19,6 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
-
   @RequiresBackgroundThread
   fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
     val application = ApplicationManager.getApplication()
@@ -34,25 +32,25 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
       return
     }
 
-    val extensionsService = PluginFeatureCacheService.instance
+    val extensionsService = PluginFeatureCacheService.getInstance()
     val extensions = extensionsService.extensions
 
     val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures.toMutableList()
-    unknownFeatures.addAll(collectDependencyUnknownFeatures(project, includeIgnored))
+    unknownFeatures.addAll(PluginAdvertiserService.getInstance().collectDependencyUnknownFeatures(project, includeIgnored))
 
     if (extensions != null && unknownFeatures.isEmpty()) {
       if (includeIgnored) {
         ProgressManager.checkCanceled()
         ApplicationManager.getApplication().invokeLater(Runnable {
           notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+            .setDisplayId("advertiser.no.plugins")
             .notify(project)
         }, ModalityState.NON_MODAL, project.disposed)
       }
-      return
     }
 
     try {
-      if (extensions == null || extensions.outdated) {
+      if (extensions == null || extensions.outdated || includeIgnored) {
         @Suppress("DEPRECATION")
         val extensionsMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(),
                                                          FileTypeFactory.FILE_TYPE_FACTORY_EP.name)
@@ -65,19 +63,22 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
         EditorNotifications.getInstance(project).updateAllNotifications()
       }
 
-      if (extensionsService.dependencies == null || extensionsService.dependencies!!.outdated) {
+      if (extensionsService.dependencies == null || extensionsService.dependencies!!.outdated || includeIgnored) {
         val dependencyMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(), DEPENDENCY_SUPPORT_FEATURE)
         extensionsService.dependencies?.update(dependencyMap) ?: run {
           extensionsService.dependencies = PluginFeatureMap(dependencyMap)
         }
       }
       ProgressManager.checkCanceled()
-      PluginAdvertiserService.instance.run(
-        project,
-        customPlugins,
-        unknownFeatures,
-        includeIgnored
-      )
+
+      if (unknownFeatures.isNotEmpty()) {
+        PluginAdvertiserService.getInstance().run(
+          project,
+          customPlugins,
+          unknownFeatures,
+          includeIgnored
+        )
+      }
     }
     catch (e: Exception) {
       if (e !is ControlFlowException) {
@@ -90,29 +91,14 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     checkSuggestedPlugins(project, false)
   }
-
-  companion object {
-    @JvmStatic
-    private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, Set<PluginData>> {
-      val params = mapOf("featureType" to featureType)
-      return MarketplaceRequests.getInstance()
-        .getFeatures(params)
-        .groupBy(
-          { it.implementationName!! },
-          { feature -> feature.toPluginData { customPluginIds.contains(it) } }
-        ).mapValues { it.value.filterNotNull().toSet() }
-    }
-  }
 }
 
-internal fun collectDependencyUnknownFeatures(project: Project, includeIgnored: Boolean = false): Sequence<UnknownFeature> {
-  return DependencyCollectorBean.EP_NAME.extensions.asSequence()
-    .flatMap { dependencyCollectorBean ->
-      dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
-        UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
-                       IdeBundle.message("plugins.advertiser.feature.dependency"),
-                       dependencyCollectorBean.kind + ":" + coordinate, null)
-      }
-    }
-    .filter { includeIgnored || !UnknownFeaturesCollector.getInstance(project).isIgnored(it) }
+private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, MutableSet<PluginData>> {
+  val params = mapOf("featureType" to featureType)
+  return MarketplaceRequests.getInstance()
+    .getFeatures(params)
+    .groupBy(
+      { it.implementationName!! },
+      { feature -> feature.toPluginData { customPluginIds.contains(it) } }
+    ).mapValues { it.value.filterNotNull().toHashSet() }
 }

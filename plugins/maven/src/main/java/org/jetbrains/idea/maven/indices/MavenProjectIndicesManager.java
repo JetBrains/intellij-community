@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 import org.jetbrains.idea.reposearch.DependencySearchService;
@@ -15,8 +14,7 @@ import java.util.Set;
 /**
  * @deprecated use {@link #org.jetbrains.idea.maven.indices.MavenIndicesManager}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@Deprecated(forRemoval = true)
 public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent implements Disposable {
 
   public static MavenProjectIndicesManager getInstance(Project p) {
@@ -32,46 +30,25 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   /**
-   * @deprecated use {@link MavenIndicesManager#scheduleUpdateIndicesList(com.intellij.util.Consumer)}
+   * @deprecated use {@link MavenIndicesManager#scheduleUpdateIndicesList(Consumer)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  private void scheduleUpdateIndicesList() {
-    scheduleUpdateIndicesList(null);
-  }
-
-  /**
-   * @deprecated use {@link MavenIndicesManager#scheduleUpdateIndicesList(com.intellij.util.Consumer)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
     MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(consumer);
   }
 
   /**
-   * @deprecated use {@link #org.jetbrains.idea.maven.indices.MavenIndicesManager#getIndex()}
+   * @deprecated use {@link MavenIndicesManager#getIndex()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public List<MavenIndex> getIndices() {
     return MavenIndicesManager.getInstance(myProject).getIndex().getIndices();
   }
 
   /**
-   * @deprecated use {@link #org.jetbrains.idea.maven.indices.MavenIndicesManager#scheduleUpdateAll()}
+   * @deprecated use {@link MavenIndicesManager#scheduleUpdateContent(List)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public void scheduleUpdateAll() {
-    MavenIndicesManager.getInstance(myProject).scheduleUpdateContentAll();
-  }
-
-  /**
-   * @deprecated use {@link #org.jetbrains.idea.maven.indices.MavenIndicesManager#scheduleUpdate(List)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public void scheduleUpdate(List<MavenIndex> indices) {
     MavenIndicesManager.getInstance(myProject).scheduleUpdateContent(indices);
   }
@@ -80,8 +57,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
    * @deprecated use {@link DependencySearchService}
    * or use {@link MavenGroupIdCompletionContributor} for example to fill async completion variants.
    **/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public Set<String> getGroupIds() {
     return getGroupIds("");
   }
@@ -90,8 +66,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
    * @deprecated use {@link DependencySearchService}
    * or use {@link MavenGroupIdCompletionContributor} for example to fill async completion variants.
    **/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public Set<String> getGroupIds(String pattern) {
     return DependencySearchService.getInstance(myProject).getGroupIds(pattern);
   }
@@ -100,19 +75,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
    * @deprecated use {@link DependencySearchService}
    * or use {@link MavenArtifactIdCompletionContributor} for example to fill async completion variants.
    **/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public Set<String> getArtifactIds(String groupId) {
     return DependencySearchService.getInstance(myProject).getArtifactIds(groupId);
-  }
-
-  /**
-   * @deprecated use {@link DependencySearchService}
-   * or use {@link MavenVersionCompletionContributor} for example to fill async completion variants.
-   **/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public Set<String> getVersions(String groupId, String artifactId) {
-    return DependencySearchService.getInstance(myProject).getVersions(groupId, artifactId);
   }
 }

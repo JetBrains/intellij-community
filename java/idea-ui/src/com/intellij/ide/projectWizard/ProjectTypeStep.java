@@ -47,8 +47,10 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -62,10 +64,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author Dmitry Avdeev
@@ -110,10 +114,11 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myContext = context;
     myContext.addContextListener(new WizardContext.Listener() {
       @Override
-      public void switchToRequested(@NotNull String placeId) {
+      public void switchToRequested(@NotNull String placeId, @NotNull Consumer<Step> configure) {
         TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
         if (groupToSelect != null) {
           myProjectTypeList.setSelectedValue(groupToSelect, true);
+          configure.accept(getCustomStep());
         }
       }
     });
@@ -135,20 +140,30 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       layout.setHGap(0);
       myPanel.setLayout(layout);
 
+      JBSplitter splitter = new OnePixelSplitter(false, 0.25f);
+      splitter.setFirstComponent(myProjectTypePanel);
+      splitter.setSecondComponent(mySettingsPanel);
+      myPanel.removeAll();
+      myPanel.add(splitter, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
+                                                GridConstraints.FILL_BOTH,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                null, null, null));
+
       String emptyCard = "emptyCard";
       ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
-        myContext, myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> {
+        myContext, myProjectTypeList, new JBScrollPane(myProjectTypeList), getNamer(), () -> {
           showCard(emptyCard);
           wizard.updateButtons(true, false, true);
       });
 
-      myProjectTypePanel.setMinimumSize(JBUI.size(160, -1));
       myProjectTypePanel.add(listWithFilter);
 
       myOptionsPanel.add(new JBPanelWithEmptyText().withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure")), emptyCard);
 
-      listWithFilter.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
-      mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0));
+      Border border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
+      listWithFilter.setBorder(border);
+      mySettingsPanel.setBorder(border);
     } else {
       myProjectTypePanel.add(BorderLayout.CENTER, new JBScrollPane(myProjectTypeList));
     }
@@ -210,6 +225,20 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       myProjectTypeList.setSelectedIndex(0);
     }
     myTemplatesList.restoreSelection();
+  }
+
+  @NotNull
+  private Function<TemplatesGroup, String> getNamer() {
+    return group -> {
+      ModuleBuilder builder = group.getModuleBuilder();
+      String name = group.getName();
+      if (builder == null) return name;
+
+      ModuleWizardStep step = myCustomSteps.get(builder.getBuilderId());
+      if (!(step instanceof NewProjectWizardStep)) return name;
+
+      return String.join(" ", ContainerUtil.addAll(new ArrayList<>(((NewProjectWizardStep)step).getKeywords().toSet()), name));
+    };
   }
 
   private static ModuleType getModuleType(TemplatesGroup group) {
@@ -370,15 +399,20 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     if (isNewWizard()) {
+      var newWizardGroups = new ArrayList<TemplatesGroup>();
+      var newWizardUserGroups = new ArrayList<TemplatesGroup>();
       if (context.isCreatingNewProject()) {
-        groups.add(0, new TemplatesGroup(new NewEmptyProjectBuilder()));
-        groups.add(0, new TemplatesGroup(new NewMultiModuleProjectBuilder()));
-        groups.add(0, new TemplatesGroup(new NewProjectBuilder()));
-        groups.addAll(getUserTemplatesMap(context));
+        newWizardGroups.add(new TemplatesGroup(new NewProjectBuilder()));
+        newWizardGroups.add(new TemplatesGroup(new NewEmptyProjectBuilder()));
+        newWizardUserGroups.addAll(getUserTemplatesMap(context));
       }
       else {
-        groups.add(0, new TemplatesGroup(new NewModuleBuilder()));
+        newWizardGroups.add(new TemplatesGroup(new NewModuleBuilder()));
       }
+      groups.addAll(0, newWizardGroups);
+      groups.addAll(newWizardUserGroups);
+      newWizardGroups.forEach(it -> myTemplatesMap.put(it, new ArrayList<>()));
+      newWizardUserGroups.forEach(it -> myTemplatesMap.put(it, new ArrayList<>()));
     }
 
     return groups;
@@ -397,7 +431,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   // new TemplatesGroup selected
   private void projectTypeChanged() {
     TemplatesGroup group = getSelectedGroup();
-    if (group == null || group == myLastSelectedGroup) return;
+    if (group == null || !isNewWizard() && group == myLastSelectedGroup) {
+      return;
+    }
+
     myLastSelectedGroup = group;
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
     if (LOG.isDebugEnabled()) {
@@ -489,28 +526,34 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private boolean showCustomOptions(@NotNull ModuleBuilder builder) {
     String card = builder.getBuilderId();
 
-    ModuleWizardStep customStep;
-    if (!myCustomSteps.containsKey(card)) {
-      ModuleWizardStep step = builder.getCustomOptionsStep(myContext, this);
+    ModuleWizardStep step = myCustomSteps.get(card);
+    if (step == null) {
+      step = builder.getCustomOptionsStep(myContext, this);
       if (isNewWizard() && builder instanceof TemplateModuleBuilder) {
         step = new ProjectSettingsStep(myContext);
         myContext.setProjectBuilder(builder);
         NewProjectWizardCollector.logCustomTemplateSelected(myContext);
       }
+
       if (step == null) return false;
+
+      myContext.setProjectBuilder(builder);
       step.updateStep();
+      JComponent component = step.getComponent();
+      if (isNewWizard()) {
+        component = new JBScrollPane(component);
+        component.setBorder(JBUI.Borders.empty());
+      }
+
+      myOptionsPanel.add(component, card);
+
       myCustomSteps.put(card, step);
-      myOptionsPanel.add(step.getComponent(), card);
-      customStep = step;
-    } else {
-      customStep = myCustomSteps.get(card);
     }
 
     try {
-      if (customStep != null) {
-        customStep._init();
-      }
-    } catch (Throwable e) {
+      step._init();
+    }
+    catch (Throwable e) {
       LOG.error(e);
     }
 
@@ -518,6 +561,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     NewProjectWizardCollector.logScreen(myContext, 1);
 
     showCard(card);
+
     return true;
   }
 
@@ -617,7 +661,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myProjectTypeList;
+    var step = getCustomStep();
+    var component = ObjectUtils.doIfNotNull(step, it -> it.getPreferredFocusedComponent());
+    return ObjectUtils.chooseNotNull(component, myProjectTypeList);
   }
 
   @Override

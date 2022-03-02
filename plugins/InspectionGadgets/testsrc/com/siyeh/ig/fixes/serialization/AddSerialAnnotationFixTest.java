@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.serialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -22,7 +22,7 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
   public void testAdditionToField() {
     doTest("import java.io.*;\n" +
            "class Test implements Serializable {\n" +
-           "  private static final long /*'serialVersionUID' can be annotated with @Serial annotation*//*_*/serialVersionUID/**/ = 7874493593505141603L;\n" +
+           "  private static final long /*'serialVersionUID' can be annotated with '@Serial' annotation*//*_*/serialVersionUID/**/ = 7874493593505141603L;\n" +
            "}");
     checkQuickFix("Annotate field 'serialVersionUID' as @Serial", "import java.io.*;\n" +
                                     "class Test implements Serializable {\n" +
@@ -34,7 +34,7 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
   public void testAdditionToMethod() {
     doTest("import java.io.*;\n" +
            "class Test implements Serializable {\n" +
-           "  protected Object /*'readResolve()' can be annotated with @Serial annotation*//*_*/readResolve/**/() throws ObjectStreamException {\n" +
+           "  protected Object /*'readResolve()' can be annotated with '@Serial' annotation*//*_*/readResolve/**/() throws ObjectStreamException {\n" +
            "    return 1;\n" +
            "  }\n" +
            "}");

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
@@ -23,7 +23,8 @@ public enum LanguageLevel {
   JDK_15(15),
   JDK_16(16), JDK_16_PREVIEW(16),
   JDK_17(17), JDK_17_PREVIEW(17),
-  JDK_X(18);
+  JDK_18(18), JDK_18_PREVIEW(18),
+  JDK_X(19);
 
   public static final LanguageLevel HIGHEST = JDK_17;
 

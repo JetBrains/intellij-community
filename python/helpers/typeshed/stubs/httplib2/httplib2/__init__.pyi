@@ -1,6 +1,6 @@
 import http.client
 from collections.abc import Generator
-from typing import Any, Dict, TypeVar
+from typing import Any, TypeVar
 
 from .error import *
 
@@ -79,8 +79,8 @@ class Credentials:
     def iter(self, domain) -> Generator[tuple[str, str], None, None]: ...
 
 class KeyCerts(Credentials):
-    def add(self, key, cert, domain, password) -> None: ...  # type: ignore
-    def iter(self, domain) -> Generator[tuple[str, str, str], None, None]: ...  # type: ignore
+    def add(self, key, cert, domain, password) -> None: ...  # type: ignore[override]
+    def iter(self, domain) -> Generator[tuple[str, str, str], None, None]: ...  # type: ignore[override]
 
 class AllHosts: ...
 
@@ -175,7 +175,7 @@ class Http:
         connection_type: Any | None = ...,
     ): ...
 
-class Response(Dict[str, Any]):
+class Response(dict[str, Any]):
     fromcache: bool
     version: int
     status: int

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -124,6 +127,16 @@ public abstract class AbstractVcs extends StartedActivated {
    * @return true if 'Local Changes' tab should be hidden.
    */
   public boolean isWithCustomLocalChanges() {
+    return false;
+  }
+
+  /**
+   * Allows to hide 'Shelf' toolwindow tab.
+   * Takes effect for projects that have configured mappings for this VCS only.
+   *
+   * @return true if 'Shelf' tab should be hidden.
+   */
+  public boolean isWithCustomShelves() {
     return false;
   }
 
@@ -505,8 +518,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (!allowsNestedRoots()) {
       new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
@@ -647,6 +659,16 @@ public abstract class AbstractVcs extends StartedActivated {
 
   public boolean needsCaseSensitiveDirtyScope() {
     return false;
+  }
+
+  /**
+   * Returns true if VCS root needs to be added to watched roots by 
+   * {@link com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestModifier} when updating VCS mappings.
+   *
+   * @return true if VCS root needs to be added to watched roots, false otherwise.
+   */
+  public boolean needsLFSWatchesForRoots() {
+    return true;
   }
 }
 

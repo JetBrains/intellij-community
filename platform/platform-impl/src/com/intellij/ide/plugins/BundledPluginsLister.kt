@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -34,16 +34,14 @@ internal class BundledPluginsLister : ApplicationStarter {
       }
       JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
         val plugins = PluginManagerCore.getPluginSet().enabledPlugins
-        val modules = ArrayList<String>()
+        val modules = HashSet<String>()
         val pluginIds = ArrayList<String>(plugins.size)
         for (plugin in plugins) {
           pluginIds.add(plugin.pluginId.idString)
-          for (pluginId in plugin.modules) {
-            modules.add(pluginId.idString)
-          }
+          plugin.modules.mapTo(modules) { it.idString }
+          plugin.content.modules.mapTo(modules) { it.name }
         }
         pluginIds.sort()
-        modules.sort()
         val fileTypeManager = FileTypeManager.getInstance()
         val extensions = ArrayList<String>()
         for (type in fileTypeManager.registeredFileTypes) {
@@ -54,7 +52,7 @@ internal class BundledPluginsLister : ApplicationStarter {
           }
         }
         writer.obj {
-          writeList(writer, "modules", modules)
+          writeList(writer, "modules", modules.sorted())
           writeList(writer, "plugins", pluginIds)
           writeList(writer, "extensions", extensions)
         }
@@ -68,7 +66,7 @@ internal class BundledPluginsLister : ApplicationStarter {
   }
 }
 
-private fun writeList(writer: JsonGenerator, name: String, elements: List<String>) {
+private fun writeList(writer: JsonGenerator, name: String, elements: Collection<String>) {
   writer.array(name) {
     for (module in elements) {
       writer.writeString(module)

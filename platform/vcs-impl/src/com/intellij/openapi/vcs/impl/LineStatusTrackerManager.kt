@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
@@ -102,9 +102,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  class MyStartupActivity : VcsStartupActivity {
+  internal class MyStartupActivity : VcsStartupActivity {
     override fun runActivity(project: Project) {
-      LineStatusTrackerManager.getInstanceImpl(project).startListenForEditors()
+      getInstanceImpl(project).startListenForEditors()
     }
 
     override fun getOrder(): Int = VcsInitObject.OTHER_INITIALIZATION.order
@@ -125,8 +125,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
     updatePartialChangeListsAvailability()
 
-    runInEdt {
-      if (project.isDisposed) return@runInEdt
+    AppUIExecutor.onUiThread().expireWith(project).execute {
+      if (project.isDisposed) {
+        return@execute
+      }
 
       ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
       FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
@@ -412,11 +414,13 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   private fun getTrackerProvider(virtualFile: VirtualFile): LocalLineStatusTrackerProvider? {
-    if (!canCreateTrackerFor(virtualFile)) return null
+    if (!canCreateTrackerFor(virtualFile)) {
+      return null
+    }
 
-    val customTracker = LocalLineStatusTrackerProvider.EP_NAME.findFirstSafe { it.isTrackedFile(project, virtualFile) }
-    if (customTracker != null) return customTracker
-
+    LocalLineStatusTrackerProvider.EP_NAME.findFirstSafe { it.isTrackedFile(project, virtualFile) }?.let {
+      return it
+    }
     return listOf(ChangelistsLocalStatusTrackerProvider, DefaultLocalStatusTrackerProvider).find { it.isTrackedFile(project, virtualFile) }
   }
 
@@ -657,10 +661,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
     private fun isTrackedEditor(editor: Editor): Boolean {
       // can't filter out "!isInLocalFileSystem" files, custom VcsBaseContentProvider can handle them
-      if (FileDocumentManager.getInstance().getFile(editor.document) == null) {
-        return false
-      }
-      return editor.project == null || editor.project == project
+      // check for isDisposed - light project in tests
+      return !project.isDisposed &&
+             (editor.project == null || editor.project == project) &&
+             FileDocumentManager.getInstance().getFile(editor.document) != null
     }
   }
 
@@ -799,7 +803,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   private inner class MyChangeListAvailabilityListener : ChangeListAvailabilityListener {
     override fun onBefore() {
       if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
-        val fileStates = LineStatusTrackerManager.getInstanceImpl(project).collectPartiallyChangedFilesStates()
+        val fileStates = getInstanceImpl(project).collectPartiallyChangedFilesStates()
         if (fileStates.isNotEmpty()) {
           PartialLineStatusTrackerManagerState.saveCurrentState(project, fileStates)
         }
@@ -1046,6 +1050,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
                    NotificationType.INFORMATION) {
     init {
       icon = AllIcons.Toolwindows.ToolWindowChanges
+      setDisplayId(VcsNotificationIdsHolder.INACTIVE_RANGES_DAMAGED)
       addAction(NotificationAction.createSimple(
         Supplier { VcsBundle.message("action.NotificationAction.InactiveRangesDamagedNotification.text.view.changes") },
         Runnable {
@@ -1113,7 +1118,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
  * - Notifies callbacks when queue is exhausted.
  */
 private abstract class SingleThreadLoader<Request, T> : Disposable {
-  private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
+  companion object {
+    private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
+  }
+
   private val LOCK: Any = Any()
 
   private val taskQueue = ArrayDeque<Request>()
@@ -1272,7 +1280,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
       try {
         callback.run()
       }
-      catch (e: ProcessCanceledException) {
+      catch (ignore: ProcessCanceledException) {
       }
       catch (e: Throwable) {
         LOG.error(e)
@@ -1386,15 +1394,14 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
   private class BaseRevisionContent(val text: CharSequence) : TrackerContent
 }
 
-
 interface LocalLineStatusTrackerProvider {
   fun isTrackedFile(project: Project, file: VirtualFile): Boolean
   fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean
   fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>?
 
   companion object {
-    val EP_NAME: ExtensionPointName<LocalLineStatusTrackerProvider> =
-      ExtensionPointName.create("com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider")
+    internal val EP_NAME =
+      ExtensionPointName<LocalLineStatusTrackerProvider>("com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider")
   }
 }
 

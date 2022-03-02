@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ActionGroupUtil {
 
   /** @deprecated use {@link #isGroupEmpty(ActionGroup, AnActionEvent)} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean unused) {
     return getActiveActions(actionGroup, e).isEmpty();
   }
@@ -39,4 +38,19 @@ public final class ActionGroupUtil {
       .filter(o -> !(o instanceof Separator) && updater.presentation(o).isVisible());
   }
 
+  @ApiStatus.Experimental
+  public static @NotNull ActionGroup forceRecursiveUpdateInBackground(@NotNull ActionGroup actionGroup) {
+    class MyGroup extends ActionGroup implements UpdateInBackground.Recursive {
+      @Override
+      public boolean isPopup() {
+        return false;
+      }
+
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        return new AnAction[] { actionGroup };
+      }
+    }
+    return new MyGroup();
+  }
 }

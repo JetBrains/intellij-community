@@ -3,8 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.util.XmlDomReader
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.xml.dom.XmlDomReader
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -28,16 +28,6 @@ final class BuildUtils {
 
   static void addToClassPath(String path, AntBuilder ant) {
     addToClassLoaderClassPath(path, ant, BuildUtils.class.classLoader)
-  }
-
-  @CompileDynamic
-  static void addToSystemClasspath(File file) {
-    def classLoader = ClassLoader.getSystemClassLoader()
-    if (!(classLoader instanceof URLClassLoader)) {
-      throw new BuildException("Cannot add to system classpath: unsupported class loader $classLoader (${classLoader.getClass()})")
-    }
-
-    classLoader.addURL(file.toURI().toURL())
   }
 
   static void addToJpsClassPath(String path, AntBuilder ant) {
@@ -166,5 +156,9 @@ final class BuildUtils {
     catch (NoSuchFileException ignore) {
       return null
     }
+  }
+
+  static boolean isUnderJpsBootstrap() {
+    return System.getenv("JPS_BOOTSTRAP_COMMUNITY_HOME") != null
   }
 }

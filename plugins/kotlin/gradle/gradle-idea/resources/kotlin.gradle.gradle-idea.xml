@@ -41,6 +41,9 @@
                  defaultValue="false"
                  restartRequired="false"/>
 
+    <applicationService
+            serviceImplementation="org.jetbrains.kotlin.idea.gradle.configuration.state.DontShowAgainKotlinAdditionPluginSuggestionService"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage"/>
     <projectService serviceInterface="org.jetbrains.kotlin.idea.caches.project.StableModuleNameProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.gradle.configuration.mpp.ExternalSystemBasedStableModuleNameProvider"/>

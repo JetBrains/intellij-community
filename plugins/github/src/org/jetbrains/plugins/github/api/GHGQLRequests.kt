@@ -69,11 +69,6 @@ object GHGQLRequests {
   }
 
   object Comment {
-    fun getCommentBody(server: GithubServerPath, commentId: String): GQLQuery<String> =
-      GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.commentBody,
-                               mapOf("id" to commentId),
-                               String::class.java,
-                               "node", "body")
 
     fun updateComment(server: GithubServerPath, commentId: String, newText: String): GQLQuery<GHComment> =
       GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.updateIssueComment,

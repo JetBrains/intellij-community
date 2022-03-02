@@ -42,7 +42,7 @@ open class Range(val line1: Int,
   override fun toString(): String = "[$vcsLine1, $vcsLine2) - [$line1, $line2)"
 
   companion object {
-    const val EQUAL: Byte = 0
+    const val EQUAL: Byte = 0 // difference only in whitespaces
     const val MODIFIED: Byte = 1
     const val INSERTED: Byte = 2
     const val DELETED: Byte = 3

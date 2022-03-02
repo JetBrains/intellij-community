@@ -16,6 +16,7 @@
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.usageView" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.usageView.impl" exported="" />
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
@@ -46,8 +47,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
@@ -56,5 +55,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
+    <orderEntry type="module" module-name="intellij.platform.rd.community" />
   </component>
 </module>

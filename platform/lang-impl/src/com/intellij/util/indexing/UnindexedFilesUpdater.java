@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -84,16 +84,19 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   protected final Project myProject;
   private final boolean myStartSuspended;
+  private final boolean myOnProjectOpen;
   private final @NonNls String myIndexingReason;
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
 
   public UnindexedFilesUpdater(@NotNull Project project,
                                boolean startSuspended,
+                               boolean onProjectOpen,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable @NonNls String indexingReason) {
     myProject = project;
     myStartSuspended = startSuspended;
+    myOnProjectOpen = onProjectOpen;
     myIndexingReason = indexingReason;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
@@ -149,9 +152,13 @@ public class UnindexedFilesUpdater extends DumbModeTask {
                StringUtil.trimStart(oldTask.myIndexingReason, "Merged ");
     }
     LOG.debug("Merged " + this + " task");
-    return new UnindexedFilesUpdater(myProject, myStartSuspended, mergeIterators(myPredefinedIndexableFilesIterators,
-                                                                                 ((UnindexedFilesUpdater)taskFromQueue).myPredefinedIndexableFilesIterators),
-                                     reason);
+    return new UnindexedFilesUpdater(
+      myProject,
+      myStartSuspended,
+      false,
+      mergeIterators(myPredefinedIndexableFilesIterators, ((UnindexedFilesUpdater)taskFromQueue).myPredefinedIndexableFilesIterators),
+      reason
+    );
   }
 
   private static @Nullable List<IndexableFilesIterator> mergeIterators(@Nullable List<IndexableFilesIterator> iterators,
@@ -178,17 +185,17 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
     // file based index extensions for all project files until at least one of UnindexedFilesUpdater-s finishes without cancellation.
     // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false, null, null);
+    this(project, false, false, null, null);
   }
 
   public UnindexedFilesUpdater(@NotNull Project project, @Nullable @NonNls String indexingReason) {
-    this(project, false, null, indexingReason);
+    this(project, false, false, null, indexingReason);
   }
 
   public UnindexedFilesUpdater(@NotNull Project project,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable @NonNls String indexingReason) {
-    this(project, false, predefinedIndexableFilesIterators, indexingReason);
+    this(project, false, false, predefinedIndexableFilesIterators, indexingReason);
   }
 
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory, @NotNull ProgressIndicator indicator) {
@@ -231,11 +238,18 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       myIndex.clearIndicesIfNecessary();
     }
 
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
     try {
       orderedProviders = Objects.requireNonNullElseGet(myPredefinedIndexableFilesIterators, () -> collectProviders(myProject, myIndex));
+    }
+    finally {
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
+    }
+
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
+    try {
       providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
       if (isFullIndexUpdate()) {
         myProject.putUserData(CONTENT_SCANNED, true);
@@ -247,7 +261,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    boolean skipInitialRefresh = skipInitialRefresh();
+    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       scheduleInitialVfsRefresh();
     }
@@ -327,7 +343,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       try {
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          indexUpdateRunner.indexFiles(myProject, fileSets, subTaskIndicator);
+          indexUpdateRunner.indexFiles(myProject, fileSets, subTaskIndicator, projectIndexingHistory);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
@@ -441,6 +457,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(1);
       List<VirtualFile> files = new ArrayList<>();
       ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
+      scanningStatistics.setProviderRoots(provider, project);
       providerToFiles.put(provider, files);
       IndexableSetOrigin origin = provider.getOrigin();
       List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors =
@@ -467,7 +484,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
         if (subTaskIndicator.isCanceled()) {
           return false;
         }
-
+        long scanningStart = System.nanoTime();
         PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
         if (pushers != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
           ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pushers, moduleValues);
@@ -487,6 +504,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
           }
           scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
         }
+        scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
         return true;
       };
       return () -> {
@@ -566,9 +584,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
-    ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
     try {
-      updateUnindexedFiles(projectIndexingHistory, indicator);
+      ((GistManagerImpl)GistManager.getInstance()).runWithMergingDependentCacheInvalidations(() ->
+         updateUnindexedFiles(projectIndexingHistory, indicator));
     }
     catch (Throwable e) {
       projectIndexingHistory.setWasInterrupted(true);
@@ -578,7 +596,6 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       throw e;
     }
     finally {
-      ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
       myIndex.filesUpdateFinished(myProject);
       myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
       projectIndexingHistory.finishTotalUpdatingTime();
@@ -626,17 +643,21 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     return Math.max(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, getNumberOfIndexingThreads());
   }
 
-  public static void indexProject(@NotNull Project project, boolean startSuspended, @Nullable @NonNls String indexingReason) {
+  private static boolean skipInitialRefresh() {
+    return SystemProperties.getBooleanProperty("ij.indexes.skip.initial.refresh", false);
+  }
+
+  public static void scanAndIndexProjectAfterOpen(@NotNull Project project, boolean startSuspended, @Nullable @NonNls String indexingReason) {
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance());
       for (IndexableFilesIterator iterator : iterators) {
-        new UnindexedFilesUpdater(project, startSuspended, Collections.singletonList(iterator), indexingReason).queue(project);
+        new UnindexedFilesUpdater(project, startSuspended, true, Collections.singletonList(iterator), indexingReason).queue(project);
       }
       project.putUserData(CONTENT_SCANNED, true);
     }
     else {
-      new UnindexedFilesUpdater(project, startSuspended, null, indexingReason).queue(project);
+      new UnindexedFilesUpdater(project, startSuspended, true, null, indexingReason).queue(project);
     }
   }
 }

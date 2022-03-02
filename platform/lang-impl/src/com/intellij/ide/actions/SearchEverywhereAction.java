@@ -19,13 +19,17 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.impl.headertoolbar.TitleActionToolbarKt;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,7 +52,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    ActionButton button = new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    ActionButton button = new ActionButton(this, presentation, place, getMinimumSize(place)) {
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
 
@@ -68,8 +72,27 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
       }
     };
 
-    button.setBorder(JBUI.Borders.empty(1, 2));
+    button.setBorder(calcBorder(place));
+    if (isExperimentalToolbar(place)) {
+      TitleActionToolbarKt.scalePresentationIcons(presentation);
+      button.setLook(TitleActionToolbarKt.getExpToolbarButtonLook());
+    }
     return button;
+  }
+
+  private static boolean isExperimentalToolbar(@NotNull String place) {
+    return ExperimentalUI.isNewToolbar() && ActionPlaces.MAIN_TOOLBAR.equals(place);
+  }
+
+  @NotNull
+  private static JBEmptyBorder calcBorder(@NotNull String place) {
+    return isExperimentalToolbar(place) ? JBUI.Borders.empty() : JBUI.Borders.empty(1, 2);
+  }
+
+  @NotNull
+  private static Dimension getMinimumSize(@NotNull String place) {
+    return isExperimentalToolbar(place) ? ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
+                                        : ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
   }
 
   @Nullable

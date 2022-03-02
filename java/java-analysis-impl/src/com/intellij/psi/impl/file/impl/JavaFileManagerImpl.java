@@ -81,14 +81,11 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   private @NotNull List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+    Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName, myManager.getProject(), scope);
     if (classes.isEmpty()) return Collections.emptyList();
 
     List<Pair<PsiClass, VirtualFile>> result = new ArrayList<>(classes.size());
     for (PsiClass aClass : classes) {
-      String qualifiedName = aClass.getQualifiedName();
-      if (!qName.equals(qualifiedName)) continue;
-
       PsiFile file = aClass.getContainingFile();
       if (file == null) {
         throw new AssertionError("No file for class: " + aClass + " of " + aClass.getClass());

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -253,7 +251,7 @@ public class FunctionExprent extends Exprent {
         case FUNCTION_AND:
         case FUNCTION_OR:
         case FUNCTION_XOR:
-          if (type1.type == CodeConstants.TYPE_BOOLEAN & type2.type == CodeConstants.TYPE_BOOLEAN) {
+          if (type1.getType() == CodeConstants.TYPE_BOOLEAN & type2.getType() == CodeConstants.TYPE_BOOLEAN) {
             exprType = VarType.VARTYPE_BOOLEAN;
           }
           else {
@@ -269,7 +267,7 @@ public class FunctionExprent extends Exprent {
       Exprent param2 = lstOperands.get(2);
       VarType supertype = VarType.getCommonSupertype(param1.getExprType(), param2.getExprType());
       if (param1.type == Exprent.EXPRENT_CONST && param2.type == Exprent.EXPRENT_CONST &&
-          supertype.type != CodeConstants.TYPE_BOOLEAN && VarType.VARTYPE_INT.isSuperset(supertype)) {
+          supertype.getType() != CodeConstants.TYPE_BOOLEAN && VarType.VARTYPE_INT.isSuperset(supertype)) {
         exprType = VarType.VARTYPE_INT;
       }
       else {
@@ -324,8 +322,8 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_IIF:
         VarType supertype = getExprType();
         result.addMinTypeExprent(param1, VarType.VARTYPE_BOOLEAN);
-        result.addMinTypeExprent(param2, VarType.getMinTypeInFamily(supertype.typeFamily));
-        result.addMinTypeExprent(lstOperands.get(2), VarType.getMinTypeInFamily(supertype.typeFamily));
+        result.addMinTypeExprent(param2, VarType.getMinTypeInFamily(supertype.getTypeFamily()));
+        result.addMinTypeExprent(lstOperands.get(2), VarType.getMinTypeInFamily(supertype.getTypeFamily()));
         break;
       case FUNCTION_I2L:
       case FUNCTION_I2F:
@@ -366,7 +364,7 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_XOR:
       case FUNCTION_EQ:
       case FUNCTION_NE: {
-        if (type1.type == CodeConstants.TYPE_BOOLEAN) {
+        if (type1.getType() == CodeConstants.TYPE_BOOLEAN) {
           if (type2.isStrictSuperset(type1)) {
             result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
           }
@@ -382,7 +380,7 @@ public class FunctionExprent extends Exprent {
             }
           }
         }
-        else if (type2.type == CodeConstants.TYPE_BOOLEAN) {
+        else if (type2.getType() == CodeConstants.TYPE_BOOLEAN) {
           if (type1.isStrictSuperset(type2)) {
             result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
           }
@@ -471,9 +469,9 @@ public class FunctionExprent extends Exprent {
         Exprent arr = lstOperands.get(0);
 
         TextBuffer res = wrapOperandString(arr, false, indent, tracer);
-        if (arr.getExprType().arrayDim == 0) {
+        if (arr.getExprType().getArrayDim() == 0) {
           VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
-          res.enclose("((" + ExprProcessor.getCastTypeName(objArr) + ")", ")");
+          res.enclose("((" + ExprProcessor.getCastTypeName(objArr, Collections.emptyList()) + ")", ")");
         }
         return res.append(".length");
       case FUNCTION_IIF:
@@ -491,7 +489,8 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_MMI:
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("--");
       case FUNCTION_INSTANCEOF:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ").append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ")
+          .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
       case FUNCTION_LCMP: // shouldn't appear in the final code
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__lcmp__(")
                  .append(", ")
@@ -521,7 +520,7 @@ public class FunctionExprent extends Exprent {
 
     if (funcType <= FUNCTION_I2S) {
       return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(
-        TYPES[funcType - FUNCTION_I2L]) + ")");
+        TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
     }
 
     //		return "<unknown function>";
@@ -571,7 +570,7 @@ public class FunctionExprent extends Exprent {
 
     for (int i = 0; i < types.length; i++) {
       for (VarType anArr : arr) {
-        if (anArr.type == types[i]) {
+        if (anArr.getType() == types[i]) {
           return vartypes[i];
         }
       }

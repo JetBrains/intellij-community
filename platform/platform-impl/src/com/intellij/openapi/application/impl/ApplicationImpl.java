@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -44,11 +44,14 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import kotlin.sequences.Sequence;
+import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
@@ -59,6 +62,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
+import static kotlinx.coroutines.JobKt.Job;
 
 @ApiStatus.Internal
 public class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
@@ -74,6 +80,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   final ReadMostlyRWLock myLock;
 
+  /**
+   * @deprecated see {@link ModalityInvokator} notice
+   */
+  @Deprecated
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
@@ -134,7 +144,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
 
-    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
     AtomicReference<Thread> edtThread = new AtomicReference<>();
     EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
       preventAwtAutoShutdown(this);
@@ -145,9 +154,38 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
+
+    NoSwingUnderWriteAction.watchForEvents(this);
+  }
+
+  // this constructor must be called only by ApplicationLoader
+  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, @NotNull Thread edtThread) {
+    super(null);
+
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
+
+    myIsInternal = isInternal;
+    myTestModeFlag = false;
+    myHeadlessMode = isHeadless;
+    myCommandLineMode = isCommandLine;
+    if (!isHeadless) {
+      mySaveAllowed = true;
+    }
+
+    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
+    myLock = new ReadMostlyRWLock(edtThread);
+    // Acquire IW lock on EDT indefinitely in legacy mode
+    if (!USE_SEPARATE_WRITE_THREAD) {
+      EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass().getName()));
+    }
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
+
+    // reset back to null only when all components already disposed
+    ApplicationManager.setApplication(this, myLastDisposable);
   }
 
   public static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
@@ -316,8 +354,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return myLock.isWriteThread();
   }
 
+  @Deprecated
   @Override
   public @NotNull ModalityInvokator getInvokator() {
+    PluginException.reportDeprecatedUsage("Application.getInvokator", "Use `invokeLater` instead");
     return myInvokator;
   }
 
@@ -338,31 +378,50 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
+    if (!(runnable instanceof FutureTask) && propagateContextOrCancellation()) {
+      // see com.intellij.util.concurrency.AppScheduledExecutorService#handleCommand
+      if (Propagation.propagateCancellation()) {
+        //noinspection TestOnlyProblems
+        Job job = Cancellation.currentJob();
+        CompletableJob childJob = Job(job);
+        expired = cancelIfExpired(expired, childJob);
+        runnable = new CancellationRunnable(childJob, runnable);
+      }
+      runnable = Propagation.handleContext(runnable);
+    }
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
-    LaterInvocator.invokeLaterWithCallback(state, expired, null, wrapWithRunIntendedWriteAction(r));
+    LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
+  }
+
+  private static <T> @NotNull Condition<T> cancelIfExpired(@NotNull Condition<T> expiredCondition, @NotNull Job childJob) {
+    return (t) -> {
+      boolean expired = expiredCondition.value(t);
+      if (expired) {
+        // Cancel to avoid a hanging child job which will prevent completion of the parent one.
+        childJob.cancel(null);
+        return true;
+      }
+      else {
+        // Treat runnable as expired if its job was already cancelled.
+        return childJob.isCancelled();
+      }
+    };
   }
 
   @Override
   public final void load() {
     PluginManagerCore.scheduleDescriptorLoading();
-    Sequence<IdeaPluginDescriptorImpl> modules =
-      PluginManagerCore.initPlugins(ApplicationImpl.class.getClassLoader()).join().getEnabledModules();
+    Sequence<IdeaPluginDescriptorImpl> modules = PluginManagerCore.getInitPluginFuture().join().getEnabledModules();
 
     registerComponents(modules, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
-    preloadServices(modules, "", false).getSecond().join();
-    loadComponents(null);
+    preloadServices(modules, "", false).sync.join();
+    loadComponents();
     ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
   }
 
-  public final void loadComponents(@Nullable ProgressIndicator indicator) {
-    if (indicator == null) {
-      // no splash - no need to use the progress manager
-      createComponents(null);
-    }
-    else {
-      ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
-    }
+  public final void loadComponents() {
+    createComponents(null);
     StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
   }
 
@@ -800,7 +859,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
     // EDT == Write Thread in legacy mode
-    LaterInvocator.invokeLaterWithCallback(modal, expired, null, wrapWithRunIntendedWriteAction(r));
+    LaterInvocator.invokeLater(modal, expired, wrapWithRunIntendedWriteAction(r));
   }
 
   @Override

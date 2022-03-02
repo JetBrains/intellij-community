@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -67,11 +67,6 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   }
 
   @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).canBePerformed(wrapContext(context));
-  }
-
-  @Override
   public boolean isDumbAware() {
     return myOrigin.isDumbAware();
   }
@@ -97,7 +92,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     myOrigin.update(wrapped);
     Icon icon = wrapped.getPresentation().getIcon();
     if (icon != null) {
-      getTemplatePresentation().setIcon(icon);
+      e.getPresentation().setIcon(icon);
     }
   }
 

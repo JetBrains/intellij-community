@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -42,6 +42,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private RefParameter[] myParameters; // guarded by this
   private volatile String myReturnValueTemplate = RETURN_VALUE_UNDEFINED; // guarded by this
+
+  private RefField myBackingField;
 
   RefMethodImpl(UMethod method, PsiElement psi, RefManager manager) {
     super(method, psi, manager);
@@ -169,6 +171,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     PsiMethod appMainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppMainPattern();
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
 
+    if ("main".equals(psiMethod.getName()) && psiMethod.getParameterList().isEmpty() &&
+        psiMethod.getLanguage().isKindOf("kotlin")) return true;
+
     PsiMethod appPremainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppPremainPattern();
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appPremainPattern)) return true;
 
@@ -262,7 +267,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (getRefManager().isOfflineView()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
-        PsiElement sourceElement = psiSuperMethod instanceof LightElement ? psiSuperMethod.getNavigationElement() : psiSuperMethod;
+        PsiElement sourceElement = psiSuperMethod;
+        if (!(RefManagerImpl.isKotlinLightFieldOrMethod(psiSuperMethod) &&
+              psiSuperMethod.getNavigationElement().getClass().getSimpleName().equals("KtProperty"))) {
+          sourceElement = psiSuperMethod.getNavigationElement();
+        }
         RefElement refElement = getRefManager().getReference(sourceElement);
         if (refElement instanceof RefMethodImpl) {
           RefMethodImpl refSuperMethod = (RefMethodImpl)refElement;
@@ -608,9 +617,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   public void updateThrowsList(PsiClassType exceptionType) {
     LOG.assertTrue(isInitialized());
-    for (RefMethod refSuper : getSuperMethods()) {
-      ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
-    }
+    myManager.executeTask(() -> {
+      for (RefMethod refSuper : getSuperMethods()) {
+        refSuper.waitForInitialized();
+        ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
+      }
+    });
     synchronized (this) {
       List<String> unThrownExceptions = myUnThrownExceptions;
       if (unThrownExceptions != null) {
@@ -684,6 +696,14 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setFlag(testMethod, IS_TEST_METHOD_MASK);
   }
 
+  public synchronized @Nullable RefField getBackingField() {
+    return myBackingField;
+  }
+
+  public synchronized void setBackingField(@NotNull RefField backingField) {
+    myBackingField = backingField;
+  }
+
   @Override
   public UDeclaration getUastElement() {
     return UastContextKt.toUElement(getPsiElement(), UMethod.class);
@@ -714,6 +734,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     final RefElement parentRef;
     //TODO strange
     if (containingDeclaration == null || containingDeclaration instanceof LightElement) {
+      if (KotlinPropertiesDetector.isPropertyOrAccessor(uElement)) {
+        psiElement = psiElement.getNavigationElement();
+      }
       parentRef = refManager.getReference(psiElement.getContainingFile(), true);
     }
     else {

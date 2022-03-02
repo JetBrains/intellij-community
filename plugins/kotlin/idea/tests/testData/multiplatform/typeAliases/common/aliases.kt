@@ -2,14 +2,14 @@
 
 package aliases
 
-expect interface <!LINE_MARKER("descr='Has actuals in JVM'")!>A<!> {
-    fun <!LINE_MARKER("descr='Has actuals in JVM'")!>commonFun<!>()
+expect interface <!LINE_MARKER("descr='Has actuals in jvm module'")!>A<!> {
+    fun <!LINE_MARKER("descr='Has actuals in jvm module'")!>commonFun<!>()
 }
 
 typealias A1 = A
 
-expect interface <!LINE_MARKER("descr='Has actuals in JVM'")!>B<!> {
-    fun <!LINE_MARKER("descr='Has actuals in JVM'")!>commonFun<!>()
+expect interface <!LINE_MARKER("descr='Has actuals in jvm module'")!>B<!> {
+    fun <!LINE_MARKER("descr='Has actuals in jvm module'")!>commonFun<!>()
 }
 
 typealias B1 = B

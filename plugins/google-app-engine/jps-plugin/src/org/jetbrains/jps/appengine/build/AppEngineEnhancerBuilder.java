@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 
 public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
 
-  public static Supplier<@Nls String> NAME_SUPPLIER = JavaGoogleAppEngineJpsBundle.messagePointer("google.appengine.enhancer");
+  public static final Supplier<@Nls String> NAME_SUPPLIER = JavaGoogleAppEngineJpsBundle.messagePointer("google.appengine.enhancer");
 
   public AppEngineEnhancerBuilder() {
     super(BuilderCategory.CLASS_POST_PROCESSOR);
@@ -112,14 +112,10 @@ public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
 
     List<String> programParams = new ArrayList<>();
     final File argsFile = FileUtil.createTempFile("appEngineEnhanceFiles", ".txt");
-    PrintWriter writer = new PrintWriter(argsFile);
-    try {
+    try (PrintWriter writer = new PrintWriter(argsFile)) {
       for (String path : pathsToProcess) {
         writer.println(FileUtil.toSystemDependentName(path));
       }
-    }
-    finally {
-      writer.close();
     }
 
     programParams.add(argsFile.getAbsolutePath());
@@ -150,7 +146,6 @@ public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   @NotNull
   @Override
   public String getPresentableName() {
-    //noinspection DialogTitleCapitalization
     return NAME_SUPPLIER.get();
   }
 
@@ -163,14 +158,12 @@ public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     }
 
     @Override
-    protected void reportInfo(String message) {
-      //noinspection DialogTitleCapitalization
+    protected void reportInfo(@Nls String message) {
       myContext.processMessage(new CompilerMessage(NAME_SUPPLIER.get(), BuildMessage.Kind.INFO, message));
     }
 
     @Override
-    protected void reportError(String message) {
-      //noinspection DialogTitleCapitalization
+    protected void reportError(@Nls String message) {
       myContext.processMessage(new CompilerMessage(NAME_SUPPLIER.get(), BuildMessage.Kind.ERROR, message));
     }
   }

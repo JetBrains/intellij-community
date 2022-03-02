@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -9,15 +9,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
@@ -48,6 +47,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class ActionMenu extends JBMenu {
+  /**
+   * By default, a "performable" popup action group menu item provides a submenu.
+   * Use this key to avoid suppress that submenu for a presentation or a template presentation like this:
+   * {@code presentation.putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true)}.
+   */
+  public static final Key<Boolean> SUPPRESS_SUBMENU = Key.create("SUPPRESS_SUBMENU");
+
   private final String myPlace;
   private final DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -183,11 +189,13 @@ public final class ActionMenu extends JBMenu {
 
   private void updateIcon() {
     UISettings settings = UISettings.getInstanceOrNull();
-    if (settings != null && settings.getShowIconsInMenus()) {
-      Icon icon = myPresentation.getIcon();
-      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace) && icon != null) {
+    Icon icon = myPresentation.getIcon();
+    if (icon != null && settings != null && settings.getShowIconsInMenus()) {
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
+      } else if (shouldConvertIconToDarkVariant()) {
+        icon = IconLoader.getDarkIcon(icon, true);
       }
       if (isShowNoIcons()) {
         setIcon(null);
@@ -201,8 +209,13 @@ public final class ActionMenu extends JBMenu {
         else {
           setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
         }
+        if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }
     }
+  }
+
+  static boolean shouldConvertIconToDarkVariant() {
+    return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff));
   }
 
   static boolean isShowNoIcons() {
@@ -378,10 +391,6 @@ public final class ActionMenu extends JBMenu {
   }
 
   public void fillMenu() {
-    Utils.performWithRetries(this::fillMenuInner, () -> !isSelected());
-  }
-
-  private void fillMenuInner() {
     DataContext context;
 
     if (myContext != null) {
@@ -400,7 +409,7 @@ public final class ActionMenu extends JBMenu {
 
     final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
     Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, isDarkMenu,
-                   RelativePoint.getNorthEastOf(this));
+                   RelativePoint.getNorthEastOf(this), () -> !isSelected());
   }
 
   private static final class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {

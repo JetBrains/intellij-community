@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -17,12 +18,16 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
+import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
+import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
 import org.jetbrains.kotlin.idea.project.isHMPPEnabled
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import java.io.File
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import kotlin.test.fail
 
 class MessageCollector {
@@ -40,6 +45,7 @@ class MessageCollector {
     }
 }
 
+@Suppress("UnstableApiUsage")
 class ProjectInfo(
     project: Project,
     internal val projectPath: String,
@@ -48,8 +54,10 @@ class ProjectInfo(
     internal val exhaustiveDependencyList: Boolean,
     internal val exhaustiveTestsList: Boolean
 ) {
-    internal val messageCollector = MessageCollector()
+    val messageCollector = MessageCollector()
+
     private val moduleManager = ModuleManager.getInstance(project)
+    private val projectDataNode = ExternalSystemApiUtil.findProjectData(project, GRADLE_SYSTEM_ID, projectPath)
     private val expectedModuleNames = HashSet<String>()
     private var allModulesAsserter: (ModuleInfo.() -> Unit)? = null
 
@@ -88,7 +96,7 @@ class ProjectInfo(
     }
 }
 
-class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
+class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
     private val rootModel = module.rootManager
     private val expectedDependencyNames = HashSet<String>()
     private val expectedDependencies = HashSet<OrderEntry>()
@@ -169,14 +177,9 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         checkReport("Additional arguments", arguments, actualArguments)
     }
 
-    @Deprecated(
-        "This assertion might be unsafe. " +
-                "Please use 'noLibraryDependency(Regex)' or " +
-                "calls to 'assertExhaustiveDependencyList' instead!",
-        ReplaceWith("noLibraryDependency(Regex.fromLiteral(libraryNameLiteral))")
-    )
-    fun noLibraryDependency(libraryNameLiteral: String, scope: DependencyScope) {
-        noLibraryDependency(Regex.fromLiteral(libraryNameLiteral))
+    fun kotlinFacetSettingCreated() {
+        val facet = KotlinFacet.get(module)?.configuration?.settings
+        if (facet == null) report("KotlinFacetSettings does not exist")
     }
 
     fun noLibraryDependency(libraryNameRegex: Regex) {
@@ -345,6 +348,19 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
             }
         }
     }
+
+    @Suppress("UnstableApiUsage")
+    inline fun <reified T : KotlinImportingDiagnostic> assertDiagnosticsCount(count: Int) {
+        val moduleNode = GradleUtil.findGradleModuleData(module)
+        val diagnostics = moduleNode!!.kotlinGradleProjectDataOrFail.kotlinImportingDiagnosticsContainer!!
+        val typedDiagnostics = diagnostics.filterIsInstance<T>()
+        if (typedDiagnostics.size != count) {
+            projectInfo.messageCollector.report(
+                "Expected number of ${T::class.java.simpleName} diagnostics $count doesn't match the actual one: ${typedDiagnostics.size}"
+            )
+        }
+    }
+
 
     fun assertExhaustiveDependencyList() {
         assertions += {

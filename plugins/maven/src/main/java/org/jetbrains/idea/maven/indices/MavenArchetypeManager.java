@@ -10,14 +10,18 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.jetbrains.idea.maven.project.MavenEmbeddersManager.FOR_POST_PROCESSING;
@@ -41,9 +45,28 @@ public class MavenArchetypeManager {
     myProject = project;
   }
 
+  public Collection<MavenArchetype> getArchetypes(@NotNull MavenCatalog catalog) {
+    if (catalog instanceof MavenCatalog.System.Internal) {
+      return getInnerArchetypes();
+    }
+    if (catalog instanceof MavenCatalog.System.DefaultLocal) {
+      return getLocalArchetypes();
+    }
+    if (catalog instanceof MavenCatalog.System.MavenCentral) {
+      return getRemoteArchetypes(((MavenCatalog.System.MavenCentral)catalog).getUrl());
+    }
+    if (catalog instanceof MavenCatalog.Local) {
+      return getInnerArchetypes(((MavenCatalog.Local)catalog).getPath());
+    }
+    if (catalog instanceof MavenCatalog.Remote) {
+      return getRemoteArchetypes(((MavenCatalog.Remote)catalog).getUrl());
+    }
+    return Collections.emptyList();
+  }
+
   public Set<MavenArchetype> getArchetypes() {
     MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(myProject);
-    Set<MavenArchetype> result = new HashSet<>(getEmbedderWrapper().getArchetypes());
+    Set<MavenArchetype> result = new HashSet<>(getInnerArchetypes());
     result.addAll(loadUserArchetypes(getUserArchetypesFile()));
     if (!indicesManager.isInit()) {
       indicesManager.updateIndicesListSync();
@@ -70,15 +93,71 @@ public class MavenArchetypeManager {
   }
 
   public Collection<MavenArchetype> getInnerArchetypes() {
-    return getEmbedderWrapper().getArchetypes();
+    return List.of(
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-archetype",
+                         "1.0", null,
+                         "An archetype which contains a sample archetype."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-j2ee-simple",
+                         "1.0", null,
+                         "An archetype which contains a simplifed sample J2EE application."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-plugin",
+                         "1.2", null,
+                         "An archetype which contains a sample Maven plugin."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-plugin-site",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven plugin site. " +
+                         "This archetype can be layered upon an existing Maven plugin project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-portlet",
+                         "1.0.1", null,
+                         "An archetype which contains a sample JSR-268 Portlet."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-profiles",
+                         "1.0-alpha-4", null, ""),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-quickstart",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-site",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven site which demonstrates some of the supported document types" +
+                         " like APT, XDoc, and FML and demonstrates how to i18n your site. " +
+                         "This archetype can be layered upon an existing Maven project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-site-simple",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven site."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-webapp",
+                         "1.0", null,
+                         "An archetype which contains a sample Maven Webapp project.")
+    );
   }
 
   public Collection<MavenArchetype> getInnerArchetypes(Path path) {
-    return getEmbedderWrapper().getInnerArchetypes(path);
+    return executeWithMavenEmbedderWrapper(wrapper -> wrapper.getInnerArchetypes(path));
+  }
+
+  public Collection<MavenArchetype> getRemoteArchetypes(URL url) {
+    return getRemoteArchetypes(url.toExternalForm());
   }
 
   public Collection<MavenArchetype> getRemoteArchetypes(String url) {
-    return getEmbedderWrapper().getRemoteArchetypes(url);
+    return executeWithMavenEmbedderWrapper(wrapper -> wrapper.getRemoteArchetypes(url));
   }
 
   /**
@@ -89,13 +168,33 @@ public class MavenArchetypeManager {
   @Nullable
   public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
                                                               @NotNull String version, @Nullable String url) {
-    MavenEmbedderWrapper embedderWrapper = getEmbedderWrapper();
-    return embedderWrapper.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, Collections.emptyList(), url);
+    return executeWithMavenEmbedderWrapperNullable(
+      wrapper -> wrapper.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, Collections.emptyList(), url)
+    );
   }
 
   @NotNull
-  private MavenEmbedderWrapper getEmbedderWrapper() {
-    return MavenProjectsManager.getInstance(myProject).getEmbeddersManager().getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+  private <R> R executeWithMavenEmbedderWrapper(Function<MavenEmbedderWrapper, R> function) {
+    MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+    try {
+      return function.apply(mavenEmbedderWrapper);
+    }
+    finally {
+      manager.release(mavenEmbedderWrapper);
+    }
+  }
+
+  @Nullable
+  private <R> R executeWithMavenEmbedderWrapperNullable(Function<MavenEmbedderWrapper, R> function) {
+    MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+    try {
+      return function.apply(mavenEmbedderWrapper);
+    }
+    finally {
+      manager.release(mavenEmbedderWrapper);
+    }
   }
 
   @NotNull

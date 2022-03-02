@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
+import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
@@ -42,7 +43,7 @@ import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -375,6 +376,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createIncreaseLanguageLevelFix(@NotNull LanguageLevel level) {
     return new IncreaseLanguageLevelFix(level);
+  }
+
+  @Override
+  public IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level) {
+    return new UpgradeSdkFix(level);
   }
 
   @NotNull
@@ -716,11 +722,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
           SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME,
                                            "myCheckParameterExcludingHierarchy",
                                            JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false,
-              in -> {
-                return in instanceof UnusedDeclarationInspectionBase
-                       ? ((UnusedDeclarationInspectionBase)in).getSharedLocalInspectionTool()
-                       : in;
-              })
+              profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
+                     ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
+                     : profileEntry)
             .applyFix(project, file);
         }
       };
@@ -882,7 +886,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
     //noinspection UnnecessaryLocalVariable
-    boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerEx
+    boolean hasErrorsBesideUnresolvedImports = !DaemonCodeAnalyzerEx
       .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), error -> {
         if (error.type instanceof LocalInspectionsPass.InspectionHighlightInfoType) return true;
         int infoStart = error.getActualStartOffset();
@@ -891,7 +895,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
         return importsRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
       });
 
-    return hasErrorsExceptUnresolvedImports;
+    return hasErrorsBesideUnresolvedImports;
   }
 
   @NotNull
@@ -936,7 +940,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(new JavaPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
+    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
       @NotNull
       @Override
       public Priority getPriority() {
@@ -1050,19 +1054,24 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
-                                                                 @NotNull PsiType enclosingClassType) {
-    return new VariableTypeFix(receiverParameter, enclosingClassType) {
-      @Override
-      public @NotNull String getText() {
-        return QuickFixBundle.message("fix.receiver.parameter.type.text");
-      }
+  public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter parameter, @NotNull PsiType newType) {
+    return new ReceiverParameterTypeFix(parameter, newType);
+  }
 
-      @Override
-      public @NotNull String getFamilyName() {
-        return QuickFixBundle.message("fix.receiver.parameter.type.family");
-      }
-    };
+  private final static class ReceiverParameterTypeFix extends SetVariableTypeFix {
+    private ReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter, @NotNull PsiType enclosingClassType) {
+      super(receiverParameter, enclosingClassType);
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return QuickFixBundle.message("fix.receiver.parameter.type.text");
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return QuickFixBundle.message("fix.receiver.parameter.type.family");
+    }
   }
 
   @Override
@@ -1128,5 +1137,41 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
                                                               @NotNull PsiCaseLabelElement labelElement) {
     return new MoveSwitchBranchUpFix(moveBeforeLabel, labelElement);
+  }
+
+  @Override
+  public @NotNull IntentionAction createSimplifyBooleanFix(@NotNull PsiExpression expression, boolean value) {
+    return new SimplifyBooleanExpressionFix(expression, value);
+  }
+
+  @Override
+  public @NotNull IntentionAction createSetVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type) {
+    return new SetVariableTypeFix(variable, type);
+  }
+
+  @Override
+  public @NotNull IntentionAction createReceiverParameterNameFix(@NotNull PsiReceiverParameter parameter, @NotNull String newName) {
+    return new ReceiverParameterNameFix(parameter, newName);
+  }
+
+  @Override
+  public @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
+                                                                               @IntentionName String message) {
+    return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message);
+  }
+
+  private final static class RemoveRedundantLambdaParameterTypesFix extends RemoveRedundantParameterTypesFix {
+    private final @IntentionName String myMessage;
+
+    private RemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression, @IntentionName String message) {
+      super(lambdaExpression);
+      myMessage = message;
+    }
+
+    @Nls
+    @Override
+    public @NotNull String getText() {
+      return myMessage;
+    }
   }
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.OverrideImplementUtil
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.ide.util.PsiClassListCellRenderer
 import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.ide.util.PsiElementListCellRenderer
@@ -18,6 +19,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.ui.components.JBList
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -28,7 +30,8 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideImplementMembersHandler
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
+import org.jetbrains.kotlin.idea.core.overrideImplement.GenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -72,6 +75,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         val memberDescriptor = member.resolveToDescriptorIfAny() as? CallableMemberDescriptor ?: return emptySequence()
 
         fun acceptSubClass(subClass: PsiElement): Boolean {
+            if (!BaseIntentionAction.canModify(subClass)) return false
             val classDescriptor = when (subClass) {
                 is KtLightClass -> subClass.kotlinOrigin?.resolveToDescriptorIfAny()
                 is KtEnumEntry -> subClass.resolveToDescriptorIfAny()
@@ -119,10 +123,10 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
             member.project,
             descriptorToImplement,
             descriptorToImplement,
-            OverrideMemberChooserObject.BodyType.FROM_TEMPLATE,
+            BodyType.FROM_TEMPLATE,
             preferConstructorParameters
         )
-        OverrideImplementMembersHandler.generateMembers(editor, targetClass, listOf(chooserObject), false)
+        GenerateMembersHandler.generateMembers(editor, targetClass, listOf(chooserObject), false)
     }
 
     private fun implementInJavaClass(member: KtNamedDeclaration, targetClass: PsiClass) {
@@ -185,6 +189,14 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
     }
 
     override fun startInWriteAction(): Boolean = false
+
+    override fun checkFile(file: PsiFile): Boolean {
+        return true
+    }
+
+    override fun preparePsiElementForWriteIfNeeded(target: KtNamedDeclaration): Boolean {
+        return true
+    }
 
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")

@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.XExpression;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,8 +10,7 @@ public abstract class XValueModifier {
   /**
    * @deprecated Use {@link #setValue(XExpression, XModificationCallback)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setValue(@NotNull String expression, @NotNull XModificationCallback callback) {
     throw new AbstractMethodError();
   }

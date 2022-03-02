@@ -121,13 +121,10 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
       settings.checkSettings(null);
       return true;
     }
-    catch (IndexNotReadyException ex) {
-      return true;
-    }
     catch (RuntimeConfigurationError ex) {
       return false;
     }
-    catch (RuntimeConfigurationException ex) {
+    catch (IndexNotReadyException | RuntimeConfigurationException ex) {
       return true;
     }
   }

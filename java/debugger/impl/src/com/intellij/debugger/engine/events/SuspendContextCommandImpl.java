@@ -4,7 +4,6 @@ package com.intellij.debugger.engine.events;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +22,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
   /**
    * @deprecated override {@link #contextAction(SuspendContextImpl)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void contextAction() throws Exception {
     throw new AbstractMethodError();
   }

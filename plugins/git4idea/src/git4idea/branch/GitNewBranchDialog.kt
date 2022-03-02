@@ -105,7 +105,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun validateBranchName(): ValidationInfoBuilder.(JTextField) -> ValidationInfo? = {
-    it.text = validator.cleanUpBranchNameOnTyping(it.text)
+    it.cleanBranchNameAndAdjustCursorIfNeeded()
     val errorInfo = checkRefNameEmptyOrHead(it.text) ?: conflictsWithRemoteBranch(repositories, it.text)
     if (errorInfo != null) error(errorInfo.message)
     else {
@@ -122,6 +122,24 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
       }
       else error(localBranchConflict.message)
     }
+  }
+
+  private fun JTextField.cleanBranchNameAndAdjustCursorIfNeeded() {
+    val initialText = text
+    val initialCaret = caretPosition
+
+    val fixedText = validator.cleanUpBranchNameOnTyping(initialText)
+
+    // if the text didn't change, there's no point in updating it or cursorPosition
+    if (fixedText == initialText) return
+
+    val initialTextBeforeCaret = initialText.take(initialCaret)
+    val fixedTextBeforeCaret = validator.cleanUpBranchNameOnTyping(initialTextBeforeCaret)
+
+    val fixedCaret = fixedTextBeforeCaret.length
+
+    text = fixedText
+    caretPosition = fixedCaret
   }
 
   private fun Cell<JTextField>.startTrackingValidationIfNeeded() {

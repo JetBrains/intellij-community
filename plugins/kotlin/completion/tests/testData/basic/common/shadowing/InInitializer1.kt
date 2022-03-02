@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo(xxx: String) {
     var xxx: Int = xx<caret>
 }

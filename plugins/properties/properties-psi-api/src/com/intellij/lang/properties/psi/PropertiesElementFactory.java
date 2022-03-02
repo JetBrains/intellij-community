@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,18 +44,6 @@ public final class PropertiesElementFactory {
     String text = getPropertyText(name, value, delimiter, project, format);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
-  }
-
-  /**
-   * @deprecated use {@link #createProperty(Project, String, String, Character)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static IProperty createProperty(@NotNull Project project,
-                                         @NonNls @NotNull String name,
-                                         @NonNls @NotNull String value) {
-    return createProperty(project, name, value, null);
   }
 
   @NotNull
@@ -112,8 +99,7 @@ public final class PropertiesElementFactory {
   /**
    * @deprecated use {@link #escapeValue(String, char, PropertyKeyValueFormat)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static String escapeValue(String value, char delimiter) {
     return escapeValue(value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
   }

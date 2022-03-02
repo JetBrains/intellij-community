@@ -17,8 +17,10 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeCastExpression
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUTypeCastExpression(
   override val sourcePsi: PsiTypeCastExpression,
   givenParent: UElement?
@@ -28,8 +30,8 @@ class JavaUTypeCastExpression(
   override val type: PsiType
     get() = sourcePsi.castType?.type ?: UastErrorType
 
-  override val typeReference: JavaUTypeReferenceExpression? by lz { sourcePsi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
+  override val typeReference: UTypeReferenceExpression? by lz { sourcePsi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
 
-  override val operationKind: UastBinaryExpressionWithTypeKind.TypeCast
+  override val operationKind: UastBinaryExpressionWithTypeKind
     get() = UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE
 }

@@ -18,8 +18,6 @@ import com.intellij.util.Consumer;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,8 +74,7 @@ public abstract class LanguageInjectionSupport {
    * and not deal with the {@link LanguageInjectionSupport} at all
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract boolean useDefaultCommentInjector();
 
   /**
@@ -85,8 +82,7 @@ public abstract class LanguageInjectionSupport {
    * for your language instead of implementing this method
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public abstract BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef);
 

@@ -58,9 +58,4 @@ public class ChangeAnnotationParameterQuickFix extends LocalQuickFixAndIntention
       new CommentTracker().deleteAndRestoreComments(attribute);
     }
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

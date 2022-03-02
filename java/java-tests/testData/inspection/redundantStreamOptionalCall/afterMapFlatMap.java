@@ -1,4 +1,4 @@
-// "Remove 'flatMap' call" "true"
+// "Remove 'flatMap()' call" "true"
 import java.util.function.Function;
 import java.util.stream.Stream;
 

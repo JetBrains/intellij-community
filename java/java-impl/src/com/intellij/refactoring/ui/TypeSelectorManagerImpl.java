@@ -18,8 +18,8 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -179,7 +179,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private PsiType[] getTypesForMain() {
     final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurrence, false, myOccurrenceClassProvider, false);
     final ArrayList<PsiType> allowedTypes = new ArrayList<>();
-    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    CommonJavaRefactoringUtil.processSuperTypes(getDefaultType(), new CommonJavaRefactoringUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
@@ -230,7 +230,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
 
     final ArrayList<PsiType> allowedTypes = new ArrayList<>();
-    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    CommonJavaRefactoringUtil.processSuperTypes(getDefaultType(), new CommonJavaRefactoringUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);

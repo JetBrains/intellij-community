@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import javax.swing.JComponent
 
@@ -52,7 +52,7 @@ abstract class DiffToolChooser(private val targetComponent: JComponent? = null) 
     for (tool in getTools()) {
       group.add(MyDiffToolAction(tool, tool == getActiveTool()))
     }
-    return SegmentedButtonToolbar(group, true, SpacingConfiguration.createIntelliJSpacingConfiguration())
+    return SegmentedButtonToolbar(group, IntelliJSpacingConfiguration())
       .also { it.targetComponent = targetComponent }
   }
 

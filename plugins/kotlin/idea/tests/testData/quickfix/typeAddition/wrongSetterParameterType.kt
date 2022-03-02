@@ -3,3 +3,4 @@ class A() {
     var i: Int = 0
         set(v: <caret>Any) {}
 }
+/* IGNORE_FIR */

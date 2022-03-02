@@ -42,6 +42,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
 /**
@@ -302,7 +303,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   public final void setLocation(@NotNull final String location) {
-    myLocationField.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(location)));
+    myLocationField.setText(getPresentablePath(location));
   }
 
   protected LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {

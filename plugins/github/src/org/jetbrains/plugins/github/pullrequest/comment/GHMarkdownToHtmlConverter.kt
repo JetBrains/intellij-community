@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
-import com.intellij.collaboration.lang.CodeBlockHtmlSyntaxHighlighter
-import com.intellij.collaboration.lang.HtmlSyntaxHighlighter
-import com.intellij.collaboration.markdown.CodeFenceSyntaxHighlighterGeneratingProvider
-import com.intellij.collaboration.markdown.MarkdownToHtmlConverter
+import com.intellij.markdown.utils.CodeFenceSyntaxHighlighterGeneratingProvider
+import com.intellij.markdown.utils.MarkdownToHtmlConverter
+import com.intellij.markdown.utils.lang.CodeBlockHtmlSyntaxHighlighter
+import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.intellij.markdown.IElementType
@@ -16,16 +16,21 @@ import java.net.URI
 
 class GHMarkdownToHtmlConverter(private val project: Project?) {
   @NlsSafe
-  fun convertMarkdownToHtml(@NlsSafe markdownText: String,
-                            server: String? = null,
-                            suggestionInfo: GHSuggestionInfo? = null): String {
+  fun convertMarkdown(@NlsSafe markdownText: String): String {
+
     val text = markdownText.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
-    val htmlSyntaxHighlighter =
-      if (suggestionInfo != null) GHSuggestionHtmlSyntaxHighlighter(project, suggestionInfo)
-      else CodeBlockHtmlSyntaxHighlighter(project)
+    val flavourDescriptor = GithubFlavourDescriptor(CodeBlockHtmlSyntaxHighlighter(project))
+    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
+  }
+
+  @NlsSafe
+  fun convertMarkdownWithSuggestedChange(@NlsSafe markdownText: String, suggestedChangeInfo: GHSuggestedChangeInfo): String {
+
+    val text = markdownText.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
+    val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, suggestedChangeInfo)
     val flavourDescriptor = GithubFlavourDescriptor(htmlSyntaxHighlighter)
 
-    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, server)
+    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
   }
 
   private class GithubFlavourDescriptor(
@@ -42,5 +47,5 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
 
 @NlsSafe
 internal fun String.convertToHtml(project: Project): String {
-  return GHMarkdownToHtmlConverter(project).convertMarkdownToHtml(this)
+  return GHMarkdownToHtmlConverter(project).convertMarkdown(this)
 }

@@ -1,15 +1,12 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.ImplicitReceiverSmartcastKind
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.psi.*
 
@@ -18,36 +15,32 @@ internal class ExpressionsSmartcastHighlightingVisitor(
     holder: AnnotationHolder
 ) : FirAfterResolveHighlightingVisitor(analysisSession, holder) {
     override fun visitExpression(expression: KtExpression) = with(analysisSession) {
-        expression.getImplicitReceiverSmartCasts().forEach { (types, kind) ->
-            val receiverName = when (kind) {
-                ImplicitReceiverSmartcastKind.EXTENSION -> KotlinIdeaAnalysisBundle.message("extension.implicit.receiver")
-                ImplicitReceiverSmartcastKind.DISPATCH -> KotlinIdeaAnalysisBundle.message("implicit.receiver")
+        expression.getImplicitReceiverSmartCast().forEach {
+            val receiverName = when (it.kind) {
+                KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinIdeaAnalysisBundle.message("extension.implicit.receiver")
+                KtImplicitReceiverSmartCastKind.DISPATCH -> KotlinIdeaAnalysisBundle.message("implicit.receiver")
             }
 
-            types.forEach { type ->
-                createInfoAnnotation(
-                    expression,
-                    KotlinIdeaAnalysisBundle.message(
-                        "0.smart.cast.to.1",
-                        receiverName,
-                        type.asStringForDebugging()
-                    ),
-                    KotlinHighlightingColors.SMART_CAST_RECEIVER
-                )
-            }
+            createInfoAnnotation(
+                expression,
+                KotlinIdeaAnalysisBundle.message(
+                    "0.smart.cast.to.1",
+                    receiverName,
+                    it.type.asStringForDebugging()
+                ),
+                KotlinHighlightingColors.SMART_CAST_RECEIVER
+            )
         }
-        expression.getSmartCasts()?.forEach { type ->
+        expression.getSmartCastInfo()?.let { info ->
             createInfoAnnotation(
                 getSmartCastTarget(expression),
                 KotlinIdeaAnalysisBundle.message(
                     "smart.cast.to.0",
-                    type.asStringForDebugging()
+                    info.smartCastType.asStringForDebugging()
                 ),
                 KotlinHighlightingColors.SMART_CAST_VALUE
             )
         }
-
-        //todo smartcast to null
 
         super.visitExpression(expression)
     }

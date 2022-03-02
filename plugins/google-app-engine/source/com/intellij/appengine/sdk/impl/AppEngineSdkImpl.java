@@ -222,8 +222,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     final InputStream stream = getClass().getResourceAsStream("/data/methodsBlacklist.txt");
     LOG.assertTrue(stream != null, "/data/methodsBlacklist.txt not found");
     final Map<String, Set<String>> map = new HashMap<>();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-    try {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       String line;
       while ((line = reader.readLine()) != null) {
         final int i = line.indexOf(':');
@@ -231,9 +230,6 @@ public class AppEngineSdkImpl implements AppEngineSdk {
         String methods = line.substring(i + 1);
         map.put(className, new HashSet<>(StringUtil.split(methods, ",")));
       }
-    }
-    finally {
-      reader.close();
     }
     return map;
   }

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
@@ -13,6 +14,8 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
+
+import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 
 @CompileStatic
 final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
@@ -67,12 +70,13 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  void buildArtifacts(Path osSpecificDistPath) {
-    copyFilesForOsDistribution(osSpecificDistPath)
-    buildContext.executeStep("build linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
-      if (customizer.buildTarGzWithoutBundledJre) {
+  void buildArtifacts(@NotNull Path osAndArchSpecificDistPath, @NotNull JvmArchitecture arch) {
+    copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
+    buildContext.executeStep(spanBuilder("build linux .tar.gz")
+                               .setAttribute("arch", arch.name()), BuildOptions.LINUX_ARTIFACTS_STEP) {
+      if (customizer.buildTarGzWithoutBundledRuntime) {
         buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
-          buildTarGz(null, osSpecificDistPath, "-no-jbr", buildContext)
+          buildTarGz(null, osAndArchSpecificDistPath, "-no-jbr", buildContext)
         }
       }
 
@@ -80,11 +84,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         return
       }
 
-      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX, JvmArchitecture.x64)
-      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "", buildContext)
+      Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.LINUX, arch)
+      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, "", buildContext)
 
       if (jreDirectoryPath != null) {
-        buildSnapPackage(jreDirectoryPath.toString(), osSpecificDistPath)
+        buildSnapPackage(jreDirectoryPath.toString(), osAndArchSpecificDistPath)
       }
       else {
         buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
@@ -137,6 +141,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       "bin/remote-dev-server.sh",
     ] + customizer.extraExecutables
     if (includeJre) {
+      // When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
       patterns += "jbr/bin/*"
       patterns += "jbr/lib/jexec"
       patterns += "jbr/lib/jcef_helper"
@@ -147,7 +152,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private Path buildTarGz(String jreDirectoryPath, Path unixDistPath, String suffix, BuildContext buildContext) {
+  private Path buildTarGz(@Nullable String jreDirectoryPath, Path unixDistPath, String suffix, BuildContext buildContext) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
     Path tarPath = buildContext.paths.artifactDir.resolve("${baseName}${suffix}.tar.gz")
@@ -157,7 +162,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
       javaExecutablePath = "jbr/bin/java"
+      if (!Files.exists(Path.of(jreDirectoryPath, javaExecutablePath))) {
+        throw new IllegalStateException(javaExecutablePath + " was not found under " + jreDirectoryPath)
+      }
     }
+
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(Paths.get(productJsonDir), javaExecutablePath)
     paths += productJsonDir
@@ -293,6 +302,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
+      buildContext.notifyArtifactBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))
     }
   }
 

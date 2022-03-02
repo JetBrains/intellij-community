@@ -8,11 +8,7 @@ cryptography.hazmat.backends.interfaces.DHBackend.dh_parameters_supported
 cryptography.hazmat.backends.interfaces.HMACBackend.cmac_algorithm_supported
 cryptography.hazmat.bindings.openssl.binding.Binding.init_static_locks
 cryptography.hazmat.primitives.asymmetric.dh.DHParameterNumbers.__init__
-cryptography.hazmat.primitives.asymmetric.dsa.AsymmetricVerificationContext
-cryptography.hazmat.primitives.asymmetric.ec.AsymmetricVerificationContext
-cryptography.hazmat.primitives.asymmetric.rsa.AsymmetricVerificationContext
 cryptography.hazmat.primitives.ciphers.aead.AESCCM.__init__
-cryptography.hazmat.primitives.ciphers.modes.GCM.__init__
 cryptography.hazmat.primitives.cmac.CMAC.__init__
 cryptography.hazmat.primitives.hashes.BLAKE2b.__init__
 cryptography.hazmat.primitives.hashes.BLAKE2s.__init__

@@ -50,7 +50,9 @@ internal class IntentionPreviewModel {
       val psiFileCopy: PsiFile = result.psiFile
       val lines: List<LineFragment> = result.lineFragments
 
-      lines.forEach { lineFragment -> reformatRange(project, psiFileCopy, lineFragment) }
+      if (result.fakeDiff) {
+        lines.forEach { lineFragment -> reformatRange(project, psiFileCopy, lineFragment) }
+      }
 
       val fileText = psiFileCopy.text
       val origText = result.origFile.text
@@ -85,6 +87,8 @@ internal class IntentionPreviewModel {
             } else {
               endPos = oldText.length - suffix
               if (endPos > prefix) {
+                val deletedLength = oldText.length - newText.length
+                endPos = deletedLength.coerceAtLeast(prefix + deletedLength)
                 highlightRange = TextRange.create(prefix, endPos)
                 return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1, true, highlightRange)
               }
@@ -100,7 +104,7 @@ internal class IntentionPreviewModel {
       }
       if (diffs.isNotEmpty()) {
         val last = diffs.last()
-        val maxLine = last.startLine + last.length
+        val maxLine = if (result.fakeDiff) last.startLine + last.length else -1
         return diffs.map { it.createEditor(project, result.origFile.fileType, maxLine) }
       }
       return emptyList()
@@ -155,7 +159,7 @@ internal class IntentionPreviewModel {
         .apply { setBorder(JBUI.Borders.empty(2, 0, 2, 0)) }
 
       editor.settings.apply {
-        isLineNumbersShown = true
+        isLineNumbersShown = maxLine != -1
         isCaretRowShown = false
         isLineMarkerAreaShown = false
         isFoldingOutlineShown = false
@@ -173,10 +177,12 @@ internal class IntentionPreviewModel {
 
       editor.gutterComponentEx.apply {
         isPaintBackground = false
-        setLineNumberConverter(object : LineNumberConverter {
-          override fun convert(editor: Editor, line: Int): Int = line + lineShift
-          override fun getMaxLineNumber(editor: Editor): Int = maxLine
-        })
+        if (maxLine != -1) {
+          setLineNumberConverter(object : LineNumberConverter {
+            override fun convert(editor: Editor, line: Int): Int = line + lineShift
+            override fun getMaxLineNumber(editor: Editor): Int = maxLine
+          })
+        }
       }
 
       return editor

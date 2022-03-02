@@ -91,11 +91,6 @@ final class ShRunConfigurationProfileState implements RunProfileState {
           public boolean splitToLines() {
             return false;
           }
-
-          @Override
-          public boolean withSeparators() {
-            return true;
-          }
         };
       }
     };

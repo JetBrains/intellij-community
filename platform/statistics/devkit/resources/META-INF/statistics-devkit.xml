@@ -2,37 +2,37 @@
   <actions>
     <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true">
       <action internal="true" id="OpenStatisticsEventLogAction"
-              class="com.intellij.internal.statistic.actions.OpenStatisticsEventLogAction"/>
+              class="com.intellij.internal.statistic.devkit.actions.OpenStatisticsEventLogAction"/>
       <action internal="true" id="RecordStateCollectors"
-              class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"/>
+              class="com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction"/>
       <action internal="true" id="AddGroupToTestSchemeAction"
-              class="com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction"/>
+              class="com.intellij.internal.statistic.devkit.actions.scheme.AddGroupToTestSchemeAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
-    <action internal="true" id="EditTestSchemeAction" class="com.intellij.internal.statistic.actions.scheme.EditEventsTestSchemeAction"/>
-    <action internal="true" id="CleanupEventsTestSchemeAction" class="com.intellij.internal.statistic.actions.CleanupEventsTestSchemeAction"/>
-    <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction"/>
-    <action internal="true" id="OpenEventsTestSchemeFileAction" class="com.intellij.internal.statistic.actions.OpenEventsTestSchemeFileAction"/>
-    <action internal="true" id="ConfigureEventsSchemeFileAction" class="com.intellij.internal.statistic.actions.ConfigureEventsSchemeFileAction"/>
-    <action internal="true" id="OpenEventsSchemeFileAction" class="com.intellij.internal.statistic.actions.OpenEventsSchemeFileAction"/>
-    <action internal="true" id="ReportSettingsToFUS" class="com.intellij.internal.statistic.actions.ReportSettingsToFUSAction"/>
-    <group internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.groups.OpenEventLogFileActionGroup"/>
-    <group internal="true" id="CleanupEventLog" class="com.intellij.internal.statistic.groups.CleanupEventLogByIdActionGroup"/>
-    <group internal="true" id="UpdateEventsSchemeAction" class="com.intellij.internal.statistic.groups.UpdateEventsSchemeActionGroup"/>
-    <action internal="true" id="GenerateEventsScheme" class="com.intellij.internal.statistic.actions.GenerateEventsScheme"/>
+    <action internal="true" id="EditTestSchemeAction" class="com.intellij.internal.statistic.devkit.actions.scheme.EditEventsTestSchemeAction"/>
+    <action internal="true" id="CleanupEventsTestSchemeAction" class="com.intellij.internal.statistic.devkit.actions.CleanupEventsTestSchemeAction"/>
+    <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.devkit.actions.SendEventLogAction"/>
+    <action internal="true" id="OpenEventsTestSchemeFileAction" class="com.intellij.internal.statistic.devkit.actions.OpenEventsTestSchemeFileAction"/>
+    <action internal="true" id="ConfigureEventsSchemeFileAction" class="com.intellij.internal.statistic.devkit.actions.ConfigureEventsSchemeFileAction"/>
+    <action internal="true" id="OpenEventsSchemeFileAction" class="com.intellij.internal.statistic.devkit.actions.OpenEventsSchemeFileAction"/>
+    <action internal="true" id="ReportSettingsToFUS" class="com.intellij.internal.statistic.devkit.actions.ReportSettingsToFUSAction"/>
+    <group internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.devkit.groups.OpenEventLogFileActionGroup"/>
+    <group internal="true" id="CleanupEventLog" class="com.intellij.internal.statistic.devkit.groups.CleanupEventLogByIdActionGroup"/>
+    <group internal="true" id="UpdateEventsSchemeAction" class="com.intellij.internal.statistic.devkit.groups.UpdateEventsSchemeActionGroup"/>
+    <action internal="true" id="GenerateEventsScheme" class="com.intellij.internal.statistic.devkit.actions.GenerateEventsScheme"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="Statistics Event Log" factoryClass="com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindowFactory"
+    <toolWindow id="Statistics Event Log" factoryClass="com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogToolWindowFactory"
                 anchor="bottom" canCloseContents="true" order="last"/>
     <notificationGroup displayType="BALLOON" id="FeatureUsageStatistics" bundle="messages.StatisticsBundle" key="stats.feature.usage.statistics"/>
     <completion.contributor language="JSON"
-                            implementationClass="com.intellij.internal.statistic.actions.scheme.ValidationRulesCompletionContributor"/>
+                            implementationClass="com.intellij.internal.statistic.devkit.actions.scheme.ValidationRulesCompletionContributor"/>
   </extensions>
   <extensionPoints>
     <extensionPoint name="statisticsLogGroupActionsProvider"
-                    interface="com.intellij.internal.statistic.toolwindow.StatisticsLogGroupActionsProvider" dynamic="true"/>
+                    interface="com.intellij.internal.statistic.devkit.toolwindow.StatisticsLogGroupActionsProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
-    <ProviderFactory implementation="com.intellij.internal.statistic.actions.scheme.EventsSchemeJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="com.intellij.internal.statistic.devkit.actions.scheme.EventsSchemeJsonSchemaProviderFactory"/>
   </extensions>
 </idea-plugin>

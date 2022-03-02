@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.keymap.impl
@@ -19,8 +19,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.ResourceUtil
 import org.jdom.Element
 import java.util.function.BiConsumer
-
-private val LOG = logger<DefaultKeymap>()
 
 open class DefaultKeymap {
   internal val keymaps: MutableList<Keymap> = ArrayList()
@@ -79,7 +77,7 @@ open class DefaultKeymap {
             return JDOMUtil.load(data)
           }
         }, pluginDescriptor)
-      }.getOrLogException(LOG)
+      }.getOrLogException(logger<DefaultKeymap>())
     }
   }
 

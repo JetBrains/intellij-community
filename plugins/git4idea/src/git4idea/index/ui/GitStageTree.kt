@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.ide.dnd.DnDActionInfo
@@ -114,7 +114,7 @@ abstract class GitStageTree(project: Project,
         .toList().toTypedArray()
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
         .map { OpenFileDescriptor(project, it!!) }.toList().toTypedArray()
-      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty()) VirtualFileDeleteProvider() else null
+      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
       else -> super.getData(dataId)
     }
   }

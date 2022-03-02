@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -46,23 +45,11 @@ public class CreateHtmlFileAction extends CreateFileFromTemplateAction implement
   protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(XmlBundle.message("html.action.new.file.dialog.title"))
-      .addKind(XmlBundle.message("html.action.new.file.item.html5.file"), HtmlFileType.INSTANCE.getIcon(), FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME)
-      .addKind(XmlBundle.message("html.action.new.file.item.html4.file"), HtmlFileType.INSTANCE.getIcon(), FileTemplateManager.INTERNAL_HTML_TEMPLATE_NAME)
-      .addKind(XmlBundle.message("html.action.new.file.item.xhtml.file"), XHtmlFileType.INSTANCE.getIcon(), FileTemplateManager.INTERNAL_XHTML_TEMPLATE_NAME);
+      .addKind(XmlBundle.message("html.action.new.file.item.html5.file"), HtmlFileType.INSTANCE.getIcon(), FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME);
   }
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
     return XmlBundle.message("html.action.new.file.name");
-  }
-
-  @Override
-  public int hashCode() {
-    return 0;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof CreateHtmlFileAction;
   }
 }

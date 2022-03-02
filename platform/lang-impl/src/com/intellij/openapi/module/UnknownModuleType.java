@@ -28,7 +28,7 @@ import javax.swing.*;
 public class UnknownModuleType extends ModuleType {
   private final ModuleType myModuleType;
 
-  public UnknownModuleType(String id, ModuleType moduleType) {
+  public UnknownModuleType(String id, @NotNull ModuleType moduleType) {
     super(id);
     myModuleType = moduleType;
   }

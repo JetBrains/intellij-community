@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.roots.ModuleRootManager
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.junit.Test
 
 /**

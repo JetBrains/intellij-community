@@ -7,6 +7,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.ngrams.TrigramTextSearchService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,6 +59,7 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.util.ui.EDT;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -98,7 +100,8 @@ final class FindInProjectTask {
   private final @NotNull List<FindInProjectSearchEngine.@NotNull FindInProjectSearcher> mySearchers;
   private long mySearchStartedAt;
 
-  FindInProjectTask(@NotNull FindModel findModel, @NotNull Project project, @NotNull Set<? extends VirtualFile> filesToScanInitially) {
+  FindInProjectTask(@NotNull FindModel findModel, @NotNull Project project, @NotNull Set<? extends VirtualFile> filesToScanInitially,
+                    boolean tooManyUsagesStatus) {
     myFindModel = findModel;
     myProject = project;
     myFilesToScanInitially = filesToScanInitially;
@@ -116,12 +119,17 @@ final class FindInProjectTask {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     myProgress = progress != null ? progress : new EmptyProgressIndicator();
 
-    TooManyUsagesStatus.createFor(myProgress);
+    if (tooManyUsagesStatus) {
+      TooManyUsagesStatus.createFor(myProgress);
+    }
 
     mySearchers = ContainerUtil.mapNotNull(FindInProjectSearchEngine.EP_NAME.getExtensions(), se -> se.createSearcher(findModel, project));
   }
 
   void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<? super UsageInfo> usageProcessor) {
+    if (!EDT.isCurrentThreadEdt()) {
+      ApplicationManager.getApplication().assertReadAccessNotAllowed();
+    }
     CoreProgressManager.assertUnderProgress(myProgress);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Searching for '" + myFindModel.getStringToFind() + "'");

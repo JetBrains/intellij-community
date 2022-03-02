@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -21,7 +21,7 @@ import kotlin.test.assertNotNull
 @TestRoot("idea/tests")
 @TestMetadata("testData/decompiler/lightClassesOrder")
 @RunWith(JUnit38ClassRunner::class)
-class LightClassesClasspathSortingTest : KotlinLightCodeInsightFixtureTestCase() {
+class LightClassesClasspathSortingTest07 : KotlinLightCodeInsightFixtureTestCase() {
     private val mockLibraryFacility = MockLibraryFacility(File(testDataPath, getTestName(true)))
 
     fun testExplicitClass() {
@@ -60,7 +60,11 @@ class LightClassesClasspathSortingTest : KotlinLightCodeInsightFixtureTestCase()
         val psiClass = JavaPsiFacade.getInstance(project).findClass(fqName, ResolveScopeManager.getElementResolveScope(file))
 
         assertNotNull(psiClass, "Can't find class for $fqName")
-        assert(psiClass is KtLightClassForSourceDeclaration || psiClass is KtLightClassForFacade) { "Should be an explicit light class, but was $fqName ${psiClass::class.java}" }
-        assert(psiClass !is KtLightClassForDecompiledDeclaration) { "Should not be decompiled light class: $fqName ${psiClass::class.java}" }
+        assert(psiClass is KtLightClassForSourceDeclaration || psiClass is KtLightClassForFacade) {
+            "Should be an explicit light class, but was $fqName ${psiClass::class.java}"
+        }
+        assert(psiClass !is KtLightClassForDecompiledDeclaration) {
+            "Should not be decompiled light class: $fqName ${psiClass::class.java}"
+        }
     }
 }

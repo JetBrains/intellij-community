@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -31,7 +31,7 @@ public final class FileTypeAssocTable<T> {
   private FileTypeAssocTable(@NotNull Map<? extends CharSequence, ? extends T> extensionMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameAnyCaseMappings,
-                             @NotNull Map<String, ? extends T> hashBangMap,
+                             @NotNull Map<? extends String, ? extends T> hashBangMap,
                              @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
     myExtensionMappings = createCharSequenceConcurrentMap(extensionMappings);
     myExactFileNameMappings = new ConcurrentHashMap<>(exactFileNameMappings);
@@ -120,7 +120,7 @@ public final class FileTypeAssocTable<T> {
       if (t != null) return t;
     }
 
-    if (!myExactFileNameAnyCaseMappings.isEmpty()) {   // even hash lookup with case insensitive hasher is costly for isIgnored checks during compile
+    if (!myExactFileNameAnyCaseMappings.isEmpty()) {   // even hash lookup with case-insensitive hasher is costly for isIgnored checks during compile
       T t = myExactFileNameAnyCaseMappings.get(fileName);
       if (t != null) return t;
     }

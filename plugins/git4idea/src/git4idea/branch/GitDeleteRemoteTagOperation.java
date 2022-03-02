@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitTag;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -117,7 +118,7 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
 
   private void notifySuccessWithEmptyTitle(@NotNull @NlsContexts.NotificationContent String message) {
     Notification notification = STANDARD_NOTIFICATION.createNotification(message, NotificationType.INFORMATION);
-    notification.setDisplayId("git.tag.remote.deletion.success");
+    notification.setDisplayId(GitNotificationIdsHolder.TAG_REMOTE_DELETION_SUCCESS);
     VcsNotifier.getInstance(myProject).notify(notification);
   }
 

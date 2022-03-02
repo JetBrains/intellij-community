@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -115,11 +115,13 @@ abstract class NonModalCommitPanel(
     withPreferredHeight(85)
   }
 
-  private fun getButtonPanelBorder(): Border =
-    EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
+  private fun getButtonPanelBorder(): Border {
+    return EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
+  }
 
-  private fun getButtonPanelBackground() =
-    JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
+  private fun getButtonPanelBackground(): JBColor? {
+    return JBColor.lazy { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
+  }
 
   override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
     val commitOptionsPanel = CommitOptionsPanel { actionName }.apply {

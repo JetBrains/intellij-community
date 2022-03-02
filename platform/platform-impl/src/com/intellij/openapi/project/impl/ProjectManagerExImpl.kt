@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.openapi.project.impl
 
@@ -50,7 +50,6 @@ import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.function.BiFunction
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
@@ -113,8 +112,12 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   private fun doOpenAsync(options: OpenProjectTask,
                           projectStoreBaseDir: Path,
                           activity: Activity): CompletableFuture<Project?> {
-    val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator(options)
-    else ProjectUiFrameAllocator(options, projectStoreBaseDir)
+    val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      ProjectFrameAllocator(options)
+    }
+    else {
+      ProjectUiFrameAllocator(options, projectStoreBaseDir)
+    }
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     return frameAllocator.run { indicator ->
       activity.end()
@@ -148,7 +151,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       frameAllocator.projectOpened(project)
       result
     }
-      .handle(BiFunction { result, error ->
+      .handle { result, error ->
         disableAutoSaveToken.finish()
 
         if (error != null) {
@@ -160,7 +163,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
           if (options.showWelcomeScreen) {
             WelcomeFrame.showIfNoProjectOpened()
           }
-          return@BiFunction null
+          return@handle null
         }
 
         val project = result.project
@@ -168,14 +171,15 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
           options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
         }
         project
-      })
+      }
   }
 
   private fun handleProjectOpenCancelOrFailure(project: Project) {
-    ApplicationManager.getApplication().invokeAndWait {
+    val app = ApplicationManager.getApplication()
+    app.invokeAndWait {
       closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false)
     }
-    ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+    app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
   }
 
   /**
@@ -224,6 +228,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       return true
     }
 
+    @Suppress("DEPRECATION")
     val previousTrustedState = project.service<TrustedProjectSettings>().trustedState
     if (previousTrustedState != ThreeState.UNSURE) {
       // we were asking about this project in the previous IDE version => migrate
@@ -427,8 +432,9 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     return result
   }
 
-  private fun closeAndDisposeKeepingFrame(project: Project) =
-    (WindowManager.getInstance() as WindowManagerImpl).runWithFrameReuseEnabled { closeAndDispose(project) }
+  private fun closeAndDisposeKeepingFrame(project: Project): Boolean {
+    return (WindowManager.getInstance() as WindowManagerImpl).runWithFrameReuseEnabled { closeAndDispose(project) }
+  }
 }
 
 @NlsSafe
@@ -443,6 +449,24 @@ private fun message(e: Throwable): String {
   return "$message (cause: $causeMessage)"
 }
 
+private inline fun executeInEdtWithProgress(indicator: ProgressIndicator?, crossinline task: () -> Unit) {
+  var pce: ProcessCanceledException? = null
+  ApplicationManager.getApplication().invokeAndWait {
+    try {
+       if (indicator == null) {
+        task()
+      }
+      else {
+        ProgressManager.getInstance().executeProcessUnderProgress({ task() }, indicator)
+      }
+    }
+    catch (e: ProcessCanceledException) {
+      pce = e
+    }
+  }
+  pce?.let { throw it }
+}
+
 private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean): CompletableFuture<*> {
   val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
@@ -452,15 +476,17 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
   }
 
   // invokeLater cannot be used for now
-  ApplicationManager.getApplication().invokeAndWait {
+  executeInEdtWithProgress(indicator) {
     waitEdtActivity.end()
+
+    indicator?.checkCanceled()
+
     if (indicator != null && ApplicationManager.getApplication().isInternal) {
       indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
     }
 
     ProjectManagerImpl.LOG.debug("projectOpened")
 
-    LifecycleUsageTriggerCollector.onProjectOpened(project)
     val activity = StartUpMeasurer.startActivity("project opened callbacks")
 
     runActivity("projectOpened event executing") {
@@ -470,29 +496,31 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     @Suppress("DEPRECATION")
     (project as ComponentManagerEx)
       .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
-      ProgressManager.checkCanceled()
-      try {
-        val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-          pluginDescriptor.pluginId.idString)
-        component.projectOpened()
-        componentActivity.end()
+        indicator?.checkCanceled()
+        try {
+          val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
+                                                                pluginDescriptor.pluginId.idString)
+          component.projectOpened()
+          componentActivity.end()
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          ProjectManagerImpl.LOG.error(e)
+        }
       }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        ProjectManagerImpl.LOG.error(e)
-      }
-    }
 
     activity.end()
-    ProjectImpl.ourClassesAreLoaded = true
   }
+
+  ProjectImpl.ourClassesAreLoaded = true
 
   if (runStartUpActivities) {
     (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
   }
 
+  LifecycleUsageTriggerCollector.onProjectOpened(project)
   return CompletableFuture.completedFuture(null)
 }
 
@@ -528,7 +556,7 @@ private fun toCanonicalName(filePath: String): Path {
       return file.toRealPath(LinkOption.NOFOLLOW_LINKS)
     }
   }
-  catch (e: InvalidPathException) {
+  catch (ignore: InvalidPathException) {
   }
   catch (e: IOException) {
     // OK. File does not yet exist, so its canonical path will be equal to its original path.

@@ -34,12 +34,22 @@ Suggests replacing classes with records.
     }
   }
 </code></pre>
-<p>This record will be converted to:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   record Point(int x, int y) {
   }
 </code></pre>
-<p>This inspection only reports if the language level of the project or module is 15 preview or higher.</p>
+<p>Enable the <b>Suggest renaming get/is-accessors</b> option to allow renaming <code>getX()</code>/<code>isX()</code> accessors to <code>x()</code> automatically.</p>
+<p>
+  Use the <b>When conversion makes a member more accessible</b> options to specify if the conversion may violate class encapsulation:
+<ul>
+  <li>Choose <b>Do not suggest conversion</b> option to never violate class encapsulation</li>
+  <li>Choose <b>Show affected members in conflicts view</b> option to apply conversion with notification about encapsulation violation issues</li>
+  <li>Choose <b>Convert silently</b> option to apply conversion silently whether encapsulation violation issues exist or not</li>
+</ul>
+<p>Use the <b>Suppress conversion if class is annotated by</b> list to exclude classes from conversion when annotated by annotations matching the specified patterns.
+</p>
+<p>This inspection only reports if the language level of the project or module is 16 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>

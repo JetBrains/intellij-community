@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @deprecated use {@link DescendentBasedRootFilter#createFileTypeBasedFilter(OrderRootType, boolean, FileType, String)} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public class FileTypeBasedRootFilter extends RootFilter {
   private final FileType myFileType;
   private final RootFilter myDelegate;

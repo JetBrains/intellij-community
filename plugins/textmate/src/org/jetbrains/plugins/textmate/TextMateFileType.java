@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,27 +42,26 @@ public final class TextMateFileType extends LanguageFileType implements FileType
     return "";
   }
 
-  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;
   }
 
-  private static boolean isTypeShouldBeReplacedByTextMateType(@Nullable FileType registeredType) {
-    return registeredType == UnknownFileType.INSTANCE
-           || registeredType == INSTANCE
-           || registeredType == PlainTextFileType.INSTANCE;
-  }
-
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
-    if (file.isDirectory()) {
+    if (file.isDirectory() || !(file instanceof LightVirtualFile)) {
       return false;
     }
     CharSequence fileName = file.getNameSequence();
     FileType originalFileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return isTypeShouldBeReplacedByTextMateType(originalFileType) &&
            TextMateService.getInstance().getLanguageDescriptorByFileName(fileName) != null;
+  }
+
+  private static boolean isTypeShouldBeReplacedByTextMateType(@Nullable FileType registeredType) {
+    return registeredType == UnknownFileType.INSTANCE
+           || registeredType == INSTANCE
+           || registeredType == PlainTextFileType.INSTANCE;
   }
 
   private static class TextMateFileDetector implements FileTypeRegistry.FileTypeDetector {
@@ -89,6 +89,11 @@ public final class TextMateFileType extends LanguageFileType implements FileType
         return null;
       }
       return INSTANCE;
+    }
+
+    @Override
+    public int getDesiredContentPrefixLength() {
+      return 0;
     }
   }
 }

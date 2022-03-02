@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ssh.SSHUtil;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
@@ -44,13 +45,13 @@ public class TerminalSshModule extends BaseTerminalModule {
   private boolean checkPassphrase(@NotNull String line) {
     Matcher matcher = PASSPHRASE_PROMPT.matcher(line);
 
-    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSPHRASE, matcher.group(1));
+    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSPHRASE, SSHUtil.extractKeyPath(matcher));
   }
 
   private boolean checkPassword(@NotNull String line) {
     Matcher matcher = PASSWORD_PROMPT.matcher(line);
 
-    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSWORD, matcher.group(1));
+    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSWORD, SSHUtil.extractUsername(matcher));
   }
 
   private boolean checkUnknownHost(@NotNull String line) {

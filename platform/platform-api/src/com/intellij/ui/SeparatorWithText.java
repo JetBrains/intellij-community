@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +28,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
 
   public SeparatorWithText() {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
-    setFont(UIUtil.getLabelFont());
+    setFont(StartupUiUtil.getLabelFont());
     setFont(getFont().deriveFont(Font.BOLD));
     setForeground(JBUI.CurrentTheme.Popup.separatorColor());
     setTextForeground(JBUI.CurrentTheme.Popup.separatorTextColor());
@@ -73,24 +60,21 @@ public class SeparatorWithText extends JComponent implements Accessible {
   }
 
   protected Dimension getPreferredElementSize() {
-    Dimension size = getLabelSize();
+    Dimension size = getLabelSize(new Insets(0, getHgap(), 0, getHgap()));
     JBInsets.addTo(size, getInsets());
     return size;
   }
 
   @NotNull
-  protected Dimension getLabelSize() {
-    Dimension size = new Dimension(Math.max(myPrefWidth, 0), 1);
+  protected Dimension getLabelSize(Insets labelInsets) {
     String caption = getCaption();
-    if (caption != null) {
-      FontMetrics fm = getFontMetrics(getFont());
-      size.height = fm.getHeight();
-      if (myPrefWidth < 0) {
-        size.width = 2 * getHgap() + fm.stringWidth(caption);
-      }
+    if (caption == null) {
+      return new Dimension(Math.max(myPrefWidth, 0), 1);
     }
 
-    return size;
+    FontMetrics fm = getFontMetrics(getFont());
+    int width = myPrefWidth < 0 ? fm.stringWidth(caption) + labelInsets.left + labelInsets.right : myPrefWidth;
+    return new Dimension(width, fm.getHeight() + labelInsets.top + labelInsets.bottom);
   }
 
   @Override

@@ -16,5 +16,7 @@
     <orderEntry type="module" module-name="intellij.maven.model" exported="" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
   </component>
 </module>

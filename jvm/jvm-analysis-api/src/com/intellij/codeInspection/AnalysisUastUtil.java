@@ -133,15 +133,6 @@ public final class AnalysisUastUtil {
         if (functionalInterfaceType != null) {
           return LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
         }
-
-        // if `functionalInterfaceType` will return proper type for Kotlin (after KT-25297 is fixed) then this part could be dropped
-        UElement lambdaParent = parent.getUastParent();
-        if (lambdaParent instanceof UCallExpression) {
-          PsiParameter lambdaParameter = UastUtils.getParameterForArgument(((UCallExpression)lambdaParent), ((ULambdaExpression)parent));
-          if (lambdaParameter == null) return null;
-          return LambdaUtil.getFunctionalInterfaceReturnType(lambdaParameter.getType());
-        }
-
         return null;
       }
       if (parent instanceof UClass) {

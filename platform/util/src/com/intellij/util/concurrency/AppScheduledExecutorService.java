@@ -1,14 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.JobFutureTask;
-import com.intellij.openapi.progress.JobRunnable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,6 +14,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
+
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -129,11 +127,22 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
 
-  static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
+  static class BackendThreadPoolExecutor extends ThreadPoolExecutor implements ContextPropagatingExecutor {
+
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
                               long keepAliveTime,
                               @NotNull TimeUnit unit) {
       super(1, Integer.MAX_VALUE, keepAliveTime, unit, new SynchronousQueue<>(), factory);
+    }
+
+    @Override
+    public void executeRaw(@NotNull Runnable command) {
+      super.execute(command);
+    }
+
+    @Override
+    public void execute(@NotNull Runnable command) {
+      executeRaw(handleCommand(command));
     }
 
     @Override
@@ -143,22 +152,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
-        return JobFutureTask.jobRunnableFuture(callable);
-      }
-      else {
-        return super.newTaskFor(callable);
-      }
-    }
-
-    @Override
-    public void execute(@NotNull Runnable command) {
-      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
-        super.execute(JobRunnable.jobRunnable(command));
-      }
-      else {
-        super.execute(command);
-      }
+      return handleTask(callable);
     }
 
     @Override
@@ -231,5 +225,27 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   void waitForLowMemoryWatcherManagerInit(int timeout, @NotNull TimeUnit unit)
     throws InterruptedException, ExecutionException, TimeoutException {
     myLowMemoryWatcherManager.waitForInitComplete(timeout, unit);
+  }
+
+  static @NotNull Runnable handleCommand(@NotNull Runnable command) {
+    if (command instanceof FutureTask) {
+      // FutureTask.callable should handle propagation/cancellation.
+      // Known implementations:
+      // - CancellationFutureTask is created in newTaskFor;
+      // - java.util.concurrent.ExecutorCompletionService$QueueingFuture (wraps CancellationFutureTask) is created in invokeAny
+      // - com.intellij.util.concurrency.SchedulingWrapper$MyScheduledFutureTask;
+      return command;
+    }
+    if (!propagateContextOrCancellation()) {
+      return command;
+    }
+    return Propagation.handleCommand(command);
+  }
+
+  static <T> @NotNull FutureTask<T> handleTask(Callable<T> callable) {
+    if (!propagateContextOrCancellation()) {
+      return new FutureTask<>(callable);
+    }
+    return Propagation.handleTask(callable);
   }
 }

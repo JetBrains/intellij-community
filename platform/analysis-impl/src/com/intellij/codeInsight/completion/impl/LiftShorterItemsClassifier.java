@@ -64,7 +64,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
     }
   }
 
-  private void calculateToLift(LookupElement element) {
+  private void calculateToLift(@NotNull LookupElement element) {
     for (String string : CompletionUtil.iterateLookupStrings(element)) {
       for (int len = 1; len < string.length(); len++) {
         String prefix = string.substring(0, len);
@@ -84,8 +84,9 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
     return liftShorterElements(source, null, context);
   }
 
-  private Iterable<LookupElement> liftShorterElements(Iterable<? extends LookupElement> source,
-                                                      @Nullable Set<? super LookupElement> lifted, final ProcessingContext context) {
+  private @NotNull Iterable<LookupElement> liftShorterElements(@NotNull Iterable<? extends LookupElement> source,
+                                                               @Nullable Set<? super LookupElement> lifted,
+                                                               @NotNull ProcessingContext context) {
     Set<LookupElement> srcSet = new ReferenceOpenHashSet<>(source instanceof Collection ? ((Collection<?>)source).size() : myCount);
     ContainerUtil.addAll(srcSet, source);
     if (srcSet.size() < 2) {
@@ -118,8 +119,8 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
   }
 
   private static void removeFromMap(LookupElement key,
-                                    MultiMap<LookupElement, LookupElement> mainMap,
-                                    MultiMap<LookupElement, LookupElement> inverseMap) {
+                                    @NotNull MultiMap<LookupElement, LookupElement> mainMap,
+                                    @NotNull MultiMap<LookupElement, LookupElement> inverseMap) {
     Collection<LookupElement> removed = mainMap.remove(key);
     if (removed == null) return;
 
@@ -135,15 +136,15 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
   }
 
   private class LiftingIterable implements Iterable<LookupElement> {
-    private final Set<LookupElement> mySrcSet;
-    private final ProcessingContext myContext;
-    private final Iterable<? extends LookupElement> mySource;
-    private final Set<? super LookupElement> myLifted;
+    private final @NotNull Set<LookupElement> mySrcSet;
+    private final @NotNull ProcessingContext myContext;
+    private final @NotNull Iterable<? extends LookupElement> mySource;
+    private final @Nullable Set<? super LookupElement> myLifted;
 
-    LiftingIterable(Set<LookupElement> srcSet,
-                    ProcessingContext context,
-                    Iterable<? extends LookupElement> source,
-                    Set<? super LookupElement> lifted) {
+    LiftingIterable(@NotNull Set<LookupElement> srcSet,
+                    @NotNull ProcessingContext context,
+                    @NotNull Iterable<? extends LookupElement> source,
+                    @Nullable Set<? super LookupElement> lifted) {
       mySrcSet = srcSet;
       myContext = context;
       mySource = source;
@@ -151,22 +152,22 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
     }
 
     @Override
-    public Iterator<LookupElement> iterator() {
+    public @NotNull Iterator<LookupElement> iterator() {
       Set<LookupElement> processed = new ReferenceOpenHashSet<>(mySrcSet.size());
       Set<Collection<LookupElement>> arraysProcessed = new ReferenceOpenHashSet<>();
 
-      final Iterable<LookupElement> next = myNext.classify(mySource, myContext);
+      final Iterable<? extends LookupElement> next = myNext == null ? mySource : myNext.classify(mySource, myContext);
       Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), element -> processed.add(element));
       return new FlatteningIterator<>(base) {
         @Override
-        protected Iterator<LookupElement> createValueIterator(LookupElement element) {
+        protected @NotNull Iterator<LookupElement> createValueIterator(LookupElement element) {
           List<LookupElement> shorter = addShorterElements(myToLift.get(element));
           List<LookupElement> singleton = Collections.singletonList(element);
           if (shorter != null) {
             if (myLifted != null) {
               myLifted.addAll(shorter);
             }
-            Iterable<LookupElement> lifted = myNext.classify(shorter, myContext);
+            Iterable<LookupElement> lifted = myNext == null ? shorter : myNext.classify(shorter, myContext);
             return (myLiftBefore ? ContainerUtil.concat(lifted, singleton) : ContainerUtil.concat(singleton, lifted)).iterator();
           }
           return singleton.iterator();

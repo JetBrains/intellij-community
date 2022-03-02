@@ -49,7 +49,7 @@ class PythonInPlaceRefactoringLesson
       text(
         PythonLessonsBundle.message("python.in.place.refactoring.invoke.intentions",
                                     icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { ui -> // no highlighting
+      triggerAndBorderHighlight().listItem { ui -> // no highlighting
         ui.isToStringContains("'s'")
       }
       proposeRestore {
@@ -111,7 +111,7 @@ class PythonInPlaceRefactoringLesson
                                        icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
       val updateUsagesText = RefactoringBundle.message("suggested.refactoring.change.signature.intention.text",
                                                        RefactoringBundle.message("suggested.refactoring.usages"))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(updateUsagesText)
       }
       proposeRestore {
@@ -125,7 +125,7 @@ class PythonInPlaceRefactoringLesson
 
     task {
       text(PythonLessonsBundle.message("python.in.place.refactoring.update.callers", action("EditorChooseLookupItem")))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JPanel -> // no highlighting
+      triggerUI().component { ui: JPanel -> // no highlighting
         ui.javaClass.name.contains("ChangeSignaturePopup")
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
@@ -134,7 +134,7 @@ class PythonInPlaceRefactoringLesson
 
     task {
       text(PythonLessonsBundle.message("python.in.place.refactoring.signature.preview", LessonUtil.rawEnter()))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JLabel -> // no highlighting
+      triggerUI().component { ui: JLabel -> // no highlighting
         ui.text == RefactoringBundle.message("suggested.refactoring.parameter.values.label.text")
       }
       restoreAfterStateBecomeFalse(restoreId = showIntentionsTaskId) {

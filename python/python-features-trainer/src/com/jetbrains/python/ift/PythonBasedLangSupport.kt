@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -26,7 +25,6 @@ import com.jetbrains.python.statistics.modules
 import training.lang.AbstractLangSupport
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
-import training.util.getFeedbackLink
 import java.awt.Dimension
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -34,8 +32,6 @@ import javax.swing.JLabel
 import kotlin.math.max
 
 abstract class PythonBasedLangSupport : AbstractLangSupport() {
-  override val langCourseFeedback get() = getFeedbackLink(this, false)
-
   override val readMeCreator = ReadMeCreator()
 
   override fun installAndOpenLearningProject(contentRoot: Path,
@@ -89,11 +85,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
   override fun checkSdk(sdk: Sdk?, project: Project) {
   }
 
-  override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean {
-    return file.name != projectSandboxRelativePath
-  }
-
-  override val projectSandboxRelativePath = "src/sandbox.py"
+  override val sampleFilePath = "src/sandbox.py"
 
   override fun startFromWelcomeFrame(startCallback: (Sdk?) -> Unit) {
     val allExistingSdks = listOf(*PyConfigurableInterpreterList.getInstance(null).model.sdks)

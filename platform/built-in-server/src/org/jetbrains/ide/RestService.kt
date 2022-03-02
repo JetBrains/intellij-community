@@ -27,6 +27,7 @@ import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
+import com.intellij.xml.util.XmlStringUtil
 import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -238,7 +239,7 @@ abstract class RestService : HttpRequestHandler() {
         LOG.error(e)
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR
       }
-      status.send(context.channel(), request, ExceptionUtil.getThrowableText(e))
+      status.send(context.channel(), request, XmlStringUtil.escapeString(ExceptionUtil.getThrowableText(e)))
     }
 
     return true

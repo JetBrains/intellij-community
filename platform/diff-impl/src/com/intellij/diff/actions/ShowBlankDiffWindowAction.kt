@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions
 
 import com.intellij.diff.*
@@ -463,7 +463,7 @@ private fun createBlankNotificationProvider(viewer: DiffViewer?, content: Docume
   }
   if (editor.document.textLength != 0) return null
 
-  val panel = EditorNotificationPanel{ editor.colorsScheme }
+  val panel = EditorNotificationPanel(editor, null, null)
   panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.select.file")) {
     SwitchToFileEditorAction().perform(editor, viewer, helper)
   }

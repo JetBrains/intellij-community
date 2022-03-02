@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("TargetPopup")
 
 package com.intellij.ui.list
@@ -62,7 +62,7 @@ fun <T> buildTargetPopup(
 }
 
 fun <T> createTargetPresentationRenderer(presentationProvider: Function<in T, out TargetPresentation>): ListCellRenderer<T> {
-  return if (UISettings.instance.showIconInQuickNavigation) {
+  return if (UISettings.getInstance().showIconInQuickNavigation) {
     TargetPresentationRenderer(presentationProvider)
   }
   else {

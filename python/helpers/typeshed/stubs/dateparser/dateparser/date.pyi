@@ -2,7 +2,7 @@ import collections
 import sys
 from _typeshed import Self as Self
 from datetime import datetime
-from typing import ClassVar, Iterable, Iterator, Type, overload
+from typing import ClassVar, Iterable, Iterator, overload
 
 from dateparser import _Settings
 from dateparser.conf import Settings
@@ -39,12 +39,12 @@ def parse_with_formats(date_string: str, date_formats: Iterable[str], settings: 
 class _DateLocaleParser:
     locale: Locale
     date_string: str
-    date_formats: list[str] | tuple[str] | set[str] | None
+    date_formats: list[str] | tuple[str, ...] | set[str] | None
     def __init__(
         self,
         locale: Locale,
         date_string: str,
-        date_formats: list[str] | tuple[str] | set[str] | None,
+        date_formats: list[str] | tuple[str, ...] | set[str] | None,
         settings: Settings | None = ...,
     ) -> None: ...
     @classmethod
@@ -52,7 +52,7 @@ class _DateLocaleParser:
         cls,
         locale: Locale,
         date_string: str,
-        date_formats: list[str] | tuple[str] | set[str] | None = ...,
+        date_formats: list[str] | tuple[str, ...] | set[str] | None = ...,
         settings: Settings | None = ...,
     ) -> DateData: ...
     def _parse(self) -> DateData | None: ...
@@ -90,21 +90,21 @@ class DateDataParser:
     try_previous_locales: bool
     use_given_order: bool
     languages: list[str] | None
-    locales: list[str] | tuple[str] | set[str] | None
+    locales: list[str] | tuple[str, ...] | set[str] | None
     region: str
     previous_locales: collections.OrderedDict[Locale, None]
     def __init__(
         self,
-        languages: list[str] | tuple[str] | set[str] | None = ...,
-        locales: list[str] | tuple[str] | set[str] | None = ...,
+        languages: list[str] | tuple[str, ...] | set[str] | None = ...,
+        locales: list[str] | tuple[str, ...] | set[str] | None = ...,
         region: str | None = ...,
         try_previous_locales: bool = ...,
         use_given_order: bool = ...,
         settings: _Settings | None = ...,
     ) -> None: ...
-    def get_date_data(self, date_string: str, date_formats: list[str] | tuple[str] | set[str] | None = ...) -> DateData: ...
-    def get_date_tuple(self, date_string: str, date_formats: list[str] | tuple[str] | set[str] | None = ...): ...
+    def get_date_data(self, date_string: str, date_formats: list[str] | tuple[str, ...] | set[str] | None = ...) -> DateData: ...
+    def get_date_tuple(self, date_string: str, date_formats: list[str] | tuple[str, ...] | set[str] | None = ...): ...
     def _get_applicable_locales(self, date_string: str) -> Iterator[Locale]: ...
     def _is_applicable_locale(self, locale: Locale, date_string: str) -> bool: ...
     @classmethod
-    def _get_locale_loader(cls: Type[DateDataParser]) -> LocaleDataLoader: ...
+    def _get_locale_loader(cls: type[DateDataParser]) -> LocaleDataLoader: ...

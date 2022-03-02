@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,7 +10,8 @@ import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -245,6 +246,40 @@ public class TreeTraverserTest extends TestCase {
     assertEquals("[42, 42, 48, 48, 49]", it.append("42").append(JBIterable.of("48").append("48")).append("49").toList().toString());
   }
 
+  public void testSingleElementWithList() {
+    Object element = Arrays.asList(1, 2);
+    JBIterable<Object> iterable = JBIterable.of(element);
+    assertEquals(1, iterable.size());
+    assertFalse(iterable.isEmpty());
+    assertEquals(element, iterable.first());
+    assertEquals(element, iterable.last());
+    assertEquals(element, iterable.get(0));
+    assertNull(iterable.get(1));
+    assertTrue(iterable.contains(element));
+    assertFalse(iterable.contains(1));
+    assertEquals("[[1, 2]]", iterable.toList().toString());
+    assertEquals("[[1, 2]]", iterable.toSet().toString());
+    assertEquals("[[1, 2]]", Arrays.asList(iterable.toArray(new Object[0])).toString());
+    assertEquals("[[1, 2]]", iterable.addAllTo(new ArrayListSet<>()).toString());
+  }
+
+  public void testSingleElementWithEmptyList() {
+    Object element = Collections.emptyList();
+    JBIterable<Object> iterable = JBIterable.of(element);
+    assertFalse(iterable.isEmpty());
+    assertEquals(1, iterable.size());
+    assertEquals(element, iterable.first());
+    assertEquals(element, iterable.last());
+    assertEquals(element, iterable.get(0));
+    assertNull(iterable.get(1));
+    assertTrue(iterable.contains(element));
+    assertFalse(iterable.contains(null));
+    assertEquals("[[]]", iterable.toList().toString());
+    assertEquals("[[]]", iterable.toSet().toString());
+    assertEquals("[[]]", Arrays.asList(iterable.toArray(new Object[0])).toString());
+    assertEquals("[[]]", iterable.addAllTo(new ArrayListSet<>()).toString());
+  }
+
   public void testFirstLastSingle() {
     assertNull(JBIterable.empty().first());
     assertNull(JBIterable.empty().last());
@@ -370,11 +405,13 @@ public class TreeTraverserTest extends TestCase {
   public void testStatefulFilterWithSet() {
     Integer base = 5;
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(10).filter(new JBIterable.SCond<>() {
-      TIntHashSet visited; // MUST NOT be initialized here
+      IntSet visited; // MUST NOT be initialized here
 
       @Override
       public boolean value(Integer integer) {
-        if (visited == null) visited = new TIntHashSet();
+        if (visited == null) {
+          visited = new IntOpenHashSet();
+        }
         return visited.add(integer % base);
       }
     });
@@ -1022,5 +1059,4 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 5, 6, 7, 3, 9, 10, 4, 12, 13), it.toList());
     assertEquals(it.toList(), t.forceDisregard(new F(false)).reset().toList());
   }
-
 }

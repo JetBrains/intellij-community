@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.icons.AllIcons
@@ -10,6 +10,7 @@ import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeNodeCache
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 
@@ -20,7 +21,7 @@ internal class GroupNode(project: Project, group: BookmarkGroup) : AbstractTreeN
     var bookmarks = value.getBookmarks()
 
     // shows line bookmarks only in the popup
-    if (parentRootNode?.value?.isPopup == true) {
+    if (parentRootNode?.value?.isPopup == true && AdvancedSettings.getBoolean("show.line.bookmarks.in.popup")) {
       bookmarks = bookmarks.filterIsInstance<LineBookmark>()
     }
 

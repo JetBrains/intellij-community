@@ -4,7 +4,6 @@ import ai.grazie.nlp.tokenizer.sentence.SRXSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
-import com.intellij.grazie.utils.Text.looksLikeCode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
@@ -28,9 +27,6 @@ internal class CommentProblemFilter : ProblemFilter() {
     }
 
     if (domain == COMMENTS) {
-      if (textAround(text, problem.highlightRange).looksLikeCode()) {
-        return true
-      }
       if (problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION))) {
         return true
       }
@@ -46,12 +42,11 @@ internal class CommentProblemFilter : ProblemFilter() {
   }
 
   private fun isInFirstSentence(problem: TextProblem) =
-    SRXSentenceTokenizer.tokenize(problem.text.substring(0, problem.highlightRange.startOffset)).size <= 1
+    SRXSentenceTokenizer.tokenize(problem.text.substring(0, problem.highlightRanges[0].startOffset)).size <= 1
 
   private fun isAboutIdentifierParts(problem: TextProblem, text: TextContent): Boolean {
-    val range = problem.highlightRange
-    return text.subSequence(0, range.startOffset).endsWith('_') ||
-           text.subSequence(range.endOffset, text.length).startsWith('_')
+    val ranges = problem.highlightRanges
+    return ranges.any { text.subSequence(0, it.startOffset).endsWith('_') || text.subSequence(it.endOffset, text.length).startsWith('_') }
   }
 
   // the _todo_ word spoils the grammar of what follows

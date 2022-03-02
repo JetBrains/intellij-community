@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo(): String.() -> Unit {
     return (label@ {
         f {

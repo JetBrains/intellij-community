@@ -122,7 +122,7 @@ public final class DiffDividerDrawUtil {
   }
 
   /**
-   * Use EditorInlayFoldingMapper-friendly renderer for folded lines.
+   * Use CustomFoldRegion-friendly renderer for folded lines.
    * We do not use it by default to avoid potential inconsistency with {@link DiffLineMarkerRenderer}.
    *
    * @see DiffDrawUtil#getGutterMarkerPaintRange

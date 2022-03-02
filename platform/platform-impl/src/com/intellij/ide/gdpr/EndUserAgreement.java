@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -97,39 +97,38 @@ public final class EndUserAgreement {
 
     String docName = getDocumentName();
     Document fromFile = loadContent(docName, getDocumentContentFile(docName));
-    if (!fromFile.getVersion().isUnknown()) {
+    if (fromFile != null && !fromFile.getVersion().isUnknown()) {
       return fromFile;
     }
-
     return loadContent(docName, getBundledResourcePath(docName));
   }
 
   public static boolean updateCachedContentToLatestBundledVersion() {
     try {
-      final String docName = getDocumentName();
-      Path cacheFile = getDocumentContentFile(docName);
-      if (Files.exists(cacheFile)) {
-        Document cached = loadContent(docName, cacheFile);
-        if (!cached.getVersion().isUnknown()) {
-          Document bundled = loadContent(docName, getBundledResourcePath(docName));
-          if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
-            try {
-              // update content only and not the active document name
-              // active document name can be changed by JBA only
-              writeToFile(getDocumentContentFile(docName), bundled.getText());
-            }
-            catch (FileNotFoundException e) {
-              LOG.info(e.getMessage());
-            }
-            catch (IOException e) {
-              LOG.info(e);
-            }
-            return true;
-          }
+      String docName = getDocumentName();
+      Document cached = loadContent(docName, getDocumentContentFile(docName));
+      if (cached == null || cached.getVersion().isUnknown()) {
+        return false;
+      }
+
+      Document bundled = loadContent(docName, getBundledResourcePath(docName));
+      if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
+        try {
+          // update content only and not the active document name
+          // active document name can be changed by JBA only
+          writeToFile(getDocumentContentFile(docName), bundled.getText());
         }
+        catch (NoSuchFileException e) {
+          LOG.info(e.getMessage());
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+        return true;
       }
     }
-    catch (Throwable ignored) { }
+    catch (Throwable ignored) {
+    }
     return false;
   }
 
@@ -165,9 +164,12 @@ public final class EndUserAgreement {
     return new Document(docName, "");
   }
 
-  private static @NotNull Document loadContent(String docName, Path file) {
+  private static @Nullable Document loadContent(String docName, Path file) {
     try {
       return new Document(docName, Files.readString(file));
+    }
+    catch (NoSuchFileException ignored) {
+      return null;
     }
     catch (IOException e) {
       LOG.info(docName + ": " + e.getMessage());
@@ -183,6 +185,9 @@ public final class EndUserAgreement {
       }
       if (PlatformUtils.isJetBrainsClient()) {
         return CWM_GUEST_EULA_NAME;
+      }
+      if (PlatformUtils.isGateway()) {
+        return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
       }
       return isEAP()? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
     }

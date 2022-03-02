@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +51,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   /**
    * @deprecated Use {@link LineStatusMarkerPopupRenderer#LineStatusMarkerPopupRenderer(LineStatusTrackerI)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
     this((LineStatusTrackerI<?>)tracker);
   }

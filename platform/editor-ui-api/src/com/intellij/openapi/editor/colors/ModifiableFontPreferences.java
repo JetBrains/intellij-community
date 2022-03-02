@@ -25,12 +25,15 @@ public abstract class ModifiableFontPreferences extends FontPreferences {
   public abstract void setUseLigatures(boolean useLigatures);
   public abstract void addFontFamily(String family);
   public abstract void register(String family, int size);
+  public void register(String family, float size) { register(family, (int)(size + 0.5)); }
   public abstract void setEffectiveFontFamilies(List<String> fontFamilies);
   public abstract void setRealFontFamilies(List<String> fontFamilies);
   public abstract void setTemplateFontSize(int size);
+  public void setTemplateFontSize(float size) { setTemplateFontSize((int)(size + 0.5)); }
   public abstract void setLineSpacing(float lineSpacing);
   public abstract void resetFontSizes();
   public abstract void setFontSize(@NotNull String fontFamily, int size);
+  public void setFontSize(@NotNull String fontFamily, float size) { setFontSize(fontFamily, (int)(size + 0.5)); }
   public abstract void setRegularSubFamily(String subFamily);
   public abstract void setBoldSubFamily(String subFamily);
 }

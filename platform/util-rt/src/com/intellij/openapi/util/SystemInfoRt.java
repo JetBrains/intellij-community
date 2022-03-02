@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -7,7 +7,7 @@ import java.util.Locale;
 
 /**
  * A stripped-down version of {@link com.intellij.openapi.util.SystemInfo}.
- * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
+ * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
 public final class SystemInfoRt {
   public static final String OS_NAME = System.getProperty("os.name");
@@ -28,6 +28,6 @@ public final class SystemInfoRt {
   private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   /** @deprecated inexact, please use {@code com.intellij.util.system.CpuArch} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = !(ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32"));
 }

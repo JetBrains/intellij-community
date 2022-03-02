@@ -24,7 +24,9 @@ public final class PluginUtilImpl implements PluginUtil {
   @Override
   public @Nullable PluginId getCallerPlugin(int stackFrameCount) {
     Class<?> aClass = ReflectionUtil.getCallerClass(stackFrameCount + 1);
-    if (aClass == null) return null;
+    if (aClass == null) {
+      return null;
+    }
     ClassLoader classLoader = aClass.getClassLoader();
     return classLoader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)classLoader).getPluginId() : null;
   }

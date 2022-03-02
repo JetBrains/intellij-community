@@ -3,7 +3,6 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.PopupMenuEvent;
@@ -17,8 +16,7 @@ import static com.intellij.openapi.util.registry.Registry.intValue;
  * @see com.intellij.ui.popup.PopupState
  * @deprecated use another PopupState instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@Deprecated(forRemoval = true)
 public class PopupState implements JBPopupListener, PopupMenuListener {
   private boolean hidden = true;
   private long time;

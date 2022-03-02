@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getReferenceTargets
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -28,8 +30,12 @@ class SyntheticPropertyAccessorReferenceDescriptorImpl(
     expression: KtNameReferenceExpression,
     getter: Boolean
 ) : SyntheticPropertyAccessorReference(expression, getter), KtDescriptorsBasedReference {
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        super<SyntheticPropertyAccessorReference>.isReferenceTo(element)
+
+    override fun isReferenceTo(element: PsiElement): Boolean {
+        if (element !is PsiMethod || !isAccessorName(element.name)) return false
+        if (!getter && expression.readWriteAccess(true) == ReferenceAccess.READ) return false
+        return additionalIsReferenceToChecker(element)
+    }
 
     override fun additionalIsReferenceToChecker(element: PsiElement): Boolean = matchesTarget(element)
 

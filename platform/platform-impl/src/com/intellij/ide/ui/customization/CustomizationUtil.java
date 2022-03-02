@@ -1,33 +1,51 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.PopupMenuListenerAdapter;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,14 +69,11 @@ public final class CustomizationUtil {
       return group;
     }
 
-    String text = group.getTemplatePresentation().getText();
-    final int mnemonic = group.getTemplatePresentation().getMnemonic();
+    String text = group.getTemplatePresentation().getText(true);
     if (text != null) {
-      for (int i = 0; i < text.length(); i++) {
-        if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
-          text = text.replaceFirst(String.valueOf(text.charAt(i)), "_" + text.charAt(i));
-          break;
-        }
+      int index = group.getTemplatePresentation().getDisplayedMnemonicIndex();
+      if (0 <= index && index <= text.length()) {
+        text = text.substring(0, index) + UIUtil.MNEMONIC + text.substring(index);
       }
     }
 
@@ -66,17 +81,18 @@ public final class CustomizationUtil {
   }
 
 
-  static AnAction [] getReordableChildren(ActionGroup group,
-                                          CustomActionsSchema schema,
-                                          String defaultGroupName,
-                                          String rootGroupName,
-                                          AnActionEvent e) {
+  static AnAction[] getReordableChildren(ActionGroup group,
+                                         CustomActionsSchema schema,
+                                         String defaultGroupName,
+                                         String rootGroupName,
+                                         AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
     ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
     final List<ActionUrl> actions = schema.getActions();
     for (ActionUrl actionUrl : actions) {
+      if (actionUrl.getParentGroup() == null) continue;
       if ((actionUrl.getParentGroup().equals(text) ||
            actionUrl.getParentGroup().equals(defaultGroupName) ||
            actionUrl.getParentGroup().equals(actionManager.getId(group)) && actionUrl.getRootGroup().equals(rootGroupName))) {
@@ -120,6 +136,7 @@ public final class CustomizationUtil {
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
     //noinspection HardCodedStringLiteral
+    @SuppressWarnings("DialogTitleCapitalization")
     Group rootGroup = new Group("root", null, null);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();
@@ -127,7 +144,7 @@ public final class CustomizationUtil {
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
     final List<ActionUrl> actions = new ArrayList<>();
-    TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), node -> {
+    TreeUtil.treeNodeTraverser((TreeNode)tree.getModel().getRoot()).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
       Object userObject = treeNode.getUserObject();
       if (treeNode.isLeaf() && !(userObject instanceof Group)) {
@@ -142,10 +159,11 @@ public final class CustomizationUtil {
         final ActionUrl[] defaultUserObjects = getChildUserObjects(visited, url);
         final ActionUrl[] currentUserObjects = getChildUserObjects(treeNode, url);
         computeDiff(defaultUserObjects, currentUserObjects, actions);
-      } else {
+      }
+      else {
         //customizations at the new place
         url.getGroupPath().remove(url.getParentGroup());
-        if (actions.contains(url)){
+        if (actions.contains(url)) {
           url.getGroupPath().add(groupName);
           actions.addAll(schema.getChildActions(url));
         }
@@ -184,8 +202,8 @@ public final class CustomizationUtil {
     }
   }
 
-  public static TreePath getPathByUserObjects(JTree tree, TreePath treePath){
-    List<String>  path = new ArrayList<>();
+  public static TreePath getPathByUserObjects(JTree tree, TreePath treePath) {
+    List<String> path = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
@@ -195,14 +213,14 @@ public final class CustomizationUtil {
     return getTreePath(0, path, tree.getModel().getRoot());
   }
 
-  public static ActionUrl getActionUrl(final TreePath treePath, int actionType) {
+  public static ActionUrl getActionUrl(final TreePath treePath,
+                                       @MagicConstant(intValues = {ActionUrl.ADDED, ActionUrl.DELETED, ActionUrl.MOVE}) int actionType) {
     ActionUrl url = new ActionUrl();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
         url.getGroupPath().add(((Group)o).getName());
       }
-
     }
 
     final DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
@@ -302,8 +320,9 @@ public final class CustomizationUtil {
    *
    * @throws IllegalArgumentException if {@code obj} has wrong type
    */
-  public static void acceptObjectIconAndText(@Nullable Object obj, BiConsumer<@Nls @NotNull String, @Nullable Icon> consumer) {
+  public static void acceptObjectIconAndText(@Nullable Object obj, @NotNull CustomPresentationConsumer consumer) {
     @NotNull String text;
+    @Nullable String description = null;
     Icon icon = null;
     if (obj instanceof Group) {
       Group group = (Group)obj;
@@ -311,6 +330,9 @@ public final class CustomizationUtil {
       @NlsSafe String id = group.getId();
       text = name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group"));
       icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = id;
+      }
     }
     else if (obj instanceof String) {
       String actionId = (String)obj;
@@ -323,19 +345,33 @@ public final class CustomizationUtil {
           icon = actionIcon;
         }
       }
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = actionId;
+      }
     }
     else if (obj instanceof Pair) {
       String actionId = (String)((Pair<?, ?>)obj).first;
       AnAction action = ActionManager.getInstance().getAction(actionId);
       var t = action != null ? action.getTemplatePresentation().getText() : null;
       text = StringUtil.isNotEmpty(t) ? t : actionId;
-      icon = (Icon)((Pair<?, ?>)obj).second;
+      Icon actionIcon = (Icon)((Pair<?, ?>)obj).second;
+      if (actionIcon == null && action != null) {
+        actionIcon = action.getTemplatePresentation().getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
+      }
+      icon = actionIcon;
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = actionId;
+      }
     }
     else if (obj instanceof Separator) {
       text = "-------------";
     }
     else if (obj instanceof QuickList) {
-      text = ((QuickList)obj).getDisplayName();
+      QuickList quickList = (QuickList)obj;
+      text = quickList.getDisplayName();
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = quickList.getActionId();
+      }
     }
     else if (obj == null) {
       //noinspection HardCodedStringLiteral
@@ -344,19 +380,17 @@ public final class CustomizationUtil {
     else {
       throw new IllegalArgumentException("unknown obj: " + obj);
     }
-    consumer.accept(text, icon);
+    consumer.accept(text, description, icon);
   }
 
   /**
    * Returns {@code schema} actions for the group with {@code groupId}.
    *
    * @param groupId action group ID
-   * @param schema schema where actions are
+   * @param schema  schema where actions are
    * @return list of objects
-   *
-   * @see CustomizationUtil#acceptObjectIconAndText(Object, BiConsumer)
-   *
    * @throws IllegalStateException if group is not found
+   * @see CustomizationUtil#acceptObjectIconAndText(Object, BiConsumer)
    */
   public static @NotNull List<Object> getGroupActions(@NotNull String groupId, @NotNull CustomActionsSchema schema) {
     var group = getGroup(groupId, schema);
@@ -370,7 +404,7 @@ public final class CustomizationUtil {
    * Returns {@link  Group} for specified {@code schema}.
    *
    * @param groupId action group ID
-   * @param schema schema where group is
+   * @param schema  schema where group is
    * @return {@link Group} or {@code null} if group isn't found
    */
   public static @Nullable Group getGroup(@NotNull String groupId, @NotNull CustomActionsSchema schema) {
@@ -407,5 +441,213 @@ public final class CustomizationUtil {
 
   private static ActionUrl @NotNull [] toActionUrls(@NotNull ArrayList<String> groupPath, @NotNull List<Object> objects) {
     return objects.stream().map(o -> new ActionUrl(groupPath, o, 0, -1)).toArray(ActionUrl[]::new);
+  }
+
+  @Nullable
+  public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionToolbarImpl toolbar) {
+    ActionGroup actionGroup = toolbar.getActionGroup();
+    String groupID = ActionManager.getInstance().getId(actionGroup instanceof CustomisedActionGroup
+                                                       ? ((CustomisedActionGroup)actionGroup).getOrigin() : actionGroup);
+    if (groupID == null) {
+      return null;
+    }
+    return installToolbarCustomizationHandler(actionGroup, groupID, toolbar.getComponent(), toolbar.getPlace());
+  }
+
+    @Nullable
+  public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
+                                                                String groupID, JComponent component, String place) {
+      if (groupID != null) {
+      final String groupName = getGroupName(actionGroup, groupID);
+      if (groupName == null) return null;
+
+      final Ref<Component> popupInvoker = Ref.create();
+      DefaultActionGroup customizationGroup = new DefaultActionGroup(
+        DumbAwareAction.create(IdeBundle.message("action.customizations.customize.action"),
+                               event -> {
+                                 Component src = popupInvoker.get();
+                                 AnAction targetAction = ObjectUtils.doIfCast(src, ActionButton.class, ActionButton::getAction);
+                                 ToolbarCustomizableActionsPanel panel = new ToolbarCustomizableActionsPanel(groupID, groupName);
+                                 DialogWrapper dialogWrapper = new DialogWrapper(event.getProject(), true) {
+                                   {
+                                     setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
+                                     init();
+                                     setSize(600, 600);
+                                     setOKButtonText(ActionsBundle.message("apply.toolbar.customization"));
+                                   }
+
+                                   @Override
+                                   public @Nullable JComponent getPreferredFocusedComponent() {
+                                     return panel.getPreferredFocusedComponent();
+                                   }
+
+                                   @Override
+                                   protected @Nullable JComponent createCenterPanel() {
+                                     panel.reset();
+                                     String id = ObjectUtils.doIfNotNull(targetAction, ActionManager.getInstance()::getId);
+                                     if (id != null) {
+                                       panel.selectAction(id);
+                                     }
+                                     return panel.getPanel();
+                                   }
+
+                                   @Override
+                                   protected void doOKAction() {
+                                     try {
+                                       panel.apply();
+                                     }
+                                     catch (ConfigurationException ex) {
+                                       LOG.error(ex);
+                                     }
+                                     close(OK_EXIT_CODE);
+                                   }
+
+                                   @Override
+                                   public void doCancelAction() {
+                                     panel.reset();
+                                     super.doCancelAction();
+                                   }
+                                 };
+                                 dialogWrapper.show();
+                               }));
+      return PopupHandler.installPopupMenu(component, customizationGroup, place, new PopupMenuListenerAdapter() {
+        @Override
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+          JBPopupMenu menu = ObjectUtils.tryCast(e.getSource(), JBPopupMenu.class);
+          popupInvoker.set(menu != null ? menu.getInvoker() : null);
+        }
+
+        @Override
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            popupInvoker.set(null);
+          });
+        }
+      });
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getGroupName(AnAction action, String groupID) {
+    String templateText = action.getTemplateText();
+    return Strings.isEmpty(templateText) ? CustomActionsSchema.getInstance().getDisplayName(groupID) : templateText;
+  }
+
+  private static class ToolbarCustomizableActionsPanel extends CustomizableActionsPanel {
+    @NotNull private final String myGroupID;
+    @NotNull private final String myGroupName;
+
+    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @NotNull String groupName) {
+      myGroupID = groupID;
+      myGroupName = groupName;
+    }
+
+    @Override
+    protected @NotNull ActionGroup getRestoreGroup() {
+      return new DefaultActionGroup(new DumbAwareAction(IdeBundle.messagePointer("button.restore.last.state")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          reset();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()));
+        }
+      }, new DumbAwareAction(IdeBundle.messagePointer("button.restore.defaults")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          resetToDefaults();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          CustomActionsSchema cleanScheme = new CustomActionsSchema();
+          updateLocalSchema(cleanScheme);
+          e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
+        }
+      }) {
+        {
+          getTemplatePresentation().setPopupGroup(true);
+          getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
+          getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          CustomActionsSchema cleanScheme = new CustomActionsSchema();
+          updateLocalSchema(cleanScheme);
+          e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) ||
+                                         mySelectedSchema.isModified(cleanScheme));
+        }
+      };
+    }
+
+    JComponent getPreferredFocusedComponent() {
+      return myActionsTree;
+    }
+
+    @Override
+    protected boolean needExpandAll() {
+      return true;
+    }
+
+    @Override
+    protected void updateGlobalSchema() {
+      updateLocalSchema(mySelectedSchema);
+      super.updateGlobalSchema();
+    }
+
+    @Override
+    protected void updateLocalSchema(CustomActionsSchema localSchema) {
+      CustomActionsSchema.getInstance().getActions().forEach(url -> {
+        // Foreign (global) customization shouldn't be lost, so we add them to a scheme with local action group root
+        if (!url.getGroupPath().contains(myGroupName)) {
+          localSchema.addAction(url.copy());
+        }
+      });
+    }
+
+    @Override
+    protected void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
+      if (myGroupID == null) return;
+      fillTreeFromActions(root, (ActionGroup)ActionManager.getInstance().getAction(myGroupID));
+    }
+
+    private void fillTreeFromActions(@Nullable DefaultMutableTreeNode root, @Nullable ActionGroup actionGroup) {
+      List<TreePath> selectedPaths = TreeUtil.collectSelectedPaths(myActionsTree);
+      if (mySelectedSchema != null && actionGroup != null && root != null) {
+        root.removeAllChildren();
+        root.add(ActionsTreeUtil.createNode(
+          ActionsTreeUtil.createCorrectedGroup(actionGroup, myGroupName, new ArrayList<>(), mySelectedSchema.getActions())));
+        ((DefaultTreeModel)(myActionsTree.getModel())).reload();
+        TreeUtil.selectPaths(myActionsTree, selectedPaths);
+      }
+    }
+
+    private void selectAction(String actionID) {
+      TreeUtil.promiseSelect(myActionsTree, new TreeVisitor() {
+        @Override
+        public @NotNull Action visit(@NotNull TreePath path) {
+          String userObjectString = ObjectUtils.doIfCast(path.getLastPathComponent(), DefaultMutableTreeNode.class,
+                                                         o -> ObjectUtils.tryCast(o.getUserObject(), String.class));
+          if (userObjectString == null) {
+            Group group = ObjectUtils.doIfCast(path.getLastPathComponent(), DefaultMutableTreeNode.class,
+                                               o -> ObjectUtils.tryCast(o.getUserObject(), Group.class));
+            userObjectString = ObjectUtils.doIfNotNull(group, Group::getName);
+          }
+          if (Objects.equals(userObjectString, actionID)) {
+            TreeUtil.selectPath(myActionsTree, path);
+            return Action.INTERRUPT;
+          }
+          return Action.CONTINUE;
+        }
+      });
+    }
+  }
+
+  public interface CustomPresentationConsumer {
+    void accept(@NotNull @Nls String text, @Nullable @Nls String description, @Nullable Icon icon);
   }
 }

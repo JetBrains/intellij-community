@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -109,171 +109,159 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighter")
-    public abstract static class Uncategorized extends AbstractHighlightingTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/highlighter")
-        public static class TestBucket001 extends AbstractHighlightingTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("Annotations.kt")
-            public void testAnnotations() throws Exception {
-                runTest("testData/highlighter/Annotations.kt");
-            }
-
-            @TestMetadata("AutoCreatedItParameter.kt")
-            public void testAutoCreatedItParameter() throws Exception {
-                runTest("testData/highlighter/AutoCreatedItParameter.kt");
-            }
-
-            @TestMetadata("DelegatingCtor.kt")
-            public void testDelegatingCtor() throws Exception {
-                runTest("testData/highlighter/DelegatingCtor.kt");
-            }
-
-            @TestMetadata("Destructuring.kt")
-            public void testDestructuring() throws Exception {
-                runTest("testData/highlighter/Destructuring.kt");
-            }
-
-            @TestMetadata("Dynamic.kt")
-            public void testDynamic() throws Exception {
-                runTest("testData/highlighter/Dynamic.kt");
-            }
-
-            @TestMetadata("Enums.kt")
-            public void testEnums() throws Exception {
-                runTest("testData/highlighter/Enums.kt");
-            }
-
-            @TestMetadata("Field.kt")
-            public void testField() throws Exception {
-                runTest("testData/highlighter/Field.kt");
-            }
-
-            @TestMetadata("Functions.kt")
-            public void testFunctions() throws Exception {
-                runTest("testData/highlighter/Functions.kt");
-            }
-
-            @TestMetadata("InaccessibleExpression.kt")
-            public void testInaccessibleExpression() throws Exception {
-                runTest("testData/highlighter/InaccessibleExpression.kt");
-            }
-
-            @TestMetadata("InvokeCall.kt")
-            public void testInvokeCall() throws Exception {
-                runTest("testData/highlighter/InvokeCall.kt");
-            }
-
-            @TestMetadata("JavaTypes.kt")
-            public void testJavaTypes() throws Exception {
-                runTest("testData/highlighter/JavaTypes.kt");
-            }
-
-            @TestMetadata("KDoc.kt")
-            public void testKDoc() throws Exception {
-                runTest("testData/highlighter/KDoc.kt");
-            }
-
-            @TestMetadata("KotlinInjection.kt")
-            public void testKotlinInjection() throws Exception {
-                runTest("testData/highlighter/KotlinInjection.kt");
-            }
-
-            @TestMetadata("Labels.kt")
-            public void testLabels() throws Exception {
-                runTest("testData/highlighter/Labels.kt");
-            }
-
-            @TestMetadata("NamedArguments.kt")
-            public void testNamedArguments() throws Exception {
-                runTest("testData/highlighter/NamedArguments.kt");
-            }
-
-            @TestMetadata("NonNullAssertion.kt")
-            public void testNonNullAssertion() throws Exception {
-                runTest("testData/highlighter/NonNullAssertion.kt");
-            }
-
-            @TestMetadata("Object.kt")
-            public void testObject() throws Exception {
-                runTest("testData/highlighter/Object.kt");
-            }
-
-            @TestMetadata("PropertiesWithPropertyDeclarations.kt")
-            public void testPropertiesWithPropertyDeclarations() throws Exception {
-                runTest("testData/highlighter/PropertiesWithPropertyDeclarations.kt");
-            }
-
-            @TestMetadata("RecursiveTypes.kt")
-            public void testRecursiveTypes() throws Exception {
-                runTest("testData/highlighter/RecursiveTypes.kt");
-            }
-
-            @TestMetadata("SmartCast.kt")
-            public void testSmartCast() throws Exception {
-                runTest("testData/highlighter/SmartCast.kt");
-            }
+    public static class Uncategorized extends AbstractHighlightingTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/highlighter")
-        public static class TestBucket002 extends AbstractHighlightingTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("Annotations.kt")
+        public void testAnnotations() throws Exception {
+            runTest("testData/highlighter/Annotations.kt");
+        }
 
-            @TestMetadata("Suspend.kt")
-            public void testSuspend() throws Exception {
-                runTest("testData/highlighter/Suspend.kt");
-            }
+        @TestMetadata("AutoCreatedItParameter.kt")
+        public void testAutoCreatedItParameter() throws Exception {
+            runTest("testData/highlighter/AutoCreatedItParameter.kt");
+        }
 
-            @TestMetadata("SyntheticExtensionProperty.kt")
-            public void testSyntheticExtensionProperty() throws Exception {
-                runTest("testData/highlighter/SyntheticExtensionProperty.kt");
-            }
+        @TestMetadata("DelegatingCtor.kt")
+        public void testDelegatingCtor() throws Exception {
+            runTest("testData/highlighter/DelegatingCtor.kt");
+        }
 
-            @TestMetadata("Todo.kt")
-            public void testTodo() throws Exception {
-                runTest("testData/highlighter/Todo.kt");
-            }
+        @TestMetadata("Destructuring.kt")
+        public void testDestructuring() throws Exception {
+            runTest("testData/highlighter/Destructuring.kt");
+        }
 
-            @TestMetadata("TopLevelDestructuring.kt")
-            public void testTopLevelDestructuring() throws Exception {
-                runTest("testData/highlighter/TopLevelDestructuring.kt");
-            }
+        @TestMetadata("Dynamic.kt")
+        public void testDynamic() throws Exception {
+            runTest("testData/highlighter/Dynamic.kt");
+        }
 
-            @TestMetadata("TopLevelOpenSuspendFun.kt")
-            public void testTopLevelOpenSuspendFun() throws Exception {
-                runTest("testData/highlighter/TopLevelOpenSuspendFun.kt");
-            }
+        @TestMetadata("Enums.kt")
+        public void testEnums() throws Exception {
+            runTest("testData/highlighter/Enums.kt");
+        }
 
-            @TestMetadata("TypeAlias.kt")
-            public void testTypeAlias() throws Exception {
-                runTest("testData/highlighter/TypeAlias.kt");
-            }
+        @TestMetadata("Field.kt")
+        public void testField() throws Exception {
+            runTest("testData/highlighter/Field.kt");
+        }
 
-            @TestMetadata("TypeAlias2.kt")
-            public void testTypeAlias2() throws Exception {
-                runTest("testData/highlighter/TypeAlias2.kt");
-            }
+        @TestMetadata("Functions.kt")
+        public void testFunctions() throws Exception {
+            runTest("testData/highlighter/Functions.kt");
+        }
 
-            @TestMetadata("TypesAndAnnotations.kt")
-            public void testTypesAndAnnotations() throws Exception {
-                runTest("testData/highlighter/TypesAndAnnotations.kt");
-            }
+        @TestMetadata("InaccessibleExpression.kt")
+        public void testInaccessibleExpression() throws Exception {
+            runTest("testData/highlighter/InaccessibleExpression.kt");
+        }
 
-            @TestMetadata("Variables.kt")
-            public void testVariables() throws Exception {
-                runTest("testData/highlighter/Variables.kt");
-            }
+        @TestMetadata("InvokeCall.kt")
+        public void testInvokeCall() throws Exception {
+            runTest("testData/highlighter/InvokeCall.kt");
+        }
 
-            @TestMetadata("VariablesAsFunctions.kt")
-            public void testVariablesAsFunctions() throws Exception {
-                runTest("testData/highlighter/VariablesAsFunctions.kt");
-            }
+        @TestMetadata("JavaTypes.kt")
+        public void testJavaTypes() throws Exception {
+            runTest("testData/highlighter/JavaTypes.kt");
+        }
+
+        @TestMetadata("KDoc.kt")
+        public void testKDoc() throws Exception {
+            runTest("testData/highlighter/KDoc.kt");
+        }
+
+        @TestMetadata("KotlinInjection.kt")
+        public void testKotlinInjection() throws Exception {
+            runTest("testData/highlighter/KotlinInjection.kt");
+        }
+
+        @TestMetadata("Labels.kt")
+        public void testLabels() throws Exception {
+            runTest("testData/highlighter/Labels.kt");
+        }
+
+        @TestMetadata("NamedArguments.kt")
+        public void testNamedArguments() throws Exception {
+            runTest("testData/highlighter/NamedArguments.kt");
+        }
+
+        @TestMetadata("NonNullAssertion.kt")
+        public void testNonNullAssertion() throws Exception {
+            runTest("testData/highlighter/NonNullAssertion.kt");
+        }
+
+        @TestMetadata("Object.kt")
+        public void testObject() throws Exception {
+            runTest("testData/highlighter/Object.kt");
+        }
+
+        @TestMetadata("PropertiesWithPropertyDeclarations.kt")
+        public void testPropertiesWithPropertyDeclarations() throws Exception {
+            runTest("testData/highlighter/PropertiesWithPropertyDeclarations.kt");
+        }
+
+        @TestMetadata("RecursiveTypes.kt")
+        public void testRecursiveTypes() throws Exception {
+            runTest("testData/highlighter/RecursiveTypes.kt");
+        }
+
+        @TestMetadata("SmartCast.kt")
+        public void testSmartCast() throws Exception {
+            runTest("testData/highlighter/SmartCast.kt");
+        }
+
+        @TestMetadata("Suspend.kt")
+        public void testSuspend() throws Exception {
+            runTest("testData/highlighter/Suspend.kt");
+        }
+
+        @TestMetadata("SyntheticExtensionProperty.kt")
+        public void testSyntheticExtensionProperty() throws Exception {
+            runTest("testData/highlighter/SyntheticExtensionProperty.kt");
+        }
+
+        @TestMetadata("Todo.kt")
+        public void testTodo() throws Exception {
+            runTest("testData/highlighter/Todo.kt");
+        }
+
+        @TestMetadata("TopLevelDestructuring.kt")
+        public void testTopLevelDestructuring() throws Exception {
+            runTest("testData/highlighter/TopLevelDestructuring.kt");
+        }
+
+        @TestMetadata("TopLevelOpenSuspendFun.kt")
+        public void testTopLevelOpenSuspendFun() throws Exception {
+            runTest("testData/highlighter/TopLevelOpenSuspendFun.kt");
+        }
+
+        @TestMetadata("TypeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("testData/highlighter/TypeAlias.kt");
+        }
+
+        @TestMetadata("TypeAlias2.kt")
+        public void testTypeAlias2() throws Exception {
+            runTest("testData/highlighter/TypeAlias2.kt");
+        }
+
+        @TestMetadata("TypesAndAnnotations.kt")
+        public void testTypesAndAnnotations() throws Exception {
+            runTest("testData/highlighter/TypesAndAnnotations.kt");
+        }
+
+        @TestMetadata("Variables.kt")
+        public void testVariables() throws Exception {
+            runTest("testData/highlighter/Variables.kt");
+        }
+
+        @TestMetadata("VariablesAsFunctions.kt")
+        public void testVariablesAsFunctions() throws Exception {
+            runTest("testData/highlighter/VariablesAsFunctions.kt");
         }
     }
 }

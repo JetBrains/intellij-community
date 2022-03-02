@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 
 enum class CoroutineDebuggerMode {
     DISABLED,
@@ -63,9 +64,9 @@ internal object CoroutineAgentConnector {
             configuration is JavaTestConfigurationWithDiscoverySupport
         ) ?: return emptyList()
 
-        val kotlinxCoroutinesPackage = JavaPsiFacade.getInstance(this)
-            .findPackage(packageName)
-            ?: return emptyList()
+        val kotlinxCoroutinesPackage =
+            runReadActionInSmartMode { JavaPsiFacade.getInstance(this).findPackage(packageName) } ?:
+            return emptyList()
 
         return kotlinxCoroutinesPackage.getDirectories(scope).mapNotNull {
             it.virtualFile.path.getParentJarPath()

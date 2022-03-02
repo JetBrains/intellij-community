@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.util.registry.Registry
@@ -13,6 +13,7 @@ import org.junit.runners.model.Statement
  * TODO change the [value] type to [String] when needed.
  *
  * @see com.intellij.openapi.util.registry.RegistryValue.setValue
+ * @see RegistryKeyExtension
  */
 class RegistryKeyRule(private val key: String, private val value: Boolean) : TestRule {
 

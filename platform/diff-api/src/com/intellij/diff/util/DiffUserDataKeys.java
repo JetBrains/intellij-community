@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.util.List;
@@ -106,8 +105,7 @@ public interface DiffUserDataKeys {
   /**
    * @deprecated Use {@link DiffUtil#addNotification}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   Key<List<JComponent>> NOTIFICATIONS = Key.create("Diff.Notifications");
 
   /**

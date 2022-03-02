@@ -95,7 +95,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
   private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
-      myUi = logManager.createLogUi(MAIN_LOG_ID, VcsLogManager.LogWindowKind.TOOL_WINDOW, false);
+      myUi = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false);
       VcsLogPanel panel = new VcsLogPanel(logManager, myUi);
       myContainer.add(panel, BorderLayout.CENTER);
       DataManager.registerDataProvider(myContainer, panel);

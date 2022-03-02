@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.configurations.coverage;
 
@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +165,8 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myRunnerPanel = new JPanel(new GridBagLayout());
     myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     myRunnerPanel.add(new JLabel(JavaCoverageBundle.message("run.configuration.choose.coverage.runner")), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(10), 0, 0));
-    myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                                 JBInsets.emptyInsets(), 0, 0));
     final JPanel cPanel = new JPanel(new VerticalFlowLayout());
 
     mySamplingRb = new JRadioButton(JavaCoverageBundle.message("run.configuration.coverage.sampling"));
@@ -190,18 +192,19 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myTrackPerTestCoverageCb = new JCheckBox(JavaCoverageBundle.message("run.configuration.track.per.test.coverage"));
     final JBPanel tracingPanel = JBUI.Panels.simplePanel(myTrackPerTestCoverageCb).withBorder(JBUI.Borders.emptyLeft(15));
     cPanel.add(tracingPanel);
-    myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                     JBInsets.emptyInsets(), 0, 0));
 
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE,
                                                          1, 1, 1, 0,
                                                          GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                         JBUI.emptyInsets(), 0, 0);
+                                                         JBInsets.emptyInsets(), 0, 0);
     result.add(myRunnerPanel, gc);
 
     JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints bagConstraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                             JBUI.emptyInsets(), 0, 0);
+                             JBInsets.emptyInsets(), 0, 0);
     panel.add(new TitledSeparator(JavaCoverageBundle.message("record.coverage.filters.title")), bagConstraints);
     myClassFilterEditor = new CoverageClassFilterEditor(myProject);
     panel.add(myClassFilterEditor, bagConstraints);

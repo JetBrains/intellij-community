@@ -9,7 +9,7 @@ public class TestClassSimpleBytecodeMapping {
          }// 18
       });
       this.test2("1");// 21
-      if (Math.random() > 0.0D) {// 23
+      if (Math.random() > 0.0) {// 23
          System.out.println("0");// 24
          return 0;// 25
       } else {

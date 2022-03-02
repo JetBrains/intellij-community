@@ -1,6 +1,7 @@
 import sys
 from _typeshed import ReadableBuffer
-from typing import ContextManager, Iterable, Iterator, NoReturn, Sized, overload
+from contextlib import AbstractContextManager
+from typing import Iterable, Iterator, NoReturn, Sized, overload
 
 ACCESS_DEFAULT: int
 ACCESS_READ: int
@@ -12,6 +13,8 @@ ALLOCATIONGRANULARITY: int
 if sys.platform == "linux":
     MAP_DENYWRITE: int
     MAP_EXECUTABLE: int
+    if sys.version_info >= (3, 10):
+        MAP_POPULATE: int
 
 if sys.platform != "win32":
     MAP_ANON: int
@@ -24,18 +27,20 @@ if sys.platform != "win32":
 
     PAGESIZE: int
 
-class mmap(ContextManager[mmap], Iterable[int], Sized):
+class mmap(AbstractContextManager[mmap], Iterable[int], Sized):
     if sys.platform == "win32":
         def __init__(self, fileno: int, length: int, tagname: str | None = ..., access: int = ..., offset: int = ...) -> None: ...
     else:
         def __init__(
             self, fileno: int, length: int, flags: int = ..., prot: int = ..., access: int = ..., offset: int = ...
         ) -> None: ...
+
     def close(self) -> None: ...
     if sys.version_info >= (3, 8):
         def flush(self, offset: int = ..., size: int = ...) -> None: ...
     else:
         def flush(self, offset: int = ..., size: int = ...) -> int: ...
+
     def move(self, dest: int, src: int, count: int) -> None: ...
     def read_byte(self) -> int: ...
     def readline(self) -> bytes: ...
@@ -48,6 +53,7 @@ class mmap(ContextManager[mmap], Iterable[int], Sized):
     closed: bool
     if sys.version_info >= (3, 8) and sys.platform != "win32":
         def madvise(self, option: int, start: int = ..., length: int = ...) -> None: ...
+
     def find(self, sub: ReadableBuffer, start: int = ..., stop: int = ...) -> int: ...
     def rfind(self, sub: ReadableBuffer, start: int = ..., stop: int = ...) -> int: ...
     def read(self, n: int | None = ...) -> bytes: ...

@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.impl.ZipHandlerBase
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
@@ -384,13 +383,13 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
     override fun before() {
       if (useCrcForTimestamp) {
-        ZipHandlerBase.forceUseCrcInsteadOfTimestamp()
+        System.setProperty("zip.handler.uses.crc.instead.of.timestamp", true.toString())
       }
     }
 
     override fun after() {
       if (useCrcForTimestamp) {
-        ZipHandlerBase.resetUseCrcInsteadOfTimestamp()
+        System.setProperty("zip.handler.uses.crc.instead.of.timestamp", false.toString())
       }
     }
   }

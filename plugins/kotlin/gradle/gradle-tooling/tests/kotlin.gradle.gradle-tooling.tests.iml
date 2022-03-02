@@ -16,5 +16,8 @@
     <orderEntry type="module" module-name="kotlin.project-model" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin.gradle.plugin" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin.project.model" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin.gradle.plugin.api" level="project" />
   </component>
 </module>

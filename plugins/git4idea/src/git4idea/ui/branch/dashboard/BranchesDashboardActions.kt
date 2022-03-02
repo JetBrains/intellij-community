@@ -453,7 +453,7 @@ internal object BranchesDashboardActions {
 
   class GroupingSettingsGroup: DefaultActionGroup(), DumbAware {
     override fun update(e: AnActionEvent) {
-      isPopup = GroupBranchByRepositoryAction.isEnabledAndVisible(e)
+      e.presentation.isPopupGroup = GroupBranchByRepositoryAction.isEnabledAndVisible(e)
     }
   }
 

@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
 LineBreakpoint created at inlineStackTrace.kt:8
 LineBreakpoint created at inlineStackTrace.kt:16
 LineBreakpoint created at inlineStackTrace.kt:25
@@ -114,6 +113,7 @@ InlineStackFrame lambda 'with' in 'fun8' (inlineStackTrace.kt:94)
     JavaValue[local] x8: int = 1 (inlineStackTrace.kt:85)
     JavaValue[local] w1: int = 1 (inlineStackTrace.kt:90)
 InlineStackFrame fun8 (inlineStackTrace.kt:89)
+    JavaValue[local] this: java.lang.String = A
     JavaValue[local] x8: int = 1 (inlineStackTrace.kt:85)
 InlineStackFrame fun7 (inlineStackTrace.kt:81)
     JavaValue[local] x7: int = 1
@@ -133,6 +133,7 @@ InlineStackFrame lambda 'with' in 'fun8' (inlineStackTrace.kt:94)
     JavaValue[local] x8: int = 1
     JavaValue[local] w1: int = 1
 InlineStackFrame fun8 (inlineStackTrace.kt:89)
+    JavaValue[local] this: java.lang.String = A
     JavaValue[local] x8: int = 1
 InlineStackFrame fun7 (inlineStackTrace.kt:81)
     JavaValue[local] x7: int = 1

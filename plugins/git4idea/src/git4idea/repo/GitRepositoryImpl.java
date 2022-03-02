@@ -44,6 +44,10 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull private volatile GitRepoInfo myInfo;
 
+  /**
+   * @param rootDir Root of the repository (parent directory of '.git' file/directory).
+   * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
+   */
   private GitRepositoryImpl(@NotNull VirtualFile rootDir,
                             @NotNull VirtualFile gitDir,
                             @NotNull Project project,
@@ -51,7 +55,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
     super(project, rootDir, parentDisposable);
     myVcs = GitVcs.getInstance(project);
     myGitDir = gitDir;
-    myRepositoryFiles = GitRepositoryFiles.getInstance(rootDir, gitDir);
+    myRepositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir);
     myReader = new GitRepositoryReader(myRepositoryFiles);
     myInfo = readRepoInfo();
 
@@ -67,8 +71,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
    * @deprecated Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static GitRepository getInstance(@NotNull VirtualFile root,
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {

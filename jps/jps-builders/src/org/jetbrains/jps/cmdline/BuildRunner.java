@@ -33,6 +33,7 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +58,10 @@ public final class BuildRunner {
 
   public void setBuilderParams(Map<String, String> builderParams) {
     myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
+  }
+
+  public @NotNull JpsProject loadModelAndGetJpsProject() throws IOException {
+    return myModelLoader.loadModel().getProject();
   }
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
@@ -101,8 +106,9 @@ public final class BuildRunner {
                                                     JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }
 
-    return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 targetIndex, buildRootIndex, ignoredFileIndex);
+    return new ProjectDescriptor(
+      jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
+    );
   }
 
   @NotNull
@@ -114,9 +120,22 @@ public final class BuildRunner {
     myForceCleanCaches = forceCleanCaches;
   }
 
+  /**
+   * @deprecated Use {@link #runBuild(ProjectDescriptor, CanceledStatus, MessageHandler, BuildType, List, boolean)} instead.
+   * constantSearch parameter is ignored
+   */
+  @Deprecated
   public void runBuild(ProjectDescriptor pd,
                        CanceledStatus cs,
                        @Nullable Callbacks.ConstantAffectionResolver constantSearch,
+                       MessageHandler msgHandler,
+                       BuildType buildType,
+                       List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
+    runBuild(pd, cs, msgHandler, buildType, scopes, includeDependenciesToScope);
+  }
+
+  public void runBuild(ProjectDescriptor pd,
+                       CanceledStatus cs,
                        MessageHandler msgHandler,
                        BuildType buildType,
                        List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
@@ -151,6 +170,11 @@ public final class BuildRunner {
         }
       }
     }
+  }
+
+  public CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes) throws Exception {
+    final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
+    return createCompilationScope(pd, scopes, myFilePaths, forceClean, false);
   }
 
   private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes, Collection<String> paths,

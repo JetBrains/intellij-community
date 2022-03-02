@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
@@ -19,9 +20,9 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
+import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @ApiStatus.Internal
 public final class IndexUpdateRunner {
+  private static final Logger LOG = Logger.getInstance(IndexUpdateRunner.class);
 
   private static final long SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = 20 * FileUtilRt.MEGABYTE;
 
@@ -53,6 +55,9 @@ public final class IndexUpdateRunner {
   private final ExecutorService myIndexingExecutor;
 
   private final int myNumberOfIndexingThreads;
+
+  private final AtomicInteger myIndexingAttemptCount = new AtomicInteger();
+  private final AtomicInteger myIndexingSuccessfulCount = new AtomicInteger();
 
   /**
    * Memory optimization to prevent OutOfMemory on loading file contents.
@@ -92,17 +97,18 @@ public final class IndexUpdateRunner {
   public static final class FileSet {
     public final String debugName;
     public final Collection<VirtualFile> files;
-    public final IndexingJobStatistics statistics;
+    public final IndexingFileSetStatistics statistics;
     public FileSet(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files) {
       this.debugName = debugName;
       this.files = files;
-      statistics = new IndexingJobStatistics(project, debugName);
+      statistics = new IndexingFileSetStatistics(project, debugName);
     }
   }
 
   public void indexFiles(@NotNull Project project,
                          @NotNull List<FileSet> fileSets,
-                         @NotNull ProgressIndicator indicator) throws IndexingInterruptedException {
+                         @NotNull ProgressIndicator indicator,
+                         @NotNull ProjectIndexingHistoryImpl projectIndexingHistory) throws IndexingInterruptedException {
     long startTime = System.nanoTime();
     try {
       doIndexFiles(project, fileSets, indicator);
@@ -112,12 +118,9 @@ public final class IndexUpdateRunner {
     }
     finally {
       long visibleIndexingTime = System.nanoTime() - startTime;
-      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
-      fileSets.forEach(b -> {
-        long weightedVisibleTime = totalProcessingTimeInAllThreads == 0
-                                   ? 0 : (long)(visibleIndexingTime * ((double) b.statistics.getProcessingTimeInAllThreads() / totalProcessingTimeInAllThreads));
-        b.statistics.setIndexingVisibleTime(weightedVisibleTime);
-      });
+      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getIndexingTimeInAllThreads()).sum();
+      projectIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
+                                                                 ? 0 : ((double)visibleIndexingTime) / totalProcessingTimeInAllThreads);
     }
   }
 
@@ -237,7 +240,7 @@ public final class IndexUpdateRunner {
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
-      IndexingJobStatistics statistics = indexingJob.getStatistics(e.getFile());
+      IndexingFileSetStatistics statistics = indexingJob.getStatistics(e.getFile());
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (statistics) {
         statistics.addTooLargeForIndexingFile(e.getFile());
@@ -263,20 +266,30 @@ public final class IndexUpdateRunner {
     try {
       indexingJob.setLocationBeingIndexed(file);
       if (!file.isDirectory()) {
-        FileIndexingStatistics fileIndexingStatistics = ReadAction
-          .nonBlocking(() -> myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent))
+        FileIndexesValuesApplier applier = ReadAction
+          .nonBlocking(() -> {
+            myIndexingAttemptCount.incrementAndGet();
+            return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent);
+          })
           .expireWith(indexingJob.myProject)
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
+        myIndexingSuccessfulCount.incrementAndGet();
+        if (LOG.isTraceEnabled() && myIndexingSuccessfulCount.longValue() % 10_000 == 0) {
+          LOG.trace("File indexing attempts = " + myIndexingAttemptCount.longValue() + ", indexed file count = " + myIndexingSuccessfulCount.longValue());
+        }
+        applier.apply(file);
         long processingTime = System.nanoTime() - startTime;
-        IndexingJobStatistics statistics = indexingJob.getStatistics(file);
+        IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (statistics) {
           statistics.addFileStatistics(file,
-                                       fileIndexingStatistics,
+                                       applier.stats,
                                        processingTime,
                                        contentLoadingTime,
-                                       loadingResult.fileLength
+                                       loadingResult.fileLength,
+                                       applier.isWriteValuesSeparately,
+                                       applier.getSeparateApplicationTimeNanos()
           );
         }
       }
@@ -294,6 +307,8 @@ public final class IndexUpdateRunner {
     }
     finally {
       signalThatFileIsUnloaded(loadingResult.fileLength);
+      IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
+      IndexingFlag.unlockFile(file);
     }
   }
 
@@ -480,7 +495,7 @@ public final class IndexUpdateRunner {
       myOriginalProgressSuspender = originalProgressSuspender;
     }
 
-    public @NotNull IndexingJobStatistics getStatistics(@NotNull VirtualFile file) {
+    public @NotNull IndexingFileSetStatistics getStatistics(@NotNull VirtualFile file) {
       return myFileToSet.get(file).statistics;
     }
 

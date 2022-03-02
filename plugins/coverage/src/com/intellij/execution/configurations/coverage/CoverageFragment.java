@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageRunner;
@@ -14,7 +14,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +74,7 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
                                                                                   boolean included, @NotNull @Nls String optionName) {
     JavaCoverageEnabledConfiguration configuration = getConfiguration();
     CoverageClassFilterEditor filterEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
-    filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBUI.emptyInsets()));
+    filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBInsets.emptyInsets()));
     filterEditor.setupEasyFocusTraversing();
     return new SettingsEditorFragment<>(id, optionName, null, filterEditor,
                                         (p, editor) -> editor.setFilters(CoverageConfigurable.getCoveragePatterns(configuration, included)),

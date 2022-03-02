@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -17,7 +18,7 @@ import javax.swing.JLabel
  */
 val EMPTY_LABEL = String()
 
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface Panel : CellBase<Panel> {
 
   override fun visible(isVisible: Boolean): Panel
@@ -36,8 +37,12 @@ interface Panel : CellBase<Panel> {
 
   override fun gap(rightGap: RightGap): Panel
 
+  override fun customize(customGaps: Gaps): Panel
+
   /**
-   * Adds standard left indent
+   * Adds standard left indent and groups rows into [RowsRange] that allows to use some groups operations on the rows
+   *
+   * @see [rowsRange]
    */
   fun indent(init: Panel.() -> Unit): RowsRange
 
@@ -74,7 +79,9 @@ interface Panel : CellBase<Panel> {
   fun panel(init: Panel.() -> Unit): Panel
 
   /**
-   * @see [RowsRange]
+   * Groups rows into [RowsRange] that allows to use some groups operations on the rows
+   *
+   * @see [indent]
    */
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
@@ -89,6 +96,14 @@ interface Panel : CellBase<Panel> {
   fun group(@NlsContexts.BorderTitle title: String? = null,
             indent: Boolean = true,
             init: Panel.() -> Unit): Row
+
+  @Deprecated("Use overloaded group(...) instead")
+  @ApiStatus.ScheduledForRemoval
+  fun group(@NlsContexts.BorderTitle title: String? = null,
+            indent: Boolean = true,
+            topGroupGap: Boolean? = null,
+            bottomGroupGap: Boolean? = null,
+            init: Panel.() -> Unit): Panel
 
   /**
    * Similar to [Panel.group] but uses the same grid as the parent.
@@ -111,6 +126,23 @@ interface Panel : CellBase<Panel> {
   fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
                        indent: Boolean = true,
                        init: Panel.() -> Unit): CollapsibleRow
+
+  @Deprecated("Use overloaded collapsibleGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
+  fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
+                       indent: Boolean = true,
+                       topGroupGap: Boolean? = null,
+                       bottomGroupGap: Boolean? = null,
+                       init: Panel.() -> Unit): CollapsiblePanel
+
+  @Deprecated("Use buttonsGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
+  fun buttonGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit)
+
+  @Deprecated("Use buttonsGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
+  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
+                      indent: Boolean = title != null, init: Panel.() -> Unit)
 
   /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
@@ -140,8 +172,24 @@ interface Panel : CellBase<Panel> {
    */
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
 
-  /**
-   * Overrides all gaps around panel by [customGaps]. Should be used for very specific cases
-   */
-  fun customize(customGaps: Gaps): Panel
+}
+
+@Deprecated("Use buttonsGroup(...) instead")
+@ApiStatus.ScheduledForRemoval
+inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
+                                               noinline setter: (T) -> Unit,
+                                               title: @NlsContexts.BorderTitle String? = null,
+                                               indent: Boolean = title != null,
+                                               crossinline init: Panel.() -> Unit) {
+  buttonGroup(PropertyBinding(getter, setter), title, indent, init)
+}
+
+@Deprecated("Use buttonsGroup(...) instead")
+@ApiStatus.ScheduledForRemoval
+inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, title: @NlsContexts.BorderTitle String? = null,
+                                               indent: Boolean = title != null,
+                                               crossinline init: Panel.() -> Unit) {
+  buttonGroup(binding, T::class.java, title, indent) {
+    init()
+  }
 }

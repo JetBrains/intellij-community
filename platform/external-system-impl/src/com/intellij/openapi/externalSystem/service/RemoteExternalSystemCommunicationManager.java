@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.configurationStore.StorageUtilKt;
@@ -18,6 +18,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -60,6 +61,7 @@ import java.util.LinkedHashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Service(Service.Level.APP)
 public final class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
   private static final Logger LOG = Logger.getInstance(RemoteExternalSystemCommunicationManager.class);
 
@@ -159,6 +161,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
           ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
           if (manager != null) {
             params.getClassPath().add(PathUtil.getJarPathForClass(manager.getProjectResolverClass()));
+            params.getClassPath().add(PathUtil.getJarPathForClass(manager.getClass().getSuperclass()));
             params.getProgramParametersList().add(manager.getProjectResolverClass().getName());
             params.getProgramParametersList().add(manager.getTaskManagerClass().getName());
             manager.enhanceRemoteProcessing(params);

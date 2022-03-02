@@ -17,17 +17,17 @@ public final class FileTypeCopyrightConfigurableFactory {
 
   public static Configurable createFileTypeConfigurable(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
     if (fileType.equals(StdFileTypes.JAVA)) {
-      return new TemplateCommentPanel(fileType, parentPanel, new String[] {
-        CopyrightBundle.message("radio.location.in.file.before.package"),
-        CopyrightBundle.message("radio.location.in.file.before.imports"), 
-        CopyrightBundle.message("radio.location.in.file.before.class")}, project);
+      return new TemplateCommentPanel(fileType, parentPanel, project,
+                                      CopyrightBundle.message("radio.location.in.file.before.package"),
+                                      CopyrightBundle.message("radio.location.in.file.before.imports"),
+                                      CopyrightBundle.message("radio.location.in.file.before.class"));
     }
     if (fileType.equals(XmlFileType.INSTANCE) ||
         fileType.equals(HtmlFileType.INSTANCE) || fileType.equals(StdFileTypes.JSP) || fileType.equals(StdFileTypes.JSPX)) {
-      return new TemplateCommentPanel(fileType, parentPanel, new String[]{
-        CopyrightBundle.message("radio.location.in.file.before.doctype"),
-        CopyrightBundle.message("radio.location.in.file.before.root.tag")}, project);
+      return new TemplateCommentPanel(fileType, parentPanel, project,
+                                      CopyrightBundle.message("radio.location.in.file.before.doctype"),
+                                      CopyrightBundle.message("radio.location.in.file.before.root.tag"));
     }
-    return new TemplateCommentPanel(fileType, parentPanel, null, project);
+    return new TemplateCommentPanel(fileType, parentPanel, project);
   }
 }

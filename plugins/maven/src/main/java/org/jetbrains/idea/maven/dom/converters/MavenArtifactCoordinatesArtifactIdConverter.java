@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.ConvertContext;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -45,12 +43,6 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
     }
 
     return manager.hasLocalArtifactId(id.getGroupId(), id.getArtifactId());
-  }
-
-  @Nullable
-  @Override
-  public LookupElement createLookupElement(String s) {
-    return null;
   }
 
   @Override

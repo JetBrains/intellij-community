@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -9,9 +9,10 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -24,7 +25,6 @@ import com.intellij.sh.psi.ShGenericCommandDirective;
 import com.intellij.sh.psi.ShLiteral;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,26 +33,23 @@ import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 
+import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.DOCUMENTATION_PROVIDER_USED_EVENT_ID;
 
 final class ShDocumentationProvider implements DocumentationProvider {
   private static final int TIMEOUT_IN_MILLISECONDS = 3 * 1000;
   private final static Logger LOG = Logger.getInstance(ShDocumentationProvider.class);
 
-  private static final NullableLazyValue<String> myManExecutable = new AtomicNullableLazyValue<>() {
-    @Nullable
-    @Override
-    protected String compute() {
-      String path = EnvironmentUtil.getValue("PATH");
-      if (path != null) {
-        for (String dir : StringUtil.tokenize(path, File.pathSeparator)) {
-          File file = new File(dir, "info");
-          if (file.canExecute()) return file.getAbsolutePath();
-        }
+  private static final NullableLazyValue<String> MAN_EXECUTABLE = atomicLazyNullable(() -> {
+    String path = EnvironmentUtil.getValue("PATH");
+    if (path != null) {
+      for (String dir : StringUtil.tokenize(path, File.pathSeparator)) {
+        File file = new File(dir, "info");
+        if (file.canExecute()) return file.getAbsolutePath();
       }
-      return null;
     }
-  };
+    return null;
+  });
 
   @Override
   public @NlsSafe String generateDoc(PsiElement o, PsiElement originalElement) {
@@ -85,16 +82,17 @@ final class ShDocumentationProvider implements DocumentationProvider {
 
   private @NlsSafe String fetchInfo(@Nullable String commandName) {
     if (commandName == null) return null;
-    String manExecutable = myManExecutable.getValue();
+    String manExecutable = MAN_EXECUTABLE.getValue();
     if (manExecutable == null) return ShBundle.message("error.message.can.t.find.info.in.your.path");
 
     return myManCache.computeIfAbsent(commandName, s -> {
       try {
+        ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator());
         return ApplicationUtil.runWithCheckCanceled(() -> {
           GeneralCommandLine commandLine = new GeneralCommandLine(manExecutable).withParameters(commandName);
           ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, TIMEOUT_IN_MILLISECONDS);
           return output.getExitCode() != 0 ? output.getStderr() : output.getStdout();
-        }, ProgressManager.getInstance().getProgressIndicator());
+        }, indicator);
       }
       catch (ProcessCanceledException e) { throw  e; }
       catch (Exception e) {

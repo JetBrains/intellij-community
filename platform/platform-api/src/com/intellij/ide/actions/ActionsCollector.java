@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +22,7 @@ public abstract class ActionsCollector {
    *
    * Actions executed with {@link ActionUtil#performActionDumbAwareWithCallbacks} are reported automatically.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context);
 
   /**

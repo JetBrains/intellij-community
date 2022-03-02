@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull.serializer
 import org.jetbrains.intellij.build.io.download
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
@@ -46,7 +45,7 @@ fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelop
       result.computeIfAbsent(plugin.id) { TreeSet<String>() }.add(plugin.version)
     }
   }
-  storeBrokenPlugin(result, targetFile)
+  storeBrokenPlugin(result, currentBuildString, targetFile)
   span.setAttribute("pluginCount", result.size.toLong())
 }
 
@@ -56,10 +55,11 @@ private fun downloadFileFromMarketplace(span: Span): List<MarketplaceBrokenPlugi
   return jsonFormat.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
 }
 
-private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, targetFile: Path) {
+private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, build: String, targetFile: Path) {
   Files.createDirectories(targetFile.parent)
   DataOutputStream(BufferedOutputStream(Files.newOutputStream(targetFile), 32_000)).use { out ->
-    out.write(1)
+    out.write(2)
+    out.writeUTF(build)
     out.writeInt(brokenPlugin.size)
     for (entry in brokenPlugin.entries) {
       out.writeUTF(entry.key)

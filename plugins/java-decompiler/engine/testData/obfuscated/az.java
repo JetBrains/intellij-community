@@ -111,21 +111,21 @@ class az {
 
          while(true) {
             var10007 = var4[var10006];
-            switch(var1 % 5) {
-            case 0:
-               var10008 = 126;
-               break;
-            case 1:
-               var10008 = 125;
-               break;
-            case 2:
-               var10008 = 79;
-               break;
-            case 3:
-               var10008 = 15;
-               break;
-            default:
-               var10008 = 87;
+            switch (var1 % 5) {
+               case 0:
+                  var10008 = 126;
+                  break;
+               case 1:
+                  var10008 = 125;
+                  break;
+               case 2:
+                  var10008 = 79;
+                  break;
+               case 3:
+                  var10008 = 15;
+                  break;
+               default:
+                  var10008 = 87;
             }
 
             var4[var10006] = (char)(var10007 ^ var10008);
@@ -168,21 +168,21 @@ class az {
 
       while(true) {
          var10007 = var4[var10006];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 126;
-            break;
-         case 1:
-            var10008 = 125;
-            break;
-         case 2:
-            var10008 = 79;
-            break;
-         case 3:
-            var10008 = 15;
-            break;
-         default:
-            var10008 = 87;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 126;
+               break;
+            case 1:
+               var10008 = 125;
+               break;
+            case 2:
+               var10008 = 79;
+               break;
+            case 3:
+               var10008 = 15;
+               break;
+            default:
+               var10008 = 87;
          }
 
          var4[var10006] = (char)(var10007 ^ var10008);

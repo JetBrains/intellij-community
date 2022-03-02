@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
@@ -46,7 +46,7 @@ new Gr().fo<caret>o()
 ''', '''\
 <div class='definition'><pre><span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
      Use <a href="psi_element://Gr#bar()"><code><span style="color:#0000ff;">bar</span><span style="">()</span></code></a> from class <a href="psi_element://Gr"><code><span style="color:#0000ff;">Gr</span></code></a> instead
-   </div><table class='sections'></table>'''
+   </div><table class='sections'></table><div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Gr"><code><span style="color:#000000;">Gr</span></code></a></div>'''
   }
 
   void 'test link with label'() {
@@ -59,7 +59,7 @@ def docs() {}
 <caret>docs()
 ''', '''<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
    check this out <a href="psi_element://java.lang.CharSequence"><code><span style="color:#0000ff;">character sequences</span></code></a>
- </div><table class='sections'></table>'''
+ </div><table class='sections'></table><div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://_"><code><span style="color:#000000;">_</span></code></a></div>'''
   }
 
   void 'test link to method'() {
@@ -85,7 +85,7 @@ Main.<caret>docs()
      Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code><span style="color:#0000ff;">bar</span><span style="">(String[])</span></code></a>
      <p>
      Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code><span style="color:#0000ff;">bar</span><span style="">(String[],&#32;Integer)</span></code></a>
-   </div><table class='sections'></table>\
+   </div><table class='sections'></table><div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Main"><code><span style="color:#000000;">Main</span></code></a></div>\
 '''
   }
 
@@ -102,7 +102,7 @@ a<caret>a
 List<String> ss = []
 ss.collect { i<caret>t }
 ''', '''\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a> <span style="color:#000000;">it</span></pre></div><table class='sections'></table><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a> <span style="color:#000000;">it</span></pre></div><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>'''
   }
 
   void 'test code tag'() {
@@ -119,7 +119,7 @@ new Foo().<caret>foo()
 ''', '''\
 <div class='definition'><pre><a href="psi_element://java.lang.String"><code><span style="color:#000000;">String</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
        May return <code style='font-size:100%;'><span style=""><span style="color:#000043;font-weight:bold;">null</span></span></code>
-     </div><table class='sections'></table>\
+     </div><table class='sections'></table><div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Foo"><code><span style="color:#000000;">Foo</span></code></a></div>\
 '''
   }
 
@@ -132,7 +132,7 @@ def foo() {}
 
 f<caret>oo()""",
            """\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p><code> lorem ipsum </code></td></table>\
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p><code> lorem ipsum </code></td></table><div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://_"><code><span style="color:#000000;">_</span></code></a></div>\
 """
   }
 
@@ -159,6 +159,22 @@ class GroovyDocTest<T> { }
 new Gr<caret>oovyDocTest<Integer>()""", """\
 <div class='definition'><pre><span style="color:#000043;font-weight:bold;">class</span> <span style="color:#000000;">GroovyDocTest</span><span style="">&lt;</span><span style="color:#20999d;">T</span><span style="">&gt;</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'><code>&lt;<span style="color:#20999d;">T</span>&gt;</code> &ndash;  kej</td></table>\
 """
+  }
+
+  void 'test render multiline inline code tag'() {
+    doTest """
+/**
+ * {@code
+ * aaa
+ * bbb
+ * ccc
+ * }
+ */
+def foo() {}
+fo<caret>o()
+""", "<div class='definition'><pre><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#000000;\">Object</span></code></a>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n" +
+     "   <code style='font-size:100%;'><span style=\"\"><span style=\"\">aaa</span><span style=\"\">&#32;bbb</span><span style=\"\">&#32;ccc</span></span></code>\n" +
+     " </div><table class='sections'></table><div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://_\"><code><span style=\"color:#000000;\">_</span></code></a></div>"
   }
 
   private void doTest(String text, @Language("HTML") String doc) {

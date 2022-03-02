@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl
 
 import com.intellij.find.FindSettings
@@ -87,34 +87,49 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logUsageShown(project: Project?, referenceClass: Class<out Any>?, language: Language?) {
+    fun logUsageShown(project: Project?, referenceClass: Class<out Any>, language: Language?) {
       USAGE_SHOWN.log(project, getSessionId(), referenceClass, language)
     }
 
     @JvmStatic
     fun logUsageNavigate(project: Project?, usage: Usage) {
-      USAGE_NAVIGATE.log(project, getSessionId(), UsageReferenceClassProvider.getReferenceClass(usage),
-        (usage as? PsiElementUsage)?.element?.language)
+      UsageReferenceClassProvider.getReferenceClass(usage)?.let {
+        USAGE_NAVIGATE.log(
+          project,
+          getSessionId(),
+          it,
+          (usage as? PsiElementUsage)?.element?.language,
+        )
+      }
     }
 
     @JvmStatic
     fun logUsageNavigate(project: Project?, usage: UsageInfo) {
-      USAGE_NAVIGATE.log(project, getSessionId(), usage.referenceClass, usage.element?.language)
+      usage.referenceClass?.let {
+        USAGE_NAVIGATE.log(
+          project,
+          getSessionId(),
+          it,
+          usage.element?.language,
+        )
+      }
     }
 
     @JvmStatic
     fun logItemChosen(project: Project?, source: CodeNavigateSource, language: Language) = itemChosen.log(project, getSessionId(), source, language)
 
     @JvmStatic
-    fun logSearchFinished(project: Project?,
-                          targetClass: Class<*>?,
-                          scope: SearchScope?,
-                          language: Language?,
-                          results: Int,
-                          durationFirstResults: Long,
-                          duration: Long,
-                          tooManyResult: Boolean,
-                          source: CodeNavigateSource) {
+    fun logSearchFinished(
+      project: Project?,
+      targetClass: Class<*>,
+      scope: SearchScope?,
+      language: Language?,
+      results: Int,
+      durationFirstResults: Long,
+      duration: Long,
+      tooManyResult: Boolean,
+      source: CodeNavigateSource,
+    ) {
       searchFinished.log(project,
                          SESSION_ID.with(getSessionId()),
                          SYMBOL_CLASS.with(targetClass),
@@ -131,10 +146,12 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     fun logTabSwitched(project: Project?) = tabSwitched.log(project, getSessionId())
 
     @JvmStatic
-    fun logScopeChanged(project: Project?,
-                        previousScope: SearchScope?,
-                        newScope: SearchScope?,
-                        symbolClass: Class<*>?) {
+    fun logScopeChanged(
+      project: Project?,
+      previousScope: SearchScope?,
+      newScope: SearchScope?,
+      symbolClass: Class<*>,
+    ) {
       val scopeIdMapper = ScopeIdMapper.instance
       scopeChanged.log(project, SESSION_ID.with(getSessionId()),
                        PREVIOUS_SCOPE.with(previousScope?.let { scopeIdMapper.getScopeSerializationId(it.displayName) }),
@@ -143,17 +160,20 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logTooManyDialog(project: Project?,
-                         action: TooManyUsagesUserAction,
-                         targetClass: Class<out PsiElement>?,
-                         @Nls scope: String,
-                         language: Language?) =
+    fun logTooManyDialog(
+      project: Project?,
+      action: TooManyUsagesUserAction,
+      targetClass: Class<out PsiElement>?,
+      @Nls scope: String,
+      language: Language?,
+    ) {
       tooManyUsagesDialog.log(project,
                               SESSION_ID.with(getSessionId()),
                               USER_ACTION.with(action),
-                              SYMBOL_CLASS.with(targetClass),
+                              SYMBOL_CLASS.with(targetClass ?: String::class.java),
                               SEARCH_SCOPE.with(ScopeIdMapper.instance.getScopeSerializationId(scope)),
                               EventFields.Language.with(language))
+    }
 
     @JvmStatic
     fun logOpenInFindToolWindow(project: Project?) =

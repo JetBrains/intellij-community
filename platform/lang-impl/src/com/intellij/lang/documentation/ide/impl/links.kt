@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -6,7 +8,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ExternalDocumentationHandler
-import com.intellij.lang.documentation.impl.resolveLink
+import com.intellij.lang.documentation.impl.handleLink
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
@@ -26,7 +28,7 @@ internal suspend fun handleLink(
   if (url.startsWith("open")) {
     return libraryEntry(project, targetPointer)
   }
-  return resolveLink(targetPointer, url)
+  return handleLink(targetPointer, url)
 }
 
 private suspend fun libraryEntry(project: Project, targetPointer: Pointer<out DocumentationTarget>): OrderEntry? {
@@ -48,7 +50,7 @@ internal fun openUrl(project: Project, targetPointer: Pointer<out DocumentationT
   if (handleExternal(project, targetPointer, url)) {
     return true
   }
-  return BrowserUtil.browseAbsolute(url)
+  return BrowserUtil.browseAbsolute(project, url)
 }
 
 private fun handleExternal(project: Project, targetPointer: Pointer<out DocumentationTarget>, url: String): Boolean {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("DynamicPluginsTestUtil")
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
@@ -77,13 +77,13 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, fs: FileSystem): D
     DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
   }
   catch (e: Exception) {
-    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
+    unloadAndUninstallPlugin(descriptor)
     throw e
   }
 
   return Disposable {
     val reason = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)
-    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
+    unloadAndUninstallPlugin(descriptor)
     assertThat(reason).isNull()
   }
 }
@@ -104,4 +104,11 @@ internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPlugin
       it.pluginClassLoader = classLoader
     }
   }
+}
+
+internal fun unloadAndUninstallPlugin(descriptor: IdeaPluginDescriptorImpl): Boolean {
+  return DynamicPlugins.unloadPlugin(
+    descriptor,
+    DynamicPlugins.UnloadPluginOptions(disable = false),
+  )
 }

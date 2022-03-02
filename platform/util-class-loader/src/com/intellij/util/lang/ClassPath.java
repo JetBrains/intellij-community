@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -53,7 +53,7 @@ public final class ClassPath {
   private volatile boolean allUrlsWereProcessed;
 
   private final AtomicInteger lastLoaderProcessed = new AtomicInteger();
-  private final Map<Path, Loader> loaderMap = new HashMap<>();
+  private final Set<Path> processedPaths = new HashSet<>();
   private final ClasspathCache cache = new ClasspathCache();
 
   // true implies that the .jar file will not be modified in the lifetime of the JarLoader
@@ -62,6 +62,7 @@ public final class ClassPath {
   final boolean isClassPathIndexEnabled;
   private final @Nullable CachePoolImpl cachePool;
   private final @Nullable Predicate<? super Path> cachingCondition;
+
   static {
     // insertion order must be preserved
     loadedClasses = recordLoadingInfo ? new ConcurrentLinkedQueue<>() : null;
@@ -116,7 +117,7 @@ public final class ClassPath {
     lastLoaderProcessed.set(0);
     allUrlsWereProcessed = false;
     loaders.clear();
-    loaderMap.clear();
+    processedPaths.clear();
     cache.clearCache();
     addFiles(paths);
   }
@@ -354,7 +355,7 @@ public final class ClassPath {
       }
 
       Path path = files.remove(size - 1);
-      if (loaderMap.containsKey(path)) {
+      if (processedPaths.contains(path)) {
         continue;
       }
 
@@ -366,8 +367,7 @@ public final class ClassPath {
           }
 
           loaders.add(loader);
-          // volatile write
-          loaderMap.put(path, loader);
+          processedPaths.add(path);
           lastLoaderProcessed.incrementAndGet();
         }
       }
@@ -396,9 +396,14 @@ public final class ClassPath {
     catch (NoSuchFileException ignore) {
       return null;
     }
+    catch (RuntimeException e) {
+      throw new RuntimeException("Failed to read attributes of file from " + file.getFileSystem(), e);
+    }
 
     if (fileAttributes.isDirectory()) {
-      return useCache ? createCachingFileLoader(file) : new FileLoader(file, null, null, isClassPathIndexEnabled);
+      return useCache
+             ? FileLoader.createCachingFileLoader(file, cachePool, cachingCondition, isClassPathIndexEnabled, cache)
+             : new FileLoader(file);
     }
     else if (!fileAttributes.isRegularFile()) {
       return null;
@@ -443,25 +448,6 @@ public final class ClassPath {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("Loaded all " + referencedJars.length + " files " + (System.nanoTime() - startReferenced) / 1000000 + "ms");
       }
-    }
-  }
-
-  private @NotNull FileLoader createCachingFileLoader(@NotNull Path file) {
-    ClasspathCache.IndexRegistrar data = cachePool == null ? null : cachePool.loaderIndexCache.get(file);
-    BiConsumer<ClasspathCache.IndexRegistrar, Loader> consumer;
-    if (data == null) {
-      consumer = (registrar, loader) -> {
-        if (cachePool != null && cachingCondition != null && cachingCondition.test(file)) {
-          cachePool.loaderIndexCache.put(file, registrar);
-        }
-        cache.applyLoaderData(registrar, loader);
-      };
-      return new FileLoader(file, null, consumer, isClassPathIndexEnabled);
-    }
-    else {
-      FileLoader loader = new FileLoader(file, data.getNameFilter(), null, isClassPathIndexEnabled);
-      cache.applyLoaderData(data, loader);
-      return loader;
     }
   }
 

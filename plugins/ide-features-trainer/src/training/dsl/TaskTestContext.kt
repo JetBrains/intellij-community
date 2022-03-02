@@ -132,6 +132,11 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     return generalListFinder(timeout, partOfItem) { element, p -> element.contains(p) }
   }
 
+  fun <C : Container> IftTestContainerFixture<C>.jListFixture(target: JList<*>): JListFixture {
+    return JListFixture(robot(), target)
+  }
+
+
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */

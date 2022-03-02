@@ -42,7 +42,7 @@ public final class IdSet {
   /**
    * @deprecated Please use {@link #getPluginIds()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull List<PluginId> getIds() {
     return new ArrayList<>(myPluginIds);
   }

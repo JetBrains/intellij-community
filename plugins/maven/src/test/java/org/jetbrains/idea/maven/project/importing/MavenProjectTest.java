@@ -4,12 +4,12 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifactNode;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
@@ -996,17 +996,17 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
     importProject();
 
     Set<MavenRemoteRepository> repositories = myProjectsManager.getRemoteRepositories();
-    MavenEmbedderWrapper mavenEmbedderWrapper = myProjectsManager.getEmbeddersManager()
-        .getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "", "");
+    MavenEmbeddersManager embeddersManager = myProjectsManager.getEmbeddersManager();
+    MavenEmbedderWrapper mavenEmbedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "", "");
 
     Set<String> repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).stream()
       .map(r -> r.getId())
       .collect(Collectors.toSet());
+    embeddersManager.release(mavenEmbedderWrapper);
 
     MavenProject project = MavenProjectsManager.getInstance(myProject).findProject(projectPom);
     Assert.assertNotNull(project);
 
-    System.out.println(repoIds);
     Assert.assertTrue(repoIds.contains("mirror"));
     Assert.assertTrue(repoIds.contains("repo-pom1"));
     Assert.assertTrue(repoIds.contains("repo1"));

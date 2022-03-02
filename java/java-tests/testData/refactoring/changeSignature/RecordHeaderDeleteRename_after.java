@@ -1,6 +1,5 @@
 /**
  * @param yyy y
- *
  */
 record Rec(long yyy) {
   public long yyy() {

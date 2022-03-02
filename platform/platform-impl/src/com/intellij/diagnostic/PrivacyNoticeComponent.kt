@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.icons.AllIcons
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -71,14 +72,15 @@ class PrivacyNoticeComponent(@NlsContexts.Label private val label: String, @NlsC
     privacyPolicyPane.border = JBUI.Borders.empty(0, 0, 6, 6)
     privacyPolicyPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
 
-    add(mySeparatorPanel, GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, JBUI.emptyInsets(),
+    add(mySeparatorPanel, GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
+                                             JBInsets.emptyInsets(),
                                              0, 0))
     add(iconLabelPanel,
-        GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0))
-    add(titleLabel, GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0,
+        GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0))
+    add(titleLabel, GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0,
                                        0))
     add(privacyPolicyPane, GridBagConstraints(2, 1, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                              JBUI.emptyInsets(), 0, 0))
+                                              JBInsets.emptyInsets(), 0, 0))
 
     expanded = true
   }

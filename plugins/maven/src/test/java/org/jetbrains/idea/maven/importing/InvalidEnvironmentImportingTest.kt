@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState

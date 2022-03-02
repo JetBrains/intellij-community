@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.Disposable
@@ -18,10 +18,12 @@ interface ConstrainedExecution<E : ConstrainedExecution<E>> {
    *
    * Never use [kotlinx.coroutines.asCoroutineDispatcher] with [asExecutor]: the latter may violate the [Executor] contract.
    */
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated(message = "Do not use: coroutine cancellation must not be handled by a dispatcher.")
   fun asCoroutineDispatcher(): ContinuationInterceptor
 
   /**
-   * TL;DR. Never use for scheduling coroutines, use the [asCoroutineDispatcher] instead.
+   * TL;DR. Never use for scheduling coroutines.
    *
    * If there were any [Disposable]s registered using [expireWith], [withConstraint], or any specialized builder methods implying the
    * execution may "expire" at some point, the returned object violates the contract of the [Executor] interface. Once the execution

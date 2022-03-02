@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -63,14 +63,12 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project1", "project2");
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
-    waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    doReadAndImport();
 
     assertModules("project2");
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p2.getPath()));
-    waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    doReadAndImport();
 
     assertModules("project1");
   }
@@ -92,16 +90,24 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project1", "project2");
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
-    waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    doReadAndImport();
 
     assertModules("project1", "project2");
     assertEquals(1, counter.get());
 
-    waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    doReadAndImport();
 
     assertModules("project1", "project2");
     assertEquals(1, counter.get());
+  }
+
+  private void doReadAndImport() {
+    if (isNewImportingProcess) {
+      doImportProjects(myProjectsManager.getProjectsTree().getExistingManagedFiles(), true);
+    }
+    else {
+      waitForReadingCompletion();
+      myProjectsManager.performScheduledImportInTests();
+    }
   }
 }

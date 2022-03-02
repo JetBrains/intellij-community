@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
@@ -22,15 +23,9 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsAsync
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.NotifyingOperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.parallelForEach
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
@@ -54,6 +49,9 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     @JvmField
     var onlyStable: Boolean = true
 
+    @JvmField
+    var enableRangeWarning: Boolean = true
+
     var excludeList: MutableList<String> = mutableListOf()
 
     companion object {
@@ -70,6 +68,8 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 else -> false
             }
         }
+
+        private fun isRange(version: String) = version.any { !it.isLetter() && !it.isDigit() && it != '_' && it != '.' && it != '-' }
     }
 
     override fun createOptionsPanel(): JPanel {
@@ -77,7 +77,8 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
         val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"), excludeList)
 
-        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), "onlyStable")
+        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), ::onlyStable.name)
+        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.rangeWarning"), ::enableRangeWarning.name)
         panel.addGrowing(injectionListTable.contentPanel)
 
         return panel
@@ -91,88 +92,79 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
         }
 
         val project = file.project
-        val service = project.packageSearchProjectService
-
         val fileModule = ModuleUtil.findModuleForFile(file)
         if (fileModule == null) {
             thisLogger().warn("Inspecting file belonging to an unknown module")
             return null
         }
 
-        val moduleModel = service.moduleModelsStateFlow.value
-            .find { fileModule.isTheSameAs(it.projectModule.nativeModule) }
+        val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
 
-        if (moduleModel == null) {
-            return null
+        if (enableRangeWarning) {
+            project.packageSearchProjectService.dependenciesByModuleStateFlow.value
+                .entries
+                .find { it.key.nativeModule == fileModule }
+                ?.value
+                ?.filter { dependency -> dependency.coordinates.version?.let { isRange(it) } ?: false }
+                ?.mapNotNull { coordinates ->
+                    runCatching { getVersionPsiElement(file, coordinates) }.getOrNull()
+                        ?.let { coordinates to it }
+                }
+                ?.forEach { (dependency, psiElement) ->
+
+                    val message = dependency.coordinates.version
+                        ?.let { PackageSearchBundle.message("packagesearch.inspection.upgrade.range.withVersion", it) }
+                        ?: PackageSearchBundle.message("packagesearch.inspection.upgrade.range")
+
+                    problemsHolder.registerProblem(psiElement, message, ProblemHighlightType.WEAK_WARNING)
+                }
         }
 
-        val availableUpdates = service.packageUpgradesStateFlow.value
-            .getPackagesToUpgrade(onlyStable)
-            .upgradesByModule[fileModule]
+        project.packageSearchProjectService.packageUpgradesStateFlow.value
+            .getPackagesToUpgrade(onlyStable).upgradesByModule[fileModule]
             ?.filter { isNotExcluded(it.packageModel.identifier) }
-            ?: return null
+            ?.filter { it.computeUpgradeOperationsForSingleModule.isNotEmpty() }
+            ?.forEach { (packageModel, usageInfo,
+                targetVersion, precomputedOperations) ->
 
-        val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
-        runBlocking {
-            availableUpdates.parallelForEach { packageUpdateInfo ->
-                val currentVersion = packageUpdateInfo.usageInfo.version
-                val scope = packageUpdateInfo.usageInfo.scope
-                val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
-                val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: return@parallelForEach
-                if (versionElement.containingFile != file) return@parallelForEach
-
-                val targetModules = TargetModules.One(moduleModel)
-                val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
-
-                val packageOperations = project.lifecycleScope.computeActionsAsync(
-                    packageModel = packageUpdateInfo.packageModel,
-                    targetModules = targetModules,
-                    knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
-                    onlyStable = onlyStable
-                )
-
-                val identifier = packageUpdateInfo.packageModel.identifier
-                if (!packageOperations.canUpgradePackage) {
-                    logWarn { "Expecting to have upgrade actions for package ${identifier.rawValue} to $targetModules" }
-                    return@parallelForEach
-                }
-
-                val operations = packageOperations.primaryOperations.await()
+                val currentVersion = usageInfo.version
+                val scope = usageInfo.scope
+                val unifiedDependency = packageModel.toUnifiedDependency(currentVersion, scope)
+                val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: return@forEach
 
                 problemsHolder.registerProblem(
                     versionElement,
                     PackageSearchBundle.message(
                         "packagesearch.inspection.upgrade.description",
-                        identifier.rawValue,
-                        packageUpdateInfo.targetVersion.originalVersion.displayName
+                        packageModel.identifier.rawValue,
+                        targetVersion.originalVersion.displayName
                     ),
                     LocalQuickFixOnPsiElement(
                         element = versionElement,
                         familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.family"),
                         text = PackageSearchBundle.message(
                             "packagesearch.quickfix.upgrade.action",
-                            identifier.rawValue,
-                            packageUpdateInfo.targetVersion.originalVersion
+                            packageModel.identifier.rawValue,
+                            targetVersion.originalVersion.displayName
                         ),
                         isHighPriority = true
                     ) {
-                        NotifyingOperationExecutor(this).executeOperations(operations)
+                        NotifyingOperationExecutor(this).executeOperations(precomputedOperations)
                     },
                     LocalQuickFixOnPsiElement(
                         element = versionElement,
                         familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.exclude.family"),
                         text = PackageSearchBundle.message(
                             "packagesearch.quickfix.upgrade.exclude.action",
-                            identifier.rawValue
+                            packageModel.identifier.rawValue
                         ),
                         isHighPriority = false
                     ) {
-                        excludeList.add(identifier.rawValue)
+                        excludeList.add(packageModel.identifier.rawValue)
                         ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
                     }
                 )
             }
-        }
 
         return problemsHolder.resultsArray
     }
@@ -193,6 +185,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
 }
 
+@Suppress("FunctionName")
 internal fun LocalQuickFixOnPsiElement(
     element: PsiElement,
     @Nls familyName: String,

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -91,6 +92,11 @@ public class PyTypeCheckerInspection extends PyInspection {
           PyExpression returnExpr = node.getExpression();
           PyType expected = getExpectedReturnType(function);
           PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyNoneType.INSTANCE;
+
+          if (expected != null && actual instanceof PyTypedDictType) {
+            if (reportTypedDictProblems(expected, (PyTypedDictType)actual, returnExpr)) return;
+          }
+
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -136,11 +142,62 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (value == null) return;
       final PyType expected = myTypeEvalContext.getType(node);
       final PyType actual = tryPromotingType(value, expected);
+
+      if (expected != null && actual instanceof PyTypedDictType) {
+        if (reportTypedDictProblems(expected, (PyTypedDictType)actual, value)) return;
+      }
+
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
         registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
+    }
+
+    private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyTypedDictType actual, @NotNull PyExpression value) {
+      final PyExpression valueWithoutKeyword = value instanceof PyKeywordArgument ? ((PyKeywordArgument)value).getValueExpression() : value;
+      final PyTypedDictType.TypeCheckingResult result =
+        PyTypedDictType.Companion.checkTypes(expected, actual, myTypeEvalContext, valueWithoutKeyword);
+      if (result == null) return false;
+      if (!result.getMatch()) {
+        if (result.getValueTypeErrors().isEmpty() &&
+            result.getExtraKeys().isEmpty() &&
+            result.getMissingKeys().isEmpty()) {
+          registerProblem(valueWithoutKeyword, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                                                   PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
+                                                                   PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)));
+        }
+
+        if (!result.getValueTypeErrors().isEmpty()) {
+          result.getValueTypeErrors().forEach(error -> {
+            registerProblem(error.getActualExpression(), PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                                                             PythonDocumentationProvider.getTypeName(
+                                                                               error.getExpectedType(), myTypeEvalContext),
+                                                                             PythonDocumentationProvider.getTypeName(error.getActualType(),
+                                                                                                                     myTypeEvalContext)));
+          });
+          if (!actual.isInferred()) {
+            return true;
+          }
+        }
+        if (!result.getExtraKeys().isEmpty()) {
+          result.getExtraKeys().forEach(error -> {
+            registerProblem(Objects.requireNonNullElse(error.getActualExpression(), valueWithoutKeyword),
+                            PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", error.getKey(),
+                                                error.getExpectedTypedDictName()));
+          });
+        }
+        if (!result.getMissingKeys().isEmpty()) {
+          result.getMissingKeys().forEach(error -> {
+            final List<String> missingKeys = error.getMissingKeys();
+            registerProblem(error.getActualExpression() != null ? error.getActualExpression() : valueWithoutKeyword,
+                            PyPsiBundle.message("INSP.type.checker.typed.dict.missing.keys", error.getExpectedTypedDictName(),
+                                                missingKeys.size(),
+                                                StringUtil.join(missingKeys, s -> String.format("'%s'", s), ", ")));
+          });
+        }
+      }
+      return true;
     }
 
     @Nullable
@@ -279,7 +336,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           break;
         }
         else {
-          final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+          final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
           result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
         }
       }
@@ -314,7 +371,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         final var expected = types.get(i);
         final var argument = arguments.get(i);
         final var actual = myTypeEvalContext.getType(argument);
-        final var matched = matchParameterAndArgument(expected, actual, substitutions);
+        final var matched = matchParameterAndArgument(expected, actual, argument, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
     }
@@ -328,7 +385,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
         final PyType actual = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
-        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, null, substitutions);
         return ContainerUtil.map(arguments,
                                  argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
       }
@@ -337,7 +394,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           arguments,
           argument -> {
             final PyType actual = myTypeEvalContext.getType(argument);
-            final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+            final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
           }
         );
@@ -346,7 +403,12 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private boolean matchParameterAndArgument(@Nullable PyType parameterType,
                                               @Nullable PyType argumentType,
+                                              @Nullable PyExpression argument,
                                               @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
+      if (parameterType != null && argumentType instanceof PyTypedDictType && argument != null) {
+        if (reportTypedDictProblems(parameterType, (PyTypedDictType)argumentType, argument)) return true;
+      }
+
       return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
              !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
     }

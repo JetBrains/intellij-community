@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,8 +9,9 @@ import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.function.Function;
 
-import static com.intellij.ui.scale.DerivedScaleType.*;
-import static com.intellij.ui.scale.ScaleType.*;
+import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * Extends {@link UserScaleContext} with the system scale, and is thus used for raster-based painting.
@@ -23,11 +23,10 @@ import static com.intellij.ui.scale.ScaleType.*;
  * @author tav
  */
 @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "deprecation"})
-public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { // extends BaseScaleContext for backward compatibility
+public class ScaleContext extends UserScaleContext {
   protected Scale sysScale = SYS_SCALE.of(JBUIScale.sysScale());
 
-  @Nullable
-  protected WeakReference<Component> compRef;
+  protected @Nullable WeakReference<Component> compRef;
 
   protected ScaleContext() {
     pixScale = derivePixScale();
@@ -41,16 +40,14 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   /**
    * Creates a context with all scale factors set to 1.
    */
-  @NotNull
-  public static ScaleContext createIdentity() {
+  public static @NotNull ScaleContext createIdentity() {
     return create(USR_SCALE.of(1), SYS_SCALE.of(1));
   }
 
   /**
    * Creates a context from the provided {@code ctx}.
    */
-  @NotNull
-  public static ScaleContext create(@Nullable UserScaleContext ctx) {
+  public static @NotNull ScaleContext create(@Nullable UserScaleContext ctx) {
     ScaleContext c = create();
     c.update(ctx);
     return c;
@@ -59,8 +56,7 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   /**
    * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
    */
-  @NotNull
-  public static ScaleContext create(@Nullable Component comp) {
+  public static @NotNull ScaleContext create(@Nullable Component comp) {
     final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(comp)));
     if (comp != null) ctx.compRef = new WeakReference<>(comp);
     return ctx;
@@ -69,32 +65,28 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   /**
    * Creates a context based on the gc's system scale
    */
-  @NotNull
-  public static ScaleContext create(@Nullable GraphicsConfiguration gc) {
+  public static @NotNull ScaleContext create(@Nullable GraphicsConfiguration gc) {
     return new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(gc)));
   }
 
   /**
    * Creates a context based on the g's system scale
    */
-  @NotNull
-  public static ScaleContext create(Graphics2D g) {
+  public static @NotNull ScaleContext create(Graphics2D g) {
     return new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(g)));
   }
 
   /**
    * Creates a context with the provided scale
    */
-  @NotNull
-  public static ScaleContext create(@NotNull Scale scale) {
+  public static @NotNull ScaleContext create(@NotNull Scale scale) {
     return new ScaleContext(scale);
   }
 
   /**
    * Creates a context with the provided scale factors
    */
-  @NotNull
-  public static ScaleContext create(Scale @NotNull ... scales) {
+  public static @NotNull ScaleContext create(Scale @NotNull ... scales) {
     ScaleContext ctx = create();
     for (Scale s : scales) ctx.setScale(s);
     return ctx;
@@ -103,8 +95,7 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   /**
    * Creates a default context with the default screen scale and the current user scale
    */
-  @NotNull
-  public static ScaleContext create() {
+  public static @NotNull ScaleContext create() {
     return new ScaleContext();
   }
 
@@ -123,8 +114,7 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   }
 
   @Override
-  @NotNull
-  protected Scale getScaleObject(@NotNull ScaleType type) {
+  protected @NotNull Scale getScaleObject(@NotNull ScaleType type) {
     if (type == SYS_SCALE) return sysScale;
     return super.getScaleObject(type);
   }
@@ -215,9 +205,8 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
     }
   }
 
-  @NotNull
   @Override
-  public <T extends UserScaleContext> T copy() {
+  public @NotNull <T extends UserScaleContext> T copy() {
     ScaleContext ctx = createIdentity();
     ctx.updateAll(this);
     //noinspection unchecked

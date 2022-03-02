@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.util
 interface GradleProperties {
 
   val javaHomeProperty: GradleProperty<String>?
+  val gradleLoggingLevel: GradleProperty<String>?
 
   /**
    * Represents property in the properties file that is descripted by [location]
@@ -15,5 +16,6 @@ interface GradleProperties {
 
   object EMPTY : GradleProperties {
     override val javaHomeProperty: Nothing? = null
+    override val gradleLoggingLevel: Nothing? = null
   }
 }

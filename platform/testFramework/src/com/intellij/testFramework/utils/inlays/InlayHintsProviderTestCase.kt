@@ -108,7 +108,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     }
   }
 
-  private enum class InlayType {
+ protected enum class InlayType {
     Inline,
     Block
   }

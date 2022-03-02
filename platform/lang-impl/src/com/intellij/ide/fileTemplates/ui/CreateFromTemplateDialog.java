@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.ui;
 
@@ -21,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateParseException;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,9 +64,9 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       String fileName = FileTemplateUtil.mergeTemplate(myDefaultProperties, template.getFileName(), false);
       try {
         String[] strings = FileTemplateUtil.calculateAttributes(fileName, myDefaultProperties, false, project);
+        mustEnterName = false;
         if (strings.length == 0) {
           myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
-          mustEnterName = false;
         }
       }
       catch (ParseException e) {
@@ -90,7 +77,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     try {
       unsetAttributes = myTemplate.getUnsetAttributes(myDefaultProperties, project);
     }
-    catch (ParseException e) {
+    catch (FileTemplateParseException e) {
       showErrorDialog(e);
     }
 
@@ -196,7 +183,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     myAttrPanel.ensureFitToScreen(200, 200);
     JPanel centerPanel = new JPanel(new GridBagLayout());
     centerPanel.add(myAttrComponent, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                                            JBUI.emptyInsets(), 0, 0));
+                                                            JBInsets.emptyInsets(), 0, 0));
     return centerPanel;
   }
 

@@ -1,12 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.model
 
 import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File
 
+typealias ModelMatcher = (String) -> ModelMatchingResult?
+class ModelMatchingResult(val methodName: String)
+
 data class TModel(
     val path: String,
-    val pattern: Regex,
+    val matcher: ModelMatcher,
     val testClassName: String,
     val testMethodName: String,
     val flatten: Boolean,
@@ -17,29 +20,42 @@ data class TModel(
     val bucketSize: Int?,
 )
 
+fun ModelMatcher.withPrecondition(precondition: (String) -> Boolean): ModelMatcher {
+    return { name -> if (precondition(name)) this(name) else null }
+}
+
 object Patterns {
-    private fun forExtension(extension: String): Regex {
-        val escapedExtension = Regex.escapeReplacement(extension)
-        return "^(.+)\\.$escapedExtension\$".toRegex()
+    fun forRegex(regex: String): ModelMatcher {
+        return f@ { name ->
+            val result = regex.toRegex().matchEntire(name) ?: return@f null
+            return@f ModelMatchingResult(result.groupValues[1])
+        }
     }
 
-    val DIRECTORY: Regex = "^([^.]+)$".toRegex()
+    private fun forExtension(extension: String): ModelMatcher {
+        val escapedExtension = Regex.escapeReplacement(extension)
+        return forRegex("^(.+)\\.$escapedExtension\$")
+    }
 
-    val TEST: Regex = forExtension("test")
-    val KT: Regex = forExtension("kt")
-    val TXT: Regex = forExtension("txt")
-    val KTS: Regex = forExtension("kts")
-    val JAVA: Regex = forExtension("java")
-    val WS_KTS: Regex = forExtension("ws.kts")
+    val DIRECTORY: ModelMatcher = forRegex("^([^\\.]+)$")
 
-    val KT_OR_KTS: Regex = "^(.+)\\.(kt|kts)$".toRegex()
-    val KT_WITHOUT_DOTS: Regex = "^([^.]+)\\.kt$".toRegex()
-    val KT_OR_KTS_WITHOUT_DOTS: Regex = "^([^.]+)\\.(kt|kts)$".toRegex()
+    val TEST: ModelMatcher = forExtension("test")
+    val KT: ModelMatcher = forExtension("kt")
+    val TXT: ModelMatcher = forExtension("txt")
+    val KTS: ModelMatcher = forExtension("kts")
+    val JAVA: ModelMatcher = forExtension("java")
+    val WS_KTS: ModelMatcher = forExtension("ws.kts")
+
+    val KT_OR_KTS: ModelMatcher = forRegex("^(.+)\\.(kt|kts)$")
+    val KT_WITHOUT_DOTS: ModelMatcher = forRegex("^([^.]+)\\.kt$")
+    val KT_OR_KTS_WITHOUT_DOTS: ModelMatcher = forRegex("^([^.]+)\\.(kt|kts)$")
+    val KT_WITHOUT_FIR_PREFIX: ModelMatcher = forRegex("""^(.+)(?<!\.fir)\.kt$""")
+    val KT_WITHOUT_DOT_AND_FIR_PREFIX: ModelMatcher = forRegex("""^([^.]+)(?<!\.fir)\.kt$""")
 }
 
 fun MutableTSuite.model(
     path: String,
-    pattern: Regex = Patterns.KT,
+    pattern: ModelMatcher = Patterns.KT,
     isRecursive: Boolean = true,
     testClassName: String = File(path).toJavaIdentifier().capitalize(),
     testMethodName: String = "doTest",
@@ -48,12 +64,12 @@ fun MutableTSuite.model(
     excludedDirectories: List<String> = emptyList(),
     depth: Int = Int.MAX_VALUE,
     testPerClass: Boolean = false,
-    splitToBuckets: Boolean = true,
+    splitToBuckets: Boolean = false,
     bucketSize: Int = 20,
 ) {
     models += TModel(
         path = path,
-        pattern = pattern,
+        matcher = pattern,
         testClassName = testClassName,
         testMethodName = testMethodName,
         flatten = flatten,
@@ -73,4 +89,4 @@ fun makeJavaIdentifier(text: String): String {
     }
 }
 
-fun File.toJavaIdentifier() = makeJavaIdentifier(nameWithoutExtension)
+fun File.toJavaIdentifier() = makeJavaIdentifier(name)

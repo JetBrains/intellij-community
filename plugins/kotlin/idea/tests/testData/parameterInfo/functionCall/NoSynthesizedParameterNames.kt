@@ -1,3 +1,4 @@
+// IGNORE_FIR
 // WITH_STDLIB
 
 lateinit var x: java.lang.Readable

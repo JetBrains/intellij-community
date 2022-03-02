@@ -64,7 +64,7 @@ public abstract class MacMessages {
   /**
    * @deprecated Use {@link #showMessageDialog(String, String, String[], Window, int, int, DoNotAskOption, Icon, String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int showMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
                                @NlsContexts.DialogMessage String message,
                                @NlsContexts.Button String @NotNull [] buttons, boolean errorStyle,

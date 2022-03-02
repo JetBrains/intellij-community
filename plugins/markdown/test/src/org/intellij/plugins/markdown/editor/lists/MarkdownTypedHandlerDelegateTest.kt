@@ -9,6 +9,8 @@ class MarkdownTypedHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
 
   fun testRenumberOnItemCreation() = doTest()
 
+  fun testRenumberOnItemCreationInBlockQuote() = doTest()
+
   private fun doTest() {
     val testName = getTestName(true)
     configureByFile("$testName.md")

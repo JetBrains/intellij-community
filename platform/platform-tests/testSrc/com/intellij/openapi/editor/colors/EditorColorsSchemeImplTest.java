@@ -136,7 +136,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     String fontName2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
     myScheme.setConsoleFontName(fontName2);
-    int scaledSize = UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
+    float scaledSize = UISettings.restoreFontSize((float)FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
 
     FontPreferencesTest.checkState(myScheme.getFontPreferences(),
                                    Collections.singletonList(fontName1),
@@ -144,14 +144,14 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
                                    fontName1,
                                    fontName1, scaledSize);
     assertEquals(fontName1, myScheme.getEditorFontName());
-    assertEquals(scaledSize, myScheme.getEditorFontSize());
+    assertEquals(scaledSize, myScheme.getEditorFontSize2D());
     FontPreferencesTest.checkState(myScheme.getConsoleFontPreferences(),
                                    Collections.singletonList(fontName2),
                                    Collections.singletonList(fontName2),
                                    fontName2,
                                    fontName2, scaledSize);
     assertEquals(fontName2, myScheme.getConsoleFontName());
-    assertEquals(scaledSize, myScheme.getConsoleFontSize());
+    assertEquals(scaledSize, myScheme.getConsoleFontSize2D());
   }
 
   public void testSetSize() {

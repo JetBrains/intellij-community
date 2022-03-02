@@ -1,6 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.ui
 
+import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.AppUIExecutor
@@ -15,16 +18,14 @@ import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
+import com.intellij.ui.scale.TestScaleHelper
+import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.util.SVGLoader
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
-import com.intellij.ui.scale.TestScaleHelper
-import com.intellij.ui.scale.paint.ImageComparator
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.StyleSheetUtil
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
@@ -81,15 +82,15 @@ internal suspend fun changeLafIfNeeded(lafName: String) {
   }
 
   withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    if (lafName == "Darcula") {
+      // static init it is hell - UIUtil static init is called too early, so, call it to init properly
+      // (otherwise null stylesheet added, and it leads to NPE on set comment text)
+      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getInstance().getGlobalStyleSheet())
+    }
+
     UIManager.setLookAndFeel(MetalLookAndFeel())
     val laf = if (lafName == "IntelliJ") IntelliJLaf() else DarculaLaf()
     UIManager.setLookAndFeel(laf)
-
-    if (lafName == "Darcula") {
-      // static init it is hell - UIUtil static init is called too early, so, call it to init properly
-      // (otherwise null stylesheet added and it leads to NPE on set comment text)
-      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", StyleSheetUtil.createJBDefaultStyleSheet())
-    }
   }
 }
 

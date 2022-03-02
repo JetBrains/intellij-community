@@ -5,5 +5,5 @@ fun x(){
     }
 }
 
-// TYPE: c -> <html>() &rarr; Unit</html>
+// TYPE: c -> <html>() -&gt; Unit</html>
 // TYPE: c() -> <html>Unit</html>

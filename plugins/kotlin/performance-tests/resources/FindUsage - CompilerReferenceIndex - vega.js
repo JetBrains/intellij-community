@@ -5166,14 +5166,7 @@
                      ]
                    }
                 },
-                {
-                  "bool": {
-                    "should": [
-                      {"term": {"benchmark.keyword": "findUsages50_50"}},
-                      {"term": {"benchmark.keyword": "findUsages50_50_with_cri"}}
-                    ]
-                  }
-                },
+                {"prefix": {"benchmark.keyword": "findUsages"}},
                 {"range": {"buildTimestamp": {"%timefilter%": true}}}
               ]
             }

@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaDocumentationProvider;
@@ -244,6 +245,13 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     myFixture.addClass("package foo; public @interface A {}");
     myFixture.configureByFile("module-info.java");
     myFixture.checkHighlighting();
+  }
+
+  public void testAlwaysFalseForLoop() {
+    doTest();
+    IntentionAction action = myFixture.findSingleIntention("Remove 'for' statement");
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
   private void doTest() {

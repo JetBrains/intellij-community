@@ -3,9 +3,12 @@ package com.intellij.ui.dsl.builder
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface CollapsibleRow : Row {
 
   var expanded: Boolean
 
+  fun setText(text: String)
+  
+  fun addExpandedListener(action: (Boolean) -> Unit)
 }

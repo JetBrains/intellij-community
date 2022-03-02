@@ -17,7 +17,10 @@ internal class ImportPathComparator(private val packageTable: KotlinPackageEntry
             import1,
             import2,
             { import -> bestEntryMatchIndex(import, ignoreAlias) },
-            { import -> import.toString() }
+            { import ->
+                // Ignore backticks when comparing lexicographically
+                import.toString().replace("`", "")
+            }
         )
     }
 

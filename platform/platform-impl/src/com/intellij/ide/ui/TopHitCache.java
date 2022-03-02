@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -66,7 +67,7 @@ public class TopHitCache implements Disposable {
         result = ((OptionsSearchTopHitProvider.ApplicationLevelProvider)provider).getOptions();
       }
       else {
-        result = ((OptionsTopHitProvider)provider).getOptions(project);
+        return Collections.emptyList();
       }
 
       ActivityCategory category = project == null ? ActivityCategory.APP_OPTIONS_TOP_HIT_PROVIDER : ActivityCategory.PROJECT_OPTIONS_TOP_HIT_PROVIDER;

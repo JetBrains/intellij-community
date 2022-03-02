@@ -43,6 +43,11 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
     }
 
     @JvmStatic
+    fun yesNo(title: @NlsContexts.DialogTitle String, message: @DialogMessage String, icon: Icon?): YesNo {
+      return YesNo(title, message).icon(icon)
+    }
+
+    @JvmStatic
     fun okCancel(title: @NlsContexts.DialogTitle String, message: @DialogMessage String): OkCancelDialogBuilder {
       return OkCancelDialogBuilder(title, message).icon(UIUtil.getQuestionIcon())
     }

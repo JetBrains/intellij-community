@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.isOverridable
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -77,7 +77,7 @@ fun PsiMethod.forEachOverridingMethod(
     processor: (PsiMethod) -> Boolean
 ): Boolean {
     if (this !is KtFakeLightMethod) {
-        if (!OverridingMethodsSearch.search(this, scope.excludeKotlinSources(), true).forEach(Processor { processor(it) })) return false
+        if (!OverridingMethodsSearch.search(this, scope.excludeKotlinSources(project), true).forEach(Processor { processor(it) })) return false
     }
 
     val ktMember = this.unwrapped as? KtNamedDeclaration ?: return true

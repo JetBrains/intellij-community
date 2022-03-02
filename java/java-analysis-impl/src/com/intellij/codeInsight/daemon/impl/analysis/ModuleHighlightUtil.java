@@ -38,6 +38,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+// generates HighlightInfoType.ERROR-like HighlightInfos for modularity-related (Jigsaw) problems
 final class ModuleHighlightUtil {
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
     if (PsiUtil.isModuleFile(file)) {

@@ -34,7 +34,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
             ?: error("The first element of the result array must be a string")
         val lastObservedThreadRefs = array.getValue(1).safeAs<ArrayReference>()?.toTypedList<ThreadReference?>()
             ?: error("The second element of the result array must be an array")
-        val lastObservedFrameRefs = array.getValue(2).safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
+        val lastObservedFrameRefs = array.getValue(2).safeAs<ArrayReference>()?.toTypedList<ObjectReference?>()
             ?: error("The third element of the result array must be an array")
         val coroutineInfoRefs = array.getValue(3).safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
             ?: error("The fourth element of the result array must be an array")
@@ -53,7 +53,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
         coroutineInfos: Array<CoroutineInfoFromJson>,
         coroutineInfoRefs: List<ObjectReference>,
         lastObservedThreadRefs: List<ThreadReference?>,
-        lastObservedFrameRefs: List<ObjectReference>
+        lastObservedFrameRefs: List<ObjectReference?>
     ): List<CoroutineInfoData> {
         val result = mutableListOf<LazyCoroutineInfoData>()
         for ((i, info) in coroutineInfos.withIndex()) {

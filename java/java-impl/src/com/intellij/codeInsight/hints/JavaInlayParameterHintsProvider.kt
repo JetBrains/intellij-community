@@ -137,7 +137,6 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return listOf(
       showIfMethodNameContainsParameterName,
       showForParamsWithSameType,
-      showForBuilderLikeMethods,
       ignoreOneCharOneDigitHints,
       isShowHintsForEnumConstants,
       isShowHintsForNewExpressions,

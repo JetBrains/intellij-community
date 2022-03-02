@@ -8,6 +8,7 @@ package org.toml.lang
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.lang.LanguageBraceMatching
 import com.intellij.testFramework.ParsingTestCase
+import org.toml.getTomlTestsResourcesPath
 import org.toml.ide.TomlBraceMatcher
 import org.toml.lang.parse.TomlParserDefinition
 import org.toml.lang.psi.impl.TomlASTFactory
@@ -28,7 +29,7 @@ class TomlParserTest
     fun testArrayTables() = doTest()
     fun testInvalid() = doTest()
 
-    override fun getTestDataPath() = "resources"
+    override fun getTestDataPath() = getTomlTestsResourcesPath().toString()
     override fun setUp() {
         super.setUp()
         addExplicitExtension(LanguageASTFactory.INSTANCE, myLanguage, TomlASTFactory())

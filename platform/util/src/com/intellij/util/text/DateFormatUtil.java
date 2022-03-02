@@ -12,7 +12,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -218,14 +217,12 @@ public final class DateFormatUtil {
 
   /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
     return formatAboutDialogDate(date.getTime());
   }
 
   /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static @NlsSafe @NotNull String formatAboutDialogDate(long time) {
     return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(time);
   }

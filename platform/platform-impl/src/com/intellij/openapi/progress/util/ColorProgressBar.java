@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -24,13 +24,13 @@ import java.awt.geom.Rectangle2D;
 public final class ColorProgressBar extends JComponent {
   private static final Dimension PREFERRED_SIZE = new Dimension(146, 17);
 
-  public static final Color GREEN = new JBColor(() -> {
+  public static final Color GREEN = JBColor.lazy(() -> {
     UISettings settings = UISettings.getInstance();
     return null == settings.getColorBlindness()
            ? new JBColor(new Color(0x6cad74), new Color(0x4a8c53))
            : new JBColor(new Color(0x6ca69c), new Color(0x639990));
   });
-  public static final Color RED = new JBColor(() -> {
+  public static final Color RED = JBColor.lazy(() -> {
     UISettings settings = UISettings.getInstance();
     return null == settings.getColorBlindness()
            ? new JBColor(new Color(0xd67b76), new Color(0xe55757))

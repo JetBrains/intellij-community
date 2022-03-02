@@ -92,7 +92,13 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
   }
 
   private void removeProfile(@NotNull InspectionProfileImpl profile) {
-    myProfilePanels.removeIf(panel -> panel.getProfile().equals(profile));
+    myProfilePanels.removeIf(panel -> {
+      if (panel.getProfile().equals(profile)) {
+        panel.disposeUI();
+        return true;
+      }
+      return false;
+    });
   }
 
   void updatePanel(@NotNull InspectionProfileSchemesPanel panel) {

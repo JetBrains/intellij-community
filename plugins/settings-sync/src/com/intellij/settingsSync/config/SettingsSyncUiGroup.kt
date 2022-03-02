@@ -2,7 +2,7 @@ package com.intellij.settingsSync.config
 
 import com.intellij.settingsSync.SettingsSyncBundle
 
-class SettingsSyncUiGroup : SettingsSyncSubcategoryGroup {
+internal class SettingsSyncUiGroup : SettingsSyncSubcategoryGroup {
 
   private val descriptors = listOf(SettingsSyncSubcategoryDescriptor(SettingsSyncBundle.message("settings.category.ui.editor.font"), EDITOR_FONT_ID, false))
 

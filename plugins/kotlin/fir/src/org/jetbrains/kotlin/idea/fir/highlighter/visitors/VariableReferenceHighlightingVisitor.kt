@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
@@ -14,7 +11,9 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.highlighter.textAttributesKeyForPropertyDeclaration
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.KtBackingFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.highlighter.NameHighlighter
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -40,19 +39,27 @@ internal class VariableReferenceHighlightingVisitor(
             return
         }
 
-        val target = expression.mainReference.resolve()
-
-        when {
-            target != null && expression.isBackingField(target) -> Colors.BACKING_FIELD_VARIABLE
-            target is PsiMethod -> Colors.SYNTHETIC_EXTENSION_PROPERTY
-            target != null -> textAttributesKeyForPropertyDeclaration(target)
-            else -> null
-        }?.let { attribute ->
-            highlightName(expression, attribute)
-            if (target?.isMutableVariable() == true) {
-                highlightName(expression, Colors.MUTABLE_VARIABLE)
+        with(analysisSession) {
+            val targetSymbol = expression.mainReference.resolveToSymbol()
+            val target = expression.mainReference.resolve()
+            when {
+                targetSymbol is KtBackingFieldSymbol -> Colors.BACKING_FIELD_VARIABLE
+                target is PsiMethod -> Colors.SYNTHETIC_EXTENSION_PROPERTY
+                target != null -> textAttributesKeyForPropertyDeclaration(target)
+                else -> null
+            }?.let { attribute ->
+                highlightName(expression, attribute)
+                if (target?.isMutableVariable() == true || targetSymbol != null && isBackingFieldReferencingMutableVariable(targetSymbol)) {
+                    highlightName(expression, Colors.MUTABLE_VARIABLE)
+                }
             }
         }
+    }
+
+    @Suppress("unused")
+    private fun KtAnalysisSession.isBackingFieldReferencingMutableVariable(symbol: KtSymbol): Boolean {
+        if (symbol !is KtBackingFieldSymbol) return false
+        return !symbol.owningProperty.isVal
     }
 
     private fun KtSimpleNameExpression.isByNameArgumentReference() =
@@ -75,9 +82,3 @@ private fun KtSimpleNameExpression.isAssignmentReference(): Boolean {
     return operationSignTokenType == KtTokens.EQ
 }
 
-private fun KtSimpleNameExpression.isBackingField(target: PsiElement): Boolean {
-    if (getReferencedName() != "field") return false
-    if (target !is KtProperty) return false
-    val accessor = parentOfType<KtPropertyAccessor>() ?: return false
-    return accessor.parent == target
-}

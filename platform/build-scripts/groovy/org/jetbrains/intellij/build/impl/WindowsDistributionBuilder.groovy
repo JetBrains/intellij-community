@@ -92,41 +92,41 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       })
     }
+    customizer.getBinariesToSign(buildContext).each {
+      def path = winDistPath.resolve(it)
+      buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", path.toString()), BuildOptions.WIN_SIGN_STEP) {
+        buildContext.signFile(path, BuildOptions.WIN_SIGN_OPTIONS)
+      }
+    }
   }
 
   @Override
-  void buildArtifacts(@NotNull Path winDistPath) {
-    copyFilesForOsDistribution(winDistPath)
+  void buildArtifacts(@NotNull Path winAndArchSpecificDistPath, @NotNull JvmArchitecture arch) {
+    copyFilesForOsDistribution(winAndArchSpecificDistPath, arch)
 
     ForkJoinTask<Path> zipPathTask = null
     String exePath = null
-    Path jreDir = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS, JvmArchitecture.x64)
-    if (jreDir != null) {
-      Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
-      try {
-        BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
-      }
-      catch (NoSuchFileException ignore) {
-        buildContext.messages.error(
-          "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
-          "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
-          "If DLL was relocated to another place, please correct the path in this code.")
-      }
+    Path jreDir = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.WINDOWS, arch)
+
+    Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
+    if (!Files.exists(vcRtDll)) {
+      buildContext.messages.error(
+        "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
+        "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
+        "If DLL was relocated to another place, please correct the path in this code.")
     }
+
+    BuildHelper.copyFileToDir(vcRtDll, winAndArchSpecificDistPath.resolve("bin"))
 
     if (customizer.buildZipArchive) {
       List<Path> jreDirectoryPaths
       if (customizer.zipArchiveWithBundledJre) {
-        if (jreDir == null) {
-          buildContext.messages.error("Bundled jre is not found, but it's required for .win.zip")
-        }
-
         jreDirectoryPaths = List.of(jreDir)
       }
       else {
         jreDirectoryPaths = List.of()
       }
-      zipPathTask = createBuildWinZipTask(jreDirectoryPaths, ".win", winDistPath, customizer, buildContext).fork()
+      zipPathTask = createBuildWinZipTask(jreDirectoryPaths, ".win", winAndArchSpecificDistPath, customizer, buildContext).fork()
     }
 
     buildContext.executeStep("build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP, new Runnable() {
@@ -134,8 +134,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       void run() {
         Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
         generateProductJson(productJsonDir, jreDir != null, buildContext)
-        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winDistPath, jreDir), [])
-        exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, "", buildContext).toString()
+        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winAndArchSpecificDistPath, jreDir), [])
+        exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winAndArchSpecificDistPath, productJsonDir, "", buildContext).toString()
       }
     })
 

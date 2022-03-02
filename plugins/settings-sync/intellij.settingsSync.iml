@@ -15,24 +15,26 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library">
       <library name="JGit" type="repository">
-        <properties maven-id="org.eclipse.jgit:org.eclipse.jgit:5.11.1.202105131744-r" />
+        <properties maven-id="org.eclipse.jgit:org.eclipse.jgit:5.11.1.202105131744-r">
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit/5.11.1.202105131744-r/org.eclipse.jgit-5.11.1.202105131744-r.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.7/JavaEWAH-1.1.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit/5.11.1.202105131744-r/org.eclipse.jgit-5.11.1.202105131744-r-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.7/JavaEWAH-1.1.7-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit/5.11.1.202105131744-r/org.eclipse.jgit-5.11.1.202105131744-r-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.7/JavaEWAH-1.1.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />

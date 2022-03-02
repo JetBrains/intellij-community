@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.util.GradleTaskData
 import org.junit.runners.Parameterized
 
 abstract class GradleTasksIndicesTestCase : GradleImportingTestCase() {
-  fun findTasks(modulePath: String, matcher: String): List<GradleTaskData> {
+  fun findTasks(matcher: String, modulePath: String = "."): List<GradleTaskData> {
     val path = FileUtil.toCanonicalPath("$projectPath/$modulePath")
     val indices = GradleTasksIndices.getInstance(myProject)
     return indices.findTasks(path, matcher)

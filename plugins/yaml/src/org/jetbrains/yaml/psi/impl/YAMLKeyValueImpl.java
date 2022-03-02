@@ -227,11 +227,6 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   }
 
   @Override
-  public @NotNull PsiElement getNavigationElement() {
-    return this;
-  }
-
-  @Override
   public @Nullable TextRange getNameIdentifierRange() {
     PsiElement key = getKey();
     return key == null ? null : key.getTextRangeInParent();

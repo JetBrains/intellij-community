@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
@@ -7,15 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -35,13 +34,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.jetbrains.idea.maven.indices.MavenArchetypeManager.loadUserArchetypes;
 
 /**
  * Main api class for work with maven indices.
- *
+ * <p>
  * Get current index state, schedule update index list, check MavenId in index, add data to index.
  */
 public final class MavenIndicesManager implements Disposable {
@@ -125,16 +125,11 @@ public final class MavenIndicesManager implements Disposable {
 
     MavenRepositoryProvider.EP_NAME.addChangeListener(() -> scheduleUpdateIndicesList(null), this);
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    projectsManager.addManagerListener(new MavenProjectsManager.Listener() {
-      @Override
-      public void activated() {
-        scheduleUpdateIndicesList(null);
-      }
-    }, this);
 
     projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void allProjectsResolved() {
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
         scheduleUpdateIndicesList(null);
       }
     }, this);
@@ -173,29 +168,32 @@ public final class MavenIndicesManager implements Disposable {
 
   /**
    * Add artifact info to index async.
+   *
    * @param mavenId
    * @param artifactFile
    */
   public void addArtifactIndexAsync(@Nullable MavenId mavenId, @NotNull File artifactFile) {
     if (myMavenIndices.isNotInit()) return;
     MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
-    if (localIndex == null) return;
-    ApplicationManager.getApplication().executeOnPooledThread(() -> myIndexFixer.fixIndex(mavenId, artifactFile, localIndex));
+    if (localIndex == null) {
+      return;
+    }
+    AppExecutorUtil.getAppExecutorService().execute(() -> myIndexFixer.fixIndex(mavenId, artifactFile, localIndex));
   }
 
   /**
    * Schedule update all indices content async.
    */
   public void scheduleUpdateContentAll() {
-    myIndexUpdateManager
-      .scheduleUpdateContent(myProject, ContainerUtil.map(myMavenIndices.getIndices(), i -> i.getRepositoryPathOrUrl()));
+    myIndexUpdateManager.scheduleUpdateContent(myProject,
+                                               ContainerUtil.map(myMavenIndices.getIndices(), MavenIndex::getRepositoryPathOrUrl));
   }
 
   /**
    * Schedule update indices content async.
    */
-  public Promise<Void> scheduleUpdateContent(@NotNull List<MavenIndex> indices) {
-    return myIndexUpdateManager.scheduleUpdateContent(myProject, ContainerUtil.map(indices, i -> i.getRepositoryPathOrUrl()));
+  public CompletableFuture<?> scheduleUpdateContent(@NotNull List<MavenIndex> indices) {
+    return myIndexUpdateManager.scheduleUpdateContent(myProject, ContainerUtil.map(indices, MavenIndex::getRepositoryPathOrUrl));
   }
 
   /**
@@ -215,7 +213,6 @@ public final class MavenIndicesManager implements Disposable {
    * @deprecated use {@link MavenArchetypeManager#getArchetypes()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public Set<MavenArchetype> getArchetypes() {
     Set<MavenArchetype> result = new HashSet<>(myIndexerWrapper.getArchetypes());
     result.addAll(loadUserArchetypes(getIndicesDir().resolve("UserArchetypes.xml")));

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -8,7 +8,7 @@ import com.intellij.util.io.isAncestor
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.nio.file.Paths
+import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 @State(name = "Trusted.Paths", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
@@ -20,19 +20,20 @@ class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State())
     var trustedPaths by map<String, Boolean>()
   }
 
-  private val trustedPaths get() = state.trustedPaths.filterValues { it }.keys.map { Paths.get(it) }
-  private val notTrustedPaths get() = state.trustedPaths.filterValues { !it }.keys.map { Paths.get(it) }
-
   @ApiStatus.Internal
   fun getProjectPathTrustedState(path: Path): ThreeState {
-    if (notTrustedPaths.any { it.isAncestor(path) }) return ThreeState.NO
-    if (trustedPaths.any { it.isAncestor(path) }) return ThreeState.YES
-    return ThreeState.UNSURE
+    val ancestors = state.trustedPaths.keys.map { path.fileSystem.getPath(it) }.filter { it.isAncestor(path) }
+    val closestAncestor = ancestors.maxByOrNull { it.nameCount } ?: return ThreeState.UNSURE
+    return when (state.trustedPaths[closestAncestor.pathString]) {
+      true -> ThreeState.YES
+      false -> ThreeState.NO
+      null -> ThreeState.UNSURE
+    }
   }
 
   @ApiStatus.Internal
   fun setProjectPathTrusted(path: Path, value: Boolean) {
-    state.trustedPaths[path.toString()] = value
+    state.trustedPaths[path.pathString] = value
   }
 
   companion object {

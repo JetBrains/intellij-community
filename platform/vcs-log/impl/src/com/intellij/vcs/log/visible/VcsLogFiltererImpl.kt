@@ -2,12 +2,10 @@
 package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.data.index.IndexDataGetter
@@ -488,8 +486,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getDetailsFromCache(commitIndex: Int): VcsCommitMetadata? {
-    return topCommitsDetailsCache.get(commitIndex) ?: UIUtil.invokeAndWaitIfNeeded(
-      Computable<VcsCommitMetadata> { commitDetailsGetter.getCommitDataIfAvailable(commitIndex) })
+    return topCommitsDetailsCache.get(commitIndex) ?: commitDetailsGetter.getCommitDataIfAvailable(commitIndex)
   }
 
   private fun Collection<CommitId>.toCommitIndexes(): Set<Int> {

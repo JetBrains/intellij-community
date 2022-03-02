@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -9,14 +9,13 @@ import org.jetbrains.annotations.TestOnly
 // if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal
 class PluginSet internal constructor(
-  val moduleGraph: ModuleGraph,
+  @JvmField val moduleGraph: ModuleGraph,
   @JvmField val allPlugins: List<IdeaPluginDescriptorImpl>,
   @JvmField val enabledPlugins: List<IdeaPluginDescriptorImpl>,
   private val enabledModuleMap: Map<String, IdeaPluginDescriptorImpl>,
   private val enabledPluginAndV1ModuleMap: Map<PluginId, IdeaPluginDescriptorImpl>,
   private val enabledModules: List<IdeaPluginDescriptorImpl>,
 ) {
-
   fun getRawListOfEnabledModules() = enabledModules
 
   /**

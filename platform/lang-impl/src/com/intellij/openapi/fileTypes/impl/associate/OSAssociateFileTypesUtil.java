@@ -212,7 +212,7 @@ public class OSAssociateFileTypesUtil {
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public Icon getIcon() {
       return myOriginalType.getIcon();
     }
 

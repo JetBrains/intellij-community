@@ -35,7 +35,7 @@ import javax.swing.JComponent
 class JupyterViewOnlyFileEditor private constructor(val myFile: VirtualFile) : UserDataHolderBase(), FileEditor {
   // OSR is slower but doesn't work on Linux when component detached from Swing (i.e. tab switched)
   private val browser = JBCefBrowser.createBuilder().setOffScreenRendering(SystemInfo.isLinux).setUrl(
-    JupyterCefHttpHandlerBase.getJupyterHttpUrl().addPathSegment("index.html").toString()).createBrowser()
+    JupyterCefHttpHandlerBase.getJupyterHttpUrl().addPathSegment("index.html").toString()).build()
   private val browserComponent: JComponent = browser.component
   private val darcula: MutableStateFlow<Boolean> = MutableStateFlow(UIUtil.isUnderDarcula())
   private val scope = CoroutineScope(Dispatchers.EDT)

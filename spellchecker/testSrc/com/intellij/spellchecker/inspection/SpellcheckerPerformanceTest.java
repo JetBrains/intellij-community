@@ -16,10 +16,8 @@
 package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * @author peter
@@ -55,19 +54,12 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     myFixture.configureFromExistingVirtualFile(file);
     LOG.debug("configure took " + (System.currentTimeMillis() - start) + " ms");
 
-    myFixture.enableInspections(getInspectionTools());
-
-    TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject());
-    List<TextEditorHighlightingPass> passes = passRegistrar.instantiatePasses(myFixture.getFile(), myFixture.getEditor(), new int[0]);
-    int[] toIgnore = passes.stream().mapToInt(TextEditorHighlightingPass::getId).toArray();
-    int i = ArrayUtil.find(toIgnore, Pass.LOCAL_INSPECTIONS);
-    toIgnore[i] = 0; // ignore everything except Pass.LOCAL_INSPECTIONS
-
     start = System.currentTimeMillis();
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false);
+    runLocalInspections();
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    int[] toIgnore = ignoreEverythingExceptInspections();
     PlatformTestUtil.startPerformanceTest("many typos highlighting", 12_000, () -> {
       assertSize(typoCount, CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false));
     }).assertTiming();
@@ -147,12 +139,16 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   @NotNull
   private List<HighlightInfo> runLocalInspections() {
     myFixture.enableInspections(getInspectionTools());
-    TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject());
-    List<TextEditorHighlightingPass> passes = passRegistrar.instantiatePasses(myFixture.getFile(), myFixture.getEditor(), new int[0]);
-    int[] toIgnore = passes.stream().mapToInt(TextEditorHighlightingPass::getId).toArray();
-    int i = ArrayUtil.find(toIgnore, Pass.LOCAL_INSPECTIONS);
-    toIgnore[i] = 0; // ignore everything except Pass.LOCAL_INSPECTIONS
+    int[] toIgnore = ignoreEverythingExceptInspections();
 
     return CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false);
+  }
+
+
+  private static int @NotNull [] ignoreEverythingExceptInspections() {
+    int[] toIgnore = IntStream.range(0, 2000).toArray();
+    int i = ArrayUtil.find(toIgnore, Pass.LOCAL_INSPECTIONS);
+    toIgnore[i] = 0; // ignore everything except Pass.LOCAL_INSPECTIONS
+    return toIgnore;
   }
 }

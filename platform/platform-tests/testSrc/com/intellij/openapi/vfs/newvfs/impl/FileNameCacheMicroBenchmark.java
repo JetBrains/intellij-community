@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,8 +6,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -115,8 +116,8 @@ public class FileNameCacheMicroBenchmark {
   private static void runTest(int nameCount, String name) throws InterruptedException, ExecutionException {
     System.out.println("----- " + name + " ------ name count: "+nameCount);
 
-    TIntObjectHashMap<CharSequence> map = generateNames(nameCount);
-    final int[] ids = map.keys();
+    Int2ObjectMap<CharSequence> map = generateNames(nameCount);
+    final int[] ids = map.keySet().toIntArray();
     checkNames(map, ids);
     warmUp(ids);
 
@@ -155,15 +156,15 @@ public class FileNameCacheMicroBenchmark {
 
   private static void measureAverageTime(int[] ids, int threadCount, TestIteration iteration) throws InterruptedException, ExecutionException {
     System.out.println("Running "+threadCount+" threads, using "+iteration);
-    TLongArrayList times = new TLongArrayList();
+    LongArrayList times = new LongArrayList();
     for (int i = 0; i < 10; i++) {
       long time = runThreads(ids, threadCount, 2000000/*0*/, iteration);
       System.out.println(time);
       times.add(time);
     }
 
-    times.sort();
-    long median = times.get(times.size() / 2);
+    times.sort(null);
+    long median = times.getLong(times.size() / 2);
     System.out.println("Median for " + threadCount + " threads: " + median+"ms");
     System.out.println();
   }
@@ -192,16 +193,16 @@ public class FileNameCacheMicroBenchmark {
     return System.currentTimeMillis() - start;
   }
 
-  private static void checkNames(TIntObjectHashMap<CharSequence> map, int[] ids) {
+  private static void checkNames(Int2ObjectMap<CharSequence> map, int[] ids) {
     for (int id : ids) {
       Assert.assertEquals(map.get(id), FileNameCache.getVFileName(id).toString());
     }
   }
 
   @NotNull
-  private static TIntObjectHashMap<CharSequence> generateNames(int nameCount) {
+  private static Int2ObjectMap<CharSequence> generateNames(int nameCount) {
     Random random = new Random();
-    TIntObjectHashMap<CharSequence> map = new TIntObjectHashMap<>();
+    Int2ObjectMap<CharSequence> map = new Int2ObjectOpenHashMap<>();
     for (int i = 0; i < nameCount; i++) {
       String name = "some_name_" + random.nextInt() + StringUtil.repeat("a", random.nextInt(10));
       int id = FileNameCache.storeName(name);

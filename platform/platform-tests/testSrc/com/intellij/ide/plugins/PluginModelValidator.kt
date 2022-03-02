@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.PathManager.getHomePath
-import com.intellij.util.XmlElement
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.getErrorsAsString
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
-import com.intellij.util.readXmlAsModel
+import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -217,7 +217,7 @@ class PluginModelValidator(sourceModules: List<Module>) {
                                 referencingPluginInfo: ModuleInfo,
                                 moduleNameToInfo: Map<String, ModuleInfo>,
                                 sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>) {
-    if (referencingModuleInfo.packageName == null) {
+    if (referencingModuleInfo.packageName == null && !knownNotFullyMigratedPluginIds.contains(referencingModuleInfo.pluginId)) {
       _errors.add(PluginValidationError(
         "`dependencies` must be specified only for plugin in a new format: package prefix is not specified",
         mapOf(

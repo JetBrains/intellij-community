@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -274,7 +274,9 @@ public interface Application extends ComponentManager {
 
   /**
    * @return a facade, which lets to call all those `invokeLater()` with an `ActionCallback` handle returned.
+   * @deprecated use corresponding {@link Application#invokeLater} methods
    */
+  @Deprecated
   @NotNull ModalityInvokator getInvokator();
 
   /**
@@ -470,7 +472,6 @@ public interface Application extends ComponentManager {
 
   /** @deprecated use {@link #isDisposed()} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   default boolean isDisposeInProgress() {
     return isDisposed();
   }
@@ -496,12 +497,10 @@ public interface Application extends ComponentManager {
 
   /** @deprecated use {@link #runReadAction(Runnable)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @NotNull AccessToken acquireReadActionLock();
 
   /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
   /**

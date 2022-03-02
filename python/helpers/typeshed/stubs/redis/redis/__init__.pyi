@@ -1,15 +1,54 @@
-from . import client, connection, exceptions, utils
+from . import client, connection, exceptions, sentinel, utils
+
+__all__ = [
+    "AuthenticationError",
+    "AuthenticationWrongNumberOfArgsError",
+    "BlockingConnectionPool",
+    "BusyLoadingError",
+    "ChildDeadlockedError",
+    "Connection",
+    "ConnectionError",
+    "ConnectionPool",
+    "DataError",
+    "from_url",
+    "InvalidResponse",
+    "PubSubError",
+    "ReadOnlyError",
+    "Redis",
+    "RedisCluster",
+    "RedisError",
+    "ResponseError",
+    "Sentinel",
+    "SentinelConnectionPool",
+    "SentinelManagedConnection",
+    "SentinelManagedSSLConnection",
+    "SSLConnection",
+    "StrictRedis",
+    "TimeoutError",
+    "UnixDomainSocketConnection",
+    "WatchError",
+]
 
 Redis = client.Redis
-StrictRedis = client.StrictRedis
+
 BlockingConnectionPool = connection.BlockingConnectionPool
-ConnectionPool = connection.ConnectionPool
 Connection = connection.Connection
+ConnectionPool = connection.ConnectionPool
 SSLConnection = connection.SSLConnection
+StrictRedis = client.StrictRedis
 UnixDomainSocketConnection = connection.UnixDomainSocketConnection
+
 from_url = utils.from_url
+
+Sentinel = sentinel.Sentinel
+SentinelConnectionPool = sentinel.SentinelConnectionPool
+SentinelManagedConnection = sentinel.SentinelManagedConnection
+SentinelManagedSSLConnection = sentinel.SentinelManagedSSLConnection
+
 AuthenticationError = exceptions.AuthenticationError
+AuthenticationWrongNumberOfArgsError = exceptions.AuthenticationWrongNumberOfArgsError
 BusyLoadingError = exceptions.BusyLoadingError
+ChildDeadlockedError = exceptions.ChildDeadlockedError
 ConnectionError = exceptions.ConnectionError
 DataError = exceptions.DataError
 InvalidResponse = exceptions.InvalidResponse

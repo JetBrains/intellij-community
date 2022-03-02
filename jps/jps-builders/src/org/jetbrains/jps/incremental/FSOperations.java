@@ -60,7 +60,7 @@ public final class FSOperations {
    *
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static void markDirty(CompileContext context, final File file) throws IOException {
     markDirty(context, CompilationRound.NEXT, file);
   }

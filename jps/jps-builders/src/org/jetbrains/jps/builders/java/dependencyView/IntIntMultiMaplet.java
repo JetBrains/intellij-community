@@ -1,27 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.ObjIntConsumer;
 
-/**
- * @author: db
- */
 abstract class IntIntMultiMaplet implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final int key);
 
-  abstract TIntHashSet get(final int key);
+  abstract IntSet get(final int key);
 
   abstract void put(final int key, final int value);
 
-  abstract void put(final int key, final TIntHashSet value);
+  abstract void put(final int key, final IntSet value);
 
-  abstract void replace(final int key, final TIntHashSet value);
+  abstract void replace(final int key, final IntSet value);
 
   abstract void putAll(IntIntMultiMaplet m);
 
@@ -31,9 +28,9 @@ abstract class IntIntMultiMaplet implements Streamable, CloseableMaplet {
 
   abstract void removeFrom(final int key, final int value);
 
-  abstract void removeAll(final int key, final TIntHashSet values);
+  abstract void removeAll(final int key, final IntSet values);
 
-  abstract void forEachEntry(TIntObjectProcedure<TIntHashSet> proc);
+  abstract void forEachEntry(ObjIntConsumer<? super IntSet> proc);
 
   abstract void flush(boolean memoryCachesOnly);
 
@@ -41,18 +38,12 @@ abstract class IntIntMultiMaplet implements Streamable, CloseableMaplet {
   public void toStream(final DependencyContext context, final PrintStream stream) {
     final OrderProvider op = new OrderProvider(context);
 
-    forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-      @Override
-      public boolean execute(final int a, final TIntHashSet b) {
-        op.register(a);
-        return true;
-      }
-    });
+    forEachEntry((integers, value) -> op.register(value));
 
     final int[] keys = op.get();
 
     for (final int a : keys) {
-      final TIntHashSet b = get(a);
+      final IntSet b = get(a);
       if (b == null) {
         continue;
       }
@@ -65,7 +56,6 @@ abstract class IntIntMultiMaplet implements Streamable, CloseableMaplet {
 
       b.forEach(value -> {
         list.add(context.getValue(value));
-        return true;
       });
 
       Collections.sort(list);

@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.components.JBList;
@@ -77,7 +78,6 @@ class MixedListFactory extends SEResultsListFactory {
           SearchEverywhereContributor<Object> contributor = model.getContributorForIndex(index);
           assert contributor != null : "Null contributor is not allowed here";
           ListCellRenderer<? super Object> renderer = myRenderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
-          //noinspection ConstantConditions
           component = renderer.getListCellRendererComponent(list, value, index, isSelected, true);
         }
 
@@ -87,6 +87,11 @@ class MixedListFactory extends SEResultsListFactory {
             ((JComponent)component).setBorder(JBUI.Borders.empty(1, 2));
           }
         }
+
+        if (!isSelected && component.getBackground() == UIUtil.getListBackground()) {
+          PopupUtil.applyNewUIBackground(component);
+        }
+
         AppUIUtil.targetToDevice(component, list);
         component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
 

@@ -1,15 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -269,6 +267,16 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   public void testOverloadedConstructors() { doTest(false);}
   public void testIncompleteLambdasWithDifferentSignatures() { doTest(false);}
   public void testTwoFunctionalInterfacesWithVarargs() { doTest(false);}
+  public void testVarargsAndBareInferenceVariable() { 
+    doTest(false);
+  
+    PsiMethodCallExpression getReference =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+    assertNotNull(getReference);
+    PsiType type = getReference.getType();
+    assertTrue(type instanceof PsiArrayType);
+    assertFalse(type instanceof PsiEllipsisType);
+  }
   public void testSecondSearchOverloadsBoxing() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";

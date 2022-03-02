@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -25,6 +26,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDunderAllReference;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -76,6 +78,13 @@ public class PyMoveSymbolProcessor {
       }
       final PsiElement[] unwrappedElements = ContainerUtil.mapNotNull(myAllMovedElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
       PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, unwrappedElements);
+      final PyTrailingBlankLinesPostFormatProcessor postFormatProcessor = new PyTrailingBlankLinesPostFormatProcessor();
+      if (PsiTreeUtil.nextVisibleLeaf(newElementBody) == null) {
+        PyUtil.updateDocumentUnblockedAndCommitted(myDestinationFile, document -> {
+          PsiDocumentManager.getInstance(newElementBody.getProject()).commitDocument(document);
+          postFormatProcessor.processElement(newElementBody, CodeStyle.getSettings(myDestinationFile));
+        });
+      }
       deleteElement();
     }
     return new PyMoveSymbolResult(myFilesWithStarUsages);

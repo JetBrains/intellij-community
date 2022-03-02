@@ -1,39 +1,42 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test.util
 
-import org.apache.log4j.AppenderSkeleton
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.spi.LoggingEvent
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
 
 internal class LogPropagator(val systemLogger: (String) -> Unit) {
     private var oldLogLevel: Level? = null
-    private val logger = Logger.getLogger(KotlinDebuggerCaches::class.java)
-    private var appender: AppenderSkeleton? = null
+    private val logger = Logger.getLogger('#' + KotlinDebuggerCaches::class.java.name)
+    private var appender: Handler? = null
 
     fun attach() {
         oldLogLevel = logger.level
-        logger.level = Level.DEBUG
+        logger.level = Level.FINE
 
-        appender = object : AppenderSkeleton() {
-            override fun append(event: LoggingEvent?) {
-                val message = event?.renderedMessage
+        appender = object : Handler() {
+            override fun publish(record: LogRecord) {
+                val message = record.message
                 if (message != null) {
                     systemLogger(message)
                 }
             }
 
-            override fun close() {}
-            override fun requiresLayout() = false
+            override fun flush() {
+            }
+
+            override fun close() {
+            }
         }
 
-        logger.addAppender(appender)
+        logger.addHandler(appender)
     }
 
     fun detach() {
-        logger.removeAppender(appender)
+        logger.removeHandler(appender)
         appender = null
 
         logger.level = oldLogLevel

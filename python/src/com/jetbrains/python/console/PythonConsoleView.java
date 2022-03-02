@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -367,7 +367,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         }
         myHyperlink = detectHyperlink(text);
         if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
-          mySourceHighlighter = new PyConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
+          mySourceHighlighter = new PyConsoleSourceHighlighter(this, myPyHighlighter);
         }
       }
       else {
@@ -483,8 +483,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   //the main function for drawing the queue
   public void showQueue() {
     JBPopupListener listener = new JBPopupListener() {
-      @Override
-      public void beforeShown(@NotNull LightweightWindowEvent event) { }
 
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
@@ -629,6 +627,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public void dispose() {
     super.dispose();
+    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+      ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
+      if (communication != null) {
+        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
+      }
+    }
     var editor = myCommandQueuePanel.getQueueEditor();
     commandQueueDimension = null;
     if (!editor.isDisposed()) {

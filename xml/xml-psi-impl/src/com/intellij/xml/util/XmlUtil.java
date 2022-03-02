@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -53,7 +53,6 @@ import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.psi.XmlPsiBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -453,8 +452,7 @@ public final class XmlUtil {
   /**
    * @deprecated use {@link XmlComment#getCommentText()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static String getCommentText(XmlComment comment) {
     return comment.getCommentText();
@@ -694,7 +692,7 @@ public final class XmlUtil {
     }
     else {
       final XmlAttribute[] attributes = tag.getAttributes().clone();
-      ContainerUtil.sort(list);
+      list.sort(null);
       Arrays.sort(attributes, Comparator.comparing(XmlAttribute::getName));
 
       final Iterator<MyAttributeInfo> iter = list.iterator();

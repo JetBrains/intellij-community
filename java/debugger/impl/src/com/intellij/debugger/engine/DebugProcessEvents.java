@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -21,6 +21,7 @@ import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -60,14 +61,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author lex
- */
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
   private static final String REQUEST_HANDLER = "REQUEST_HANDLER";
 
-  private Map<VirtualMachine, DebuggerEventThread> myEventThreads = new HashMap<>();
+  private final Map<VirtualMachine, DebuggerEventThread> myEventThreads = new HashMap<>();
 
   public DebugProcessEvents(Project project) {
     super(project);
@@ -278,9 +276,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
             });
           }
-          catch (InternalException e) {
-            LOG.debug(e);
-          }
           catch (InterruptedException | ProcessCanceledException | VMDisconnectedException e) {
             throw e;
           }
@@ -395,8 +390,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
         @Override
         public void extensionRemoved(@NotNull PositionManagerFactory extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () ->
-            ObjectUtils.consumeIfNotNull(mapping.remove(extension), m -> myPositionManager.removePositionManager(m)));
+          getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () -> {
+            PositionManager manager = mapping.remove(extension);
+            if (manager != null) {
+              myPositionManager.removePositionManager(manager);
+            }
+          });
         }
       }, true, myDisposable);
 
@@ -567,7 +566,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       catch (InterruptedException ignored) {
       }
       catch (TimeoutException e) {
-        LOG.error("Timeout while preloading thread data", ThreadDumper.dumpThreadsToString());
+        Attachment threadDumpAttachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
+        threadDumpAttachment.setIncluded(true);
+        LOG.error("Timeout while preloading thread data", threadDumpAttachment);
       }
       catch (Exception e) {
         Throwable throwable = DebuggerUtilsAsync.unwrap(e);

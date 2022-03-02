@@ -16,11 +16,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("UnusedReturnValue")
 @ApiStatus.Internal
 public class Field {
+  private static final Pattern PATTERN_ANYTHING = Pattern.compile(".*");
 
   public enum Relation {
     SCALAR_VALUE,
@@ -36,7 +38,8 @@ public class Field {
   private boolean myIsRequired;
   private boolean myEditable = true;
   private boolean myDeprecated = false;
-  private boolean myAnyNameAllowed;
+  @Nullable
+  private Pattern myNamePattern;
   private boolean myEmptyValueAllowed;
   private boolean myIsMany;
   private Relation myOverriddenDefaultRelation;
@@ -195,12 +198,32 @@ public class Field {
 
   @NotNull
   public Field withAnyName(boolean allowAnyName) {
-    myAnyNameAllowed = allowAnyName;
+    myNamePattern = allowAnyName ? PATTERN_ANYTHING : null;
+    return this;
+  }
+
+  @NotNull
+  public Field withNamePattern(@NotNull Pattern pattern) {
+    myNamePattern = pattern.pattern().equals(PATTERN_ANYTHING.pattern()) ? PATTERN_ANYTHING : pattern;
     return this;
   }
 
   public final boolean isAnyNameAllowed() {
-    return myAnyNameAllowed;
+    return PATTERN_ANYTHING == myNamePattern;
+  }
+
+  public final boolean isByPattern() {
+    return myNamePattern != null;
+  }
+
+  public final boolean acceptsFieldName(@NotNull String actualName) {
+    if (myNamePattern == null) {
+      return false;
+    }
+    if (myNamePattern == PATTERN_ANYTHING) {
+      return true;
+    }
+    return myNamePattern.matcher(actualName).matches();
   }
 
   public final boolean isEmptyValueAllowed() {
@@ -229,7 +252,7 @@ public class Field {
   @NotNull
   public List<LookupElementBuilder> getKeyLookups(@NotNull YamlMetaType ownerClass,
                                                   @NotNull PsiElement insertedScalar) {
-    if (isAnyNameAllowed()) {
+    if (isByPattern()) {
       return Collections.emptyList();
     }
 
@@ -277,7 +300,7 @@ public class Field {
     result.myIsRequired = myIsRequired;
     result.myEditable = myEditable;
     result.myDeprecated = myDeprecated;
-    result.myAnyNameAllowed = myAnyNameAllowed;
+    result.myNamePattern = myNamePattern;
     result.myEmptyValueAllowed = myEmptyValueAllowed;
     result.myIsMany = myIsMany;
     result.myOverriddenDefaultRelation = myOverriddenDefaultRelation;

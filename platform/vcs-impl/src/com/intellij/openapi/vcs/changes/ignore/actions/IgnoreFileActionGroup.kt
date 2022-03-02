@@ -65,15 +65,14 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       actions += additionalActions
     }
 
-    isPopup = actions.size > 1
+    presentation.isPopupGroup = actions.size > 1
+    presentation.isPerformGroup = actions.size == 1
     presentation.isVisible = actions.isNotEmpty()
   }
 
   protected open fun createAdditionalActions(project: Project,
                                              selectedFiles: List<VirtualFile>,
                                              unversionedFiles: List<VirtualFile>): List<AnAction> = emptyList()
-
-  override fun canBePerformed(context: DataContext) = actions.size == 1
 
   override fun actionPerformed(e: AnActionEvent) {
     actions.firstOrNull()?.actionPerformed(e)

@@ -88,6 +88,16 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
       added = false
       super.removeNotify()
     }
+
+/*    override fun getPreferredSize(): Dimension {
+      val d = super.getPreferredSize()
+      return baseWidth()?.let {
+        val w = it + insets.left + insets.right
+        println("getPreferredSize: $it ${w}")
+        return Dimension(w, d.height)
+      } ?: d
+
+    }*/
   }.apply {
     border = JBUI.Borders.empty(3, 0, 0, 3)
     background = JBColor.namedColor("Panel.background", Gray.xCD)
@@ -177,7 +187,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     components.add(slot)
   }
 
-  private fun pack() {
+  fun pack() {
     newSlotDetails.isVisible = manager.slotsCount() == 0
 
     slotPane.revalidate()
@@ -226,12 +236,9 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     val runToolbarActionsGroup = ActionManager.getInstance().getAction(
       "RunToolbarActionsGroup") as DefaultActionGroup
 
-    val dataContext = DataManager.getInstance().getDataContext(bar)
-    val event = AnActionEvent.createFromDataContext("RunToolbarActionsGroup", null, dataContext)
-
-    for (action in runToolbarActionsGroup.getChildren(event)) {
+    for (action in runToolbarActionsGroup.getChildren(null)) {
       if (action is ActionGroup && !action.isPopup) {
-        group.addAll(*action.getChildren(event))
+        group.addAll(*action.getChildren(null))
       }
       else {
         group.addAction(action)

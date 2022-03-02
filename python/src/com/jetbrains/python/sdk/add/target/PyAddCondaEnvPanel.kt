@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.fixHighlightingOfUiDslComponents
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -141,9 +140,6 @@ open class PyAddCondaEnvPanel(
       updateComponentsVisibility()
     }
 
-    // workarounds the issue with cropping the focus highlighting
-    formPanel.fixHighlightingOfUiDslComponents()
-
     add(formPanel, BorderLayout.NORTH)
   }
 
@@ -193,6 +189,7 @@ open class PyAddCondaEnvPanel(
       sdk = createSdkForTarget(project, targetEnvironmentConfiguration, homePath, existingSdks)
     }
     PyCondaPackageService.onCondaEnvCreated(condaPath)
+    project.excludeInnerVirtualEnv(sdk)
     return sdk
   }
 
@@ -229,7 +226,8 @@ open class PyAddCondaEnvPanel(
     val userHome = if (targetEnvironmentConfiguration == null) SystemProperties.getUserHome() else config.userHome
     val baseDir = defaultBaseDir ?: "$userHome/.conda/envs"
     val dirName = PathUtil.getFileName(projectBasePath ?: "untitled")
-    pathField.text = FileUtil.toSystemDependentName("$baseDir/$dirName")
+    val fullPath = "$baseDir/$dirName"
+    pathField.text = if (targetEnvironmentConfiguration.isLocal()) FileUtil.toSystemDependentName(fullPath) else fullPath
   }
 
   private val defaultBaseDir: String?

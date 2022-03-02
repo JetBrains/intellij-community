@@ -975,6 +975,68 @@ public class PyTypingTest extends PyTestCase {
            "expr = C(0).get()\n");
   }
 
+  // PY-27627
+  public void testExplicitlyParametrizedGenericClassInstance() {
+    doTest("Node[int]",
+           "from typing import TypeVar, Generic, List\n" +
+           "\n" +
+           "T = TypeVar('T')" +
+           "\n" +
+           "class Node(Generic[T]):\n" +
+           "    def __init__(self, children : List[T]):\n" +
+           "        self.children = children" +
+           "\n" +
+           "expr = Node[int]()");
+  }
+
+  // PY-27627
+  public void testMultiTypeExplicitlyParametrizedGenericClassInstance() {
+    doTest("float",
+           "from typing import TypeVar, Generic\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "V = TypeVar('V')\n" +
+           "Z = TypeVar('Z')\n" +
+           "\n" +
+           "class FirstType(Generic[T]): pass\n" +
+           "class SecondType(Generic[V]): pass\n" +
+           "class ThirdType(Generic[Z]): pass\n" +
+           "\n" +
+           "class Clazz(FirstType[T], SecondType[V], ThirdType[Z]):\n" +
+           "    first: T\n" +
+           "    second: V\n" +
+           "    third: Z\n" +
+           "\n" +
+           "    def __init__(self):\n" +
+           "        pass\n" +
+           "\n" +
+           "node = Clazz[str, int, float]()\n" +
+           "expr = node.third");
+  }
+
+  // PY-27627
+  public void testExplicitlyParametrizedGenericClassInstanceTypizationPriority() {
+    doTest("Node[str]",
+           "from typing import TypeVar, Generic, List\n" +
+           "\n" +
+           "T = TypeVar('T')" +
+           "\n" +
+           "class Node(Generic[T]):\n" +
+           "    def __init__(self, children : List[T]):\n" +
+           "        self.children = children" +
+           "\n" +
+           "expr = Node[str]([1,2,3])");
+  }
+
+  // PY-27627
+  public void testItemLookupNotResolvedAsParametrizedClassInstance() {
+    doTest("tuple",
+           "d = {\n" +
+           "    int: lambda: ()\n" +
+           "}\n" +
+           "expr = d[int]()");
+  }
+
   // PY-20057
   public void testClassObjectType() {
     doTest("Type[MyClass]",

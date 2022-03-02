@@ -26,6 +26,7 @@
       <with attribute="implementationClass" implements="com.intellij.lang.injection.general.LanguageInjectionPerformer"/>
     </extensionPoint>
     <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider" dynamic="true"/>
+    <extensionPoint name="sideEffectGuard" interface="com.intellij.model.SideEffectGuard" dynamic="true"/>
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage" dynamic="true"/>
     <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ParserDefinition"/>

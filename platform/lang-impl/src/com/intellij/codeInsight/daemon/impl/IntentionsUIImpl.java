@@ -13,10 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class IntentionsUIImpl extends IntentionsUI {
-
   private volatile IntentionHintComponent myLastIntentionHint;
 
-  public IntentionsUIImpl(Project project) {
+  public IntentionsUIImpl(@NotNull Project project) {
     super(project);
   }
 
@@ -32,23 +31,19 @@ public class IntentionsUIImpl extends IntentionsUI {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
     if (!actionsChanged) return;
 
-    //IntentionHintComponent hint = myLastIntentionHint;
-    //if (hint != null && hint.getPopupUpdateResult(actionsChanged) == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
-    //  hint.recreate();
-    //  return;
-    //}
-
     Project project = cachedIntentions.getProject();
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     Point xy = editor.logicalPositionToXY(caretPos);
 
     hide();
-    if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false) &&
-        visibleArea.contains(xy) &&
-        editor.getSettings().isShowIntentionBulb() &&
-        editor.getCaretModel().getCaretCount() == 1 &&
-        cachedIntentions.showBulb()) {
+    if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)
+        && visibleArea.contains(xy)
+        && editor.getSettings().isShowIntentionBulb()
+        && editor.getCaretModel().getCaretCount() == 1
+        && cachedIntentions.showBulb()
+        // do not show bulb when the user explicitly ESCaped it away
+        && !DaemonListeners.getInstance(project).isEscapeJustPressed()) {
       myLastIntentionHint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
     }
   }

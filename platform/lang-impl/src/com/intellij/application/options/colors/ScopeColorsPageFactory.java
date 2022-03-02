@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -12,7 +12,7 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.codeStyle.DisplayPriority;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,7 +46,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
     //panel.setBorder(new LineBorder(Color.red));
     if (projects.length == 0) return panel;
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                   JBUI.emptyInsets(), 0, 0);
+                                                   JBInsets.emptyInsets(), 0, 0);
 
     JButton button = new JButton(LangBundle.message("manage.scopes"));
     button.setPreferredSize(new Dimension(230, button.getPreferredSize().height));

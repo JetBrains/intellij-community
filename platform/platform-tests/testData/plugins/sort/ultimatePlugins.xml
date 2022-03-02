@@ -784,7 +784,7 @@
     <depends optional="true">com.intellij.modules.sql</depends>
     <depends optional="true">-com-intellij-plugins-html-instantEditing-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.wsl/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.wsl.remoteSdk/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-wsl-</id>
     <name>WSL Support Framework</name>
     <depends>com.intellij.modules.ultimate</depends>
@@ -1379,12 +1379,5 @@
     <id>-org-jetbrains-python-concurrency-visualiser-</id>
     <name>Concurrency Visualiser</name>
     <depends>com.intellij.modules.pycharm.professional</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.microservices.config/META-INF/plugin.xml">
-    <id>-com-intellij-microservices-config-</id>
-    <name>Microservices Application Configuration</name>
-    <depends>com.intellij.modules.java</depends>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>-com-intellij-properties-</depends>
   </idea-plugin>
 </root>

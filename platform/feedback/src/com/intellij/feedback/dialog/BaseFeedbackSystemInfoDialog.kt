@@ -31,8 +31,11 @@ fun showFeedbackSystemInfoDialog(project: Project?,
     row(FeedbackBundle.message("dialog.created.project.system.info.panel.app.version")) {
       cell(MultiLineLabel(systemInfoData.appVersionWithBuild)) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.license")) {
-      cell(MultiLineLabel(systemInfoData.getLicenseInfoForDialog())) //NON-NLS
+    row(FeedbackBundle.message("dialog.created.project.system.info.panel.license.evaluation")) {
+      label(systemInfoData.getIsLicenseEvaluationForDialog()) //NON-NLS
+    }
+    row(FeedbackBundle.message("dialog.created.project.system.info.panel.license.restrictions")) {
+      cell(MultiLineLabel(systemInfoData.getLicenseRestrictionsForDialog())) //NON-NLS
     }
     row(FeedbackBundle.message("dialog.created.project.system.info.panel.runtime.version")) {
       label(systemInfoData.runtimeVersion) //NON-NLS

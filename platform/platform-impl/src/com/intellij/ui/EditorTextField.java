@@ -781,6 +781,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   @Override
+  public void validate() {
+    getEditor(true);
+    super.validate();
+  }
+
+  @Override
   public Dimension getPreferredSize() {
     if (isPreferredSizeSet()) {
       return super.getPreferredSize();

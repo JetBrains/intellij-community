@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
@@ -18,7 +18,7 @@ import java.awt.event.ItemEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InspectionOptionsPanel extends JPanel {
+public class InspectionOptionsPanel extends JPanel implements InspectionOptionContainer {
 
   @Nullable
   private final OptionAccessor myOptionAccessor;
@@ -85,12 +85,13 @@ public class InspectionOptionsPanel extends JPanel {
     return checkBox;
   }
 
-  /**
-   * @param property property name
-   * @return label text for the checkbox that changes the specified property; null if there were no such checkbox added
-   */
-  public @Nullable @NlsContexts.Checkbox String getLabelForCheckbox(@NotNull @NonNls String property) {
-    return myCheckBoxLabels.get(property);
+  @Override
+  public @NotNull HtmlChunk getLabelForCheckbox(@NotNull @NonNls String property) {
+    String label = myCheckBoxLabels.get(property);
+    if (label == null) {
+      throw new IllegalArgumentException("Invalid property name: " + property);
+    }
+    return HtmlChunk.text(label);
   }
 
   public JCheckBox addDependentCheckBox(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property,

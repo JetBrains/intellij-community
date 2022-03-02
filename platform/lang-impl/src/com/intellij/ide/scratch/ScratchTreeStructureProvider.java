@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -41,7 +41,6 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,8 +150,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
-  @Nullable
-  private static VirtualFile getVirtualFile(@NotNull RootType rootType) {
+  public static @Nullable VirtualFile getVirtualFile(@NotNull RootType rootType) {
     String path = ScratchFileService.getInstance().getRootPath(rootType);
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
@@ -184,8 +182,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   /**
    * @deprecated Use modify method instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static AbstractTreeNode<?> createRootNode(@NotNull Project project, ViewSettings settings) {
     return new MyProjectNode(project, settings);
   }

@@ -4,10 +4,13 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.isDirectory
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask
+import java.nio.file.Path
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getVMArguments(): MutableList<String> {
@@ -35,7 +38,8 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         return res
     }
 
-    override fun getAdditionalPluginPaths(): Iterable<String> {
-        return listOf(KotlinArtifacts.instance.kotlincDirectory.path)
-    }
+    override fun getPathParameters(): List<Pair<String, Path>> =
+        listOfNotNull(
+            Pair("-Djps.kotlin.home=", KotlinPathsProvider.getKotlinPaths(project).homePath.toPath()).takeIf { it.second.isDirectory() }
+        )
 }

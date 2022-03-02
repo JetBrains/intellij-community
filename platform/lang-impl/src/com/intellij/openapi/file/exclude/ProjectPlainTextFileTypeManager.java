@@ -14,7 +14,7 @@ import java.util.Collection;
  * @author Rustam Vishnyakov
  * @deprecated use {@link OverrideFileTypeManager} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @State(name = "ProjectPlainTextFileTypeManager")
 public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   public static ProjectPlainTextFileTypeManager getInstance(@NotNull Project project) {
@@ -35,6 +35,9 @@ public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   public void loadState(@NotNull Element state) {
     super.loadState(state);
     for (VirtualFile file : super.getFiles()) {
+      if (!OverrideFileTypeManager.isOverridable(file.getFileType())) {
+        continue;
+      }
       OverrideFileTypeManager.getInstance().addFile(file, PlainTextFileType.INSTANCE);
     }
   }

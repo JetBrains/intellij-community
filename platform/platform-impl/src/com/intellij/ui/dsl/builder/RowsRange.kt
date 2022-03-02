@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Grouped rows range to perform operations on them. All rows use parent grid
  */
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface RowsRange {
 
   fun visible(isVisible: Boolean): RowsRange

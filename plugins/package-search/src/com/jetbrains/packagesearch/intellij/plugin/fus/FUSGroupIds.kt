@@ -2,7 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.fus
 
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 
-internal object FUSGroupIds {
+object FUSGroupIds {
 
     const val GROUP_ID = "packagesearch"
 
@@ -20,8 +20,9 @@ internal object FUSGroupIds {
 
     const val PREFERENCES_GRADLE_SCOPES_COUNT = "preferences_gradle_scopes_count"
     const val PREFERENCES_UPDATE_SCOPES_ON_USAGE = "preferences_update_scopes_on_usage"
-    const val PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED = "preferences_default_gradle_scope"
-    const val PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED = "preferences_default_maven_scope"
+    const val PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED = "preferences_default_gradle_scope_changed"
+    const val PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED = "preferences_default_maven_scope_changed"
+    const val PREFERENCES_AUTO_ADD_REPOSITORIES = "preferences_auto_add_repositories"
     const val FILE_TYPE = "file_type"
     const val DETAILS_LINK_LABEL = "details_link_label"
     const val DETAILS_VISIBLE = "details_visible"

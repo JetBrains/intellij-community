@@ -11,6 +11,7 @@ import com.intellij.terminal.TerminalSplitAction;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
 import com.jediterm.terminal.TextStyle;
@@ -19,7 +20,6 @@ import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
@@ -137,6 +137,16 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
+  public String getSessionName() {
+    ProcessTtyConnector connector = getProcessTtyConnector();
+    if (connector instanceof PtyProcessTtyConnector) {
+      // use name from settings for local terminal
+      return TerminalOptionsProvider.getInstance().getTabName();
+    }
+    return super.getSessionName();
+  }
+
+  @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
 
@@ -175,18 +185,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return TerminalUtil.hasRunningCommands(processTtyConnector);
     }
     throw new IllegalStateException("Cannot determine if there are running processes for " + connector.getClass()); //NON-NLS
-  }
-
-  /**
-   * @deprecated use {@link TtyConnector#close()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public void terminateProcess() {
-    TtyConnector connector = getTtyConnector();
-    if (connector != null) {
-      connector.close();
-    }
   }
 
   @Override
@@ -245,6 +243,11 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     TerminalLineIntervalHighlighting highlighting = line.addCustomHighlighting(intervalStartOffset, intervalLength, style);
     getTerminalPanel().repaint();
     return highlighting;
+  }
+
+  @Override
+  public @Nullable ProcessTtyConnector getProcessTtyConnector() {
+    return getProcessTtyConnector(getTtyConnector());
   }
 
   public static @Nullable ProcessTtyConnector getProcessTtyConnector(@Nullable TtyConnector connector) {

@@ -10,10 +10,10 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="library" name="rd-core" level="project" />
-    <orderEntry type="library" name="rd-framework" level="project" />
+    <orderEntry type="library" exported="" name="rd-core" level="project" />
+    <orderEntry type="library" exported="" name="rd-framework" level="project" />
     <orderEntry type="library" name="rd-text" level="project" />
-    <orderEntry type="library" name="rd-swing" level="project" />
+    <orderEntry type="library" exported="" name="rd-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -19,9 +19,9 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -32,8 +32,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }
@@ -63,7 +62,14 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       final InheritorChooser inheritorChooser = new InheritorChooser() {
         @Override
         protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-          ReadAction.nonBlocking(() -> ((T)configuration.getConfiguration()).bePatternConfiguration(classes, method))
+          ReadAction.nonBlocking(() -> {
+              ((T)configuration.getConfiguration()).bePatternConfiguration(classes, method);
+              if (!classes.isEmpty()) {
+                PsiClass containerClass = psiElement instanceof PsiMethod ? ((PsiMethod)psiElement).getContainingClass() 
+                                                                          : ((PsiClass)psiElement);
+                setNestedClass(classes.get(0), containerClass);
+              }
+            })
             .finishOnUiThread(ModalityState.NON_MODAL, v -> super.runForClasses(classes, method, context, performRunnable))
             .submit(AppExecutorUtil.getAppExecutorService());
         }
@@ -73,15 +79,32 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
                                    PsiMethod psiMethod,
                                    ConfigurationContext context,
                                    Runnable performRunnable) {
+          PsiClass containerClass;
           if (psiElement instanceof PsiMethod) {
             final Project project = psiMethod.getProject();
             final MethodLocation methodLocation = new MethodLocation(project, psiMethod, PsiLocation.fromPsiElement(aClass));
             ((T)configuration.getConfiguration()).beMethodConfiguration(methodLocation);
+            containerClass = psiMethod.getContainingClass();
           }
           else {
             ((T)configuration.getConfiguration()).beClassConfiguration(aClass);
+            containerClass = (PsiClass)psiElement;
           }
+          setNestedClass(aClass, containerClass);
           super.runForClass(aClass, psiMethod, context, performRunnable);
+        }
+
+        private void setNestedClass(PsiClass aClass, PsiClass containerClass) {
+          if (containerClass != null && !aClass.isInheritor(containerClass, true)) {
+            for (PsiClass innerClass : aClass.getAllInnerClasses()) {
+              //when there are multiple inners with the same super - we just take the first for now; 
+              //otherwise chooser should have more than one step
+              if (InheritanceUtil.isInheritorOrSelf(innerClass, containerClass, true)) {
+                ((T)configuration.getConfiguration()).withNestedClass(innerClass);
+                break;
+              }
+            }
+          }
         }
       };
       if (inheritorChooser.runMethodInAbstractClass(fromContext, performRunnable, psiMethod, containingClass,

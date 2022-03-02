@@ -25,7 +25,7 @@ import static org.junit.Assume.assumeThat;
 
 public class GradleImportPerformanceTest extends GradleImportPerformanceTestCase {
 
-  public static final String TEST_DATA_PATH = System.getenv("gradle.performance.test.data.path");
+  public static final String TEST_DATA_PATH = System.getenv("gradle_performance_test_data_path");
 
   @Override
   public void setUp() throws Exception {

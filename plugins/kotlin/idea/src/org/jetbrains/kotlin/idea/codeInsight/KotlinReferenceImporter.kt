@@ -37,9 +37,11 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
     protected abstract val enableAutoImportFilter: Boolean
 
     private fun filterSuggestions(context: KtFile, suggestions: Collection<FqName>): Collection<FqName> =
-        KotlinAutoImportsFilter.takeIf { enableAutoImportFilter }
-            ?.filterSuggestionsIfApplicable(context, suggestions)
-            ?: suggestions
+        if (enableAutoImportFilter) {
+            KotlinAutoImportsFilter.filterSuggestionsIfApplicable(context, suggestions)
+        } else {
+            suggestions
+        }
 
     override fun autoImportReferenceAtCursor(editor: Editor, file: PsiFile): Boolean {
         if (file !is KtFile || !DaemonListeners.canChangeFileSilently(file)) return false

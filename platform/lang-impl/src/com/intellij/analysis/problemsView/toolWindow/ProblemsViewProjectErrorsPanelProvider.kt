@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -14,8 +15,6 @@ class ProblemsViewProjectErrorsPanelProvider(private val project: Project) : Pro
   private val ACTION_IDS = listOf("CompileDirty", "InspectCode")
 
   override fun create(): ProblemsViewTab? {
-    if (!ProblemsView.isProjectErrorsEnabled()) return null
-
     val state = ProblemsViewState.getInstance(project)
     val panel = ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.project"))
     panel.treeModel.root = CollectorBasedRoot(panel)

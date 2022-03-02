@@ -16,12 +16,12 @@ import org.jetbrains.kotlin.psi.psiUtil.children
 class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactoringSupport) :
     SuggestedRefactoringStateChanges(refactoringSupport)
 {
-    override fun createInitialState(declaration: PsiElement): SuggestedRefactoringState? {
-        declaration as KtDeclaration
-        if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null // currently not supported
-        if (declaration.hasModifier(KtTokens.ACTUAL_KEYWORD)) return null // currently not supported
-        val state = super.createInitialState(declaration) ?: return null
-        if (isDuplicate(declaration, state.oldSignature)) return null
+    override fun createInitialState(anchor: PsiElement): SuggestedRefactoringState? {
+        anchor as KtDeclaration
+        if (anchor.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null // currently not supported
+        if (anchor.hasModifier(KtTokens.ACTUAL_KEYWORD)) return null // currently not supported
+        val state = super.createInitialState(anchor) ?: return null
+        if (isDuplicate(anchor, state.oldSignature)) return null
         return state
     }
 
@@ -57,29 +57,29 @@ class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefact
         }
     }
 
-    override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
-        declaration as KtDeclaration
-        val name = declaration.name ?: return null
-        if (declaration !is KtCallableDeclaration || KotlinSuggestedRefactoringSupport.isOnlyRenameSupported(declaration)) {
+    override fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
+        anchor as KtDeclaration
+        val name = anchor.name ?: return null
+        if (anchor !is KtCallableDeclaration || KotlinSuggestedRefactoringSupport.isOnlyRenameSupported(anchor)) {
             return Signature.create(name, null, emptyList(), null)
         }
 
-        val parameters = declaration.valueParameters.map { it.extractParameterData() ?: return null }
-        val type = declaration.typeReference?.text
-        val receiverType = declaration.receiverTypeReference?.text
+        val parameters = anchor.valueParameters.map { it.extractParameterData() ?: return null }
+        val type = anchor.typeReference?.text
+        val receiverType = anchor.receiverTypeReference?.text
         val signature = Signature.create(
             name,
             type,
             parameters,
-            KotlinSignatureAdditionalData(DeclarationType.fromDeclaration(declaration), receiverType)
+            KotlinSignatureAdditionalData(DeclarationType.fromDeclaration(anchor), receiverType)
         ) ?: return null
 
-        return if (prevState == null) signature else matchParametersWithPrevState(signature, declaration, prevState)
+        return if (prevState == null) signature else matchParametersWithPrevState(signature, anchor, prevState)
     }
 
-    override fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?> {
-        if (declaration !is KtFunction) return emptyList()
-        return declaration.valueParameters.map { it.colon?.textRange }
+    override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
+        if (anchor !is KtFunction) return emptyList()
+        return anchor.valueParameters.map { it.colon?.textRange }
     }
 
     private fun KtParameter.extractParameterData(): Parameter? {

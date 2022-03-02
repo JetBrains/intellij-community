@@ -3,10 +3,12 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiYieldStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UYieldExpression
 
+@ApiStatus.Internal
 class JavaUYieldExpression(
   override val sourcePsi: PsiYieldStatement,
   private val psiExpression: PsiExpression?,

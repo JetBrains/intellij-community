@@ -1,45 +1,60 @@
-from typing import Any
+from _typeshed import SupportsKeysAndGetItem
+from collections.abc import Callable, Generator, Iterable
+from typing import Any, ClassVar
 
-from jsonschema import exceptions as exceptions
-from jsonschema.exceptions import ErrorTree as ErrorTree
+from ._utils import URIDict
 
-class _DontDoThat(Exception): ...
+_Schema = Any
 
-validators: Any
-meta_schemas: Any
+# This class does not exist at runtime. Compatible classes are created at
+# runtime by create().
+class _Validator:
+    VALIDATORS: ClassVar[dict[Any, Any]]
+    META_SCHEMA: ClassVar[dict[Any, Any]]
+    TYPE_CHECKER: Any
+    @staticmethod
+    def ID_OF(schema: _Schema) -> str: ...
+    schema: Any
+    resolver: Any
+    format_checker: Any
+    evolve: Any
+    def __init__(self, schema: _Schema, resolver: Any | None = ..., format_checker: Any | None = ...) -> None: ...
+    @classmethod
+    def check_schema(cls, schema) -> None: ...
+    def iter_errors(self, instance, _schema: Any | None = ...) -> Generator[Any, None, None]: ...
+    def descend(self, instance, schema, path: Any | None = ..., schema_path: Any | None = ...) -> Generator[Any, None, None]: ...
+    def validate(self, *args, **kwargs) -> None: ...
+    def is_type(self, instance, type): ...
+    def is_valid(self, instance, _schema: Any | None = ...) -> bool: ...
 
-def validates(version): ...
-
-class _DefaultTypesDeprecatingMetaClass(type):
-    DEFAULT_TYPES: Any
-
+def validates(version: str) -> Callable[..., Any]: ...
 def create(
-    meta_schema,
-    validators=...,
-    version: Any | None = ...,
-    default_types: Any | None = ...,
-    type_checker: Any | None = ...,
-    id_of=...,
-): ...
+    meta_schema, validators=..., version: Any | None = ..., type_checker=..., id_of=..., applicable_validators=...
+) -> type[_Validator]: ...
 def extend(validator, validators=..., version: Any | None = ..., type_checker: Any | None = ...): ...
 
-Draft3Validator: Any
-Draft4Validator: Any
-Draft6Validator: Any
-Draft7Validator: Any
+# At runtime these are fields that are assigned the return values of create() calls.
+class Draft3Validator(_Validator): ...
+class Draft4Validator(_Validator): ...
+class Draft6Validator(_Validator): ...
+class Draft7Validator(_Validator): ...
+class Draft201909Validator(_Validator): ...
+class Draft202012Validator(_Validator): ...
+
+_Handler = Callable[[str], Any]
 
 class RefResolver:
-    referrer: Any
+    referrer: str
     cache_remote: Any
-    handlers: Any
-    store: Any
+    handlers: dict[str, _Handler]
+    store: URIDict
     def __init__(
         self,
-        base_uri,
-        referrer,
-        store=...,
+        base_uri: str,
+        referrer: str,
+        store: SupportsKeysAndGetItem[str, str] | Iterable[tuple[str, str]] = ...,
         cache_remote: bool = ...,
-        handlers=...,
+        handlers: SupportsKeysAndGetItem[str, _Handler] | Iterable[tuple[str, _Handler]] = ...,
         urljoin_cache: Any | None = ...,
         remote_cache: Any | None = ...,
     ) -> None: ...
@@ -58,5 +73,5 @@ class RefResolver:
     def resolve_fragment(self, document, fragment): ...
     def resolve_remote(self, uri): ...
 
-def validate(instance, schema, cls: Any | None = ..., *args, **kwargs) -> None: ...
+def validate(instance: object, schema: object, cls: type[_Validator] | None = ..., *args: Any, **kwargs: Any) -> None: ...
 def validator_for(schema, default=...): ...

@@ -5,3 +5,21 @@ sqlite3.Connection.enable_load_extension
 sqlite3.Connection.load_extension
 sqlite3.dbapi2.Connection.enable_load_extension
 sqlite3.dbapi2.Connection.load_extension
+
+# pathlib methods that exist on Windows, but always raise NotImplementedError,
+# so are omitted from the stub
+pathlib.WindowsPath.is_mount
+pathlib.Path.is_mount
+
+# Exists at runtime, but missing from stubs
+_winapi.CreateFileMapping
+_winapi.MapViewOfFile
+_winapi.OpenFileMapping
+_winapi.VirtualQuerySize
+asyncio.IocpProactor.recvfrom
+asyncio.IocpProactor.sendto
+asyncio.windows_events.IocpProactor.recvfrom
+asyncio.windows_events.IocpProactor.sendto
+msvcrt.GetErrorMode
+socket.MsgFlag.MSG_ERRQUEUE
+subprocess.STARTUPINFO.copy

@@ -20,7 +20,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productImplementationModules = ["intellij.platform.main", "intellij.notebooks.visualization"]
+    productLayout.productImplementationModules = ["intellij.platform.main"]
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
@@ -43,7 +43,9 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     mavenArtifacts.additionalModules = [
       "intellij.tools.jps.buildScriptDependencies",
       "intellij.platform.debugger.testFramework",
-      "intellij.platform.vcs.testFramework"
+      "intellij.platform.vcs.testFramework",
+      "intellij.platform.externalSystem.testFramework",
+      "intellij.maven.testFramework"
     ]
 
     versionCheckerConfig = CE_CLASS_VERSIONS

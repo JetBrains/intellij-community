@@ -33,7 +33,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerPsiEvaluator;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -148,8 +147,13 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
               throw ex;
             }
           });
-          Value value = evaluator.evaluate(evalContext);
-          WatchItemDescriptor descriptor = new WatchItemDescriptor(project, text.get(), value, evalContext);
+          WatchItemDescriptor descriptor = new WatchItemDescriptor(project, text.get()) {
+            @Override
+            protected @NotNull ExpressionEvaluator getEvaluator(EvaluationContextImpl evaluationContext) {
+              return evaluator;
+            }
+          };
+          descriptor.setContext(evalContext);
           callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
         }
         catch (EvaluateException e) {

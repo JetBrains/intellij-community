@@ -78,7 +78,7 @@ open class UastEmptyExpression(override val uastParent: UElement?) : UExpression
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiElement?

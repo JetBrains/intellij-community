@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
@@ -44,6 +44,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -384,7 +385,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     Window window = getWindow();
     if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null) {
-      UIUtil.setCustomTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
+      ToolbarUtil.setTransparentTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
     }
 
     Container contentPane = getContentPane();
@@ -529,7 +530,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                     Project project,
                     @NotNull ActionCallback focused) {
       super(owner);
-      UIUtil.markAsTypeAheadAware(this);
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
 
@@ -626,7 +626,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        JdkEx.setHasCustomDecoration(this);
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
       }
       super.addNotify();
     }

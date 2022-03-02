@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -12,10 +12,16 @@ data class JsonFileProviderIndexStatistics(
   val providerName: String = "",
   val totalNumberOfIndexedFiles: Int = 0,
   val totalNumberOfFilesFullyIndexedByExtensions: Int = 0,
-  val totalIndexingTime: JsonDuration = JsonDuration(0),
-  val contentLoadingTime: JsonDuration = JsonDuration(0),
+  val totalIndexingVisibleTime: JsonDuration = JsonDuration(0),
+  val contentLoadingVisibleTime: JsonDuration = JsonDuration(0),
   val numberOfTooLargeForIndexingFiles: Int = 0,
   val slowIndexedFiles: List<JsonSlowIndexedFile> = emptyList(),
+  val filesFullyIndexedByExtensions: List<String> = emptyList(),
+  val isAppliedAllValuesSeparately: Boolean = true,
+  /**
+   * Is 0 when [isAppliedAllValuesSeparately] <=> [!FileBasedIndexImpl.isWritingIndexValuesSeparatedFromCounting]
+   */
+  val separateApplyingIndexesVisibleTime: JsonDuration = JsonDuration(0),
   /**
    * Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
    */

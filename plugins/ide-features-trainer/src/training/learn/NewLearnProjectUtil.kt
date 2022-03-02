@@ -21,6 +21,9 @@ object NewLearnProjectUtil {
                          langSupport: LangSupport,
                          selectedSdk: Sdk?,
                          postInitCallback: (learnProject: Project) -> Unit) {
+    if (langSupport.useUserProjects) {
+      error("Language support for ${langSupport.primaryLanguage} cannot create learning project.")
+    }
     val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
 
     ProjectUtils.importOrOpenProject(langSupport, projectToClose) { newProject ->

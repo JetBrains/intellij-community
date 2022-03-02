@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
@@ -194,6 +194,28 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       });
     }
 
+    /**
+     * Sets a label for this component.  If the given label has displayed mnemonic,
+     * it will call the {@code #doClick} method when the mnemonic is activated.
+     *
+     * @param label the label referring to this component
+     * @see JLabel#setLabelFor
+     */
+    public void setLabel(@NotNull JLabel label) {
+      label.setLabelFor(this);
+
+      ActionMap map = label.getActionMap();
+      String name = "release"; // BasicLabelUI.Actions.RELEASE
+      Action old = map.get(name);
+      map.put(name, new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+          if (old != null) old.actionPerformed(event);
+          doClick();
+        }
+      });
+    }
+
     protected void presentationChanged(PropertyChangeEvent evt) {
       String propertyName = evt.getPropertyName();
       if (Presentation.PROP_TEXT.equals(propertyName)) {
@@ -332,7 +354,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Font getFont() {
-      return isSmallVariant() ? UIUtil.getToolbarFont() : UIUtil.getLabelFont();
+      return isSmallVariant() ? UIUtil.getToolbarFont() : StartupUiUtil.getLabelFont();
     }
 
     @Override

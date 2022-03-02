@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.lang
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,27 +23,37 @@ interface LangSupport {
   /** It is a name for content root for learning files. In most cases it is just a learning project name. */
   val contentRootDirectoryName: String
 
-  val filename: String
-    get() = "Learning"
   val langCourseFeedback: String?
     get() = null
 
   /** The onboarding leson can set this variable to non-null value to invoke feedback dialog and include corresponding data */
   var onboardingFeedbackData: OnboardingFeedbackData?
 
+  /**
+   * Should be true iff this language support will not create its own demo project and
+   * will use current user project even for non-scratch lessons.
+   */
+  val useUserProjects: Boolean get() = false
+
   /** Relative path inside plugin resources */
   val projectResourcePath: String
     get() = "learnProjects/${primaryLanguage.toLowerCase()}/$contentRootDirectoryName"
 
   /** Language can specify default sandbox-like file to be used for lessons with modifications but also with project support */
-  val projectSandboxRelativePath: String?
+  val sampleFilePath: String?
     get() = null
+
+  /** Language can specify default scratch file name for scratch lessons */
+  val scratchFileName: String
+    get() = "Learning"
 
   companion object {
     const val EP_NAME = "training.ift.language.extension"
   }
 
   fun installAndOpenLearningProject(contentRoot: Path, projectToClose: Project?, postInitCallback: (learnProject: Project) -> Unit)
+
+  fun openOrImportLearningProject(projectRootDirectory: VirtualFile, openProjectTask: OpenProjectTask): Project
 
   fun copyLearningProjectFiles(projectDirectory: File, destinationFilter: FileFilter? = null): Boolean
 

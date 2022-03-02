@@ -16,11 +16,13 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiLabeledStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.ULabeledExpression
 
+@ApiStatus.Internal
 class JavaULabeledExpression(
   override val sourcePsi: PsiLabeledStatement,
   givenParent: UElement?

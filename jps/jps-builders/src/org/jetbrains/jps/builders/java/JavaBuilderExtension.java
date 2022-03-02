@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.builders.java;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
@@ -54,7 +53,6 @@ public abstract class JavaBuilderExtension {
    * The implementation should expect asynchronous execution.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public Callbacks.ConstantAffectionResolver getConstantSearch(CompileContext context) {
     return null;

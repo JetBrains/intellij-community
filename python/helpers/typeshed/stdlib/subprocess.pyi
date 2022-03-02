@@ -1,7 +1,7 @@
 import sys
 from _typeshed import Self, StrOrBytesPath
 from types import TracebackType
-from typing import IO, Any, AnyStr, Callable, Generic, Iterable, Mapping, Sequence, Type, TypeVar, Union, overload
+from typing import IO, Any, AnyStr, Callable, Generic, Iterable, Mapping, Sequence, TypeVar, Union, overload
 from typing_extensions import Literal
 
 if sys.version_info >= (3, 9):
@@ -991,6 +991,7 @@ class Popen(Generic[AnyStr]):
             encoding: str | None = ...,
             errors: str | None = ...,
         ) -> Popen[Any]: ...
+
     def poll(self) -> int | None: ...
     if sys.version_info >= (3, 7):
         def wait(self, timeout: float | None = ...) -> int: ...
@@ -1008,7 +1009,7 @@ class Popen(Generic[AnyStr]):
     def kill(self) -> None: ...
     def __enter__(self: Self) -> Self: ...
     def __exit__(
-        self, type: Type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None
+        self, type: type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None
     ) -> None: ...
     if sys.version_info >= (3, 9):
         def __class_getitem__(cls, item: Any) -> GenericAlias: ...
@@ -1016,7 +1017,12 @@ class Popen(Generic[AnyStr]):
 # The result really is always a str.
 def getstatusoutput(cmd: _TXT) -> tuple[int, str]: ...
 def getoutput(cmd: _TXT) -> str: ...
-def list2cmdline(seq: Iterable[str]) -> str: ...  # undocumented
+
+if sys.version_info >= (3, 8):
+    def list2cmdline(seq: Iterable[StrOrBytesPath]) -> str: ...  # undocumented
+
+else:
+    def list2cmdline(seq: Iterable[str]) -> str: ...  # undocumented
 
 if sys.platform == "win32":
     class STARTUPINFO:
@@ -1038,22 +1044,27 @@ if sys.platform == "win32":
         wShowWindow: int
         if sys.version_info >= (3, 7):
             lpAttributeList: Mapping[str, Any]
-    STD_INPUT_HANDLE: Any
-    STD_OUTPUT_HANDLE: Any
-    STD_ERROR_HANDLE: Any
-    SW_HIDE: int
-    STARTF_USESTDHANDLES: int
-    STARTF_USESHOWWINDOW: int
-    CREATE_NEW_CONSOLE: int
-    CREATE_NEW_PROCESS_GROUP: int
+    from _winapi import (
+        CREATE_NEW_CONSOLE as CREATE_NEW_CONSOLE,
+        CREATE_NEW_PROCESS_GROUP as CREATE_NEW_PROCESS_GROUP,
+        STARTF_USESHOWWINDOW as STARTF_USESHOWWINDOW,
+        STARTF_USESTDHANDLES as STARTF_USESTDHANDLES,
+        STD_ERROR_HANDLE as STD_ERROR_HANDLE,
+        STD_INPUT_HANDLE as STD_INPUT_HANDLE,
+        STD_OUTPUT_HANDLE as STD_OUTPUT_HANDLE,
+        SW_HIDE as SW_HIDE,
+    )
+
     if sys.version_info >= (3, 7):
-        ABOVE_NORMAL_PRIORITY_CLASS: int
-        BELOW_NORMAL_PRIORITY_CLASS: int
-        HIGH_PRIORITY_CLASS: int
-        IDLE_PRIORITY_CLASS: int
-        NORMAL_PRIORITY_CLASS: int
-        REALTIME_PRIORITY_CLASS: int
-        CREATE_NO_WINDOW: int
-        DETACHED_PROCESS: int
-        CREATE_DEFAULT_ERROR_MODE: int
-        CREATE_BREAKAWAY_FROM_JOB: int
+        from _winapi import (
+            ABOVE_NORMAL_PRIORITY_CLASS as ABOVE_NORMAL_PRIORITY_CLASS,
+            BELOW_NORMAL_PRIORITY_CLASS as BELOW_NORMAL_PRIORITY_CLASS,
+            CREATE_BREAKAWAY_FROM_JOB as CREATE_BREAKAWAY_FROM_JOB,
+            CREATE_DEFAULT_ERROR_MODE as CREATE_DEFAULT_ERROR_MODE,
+            CREATE_NO_WINDOW as CREATE_NO_WINDOW,
+            DETACHED_PROCESS as DETACHED_PROCESS,
+            HIGH_PRIORITY_CLASS as HIGH_PRIORITY_CLASS,
+            IDLE_PRIORITY_CLASS as IDLE_PRIORITY_CLASS,
+            NORMAL_PRIORITY_CLASS as NORMAL_PRIORITY_CLASS,
+            REALTIME_PRIORITY_CLASS as REALTIME_PRIORITY_CLASS,
+        )

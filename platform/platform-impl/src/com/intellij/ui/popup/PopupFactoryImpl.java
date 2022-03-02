@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -38,6 +38,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -258,7 +259,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       List<ActionItem> items = ActionPopupStep.createActionItems(
           actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
 
-      return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+      return new ActionPopupStep(items, title, getComponentContextSupplier(dataContext, component), actionPlace, showNumbers || honorActionMnemonics && anyMnemonicsIn(items),
                                  preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
     }
 
@@ -313,7 +314,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @NotNull
-  private static Supplier<DataContext> getComponentContextSupplier(Component component) {
+  private static Supplier<DataContext> getComponentContextSupplier(@NotNull DataContext parentDataContext,
+                                                                   @Nullable Component component) {
+    if(component == null) return () -> parentDataContext;
     DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
     if (Utils.isAsyncDataContext(dataContext)) return () -> dataContext;
     return () -> DataManager.getInstance().getDataContext(component);
@@ -373,11 +376,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return ActionPopupStep.createActionsStep(
       actionGroup, dataContext, showNumbers, true, showDisabledActions,
       title, honorActionMnemonics, autoSelectionEnabled,
-      getComponentContextSupplier(component),
+      getComponentContextSupplier(dataContext, component),
       actionPlace, null, defaultOptionIndex, null);
   }
 
-  private static boolean itemsHaveMnemonics(final List<? extends ActionItem> items) {
+  @ApiStatus.Internal
+  public static boolean anyMnemonicsIn(Iterable<? extends ActionItem> items) {
     for (ActionItem item : items) {
       if (item.getAction().getTemplatePresentation().getMnemonic() != 0) return true;
     }
@@ -658,6 +662,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Character myMnemonicChar;
     private final boolean myMnemonicsEnabled;
     private final boolean myIsEnabled;
+    private final boolean myIsPerformGroup;
+    private final boolean myIsSubstepSuppressed;
     private final Icon myIcon;
     private final Icon mySelectedIcon;
     private final boolean myPrependWithSeparator;
@@ -673,6 +679,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                @Nullable @NlsContexts.DetailedDescription String description,
                @Nullable @NlsContexts.DetailedDescription String tooltip,
                boolean enabled,
+               boolean performingGroup,
+               boolean substepSuppressed,
                @Nullable Icon icon,
                @Nullable Icon selectedIcon,
                final boolean prependWithSeparator,
@@ -683,6 +691,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myMnemonicChar = mnemonicChar;
       myMnemonicsEnabled = mnemonicsEnabled;
       myIsEnabled = enabled;
+      myIsPerformGroup = performingGroup;
+      myIsSubstepSuppressed = substepSuppressed;
       myIcon = icon;
       mySelectedIcon = selectedIcon;
       myPrependWithSeparator = prependWithSeparator;
@@ -733,6 +743,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public boolean isEnabled() { return myIsEnabled; }
+
+    public boolean isPerformGroup() { return myIsPerformGroup; }
+
+    public boolean isSubstepSuppressed() { return myIsSubstepSuppressed; }
 
     public @NlsContexts.DetailedDescription String getDescription() {
       return myDescription == null ? myTooltip : myDescription;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
@@ -12,9 +12,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.Refactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,13 +57,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
     setDoNotAskOption(new DoNotAskOption.Adapter() {
       @Override
       public void rememberChoice(boolean selected, int exitCode) {
-        PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, true);
+        PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, isOpenInEditorEnabledByDefault());
         RefactoringDialogUsageCollector.logOpenInEditorSaved(myProject, selected, RefactoringDialog.this.getClass());
       }
 
       @Override
       public boolean isSelectedByDefault() {
-        boolean selected = PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", true);
+        boolean selected = PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", isOpenInEditorEnabledByDefault());
         RefactoringDialogUsageCollector.logOpenInEditorShown(myProject, selected, RefactoringDialog.this.getClass());
         return selected;
       }
@@ -72,6 +74,10 @@ public abstract class RefactoringDialog extends DialogWrapper {
         return RefactoringBundle.message("open.in.editor.label");
       }
     });
+  }
+
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return true;
   }
 
   @NonNls
@@ -110,6 +116,12 @@ public abstract class RefactoringDialog extends DialogWrapper {
    */
   protected final Action getRefactorAction() {
     return myRefactorAction;
+  }
+
+  protected final void setRefactorButtonText(@Button @NotNull String text) {
+    myRefactorAction.putValue(Action.NAME, text);
+    myRefactorAction.putValue(Action.DISPLAYED_MNEMONIC_INDEX_KEY, null);
+    myRefactorAction.putValue(Action.MNEMONIC_KEY, null);
   }
 
   /**
@@ -173,8 +185,12 @@ public abstract class RefactoringDialog extends DialogWrapper {
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
   }
-  
+
   protected void validateButtonsAsync() {
+    validateButtonsAsync(ModalityState.stateForComponent(getContentPanel()));
+  }
+
+  protected void validateButtonsAsync(@NotNull ModalityState modalityState) {
     setErrorText(null);
     ReadAction.nonBlocking(() -> {
         try {
@@ -184,7 +200,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
         catch (ConfigurationException e) {
           return e;
         }
-      }).finishOnUiThread(ModalityState.stateForComponent(getContentPanel()), e -> {
+      }).finishOnUiThread(modalityState, e -> {
         if (e != null) {
           setErrorText(e.getMessage());
         }
@@ -253,6 +269,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
   protected void invokeRefactoring(BaseRefactoringProcessor processor) {
     final Runnable prepareSuccessfulCallback = () -> close(DialogWrapper.OK_EXIT_CODE);
     processor.setPrepareSuccessfulSwingThreadCallback(prepareSuccessfulCallback);
+    processor.setPreviewUsages(isPreviewUsages());
+    processor.run();
+  }
+  
+  protected void invokeRefactoring(Refactoring processor) {
+    final Runnable prepareSuccessfulCallback = () -> close(DialogWrapper.OK_EXIT_CODE);
+    processor.setInteractive(prepareSuccessfulCallback);
     processor.setPreviewUsages(isPreviewUsages());
     processor.run();
   }

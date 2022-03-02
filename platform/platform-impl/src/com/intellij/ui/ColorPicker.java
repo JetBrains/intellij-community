@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -48,6 +49,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
@@ -1119,7 +1121,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       setTitle(caption);
       setResizable(false);
-      setOKButtonText(IdeBundle.message("button.choose"));
+      setOKButtonText(listeners == null || listeners.size() > 0 ? IdeBundle.message("button.choose") : IdeBundle.message("button.copy"));
       super.init();
     }
 
@@ -1146,6 +1148,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       myColorPicker.appendRecentColor();
       myColorPicker.saveRecentColors();
 
+      if (myListeners != null && myListeners.isEmpty()) {
+        String color = StringUtil.toUpperCase(ColorUtil.toHex(myColorPicker.myColor));
+        CopyPasteManager.getInstance().setContents(new StringSelection(color));
+      }
       super.doOKAction();
     }
 

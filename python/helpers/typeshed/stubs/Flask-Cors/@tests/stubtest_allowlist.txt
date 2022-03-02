@@ -1,0 +1,2 @@
+# Caused by https://github.com/python/mypy/pull/12040
+flask_cors.core.DEFAULT_OPTIONS

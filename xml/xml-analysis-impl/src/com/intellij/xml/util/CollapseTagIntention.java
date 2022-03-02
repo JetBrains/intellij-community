@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -22,9 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -94,12 +78,10 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   }
 
   protected static void applyFix(@NotNull final Project project, @NotNull final PsiElement tag) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
     if (child == null) return;
     final int offset = child.getTextRange().getStartOffset();
-    VirtualFile file = tag.getContainingFile().getVirtualFile();
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    final Document document = tag.getContainingFile().getViewProvider().getDocument();
     assert document != null;
     document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
     SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(tag);

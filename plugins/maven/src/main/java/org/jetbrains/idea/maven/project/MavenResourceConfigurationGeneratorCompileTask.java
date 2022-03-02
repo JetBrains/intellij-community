@@ -88,19 +88,13 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     final Path crcFile = mavenConfigFile.resolveSibling("configuration.crc");
 
     if (!force) {
-      try {
-        DataInputStream crcInput = new DataInputStream(Files.newInputStream(crcFile, StandardOpenOption.READ));
-        try {
-          final int lastCrc = crcInput.readInt();
-          if (lastCrc == crc) return; // Project had not change since last config generation.
+      try (DataInputStream crcInput = new DataInputStream(Files.newInputStream(crcFile, StandardOpenOption.READ))) {
+        final int lastCrc = crcInput.readInt();
+        if (lastCrc == crc) return; // Project had not changed since last config generation.
 
-          LOG.debug(String.format(
-            "project configuration changed: lastCrc = %d, currentCrc = %d, projectRootModificationCount = %d, mavenConfigCrc = %d",
-            lastCrc, crc, projectRootModificationCount, mavenConfigCrc));
-        }
-        finally {
-          crcInput.close();
-        }
+        LOG.debug(String.format(
+          "project configuration changed: lastCrc = %d, currentCrc = %d, projectRootModificationCount = %d, mavenConfigCrc = %d",
+          lastCrc, crc, projectRootModificationCount, mavenConfigCrc));
       }
       catch (IOException e) {
         LOG.debug("Unable to read or find config file: " + e.getMessage());
@@ -181,13 +175,9 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
       }
       try {
         JdomKt.write(element, mavenConfigFile);
-        DataOutputStream crcOutput = new DataOutputStream(
-          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)));
-        try {
+        try (DataOutputStream crcOutput = new DataOutputStream(
+          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)))) {
           crcOutput.writeInt(crc);
-        }
-        finally {
-          crcOutput.close();
         }
       }
       catch (IOException e) {
@@ -221,7 +211,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
                                        @NotNull Module module,
                                        @NotNull MavenModuleResourceConfiguration resourceConfig) {
     if (mavenProject.isAggregator()) return;
-    if (Boolean.valueOf(IDEA_MAVEN_DISABLE_MANIFEST)) {
+    if (Boolean.parseBoolean(IDEA_MAVEN_DISABLE_MANIFEST)) {
       resourceConfig.manifest = null;
       return;
     }
@@ -258,14 +248,8 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     final Properties properties = new Properties();
 
     for (String each : mavenProject.getFilterPropertiesFiles()) {
-      try {
-        FileInputStream in = new FileInputStream(each);
-        try {
-          properties.load(in);
-        }
-        finally {
-          in.close();
-        }
+      try (FileInputStream in = new FileInputStream(each)) {
+        properties.load(in);
       }
       catch (IOException ignored) {
       }

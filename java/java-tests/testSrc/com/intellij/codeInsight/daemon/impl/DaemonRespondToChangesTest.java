@@ -32,7 +32,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LanguageAnnotators;
@@ -97,6 +96,7 @@ import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
@@ -162,6 +162,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       super.tearDown();
     }
   }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
+
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_11;
+  }
+
 
   @Override
   protected boolean doTestLineMarkers() {
@@ -1198,21 +1209,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(errs);
   }
 
-
-
-
-
   public void testBulbAppearsAfterType() {
     String text = "class S { ArrayList<caret>XXX x;}";
     configureByText(JavaFileType.INSTANCE, text);
 
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
     Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC, (project, hint, flags) -> {
-      shown.add(hint);
-      hint.addHintListener(event -> shown.remove(hint));
+    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+      @Override
+      public void hintShown(@NotNull Project project, @NotNull LightweightHint hint, int flags) {
+        shown.add(hint);
+        hint.addHintListener(event -> shown.remove(hint));
+      }
     });
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
@@ -1231,6 +1242,54 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertFalse(hintComponent.isDisposed());
     assertNotNull(hintComponent.getComponentHint());
     assertTrue(shown.contains(hintComponent.getComponentHint()));
+  }
+
+  public void testBulbMustDisappearAfterPressEscape() {
+    String text = "class S { ArrayList<caret>XXX x;}";
+    configureByText(JavaFileType.INSTANCE, text);
+
+    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+
+    Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
+    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC,
+                                                     new EditorHintListener() {
+                                                       @Override
+                                                       public void hintShown(@NotNull Editor editor,
+                                                                             @NotNull LightweightHint hint,
+                                                                             int flags,
+                                                                             @NotNull HintHint hintInfo) {
+                                                         shown.add(hint);
+                                                         hint.addHintListener(event -> shown.remove(hint));
+                                                       }
+                                                     });
+
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+    highlightErrors();
+
+    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+    assertNotNull(hintComponent);
+    assertFalse(hintComponent.isDisposed());
+    assertNotNull(hintComponent.getComponentHint());
+    assertTrue(shown.contains(hintComponent.getComponentHint()));
+    assertTrue(hintComponent.hasVisibleLightBulbOrPopup());
+
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_EDITOR_ESCAPE, true), "", null, getEditor().getDocument());
+
+    highlightErrors();
+    hintComponent = codeAnalyzer.getLastIntentionHint();
+    assertNull(hintComponent);
+
+    // bulb must reappear when the caret moved
+    caretLeft();
+    highlightErrors();
+    IntentionHintComponent hintComponentAfter = codeAnalyzer.getLastIntentionHint();
+    assertNotNull(hintComponentAfter);
+    assertFalse(hintComponentAfter.isDisposed());
+    assertNotNull(hintComponentAfter.getComponentHint());
+    assertTrue(shown.contains(hintComponentAfter.getComponentHint()));
+    assertTrue(hintComponentAfter.hasVisibleLightBulbOrPopup());
   }
 
   @Override
@@ -1331,12 +1390,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public static ProperTextRange makeEditorWindowVisible(@NotNull Point viewPosition, @NotNull Editor editor) {
-    ((EditorImpl)editor).getScrollPane().getViewport().setSize(1000, 1000);
+    EditorImpl impl = (EditorImpl)editor;
+    impl.getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ((EditorImpl)editor).getScrollPane().getViewport().setViewPosition(viewPosition);
-    ((EditorImpl)editor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)editor).getPreferredHeight() - viewPosition.y));
+    impl.getScrollPane().getViewport().setViewPosition(viewPosition);
+    impl.getScrollPane().getViewport().setExtentSize(new Dimension(100, impl.getPreferredHeight() - viewPosition.y));
+    UIUtil.markAsFocused(impl.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+
     return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
   }
 
@@ -1656,16 +1718,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       return;
     }
     fail("PCE must have been thrown");
-  }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-  }
-
-  @Override
-  protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_11;
   }
 
   public void testTypingInsideCodeBlockDoesntLeadToCatastrophicUnusedEverything_Stress() throws Throwable {
@@ -2109,11 +2161,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testLightBulbIsHiddenWhenFixRangeIsCollapsed() {
     configureByText(JavaFileType.INSTANCE, "class S { void foo() { boolean var; if (<selection>va<caret>r</selection>) {}} }");
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
     Set<LightweightHint> visibleHints = new ReferenceOpenHashSet<>();
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+      public void hintShown(Project project,
+                            @NotNull LightweightHint hint,
+                            int flags) {
         visibleHints.add(hint);
         hint.addHintListener(new HintListener() {
           @Override
@@ -2125,7 +2180,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     });
 
-    highlightErrors();
+    List<HighlightInfo> errors = highlightErrors();
+    assertNotEmpty(errors);
     UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     assertNotNull(lastHintBeforeDeletion);
@@ -2942,7 +2998,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                   "}";
     configureByText(JavaFileType.INSTANCE, text);
     makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
-    //Registry.get("inspection.sort").setValue(false);
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
     AtomicReference<String> diagnosticText = new AtomicReference<>("1st run");
     AtomicInteger stallMs = new AtomicInteger();
@@ -3105,15 +3161,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
     myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = visibleRange;
-    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()->{
-      assertEmpty(doHighlighting());
-    });
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()-> assertEmpty(doHighlighting()));
     makeWholeEditorWindowVisible(editor);
     myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
-    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()->{
-      assertEmpty(doHighlighting());
-    });
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()-> assertEmpty(doHighlighting()));
   }
   private static class MyVisibleRangeInspection extends MyTrackingInspection {
     @Override
@@ -3151,6 +3203,102 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
     doHighlighting();
     assertNull(expectedVisibleRange); // check the inspection was run
+  }
+
+  public void testHighlightingPassesAreInstantiatedOffEDTToImproveResponsiveness() throws Throwable {
+    AtomicReference<Throwable> violation = new AtomicReference<>();
+    AtomicBoolean applied = new AtomicBoolean();
+    class MyCheckingConstructorTraceFac implements TextEditorHighlightingPassFactory {
+      @Override
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+        return new MyPass(myProject);
+      }
+
+      final class MyPass extends TextEditorHighlightingPass {
+        private MyPass(Project project) {
+          super(project, getEditor().getDocument(), false);
+          if (ApplicationManager.getApplication().isDispatchThread()) {
+            violation.set(new Throwable());
+          }
+        }
+
+        @Override
+        public void doCollectInformation(@NotNull ProgressIndicator progress) {
+        }
+
+        @Override
+        public void doApplyInformationToEditor() {
+          applied.set(true);
+        }
+      }
+    }
+    TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
+    registrar.registerTextEditorHighlightingPass(new MyCheckingConstructorTraceFac(), null, null, false, -1);
+    configureByText(JavaFileType.INSTANCE, "class C{}");
+    assertEmpty(highlightErrors());
+    assertTrue(applied.get());
+    if (violation.get() != null) {
+      throw violation.get();
+    }
+  }
+
+  public void testTextEditorHighlightingPassRegistrarMustNotAllowCyclesInPassDeclarationsOrCrazyPassIdsOmgMurphyLawStrikesAgain() {
+    class MyFac1 implements TextEditorHighlightingPassFactory {
+      @Override
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+        return new MyPass1(myProject);
+      }
+
+      final class MyPass1 extends TextEditorHighlightingPass {
+        private MyPass1(Project project) {
+          super(project, getEditor().getDocument(), false);
+        }
+
+        @Override
+        public void doCollectInformation(@NotNull ProgressIndicator progress) {
+        }
+
+        @Override
+        public void doApplyInformationToEditor() {
+        }
+      }
+    }
+    class MyFac2 implements TextEditorHighlightingPassFactory {
+      @Override
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+        return new MyPass2(myProject);
+      }
+
+      final class MyPass2 extends TextEditorHighlightingPass {
+        private MyPass2(Project project) {
+          super(project, getEditor().getDocument(), false);
+        }
+
+        @Override
+        public void doCollectInformation(@NotNull ProgressIndicator progress) {
+        }
+
+        @Override
+        public void doApplyInformationToEditor() {
+        }
+      }
+    }
+    TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
+    int F1 = 254;
+    int F2 = 256;
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not intersect
+      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F2}, new int[]{F2}, false, -1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain forcedId
+      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F1}, new int[]{F2}, false, F1));
+
+    assertThrows(IllegalStateException.class, () -> {
+      registrar.registerTextEditorHighlightingPass(new MyFac1(), new int[]{F2}, null, false, F1);
+      registrar.registerTextEditorHighlightingPass(new MyFac2(), new int[]{F1}, null, false, F2);
+      configureByText(JavaFileType.INSTANCE, "class C{}");
+      assertEmpty(highlightErrors());
+    });
   }
 }
 

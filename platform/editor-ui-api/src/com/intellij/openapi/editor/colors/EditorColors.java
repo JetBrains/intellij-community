@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.lang.Language;
@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +19,7 @@ public interface EditorColors {
   ColorKey LINE_NUMBERS_COLOR = ColorKey.createColorKey("LINE_NUMBERS_COLOR");
   ColorKey LINE_NUMBER_ON_CARET_ROW_COLOR = ColorKey.createColorKey("LINE_NUMBER_ON_CARET_ROW_COLOR");
   ColorKey ANNOTATIONS_COLOR = ColorKey.createColorKey("ANNOTATIONS_COLOR");
+  ColorKey ANNOTATIONS_LAST_COMMIT_COLOR = ColorKey.createColorKeyWithFallback("ANNOTATIONS_LAST_COMMIT_COLOR", ANNOTATIONS_COLOR);
   ColorKey READONLY_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_BACKGROUND");
   ColorKey READONLY_FRAGMENT_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_FRAGMENT_BACKGROUND");
   ColorKey WHITESPACES_COLOR = ColorKey.createColorKey("WHITESPACES");
@@ -28,13 +28,13 @@ public interface EditorColors {
   ColorKey STRING_CONTENT_INDENT_GUIDE_COLOR = ColorKey.createColorKey("STRING_CONTENT_INDENT_GUIDE");
   ColorKey SOFT_WRAP_SIGN_COLOR = ColorKey.createColorKey("SOFT_WRAP_SIGN_COLOR");
   ColorKey SELECTED_INDENT_GUIDE_COLOR = ColorKey.createColorKey("SELECTED_INDENT_GUIDE");
+  ColorKey MATCHED_BRACES_INDENT_GUIDE_COLOR = ColorKey.createColorKey("MATCHED_BRACES_INDENT_GUIDE_COLOR");
   ColorKey SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("SELECTION_BACKGROUND");
   ColorKey SELECTION_FOREGROUND_COLOR = ColorKey.createColorKey("SELECTION_FOREGROUND");
   /**
    * @deprecated use {@code ScrollBarPainter.THUMB_OPAQUE_BACKGROUND} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   ColorKey SCROLLBAR_THUMB_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.thumbColor" : "ScrollBar.thumbColor");
 
   TextAttributesKey TAB_SELECTED = TextAttributesKey.createTextAttributesKey("TAB_SELECTED");
@@ -65,7 +65,7 @@ public interface EditorColors {
   /**
    * @deprecated use {@link #GUTTER_BACKGROUND}
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   ColorKey LEFT_GUTTER_BACKGROUND = GUTTER_BACKGROUND;
   ColorKey NOTIFICATION_BACKGROUND = ColorKey.createColorKey("NOTIFICATION_BACKGROUND");
 

@@ -83,6 +83,11 @@ public class NewProjectWizard extends AbstractProjectWizard {
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return new Dimension(800, 600);
+  }
+
+  @Override
   protected @Nullable Border createContentPaneBorder() {
     return isNewWizard() ? JBUI.Borders.empty() : super.createContentPaneBorder();
   }

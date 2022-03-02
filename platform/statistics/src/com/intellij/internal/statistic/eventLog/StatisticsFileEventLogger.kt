@@ -61,7 +61,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     }
     catch (e: RejectedExecutionException) {
       //executor is shutdown
-      CompletableFuture.completedFuture(null)
+      CompletableFuture<Void>().also { it.completeExceptionally(e) }
     }
   }
 
@@ -128,9 +128,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   fun flush(): CompletableFuture<Void> {
-    return CompletableFuture.runAsync(Runnable {
-      logLastEvent()
-    }, logExecutor)
+    return CompletableFuture.runAsync({ logLastEvent() }, logExecutor)
   }
 
   private data class FusEvent(val validatedEvent: LogEvent,

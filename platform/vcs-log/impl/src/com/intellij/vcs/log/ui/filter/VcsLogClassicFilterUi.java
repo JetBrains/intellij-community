@@ -12,10 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,7 +89,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myDataPack = VisiblePack.EMPTY;
     myColorManager = colorManager;
 
-    NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
+    Supplier<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myLogData.getStorage(), myLogData.getRoots(), myUiProperties, filters);
     myUserFilterModel = new UserFilterModel(myUiProperties, filters);
     myDateFilterModel = new DateFilterModel(myUiProperties, filters);
@@ -204,10 +202,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   protected static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
 
-    @NotNull private final Computable<? extends JComponent> myComponentCreator;
+    @NotNull private final Supplier<? extends JComponent> myComponentCreator;
 
     public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText,
-                                 @NotNull Computable<? extends JComponent> componentCreator) {
+                                 @NotNull Supplier<? extends JComponent> componentCreator) {
       super(dynamicText);
       myComponentCreator = componentCreator;
     }
@@ -215,7 +213,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @NotNull
     @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return myComponentCreator.compute();
+      return myComponentCreator.get();
     }
 
     @Override
@@ -236,9 +234,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final Collection<VirtualFile> myRoots;
     @Nullable private Collection<VirtualFile> myVisibleRoots;
-    @NotNull private final Computable<? extends VcsLogDataPack> myDataPackProvider;
+    @NotNull private final Supplier<? extends VcsLogDataPack> myDataPackProvider;
 
-    BranchFilterModel(@NotNull Computable<? extends VcsLogDataPack> dataPackProvider,
+    BranchFilterModel(@NotNull Supplier<? extends VcsLogDataPack> dataPackProvider,
                       @NotNull VcsLogStorage storage,
                       @NotNull Collection<VirtualFile> roots,
                       @NotNull MainVcsLogUiProperties properties,
@@ -345,7 +343,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @NotNull
     VcsLogDataPack getDataPack() {
-      return myDataPackProvider.compute();
+      return myDataPackProvider.get();
     }
 
     @Nullable

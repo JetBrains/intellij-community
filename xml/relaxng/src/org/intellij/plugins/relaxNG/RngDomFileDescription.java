@@ -16,11 +16,6 @@ public class RngDomFileDescription<T> extends DomFileDescription<T> {
   }
 
   @Override
-  public boolean isAutomaticHighlightingEnabled() {
-    return true;
-  }
-
-  @Override
   public DomElementsAnnotator createAnnotator() {
     return new ModelAnnotator();
   }

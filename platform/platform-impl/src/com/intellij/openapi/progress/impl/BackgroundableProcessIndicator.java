@@ -32,7 +32,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   /**
    * @deprecated use {@link #BackgroundableProcessIndicator(Project, TaskInfo)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public BackgroundableProcessIndicator(@Nullable Project project,
                                         @NotNull TaskInfo info,
                                         @NotNull PerformInBackgroundOption option) {

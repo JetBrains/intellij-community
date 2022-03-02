@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -78,7 +78,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
@@ -127,7 +126,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final int TEXT_ALIGNMENT_LEFT = 0;
   public static final int TEXT_ALIGNMENT_RIGHT = 1;
 
-  private static final int MIN_FONT_SIZE = 8;
+  private static final float MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance(EditorImpl.class);
   static final Logger EVENT_LOG = Logger.getInstance("editor.input.events");
   private static final Object DND_COMMAND_GROUP = ObjectUtils.sentinel("DndCommand");
@@ -517,9 +516,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()
-        && SystemInfo.isMac && SystemInfo.isJetBrainsJvm
-        //todo[kb] JBR-4038
-        && !JavaVersion.current().isAtLeast(17)) {
+        && SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
       MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
     }
 
@@ -1207,14 +1204,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     setFontSize(fontSize, null);
   }
 
+  @Override
+  public void setFontSize(final float fontSize) {
+    setFontSize(fontSize, null);
+  }
+
   /**
    * Changes editor font size, attempting to keep a given point unmoved. If point is not given, top left screen corner is assumed.
    *
    * @param fontSize new font size
    * @param zoomCenter zoom point, relative to viewport
    */
-  private void setFontSize(int fontSize, @Nullable Point zoomCenter) {
+  private void setFontSize(float fontSize, @Nullable Point zoomCenter) {
     int oldFontSize = myScheme.getEditorFontSize();
+    float oldFontSize2D = myScheme.getEditorFontSize2D();
 
     Rectangle visibleArea = myScrollingModel.getVisibleArea();
     Point zoomCenterRelative = zoomCenter == null ? new Point() : zoomCenter;
@@ -1224,8 +1227,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int intraLineOffset = zoomCenterAbsolute.y % oldLineHeight;
 
     myScheme.setEditorFontSize(fontSize);
-    fontSize = myScheme.getEditorFontSize(); // resulting font size might be different due to applied min/max limits
-    myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
+    int newFontSize = myScheme.getEditorFontSize();
+    float newFontSize2D = myScheme.getEditorFontSize2D(); // resulting font size might be different due to applied min/max limits
+    myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, newFontSize);
+    myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE_2D, oldFontSize2D, newFontSize2D);
     // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size and it was not possible
     // to scroll to the bottom of the document).
     myScrollPane.getViewport().invalidate();
@@ -1244,6 +1249,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public int getFontSize() {
     return myScheme.getEditorFontSize();
+  }
+
+  public float getFontSize2D() {
+    return myScheme.getEditorFontSize2D();
   }
 
   @NotNull
@@ -4362,16 +4371,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     VisualPosition visualPosition = location.getVisualPosition();
     LogicalPosition logicalPosition = location.getLogicalPosition();
     int offset = location.getOffset();
+    int relX = point.x - myEditorComponent.getInsets().left;
     Inlay<?> inlayCandidate = inEditingArea ? myInlayModel.getElementAt(location, true) : null;
     Inlay<?> inlay = inlayCandidate == null ||
                   (inlayCandidate.getPlacement() == Inlay.Placement.BELOW_LINE ||
                    inlayCandidate.getPlacement() == Inlay.Placement.ABOVE_LINE) &&
-                  inlayCandidate.getWidthInPixels() <= point.getX() ? null : inlayCandidate;
-    FoldRegion collapseFoldRegion = inEditingArea ? myFoldingModel.getFoldingPlaceholderAt(location) : null;
+                  inlayCandidate.getWidthInPixels() <= relX ? null : inlayCandidate;
+    FoldRegion foldRegionCandidate = inEditingArea ? myFoldingModel.getFoldingPlaceholderAt(location, true) : null;
+    FoldRegion foldRegion = foldRegionCandidate instanceof CustomFoldRegion &&
+                            ((CustomFoldRegion)foldRegionCandidate).getWidthInPixels() <= relX ? null : foldRegionCandidate;
     GutterIconRenderer gutterIconRenderer = inEditingArea ? null : myGutterComponent.getGutterRenderer(point);
-    boolean overText = inlayCandidate == null && offsetToLogicalPosition(offset).equals(logicalPosition);
+    boolean overText = inlayCandidate == null &&
+                       (foldRegionCandidate == null || foldRegion != null) &&
+                       offsetToLogicalPosition(offset).equals(logicalPosition);
     return new EditorMouseEvent(this, e, area, offset, logicalPosition, visualPosition,
-                                overText, collapseFoldRegion, inlay, gutterIconRenderer);
+                                overText, foldRegion, inlay, gutterIconRenderer);
   }
 
   private class MyMouseMotionListener implements MouseMotionListener {
@@ -4444,9 +4458,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private final Map<ColorKey, Color> myOwnColors = new HashMap<>();
     private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap;
-    private int myMaxFontSize = EditorFontsConstants.getMaxEditorFontSize();
-    private int myFontSize = -1;
-    private int myConsoleFontSize = -1;
+    private float myMaxFontSize = EditorFontsConstants.getMaxEditorFontSize();
+    private float myFontSize = -1f;
+    private float myConsoleFontSize = -1f;
     private String myFaceName;
     private Float myLineSpacing;
     private boolean myFontPreferencesAreSetExplicitly;
@@ -4460,13 +4474,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void reinitFonts() {
       EditorColorsScheme delegate = getDelegate();
       String editorFontName = getEditorFontName();
-      int editorFontSize = getEditorFontSize();
+      float editorFontSize = getEditorFontSize2D();
       if (!myFontPreferencesAreSetExplicitly) {
         updatePreferences(myFontPreferences, editorFontName, editorFontSize,
                           delegate == null ? null : delegate.getFontPreferences());
       }
       String consoleFontName = getConsoleFontName();
-      int consoleFontSize = getConsoleFontSize();
+      float consoleFontSize = getConsoleFontSize2D();
       updatePreferences(myConsoleFontPreferences, consoleFontName, consoleFontSize,
                         delegate == null ? null : delegate.getConsoleFontPreferences());
 
@@ -4484,7 +4498,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void setFont(@NotNull EditorFontType fontType,
                          @NotNull String familyName,
                          int style,
-                         int fontSize,
+                         float fontSize,
                          @NotNull FontPreferences fontPreferences) {
       Font baseFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
                                                 style, fontSize);
@@ -4493,7 +4507,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void updatePreferences(@NotNull FontPreferencesImpl preferences,
                                    @NotNull String fontName,
-                                   int fontSize,
+                                   float fontSize,
                                    @Nullable FontPreferences delegatePreferences) {
       preferences.clear();
       preferences.register(fontName, fontSize);
@@ -4553,17 +4567,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public int getEditorFontSize() {
+      return (int)(getEditorFontSize2D() + 0.5);
+    }
+
+    @Override
+    public float getEditorFontSize2D() {
       if (myFontPreferencesAreSetExplicitly) {
-        return myFontPreferences.getSize(myFontPreferences.getFontFamily());
+        return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
-      if (myFontSize == -1) {
-        return getDelegate().getEditorFontSize();
+      if (myFontSize == -1f) {
+        return getDelegate().getEditorFontSize2D();
       }
       return myFontSize;
     }
 
     @Override
     public void setEditorFontSize(int fontSize) {
+      setEditorFontSize((float)fontSize);
+    }
+
+    @Override
+    public void setEditorFontSize(float fontSize) {
       if (fontSize < MIN_FONT_SIZE) fontSize = MIN_FONT_SIZE;
       if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
       if (fontSize == myFontSize) return;
@@ -4576,7 +4600,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     void resetEditorFontSize() {
-      myFontSize = -1;
+      myFontSize = -1f;
       reinitFonts();
     }
 
@@ -4595,7 +4619,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = true;
       myFaceName = null;
-      myFontSize = -1;
+      myFontSize = -1f;
       preferences.copyTo(myFontPreferences);
       reinitFontsAndSettings();
     }
@@ -4668,20 +4692,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setDelegate(@NotNull EditorColorsScheme delegate) {
       super.setDelegate(delegate);
-      int globalFontSize = getDelegate().getEditorFontSize();
+      float globalFontSize = getDelegate().getEditorFontSize2D();
       myMaxFontSize = Math.max(EditorFontsConstants.getMaxEditorFontSize(), globalFontSize);
       reinitFonts();
     }
 
     @Override
     public void setConsoleFontSize(int fontSize) {
+      setConsoleFontSize((float)fontSize);
+    }
+
+    @Override
+    public void setConsoleFontSize(float fontSize) {
       myConsoleFontSize = fontSize;
       reinitFontsAndSettings();
     }
 
     @Override
     public int getConsoleFontSize() {
-      return myConsoleFontSize == -1 ? super.getConsoleFontSize() : myConsoleFontSize;
+      return (int)(getConsoleFontSize2D() + 0.5);
+    }
+
+    @Override
+    public float getConsoleFontSize2D() {
+      return myConsoleFontSize == -1f ? super.getConsoleFontSize2D() : myConsoleFontSize;
     }
 
     @Override
@@ -5035,7 +5069,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (mySettings.isWheelFontChangeEnabled()) {
         if (EditorUtil.isChangeFontSize(e)) {
-          int size = myScheme.getEditorFontSize() - e.getWheelRotation();
+          float size = myScheme.getEditorFontSize2D() - e.getWheelRotation();
           if (size >= MIN_FONT_SIZE) {
             setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
             if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
@@ -5167,6 +5201,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super(NULL_ATTRIBUTES);
     }
 
+    @SuppressWarnings("removal")
     @Override
     public void setAttributes(TextAttributes attributes) {}
 

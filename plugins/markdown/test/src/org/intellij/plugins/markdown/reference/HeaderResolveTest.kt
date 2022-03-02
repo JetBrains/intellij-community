@@ -5,7 +5,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.containers.ContainerUtil
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference
 
 class HeaderResolveTest : BasePlatformTestCase() {
@@ -19,7 +19,7 @@ class HeaderResolveTest : BasePlatformTestCase() {
     val resolve = reference?.resolve()
 
     assertNotNull(resolve)
-    assertTrue(resolve is MarkdownHeaderImpl)
+    assertTrue(resolve is MarkdownHeader)
   }
 
   fun testHeader1() {

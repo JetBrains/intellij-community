@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.structuralSearch" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
   </component>
 </module>

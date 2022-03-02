@@ -30,7 +30,9 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                                                                "YAMLKeysSearchEverywhereContributor",
                                                                                                "CommandsContributor", "third.party",
                                                                                                "Vcs.Git", "UrlSearchEverywhereContributor",
-                                                                                               "GitSearchEverywhereContributor"));
+                                                                                               "GitSearchEverywhereContributor",
+                                                                                               "TextSearchContributor"));
+
   public static final StringEventField CURRENT_TAB_FIELD = EventFields.String("currentTabId",
                                                                               Arrays.asList("FileSearchEverywhereContributor",
                                                                                             "SearchEverywhereContributor.All",
@@ -38,7 +40,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                                                             "ActionSearchEverywhereContributor",
                                                                                             "SymbolSearchEverywhereContributor",
                                                                                             "third.party", "Vcs.Git"));
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 7);
 
   public static final EventId2<String, AnActionEvent> DIALOG_OPEN = GROUP.registerEvent("dialogOpen",
                                                                                         CONTRIBUTOR_ID_FIELD,

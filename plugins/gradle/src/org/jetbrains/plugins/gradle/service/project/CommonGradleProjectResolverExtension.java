@@ -923,10 +923,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         Object result = getDependencyModule.invoke(dependency);
         return (IdeaModule)result;
       }
-      catch (IllegalAccessException e) {
-        LOG.info("Failed to get dependency module for [" + dependency + "]", e);
-      }
-      catch (InvocationTargetException e) {
+      catch (IllegalAccessException | InvocationTargetException e) {
         LOG.info("Failed to get dependency module for [" + dependency + "]", e);
       }
     }

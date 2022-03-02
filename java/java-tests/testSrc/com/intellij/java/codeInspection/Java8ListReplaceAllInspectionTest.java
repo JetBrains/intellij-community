@@ -9,7 +9,9 @@ import org.jetbrains.annotations.NotNull;
 public class Java8ListReplaceAllInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new Java8ListReplaceAllInspection()};
+    Java8ListReplaceAllInspection inspection = new Java8ListReplaceAllInspection();
+    inspection.dontWarnInCaseOfMultilineLambda = false;
+    return new LocalInspectionTool[]{inspection};
   }
 
   @Override
