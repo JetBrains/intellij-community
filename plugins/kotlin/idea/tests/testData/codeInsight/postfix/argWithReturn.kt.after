@@ -1,0 +1,4 @@
+// TEMPLATE: \tfunctionCall\t
+fun foo(s: String) {
+    return functionCall(s<caret>)
+}

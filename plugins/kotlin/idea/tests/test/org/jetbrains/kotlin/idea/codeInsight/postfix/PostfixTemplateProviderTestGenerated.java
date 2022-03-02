@@ -31,6 +31,16 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
             runTest("testData/codeInsight/postfix/arg.kt");
         }
 
+        @TestMetadata("argWithReturn.kt")
+        public void testArgWithReturn() throws Exception {
+            runTest("testData/codeInsight/postfix/argWithReturn.kt");
+        }
+
+        @TestMetadata("argWithThrow.kt")
+        public void testArgWithThrow() throws Exception {
+            runTest("testData/codeInsight/postfix/argWithThrow.kt");
+        }
+
         @TestMetadata("assert.kt")
         public void testAssert() throws Exception {
             runTest("testData/codeInsight/postfix/assert.kt");
