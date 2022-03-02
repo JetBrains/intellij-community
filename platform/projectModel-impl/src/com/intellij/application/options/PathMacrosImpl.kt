@@ -29,8 +29,6 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
   private val modificationStamp = AtomicLong()
   private val ignoredMacros = ContainerUtil.createLockFreeCopyOnWriteList<String>()
 
-  private var userMacroMapCache: Map<String, String>? = null
-
   companion object {
     @JvmStatic
     private val EP_NAME = ExtensionPointName<PathMacroContributor>("com.intellij.pathMacroContributor")
@@ -133,7 +131,6 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
 
   private fun userMacroModified() {
     modificationStamp.incrementAndGet()
-    userMacroMapCache = null
   }
 
   override fun getState(): Element? {
