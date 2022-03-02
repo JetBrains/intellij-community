@@ -4,18 +4,30 @@ package org.jetbrains.kotlin.idea.project.test.base.elastic
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.performance.tests.utils.BuildData
 import org.jetbrains.kotlin.idea.project.test.base.ProjectData
 import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
 import org.jetbrains.kotlin.idea.project.test.base.metrics.Metric
 import org.jetbrains.kotlin.idea.project.test.base.metrics.MetricsData
 
 object MetricsToJson {
-    fun toJsonString(action: ProjectAction, project: ProjectData, frontend: KotlinPluginKind, iterations: List<MetricsData>): String {
+    fun toJsonString(
+        action: ProjectAction,
+        project: ProjectData,
+        buildData: BuildData,
+        frontend: KotlinPluginKind,
+        iterations: List<MetricsData>
+    ): String {
         val mapper = ObjectMapper()
         val rootNode = mapper.createObjectNode().apply {
-            // TODO
-            put("buildBranch", "NO_BRANCH")
-            put("buildId",  System.currentTimeMillis())
+            put("tcBuildId", buildData.buildId)
+            put("tcBuildConfigurationId", buildData.buildConfigurationId)
+            put("tcBuildConfigurationName", buildData.buildConfigurationName)
+            put("tcProjectName", buildData.projectName)
+            put("tcAgentName", buildData.agentName)
+            put("buildBranch", buildData.buildBranch)
+            put("buildLastCommit", buildData.commit)
+            put("buildTimestamp", buildData.buildTimestamp)
             put("frontend", frontend.frontendId)
             put("project", project.id)
             put("file", action.filePath)
