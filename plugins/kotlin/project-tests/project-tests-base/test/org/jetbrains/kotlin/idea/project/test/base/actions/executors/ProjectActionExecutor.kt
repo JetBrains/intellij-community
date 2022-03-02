@@ -6,7 +6,7 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.idea.project.test.base.actions.ActionExecutionResultError
 import org.jetbrains.kotlin.idea.project.test.base.metrics.MetricsCollector
 import org.jetbrains.kotlin.idea.project.test.base.metrics.MetricsData
-import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
 
 abstract class ProjectActionExecutor<R : Any, CONTEXT> {
 

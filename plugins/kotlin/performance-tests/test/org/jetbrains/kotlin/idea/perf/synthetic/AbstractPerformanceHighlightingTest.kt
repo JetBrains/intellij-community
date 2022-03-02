@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.ensureIndexesUpToDate
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.runAll

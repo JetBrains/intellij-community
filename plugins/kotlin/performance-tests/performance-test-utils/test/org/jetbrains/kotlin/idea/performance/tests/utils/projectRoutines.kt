@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.testFramework
+package org.jetbrains.kotlin.idea.performance.tests.utils
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
@@ -21,13 +21,18 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.perf.util.logMessage
+import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import java.nio.file.Paths
 
 fun commitAllDocuments() {
@@ -105,6 +110,36 @@ fun replaceWithCustomHighlighter(parentDisposable: Disposable, fromImplementatio
     if (filteredExtensions.size < extensions.size) {
         ExtensionTestUtil.maskExtensions(pointName, filteredExtensions + listOf(point), parentDisposable)
     }
+}
+
+fun projectFileByName(project: Project, name: String): PsiFile {
+    fun baseName(name: String): String {
+        val index = name.lastIndexOf("/")
+        return if (index > 0) name.substring(index + 1) else name
+    }
+
+    val fileManager = VirtualFileManager.getInstance()
+    val url = "${project.guessProjectDir()}/$name"
+    fileManager.refreshAndFindFileByUrl(url)?.let {
+        return it.toPsiFile(project)!!
+    }
+
+    val baseFileName = baseName(name)
+    val projectBaseName = baseName(project.name)
+
+    val virtualFiles = FilenameIndex.getVirtualFilesByName(
+        project,
+        baseFileName, true,
+        GlobalSearchScope.projectScope(project)
+    )
+        .filter { it.canonicalPath?.contains("/$projectBaseName/$name") ?: false }.toList()
+
+    TestCase.assertEquals(
+        "expected the only file with name '$name'\n, it were: [${virtualFiles.map { it.canonicalPath }.joinToString("\n")}]",
+        1,
+        virtualFiles.size
+    )
+    return virtualFiles.iterator().next().toPsiFile(project)!!
 }
 
 fun Project.relativePath(file: VirtualFile): String {

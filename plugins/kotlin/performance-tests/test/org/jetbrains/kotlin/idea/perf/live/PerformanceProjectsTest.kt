@@ -9,8 +9,10 @@ import org.jetbrains.kotlin.idea.perf.suite.*
 import org.jetbrains.kotlin.idea.perf.suite.TypePosition.AFTER_MARKER
 import org.jetbrains.kotlin.idea.perf.suite.TypePosition.IN_FRONT_OF_MARKER
 import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
+import org.jetbrains.kotlin.idea.performance.tests.utils.dispatchAllInvocationEvents
 import org.jetbrains.kotlin.idea.testFramework.*
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction.GRADLE_PROJECT
 
 open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 

@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.project.test.base
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import org.jetbrains.kotlin.idea.testFramework.OpenProject
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.OpenProject
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
 
 object ProjectOpener {
     fun openProject(projectData: ProjectData, jdk: Sdk): Project {

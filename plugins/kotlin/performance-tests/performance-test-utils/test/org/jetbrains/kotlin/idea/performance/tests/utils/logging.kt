@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.perf.util
+package org.jetbrains.kotlin.idea.performance.tests.utils
 
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.system.measureTimeMillis
 
 val Long.nsToMs get() = (this * 1e-6).toLong()
 
@@ -13,6 +14,13 @@ inline fun gradleMessage(block: () -> String) {
 
 inline fun logMessage(message: () -> String) {
     println("-- ${message()}")
+}
+
+inline fun runAndMeasure(note: String, block: () -> Unit) {
+    val openProjectMillis = measureTimeMillis {
+        block()
+    }
+    logMessage { "$note took $openProjectMillis ms" }
 }
 
 fun logMessage(t: Throwable, message: () -> String) {
