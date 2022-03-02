@@ -6,6 +6,9 @@ import org.jetbrains.kotlin.idea.perf.profilers.*
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.perf.util.pathToResource
 import org.jetbrains.kotlin.idea.perf.util.plainname
+import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.nsToMs
 import org.jetbrains.kotlin.util.PerformanceCounter
 import java.lang.ref.WeakReference
 import java.util.HashMap

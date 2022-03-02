@@ -8,14 +8,14 @@ import org.jetbrains.kotlin.idea.project.test.base.ProjectData
 import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
 import org.jetbrains.kotlin.idea.project.test.base.metrics.Metric
 import org.jetbrains.kotlin.idea.project.test.base.metrics.MetricsData
-import org.jetbrains.kotlin.idea.testFramework.Stats
 
 object MetricsToJson {
     fun toJsonString(action: ProjectAction, project: ProjectData, frontend: KotlinPluginKind, iterations: List<MetricsData>): String {
         val mapper = ObjectMapper()
         val rootNode = mapper.createObjectNode().apply {
-            put("buildBranch", Stats.BENCHMARK_STUB.buildBranch ?: "NO_BRANCH")
-            put("buildId", Stats.BENCHMARK_STUB.buildId?.toLong() ?: System.currentTimeMillis())
+            // TODO
+            put("buildBranch", "NO_BRANCH")
+            put("buildId",  System.currentTimeMillis())
             put("frontend", frontend.frontendId)
             put("project", project.id)
             put("file", action.filePath)
