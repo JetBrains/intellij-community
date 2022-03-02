@@ -752,8 +752,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
             bindingContext: BindingContext
         ): AnalyzeQualifiedElementResult {
             val parent = element.parent
-            // TODO: Delete this code when KT-13934 is fixed
-            if (parent is KtCallableReferenceExpression && parent.receiverExpression == element) return AnalyzeQualifiedElementResult.Skip
+            if (parent is KtDoubleColonExpression && parent.receiverExpression == element) return AnalyzeQualifiedElementResult.Skip
 
             val receiver = element.receiverExpression
 
