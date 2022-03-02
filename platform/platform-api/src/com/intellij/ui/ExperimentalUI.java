@@ -152,6 +152,7 @@ public final class ExperimentalUI {
     paths.put("nodes/warningIntroduction.svg", "/expui/nodes/warningIntroduction.svg");
     paths.put("modules/excludeRoot.svg", "/expui/nodes/excludeRoot.svg");
     paths.put("modules/sourceRoot.svg", "/expui/nodes/sourceRoot.svg");
+    paths.put("modules/resourcesRoot.svg", "/expui/nodes/resourcesRoot.svg");
     paths.put("modules/testRoot.svg", "/expui/nodes/testRoot.svg");
     paths.put("toolwindows/notifications.svg", "/expui/general/notifications.svg");
     paths.put("toolwindows/toolWindowAnt.svg", "/expui/toolwindow/ant.svg");
@@ -235,6 +236,7 @@ public final class ExperimentalUI {
     paths.put("org/intellij/images/icons/ImagesFileType.svg", "/expui/fileTypes/image.svg");
     paths.put("org/jetbrains/plugins/sass/sass.svg", "/expui/fileTypes/scss.svg");
     paths.put("icons/shFile.svg", "/expui/fileTypes/shell.svg");
+    paths.put("icons/AngularJS.svg", "/expui/fileTypes/angularJS.svg");
     paths.put("icons/MarkdownPlugin.svg", "/expui/fileTypes/markdown.svg");
     paths.put("org/jetbrains/plugins/cucumber/icons/cucumber.svg", "expui/fileTypes/cucumber.svg");
     paths.put("providers/eclipse.svg", "expui/fileTypes/eclipse.svg");
@@ -242,13 +244,15 @@ public final class ExperimentalUI {
     paths.put("icons/go.svg", "expui/fileTypes/go.svg");
     paths.put("icons/fileTypes/jestSnapshot.svg", "expui/fileTypes/jest.svg");
     paths.put("icons/fileTypes/jsHint.svg", "expui/fileTypes/jshint.svg");
-    paths.put("org/jetbrains/plugins/less/less.svg", "expui/fileTypes/less.svg");
+    paths.put("icons/less.svg", "expui/fileTypes/less.svg");
     paths.put("icons/lombok.svg", "expui/fileTypes/lombok.svg");
     paths.put("icons/config.svg", "expui/fileTypes/lombokConfig.svg");
+    paths.put("org/jetbrains/kotlin/idea/icons/kotlin_file.svg", "expui/fileTypes/kotlin.svg");
     paths.put("vcs/patch_file.svg", "expui/fileTypes/patch.svg");
     paths.put("protoFile.png", "expui/fileTypes/protobuf.svg");
     paths.put("icons/com/jetbrains/python/pythonFile.svg", "expui/fileTypes/python.svg");
     paths.put("org/jetbrains/kotlin/idea/icons/wizard/react.svg", "expui/fileTypes/react.svg");
+    paths.put("org/jetbrains/plugins/scala/images/scala16.png", "expui/fileTypes/scala.svg");
     paths.put("hcl/terraform.png", "expui/fileTypes/terraform.svg");
     paths.put("icons/velocity.svg", "expui/fileTypes/velocity.svg");
     paths.put("icons/vue.svg", "expui/fileTypes/vueJs.svg");
