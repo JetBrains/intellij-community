@@ -448,15 +448,6 @@ public class VcsUtil {
            : revision.asString();
   }
 
-  public static VirtualFile[] paths2VFiles(@NonNls String[] paths) {
-    VirtualFile[] files = new VirtualFile[paths.length];
-    for (int i = 0; i < paths.length; i++) {
-      files[i] = getVirtualFile(paths[i]);
-    }
-
-    return files;
-  }
-
   private static final @NonNls String ANNO_ASPECT = "show.vcs.annotation.aspect.";
 
   public static boolean isAspectAvailableByDefault(@Nullable @NonNls String id) {
@@ -470,18 +461,6 @@ public class VcsUtil {
 
   public static void setAspectAvailability(@Nullable @NonNls String aspectID, boolean showByDefault) {
     PropertiesComponent.getInstance().setValue(ANNO_ASPECT + aspectID, String.valueOf(showByDefault));
-  }
-
-  public static boolean isPathRemote(@NonNls String path) {
-    final int idx = path.indexOf("://");
-    if (idx == -1) {
-      final int idx2 = path.indexOf(":\\\\");
-      if (idx2 == -1) {
-        return false;
-      }
-      return idx2 > 0;
-    }
-    return idx > 0;
   }
 
   @Nls
