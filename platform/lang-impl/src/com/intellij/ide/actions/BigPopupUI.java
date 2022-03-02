@@ -291,8 +291,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     if (viewType == ViewType.SHORT) {
       size.height -= suggestionsPanel.getPreferredSize().height;
       if (ExperimentalUI.isNewUI()) {
-        size.height -= JBUI.scale(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled().bottom +
-                                  JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT);
+        size.height -= JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().bottom +
+                       JBUI.scale(JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT);
       }
     }
     return size;

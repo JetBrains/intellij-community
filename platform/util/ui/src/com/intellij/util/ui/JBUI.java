@@ -823,15 +823,15 @@ public final class JBUI {
 
       public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
 
-      public static JBInsets headerInsets() {
+      public static Insets headerInsets() {
         return insets("ComplexPopup.Header.insets", insets(13, 20, 11, 15));
       }
 
-      public static JBInsets textFieldBorderInsets() {
+      public static Insets textFieldBorderInsets() {
         return insets("ComplexPopup.TextField.borderInsets", insets(0, 12));
       }
 
-      public static JBInsets textFieldInputInsets() {
+      public static Insets textFieldInputInsets() {
         return insets("ComplexPopup.TextField.inputInsets", insets(6, 2));
       }
 
@@ -864,7 +864,7 @@ public final class JBUI {
       }
 
       @NotNull
-      public static JBInsets headerInsets() {
+      public static Insets headerInsets() {
         return insets("Popup.Header.insets", insets(12, 10, 10, 10));
       }
 
@@ -908,7 +908,7 @@ public final class JBUI {
         return JBColor.namedColor("Popup.separatorColor", new JBColor(Color.gray.brighter(), Gray.x51));
       }
 
-      public static JBInsets separatorInsets() {
+      public static Insets separatorInsets() {
         return insets("Popup.separatorInsets", insets(4, 12, 4, 12));
       }
 
