@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.index
 
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.withValue
 import org.jetbrains.kotlin.idea.caches.project.ModuleProductionSourceScope
 import org.jetbrains.kotlin.idea.stubindex.SubpackagesIndexService
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -10,23 +8,17 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
-private const val REGISTRY_CACHE_KEY = "kotlin.cache.top.level.subpackages"
-
 class SubpackageIndexServiceTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testBasicWithoutCaching() {
-        Registry.get(REGISTRY_CACHE_KEY).withValue(tempValue = false) {
-            setupSimpleTest()
-            basicSimpleTest()
-        }
+        setupSimpleTest()
+        basicSimpleTest()
     }
 
     fun testBasicWithCaching() {
-        Registry.get(REGISTRY_CACHE_KEY).withValue(tempValue = true) {
-            setupSimpleTest()
-            basicSimpleTest()
-            basicSimpleTest()
-        }
+        setupSimpleTest()
+        basicSimpleTest()
+        basicSimpleTest()
     }
 
     private fun basicSimpleTest() {
