@@ -148,8 +148,7 @@ public class JavaDfaValueFactory {
     if (qualifierExpression == null) {
       PsiElement element = refExpr.resolve();
       if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass currentClass;
-        currentClass = ClassUtils.getContainingClass(refExpr);
+        PsiClass currentClass = ClassUtils.getContainingClass(refExpr);
         PsiClass memberClass = ((PsiMember)element).getContainingClass();
         if (memberClass != null && currentClass != null) {
           PsiClass target;
