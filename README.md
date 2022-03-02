@@ -51,7 +51,17 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.
 
-To build installation packages, run the `ant` command in `<IDEA_HOME>` directory. See the `build.xml` file for details.
+To build installation packages, run the `installers.cmd` command in `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
+
+Options to build installers are passed as system properties to `installers.cmd` command.
+You may find the list of available commands in [BuildOptions.groovy](platform/build-scripts/groovy/org/jetbrains/intellij/build/BuildOptions.groovy)
+
+Examples (`./` should be added only for Linux/macOS):
+ * Build installers only for current operating system: `./installers.cmd -Dintellij.build.target.os=current`
+ * Build source code _incrementally_ (do not build what was already built before): `./installers.cmd -Dintellij.build.incremental.compilation=true`
+
+`installers.cmd` is used just to run [OpenSourceCommunityInstallersBuildTarget](build/scripts/OpenSourceCommunityInstallersBuildTarget.kt) from the command line.
+You may call it directly from IDEA, see run configuration `Build IDEA Community Installers (current OS)` for an example.
 
 ## Running IntelliJ IDEA
 To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".
