@@ -9,10 +9,11 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.castSafelyTo
-import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
-import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqJoinFragment
-import org.jetbrains.plugins.groovy.ext.ginq.ast.parseGinqBody
+import com.intellij.util.containers.addAllIfNotNull
+import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -30,7 +31,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   private fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {
-    return CachedValuesManager.getCachedValue(macroCall, CachedValueProvider {
+    return CachedValuesManager.getCachedValue(macroCall, rootGinq, CachedValueProvider {
       CachedValueProvider.Result(doGetParsedGinqTree(macroCall), macroCall)
     })
   }
@@ -39,8 +40,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val closure = macroCall.expressionArguments.filterIsInstance<GrClosableBlock>().singleOrNull()
                   ?: macroCall.closureArguments.singleOrNull()
                   ?: return null
-    return parseGinqBody(closure)
-
+    return parseGinq(closure)
   }
 
   override fun computeHighlighing(macroCall: GrCall): List<HighlightInfo> {
@@ -52,9 +52,24 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       limit,
       select
     ) = getParsedGinqTree(macroCall) ?: return emptyList()
-    val keywords = listOfNotNull(from.fromKw, where?.whereKw, groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw,
-                                 select.selectKw) + join.map(GinqJoinFragment::joinKw) + join.mapNotNull { it.onCondition?.onKw }
-    return keywords.mapNotNull {
+    val keywords = mutableListOf<PsiElement?>()
+    keywords.addAllIfNotNull(from.fromKw, where?.whereKw, groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw,
+                             select.selectKw)
+    keywords.addAll(join.mapNotNull { it.onCondition?.onKw })
+    keywords.addAll(join.map { it.joinKw })
+    macroCall.accept(object : GroovyRecursiveElementVisitor() {
+      override fun visitElement(element: GroovyPsiElement) {
+        val nestedGinq = element.getUserData(injectedGinq)
+        if (nestedGinq != null) {
+          keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw, nestedGinq.select.selectKw)
+          keywords.addAll(nestedGinq.join.mapNotNull { it.onCondition?.onKw })
+          keywords.addAll(nestedGinq.join.map { it.joinKw })
+        } else {
+          super.visitElement(element)
+        }
+      }
+    })
+    return keywords.filterNotNull().mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.KEYWORD).create()
     }
   }
@@ -73,9 +88,14 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     if (element !is GrReferenceExpression) {
       return null
     }
-    val tree = getParsedGinqTree(macroCall) ?: return null
-    val bindings  = tree.join.map { it.alias } + listOf(tree.from.alias)
-    val binding = bindings.find { it.referenceName == element.referenceName }
-    return binding?.let(::ElementResolveResult)
+    val hierarchy = element.ginqParents()
+    for (ginq in hierarchy) {
+      val bindings  = ginq.join.map { it.alias } + listOf(ginq.from.alias)
+      val binding = bindings.find { it.referenceName == element.referenceName }
+      if (binding != null) {
+        return ElementResolveResult(binding)
+      }
+    }
+    return null
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
@@ -65,12 +66,14 @@ class GinqJoinFragment(
   val onCondition: GinqOnFragment?,
 ) : GinqDataSourceFragment(aliasExpression, dataSourceExpression), GinqQueryFragment
 
-abstract class GinqFilterFragment(val filter: GrExpression) : GinqQueryFragment
+abstract class GinqFilterFragment(open val filter: GrExpression) : GinqQueryFragment
 
 class GinqOnFragment(
   val onKw: PsiElement,
-  filterExpression: GrExpression,
-) : GinqFilterFragment(filterExpression), GinqQueryFragment
+  filterExpression: GrBinaryExpression,
+) : GinqFilterFragment(filterExpression), GinqQueryFragment {
+  override val filter: GrBinaryExpression = filterExpression
+}
 
 class GinqWhereFragment(
   val whereKw: PsiElement,
