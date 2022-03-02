@@ -308,6 +308,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(idx)
             val lastIndex = idx == indexes.last()
             val anchor = if (lastIndex) KotlinExpressionAnchor(expr) else null
+            val expectedType = if (lastIndex) expr.getKotlinType()?.toDfType(expr) ?: DfType.TOP else DfType.TOP
             var indexType = idx.getKotlinType()
             val constructor = indexType?.constructor as? IntegerLiteralTypeConstructor
             if (constructor != null) {
@@ -318,7 +319,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     processExpression(storedValue)
                     addInstruction(PopInstruction())
                 }
-                addInstruction(EvalUnknownInstruction(anchor, 2))
+                addInstruction(EvalUnknownInstruction(anchor, 2, expectedType))
                 addInstruction(FlushFieldsInstruction())
                 continue
             }
@@ -366,7 +367,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         processExpression(storedValue)
                         addInstruction(PopInstruction())
                     }
-                    addInstruction(EvalUnknownInstruction(anchor, 2))
+                    addInstruction(EvalUnknownInstruction(anchor, 2, expectedType))
                     addInstruction(FlushFieldsInstruction())
                 }
             }
@@ -807,7 +808,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 addInstruction(FlushVariableInstruction(dfVar))
             }
         }
-        addInstruction(EvalUnknownInstruction(anchor, 1))
+        addInstruction(EvalUnknownInstruction(anchor, 1, expr.getKotlinType()?.toDfType(expr) ?: DfType.TOP))
     }
 
     private fun processPostfixExpression(expr: KtPostfixExpression) {
@@ -844,7 +845,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 addImplicitConversion(expr, operandType, expr.getKotlinType())
             }
         } else {
-            addInstruction(EvalUnknownInstruction(anchor, 1))
+            addInstruction(EvalUnknownInstruction(anchor, 1, expr.getKotlinType()?.toDfType(expr) ?: DfType.TOP))
         }
     }
 
@@ -1246,7 +1247,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
         processExpression(range)
-        addInstruction(EvalUnknownInstruction(anchor, 2))
+        addInstruction(EvalUnknownInstruction(anchor, 2, DfTypes.BOOLEAN))
         addInstruction(FlushFieldsInstruction())
     }
 
