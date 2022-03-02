@@ -13,11 +13,10 @@ import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.ThreeState;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,17 +31,15 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManagerImpl.class);
 
-  private final AtomicReference<ThreeState> myFactoriesInitialized = new AtomicReference<>(ThreeState.NO);
   private final ClearableLazyValue<Map<EngineInfo, ScriptEngineFactory>> myFactories = ClearableLazyValue.createAtomic(() -> {
     long start = System.nanoTime();
     Map<EngineInfo, ScriptEngineFactory> map = calcFactories();
-    LOG.info(ScriptEngineManager.class.getName() + " initialized in " + TimeoutUtil.getDurationMillis(start) + " ms");
-    myFactoriesInitialized.set(ThreeState.YES);
+    LOG.info(TimeoutUtil.getDurationMillis(start) + " ms to enumerate javax.scripting engines on " +
+             (EDT.isCurrentThreadEdt() ? "EDT" : "BGT"));
     return map;
   });
 
@@ -96,13 +93,6 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     return null;
   }
 
-  @Override
-  public boolean isInitialized() {
-    if (myFactoriesInitialized.compareAndSet(ThreeState.NO, ThreeState.UNSURE)) {
-      AppExecutorUtil.getAppExecutorService().execute(this::getFactories);
-    }
-    return myFactoriesInitialized.get() == ThreeState.YES;
-  }
 
   private @NotNull Map<EngineInfo, ScriptEngineFactory> getFactories() {
     try {
@@ -115,13 +105,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   private void dropFactories() {
-    try {
-      myFactoriesInitialized.set(ThreeState.UNSURE);
-      myFactories.drop();
-    }
-    finally {
-      myFactoriesInitialized.set(ThreeState.NO);
-    }
+    myFactories.drop();
   }
 
   private static @NotNull Map<EngineInfo, ScriptEngineFactory> calcFactories() {
