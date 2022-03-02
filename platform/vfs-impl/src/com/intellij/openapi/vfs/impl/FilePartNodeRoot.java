@@ -142,9 +142,6 @@ final class FilePartNodeRoot extends FilePartNode {
     List<String> names = splitNames(pair != null ? pair.second : path);
     NewVirtualFile fsRoot = pair != null ? pair.first : null;
 
-    VirtualFile NEVER_TRIED_TO_FIND = NullVirtualFile.INSTANCE;
-    // we try to never call file.findChild() because it's expensive
-    VirtualFile currentFile = NEVER_TRIED_TO_FIND;
     FilePartNode currentNode = this;
     FilePartNode parentNode = this;
 
@@ -164,6 +161,21 @@ final class FilePartNodeRoot extends FilePartNode {
       }
     }
 
+    return trieDescend(fs, currentFS, names, fsRoot, currentNode, parentNode);
+  }
+
+  // extracted private method to split code which is too large for JDK17 to not crash (see IDEA-289921 [JBR17] Constant crashes while executing tests on TeamCity
+  @NotNull
+  private static NodeToUpdate trieDescend(@NotNull NewVirtualFileSystem fs,
+                                          @NotNull NewVirtualFileSystem currentFS,
+                                          @NotNull List<String> names,
+                                          @Nullable NewVirtualFile fsRoot,
+                                          @NotNull FilePartNode currentNode,
+                                          @NotNull FilePartNode parentNode) {
+    VirtualFile NEVER_TRIED_TO_FIND = NullVirtualFile.INSTANCE;
+    // we try to never call file.findChild() until absolutely necessary, because it's expensive;
+    // instead, rely on string name matching as long as possible
+    VirtualFile currentFile = NEVER_TRIED_TO_FIND;
     for (int i = names.size() - 1; i >= 0; i--) {
       String name = names.get(i);
       if (name.equals(JarFileSystem.JAR_SEPARATOR) && currentFS instanceof LocalFileSystem) {
@@ -212,7 +224,8 @@ final class FilePartNodeRoot extends FilePartNode {
       }
 
       FilePartNode child = currentFile == null ? new UrlPartNode(name, myUrl(currentNode.myFileOrUrl), currentFS)
-             : new FilePartNode(name.equals(JarFileSystem.JAR_SEPARATOR) ? JAR_SEPARATOR_NAME_ID : getNameId(currentFile), currentFile, currentFS);
+                                               : new FilePartNode(name.equals(JarFileSystem.JAR_SEPARATOR) ? JAR_SEPARATOR_NAME_ID : getNameId(
+                                                 currentFile), currentFile, currentFS);
 
       currentNode.children = ArrayUtil.insert(currentNode.children, -index - 1, child);
       parentNode = currentNode;
