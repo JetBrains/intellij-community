@@ -266,7 +266,7 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection"
                      key="inspection.missing.recent.api.display.name"/>
-    <localInspection language="JAVA" shortName="SerializableCtor"
+    <localInspection language="UAST" shortName="SerializableCtor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.SerializableCtorInspection"
