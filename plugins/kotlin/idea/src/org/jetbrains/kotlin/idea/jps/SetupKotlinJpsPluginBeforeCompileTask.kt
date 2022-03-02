@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.jps
 
-import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
@@ -10,7 +9,6 @@ import com.intellij.project.stateStore
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.KotlinPluginMacros
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
@@ -65,8 +63,6 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
         if (unpackedKotlinc == null) {
             return false
         }
-
-        PathMacros.getInstance().setMacro(KotlinPluginMacros.KOTLIN_BUNDLED_PATH_VARIABLE, unpackedKotlinc.canonicalPath)
 
         return true
     }
