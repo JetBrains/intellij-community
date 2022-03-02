@@ -763,6 +763,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());
         button.setOpaque(false);
+        setButtonColor(button, "Notification.Button.foreground", "JButton.textColor");
+        setButtonColor(button, "Notification.Button.background", "JButton.backgroundColor");
+        setButtonColor(button, "Notification.Button.borderColor", "JButton.borderColor");
         actionPanel.addAction(button);
         button.addActionListener(e -> {
           NotificationCollector.getInstance()
@@ -819,6 +822,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     hoverAdapter.addSource(actionPanel);
+  }
+
+  private static void setButtonColor(@NotNull JButton button, @NotNull String colorKey, @NotNull String colorProperty) {
+    if (UIManager.getColor(colorKey) != null) {
+      button.putClientProperty(colorProperty, JBColor.namedColor(colorKey));
+    }
   }
 
   private static @NotNull LinkLabel<AnAction> createAction(@NotNull Notification notification, @NotNull AnAction action) {
