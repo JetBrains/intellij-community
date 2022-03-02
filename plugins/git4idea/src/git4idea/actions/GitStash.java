@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitStashUsageCollector;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -57,7 +58,10 @@ public class GitStash extends GitRepositoryAction {
           Collection<VirtualFile> successfulRoots = new ArrayList<>();
           Map<VirtualFile, @Nls String> failedRoots = new LinkedHashMap<>();
           for (VirtualFile root : roots) {
+            long startTime = System.currentTimeMillis();
             GitCommandResult result = Git.getInstance().runCommand(createHandler.apply(root));
+            GitStashUsageCollector.logStashPush(startTime);
+
             if (result.success()) {
               successfulRoots.add(root);
             }
