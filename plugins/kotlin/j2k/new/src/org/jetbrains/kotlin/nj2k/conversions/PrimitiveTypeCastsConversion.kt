@@ -76,7 +76,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
             ).withFormattingFrom(expression)
         }
 
-        fun RecursiveApplicableConversionBase.charConversion(
+        private fun RecursiveApplicableConversionBase.charConversion(
             expression: JKExpression,
             fromType: JKJavaPrimitiveType,
             toType: JKJavaPrimitiveType
