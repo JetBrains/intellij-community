@@ -40,7 +40,7 @@ class GitNewProjectWizardStep(
       val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(path, name))
       if (projectBaseDirectory != null) {
         runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
-          GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
+          GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory, true)
         }
       }
     }
