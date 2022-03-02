@@ -6,7 +6,7 @@ fun <T: Any, E> T.foo(<warning>x</warning> : E, y : A) : T   {
   y plus 1
   y + 1.0
 
-  <warning>this<warning>?.</warning>minus<T>(this)</warning>
+  this<warning>?.</warning>minus<T>(this)
 
   return this
 }
@@ -64,7 +64,7 @@ fun Int.foo() = this
             command?.equals1(null)
 
             val c = Command()
-            <warning>c<warning>?.</warning>equals2(null)</warning>
+            c<warning>?.</warning>equals2(null)
 
             if (command == null) <warning>1</warning>
         }
