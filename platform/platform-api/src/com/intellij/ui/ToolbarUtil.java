@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
@@ -17,6 +18,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -113,6 +115,13 @@ public final class ToolbarUtil {
   public static void setTransparentTitleBar(@NotNull Window window,
                                             @NotNull JRootPane rootPane,
                                             Consumer<? super Runnable> onDispose) {
+    setTransparentTitleBar(window, rootPane, null, onDispose);
+  }
+
+  public static void setTransparentTitleBar(@NotNull Window window,
+                                            @NotNull JRootPane rootPane,
+                                            @Nullable BooleanSupplier handler,
+                                            Consumer<? super Runnable> onDispose) {
     if (!SystemInfoRt.isMac || !isMacTransparentTitleBarAppearance()) {
       return;
     }
@@ -121,11 +130,17 @@ public final class ToolbarUtil {
     AbstractBorder customBorder = new AbstractBorder() {
       @Override
       public Insets getBorderInsets(Component c) {
+        if (handler != null && !handler.getAsBoolean()) {
+          return JBInsets.emptyInsets();
+        }
         return topWindowInset;
       }
 
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        if (handler != null && !handler.getAsBoolean()) {
+          return;
+        }
         Graphics2D graphics = (Graphics2D)g.create();
         try {
           Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
