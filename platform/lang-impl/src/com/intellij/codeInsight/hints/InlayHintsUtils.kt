@@ -76,6 +76,11 @@ internal fun <T : Any> copySettings(from: T, provider: InlayHintsProvider<T>): T
   return settings
 }
 
+internal fun strikeOutBuilder(editor: Editor): TextAttributesEffectsBuilder {
+  val effectColor = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).foregroundColor
+  return TextAttributesEffectsBuilder.create().coverWith(EffectType.STRIKEOUT, effectColor)
+}
+
 class CollectorWithSettings<T : Any>(
   val collector: InlayHintsCollector,
   val key: SettingsKey<T>,
@@ -102,8 +107,7 @@ class CollectorWithSettings<T : Any>(
   fun collectTraversingAndApplyOnEdt(editor: Editor, file: PsiFile, enabled: Boolean) {
     val hintsBuffer = collectTraversing(editor, file, true)
     if (!enabled) {
-      val effectColor = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).foregroundColor
-      val builder = TextAttributesEffectsBuilder.create().coverWith(EffectType.STRIKEOUT, effectColor)
+      val builder = strikeOutBuilder(editor)
       addStrikeout(hintsBuffer.inlineHints, builder) { root, constraints -> HorizontalConstrainedPresentation(root, constraints) }
       addStrikeout(hintsBuffer.blockAboveHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
       addStrikeout(hintsBuffer.blockBelowHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
