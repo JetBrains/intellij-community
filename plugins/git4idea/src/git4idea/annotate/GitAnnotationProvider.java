@@ -156,6 +156,10 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                        @NotNull FilePath filePath,
                                        @Nullable VcsRevisionNumber revision,
                                        @NotNull VirtualFile file) throws VcsException {
+    if (revision == null) {
+      LOG.warn("Computing annotations for implicitly passed HEAD revision");
+    }
+
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
     GitBinaryHandler h = new GitBinaryHandler(myProject, root, GitCommand.BLAME);
@@ -432,7 +436,8 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       }
       return lastRevision;
     }
-    catch (VcsException ignore) {
+    catch (VcsException e) {
+      LOG.warn(e);
       return null;
     }
   }
