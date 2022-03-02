@@ -12,6 +12,12 @@ data class GHSuggestedChangeInfo(
   val startLine: Int,
   val endLine: Int
 ) {
+  fun cutContextContent(): List<String> = patchHunk.lines
+    .filter { it.type != PatchLine.Type.REMOVE }
+    .dropLast(endLine - startLine + 1)
+    .takeLast(3)
+    .map { it.text }
+
   fun cutChangedContent(): List<String> = patchHunk.lines
     .filter { it.type != PatchLine.Type.REMOVE }
     .takeLast(endLine - startLine + 1)
