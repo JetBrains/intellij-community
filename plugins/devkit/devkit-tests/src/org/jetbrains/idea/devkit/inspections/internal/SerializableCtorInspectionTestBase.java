@@ -14,13 +14,20 @@ public abstract class SerializableCtorInspectionTestBase extends LightJavaCodeIn
     myFixture.enableInspections(new SerializableCtorInspection());
   }
 
-  protected void addPropertyMappingClass() {
-    myFixture.addClass("package com.intellij.serialization;\n" +
-                       "public @interface PropertyMapping { String[] value(); }");
+  protected void doTest() {
+    doTest(false);
   }
 
-  protected void doTest() {
+  protected void doTest(boolean disablePropertyMappingClass) {
+    if (!disablePropertyMappingClass) {
+      addPropertyMappingClass();
+    }
     myFixture.testHighlighting(getTestName(false) + '.' +  getFileExtension());
+  }
+
+  private void addPropertyMappingClass() {
+    myFixture.addClass("package com.intellij.serialization;\n" +
+                       "public @interface PropertyMapping { String[] value(); }");
   }
 
   @NotNull

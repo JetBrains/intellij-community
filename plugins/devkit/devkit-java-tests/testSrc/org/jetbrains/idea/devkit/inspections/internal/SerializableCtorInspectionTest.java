@@ -19,42 +19,34 @@ public class SerializableCtorInspectionTest extends SerializableCtorInspectionTe
   }
 
   public void testCorrectAnnotatedConstructor() {
-    addPropertyMappingClass();
-    doTest();
+    doTest(false);
   }
 
   public void testSerializableClassButPropertyMappingAnnotationNotAvailable() {
-    // no @PropertyMapping in the project
-    doTest();
+    doTest(true);
   }
 
   public void testNotSerializableClass() {
-    addPropertyMappingClass();
     doTest();
   }
 
   public void testSerializableClassButDoesNotContainSerialVersionUidField() {
-    addPropertyMappingClass();
     doTest();
   }
 
   public void testClassContainingSerialVersionUidFieldButIsNotSerializable() {
-    addPropertyMappingClass();
     doTest();
   }
 
   public void testNotAnnotatedConstructor() {
-    addPropertyMappingClass();
     doTest();
   }
 
   public void testNotAnnotatedMultipleConstructors() {
-    addPropertyMappingClass();
     doTest();
   }
 
   public void testNotAnnotatedAndAnnotatedConstructorsInSingleClass() {
-    addPropertyMappingClass();
     doTest();
   }
 }

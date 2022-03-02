@@ -49,7 +49,7 @@ public class SerializableCtorInspection extends DevKitUastInspectionBase {
     if (!hasFieldWithName(aClass, CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME)) return null;
     ProblemsHolder holder = createProblemsHolder(aClass, manager, isOnTheFly);
     for (UMethod constructor : getConstructors(aClass)) {
-      if (!isAnnotated(constructor, PROPERTY_MAPPING_ANNOTATION)) {
+      if (!isAnnotatedWithPropertyMapping(constructor)) {
         PsiElement constructorAnchor = UElementKt.getSourcePsiElement(constructor.getUastAnchor());
         if (constructorAnchor != null) {
           holder.registerProblem(constructorAnchor, DevKitBundle.message("inspection.serializable.constructor.message"),
@@ -77,12 +77,11 @@ public class SerializableCtorInspection extends DevKitUastInspectionBase {
     return ContainerUtil.filter(aClass.getMethods(), method -> method.isConstructor());
   }
 
-  private static boolean isAnnotated(UMethod constructor, String annotationFqn) {
+  private static boolean isAnnotatedWithPropertyMapping(UMethod constructor) {
     return ContainerUtil.exists(constructor.getUAnnotations(),
-                                annotation -> annotationFqn.equals(annotation.getQualifiedName()));
+                                annotation -> PROPERTY_MAPPING_ANNOTATION.equals(annotation.getQualifiedName()));
   }
 
-  @NotNull
   private static LocalQuickFix[] createFixes(@NotNull UClass aClass, ProblemsHolder holder, UMethod constructor) {
     return JavaLanguage.INSTANCE.is(aClass.getLang()) ?
            new LocalQuickFix[]{
