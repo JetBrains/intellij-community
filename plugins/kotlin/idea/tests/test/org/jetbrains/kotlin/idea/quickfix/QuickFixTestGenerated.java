@@ -10447,6 +10447,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionTwoTraits.kt");
             }
 
+            @TestMetadata("addFunctionWithoutDefaultValue.kt")
+            public void testAddFunctionWithoutDefaultValue() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addFunctionWithoutDefaultValue.kt");
+            }
+
             @TestMetadata("addParameter.kt")
             public void testAddParameter() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/addParameter.kt");
