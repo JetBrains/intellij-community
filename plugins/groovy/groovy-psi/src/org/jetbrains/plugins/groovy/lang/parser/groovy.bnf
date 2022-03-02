@@ -969,7 +969,7 @@ string_injection ::= '$' string_injection_body
 private string_injection_body ::= qualified_reference_expression | unqualified_reference_expression | lazy_closure | clear_variants <<unexpected "identifier.or.block.expected">>
 
 parenthesized_expression ::= p_parenthesized_expression_inner
-private p_parenthesized_expression_inner ::= '(' mb_nl <<insideParentheses expression>> mb_nl ')' { pin = 1 }
+private p_parenthesized_expression_inner ::= '(' mb_nl <<insideParentheses expression_or_application>> mb_nl ')' { pin = 1 }
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
@@ -1267,7 +1267,10 @@ application_argument_list ::= <<applicationArguments application_arguments>>
 private application_arguments ::= argument (',' mb_nl argument)*
 
 private parse_argument ::= <<parseArgument argument>>
-private argument ::= spread_list_argument | named_argument | expression (map_argument_label map_argument)?
+private argument ::= spread_list_argument
+                   | named_argument
+                   | !<<isApplicationArguments>> expression_or_application (map_argument_label map_argument)?
+                   | expression (map_argument_label map_argument)?
 
 left map_argument_label ::= &':'
 {

@@ -852,7 +852,10 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // spread_list_argument | named_argument | expression (map_argument_label map_argument)?
+  // spread_list_argument
+  //                    | named_argument
+  //                    | !<<isApplicationArguments>> expression_or_application (map_argument_label map_argument)?
+  //                    | expression (map_argument_label map_argument)?
   static boolean argument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument")) return false;
     boolean r;
@@ -860,31 +863,72 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = spread_list_argument(b, l + 1);
     if (!r) r = named_argument(b, l + 1);
     if (!r) r = argument_2(b, l + 1);
+    if (!r) r = argument_3(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !<<isApplicationArguments>> expression_or_application (map_argument_label map_argument)?
+  private static boolean argument_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = argument_2_0(b, l + 1);
+    r = r && expression_or_application(b, l + 1);
+    r = r && argument_2_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !<<isApplicationArguments>>
+  private static boolean argument_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !isApplicationArguments(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (map_argument_label map_argument)?
+  private static boolean argument_2_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_2_2")) return false;
+    argument_2_2_0(b, l + 1);
+    return true;
+  }
+
+  // map_argument_label map_argument
+  private static boolean argument_2_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_2_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = map_argument_label(b, l + 1);
+    r = r && map_argument(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // expression (map_argument_label map_argument)?
-  private static boolean argument_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "argument_2")) return false;
+  private static boolean argument_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = expression(b, l + 1, -1);
-    r = r && argument_2_1(b, l + 1);
+    r = r && argument_3_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // (map_argument_label map_argument)?
-  private static boolean argument_2_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "argument_2_1")) return false;
-    argument_2_1_0(b, l + 1);
+  private static boolean argument_3_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_3_1")) return false;
+    argument_3_1_0(b, l + 1);
     return true;
   }
 
   // map_argument_label map_argument
-  private static boolean argument_2_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "argument_2_1_0")) return false;
+  private static boolean argument_3_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "argument_3_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = map_argument_label(b, l + 1);
@@ -5590,7 +5634,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' mb_nl <<insideParentheses expression>> mb_nl ')'
+  // '(' mb_nl <<insideParentheses expression_or_application>> mb_nl ')'
   static boolean p_parenthesized_expression_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "p_parenthesized_expression_inner")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
@@ -5599,7 +5643,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_LPAREN);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, insideParentheses(b, l + 1, expression_parser_)) && r;
+    r = p && report_error_(b, insideParentheses(b, l + 1, GroovyGeneratedParser::expression_or_application)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && consumeToken(b, T_RPAREN) && r;
     exit_section_(b, l, m, r, p, null);

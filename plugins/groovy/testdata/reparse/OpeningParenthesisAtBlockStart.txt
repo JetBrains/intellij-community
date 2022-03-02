@@ -72,38 +72,40 @@ Groovy script
       Call expression
         Parenthesized expression
           PsiElement(()('(')
-          Reference expression
-            PsiElement(identifier)('String')
-          PsiErrorElement:')' or ',' expected, got 'home'
-            <empty list>
-        PsiWhiteSpace(' ')
-        Command arguments
-          Reference expression
-            PsiElement(identifier)('home')
-      PsiElement(new line)('\n    ')
-      Method call
-        Reference expression
-          Reference expression
-            PsiElement(identifier)('simplePlugins')
-          PsiElement(.)('.')
-          PsiElement(identifier)('each')
-        PsiWhiteSpace(' ')
-        Arguments
-          <empty list>
-        Closable block
-          PsiElement({)('{')
-          PsiWhiteSpace('\n        ')
-          Parameter list
-            <empty list>
           Call expression
             Reference expression
-              PsiElement(identifier)('layoutPlugin')
+              PsiElement(identifier)('String')
             PsiWhiteSpace(' ')
             Command arguments
               Reference expression
-                PsiElement(identifier)('it')
+                PsiElement(identifier)('home')
           PsiElement(new line)('\n    ')
-          PsiElement(})('}')
+          PsiErrorElement:')' expected, got 'simplePlugins'
+            <empty list>
+        Command arguments
+          Method call
+            Reference expression
+              Reference expression
+                PsiElement(identifier)('simplePlugins')
+              PsiElement(.)('.')
+              PsiElement(identifier)('each')
+            PsiWhiteSpace(' ')
+            Arguments
+              <empty list>
+            Closable block
+              PsiElement({)('{')
+              PsiWhiteSpace('\n        ')
+              Parameter list
+                <empty list>
+              Call expression
+                Reference expression
+                  PsiElement(identifier)('layoutPlugin')
+                PsiWhiteSpace(' ')
+                Command arguments
+                  Reference expression
+                    PsiElement(identifier)('it')
+              PsiElement(new line)('\n    ')
+              PsiElement(})('}')
       PsiElement(new line)('\n\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')
