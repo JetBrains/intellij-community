@@ -9,11 +9,12 @@ import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.LocalFilePath
-import git4idea.GitContentRevision
-import git4idea.GitRevisionNumber
+import com.intellij.vcsUtil.VcsImplUtil
+import git4idea.GitUtil
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCommitOptions
 import git4idea.index.GitIndexUtil
+import git4idea.util.GitFileUtils
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.nio.charset.Charset
@@ -59,10 +60,8 @@ class GHSuggestedChangeApplier(
     val beforeLocalFilePath = createLocalFilePath(suggestedChangePatch.beforeName)
     val afterLocalFilePath = createLocalFilePath(suggestedChangePatch.afterName)
 
-    val beforeRevision = GitContentRevision.createRevision(beforeLocalFilePath, GitRevisionNumber.HEAD, project)
-    val revisionContent = beforeRevision.content
-    if (revisionContent == null) return ApplyPatchStatus.FAILURE
-
+    val bytes = GitFileUtils.getFileContent(project, virtualBaseDir, GitUtil.HEAD, suggestedChangePatch.beforeName)
+    val revisionContent = VcsImplUtil.loadTextFromBytes(project, bytes, beforeLocalFilePath)
     val appliedPatch = GenericPatchApplier.apply(revisionContent, suggestedChangePatch.hunks)
     if (appliedPatch == null || appliedPatch.status != ApplyPatchStatus.SUCCESS) {
       return appliedPatch?.status ?: ApplyPatchStatus.FAILURE
