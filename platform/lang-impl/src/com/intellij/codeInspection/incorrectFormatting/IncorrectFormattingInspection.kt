@@ -11,6 +11,7 @@ import com.intellij.formatting.service.FormattingServiceUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
@@ -33,6 +34,12 @@ class IncorrectFormattingInspection(
 
     // Skip files we are not able to fix
     if (!file.isWritable) return null
+
+    // Skip injections
+    val host = InjectedLanguageManager.getInstance(file.project).getInjectionHost(file)
+    if (host != null) {
+      return null
+    }
 
     // Doesn't work with external and async formatters since they modify the file
     if (FormattingServiceUtil.findService(file, true, true) !is CoreFormattingService) {
