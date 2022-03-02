@@ -66,25 +66,27 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
         if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
           registerClassError(aClass, ProblemType.CLASS_NOT_PUBLIC);
         }
-        final PsiMethod[] constructors = aClass.getConstructors();
-        if (constructors.length != 0) {
-          boolean hasPublicNoArgConstructor = false;
-          boolean hasIncompatibleConstructor = false;
-          for (PsiMethod constructor : constructors) {
-            final PsiParameterList parameterList = constructor.getParameterList();
-            if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-              if (parameterList.isEmpty()) {
-                hasPublicNoArgConstructor = true;
-              }
-              else {
-                hasIncompatibleConstructor = true;
+        else {
+          final PsiMethod[] constructors = aClass.getConstructors();
+          if (constructors.length != 0) {
+            boolean hasPublicNoArgConstructor = false;
+            boolean hasIncompatibleConstructor = false;
+            for (PsiMethod constructor : constructors) {
+              final PsiParameterList parameterList = constructor.getParameterList();
+              if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+                if (parameterList.isEmpty()) {
+                  hasPublicNoArgConstructor = true;
+                }
+                else {
+                  hasIncompatibleConstructor = true;
+                }
               }
             }
-          }
-          if (!hasPublicNoArgConstructor || hasIncompatibleConstructor) {
-            registerClassError(aClass, hasPublicNoArgConstructor
-                                       ? ProblemType.INCOMPATIBLE_CONSTRUCTOR
-                                       : ProblemType.NO_PUBLIC_NOARG_CONSTRUCTOR);
+            if (!hasPublicNoArgConstructor || hasIncompatibleConstructor) {
+              registerClassError(aClass, hasPublicNoArgConstructor
+                                         ? ProblemType.INCOMPATIBLE_CONSTRUCTOR
+                                         : ProblemType.NO_PUBLIC_NOARG_CONSTRUCTOR);
+            }
           }
         }
       }
@@ -92,30 +94,32 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
         if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
           registerClassError(aClass, ProblemType.CLASS_NOT_PUBLIC);
         }
-        final PsiMethod[] constructors = aClass.getConstructors();
-        boolean hasStringConstructor = false;
-        boolean hasNoArgConstructor = false;
-        boolean hasConstructor = false;
-        for (PsiMethod constructor : constructors) {
-          hasConstructor = true;
-          if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-            continue;
-          }
-          final PsiParameterList parameterList = constructor.getParameterList();
-          final int parametersCount = parameterList.getParametersCount();
-          if (parametersCount == 0) {
-            hasNoArgConstructor = true;
-          }
-          if (parametersCount == 1) {
-            final PsiParameter[] parameters = parameterList.getParameters();
-            final PsiType type = parameters[0].getType();
-            if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
-              hasStringConstructor = true;
+        else {
+          final PsiMethod[] constructors = aClass.getConstructors();
+          boolean hasStringConstructor = false;
+          boolean hasNoArgConstructor = false;
+          boolean hasConstructor = false;
+          for (PsiMethod constructor : constructors) {
+            hasConstructor = true;
+            if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+              continue;
+            }
+            final PsiParameterList parameterList = constructor.getParameterList();
+            final int parametersCount = parameterList.getParametersCount();
+            if (parametersCount == 0) {
+              hasNoArgConstructor = true;
+            }
+            if (parametersCount == 1) {
+              final PsiParameter[] parameters = parameterList.getParameters();
+              final PsiType type = parameters[0].getType();
+              if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
+                hasStringConstructor = true;
+              }
             }
           }
-        }
-        if (hasConstructor && !hasNoArgConstructor && !hasStringConstructor) {
-          registerClassError(aClass, ProblemType.NO_PUBLIC_NOARG_CONSTRUCTOR);
+          if (hasConstructor && !hasNoArgConstructor && !hasStringConstructor) {
+            registerClassError(aClass, ProblemType.NO_PUBLIC_NOARG_CONSTRUCTOR);
+          }
         }
       }
     }
