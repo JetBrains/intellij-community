@@ -719,4 +719,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testPureMethodReadsMutableArray() { doTest(); }
   public void testBoxingInConstructorArguments() { doTest(); }
   public void testBoxingInArrayDeclaration() { doTest(); }
+  public void testNestedVersusSuper() { doTest(); }
 }
