@@ -4,6 +4,7 @@ package git4idea.repo;
 import com.intellij.openapi.GitRepositoryInitializer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -11,13 +12,17 @@ import git4idea.actions.GitInit;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+
 import static git4idea.GitNotificationIdsHolder.INIT_FAILED;
+import static git4idea.GitNotificationIdsHolder.INIT_STAGE_FAILED;
 
 public class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
   @Override
-  public void initRepository(@NotNull Project project, @NotNull VirtualFile root) {
+  public void initRepository(@NotNull Project project, @NotNull VirtualFile root, boolean addFilesToVcs) {
     ProgressManager.progress2(GitBundle.message("progress.title.creating.git.repository"));
 
     GitCommandResult result = Git.getInstance().init(project, root);
@@ -29,5 +34,17 @@ public class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
 
     GitInit.refreshAndConfigureVcsMappings(project, root, root.getPath());
     GitUtil.generateGitignoreFileIfNeeded(project, root);
+
+    if (addFilesToVcs) {
+      project.save(); // ensure vcs.xml is up-to-date
+
+      try {
+        GitFileUtils.addFiles(project, root, Collections.singletonList(root));
+      }
+      catch (VcsException e) {
+        VcsNotifier.getInstance(project).notifyError(INIT_STAGE_FAILED, GitBundle.message("action.Git.Init.Stage.error"),
+                                                     result.getErrorOutputAsHtmlString(), true);
+      }
+    }
   }
 }
