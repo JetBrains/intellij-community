@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.project.test.base.elastic
 
 
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.performance.tests.utils.BuildData
 import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.project.test.base.ProjectData
 import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
@@ -20,9 +21,10 @@ object EsMetricUploader {
         project: ProjectData,
         frontend: KotlinPluginKind,
         iterations: List<MetricsData>,
+        buildData: BuildData,
         elasticCredentials: ElasticCredentials
     ) {
-        val json = MetricsToJson.toJsonString(action, project, frontend, iterations)
+        val json = MetricsToJson.toJsonString(action, project, buildData, frontend, iterations)
         logMessage { json }
         post(json, elasticCredentials)
     }
