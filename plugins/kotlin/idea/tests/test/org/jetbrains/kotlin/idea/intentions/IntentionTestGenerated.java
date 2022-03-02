@@ -4144,6 +4144,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/changeVisibility/protected/notForFinalClass5.kt");
             }
 
+            @TestMetadata("notForInterfaceMember.kt")
+            public void testNotForInterfaceMember() throws Exception {
+                runTest("testData/intentions/changeVisibility/protected/notForInterfaceMember.kt");
+            }
+
             @TestMetadata("notForNonValParameter.kt")
             public void testNotForNonValParameter() throws Exception {
                 runTest("testData/intentions/changeVisibility/protected/notForNonValParameter.kt");
