@@ -403,7 +403,10 @@ fun KtModifierListOwner.canBeProtected(): Boolean {
         else -> this.parent
     }
     return when (parent) {
-        is KtClassBody -> parent.parent is KtClass && !this.isFinalClassConstructor()
+        is KtClassBody -> {
+            val parentClass = parent.parent as? KtClass
+            parentClass != null && !parentClass.isInterface() && !this.isFinalClassConstructor()
+        }
         is KtParameterList -> parent.parent is KtPrimaryConstructor
         is KtClass -> !this.isAnnotationClassPrimaryConstructor() && !this.isFinalClassConstructor()
         else -> false
