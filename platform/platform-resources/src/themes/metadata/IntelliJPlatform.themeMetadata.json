@@ -633,6 +633,15 @@
       "key": "Notification.MoreButton.innerBorderColor"
     },
     {
+      "key": "Notification.Button.foreground"
+    },
+    {
+      "key": "Notification.Button.background"
+    },
+    {
+      "key": "Notification.Button.borderColor"
+    },
+    {
       "key": "Notification.ToolWindow.errorBackground",
       "description": "Tool window balloon. Use the \"Add Test Notification\" action in internal mode to show notifications on demand."
     },
