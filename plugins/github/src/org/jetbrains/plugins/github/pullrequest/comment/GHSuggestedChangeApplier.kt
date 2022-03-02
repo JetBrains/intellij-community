@@ -39,8 +39,8 @@ class GHSuggestedChangeApplier(
     val suggestedChangePatchHunk = PatchHunk(suggestedChangeInfo.startLine, suggestedChangeInfo.endLine,
                                              suggestedChangeInfo.startLine, suggestedChangeInfo.startLine + suggestedChangeContent.size - 1)
 
-    val changedLines = suggestedChangeInfo.cutChangedContent()
-    changedLines.forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.REMOVE, it)) }
+    suggestedChangeInfo.cutContextContent().forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.CONTEXT, it)) }
+    suggestedChangeInfo.cutChangedContent().forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.REMOVE, it)) }
     suggestedChangeContent.forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.ADD, it)) }
 
     return suggestedChangePatchHunk
