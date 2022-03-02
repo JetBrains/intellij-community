@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
@@ -9,12 +10,16 @@ import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
@@ -95,8 +100,28 @@ class CollectorWithSettings<T : Any>(
    * Same as [collectTraversingAndApply] but invoked on bg thread
    */
   fun collectTraversingAndApplyOnEdt(editor: Editor, file: PsiFile, enabled: Boolean) {
-    val hintsBuffer = collectTraversing(editor, file, enabled)
+    val hintsBuffer = collectTraversing(editor, file, true)
+    if (!enabled) {
+      val effectColor = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).foregroundColor
+      val builder = TextAttributesEffectsBuilder.create().coverWith(EffectType.STRIKEOUT, effectColor)
+      addStrikeout(hintsBuffer.inlineHints, builder) { root, constraints -> HorizontalConstrainedPresentation(root, constraints) }
+      addStrikeout(hintsBuffer.blockAboveHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
+      addStrikeout(hintsBuffer.blockBelowHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
+    }
     invokeLater { applyToEditor(file, editor, hintsBuffer) }
+  }
+
+  private fun <T: Any> addStrikeout(inlineHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, T>>>,
+                           builder: TextAttributesEffectsBuilder,
+                           factory: (RootInlayPresentation<*>, T?) -> ConstrainedPresentation<*, T>
+  ) {
+    inlineHints.forEach {
+      it.value.replaceAll { presentation ->
+        val transformer = AttributesTransformerPresentation(presentation.root) { builder.applyTo(it) }
+        val rootPresentation = RecursivelyUpdatingRootPresentation(transformer)
+        factory(rootPresentation, presentation.constraints)
+      }
+    }
   }
 
   fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
