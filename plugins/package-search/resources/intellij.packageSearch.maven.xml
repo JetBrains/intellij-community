@@ -16,6 +16,16 @@
                 language="XML"
                 level="WEAK WARNING"/>
 
+        <localInspection
+                bundle="messages.packageSearchBundle"
+                enabledByDefault="true"
+                groupKey="packagesearch.inspection.upgrade.group"
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.maven.MavenPackageVersionRangeInspection"
+                key="packagesearch.inspection.range.key.maven"
+                hasStaticDescription="true"
+                language="XML"
+                level="WEAK WARNING"/>
+
         <packagesearch.projectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenProjectModuleOperationProvider"/>
         <packagesearch.coroutineModuleTransformer
