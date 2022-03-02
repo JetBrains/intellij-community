@@ -364,9 +364,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       options.preparedToOpen?.invoke(module)
       return PrepareProjectResult(project, module)
     }
-    else {
-      return PrepareProjectResult(project, module = null)
-    }
+    return PrepareProjectResult(project, module = null)
   }
 
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
