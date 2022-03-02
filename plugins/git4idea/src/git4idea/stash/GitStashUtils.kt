@@ -178,7 +178,7 @@ object GitStashOperations {
         handler.addLineListener(untrackedFilesDetector)
         handler.addLineListener(localChangesDetector)
 
-        val result = Git.getInstance().runCommand { handler }
+        val result = Git.getInstance().runCommand(handler)
 
         if (hash != null) refreshUnstashedChanges(project, hash, root)
         GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.refreshIndexFile()
