@@ -9,6 +9,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runAll
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
+import org.jetbrains.kotlin.idea.performance.tests.utils.BuildDataProvider
 import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
 import org.jetbrains.kotlin.idea.project.test.base.actions.ActionExecutionResultError
 import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.initApp
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.initSdk
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import java.lang.management.ManagementFactory
 
 abstract class AbstractProjectBasedTest : UsefulTestCase() {
     private lateinit var jdk: Sdk
@@ -32,7 +34,6 @@ abstract class AbstractProjectBasedTest : UsefulTestCase() {
     protected val project: Project
         get() = nullableProject
             ?: error("Project was not initialized")
-
 
     override fun setUp() {
         super.setUp()
@@ -80,11 +81,13 @@ abstract class AbstractProjectBasedTest : UsefulTestCase() {
         val iterations = executor.execute(action, projectData, profile, profile.iterations).handleErrors(profile)
 
         if (profile.uploadResultsToEs) {
+            val buildData = BuildDataProvider.getBuildDataFromTeamCity() ?: BuildDataProvider.getLocalBuildData()
             EsMetricUploader.upload(
                 action,
                 projectData,
                 profile.frontendConfiguration.pluginKind,
                 iterations,
+                buildData.copy(buildTimestamp = startedBuildTimestamp),
                 credentialsByEnvVariables(index = "kotlin_fir_ide_benchmarks"),
             )
         }
@@ -119,6 +122,11 @@ abstract class AbstractProjectBasedTest : UsefulTestCase() {
             }
         }
         return this
+    }
+
+    companion object {
+        // this has to be static, so it's the same for the all tests run during the build
+        val startedBuildTimestamp = BuildDataProvider.getBuildTimestamp()
     }
 }
 
