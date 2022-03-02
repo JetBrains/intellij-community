@@ -512,10 +512,17 @@ public class VcsUtil {
       }
       else if (FileUtil.pathsEqual(mapping.getDirectory(), newMapping.getDirectory())) {
         if (!StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
-          LOG.warn("Substituting existing mapping [" + mapping.getDirectory() + "] -> [" + mapping.getVcs() + "] with [" + mapping.getVcs() + "]");
+          if (mapping.getVcs().equals(newMapping.getVcs())) {
+            LOG.debug(String.format("Substituting existing mapping with identical [%s] -> [%s]",
+                                    mapping.getDirectory(), mapping.getVcs()));
+          }
+          else {
+            LOG.warn(String.format("Substituting existing mapping [%s] -> [%s] with [%s]",
+                                   mapping.getDirectory(), mapping.getVcs(), newMapping.getVcs()));
+          }
         }
         else {
-          LOG.debug("Removing [" + mapping.getDirectory() + "] -> <None> mapping");
+          LOG.debug(String.format("Removing [%s] -> <None> mapping", mapping.getDirectory()));
         }
         iterator.remove();
       }
