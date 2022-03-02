@@ -69,6 +69,10 @@
                      key="inspection.type.may.be.weakened.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnresolvedClassReferenceRepair" bundle="messages.InspectionGadgetsBundle"
+                     key="unresolved.class.reference.repair.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.abstraction.UnresolvedClassReferenceRepairInspection"/>
 
     <!--group.names.assignment.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AssignmentToCatchBlockParameter" bundle="messages.InspectionGadgetsBundle"
@@ -361,7 +365,7 @@
                      implementationClass="com.siyeh.ig.bugs.MismatchedStringCaseInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousIndentAfterControlStatement" bundle="messages.InspectionGadgetsBundle"
                      key="suspicious.indent.after.control.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.SuspiciousIndentAfterControlStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousIntegerDivAssignment" bundle="messages.InspectionGadgetsBundle"
                      key="suspicious.integer.div.assignment.display.name" groupBundle="messages.InspectionsBundle"
@@ -2054,7 +2058,7 @@
     <!--group.names.resource.management.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="resource" shortName="AutoCloseableResource" bundle="messages.InspectionGadgetsBundle"
                      key="auto.closeable.resource.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.resource.management.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.resource.management.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.resources.AutoCloseableResourceInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ChannelOpenedButNotSafelyClosed" shortName="ChannelResource" bundle="messages.InspectionGadgetsBundle"
                      key="channel.opened.not.closed.display.name" groupBundle="messages.InspectionsBundle"

@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.InvocationUtil;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
@@ -62,6 +63,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class IdeEventQueue extends EventQueue {
+  private static final ExtensionPointName<EventDispatcher> DISPATCHERS_EP =
+    new ExtensionPointName<>("com.intellij.ideEventQueueDispatcher");
+
   private static final boolean ourDefaultEventWithWrite = true;
 
   private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
@@ -160,15 +164,17 @@ public final class IdeEventQueue extends EventQueue {
 
     if (lastFocusGainedEvent != null) {
       if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        Logs.FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (trying to execute runnable): " + runnablesWaitingForFocusChangeState() + "\n" +
-                                        "    runnable saved for : [" + lastFocusGainedEvent.getID() + "; " +
-                                        lastFocusGainedEvent.getSource() + "] -> " + no.getClass().getName());
+        Logs.FOCUS_AWARE_RUNNABLES_LOG.debug(
+          "Focus event list (trying to execute runnable): " + runnablesWaitingForFocusChangeState() + "\n" +
+          "    runnable saved for : [" + lastFocusGainedEvent.getID() + "; " +
+          lastFocusGainedEvent.getSource() + "] -> " + no.getClass().getName());
       }
       yes.accept(lastFocusGainedEvent);
     }
     else {
       if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        Logs.FOCUS_AWARE_RUNNABLES_LOG.debug("No focus gained event in the queue runnable is run on EDT if needed : " + no.getClass().getName());
+        Logs.FOCUS_AWARE_RUNNABLES_LOG.debug(
+          "No focus gained event in the queue runnable is run on EDT if needed : " + no.getClass().getName());
       }
       EdtInvocationManager.invokeLaterIfNeeded(no);
     }
@@ -619,15 +625,15 @@ public final class IdeEventQueue extends EventQueue {
     if (src.getButton() < 6) {
       // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
       return new MouseWheelEvent(src.getComponent(), MouseEvent.MOUSE_WHEEL, src.getWhen(),
-                              src.getModifiers() | InputEvent.SHIFT_DOWN_MASK, src.getX(), src.getY(),
-                              0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.getClickCount(), src.getButton() == 4 ? -1 : 1);
+                                 src.getModifiers() | InputEvent.SHIFT_DOWN_MASK, src.getX(), src.getY(),
+                                 0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.getClickCount(), src.getButton() == 4 ? -1 : 1);
     }
 
     // Here we "shift" events with buttons 6 and 7 to similar events with buttons 4 and 5
     // See java.awt.InputEvent#BUTTON_DOWN_MASK, 1<<14 is 4th physical button, 1<<15 is 5th.
     //noinspection MagicConstant
     return new MouseEvent(src.getComponent(), src.getID(), src.getWhen(), src.getModifiers() | (1 << 8 + src.getButton()),
-                       src.getX(), src.getY(), 1, src.isPopupTrigger(), src.getButton() - 2);
+                          src.getX(), src.getY(), 1, src.isPopupTrigger(), src.getButton() - 2);
   }
 
   /**
@@ -765,6 +771,22 @@ public final class IdeEventQueue extends EventQueue {
       ActivityTracker.getInstance().inc();
     }
     synchronized (myLock) {
+      restartIdleTimer();
+      if (isActivityInputEvent) {
+        myLastActiveTime = System.nanoTime();
+        for (Runnable activityListener : myActivityListeners) {
+          activityListener.run();
+        }
+      }
+    }
+  }
+
+  /**
+   * Notify the event queue that IDE shouldn't be considered idle at this moment.
+   */
+  @ApiStatus.Experimental
+  public void restartIdleTimer() {
+    synchronized (myLock) {
       myIdleRequestsAlarm.cancelAllRequests();
       for (Runnable idleListener : myIdleListeners) {
         final MyFireIdleRequest request = myListenerToRequest.get(idleListener);
@@ -773,12 +795,6 @@ public final class IdeEventQueue extends EventQueue {
         }
         else {
           myIdleRequestsAlarm.addRequest(request, request.getTimeout(), ModalityState.NON_MODAL);
-        }
-      }
-      if (isActivityInputEvent) {
-        myLastActiveTime = System.nanoTime();
-        for (Runnable activityListener : myActivityListeners) {
-          activityListener.run();
         }
       }
     }
@@ -828,6 +844,13 @@ public final class IdeEventQueue extends EventQueue {
         return true;
       }
     }
+
+    for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionList()) {
+      if (eachDispatcher.dispatch(e)) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -905,7 +928,9 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Future<?> exitCondition, @NotNull Predicate<? super AWTEvent> isCancelEvent) {
+  public void pumpEventsForHierarchy(@NotNull Component modalComponent,
+                                     @NotNull Future<?> exitCondition,
+                                     @NotNull Predicate<? super AWTEvent> isCancelEvent) {
     assert EventQueue.isDispatchThread();
     if (Logs.LOG.isDebugEnabled()) {
       Logs.LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
@@ -1152,7 +1177,7 @@ public final class IdeEventQueue extends EventQueue {
 
     private static boolean cancelCellEditing() {
       final Component owner = ComponentUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
-                                                           component -> component instanceof JTable || component instanceof JTree);
+                                                                  component -> component instanceof JTable || component instanceof JTree);
 
       if (owner instanceof JTable && ((JTable)owner).isEditing()) {
         ((JTable)owner).editingCanceled(null);
@@ -1252,13 +1277,14 @@ public final class IdeEventQueue extends EventQueue {
    * @deprecated Does nothing currently
    */
   @Deprecated
-  public void flushDelayedKeyEvents() {}
+  public void flushDelayedKeyEvents() { }
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
     return event instanceof KeyEvent;
   }
 
   private Boolean myTestMode;
+
   private boolean isTestMode() {
     Boolean testMode = myTestMode;
     if (testMode != null) return testMode;
@@ -1307,7 +1333,8 @@ public final class IdeEventQueue extends EventQueue {
 
   private static final class Holder {
     // JBSDK only
-    private static final Method unsafeNonBlockingExecuteRef = ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class);
+    private static final Method unsafeNonBlockingExecuteRef =
+      ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class);
   }
 
   /**

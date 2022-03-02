@@ -355,10 +355,8 @@
                  description="Allows to collect method usages for more precise type inference"/>
     <registryKey key="groovy.use.explicitly.typed.closure.in.inference" defaultValue="true"
                  description="Enable type inference with using info from explicitly typed closures"/>
-    <registryKey key="groovy.process.nested.dfa" defaultValue="true"
-                 description="Allows to run nested DFA inside the outer one"/>
-
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizardUsageCollector"/>
+    <registryKey key="groovy.flat.dfa" defaultValue="true"
+                 description="Merges all control flows graphs in method"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
@@ -611,6 +609,8 @@
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.GroovyDebuggerSettings"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyGenerationSettingsProvider"/>
+    <lang.lineWrapStrategy language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GrLineWrapPositionStrategy"/>
+
 
 
     <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.hierarchy.type.GroovyTypeHierarchyProvider"/>
@@ -1288,8 +1288,8 @@
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerGradleConfigurationHandler"/>
     <compilableFileTypesProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilableFileTypesProvider"/>
 
-    <notificationGroup id="Groovy DSL errors" displayType="BALLOON"/>
-    <notificationGroup id="Grape" displayType="BALLOON"/>
+    <notificationGroup id="Groovy DSL errors" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.groovy.dsl"/>
+    <notificationGroup id="Grape" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.grape"/>
     <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
     <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
   </extensions>

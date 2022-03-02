@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.NlsContexts
@@ -14,6 +16,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
 import org.jetbrains.ide.BuiltInServerManager
+import java.net.URI
 
 open class BrowserLauncherImpl : BrowserLauncherAppless() {
   override fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? {
@@ -26,6 +29,19 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
       }
     }
     return effectiveBrowser
+  }
+
+  override fun desktopBrowse(project: Project?, uri: URI): Boolean {
+    if (project == null || !project.isTrusted()) {
+      val ok = MessageDialogBuilder.yesNo(
+        IdeBundle.message("external.link.confirmation.title"),
+        IdeBundle.message("external.link.confirmation.message.0", uri),
+      ).asWarning().ask(project)
+      if (!ok) {
+        return true // don't do anything else
+      }
+    }
+    return super.desktopBrowse(project, uri)
   }
 
   override fun signUrl(url: String): String {

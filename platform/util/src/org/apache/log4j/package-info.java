@@ -5,7 +5,7 @@
  * directly. 
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 package org.apache.log4j;
 
 import org.jetbrains.annotations.ApiStatus;

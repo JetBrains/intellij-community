@@ -77,7 +77,7 @@ abstract class TraceableTargetEnvironmentFunction<R> : TargetEnvironmentFunction
  */
 fun <T> constant(value: T): TargetEnvironmentFunction<T> = Constant(value)
 
-private class Constant<T>(private val value: T): TraceableTargetEnvironmentFunction<T>() {
+private class Constant<T>(private val value: T) : TraceableTargetEnvironmentFunction<T>() {
   override fun toString(): String = "${javaClass.simpleName}($value)"
   override fun applyInner(t: TargetEnvironment): T = value
 }
@@ -144,6 +144,10 @@ private fun getRelativePathIfAncestor(ancestor: Path, file: String): String? =
   }
 
 private fun joinPaths(basePath: String, relativePath: String, targetPlatform: TargetPlatform): String {
+  if (relativePath == ".") {
+    return basePath
+  }
+
   val fileSeparator = targetPlatform.platform.fileSeparator.toString()
   return FileUtil.toSystemIndependentName("${basePath.removeSuffix(fileSeparator)}$fileSeparator$relativePath")
 }
@@ -195,3 +199,18 @@ private class JoinedStringTargetEnvironmentFunction<T>(private val iterable: Ite
     return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator)"
   }
 }
+
+private class ConcatTargetEnvironmentFunction(private val left: TargetEnvironmentFunction<String>,
+                                              private val right: TargetEnvironmentFunction<String>)
+  : TraceableTargetEnvironmentFunction<String>() {
+  override fun applyInner(t: TargetEnvironment): String = left.apply(t) + right.apply(t)
+
+  override fun toString(): String {
+    return "ConcatTargetEnvironmentFunction(left=$left, right=$right)"
+  }
+}
+
+operator fun TargetEnvironmentFunction<String>.plus(f: TargetEnvironmentFunction<String>): TargetEnvironmentFunction<String> =
+  ConcatTargetEnvironmentFunction(this, f)
+
+operator fun TargetEnvironmentFunction<String>.plus(str: String): TargetEnvironmentFunction<String> = this + constant(str)

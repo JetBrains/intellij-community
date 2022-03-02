@@ -17,7 +17,7 @@ public class TestSwitchOnEnum {
    }
 
    static class Example {
-      void test(TestSwitchOnEnum.Example.A a, TestSwitchOnEnum.Example.B b) {
+      void test(A a, B b) {
          switch (a) {// 30
             case A1:
                System.out.println("A1");// 32

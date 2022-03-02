@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.util.io.systemIndependentPath
 import javax.swing.JLabel
 
 class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
@@ -36,8 +35,8 @@ class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
 
   override fun setupProject(project: Project) {
     val builder = WebModuleBuilder(template, peer)
-    builder.moduleFilePath = parent.projectPath.systemIndependentPath
-    builder.contentEntryPath = parent.projectPath.systemIndependentPath
+    builder.moduleFilePath = "${parent.path}/${parent.name}"
+    builder.contentEntryPath = "${parent.path}/${parent.name}"
     builder.name = parent.name
     builder.commitModule(project, null)
   }

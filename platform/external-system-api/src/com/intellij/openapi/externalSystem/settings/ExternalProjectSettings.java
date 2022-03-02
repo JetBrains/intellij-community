@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.settings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,8 +59,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
    * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
    */
   @Transient
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public void setUseAutoImport(@SuppressWarnings("unused") boolean useAutoImport) {
     LOG.warn(new Throwable("Auto-import cannot be disabled"));
   }
@@ -69,8 +67,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   /**
    * @deprecated left for settings backward-compatibility
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean isCreateEmptyContentRootDirectories() {
     return myCreateEmptyContentRootDirectories;
   }
@@ -78,8 +75,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   /**
    * @deprecated left for settings backward-compatibility
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
     myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
   }

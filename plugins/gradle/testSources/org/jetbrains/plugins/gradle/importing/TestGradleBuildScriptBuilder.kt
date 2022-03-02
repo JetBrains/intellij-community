@@ -155,7 +155,7 @@ open class TestGradleBuildScriptBuilder(
   }
 
   companion object {
-    const val IDEA_EXT_PLUGIN_VERSION = "0.10"
+    const val IDEA_EXT_PLUGIN_VERSION = "1.1.3"
 
     @JvmStatic
     fun extPluginVersionIsAtLeast(version: String) =

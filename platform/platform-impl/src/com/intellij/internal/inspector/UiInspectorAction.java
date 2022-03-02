@@ -44,12 +44,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.impl.StripeButton;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.toolWindow.StripeButton;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
@@ -1344,6 +1344,12 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
+      if (value instanceof JBColor) {
+        String name = ((JBColor)value).getName();
+        if (!StringUtil.isEmpty(name)) {
+          sb.append(" name: ").append(name);
+        }
+      }
       setText(sb.toString());
       setIcon(createColorIcon(value));
     }
@@ -2455,7 +2461,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     private static @NotNull Icon load(@NotNull String path, Class<?> cls) {
-      Icon icon = IconLoader.getIcon("com/intellij/internal/inspector/icons/" + path, UiInspectorAction.class);
+      Icon icon = IconLoader.getIcon("com/intellij/internal/inspector/icons/" + path, UiInspectorAction.class.getClassLoader());
       if (cls != null) {
         COMPONENT_MAPPING.put(cls, icon);
       }

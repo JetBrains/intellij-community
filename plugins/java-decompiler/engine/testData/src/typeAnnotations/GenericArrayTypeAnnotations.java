@@ -27,4 +27,8 @@ public class GenericArrayTypeAnnotations {
     @A List<@B Object @C [] @D []> @E [] @F [] l2() {
         return null;
     }
+
+    @L List<Object[][]>[] @L [] l3() {
+        return null;
+    }
 }

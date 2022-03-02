@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.kotlin.idea.test.AstAccessControl.dropPsiAndTestWithControlledAccessToAst;
+
 @RunWith(JUnit38ClassRunner.class)
 public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
     @NotNull
@@ -73,13 +75,13 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
         assertEquals(1, astDeclarations.size());
         assertTrue(astDeclarations.get(0) instanceof KtScript);
 
-        // clean up AST
-        ApplicationManager.getApplication().runWriteAction(() -> ktFile.onContentReload());
+        dropPsiAndTestWithControlledAccessToAst(true, ktFile, getTestRootDisposable(), () -> {
+            List<KtDeclaration> stubDeclarations = ktFile.getDeclarations();
+            assertEquals(1, stubDeclarations.size());
+            assertTrue(stubDeclarations.get(0) instanceof KtScript);
 
-        assertNotNull("file is parsed from AST", ktFile.getStub());
-        List<KtDeclaration> stubDeclarations = ktFile.getDeclarations();
-        assertEquals(1, stubDeclarations.size());
-        assertTrue(stubDeclarations.get(0) instanceof KtScript);
+            return null;
+        });
     }
 
     public void testUArrayJvmPackageNameInStubs() {

@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiStubSuppressor;
-import org.jetbrains.annotations.ApiStatus;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -230,8 +230,7 @@ public final class ResolveImportUtil {
   /**
    * @deprecated Use {@link #resolveChildren(PsiElement, String, PsiFile, boolean, boolean, boolean, boolean)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent,
                                         @NotNull final String referencedName,
@@ -392,7 +391,9 @@ public final class ResolveImportUtil {
 
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
-    if (subdir != null && subdir.getName().equals(referencedName) && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
+    if (subdir != null && subdir.getName().equals(referencedName) &&
+        (!checkForPackage || PyUtil.isPackage(subdir, containingFile)) &&
+        (!withoutStubs || !PyiUtil.isPyiFileOfPackage(subdir))) {
       result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, subdir)));
     }
 

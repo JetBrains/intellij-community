@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Inspect and validate @EqualsAndHashCode lombok annotation on a class
@@ -86,19 +88,19 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
                                             @NotNull PsiClass psiClass,
                                             @NotNull ProblemBuilder builder) {
     validateCallSuperParam(psiAnnotation, psiClass, builder,
-                           PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
-                           PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"));
+                           () -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
+                           () -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"));
   }
 
   void validateCallSuperParamExtern(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     validateCallSuperParam(psiAnnotation, psiClass, builder,
-                           PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper = true"));
+                           () -> PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper = true"));
   }
 
   private void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation,
                                       @NotNull PsiClass psiClass,
                                       @NotNull ProblemBuilder builder,
-                                      LocalQuickFix... quickFixes) {
+                                      Supplier<LocalQuickFix>... quickFixes) {
     final Boolean declaredBooleanAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
     if (null == declaredBooleanAnnotationValue) {
       final String configProperty = configDiscovery.getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
@@ -107,7 +109,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
           PsiClassUtil.hasSuperClass(psiClass) &&
           !hasOneOfMethodsDefined(psiClass)) {
         builder.addWarning(LombokBundle.message("inspection.message.generating.equals.hashcode.implementation"),
-                           quickFixes);
+                           ContainerUtil.map2Array(quickFixes, Supplier::get));
       }
     }
   }

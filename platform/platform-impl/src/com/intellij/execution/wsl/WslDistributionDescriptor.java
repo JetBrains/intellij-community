@@ -6,12 +6,13 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
 
@@ -44,8 +46,8 @@ final class WslDistributionDescriptor {
   @Tag("presentable-name")
   private @NlsSafe String myPresentableName;
 
-  private final NotNullLazyValue<String> myMntRootProvider =
-    NotNullLazyValue.atomicLazy(() -> executeOrRunTask(pi -> computeMntRoot(pi)));
+  private final ClearableLazyValue<String> myMntRootProvider =
+    createAtomicClearableLazyValue(() -> executeOrRunTask(pi -> computeMntRoot(pi)));
 
   /**
    * Necessary for serializer
@@ -199,5 +201,30 @@ final class WslDistributionDescriptor {
         return commandRunner.apply(indicator);
       }
     });
+  }
+
+  public static @NotNull <T> ClearableLazyValue<T> createAtomicClearableLazyValue(@NotNull Supplier<? extends T> computable) {
+    return new ClearableLazyValue<>() {
+      private long myExternalChangesCount = getCurrentExternalChangesCount();
+
+      @Override
+      protected @NotNull T compute() {
+        return computable.get();
+      }
+
+      @Override
+      public synchronized @NotNull T getValue() {
+        final long curExternalChangesCount = getCurrentExternalChangesCount();
+        if (curExternalChangesCount != myExternalChangesCount) {
+          myExternalChangesCount = curExternalChangesCount;
+          drop(); // drop cache
+        }
+        return super.getValue();
+      }
+
+      private long getCurrentExternalChangesCount() {
+        return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
+      }
+    };
   }
 }

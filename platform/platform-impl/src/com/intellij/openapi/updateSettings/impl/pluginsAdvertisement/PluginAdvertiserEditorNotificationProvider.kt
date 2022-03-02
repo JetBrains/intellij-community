@@ -15,7 +15,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
-import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
+import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile

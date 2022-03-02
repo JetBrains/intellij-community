@@ -441,7 +441,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
      */
     @NotNull
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @ApiStatus.ScheduledForRemoval
     public IdeaProject getIdeaProject() {
       IdeaProject ideaProject = getModel(IdeaProject.class);
       assert ideaProject != null;

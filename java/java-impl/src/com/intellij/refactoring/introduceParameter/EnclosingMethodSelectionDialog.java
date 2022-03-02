@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.introduceParameter;
 
@@ -24,7 +24,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
   private JList<PsiMethod> myEnclosingMethodsList;
   private final JCheckBox myCbReplaceInstanceOf = new JCheckBox(JavaRefactoringBundle.message("use.interface.superclass.in.instanceof"));
 
-  EnclosingMethodSelectionDialog(Project project, List<PsiMethod> enclosingMethods) {
+  public EnclosingMethodSelectionDialog(Project project, List<PsiMethod> enclosingMethods) {
     super(project, true);
 
     myEnclosingMethods = enclosingMethods;

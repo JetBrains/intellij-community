@@ -282,10 +282,6 @@ public final class Foundation {
     myFoundationLibrary.CFRetain(id);
   }
 
-  public static ID cgWindowListCreateImage(Foundation.NSRect screenBounds, int windowOption, ID windowID, int imageOption) {
-    return myFoundationLibrary.CGWindowListCreateImage(screenBounds, windowOption, windowID, imageOption);
-  }
-
   public static void cfRelease(ID... ids) {
     for (ID id : ids) {
       if (id != null) {
@@ -503,8 +499,8 @@ public final class Foundation {
 
   @Structure.FieldOrder({"x", "y"})
   public static class NSPoint extends Structure implements Structure.ByValue {
-    public CGFloat x;
-    public CGFloat y;
+    public CoreGraphics.CGFloat x;
+    public CoreGraphics.CGFloat y;
 
     @SuppressWarnings("UnusedDeclaration")
     public NSPoint() {
@@ -512,15 +508,15 @@ public final class Foundation {
     }
 
     public NSPoint(double x, double y) {
-      this.x = new CGFloat(x);
-      this.y = new CGFloat(y);
+      this.x = new CoreGraphics.CGFloat(x);
+      this.y = new CoreGraphics.CGFloat(y);
     }
   }
 
   @Structure.FieldOrder({"width", "height"})
   public static class NSSize extends Structure implements Structure.ByValue {
-    public CGFloat width;
-    public CGFloat height;
+    public CoreGraphics.CGFloat width;
+    public CoreGraphics.CGFloat height;
 
     @SuppressWarnings("UnusedDeclaration")
     public NSSize() {
@@ -528,54 +524,8 @@ public final class Foundation {
     }
 
     public NSSize(double width, double height) {
-      this.width = new CGFloat(width);
-      this.height = new CGFloat(height);
-    }
-  }
-
-  public static class CGFloat implements NativeMapped {
-    private final double value;
-
-    @SuppressWarnings("UnusedDeclaration")
-    public CGFloat() {
-      this(0);
-    }
-
-    public CGFloat(double d) {
-      value = d;
-    }
-
-    @Override
-    public Object fromNative(Object o, FromNativeContext fromNativeContext) {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return new CGFloat((Float)o);
-        case 8:
-          return new CGFloat((Double)o);
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public Object toNative() {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return (float)value;
-        case 8:
-          return value;
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public Class<?> nativeType() {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return Float.class;
-        case 8:
-          return Double.class;
-      }
-      throw new IllegalStateException();
+      this.width = new CoreGraphics.CGFloat(width);
+      this.height = new CoreGraphics.CGFloat(height);
     }
   }
 

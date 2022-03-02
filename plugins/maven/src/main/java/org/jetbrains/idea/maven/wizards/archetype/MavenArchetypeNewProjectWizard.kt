@@ -1,52 +1,62 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.*
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_ATTRIBUTES
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
+import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.util.bind
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.collectionModel
 import com.intellij.openapi.ui.naturalSorted
+import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes.*
+import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
+import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil.putIfNotNull
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.nullize
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.MavenArchetypeManager
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import org.jetbrains.idea.maven.wizards.archetype.TextCompletionComboBoxRenderer.Companion.append
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
@@ -58,9 +68,9 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
   override val icon: Icon = OpenapiIcons.RepositoryLibraryLogo
 
-  override fun createStep(context: WizardContext): NewProjectWizardStep {
-    return RootNewProjectWizardStep(context).chain(::CommentStep, ::NewProjectWizardBaseStep, ::Step)
-  }
+  override fun createStep(context: WizardContext) =
+    RootNewProjectWizardStep(context).chain(::CommentStep, ::NewProjectWizardBaseStep, ::GitNewProjectWizardStep, ::Step)
+      .chain(::AssetsStep)
 
   private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
     override fun getComment(name: String): String {
@@ -73,14 +83,14 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
   }
 
-  private class Step(parent: NewProjectWizardBaseStep) : MavenNewProjectWizardStep<NewProjectWizardBaseStep>(parent) {
+  private class Step(parent: GitNewProjectWizardStep) : MavenNewProjectWizardStep<GitNewProjectWizardStep>(parent) {
 
     private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenArchetypeNewProjectWizard", 1)
 
-    val catalogItemProperty = propertyGraph.graphProperty<MavenCatalog>(MavenCatalog.System.Internal)
-    val archetypeItemProperty = propertyGraph.graphProperty(ArchetypeItem.NONE)
-    val archetypeVersionProperty = propertyGraph.graphProperty("")
-    val archetypeDescriptorProperty = propertyGraph.graphProperty(emptyMap<String, String>())
+    val catalogItemProperty = propertyGraph.property<MavenCatalog>(MavenCatalog.System.Internal)
+    val archetypeItemProperty = propertyGraph.property(ArchetypeItem.NONE)
+    val archetypeVersionProperty = propertyGraph.property("")
+    val archetypeDescriptorProperty = propertyGraph.property(emptyMap<String, String>())
 
     var catalogItem by catalogItemProperty
     var archetypeItem by archetypeItemProperty
@@ -101,33 +111,44 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
       with(builder) {
-        row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
-          comboBox(CollectionComboBoxModel(), CatalogRenderer())
-            .apply { catalogComboBox = component }
+        row {
+          layout(RowLayout.LABEL_ALIGNED)
+          catalogComboBox = ComboBox(CollectionComboBoxModel())
+          label(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label"))
+            .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+            .applyToComponent { icon = AllIcons.General.ContextHelp }
+            .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.tooltip") }
+          cell(catalogComboBox)
+            .applyToComponent { renderer = CatalogRenderer() }
             .applyToComponent { setSwingPopup(false) }
             .bindItem(catalogItemProperty)
             .columns(COLUMNS_MEDIUM)
+            .gap(RightGap.SMALL)
           link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.button")) {
             manageCatalogs()
           }
         }.topGap(TopGap.SMALL)
-        row(MavenWizardBundle.message("maven.new.project.wizard.archetype.label")) {
-          archetypeComboBox = TextCompletionComboBox(ArchetypeConverter(), ArchetypeRenderer())
-          archetypeComboBox.bind(archetypeItemProperty)
+        row {
+          layout(RowLayout.LABEL_ALIGNED)
+          archetypeComboBox = TextCompletionComboBox(context.project, ArchetypeConverter())
+          label(MavenWizardBundle.message("maven.new.project.wizard.archetype.label"))
+            .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+            .applyToComponent { icon = AllIcons.General.ContextHelp }
+            .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.tooltip") }
           cell(archetypeComboBox)
+            .applyToComponent { bindSelectedItem(archetypeItemProperty) }
             .horizontalAlign(HorizontalAlign.FILL)
             .resizableColumn()
-            .validationOnInput { validateArchetypeId() }
             .validationOnApply { validateArchetypeId() }
+            .gap(RightGap.SMALL)
           button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
             addArchetype()
           }
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
-          archetypeVersionComboBox = TextCompletionComboBox(ArchetypeVersionConverter())
-          archetypeVersionComboBox.bind(archetypeVersionProperty)
+          archetypeVersionComboBox = TextCompletionComboBox(context.project, ArchetypeVersionConverter())
           cell(archetypeVersionComboBox)
-            .validationOnInput { validateArchetypeVersion() }
+            .applyToComponent { bindSelectedItem(archetypeVersionProperty) }
             .validationOnApply { validateArchetypeVersion() }
             .columns(10)
         }.topGap(TopGap.SMALL)
@@ -142,8 +163,10 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
               ))
             cell(archetypeDescriptorTable.component)
               .horizontalAlign(HorizontalAlign.FILL)
-          }
-        }
+              .verticalAlign(VerticalAlign.FILL)
+              .resizableColumn()
+          }.resizableRow()
+        }.resizableRow()
       }
       reloadCatalogs()
     }
@@ -155,8 +178,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           textField()
             .bindText(versionProperty)
             .columns(COLUMNS_MEDIUM)
-            .validationOnInput { validateVersion() }
-            .validationOnApply { validateVersion() }
+            .textValidation(CHECK_NON_EMPTY)
         }.bottomGap(BottomGap.SMALL)
       }
     }
@@ -200,8 +222,16 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private fun reloadCatalogs() {
       val catalogManager = MavenCatalogManager.getInstance()
       val catalogs = catalogManager.getCatalogs(context.projectOrDefault)
+      val oldCatalogs = catalogComboBox.collectionModel.items
+      val addedCatalogs = catalogs.toSet() - oldCatalogs.toSet()
+
       catalogComboBox.collectionModel.replaceAll(catalogs)
-      catalogItem = catalogs.firstOrNull() ?: MavenCatalog.System.Internal
+      when {
+        addedCatalogs.isNotEmpty() ->
+          catalogItem = addedCatalogs.first()
+        catalogItem !in catalogs ->
+          catalogItem = catalogs.firstOrNull() ?: MavenCatalog.System.Internal
+      }
     }
 
     private fun manageCatalogs() {
@@ -233,16 +263,23 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private fun addArchetype() {
       val dialog = MavenAddArchetypeDialog(context.projectOrDefault)
       if (dialog.showAndGet()) {
-        val catalog = dialog.getCatalog()
-        val archetype = ArchetypeItem(dialog.archetypeGroupId, dialog.archetypeArtifactId, listOf(dialog.archetypeVersion))
+        setArchetype(dialog.getArchetype())
+      }
+    }
 
-        if (catalog != null) {
-          catalogComboBox.collectionModel.add(catalog)
-        }
-        catalogItem = catalog ?: MavenCatalog.System.Internal
-        archetypeComboBox.invokeWhenBackgroundTasksFinished {
-          archetypeComboBox.collectionModel.add(archetype)
-          archetypeItem = archetype
+    private fun setArchetype(archetype: MavenArchetype) {
+      val catalogLocation = archetype.repository
+      var catalog = catalogComboBox.collectionModel.items
+        .find { it.location == catalogLocation }
+      if (catalogLocation != null && catalog == null) {
+        catalog = createCatalog(catalogLocation)
+        catalogComboBox.collectionModel.add(catalog)
+      }
+      catalogItem = catalog ?: MavenCatalog.System.Internal
+      archetypeComboBox.invokeWhenBackgroundTasksFinished {
+        archetypeComboBox.text = "${archetype.groupId}:${archetype.artifactId}"
+        archetypeVersionComboBox.invokeWhenBackgroundTasksFinished {
+          archetypeVersionComboBox.text = archetype.version
         }
       }
     }
@@ -250,7 +287,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private fun reloadArchetypeVersions() {
       val versions = archetypeItem.versions.naturalSorted().reversed()
       archetypeVersionComboBox.collectionModel.replaceAll(versions)
-      archetypeVersion = ""
+      archetypeVersion = versions.firstOrNull() ?: ""
     }
 
     private fun reloadArchetypeDescriptor() {
@@ -282,7 +319,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name
-        contentEntryPath = parentStep.projectPath.systemIndependentPath
+        contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
         parentProject = parentData
         aggregatorProject = parentData
@@ -360,7 +397,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   }
 
   private class ArchetypeConverter : TextCompletionComboBoxConverter<ArchetypeItem> {
-    override fun createItem(text: String) =
+    override fun getItem(text: String) =
       text.nullize(true)?.let {
         ArchetypeItem(
           groupId = text.substringBefore(':'),
@@ -369,45 +406,60 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         )
       } ?: ArchetypeItem.NONE
 
-    override fun createString(element: ArchetypeItem) =
-      element.run {
+    override fun getText(item: ArchetypeItem) =
+      item.run {
         if (artifactId.isNotEmpty())
           "$groupId:$artifactId"
         else
           groupId
       }
-  }
 
-  private class ArchetypeVersionConverter : TextCompletionComboBoxConverter<String> {
-    override fun createItem(text: String) = text.trim()
-
-    override fun createString(element: String) = element
-  }
-
-  private class ArchetypeRenderer : TextCompletionComboBoxRenderer<ArchetypeItem> {
-    override fun customizeCellRenderer(cell: SimpleColoredComponent, item: ArchetypeItem, matchedText: @NlsSafe String) {
-      val groupIdSuffix = matchedText.substringBefore(':')
-      val artifactIdPrefix = matchedText.substringAfter(':', "")
-      if (':' in matchedText && item.groupId.endsWith(groupIdSuffix) && item.artifactId.startsWith(artifactIdPrefix)) {
-        val groupIdPrefix = item.groupId.removeSuffix(groupIdSuffix)
-        val artifactIdSuffix = item.artifactId.removePrefix(artifactIdPrefix)
-        cell.append(groupIdPrefix, GRAYED_ATTRIBUTES, matchedText, REGULAR_MATCHED_ATTRIBUTES)
-        cell.append(groupIdSuffix, REGULAR_MATCHED_ATTRIBUTES)
-        if (item.artifactId.isNotEmpty()) {
-          cell.append(":", REGULAR_MATCHED_ATTRIBUTES)
-          cell.append(artifactIdPrefix, REGULAR_MATCHED_ATTRIBUTES)
-          cell.append(artifactIdSuffix, REGULAR_ATTRIBUTES, matchedText, REGULAR_MATCHED_ATTRIBUTES)
+    override fun customizeCellRenderer(editor: TextCompletionField<ArchetypeItem>, cell: Cell<ArchetypeItem>) {
+      val item = cell.item
+      val text = editor.getTextToComplete()
+      with(cell.component) {
+        val groupIdSuffix = text.substringBefore(':')
+        val artifactIdPrefix = text.substringAfter(':', "")
+        if (':' in text && item.groupId.endsWith(groupIdSuffix) && item.artifactId.startsWith(artifactIdPrefix)) {
+          val groupIdPrefix = item.groupId.removeSuffix(groupIdSuffix)
+          val artifactIdSuffix = item.artifactId.removePrefix(artifactIdPrefix)
+          append(groupIdPrefix, GRAYED_ATTRIBUTES, text, REGULAR_MATCHED_ATTRIBUTES)
+          append(groupIdSuffix, REGULAR_MATCHED_ATTRIBUTES)
+          if (item.artifactId.isNotEmpty()) {
+            append(":", REGULAR_MATCHED_ATTRIBUTES)
+            append(artifactIdPrefix, REGULAR_MATCHED_ATTRIBUTES)
+            append(artifactIdSuffix, REGULAR_ATTRIBUTES, text, REGULAR_MATCHED_ATTRIBUTES)
+          }
         }
-      }
-      else {
-        cell.append(item.groupId, GRAYED_ATTRIBUTES, matchedText, REGULAR_MATCHED_ATTRIBUTES)
-        if (item.artifactId.isNotEmpty()) {
-          cell.append(":", GRAYED_ATTRIBUTES)
-          cell.append(item.artifactId, REGULAR_ATTRIBUTES, matchedText, REGULAR_MATCHED_ATTRIBUTES)
+        else {
+          append(item.groupId, GRAYED_ATTRIBUTES, text, REGULAR_MATCHED_ATTRIBUTES)
+          if (item.artifactId.isNotEmpty()) {
+            append(":", GRAYED_ATTRIBUTES)
+            append(item.artifactId, REGULAR_ATTRIBUTES, text, REGULAR_MATCHED_ATTRIBUTES)
+          }
         }
       }
     }
   }
 
+  private class ArchetypeVersionConverter : TextCompletionComboBoxConverter<@NlsSafe String> {
+    override fun getItem(text: String) = text.trim()
+
+    override fun getText(item: String) = item
+
+    override fun customizeCellRenderer(editor: TextCompletionField<String>, cell: Cell<@NlsSafe String>) {
+      cell.component.append(cell.item, editor.getTextToComplete())
+    }
+  }
+
   class Builder : GeneratorNewProjectWizardBuilderAdapter(MavenArchetypeNewProjectWizard())
+
+  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
+      if (gitData?.git == true) {
+        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+      }
+    }
+  }
 }

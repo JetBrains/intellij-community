@@ -31,7 +31,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FilteringProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,8 +125,7 @@ public class EditorHyperlinkSupport {
   /**
    * @deprecated use {@link #findAllHyperlinksOnLine(int)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public Map<RangeHighlighter, HyperlinkInfo> getHyperlinks() {
     LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<>();
     for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {

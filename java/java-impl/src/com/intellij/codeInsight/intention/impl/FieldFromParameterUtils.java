@@ -28,7 +28,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,7 @@ public final class FieldFromParameterUtils {
     }
 
     Set<PsiTypeParameter> usedTypeParameters = new HashSet<>();
-    RefactoringUtil.collectTypeParameters(usedTypeParameters, parameter);
+    CommonJavaRefactoringUtil.collectTypeParameters(usedTypeParameters, parameter);
     usedTypeParameters.removeIf(usedTypeParameter -> parameter.getDeclarationScope() != usedTypeParameter.getOwner());
 
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;

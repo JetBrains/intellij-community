@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
@@ -14,9 +16,11 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.idea.util.hasNoSideEffects
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -35,7 +39,15 @@ class SimplifyIfExpressionFix(
         simplifyIfPossible(ifExpression, conditionValue, isUsedAsExpression)
     }
 
-    companion object {
+    companion object : KotlinSingleIntentionActionFactory() {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+            val expression = diagnostic.psiElement.getNonStrictParentOfType<KtIsExpression>() ?: return null
+            val ifExpression = expression.parentIfExpression() ?: return null
+            return SimplifyIfExpressionFix.createFix(ifExpression, expression.isNegated.not())
+        }
+
+        private fun KtExpression.parentIfExpression() = getStrictParentOfType<KtIfExpression>()?.takeIf { it.condition == this }
+
         fun createFix(expression: KtIfExpression, conditionValue: Boolean): SimplifyIfExpressionFix? {
             return when {
                 canRemove(expression, conditionValue) ->

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -21,7 +22,7 @@ public final class DoStatement extends Statement {
   private @NotNull LoopType loopType;
 
   private DoStatement() {
-    super(Statement.TYPE_DO);
+    super(StatementType.DO);
     initExprent.add(null);
     conditionExprent.add(null);
     incExprent.add(null);
@@ -36,19 +37,19 @@ public final class DoStatement extends Statement {
   }
 
   public static @Nullable Statement isHead(Statement head) {
-    if (head.getLastBasicType() == LASTBASICTYPE_GENERAL && !head.isMonitorEnter()) {
+    if (head.getLastBasicType() == StatementType.GENERAL && !head.isMonitorEnter()) {
       // at most one outgoing edge
       StatEdge edge = null;
-      List<StatEdge> successorEdges = head.getSuccessorEdges(STATEDGE_DIRECT_ALL);
+      List<StatEdge> successorEdges = head.getSuccessorEdges(EdgeType.DIRECT_ALL);
       if (!successorEdges.isEmpty()) {
         edge = successorEdges.get(0);
       }
       // regular loop
-      if (edge != null && edge.getType() == StatEdge.TYPE_REGULAR && edge.getDestination() == head) {
+      if (edge != null && edge.getType() == EdgeType.REGULAR && edge.getDestination() == head) {
         return new DoStatement(head);
       }
       // continues
-      if (head.type != TYPE_DO && (edge == null || edge.getType() != StatEdge.TYPE_REGULAR) &&
+      if (head.type != StatementType.DO && (edge == null || edge.getType() != EdgeType.REGULAR) &&
           head.getContinueSet().contains(head.getBasichead())) {
         return new DoStatement(head);
       }
@@ -61,7 +62,7 @@ public final class DoStatement extends Statement {
     TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
     if (isLabeled()) {
-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      buf.appendIndent(indent).append("label").append(Integer.toString(id)).append(":").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
     switch (loopType) {

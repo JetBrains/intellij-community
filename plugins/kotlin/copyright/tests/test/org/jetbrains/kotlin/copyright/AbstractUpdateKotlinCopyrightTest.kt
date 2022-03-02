@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.copyright
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.copyright.UpdateKotlinCopyright
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.Assert
 
 abstract class AbstractUpdateKotlinCopyrightTest : KotlinLightCodeInsightFixtureTestCase() {

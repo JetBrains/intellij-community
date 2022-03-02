@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardIndexAccessor<Integer, V, Void> {
   private static final Logger LOG = Logger.getInstance(SingleEntryIndexForwardIndexAccessor.class);
-  private final NotNullLazyValue<UpdatableIndex<Integer, V, ?>> myIndex;
+  private final NotNullLazyValue<UpdatableIndex<Integer, V, ?, ?>> myIndex;
 
   @SuppressWarnings("unchecked")
   public SingleEntryIndexForwardIndexAccessor(IndexExtension<Integer, V, ?> extension) {

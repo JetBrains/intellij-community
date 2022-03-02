@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.notifications
 
@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -22,6 +23,12 @@ internal fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
         return
     }
 
+    if (project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == java.lang.Boolean.TRUE) {
+        // project has been just created, switch to new Kotlin code style automatically
+        applyKotlinCodeStyleSetting(project)
+        return
+    }
+
     NotificationGroupManager.getInstance()
         .getNotificationGroup("Update Kotlin code style")
         .createNotification(
@@ -29,6 +36,7 @@ internal fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
             KotlinBundle.htmlMessage("configuration.notification.update.code.style.to.official"),
             NotificationType.WARNING,
         )
+        .setSuggestionType(true)
         .addAction(applyCodeStyleAction())
         .addAction(dontAskAgainAction())
         .setImportant(true)
@@ -49,10 +57,14 @@ private fun dontAskAgainAction() = NotificationAction.createExpiring(
 private fun applyCodeStyleAction() = NotificationAction.createExpiring(
     KotlinBundle.message("configuration.apply.new.code.style")
 ) { e, _ ->
-    e.project?.takeIf { !it.isDisposed }?.let { project ->
-        runWriteAction {
-            ProjectCodeStyleImporter.apply(project, KotlinStyleGuideCodeStyle.INSTANCE)
-        }
+    e.project
+        ?.takeIf { !it.isDisposed }
+        ?.let { project -> applyKotlinCodeStyleSetting(project) }
+}
+
+private fun applyKotlinCodeStyleSetting(project: Project) {
+    runWriteAction {
+        ProjectCodeStyleImporter.apply(project, KotlinStyleGuideCodeStyle.INSTANCE)
     }
 }
 

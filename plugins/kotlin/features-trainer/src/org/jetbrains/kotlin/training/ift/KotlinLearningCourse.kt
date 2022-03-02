@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.training.ift.lesson.basic.KotlinBasicCompletionLesson
 import org.jetbrains.kotlin.training.ift.lesson.basic.KotlinContextActionsLesson
 import org.jetbrains.kotlin.training.ift.lesson.basic.KotlinSelectLesson
+import org.jetbrains.kotlin.training.ift.lesson.basic.KotlinSurroundAndUnwrapLesson
 import org.jetbrains.kotlin.training.ift.lesson.navigation.KotlinFileStructureLesson
 import org.jetbrains.kotlin.training.ift.lesson.navigation.KotlinSearchEverywhereLesson
 import training.dsl.LessonUtil
@@ -12,7 +13,7 @@ import training.learn.LessonsBundle
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
 import training.learn.course.LessonType
-import training.learn.lesson.general.GotoActionLesson
+import training.learn.lesson.general.*
 
 class KotlinLearningCourse : LearningCourseBase(KotlinLanguage.INSTANCE.id) {
     override fun modules() = stableModules()
@@ -40,7 +41,16 @@ class KotlinLearningCourse : LearningCourseBase(KotlinLanguage.INSTANCE.id) {
             primaryLanguage = langSupport,
             moduleType = LessonType.SCRATCH
         ) {
-            listOf(KotlinSelectLesson())
+            fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
+            listOf(
+                KotlinSelectLesson(),
+                CommentUncommentLesson(ls("Comment.kt.sample"), blockCommentsAvailable = true),
+                DuplicateLesson(ls("Duplicate.kt.sample")),
+                MoveLesson("run()", ls("Move.kt.sample")),
+                CollapseLesson(ls("Collapse.kt.sample")),
+                KotlinSurroundAndUnwrapLesson(),
+                MultipleSelectionHtmlLesson(),
+            )
         },
         LearningModule(
             id = "Kotlin.CodeCompletion",

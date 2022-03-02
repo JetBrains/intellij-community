@@ -25,14 +25,19 @@ class FileHistoryManagerWrapper(private val project: Project) : Disposable {
   }
 
   private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("NextFilePrediction")
-  private val manager = FileHistoryManager(FileHistoryPersistence.loadNGrams(project, MAX_NGRAM_SEQUENCE))
+  private val lazyManager: Lazy<FileHistoryManager> = lazy { FileHistoryManager(FileHistoryPersistence.loadNGrams(project, MAX_NGRAM_SEQUENCE)) }
 
-  fun calcNGramFeatures(candidates: List<VirtualFile>): FilePredictionNGramFeatures {
-    return manager.calcNGramFeatures(candidates.map { it.url })
+  private fun getManagerIfInitialized(): FileHistoryManager? {
+    return if (lazyManager.isInitialized()) lazyManager.value else null
+  }
+
+  fun calcNGramFeatures(candidates: List<VirtualFile>): FilePredictionNGramFeatures? {
+    val managerIfInitialized = getManagerIfInitialized()
+    return managerIfInitialized?.calcNGramFeatures(candidates.map { it.url })
   }
 
   fun calcNextFileProbability(file: VirtualFile): Double {
-    return manager.calcNextFileProbability(file.url)
+    return getManagerIfInitialized()?.calcNextFileProbability(file.url) ?: 0.0
   }
 
   private fun onFileOpened(file: VirtualFile) {
@@ -42,14 +47,14 @@ class FileHistoryManagerWrapper(private val project: Project) : Disposable {
 
     executor.submit {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
-        manager.onFileOpened(file.url)
+        lazyManager.value.onFileOpened(file.url)
       })
     }
   }
 
   private fun onProjectClosed(project: Project) {
     ApplicationManager.getApplication().executeOnPooledThread {
-      manager.saveFileHistory(project)
+      getManagerIfInitialized()?.saveFileHistory(project)
     }
   }
 

@@ -1,4 +1,4 @@
-from typing import Text, Type
+from typing import Text
 
 from boto.connection import AWSAuthConnection
 from boto.regioninfo import RegionInfo
@@ -10,7 +10,7 @@ class S3RegionInfo(RegionInfo):
         self,
         name: Text | None = ...,
         endpoint: str | None = ...,
-        connection_cls: Type[AWSAuthConnection] | None = ...,
+        connection_cls: type[AWSAuthConnection] | None = ...,
         **kw_params,
     ) -> S3Connection: ...
 

@@ -9,8 +9,8 @@
   <incompatible-with>com.intellij.modules.appcode</incompatible-with>
 
   <extensions defaultExtensionNs="com.intellij">
-    <preloadingActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
-    <preloadingActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 

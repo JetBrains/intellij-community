@@ -227,7 +227,14 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         val (bindingContext, filesToCompile) = runReadAction {
             val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
-            analyzeInlinedFunctions(resolutionFacade, codeFragment, false, analysisResult.bindingContext)
+            try {
+                val (_, filesToCompile) = analyzeInlinedFunctions(resolutionFacade, codeFragment, false, analysisResult.bindingContext)
+                val inlineFilesAnalysis = resolutionFacade.analyzeWithAllCompilerChecks(filesToCompile)
+                Pair(inlineFilesAnalysis.bindingContext, filesToCompile)
+            } catch (e: IllegalArgumentException) {
+                status.error(EvaluationError.ErrorElementOccurred)
+                evaluationException(e.message ?: e.toString())
+            }
         }
 
         val moduleDescriptor = analysisResult.moduleDescriptor
@@ -331,7 +338,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     ): InterpreterResult {
         val mainClassBytecode = compiledData.mainClass.bytes
         val mainClassAsmNode = ClassNode().apply { ClassReader(mainClassBytecode).accept(this, 0) }
-        val mainMethod = mainClassAsmNode.methods.first { it.name == GENERATED_FUNCTION_NAME }
+        val mainMethod = mainClassAsmNode.methods.first { it.name.startsWith(GENERATED_FUNCTION_NAME) }
 
         return runEvaluation(context, compiledData, classLoader ?: context.evaluationContext.classLoader, status) { args ->
             val vm = context.vm.virtualMachine
@@ -452,7 +459,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     companion object {
         internal val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
                 setOf(
-                    Errors.EXPERIMENTAL_API_USAGE_ERROR,
+                    Errors.OPT_IN_USAGE_ERROR,
                     Errors.MISSING_DEPENDENCY_SUPERCLASS,
                     Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS,
                     Errors.FIR_COMPILED_CLASS,

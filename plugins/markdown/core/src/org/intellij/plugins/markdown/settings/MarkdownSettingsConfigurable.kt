@@ -34,6 +34,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.annotations.Nls
@@ -65,13 +66,13 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         comboBox(
           model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
           renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
-        ).bindItem(settings::splitLayout)
+        ).bindItem(settings::splitLayout.toNullableProperty())
       }
       row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
         comboBox(
           model = DefaultComboBoxModel(arrayOf(false, true)),
           renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
-        ).bindItem(settings::isVerticalSplit)
+        ).bindItem(settings::isVerticalSplit.toNullableProperty())
       }.bottomGap(BottomGap.SMALL)
       row {
         checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
@@ -90,25 +91,32 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
           .bindSelected(settings::hideErrorsInCodeBlocks)
       }
       row {
-        checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text"))
-          .bindSelected(settings::isRunnerEnabled)
+        checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text")).apply {
+          bindSelected(
+            getter = { CommandRunnerExtension.isExtensionEnabled() },
+            setter = { MarkdownExtensionsSettings.getInstance().extensionsEnabledState[CommandRunnerExtension.extensionId] = it }
+          )
+          onApply { notifyExtensionsChanged() }
+        }
       }.bottomGap(BottomGap.SMALL)
       extensionsListRow().apply {
-        onApply {
-          val publisher = application.messageBus.syncPublisher(MarkdownExtensionsSettings.ChangeListener.TOPIC)
-          publisher.extensionsSettingsChanged(fromSettingsDialog = true)
-        }
+        onApply { notifyExtensionsChanged() }
       }
       customCssRow()
       pandocSettingsRow()
     }
   }
 
+  private fun notifyExtensionsChanged() {
+    val publisher = application.messageBus.syncPublisher(MarkdownExtensionsSettings.ChangeListener.TOPIC)
+    publisher.extensionsSettingsChanged(fromSettingsDialog = true)
+  }
+
   private fun Panel.htmlPanelProvidersRow(): Row {
     return row(MarkdownBundle.message("markdown.settings.preview.providers.label")) {
       val providers = MarkdownHtmlPanelProvider.getProviders().map { it.providerInfo }
       comboBox(model = DefaultComboBoxModel(providers.toTypedArray()))
-        .bindItem(settings::previewPanelProviderInfo)
+        .bindItem(settings::previewPanelProviderInfo.toNullableProperty())
     }
   }
 

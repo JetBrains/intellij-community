@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -16,9 +16,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -41,6 +43,22 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
   public static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
+
+  public static boolean hasRunCurrentFileItem(@NotNull Project project) {
+    if (RunManager.getInstance(project).isRunWidgetActive()) {
+      // Run Widget shows up only in Rider. In other IDEs it's a secret feature backed by the "ide.run.widget" Registry key.
+      // The 'Run Current File' feature doesn't look great together with the Run Widget.
+      return false;
+    }
+
+    if (PlatformUtils.isIdeaUltimate()) return true;
+    if (PlatformUtils.isIdeaCommunity()) return true;
+    if (PlatformUtils.isPhpStorm()) return true;
+    if (PlatformUtils.isWebStorm()) return true;
+    if (PlatformUtils.isRubyMine()) return true;
+
+    return Registry.is("run.current.file.item.in.run.configurations.combobox");
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -95,6 +113,12 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
     }
     else {
+      if (project != null && hasRunCurrentFileItem(project)) {
+        presentation.setText(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.selected"));
+        presentation.setIcon(null);
+        return;
+      }
+
       presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
       presentation.setText(ExecutionBundle.messagePointer("action.presentation.RunConfigurationsComboBoxAction.text"));
       presentation.setDescription(ActionsBundle.actionDescription(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
@@ -173,6 +197,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
     allActionsGroup.add(new SaveTemporaryAction());
     allActionsGroup.addSeparator();
+
+    allActionsGroup.add(new RunCurrentFileAction());
+    allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
 
     RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
     if (selected != null) {
@@ -304,6 +331,30 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       return ContainerUtil.getFirstItem(RunManager.getInstance(project).getTempConfigurationsList());
     }
   }
+
+
+  private static class RunCurrentFileAction extends AnAction {
+    private RunCurrentFileAction() {
+      super(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.item.in.dropdown"),
+            ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.description"),
+            null);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(e.getProject() != null && hasRunCurrentFileItem(e.getProject()));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project == null) return;
+
+      RunManager.getInstance(project).setSelectedConfiguration(null);
+      updatePresentation(null, null, project, e.getPresentation(), e.getPlace());
+    }
+  }
+
 
   private static final class SelectTargetAction extends AnAction {
     private final Project myProject;

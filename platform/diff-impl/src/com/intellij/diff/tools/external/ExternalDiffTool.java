@@ -36,17 +36,18 @@ import java.util.List;
 public final class ExternalDiffTool {
   private static final Logger LOG = Logger.getInstance(ExternalDiffTool.class);
 
-  public static boolean isDefault() {
-    return ExternalDiffSettings.getInstance().isDiffEnabled() && ExternalDiffSettings.getInstance().isDiffDefault();
+  public static boolean isEnabled() {
+    return ExternalDiffSettings.getInstance().isExternalToolsEnabled();
   }
 
-  public static boolean isEnabled() {
-    return ExternalDiffSettings.getInstance().isDiffEnabled();
+  public static boolean isDefault() {
+    return isEnabled() && ExternalDiffSettings.isNotBuiltinDiffTool();
   }
 
   public static void show(@Nullable final Project project,
                           @NotNull final DiffRequestChain chain,
-                          @NotNull final DiffDialogHints hints) {
+                          @NotNull final DiffDialogHints hints,
+                          @NotNull final ExternalDiffSettings.ExternalTool externalDiffTool) {
     try {
       final List<DiffRequest> requests = loadRequestsUnderProgress(project, chain);
       if (requests == null) return;
@@ -54,7 +55,7 @@ public final class ExternalDiffTool {
       List<DiffRequest> showInBuiltin = new ArrayList<>();
       for (DiffRequest request : requests) {
         if (canShow(request)) {
-          showRequest(project, request);
+          showRequest(project, request, externalDiffTool);
         }
         else {
           showInBuiltin.add(request);
@@ -142,15 +143,14 @@ public final class ExternalDiffTool {
     });
   }
 
-  public static void showRequest(@Nullable Project project, @NotNull DiffRequest request) throws ExecutionException, IOException {
+  public static void showRequest(@Nullable Project project,
+                                 @NotNull DiffRequest request,
+                                 @NotNull final ExternalDiffSettings.ExternalTool externalDiffTool) throws ExecutionException, IOException {
     request.onAssigned(true);
     try {
-      ExternalDiffSettings settings = ExternalDiffSettings.getInstance();
-
       List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
       List<String> titles = ((ContentDiffRequest)request).getContentTitles();
-
-      ExternalDiffToolUtil.execute(project, settings, contents, titles, request.getTitle());
+      ExternalDiffToolUtil.execute(project, externalDiffTool, contents, titles, request.getTitle());
     }
     finally {
       request.onAssigned(false);

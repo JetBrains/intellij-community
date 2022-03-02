@@ -15,3 +15,5 @@ operator fun B.plus(other: B): A = TODO()
 fun f(b1: B, b2: B) {
     val (x, y) = b1 + b2
 }
+
+// FIR_COMPARISON_WITH_DISABLED_COMPONENTS

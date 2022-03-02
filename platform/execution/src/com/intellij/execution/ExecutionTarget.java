@@ -41,8 +41,7 @@ public abstract class ExecutionTarget {
   /**
    * @deprecated implement {@link #canRun(RunConfiguration)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean canRun(@NotNull RunnerAndConfigurationSettings configuration) {
     return canRun(configuration.getConfiguration());
   }

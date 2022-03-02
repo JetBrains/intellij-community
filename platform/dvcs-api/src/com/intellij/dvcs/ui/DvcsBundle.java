@@ -29,7 +29,7 @@ public final class DvcsBundle extends DynamicBundle {
    * @deprecated prefer {@link #message(String, Object...)} instead
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);
   }

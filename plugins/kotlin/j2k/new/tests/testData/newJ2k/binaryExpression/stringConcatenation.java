@@ -17,7 +17,7 @@ class Foo {
         System.out.println(1 + 3 + 4 + "5");
         System.out.println("5" + 1 + 3 + 4);
         System.out.println('c' + "5");
-        System.out.println('c' + 'd' + "5"); // TODO: fix KTIJ-8532
+        System.out.println('c' + 'd' + "5");
         System.out.println("5" + 'c');
         System.out.println("5" + 'c' + 'd');
         System.out.println(c + "s");

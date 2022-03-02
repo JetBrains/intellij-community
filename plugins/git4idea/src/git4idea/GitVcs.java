@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
@@ -45,12 +45,16 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
+import git4idea.stash.ui.GitStashContentProviderKt;
 import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -301,8 +305,7 @@ public final class GitVcs extends AbstractVcs {
   /**
    * @deprecated Use {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public GitExecutableValidator getExecutableValidator() {
     return new GitExecutableValidator(myProject);
@@ -370,6 +373,11 @@ public final class GitVcs extends AbstractVcs {
   public boolean isWithCustomLocalChanges() {
     return GitVcsApplicationSettings.getInstance().isStagingAreaEnabled() &&
            GitStageManagerKt.canEnableStagingArea();
+  }
+
+  @Override
+  public boolean isWithCustomShelves() {
+    return GitStashContentProviderKt.stashToolWindowRegistryOption().asBoolean();
   }
 
   @Override

@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -1716,6 +1716,54 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("singleExpression.kt")
             public void testSingleExpression() throws Exception {
                 runTest("testData/refactoring/extractFunction/duplicates/singleExpression.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/extractFunction/experimental")
+        public static class Experimental extends AbstractExtractionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("allOptInAnnotations.kt")
+            public void testAllOptInAnnotations() throws Exception {
+                runTest("testData/refactoring/extractFunction/experimental/allOptInAnnotations.kt");
+            }
+
+            @TestMetadata("containerOptInAnnotation.kt")
+            public void testContainerOptInAnnotation() throws Exception {
+                runTest("testData/refactoring/extractFunction/experimental/containerOptInAnnotation.kt");
+            }
+
+            @TestMetadata("filterOptInAnnotations.kt")
+            public void testFilterOptInAnnotations() throws Exception {
+                runTest("testData/refactoring/extractFunction/experimental/filterOptInAnnotations.kt");
+            }
+
+            @TestMetadata("filterPropagatingMarkers.kt")
+            public void testFilterPropagatingMarkers() throws Exception {
+                runTest("testData/refactoring/extractFunction/experimental/filterPropagatingMarkers.kt");
+            }
+
+            @TestMetadata("noExperimentalApi.kt")
+            public void testNoExperimentalApi() throws Exception {
+                runTest("testData/refactoring/extractFunction/experimental/noExperimentalApi.kt");
+            }
+
+            @TestMetadata("singleOptInAnnotation.kt")
+            public void testSingleOptInAnnotation() throws Exception {
+                runTest("testData/refactoring/extractFunction/experimental/singleOptInAnnotation.kt");
+            }
+
+            @TestMetadata("singlePropagatingMarker.kt")
+            public void testSinglePropagatingMarker() throws Exception {
+                runTest("testData/refactoring/extractFunction/experimental/singlePropagatingMarker.kt");
+            }
+
+            @TestMetadata("useExperimental16.kt")
+            public void testUseExperimental16() throws Exception {
+                runTest("testData/refactoring/extractFunction/experimental/useExperimental16.kt");
             }
         }
 

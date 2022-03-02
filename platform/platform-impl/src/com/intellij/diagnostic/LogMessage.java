@@ -1,14 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.idea.IdeaLogger;
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Layout;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +45,7 @@ public class LogMessage extends AbstractMessage {
 
   @Override
   public @NotNull String getThrowableText() {
-    return StringUtil.join(IdeaLogger.getThrowableRenderer().doRender(myThrowable), Layout.LINE_SEP);
+    return IdeaLogRecordFormatter.formatThrowable(myThrowable);
   }
 
   @Override
@@ -61,8 +59,7 @@ public class LogMessage extends AbstractMessage {
   }
 
   /** @deprecated pass all attachments to {@link #createEvent(Throwable, String, Attachment...)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated(forRemoval = true)
   public synchronized void addAttachment(@NotNull Attachment attachment) {
     myAttachments.add(attachment);
   }

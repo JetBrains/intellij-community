@@ -241,8 +241,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   /**
    * @deprecated use {@link #checkBox(String, Getter, Setter)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected void checkBox(@NonNls String fieldName, @NlsContexts.Checkbox String title) {
     myFields.add(new CheckboxField(fieldName, title));
   }

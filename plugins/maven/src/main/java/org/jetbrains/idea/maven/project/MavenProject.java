@@ -80,38 +80,26 @@ public class MavenProject {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
     if (file == null) return null;
 
-    ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-    ObjectInputStream os = new ObjectInputStream(bs);
-    try {
-      try {
-        MavenProject result = new MavenProject(file);
-        result.myState = (State)os.readObject();
-        return result;
-      }
-      catch (ClassNotFoundException e) {
-        throw new IOException(e);
-      }
+    try (ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+         ObjectInputStream os = new ObjectInputStream(bs)) {
+      MavenProject result = new MavenProject(file);
+      result.myState = (State)os.readObject();
+      return result;
     }
-    finally {
-      os.close();
-      bs.close();
+    catch (ClassNotFoundException e) {
+      throw new IOException(e);
     }
   }
 
   public void write(@NotNull DataOutputStream out) throws IOException {
     out.writeUTF(getPath());
 
-    BufferExposingByteArrayOutputStream bs = new BufferExposingByteArrayOutputStream();
-    ObjectOutputStream os = new ObjectOutputStream(bs);
-    try {
+    try (BufferExposingByteArrayOutputStream bs = new BufferExposingByteArrayOutputStream();
+         ObjectOutputStream os = new ObjectOutputStream(bs)) {
       os.writeObject(myState);
 
       out.writeInt(bs.size());
       out.write(bs.getInternalBuffer(), 0, bs.size());
-    }
-    finally {
-      os.close();
-      bs.close();
     }
   }
 
@@ -681,6 +669,11 @@ public class MavenProject {
     }
   }
 
+  public @NotNull List<MavenProjectProblem> getCacheProblems() {
+    List<MavenProjectProblem> problemsCache = myState.myProblemsCache;
+    return problemsCache == null ? Collections.emptyList() : problemsCache;
+  }
+
   private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
     List<MavenProjectProblem> result = new ArrayList<>();
 
@@ -739,7 +732,9 @@ public class MavenProject {
       if (state.myUnresolvedDependenciesCache == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
-          if (!MavenArtifactUtilKt.resolved(each)) result.add(each);
+          boolean resolved = MavenArtifactUtilKt.resolved(each);
+          each.setFileUnresolved(!resolved);
+          if (!resolved) result.add(each);
         }
         state.myUnresolvedDependenciesCache = result;
       }
@@ -1032,6 +1027,18 @@ public class MavenProject {
     return getCompilerLevel("release");
   }
 
+  public @Nullable String getTestSourceLevel() {
+    return getCompilerLevel("testSource");
+  }
+
+  public @Nullable String getTestTargetLevel() {
+    return getCompilerLevel("testTarget");
+  }
+
+  public @Nullable String getTestReleaseLevel() {
+    return getCompilerLevel("testRelease");
+  }
+
   private @Nullable String getCompilerLevel(String level) {
     List<Element> configs = getCompilerConfigs();
     if (configs.size() == 1) return getCompilerLevel(level, configs.get(0));
@@ -1251,9 +1258,8 @@ public class MavenProject {
       boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
 
       result.dependencies = repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies);
-
       result.plugins = repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins);
-
+      result.properties = !Comparing.equal(myProperties, other.myProperties);
       return result;
     }
 

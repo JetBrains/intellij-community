@@ -59,6 +59,9 @@
     <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
                         serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="notLightEdit"/>
 
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubUpdatableIndexFactory"
+                        serviceImplementation="com.intellij.psi.stubs.StubUpdatableIndexFactoryImpl"/>
+
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"
                         overrides="true"/>
@@ -71,6 +74,7 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.intention.IntentionManager"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl"/>
+    <applicationInitializedListener implementation="com.intellij.codeInsight.intention.impl.IntentionShortcutManager$InitListener"/>
     <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSettingsService"
@@ -351,9 +355,6 @@
     <projectService serviceInterface="com.intellij.ide.util.gotoByName.ChooseByNameFactory"
                     serviceImplementation="com.intellij.ide.util.gotoByName.ChooseByNameFactoryImpl"/>
 
-    <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
-                    serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
-
     <projectService serviceImplementation="com.intellij.codeEditor.printing.ExportToHTMLSettings"/>
 
     <projectService serviceImplementation="com.intellij.diagnostic.logging.LogConsolePreferences"/>
@@ -394,6 +395,15 @@
 
     <projectService serviceInterface="com.intellij.codeInsight.highlighting.HighlightManager"
                     serviceImplementation="com.intellij.codeInsight.highlighting.HighlightManagerImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.settings.CodeVisionSettings" />
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionHost" preload="true" />
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionContextProvider" />
+
+    <config.inlaySettingsProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionInlaySettingProvider" />
+
+    <projectService serviceImplementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionCacheService" />
+    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory"/>
 
     <projectService serviceInterface="com.intellij.ide.GeneratedSourceFileChangeTracker"
                     serviceImplementation="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl" preload="notHeadless"/>
@@ -452,7 +462,12 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.InlayHintsSettings"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory"/>
-
+    <codeInsight.codeVisionProviderFactory implementation="com.intellij.codeInsight.codeVision.DefaultCodeVisionProviderFactory"/>
+    <codeInsight.codeVisionProviderFactory implementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProviderFactory"/>
+    <config.inlayGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionGlobalSettingsProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionInheritorsSettingsProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionProblemsSettingsProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionUsagesSettingsProvider"/>
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager"/>
 
     <applicationService serviceInterface="com.intellij.framework.detection.FileContentPattern$ParseXml"
@@ -768,6 +783,14 @@
     <editorOptionsProvider instance="com.intellij.application.options.editor.GutterIconsConfigurable" id="editor.preferences.gutterIcons"/>
     <search.optionContributor implementation="com.intellij.application.options.editor.GutterIconsSearchableOptionContributor"/>
 
+    <!-- Code Lens -->
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.CounterCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.CounterCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.TextCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.TextCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.TextCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.AdditionalCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.AdditionalCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.RichTextCodeVisionEntryPainter"/>
+
     <!-- Colors & Fonts-->
     <applicationConfigurable groupId="editor" groupWeight="180" dynamic="true" instance="com.intellij.application.options.colors.ColorAndFontOptions"
                            id="reference.settingsdialog.IDE.editor.colors" key="title.colors.and.fonts" bundle="messages.ApplicationBundle"/>
@@ -910,6 +933,9 @@
     <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
                     serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
 
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.CodeVisionView" />
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel" />
+
     <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 
     <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
@@ -921,6 +947,9 @@
                 factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory" order="after Structure"/>
     <toolWindow id="Bookmarks" anchor="left" icon="AllIcons.Toolwindows.ToolWindowBookmarks" secondary="true"
                 factoryClass="com.intellij.ide.bookmark.ui.BookmarksViewFactory" order="after Structure"/>
+    <toolWindowExtractorMode id="Bookmarks" mode="mirror"/>
+    <toolWindowExtractorMode id="Favorites" mode="mirror"/>
+
     <postStartupActivity implementation="com.intellij.ide.bookmark.BookmarksStartupActivity"/>
     <projectService serviceImplementation="com.intellij.ide.bookmark.ui.BookmarksViewStateComponent"/>
     <editorFactoryListener implementation="com.intellij.ide.bookmark.GutterLineBookmarkUpdater"/>
@@ -966,9 +995,10 @@
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ProblematicWhitespaceInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspectionMerger"/>
     <localInspection shortName="IncorrectFormatting" bundle="messages.LangBundle" key="inspection.incorrect.formatting.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection" runForWholeFile="true"/>
+                     level="WEAK WARNING" implementationClass="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection" runForWholeFile="true"/>
     <localInspection shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.TodoCommentInspection"/>
@@ -1022,12 +1052,11 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.rename.RenameUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.rename.RenameInplacePopupUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.move.MoveUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.actions.RefactoringUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.webcore.packaging.PackageManagementUsageCollector"/>
-    <statistics.counterUsagesCollector groupId="completion" version="8"/>
+    <statistics.counterUsagesCollector groupId="completion" version="9"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.FindUsagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions"/>
@@ -1175,7 +1204,7 @@
 
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" bundle="messages.LangBundle" key="notification.group.jdk.update.error"/>
     <notificationGroup id="ColorSchemeDrop" displayType="BALLOON" hideFromSettings="true"/>
-    <notificationGroup id="Services Tool Window" displayType="STICKY_BALLOON" isLogByDefault="false"
+    <notificationGroup id="Services Tool Window" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.ExecutionBundle" key="notification.group.services"
                        notificationIds="run.dashboard.multiple.run.configurations"/>
     <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager" serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>
     <postStartupActivity implementation="com.intellij.execution.services.ServiceViewStartupActivity"/>
@@ -1355,7 +1384,7 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.refactoring.changeSignature.inplace.ChangeSignaturePassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory"/>
-    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.focusMode.FocusModePassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.openapi.fileEditor.impl.text.FocusModePassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.ParameterHintsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.IndentsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.InjectedCodeFoldingPassFactory"/>
@@ -1366,6 +1395,8 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.WholeFileLocalInspectionsPassFactory$MyRegistrar"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory$MyRegistrar"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.WolfPassFactory$MyRegistrar"/>
+
+    <highlightingPassFactory implementation="com.intellij.formatting.visualLayer.VisualFormattingLayerHighlightingPassFactory"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryKindRegistry"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryKindRegistryImpl"
@@ -1388,20 +1419,27 @@
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
     <toolWindowExtractorMode id="Problems View" mode="per_client"/>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
-    <notificationGroup id="Automatic Module Unloading" displayType="BALLOON"/>
-    <notificationGroup id="Execution" displayType="NONE"/>
-    <notificationGroup id="Inspection Results" displayType="TOOL_WINDOW" toolWindowId="Inspection Results"/>
+    <notificationGroup id="Automatic Module Unloading" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.automatic.module.unloading"/>
+    <notificationGroup id="Execution" displayType="BALLOON" bundle="messages.ExecutionBundle" key="notification.group.execution"/>
+    <notificationGroup id="Silent Execution" displayType="NONE" bundle="messages.ExecutionBundle" key="notification.group.execution.silent" />
+    <notificationGroup id="Inspection Results" displayType="TOOL_WINDOW" toolWindowId="Inspection Results" bundle="messages.InspectionsBundle" key="notification.group.inspection.results"/>
     <notificationGroup id="Find in Path" displayType="TOOL_WINDOW" toolWindowId="Find" isLogByDefault="false" bundle="messages.FindBundle" key="find.in.files.notification.group"/>
-    <notificationGroup id="Dependencies" displayType="TOOL_WINDOW" toolWindowId="Dependency Viewer"/>
-    <notificationGroup id="Suggest Run Dashboard" displayType="BALLOON"/>
-    <notificationGroup id="Parameter Name Hints" displayType="BALLOON"/>
-    <notificationGroup id="Print" displayType="BALLOON"/>
-    <notificationGroup id="Project Template" displayType="BALLOON"/>
-    <notificationGroup id="Load Error" displayType="BALLOON"/>
-    <notificationGroup id="Module Manager" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.module.manager"/>
-    <notificationGroup id="Reformat changed text" displayType="BALLOON" bundle="messages.ApplicationBundle" key="reformat.changed.text.file.too.big.notification.groupId"/>
+    <notificationGroup id="Dependencies" displayType="TOOL_WINDOW" toolWindowId="Dependency Viewer" bundle="messages.CodeInsightBundle" key="notification.group.dependencies"/>
+    <notificationGroup id="Parameter Name Hints" displayType="BALLOON" bundle="messages.CodeInsightBundle" key="notification.group.parameter.name.hints"/>
+    <notificationGroup id="Print" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Project Template" displayType="BALLOON" bundle="messages.LangBundle" key="notification.group.project.template"/>
+    <notificationGroup id="Reformat changed text" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Project Loading Error" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.project.loading.error"/>
     <notificationGroup id="Run Anything" displayType="BALLOON" bundle="messages.IdeBundle" key="run.anything.custom.activity.notification.group.id"/>
+    <notificationGroup id="Show control flow group" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Power Save Mode" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.power.save.mode"/>
+    <notificationGroup id="IDE Caches" displayType="BALLOON" bundle="messages.IndexingBundle" key="notification.group.ide.caches"/>
+    <notificationGroup id="Cache Recovery" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.cache.recovery"/>
+    <notificationGroup id="Framework Detection" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.framework.detection"/>
+    <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false" hideFromSettings="true"/>
+    <notificationGroup id="Missing SDKs" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.missing.sdks"/>
+    <notificationGroup id="Automatic indent detection" displayType="STICKY_BALLOON" bundle="messages.ApplicationBundle" key="notification.group.automatic.indent.detection"/>
+    <notificationGroup id="Incorrect Formatting" displayType="STICKY_BALLOON" bundle="messages.LangBundle" key="inspection.incorrect.formatting.notification.group"/>
 
     <codeInsight.lineMarkerProvider implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
 
@@ -1423,6 +1461,8 @@
                  key="indexing.enable.entity.provider.based.indexing"/>
     <registryKey defaultValue="2000" description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
                  key="ide.completion.auto.insert.item.timeout"/>
+    <registryKey defaultValue="true" description="Separate applying index values from counting" restartRequired="true"
+                 key="indexing.separate.applying.values.from.counting"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>
@@ -1467,11 +1507,15 @@
 
     <postStartupActivity implementation="com.intellij.lang.documentation.ide.impl.DocumentationAutoPopup"/>
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.DocumentationSettingsListener"/>
-    <lang.documentationLinkResolver implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkResolver"/>
+    <lang.documentationLinkHandler implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkHandler"/>
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
 
     <lang.formatter.restriction implementation="com.intellij.lang.InvalidPsiAutoFormatRestriction"/>
+
+    <!--  Inspection results -->
+    <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
+    <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
@@ -1479,8 +1523,6 @@
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
-    <listener class="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationNotifier"
-              topic="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationListener"/>
     <listener class="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter"
               topic="com.intellij.ide.SaveAndSyncHandlerListener" />
   </projectListeners>

@@ -36,26 +36,33 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
                         ImmediateConfigurable.Case(
                             KotlinBundle.message("hints.settings.types.property"),
                             "hints.type.property",
-                            settings::propertyType
+                            settings::propertyType,
+                            KotlinBundle.message("inlay.kotlin.references.types.hints.hints.type.property")
                         ),
                         ImmediateConfigurable.Case(
                             KotlinBundle.message("hints.settings.types.variable"),
                             "hints.type.variable",
-                            settings::localVariableType
+                            settings::localVariableType,
+                            KotlinBundle.message("inlay.kotlin.references.types.hints.hints.type.variable")
                         ),
                         ImmediateConfigurable.Case(
                             KotlinBundle.message("hints.settings.types.return"),
                             "hints.type.function.return",
-                            settings::functionReturnType
+                            settings::functionReturnType,
+                            KotlinBundle.message("inlay.kotlin.references.types.hints.hints.type.function.return")
                         ),
                         ImmediateConfigurable.Case(
                             KotlinBundle.message("hints.settings.types.parameter"),
                             "hints.type.function.parameter",
-                            settings::parameterType
+                            settings::parameterType,
+                            KotlinBundle.message("inlay.kotlin.references.types.hints.hints.type.function.parameter")
                         ),
                     )
             }
     }
+
+    override val description: String
+        get() = KotlinBundle.message("inlay.kotlin.references.types.hints")
 
     override fun createSettings(): Settings = Settings()
 

@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.caches.resolve;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -38,6 +38,16 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/callableReferences/");
     }
 
+    @TestMetadata("chainedTypeAliasRefinement")
+    public void testChainedTypeAliasRefinement() throws Exception {
+        runTest("testData/multiplatform/chainedTypeAliasRefinement/");
+    }
+
+    @TestMetadata("commonSealedWithPlatformInheritor")
+    public void testCommonSealedWithPlatformInheritor() throws Exception {
+        runTest("testData/multiplatform/commonSealedWithPlatformInheritor/");
+    }
+
     @TestMetadata("constructorsOfExpect")
     public void testConstructorsOfExpect() throws Exception {
         runTest("testData/multiplatform/constructorsOfExpect/");
@@ -46,6 +56,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
     @TestMetadata("correctOverloadResolutionAmbiguity")
     public void testCorrectOverloadResolutionAmbiguity() throws Exception {
         runTest("testData/multiplatform/correctOverloadResolutionAmbiguity/");
+    }
+
+    @TestMetadata("defaultArguments")
+    public void testDefaultArguments() throws Exception {
+        runTest("testData/multiplatform/defaultArguments/");
     }
 
     @TestMetadata("diamondActualInBottom")
@@ -163,6 +178,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/jvmDefaultNonMpp/");
     }
 
+    @TestMetadata("jvmInlineValueClass")
+    public void testJvmInlineValueClass() throws Exception {
+        runTest("testData/multiplatform/jvmInlineValueClass/");
+    }
+
     @TestMetadata("kt41218")
     public void testKt41218() throws Exception {
         runTest("testData/multiplatform/kt41218/");
@@ -171,6 +191,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
     @TestMetadata("kt44898")
     public void testKt44898() throws Exception {
         runTest("testData/multiplatform/kt44898/");
+    }
+
+    @TestMetadata("kt48291")
+    public void testKt48291() throws Exception {
+        runTest("testData/multiplatform/kt48291/");
     }
 
     @TestMetadata("lambdas")
@@ -203,6 +228,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/overrideExpectWithCompositeType/");
     }
 
+    @TestMetadata("platformDependencyInCommon")
+    public void testPlatformDependencyInCommon() throws Exception {
+        runTest("testData/multiplatform/platformDependencyInCommon/");
+    }
+
     @TestMetadata("platformSpecificChecksInCommon")
     public void testPlatformSpecificChecksInCommon() throws Exception {
         runTest("testData/multiplatform/platformSpecificChecksInCommon/");
@@ -216,6 +246,16 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
     @TestMetadata("recursiveTypes")
     public void testRecursiveTypes() throws Exception {
         runTest("testData/multiplatform/recursiveTypes/");
+    }
+
+    @TestMetadata("sealedInheritorsInComplexModuleStructure1")
+    public void testSealedInheritorsInComplexModuleStructure1() throws Exception {
+        runTest("testData/multiplatform/sealedInheritorsInComplexModuleStructure1/");
+    }
+
+    @TestMetadata("sealedInheritorsInComplexModuleStructure2")
+    public void testSealedInheritorsInComplexModuleStructure2() throws Exception {
+        runTest("testData/multiplatform/sealedInheritorsInComplexModuleStructure2/");
     }
 
     @TestMetadata("simple")

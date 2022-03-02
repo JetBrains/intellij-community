@@ -1,7 +1,0 @@
-query($id: ID!) {
-    node(id: $id) {
-        ... on Comment {
-            body
-        }
-    }
-}

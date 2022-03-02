@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
+import org.jetbrains.kotlin.util.firstNotNullResult
 
 class JKResolver(val project: Project, module: Module?, private val contextElement: PsiElement) {
     private val scope = module?.let {

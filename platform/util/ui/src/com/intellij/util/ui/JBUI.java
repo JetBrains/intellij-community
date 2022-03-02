@@ -4,15 +4,11 @@ package com.intellij.util.ui;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,8 +142,7 @@ public final class JBUI {
   /**
    * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull <T extends JBScalableIcon> T scale(@NotNull T icon) {
     return JBUIScale.scaleIcon(icon);
   }
@@ -163,8 +158,7 @@ public final class JBUI {
   /**
    * @deprecated use {@link JBUIScale#isUsrHiDPI()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean isUsrHiDPI() {
     return JBUIScale.isUsrHiDPI();
   }
@@ -286,6 +280,23 @@ public final class JBUI {
 
     public static @Nullable Border compound(@Nullable Border outside, @Nullable Border inside) {
       return inside == null ? outside : outside == null ? inside : new CompoundBorder(outside, inside);
+    }
+
+    /**
+     * @param borders list of border to be compound from outside to inside
+     */
+    public static @Nullable Border compound(Border @NotNull ... borders) {
+      Border result = null;
+      for (Border border : borders) {
+        if (border != null) {
+          if (result == null) {
+            result = border;
+          } else {
+            result = new CompoundBorder(result, border);
+          }
+        }
+      }
+      return result;
     }
 
     public static @NotNull Border merge(@Nullable Border source, @NotNull Border extra, boolean extraIsOutside) {
@@ -417,6 +428,9 @@ public final class JBUI {
     public interface SegmentedButton {
       Color SELECTED_START_BORDER_COLOR = JBColor.namedColor("SegmentedButton.selectedStartBorderColor", Gray.xBF);
       Color SELECTED_END_BORDER_COLOR = JBColor.namedColor("SegmentedButton.selectedEndBorderColor", Gray.xB8);
+
+      Color SELECTED_BUTTON_COLOR = JBColor.namedColor("SegmentedButton.selectedButtonColor", 0x555a5c);
+      Color FOCUSED_SELECTED_BUTTON_COLOR = JBColor.namedColor("SegmentedButton.focusedSelectedButtonColor", 0xDAE4ED);
     }
 
     public static final class CustomFrameDecorations {
@@ -570,6 +584,15 @@ public final class JBUI {
       }
     }
 
+    public interface Editor {
+      Color BORDER_COLOR = JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border());
+
+      interface Tooltip {
+        Color BACKGROUND = JBColor.namedColor("Editor.ToolTip.background", UIUtil.getToolTipBackground());
+        Color FOREGROUND = JBColor.namedColor("Editor.ToolTip.foreground", UIUtil.getToolTipForeground());
+      }
+    }
+
     public interface DragAndDrop {
       Color BORDER_COLOR = JBColor.namedColor("DragAndDrop.borderColor", 0x2675BF, 0x2F65CA);
       Color ROW_BACKGROUND = JBColor.namedColor("DragAndDrop.rowBackground", 0x2675BF26, 0x2F65CA33);
@@ -582,6 +605,7 @@ public final class JBUI {
 
     public interface IconBadge {
       Color ERROR = JBColor.namedColor("IconBadge.errorBackground", 0xE35252, 0xDB5C5C);
+      Color WARNING = JBColor.namedColor("IconBadge.warningBackground", 0xFCC75B, 0xF2C55C);
       Color INFORMATION = JBColor.namedColor("IconBadge.infoBackground", 0x588CF3, 0x548AF7);
       Color SUCCESS = JBColor.namedColor("IconBadge.successBackground", 0x5FB865, 0x5FAD65);
     }
@@ -737,8 +761,7 @@ public final class JBUI {
       /**
        * @deprecated obsolete UI
        */
-      @Deprecated
-      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+      @Deprecated(forRemoval = true)
       public static int tabVerticalPadding() {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
       }
@@ -796,21 +819,77 @@ public final class JBUI {
       }
     }
 
+    public static final class ComplexPopup {
+
+      public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
+
+      public static JBInsets headerInsets() {
+        return insets("ComplexPopup.Header.insets", insets(9, 20, 8, 15));
+      }
+
+      public static JBInsets textFieldBorderInsets() {
+        return insets("ComplexPopup.TextField.borderInsets", insets(0, 12));
+      }
+
+      public static JBInsets textFieldInputInsets() {
+        return insets("ComplexPopup.TextField.inputInsets", insets(6, 2));
+      }
+
+      public static final int TEXT_FIELD_SEPARATOR_HEIGHT = 1;
+    }
+
     public static final class Popup {
+      public static int bodyBottomInsetNoAd() {
+        return getInt("Popup.Body.bottomInsetNoAd", 8);
+      }
+
+      public static int bodyBottomInsetBeforeAd() {
+        return getInt("Popup.Body.bottomInsetBeforeAd", 8);
+      }
+
+      public static int bodyTopInsetNoHeader() {
+        return getInt("Popup.Body.topInsetNoHeader", 8);
+      }
+
       public static Color headerBackground(boolean active) {
         return active
                ? JBColor.namedColor("Popup.Header.activeBackground", 0xe6e6e6)
                : JBColor.namedColor("Popup.Header.inactiveBackground", 0xededed);
       }
 
+      public static Color headerForeground(boolean active) {
+        return active
+               ? JBColor.namedColor("Popup.Header.activeForeground", UIUtil.getLabelForeground())
+               : JBColor.namedColor("Popup.Header.inactiveForeground", UIUtil.getLabelDisabledForeground());
+      }
+
+      @NotNull
+      public static JBInsets headerInsets() {
+        return insets("Popup.Header.insets", insets(12, 10, 10, 10));
+      }
+
       public static int headerHeight(boolean hasControls) {
         return hasControls ? JBUIScale.scale(28) : JBUIScale.scale(24);
       }
+
+      public static final Color BACKGROUND = JBColor.namedColor("Popup.background", List.BACKGROUND);
 
       public static Color borderColor(boolean active) {
         return active
                ? JBColor.namedColor("Popup.borderColor", JBColor.namedColor("Popup.Border.color", 0x808080))
                : JBColor.namedColor("Popup.inactiveBorderColor", JBColor.namedColor("Popup.inactiveBorderColor", 0xaaaaaa));
+      }
+
+      public static float borderWidth() {
+        return getFloat("Popup.borderWidth", 1);
+      }
+
+      public static Insets searchFieldBorderInsets() {
+        return insets("Popup.SearchField.borderInsets", insets(4, 12, 4, 12));
+      }
+
+      public static Insets searchFieldInputInsets() {
+        return insets("Popup.SearchField.inputInsets", insets(4, 8, 8, 2));
       }
 
       public static Color toolbarPanelColor() {
@@ -827,6 +906,14 @@ public final class JBUI {
 
       public static Color separatorColor() {
         return JBColor.namedColor("Popup.separatorColor", new JBColor(Color.gray.brighter(), Gray.x51));
+      }
+
+      public static JBInsets separatorInsets() {
+        return insets("Popup.separatorInsets", insets(4, 12, 4, 12));
+      }
+
+      public static Insets separatorLabelInsets() {
+        return insets("Popup.separatorLabelInsets", insets(3, 20));
       }
 
       public static Color separatorTextColor() {
@@ -869,6 +956,7 @@ public final class JBUI {
       public static final Color FOCUS_COLOR = JBColor.namedColor("TabbedPane.focusColor", 0xDAE4ED);
       public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
       public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
+      public static final JBValue SELECTION_ARC = new JBValue.UIInteger("TabbedPane.tabSelectionArc", 0);
     }
 
     public static final class BigPopup {
@@ -907,6 +995,9 @@ public final class JBUI {
       public static @NotNull Color listSeparatorColor() {
         return JBColor.namedColor("SearchEverywhere.List.separatorColor", Gray.xDC);
       }
+
+      public static @NotNull Color LIST_SETTINGS_BACKGROUND =
+        JBColor.namedColor("SearchEverywhere.List.settingsBackground", LightColors.SLIGHTLY_GRAY);
 
       public static @NotNull Color listTitleLabelForeground() {
         return JBColor.namedColor("SearchEverywhere.List.separatorForeground", UIUtil.getLabelDisabledForeground());
@@ -982,8 +1073,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#ENABLED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkColor() {
         return Foreground.ENABLED;
       }
@@ -991,8 +1081,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#HOVERED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkHoverColor() {
         return Foreground.HOVERED;
       }
@@ -1000,8 +1089,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#PRESSED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkPressedColor() {
         return Foreground.PRESSED;
       }
@@ -1009,8 +1097,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#VISITED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkVisitedColor() {
         return Foreground.VISITED;
       }

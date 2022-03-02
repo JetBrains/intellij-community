@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -6,11 +6,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Bridge between auto-reload backend and notification view about that project is needed to reload.
  * Notifications can be shown in editor floating toolbar, editor banner, etc.
  */
+@ApiStatus.NonExtendable
 interface ExternalSystemProjectNotificationAware {
 
   /**
@@ -40,7 +42,6 @@ interface ExternalSystemProjectNotificationAware {
   fun getSystemIds(): Set<ProjectSystemId>
 
   interface Listener {
-
     /**
      * Happens when notification should be shown or hidden.
      */

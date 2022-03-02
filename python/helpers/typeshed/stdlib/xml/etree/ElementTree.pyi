@@ -4,7 +4,6 @@ from typing import (
     IO,
     Any,
     Callable,
-    Dict,
     Generator,
     ItemsView,
     Iterable,
@@ -17,7 +16,7 @@ from typing import (
     Union,
     overload,
 )
-from typing_extensions import Literal, SupportsIndex
+from typing_extensions import Literal, SupportsIndex, TypeGuard
 
 _T = TypeVar("_T")
 _File = Union[StrOrBytesPath, FileDescriptor, IO[Any]]
@@ -28,7 +27,8 @@ class ParseError(SyntaxError):
     code: int
     position: tuple[int, int]
 
-def iselement(element: object) -> bool: ...
+# In reality it works based on `.tag` attribute duck typing.
+def iselement(element: object) -> TypeGuard[Element]: ...
 
 if sys.version_info >= (3, 8):
     @overload
@@ -119,6 +119,7 @@ class ElementTree:
     def iter(self, tag: str | None = ...) -> Generator[Element, None, None]: ...
     if sys.version_info < (3, 9):
         def getiterator(self, tag: str | None = ...) -> list[Element]: ...
+
     def find(self, path: str, namespaces: dict[str, str] | None = ...) -> Element | None: ...
     @overload
     def findtext(self, path: str, default: None = ..., namespaces: dict[str, str] | None = ...) -> str | None: ...
@@ -257,7 +258,7 @@ def fromstringlist(sequence: Sequence[str | bytes], parser: XMLParser | None = .
 # TreeBuilder is called by client code (they could pass strs, bytes or whatever);
 # but we don't want to use a too-broad type, or it would be too hard to write
 # elementfactories.
-_ElementFactory = Callable[[Any, Dict[Any, Any]], Element]
+_ElementFactory = Callable[[Any, dict[Any, Any]], Element]
 
 class TreeBuilder:
     if sys.version_info >= (3, 8):
@@ -275,6 +276,7 @@ class TreeBuilder:
         insert_pis: bool
     else:
         def __init__(self, element_factory: _ElementFactory | None = ...) -> None: ...
+
     def close(self) -> Element: ...
     def data(self, __data: str | bytes) -> None: ...
     def start(self, __tag: str | bytes, __attrs: dict[str | bytes, str | bytes]) -> Element: ...
@@ -316,5 +318,6 @@ class XMLParser:
     else:
         def __init__(self, html: int = ..., target: Any = ..., encoding: str | None = ...) -> None: ...
         def doctype(self, __name: str, __pubid: str, __system: str) -> None: ...
+
     def close(self) -> Any: ...
     def feed(self, __data: str | bytes) -> None: ...

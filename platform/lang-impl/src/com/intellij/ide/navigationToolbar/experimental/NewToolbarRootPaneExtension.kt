@@ -1,29 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar.experimental
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.CustomizableActionsPanel
+import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -31,16 +24,10 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Point
-import java.awt.event.ActionEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
 import javax.swing.*
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.DefaultTreeModel
 
 @FunctionalInterface
 fun interface ExperimentalToolbarStateListener {
@@ -86,75 +73,88 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     val panel = extension.panel
     if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
       CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
-        .thenAcceptAsync(
-          {
-            applyTo(it, panel, extension.layout)
-          it.forEach { it2 ->
-            if (it2.key == null) {
-              val comp = extension.layout.getLayoutComponent(it2.value)
-              if (comp != null) {
-                panel.remove(comp)
-              }
-            }
-          }
-          },
-          Executor {
-            ApplicationManager.getApplication().invokeLater(it, project.disposed)
-          })
+        .thenAcceptAsync({ placeToActionGroup ->
+                           applyTo(placeToActionGroup, panel, extension.layout)
+                           for ((place, actionGroup) in placeToActionGroup) {
+                             if (actionGroup == null) {
+                               val comp = extension.layout.getLayoutComponent(place)
+                               if (comp != null) {
+                                 panel.remove(comp)
+                               }
+                             }
+                           }
+                         }
+        ) {
+          ApplicationManager.getApplication().invokeLater(it, project.disposed)
+        }
         .exceptionally {
           LOG.error(it)
           null
         }
+      getToolbarGroup()?.let {
+        CustomizationUtil.installToolbarCustomizationHandler(it, IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, panel, ActionPlaces.MAIN_TOOLBAR)
+      }
     }
   }
 
-  /**
-   * Null key in the result map means that we need to clear the old panel that corresponded to the null group
-   */
   @RequiresBackgroundThread
-  private fun correctedToolbarActions(): Map<ActionGroup?, String> {
-    val toolbarGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
-                       ?: return emptyMap()
+  private fun correctedToolbarActions(): Map<String, ActionGroup?> {
+    val toolbarGroup = getToolbarGroup() ?: return emptyMap()
+
     val children = toolbarGroup.getChildren(null)
+
     val leftGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) }
     val rightGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) }
     val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
-    val map = mutableMapOf<ActionGroup?, String>()
-    map[leftGroup as? ActionGroup] = BorderLayout.WEST
-    map[rightGroup as? ActionGroup] = BorderLayout.EAST
-    map[restGroup] = BorderLayout.CENTER
+
+    val map = mutableMapOf<String, ActionGroup?>()
+    map[BorderLayout.WEST] = leftGroup as? ActionGroup
+    map[BorderLayout.EAST] = rightGroup as? ActionGroup
+    map[BorderLayout.CENTER] = restGroup
 
     return map
   }
 
+  private fun getToolbarGroup(): ActionGroup? {
+    val mainGroupName = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
+      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
+    }
+    else {
+      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
+    }
+    return CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
+  }
+
   @RequiresEdt
   private fun applyTo(
-    actions: Map<ActionGroup?, String>,
+    actions: Map<String, ActionGroup?>,
     component: JComponent,
     layout: BorderLayout
   ) {
-    val actionManager = ActionManager.getInstance()
 
-    actions.mapKeys { (actionGroup, _) ->
+    actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
-        actionManager.createActionToolbar(
-          ActionPlaces.MAIN_TOOLBAR,
-          actionGroup,
-          true,
-        )
+        val toolbar = ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
+                                        IdeActions.GROUP_EXPERIMENTAL_TOOLBAR)
+        ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC).toolbarCreated(ActionPlaces.MAIN_TOOLBAR,
+                                                                                                                 actionGroup, true, toolbar)
+        toolbar
       }
       else {
         null
       }
-    }.forEach { (toolbar, layoutConstraints) ->
+    }.forEach { (layoutConstraints, toolbar) ->
       // We need to replace old component having the same constraints with the new one.
       if (toolbar != null) {
+
         layout.getLayoutComponent(component, layoutConstraints)?.let {
           component.remove(it)
         }
         toolbar.targetComponent = null
         toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
         component.add(toolbar.component, layoutConstraints)
+
+        toolbar.updateActionsImmediately()
       }
     }
     component.revalidate()
@@ -175,84 +175,10 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
       isOpaque = true
       border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
       //show ui customization option
-      addMouseListener(customizeMouseListener())
     }
 
     override fun getComponentGraphics(graphics: Graphics?): Graphics {
       return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
-    }
-  }
-
-  inner class CustomizeToolbarAction : AnAction(ActionsBundle.message("action.CustomizeToolbarAction.text")) {
-    override fun actionPerformed(e: AnActionEvent) {
-      object : DialogWrapper(project, true) {
-        var customizeWidget = object : CustomizableActionsPanel() {
-          override fun patchActionsTreeCorrespondingToSchema(root: DefaultMutableTreeNode?) {
-            val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
-            fillTreeFromActions(root, actionGroup)
-          }
-
-          private fun fillTreeFromActions(root: DefaultMutableTreeNode?, actionGroup: ActionGroup?) {
-            if (mySelectedSchema == null || actionGroup == null) return
-            root?.removeAllChildren()
-            root?.add(ActionsTreeUtil.createNode
-            (ActionsTreeUtil.createCorrectedGroup(actionGroup, ActionsTreeUtil.getExperimentalToolbar(), mutableListOf(),
-                                                  mySelectedSchema.actions)))
-
-            (myActionsTree.model as DefaultTreeModel).reload()
-          }
-
-          override fun getRestoreGroup(): ActionGroup {
-            return DefaultActionGroup(object : AnAction(IdeBundle.messagePointer("button.restore.last.state")) {
-              override fun actionPerformed(e: AnActionEvent) {
-                reset()
-              }
-            },
-                                      object : AnAction(IdeBundle.messagePointer("button.restore.defaults")) {
-                                        override fun actionPerformed(e: AnActionEvent) {
-                                          val actionGroup = ActionManager.getInstance().getAction(
-                                            IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
-                                          fillTreeFromActions(myActionsTree.model.root as DefaultMutableTreeNode?, actionGroup)
-                                          myActionsTree.setSelectionRow(0)
-                                          apply()
-                                        }
-                                      }).apply {
-              isPopup = true
-              templatePresentation.icon = AllIcons.Actions.Rollback
-            }
-          }
-        }
-
-        init {
-          super.init()
-          setSize(600, 600)
-        }
-
-        override fun createCenterPanel(): JComponent {
-          customizeWidget.reset()
-          return customizeWidget.panel
-        }
-
-        override fun getOKAction(): Action {
-          return object : AbstractAction(ActionsBundle.message("apply.toolbar.customization")) {
-            override fun actionPerformed(e: ActionEvent?) {
-              customizeWidget.apply()
-              close(0)
-            }
-          }
-        }
-      }.show()
-    }
-  }
-
-  private fun customizeMouseListener() = object : MouseAdapter() {
-    override fun mouseClicked(e: MouseEvent?) {
-      if (e?.component == null) return
-      val point = RelativePoint(e.component, Point(e.x, e.y))
-      JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(CustomizeToolbarAction()),
-                                                          DataManager.getInstance().getDataContext(e.component),
-                                                          false, true, false, null,
-                                                          -1, Conditions.alwaysTrue()).show(point)
     }
   }
 

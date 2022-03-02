@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlDeprecationOwnerDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.BaseXmlElementDescriptorImpl;
@@ -40,7 +41,7 @@ import static com.intellij.util.ObjectUtils.doIfNotNull;
 /**
  * @author Maxim.Mossienko
  */
-public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
+public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl implements XmlDeprecationOwnerDescriptor {
   private final Set<String> ourHtml4DeprecatedTags = ContainerUtil.newHashSet("applet", "basefont", "center", "dir",
                                                                               "font", "frame", "frameset", "isindex", "menu",
                                                                               "noframes", "s", "strike", "u", "xmp");
@@ -243,6 +244,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return myCaseSensitive;
   }
 
+  @Override
   public boolean isDeprecated() {
     boolean html4Deprecated = ourHtml4DeprecatedTags.contains(myDelegate.getName());
     MdnSymbolDocumentation documentation = doIfNotNull(

@@ -683,8 +683,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     final PsiClass psiClass = isMethodConfiguration || isClassConfiguration
                               ? JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope) : null;
     if (psiClass != null) {
-      TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
-      if (testFramework instanceof JUnit5Framework) {
+      Set<TestFramework> testFrameworks = TestFrameworks.detectApplicableFrameworks(psiClass);
+      TestFramework testFramework = ContainerUtil.getFirstItem(testFrameworks);
+      if (testFramework instanceof JUnit5Framework ||
+          testFrameworks.size() > 1 && ContainerUtil.find(testFrameworks, f -> f instanceof JUnit5Framework) != null) {
         return JUnitStarter.JUNIT5_PARAMETER;
       }
       if (testFramework instanceof JUnit4Framework) {

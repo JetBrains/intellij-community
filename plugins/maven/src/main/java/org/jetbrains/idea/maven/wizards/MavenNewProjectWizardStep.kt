@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -29,7 +28,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  val sdkProperty = propertyGraph.property<Sdk?>(null)
 
   val sdk by sdkProperty
 
@@ -53,18 +52,10 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   override fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? {
-    if (groupId.isEmpty()) {
-      return error(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.missing.error",
-        if (context.isCreatingNewProject) 1 else 0))
-    }
     return validateCoordinates()
   }
 
   override fun ValidationInfoBuilder.validateArtifactId(): ValidationInfo? {
-    if (artifactId.isEmpty()) {
-      return error(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.missing.error",
-        if (context.isCreatingNewProject) 1 else 0))
-    }
     return validateCoordinates()
   }
 
@@ -74,14 +65,6 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       val message = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.entity.coordinates.already.exists.error",
         if (context.isCreatingNewProject) 1 else 0, "$groupId:$artifactId")
       return error(message)
-    }
-    return null
-  }
-
-  override fun ValidationInfoBuilder.validateVersion(): ValidationInfo? {
-    if (version.isEmpty()) {
-      return error(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.missing.error",
-        if (context.isCreatingNewProject) 1 else 0))
     }
     return null
   }

@@ -57,7 +57,7 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     task("CompileDirty") {
       text(JavaLessonsBundle.message("java.debug.workflow.rebuild", action(it), icon(AllIcons.Actions.Compile)))
       if (isAlwaysHotSwap()) {
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JEditorPane ->
+        triggerUI().component { ui: JEditorPane ->
           ui.text.contains(JavaDebuggerBundle.message("status.hot.swap.completed.stop"))
         }
       }
@@ -114,5 +114,5 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     }
   }
 
-  override val fileName: String = "$demoClassName.java"
+  override val sampleFilePath: String = "$demoClassName.java"
 }

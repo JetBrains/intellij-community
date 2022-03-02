@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.*
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.ide.wizard.getCanonicalPath
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
@@ -35,6 +34,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparator
 import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
@@ -524,7 +524,7 @@ class MavenRunConfigurationSettingsEditor(
       val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
       val distributionInfo = distributionComponent.selectedDistribution
       val distribution = distributionInfo?.let(::asMavenHome) ?: MavenServerManager.BUNDLED_MAVEN_3
-      val userSettingsPath = getCanonicalPath(userSettingsComponent.text.trim())
+      val userSettingsPath = getCanonicalPath(userSettingsComponent.text)
       val userSettingsFile = MavenWslUtil.getUserSettings(project, userSettingsPath, mavenConfig)
       val userSettings = getCanonicalPath(userSettingsFile.path)
       val localRepository = MavenWslUtil.getLocalRepo(project, "", distribution, userSettings, mavenConfig)

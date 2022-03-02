@@ -111,7 +111,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   override fun getValues(name: @NonNls String) = getList(name)?.toTypedArray()
 
   override fun setValues(name: @NonNls String, values: Array<String>?) {
-    if (values.isNullOrEmpty()) {
+    if (values == null) {
       unsetValue(name)
     }
     else {
@@ -123,22 +123,23 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   override fun getList(name: String) = keyToStringList.get(name)
 
   override fun setList(name: String, values: MutableCollection<String>?) {
-    if (values.isNullOrEmpty()) {
+    if (values == null) {
       unsetValue(name)
     }
     else {
+      // for possible backward compatibility to existing usages, allow to store empty collections
       keyToStringList.put(name, java.util.List.copyOf(values))
       tracker.incModificationCount()
     }
   }
 }
 
-@State(name = "PropertyService", storages = [
+@State(name = "PropertyService", reportStatistic = false, storages = [
   Storage(value = StoragePathMacros.NON_ROAMABLE_FILE),
   Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true),
 ])
 @Internal
 class AppPropertyService : BasePropertyService()
 
-@State(name = "PropertiesComponent", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "PropertiesComponent", reportStatistic = false, storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 internal class ProjectPropertyService : BasePropertyService()

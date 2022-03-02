@@ -20,7 +20,6 @@ import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -30,12 +29,14 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
@@ -48,7 +49,6 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -92,8 +92,6 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
     add(createRunActionToolbar().component.apply {
       isOpaque = false
     }, VerticalLayout.CENTER)
-
-    ExecutionReasonableHistoryManager.register(project)
   }
 
   private fun createRunActionToolbar(): ActionToolbar {
@@ -111,6 +109,8 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
 }
 
 internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware, UpdateInBackground {
+  private val spinningIcon = SpinningProgressIcon()
+
   override fun actionPerformed(e: AnActionEvent) {
     if (!e.presentation.isEnabled) return
     val conf = e.presentation.getClientProperty(CONF)
@@ -169,7 +169,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       DefaultRunExecutor.EXECUTOR_ID -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
       ToolWindowId.DEBUG -> IconManager.getInstance().getIcon("expui/run/widget/debug.svg", AllIcons::class.java)
       "Coverage" -> AllIcons.General.RunWithCoverage
-      LOADING -> AnimatedIcon.Default.INSTANCE
+      LOADING -> spinningIcon
       RESTART -> IconManager.getInstance().getIcon("expui/run/widget/restart.svg", AllIcons::class.java)
       else -> AllIcons.Actions.Execute
     }
@@ -199,7 +199,11 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   override fun updateCustomComponent(wrapper: JComponent, presentation: Presentation) {
     val component = (wrapper as Wrapper).targetComponent as RunDropDownButton
     component.text = presentation.text?.let(::shorten)
-    component.icon = presentation.icon
+    component.icon = presentation.icon.also { currentIcon ->
+      if (spinningIcon === currentIcon) {
+        spinningIcon.setIconColor(component.foreground)
+      }
+    }
     presentation.getClientProperty(COLOR)?.updateColors(component)
     if (presentation.getClientProperty(CONF) == null) {
       component.dropDownPopup = null
@@ -324,7 +328,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware, Upd
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = IconManager.getInstance().getIcon("expui/run/widget/stop.svg", AllIcons::class.java)
+    e.presentation.icon = IconLoader.getIcon("expui/run/widget/stop.svg", AllIcons::class.java.classLoader)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)
@@ -824,49 +828,31 @@ class RunConfigurationStartHistory(val project: Project) : PersistentStateCompon
  * Registers one [ExecutionReasonableHistory] per project and
  * disposes it with the project.
  */
-private object ExecutionReasonableHistoryManager {
-  private val registeredListeners = mutableMapOf<Project, ExecutionReasonableHistory>()
-
-  @RequiresEdt
-  fun register(project: Project) {
-    if (!registeredListeners.containsKey(project)) {
-      registeredListeners[project] = ExecutionReasonableHistory(
-        project,
-        onHistoryChanged = ::processHistoryChanged,
-        onAnyChange = ::configurationHistoryStateChanged
-      )
-      Disposer.register(project) {
-        ApplicationManager.getApplication().invokeLater {
-          unregister(project)
-        }
-      }
-    }
-  }
-
-  /**
-   * Unregister [ExecutionReasonableHistory] of the project and dispose it.
-   *
-   * Shouldn't be called directly because it clears runtime history,
-   * that isn't persisted in [RunConfigurationStartHistory].
-   */
-  @RequiresEdt
-  fun unregister(project: Project) {
-    registeredListeners.remove(project)?.let(Disposer::dispose)
+private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
+  override fun runActivity(project: Project) {
+    ExecutionReasonableHistory(
+      project,
+      onHistoryChanged = ::processHistoryChanged,
+      onAnyChange = ::configurationHistoryStateChanged
+    )
   }
 
   private fun processHistoryChanged(latest: ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) {
     if (latest != null) {
       val (env, reason) = latest
-      val history = RunConfigurationStartHistory.getInstance(env.project)
       getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
         if (reason == RunState.SCHEDULED) {
-          history.register(conf, env.executor.id, reason)
+          RunConfigurationStartHistory.getInstance(env.project).register(conf, env.executor.id, reason)
         }
-        if (reason.isRunningState()) {
-          RunManager.getInstance(env.project).selectedConfiguration = conf
+        val runManager = RunManager.getInstance(env.project)
+        if (reason.isRunningState() && ExperimentalUI.isNewUI() && !runManager.isRunWidgetActive()) {
+          runManager.selectedConfiguration = conf
         }
-      } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.configurationSettings}"))
-      ActivityTracker.getInstance().inc()
+        ActivityTracker.getInstance().inc()
+      } ?: logger<RunToolbarWidget>().warn(
+        "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
+        "It won't be saved in the run history."
+      )
     }
   }
 

@@ -26,7 +26,9 @@ internal class GitSettingsLogTest {
 
   private val tempDirManager = TemporaryDirectory()
   private val disposableRule = DisposableRule()
-  @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(disposableRule)
+  @Rule
+  @JvmField
+  val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(disposableRule)
 
   private lateinit var configDir: Path
   private lateinit var settingsSyncStorage: Path
@@ -70,7 +72,7 @@ internal class GitSettingsLogTest {
     settingsLog.applyIdeState(settingsSnapshot {
       fileState("options/editor.xml", "ideEditorContent")
     })
-    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity
+    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
     settingsLog.applyCloudState(settingsSnapshot {
       fileState("options/editor.xml", "cloudEditorContent")
     })
@@ -78,6 +80,51 @@ internal class GitSettingsLogTest {
     settingsLog.advanceMaster()
 
     assertEquals("Incorrect content", "cloudEditorContent", (settingsSyncStorage / "options" / "editor.xml").readText())
+    assertMasterIsMergeOfIdeAndCloud()
+  }
+
+  @Test
+  fun `delete-modify merge conflict should be resolved as last modified`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
+      listOf(editorXml)
+    }
+    settingsLog.initialize()
+
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState(FileState.Deleted("options/editor.xml"))
+    })
+    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
+    settingsLog.applyCloudState(settingsSnapshot {
+      fileState("options/editor.xml", "cloudEditorContent")
+    })
+    settingsLog.advanceMaster()
+
+    assertEquals("Incorrect content", "cloudEditorContent", (settingsSyncStorage / "options" / "editor.xml").readText())
+    assertMasterIsMergeOfIdeAndCloud()
+
+  }
+
+  @Test
+  fun `modify-delete merge conflict should be resolved as last modified`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
+      listOf(editorXml)
+    }
+    settingsLog.initialize()
+
+    settingsLog.applyCloudState(settingsSnapshot {
+      fileState("options/editor.xml", "moreCloudEditorContent")
+    })
+    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState(FileState.Deleted("options/editor.xml"))
+    })
+    settingsLog.advanceMaster()
+
+    assertEquals("Incorrect deleted file content", DELETED_FILE_MARKER, (settingsSyncStorage / "options" / "editor.xml").readText())
     assertMasterIsMergeOfIdeAndCloud()
   }
 

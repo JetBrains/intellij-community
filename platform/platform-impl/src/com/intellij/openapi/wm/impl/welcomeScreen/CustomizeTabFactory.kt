@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.ide.IdeBundle
@@ -49,7 +49,7 @@ import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
-private val settings get() = UISettings.instance
+private val settings get() = UISettings.getInstance()
 private val defaultProject get() = ProjectManager.getInstance().defaultProject
 
 private val laf get() = LafManager.getInstance()
@@ -60,7 +60,7 @@ class CustomizeTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable) = CustomizeTab(parentDisposable)
 }
 
-private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size
+private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize2D else JBFont.label().size2D
 
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
@@ -89,10 +89,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       WelcomeScreenEventCollector.logLafChanged(laf.currentLookAndFeel, laf.autodetect)
     }
     ideFontProperty.afterChange({
-                                  if (settings.fontSize == it) return@afterChange
+                                  if (settings.fontSize2D == it) return@afterChange
                                   settings.overrideLafFonts = true
-                                  WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize, it)
-                                  settings.fontSize = it
+                                  WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize2D, it)
+                                  settings.fontSize2D = it
                                   updateFontSettingsLater()
                                 }, parentDisposable)
     keymapProperty.afterChange({
@@ -270,8 +270,8 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     }
   }
 
-  private fun Row.fontComboBox(fontProperty: GraphProperty<Int>): Cell<ComboBox<Int>> {
-    val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet()
+  private fun Row.fontComboBox(fontProperty: GraphProperty<Float>): Cell<ComboBox<Float>> {
+    val fontSizes = UIUtil.getStandardFontSizes().map { it.toFloat() }.toSortedSet()
     fontSizes.add(fontProperty.get())
     val model = DefaultComboBoxModel(fontSizes.toTypedArray())
     return comboBox(model)

@@ -44,9 +44,9 @@ Supports Maven and Gradle projects.
     </extensionPoints>
 
     <content>
-        <module name="intellij.packageSearch/gradle"/>
-        <module name="intellij.packageSearch/kotlin"/>
-        <module name="intellij.packageSearch/maven"/>
+        <module name="intellij.packageSearch.gradle"/>
+        <module name="intellij.packageSearch.kotlin"/>
+        <module name="intellij.packageSearch.maven"/>
     </content>
     <dependencies>
         <plugin id="com.intellij.java"/>
@@ -66,6 +66,9 @@ Supports Maven and Gradle projects.
         <projectConfigurable groupId="build" key="packagesearch.configuration.title" bundle="messages.packageSearchBundle"
                              id="preferences.packagesearch.PackageSearchGeneralConfigurable"
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.services.DependencyNavigationService"/>
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
@@ -105,9 +108,10 @@ Supports Maven and Gradle projects.
         <!--suppress PluginXmlCapitalization -->
         <notificationGroup displayType="BALLOON"
                            id="packagesearch.notification"
-                           icon="/icons/artifactSmall.svg"
                            bundle="messages.packageSearchBundle"
                            key="packagesearch.title"/>
+
+        <themeMetadataProvider path="/META-INF/PackageSearch.themeMetadata.json"/>
     </extensions>
 
     <actions>

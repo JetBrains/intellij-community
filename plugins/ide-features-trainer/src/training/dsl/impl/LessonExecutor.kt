@@ -286,7 +286,7 @@ internal class LessonExecutor(val lesson: KLesson,
     ApplicationManager.getApplication().executeOnPooledThread {
       var ui = component
       while (ActionUpdateEdtExecutor.computeOnEdt { condition.get() } == true) {
-        if (ui == null || !ui.isShowing) {
+        if (ui == null || !ui.isShowing || ui.bounds.isEmpty) {
           ui = highlightingFunction()
         }
         Thread.sleep(300)

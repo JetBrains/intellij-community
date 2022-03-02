@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.checkers
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

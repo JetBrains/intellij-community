@@ -60,10 +60,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -89,6 +86,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -109,6 +107,7 @@ import static icons.ExternalSystemIcons.Task;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 
 public class MavenUtil {
+  private static final Set<Runnable> runnables = Collections.newSetFromMap(new IdentityHashMap<>());
   public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
   @ApiStatus.Experimental
   public static final @NlsSafe String MAVEN_NAME = "Maven";
@@ -129,12 +128,12 @@ public class MavenUtil {
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
   protected static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
 
-
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
     Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML),
     Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
   };
+
   public static final String MAVEN_NEW_PROJECT_MODEL_KEY = "maven.new.project.model";
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
@@ -158,17 +157,68 @@ public class MavenUtil {
   }
 
 
+
   public static void invokeLater(Project p, Runnable r) {
     invokeLater(p, ModalityState.defaultModalityState(), r);
   }
 
   public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
+    startTestRunnable(r);
+
     if (isNoBackgroundMode()) {
-      r.run();
+      runAndFinishTestRunnable(r);
     }
     else {
-      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        runAndFinishTestRunnable(r);
+      }, state, p.getDisposed());
     }
+  }
+
+
+  private static void startTestRunnable(Runnable r) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) return;
+    synchronized (runnables) {
+      runnables.add(r);
+    }
+  }
+
+  private static void runAndFinishTestRunnable(Runnable r) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      r.run();
+      return;
+    }
+
+    try {
+      r.run();
+    }
+    finally {
+      synchronized (runnables) {
+        runnables.remove(r);
+      }
+    }
+  }
+
+  @TestOnly
+  public static boolean noUncompletedRunnables() {
+    synchronized (runnables) {
+      return runnables.isEmpty();
+    }
+  }
+
+  public static void cleanAllRunnables() {
+    synchronized (runnables) {
+      runnables.clear();
+    }
+  }
+
+  @TestOnly
+  public static List<Runnable> getUncompletedRunnables() {
+    List<Runnable> result;
+    synchronized (runnables) {
+      result = new ArrayList<>(runnables);
+    }
+    return result;
   }
 
   public static void invokeAndWait(@NotNull Project p, @NotNull Runnable r) {
@@ -176,24 +226,27 @@ public class MavenUtil {
   }
 
   public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
+    startTestRunnable(r);
     if (isNoBackgroundMode()) {
-      r.run();
+      runAndFinishTestRunnable(r);
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
+      ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), p), state);
     }
   }
 
+
   public static void smartInvokeAndWait(final Project p, final ModalityState state, final Runnable r) {
+    startTestRunnable(r);
     if (isNoBackgroundMode() || ApplicationManager.getApplication().isDispatchThread()) {
-      r.run();
+      runAndFinishTestRunnable(r);
     }
     else {
       final Semaphore semaphore = new Semaphore();
       semaphore.down();
       DumbService.getInstance(p).smartInvokeLater(() -> {
         try {
-          r.run();
+          runAndFinishTestRunnable(r);
         }
         finally {
           semaphore.up();
@@ -204,46 +257,50 @@ public class MavenUtil {
   }
 
   public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
+    startTestRunnable(r);
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      r.run();
+      runAndFinishTestRunnable(r);
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().runWriteAction(r);
     }
     else {
       ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(
-                                                          () -> ApplicationManager.getApplication().runWriteAction(r), p),
+                                                          () -> ApplicationManager.getApplication().runWriteAction(() -> runAndFinishTestRunnable(r)), p),
                                                         ModalityState.defaultModalityState());
     }
   }
 
   public static void runDumbAware(@NotNull Project project, @NotNull Runnable r) {
+    startTestRunnable(r);
     if (DumbService.isDumbAware(r)) {
-      r.run();
+      runAndFinishTestRunnable(r);
     }
     else {
-      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(r, project));
+      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), project));
     }
   }
 
   public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
-    if (project.isDisposed()) return;
+    if (project.isDisposed()) {
+      return;
+    }
 
     if (isNoBackgroundMode()) {
-      runnable.run();
-      return;
+      startTestRunnable(runnable);
+      runAndFinishTestRunnable(runnable);
     }
-
-    if (!project.isInitialized()) {
-      StartupManager.getInstance(project).runAfterOpened(runnable);
-      return;
+    else if (project.isInitialized()) {
+      runDumbAware(project, runnable);
     }
-
-    runDumbAware(project, runnable);
+    else {
+      startTestRunnable(runnable);
+      StartupManager.getInstance(project).runAfterOpened(() -> runAndFinishTestRunnable(runnable));
+    }
   }
 
   public static boolean isNoBackgroundMode() {
-    if (shouldRunTasksAsynchronouslyInTests() || Registry.is("maven.new.import")) {
+    if (shouldRunTasksAsynchronouslyInTests() || isLinearImportEnabled()) {
       return false;
     }
     return (ApplicationManager.getApplication().isUnitTestMode()
@@ -880,13 +937,18 @@ public class MavenUtil {
       return null;
     }
     String[] artifactPath = id.getGroupId().split("\\.");
-    for (String path : artifactPath) {
-      localRepository = localRepository.resolve(path);
+    try {
+      for (String path : artifactPath) {
+        localRepository = localRepository.resolve(path);
+      }
+      return localRepository
+        .resolve(id.getArtifactId())
+        .resolve(id.getVersion())
+        .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
     }
-    return localRepository
-      .resolve(id.getArtifactId())
-      .resolve(id.getVersion())
-      .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
+    catch (InvalidPathException e) {
+      return null;
+    }
   }
 
   @Nullable
@@ -1240,12 +1302,8 @@ public class MavenUtil {
   }
 
   public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
-    InputStream inputStream = xmlFile.getInputStream();
-    try {
+    try (InputStream inputStream = xmlFile.getInputStream()) {
       return crcWithoutSpaces(inputStream);
-    }
-    finally {
-      inputStream.close();
     }
   }
 
@@ -1520,14 +1578,20 @@ public class MavenUtil {
   public static Set<MavenRemoteRepository> getRemoteResolvedRepositories(@NotNull Project project) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
+    MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
+    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, EMPTY, EMPTY);
     try {
-      MavenEmbedderWrapper mavenEmbedderWrapper = projectsManager.getEmbeddersManager()
-        .getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, EMPTY, EMPTY);
-      Set<MavenRemoteRepository> resolvedRepositories = mavenEmbedderWrapper.resolveRepositories(repositories);
+      Set<MavenRemoteRepository> resolvedRepositories = embedderWrapper.resolveRepositories(repositories);
       return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
     } catch (Exception e) {
       MavenLog.LOG.warn("resolve remote repo error", e);
+    } finally {
+      embeddersManager.release(embedderWrapper);
     }
     return repositories;
+  }
+
+  public static boolean isLinearImportEnabled(){
+    return Registry.is("maven.new.import");
   }
 }

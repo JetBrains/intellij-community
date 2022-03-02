@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
@@ -47,13 +47,15 @@ public final class RunOnceUtil {
                                   @NotNull @NonNls String id,
                                   boolean ideAware,
                                   @NotNull Runnable activity) {
-    String key = createKey(id, ideAware);
-    if (storage.isTrueValue(key)) {
-      return false;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (storage) {
+      String key = createKey(id, ideAware);
+      if (storage.isTrueValue(key)) {
+        return false;
+      }
+      storage.setValue(key, true);
     }
-
     activity.run();
-    storage.setValue(key, true);
     return true;
   }
 

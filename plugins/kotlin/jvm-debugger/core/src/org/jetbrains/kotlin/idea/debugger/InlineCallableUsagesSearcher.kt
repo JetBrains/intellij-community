@@ -36,7 +36,7 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
         alreadyVisited: Set<PsiElement>,
         transformer: (PsiElement, Set<PsiElement>) -> ComputedClassNames
     ): ComputedClassNames {
-        if (DumbService.isDumb(project) || !checkIfInline(declaration)) {
+        if (!checkIfInline(declaration)) {
             return ComputedClassNames.EMPTY
         } else {
             val searchResult = hashSetOf<PsiElement>()
@@ -101,6 +101,10 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
         }.executeSynchronously()
 
     private fun checkIfInlineInReadAction(declaration: KtDeclaration): Boolean {
+        if (DumbService.isDumb(project)) {
+            return false
+        }
+
         val bindingContext = declaration.analyze(BodyResolveMode.PARTIAL)
         val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, declaration) ?: return false
         return when (descriptor) {

@@ -359,12 +359,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           if (element instanceof PsiJavaModule) {
             visitJavaModule((PsiJavaModule)element);
           }
-          else if (element instanceof PsiFunctionalExpression) {
-            RefElement decl = myRefManager.getReference(element);
-            if (decl != null) {
-              myRefManager.executeTask(() -> ((RefElementImpl)decl).buildReferences());
-            }
-          }
         }
 
         private void visitJavaModule(PsiJavaModule module) {
@@ -461,7 +455,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     @Override
     public boolean visitDeclaration(@NotNull UDeclaration node) {
       processComments(node);
-      RefElement decl = myRefManager.getReference(node.getSourcePsi());
+      RefElement decl = myRefManager.getReference(KotlinPropertiesDetector.getPropertyElement(node));
       if (decl != null) {
         myRefManager.executeTask(() -> ((RefElementImpl)decl).buildReferences());
       }
@@ -494,6 +488,24 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         }
       }
       return false;
+    }
+
+    @Override
+    public boolean visitLambdaExpression(@NotNull ULambdaExpression node) {
+      return visitFunctionalExpression(node);
+    }
+
+    @Override
+    public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
+      return visitFunctionalExpression(node);
+    }
+
+    private boolean visitFunctionalExpression(@NotNull UExpression expression) {
+      RefElement refElement = myRefManager.getReference(expression.getSourcePsi());
+      if (refElement instanceof RefFunctionalExpressionImpl) {
+        myRefManager.executeTask(() -> ((RefFunctionalExpressionImpl)refElement).buildReferences());
+      }
+      return true;
     }
 
     @Override

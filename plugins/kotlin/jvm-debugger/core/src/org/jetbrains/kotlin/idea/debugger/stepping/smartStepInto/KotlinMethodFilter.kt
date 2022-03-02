@@ -8,14 +8,13 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
-import com.sun.jdi.Method
-import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.getInlineFunctionNamesAndBorders
 import org.jetbrains.kotlin.idea.debugger.safeMethod
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -26,9 +25,8 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 
 open class KotlinMethodFilter(
     declaration: KtDeclaration?,
-    private val isInvoke: Boolean,
     private val lines: Range<Int>?,
-    private val targetMethodName: String
+    private val methodInfo: CallableMemberInfo
 ) : NamedMethodFilter {
     private val declarationPtr = declaration?.createSmartPointer()
 
@@ -53,7 +51,7 @@ open class KotlinMethodFilter(
         if (currentDescriptor !is CallableMemberDescriptor) return false
         if (currentDescriptor.kind != CallableMemberDescriptor.Kind.DECLARATION) return false
 
-        if (isInvoke) {
+        if (methodInfo.isInvoke) {
             // There can be only one 'invoke' target at the moment so consider position as expected.
             // Descriptors can be not-equal, say when parameter has type `(T) -> T` and lambda is `Int.() -> Int`.
             return true
@@ -73,19 +71,26 @@ open class KotlinMethodFilter(
         }
     }
 
-    override fun getCallingExpressionLines() = lines
+    override fun getCallingExpressionLines(): Range<Int>? =
+        lines
 
-    override fun getMethodName() = targetMethodName
+    override fun getMethodName(): String =
+        methodInfo.name
 
     private fun nameMatches(location: Location): Boolean {
         val method = location.safeMethod() ?: return false
         val targetMethodName = methodName
-        return method.name() == targetMethodName ||
-               method.name() == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
+        val isNameMangledInBytecode = methodInfo.isNameMangledInBytecode
+        val actualMethodName = method.name().trimIfMangledInBytecode(isNameMangledInBytecode)
+
+        return actualMethodName == targetMethodName ||
+               actualMethodName == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
                // A correct way here is to memorize the original location (where smart step into was started)
                // and filter out ranges that contain that original location.
                // Otherwise, nested inline with the same method name will not work correctly.
-               method.getInlineFunctionNamesAndBorders().filter { location in it.value }.any { it.key.isInlinedFromFunction(targetMethodName) }
+               method.getInlineFunctionNamesAndBorders()
+                   .filter { location in it.value }
+                   .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode) }
     }
 }
 
@@ -95,7 +100,6 @@ private fun getMethodDescriptorAndDeclaration(
 ): Pair<DeclarationDescriptor?, KtDeclaration?> {
     val actualMethodName = location.safeMethod()?.name() ?: return null to null
     val elementAt = positionManager.getSourcePosition(location)?.elementAt
-
     val declaration = elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
         it !is KtProperty || !it.isLocal
     }
@@ -107,6 +111,8 @@ private fun getMethodDescriptorAndDeclaration(
     }
 }
 
-private fun LocalVariable.isInlinedFromFunction(methodName: String) =
-    name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
-    name().substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName
+private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangledInBytecode: Boolean): Boolean {
+    val variableName = name().trimIfMangledInBytecode(isNameMangledInBytecode)
+    return variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
+           variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName
+}

@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 import org.jetbrains.kotlin.test.TargetBackend;
 
@@ -85,6 +85,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 @TestMetadata("outerMembersNoReflection.kt")
                 public void testOuterMembersNoReflection() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/outerMembersNoReflection.kt");
+                }
+
+                @TestMetadata("privateAnnotationCompanionValue.kt")
+                public void testPrivateAnnotationCompanionValue() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/privateAnnotationCompanionValue.kt");
                 }
 
                 @TestMetadata("selfMembers.kt")
@@ -1003,6 +1008,16 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointVariants.kt");
             }
 
+            @TestMetadata("inlineFunctionDeepInlining.kt")
+            public void testInlineFunctionDeepInlining() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInlining.kt");
+            }
+
+            @TestMetadata("inlineFunctionDeepInliningSameFile.kt")
+            public void testInlineFunctionDeepInliningSameFile() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInliningSameFile.kt");
+            }
+
             @TestMetadata("inlineMethodsInSignature.kt")
             public void testInlineMethodsInSignature() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
@@ -1203,6 +1218,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
             }
 
+            @TestMetadata("privatePropertyWithNonDefaultAccessor.kt")
+            public void testPrivatePropertyWithNonDefaultAccessor() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privatePropertyWithNonDefaultAccessor.kt");
+            }
+
             @TestMetadata("protectedMember.kt")
             public void testProtectedMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
@@ -1266,6 +1286,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
             @TestMetadata("unsafeCall.kt")
             public void testUnsafeCall() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
+            }
+
+            @TestMetadata("unusedTransitiveDependencies.kt")
+            public void testUnusedTransitiveDependencies() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
             }
 
             @TestMetadata("valueParameterName.kt")

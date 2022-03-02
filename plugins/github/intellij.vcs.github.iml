@@ -50,6 +50,6 @@
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
-    <orderEntry type="library" name="intellij-markdown" level="project" />
+    <orderEntry type="library" name="jetbrains.markdown.jvm" level="project" />
   </component>
 </module>

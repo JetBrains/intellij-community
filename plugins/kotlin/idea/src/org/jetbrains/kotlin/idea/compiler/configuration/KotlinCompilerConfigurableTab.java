@@ -67,8 +67,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         moduleKindDescriptions.put(K2JsArgumentConstants.MODULE_COMMONJS, KotlinBundle.message("configuration.description.commonjs"));
         moduleKindDescriptions.put(K2JsArgumentConstants.MODULE_UMD, KotlinBundle.message("configuration.description.umd.detect.amd.or.commonjs.if.available.fallback.to.plain"));
 
-        sourceMapSourceEmbeddingDescriptions.put(K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_NEVER, KotlinBundle.message("configuration.description.never"));
-        sourceMapSourceEmbeddingDescriptions.put(K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_ALWAYS, KotlinBundle.message("configuration.description.always"));
+        sourceMapSourceEmbeddingDescriptions
+                .put(K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_NEVER, KotlinBundle.message("configuration.description.never"));
+        sourceMapSourceEmbeddingDescriptions
+                .put(K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_ALWAYS, KotlinBundle.message("configuration.description.always"));
         sourceMapSourceEmbeddingDescriptions.put(K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_INLINING, KotlinBundle.message("configuration.description.when.inlining.a.function.from.other.module.with.embedded.sources"));
     }
 
@@ -97,8 +99,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     private JComboBox<String> moduleKindComboBox;
     private JTextField scriptTemplatesField;
     private JTextField scriptTemplatesClasspathField;
-    public JLabel scriptTemplatesLabel;
-    public JLabel scriptTemplatesClasspathLabel;
     private JPanel k2jvmPanel;
     private JPanel k2jsPanel;
     private JComboBox<String> jvmVersionComboBox;
@@ -111,7 +111,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     private JLabel labelForOutputPostfixFile;
     private JLabel warningLabel;
     private JTextField sourceMapPrefix;
-    public JLabel labelForSourceMapPrefix;
     private JComboBox<String> sourceMapEmbedSources;
     private boolean isEnabled = true;
 
@@ -129,9 +128,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         this.commonCompilerArguments = commonCompilerArguments;
         this.k2jsCompilerArguments = k2jsCompilerArguments;
         this.compilerSettings = compilerSettings;
-        this.jpsPluginSettings = isProjectSettings
-                                 ? FreezableKt.unfrozen(KotlinJpsPluginSettings.Companion.getInstance(project).getSettings())
-                                 : null;
+        this.jpsPluginSettings = Optional.ofNullable(isProjectSettings ? KotlinJpsPluginSettings.Companion.getInstance(project) : null)
+                .map(KotlinJpsPluginSettings::getSettings)
+                .map(FreezableKt::unfrozen)
+                .orElse(null);
         this.compilerWorkspaceSettings = compilerWorkspaceSettings;
         this.k2jvmCompilerArguments = k2jvmCompilerArguments;
         this.isProjectSettings = isProjectSettings;
@@ -334,7 +334,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         }
     }
 
-    private static boolean isLessOrEqual(LanguageVersion version, LanguageVersion upperBound) {
+    private static boolean isLessOrEqual(LanguageOrApiVersion version, LanguageOrApiVersion upperBound) {
         return VersionComparatorUtil.compare(version.getVersionString(), upperBound.getVersionString()) <= 0;
     }
 
@@ -345,8 +345,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     private void restrictAPIVersions(VersionView upperBoundView) {
         VersionView selectedAPIView = getSelectedAPIVersionView();
-        LanguageVersion selectedAPIVersion = selectedAPIView.getVersion();
-        LanguageVersion upperBound = upperBoundView.getVersion();
+        LanguageOrApiVersion selectedAPIVersion = selectedAPIView.getVersion();
+        LanguageOrApiVersion upperBound = upperBoundView.getVersion();
         List<VersionView> permittedAPIVersions = new ArrayList<>(LanguageVersion.values().length + 1);
         if (isLessOrEqual(VersionView.LatestStable.INSTANCE.getVersion(), upperBound)) {
             permittedAPIVersions.add(VersionView.LatestStable.INSTANCE);
@@ -354,7 +354,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         ArraysKt.mapNotNullTo(
                 LanguageVersion.values(),
                 permittedAPIVersions,
-                version -> isLessOrEqual(version, upperBound) && !version.isUnsupported() ? new VersionView.Specific(version) : null
+                languageVersion -> {
+                    ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
+                    if (isLessOrEqual(apiVersion, upperBound) && !apiVersion.isUnsupported()) {
+                        return new VersionView.Specific(languageVersion);
+                    }
+
+                    return null;
+                }
         );
 
         apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
@@ -384,7 +391,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                     }
                     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
                                     KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID,
-                                    SetupKotlinJpsPluginBeforeCompileTask.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
+                                    KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
                             .onProcessed(jpsClassPathVersions -> {
                                 if (jpsClassPathVersions == null) {
                                     onFinish.accept(null);
@@ -406,7 +413,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         languageVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
         apiVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
 
-        if (isProjectSettings) {
+        if (isProjectSettings && KotlinJpsPluginSettings.Companion.isUnbundledJpsExperimentalFeatureEnabled(project)) {
             ComboBoxTextItem loadingItem = new ComboBoxTextItem(KotlinBundle.message("loading.available.versions.from.maven"), false);
             kotlinJpsPluginVersionComboBox.addItem(loadingItem);
             fetchAvailableJpsCompilersAsync(
@@ -429,15 +436,21 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
             kotlinJpsPluginVersionPanel.setVisible(false);
         }
 
-        for (LanguageVersion version : LanguageVersion.values()) {
-            if (version.isUnsupported() ||
-                !LanguageVersionSettingsKt.isStableOrReadyForPreview(version) && !ApplicationManager.getApplication().isInternal()) {
+        for (LanguageVersion languageVersion : LanguageVersion.values()) {
+            if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion) &&
+                !ApplicationManager.getApplication().isInternal()
+            ) {
                 continue;
             }
 
-            VersionView.Specific specificVersion = new VersionView.Specific(version);
-            languageVersionComboBox.addItem(specificVersion);
-            apiVersionComboBox.addItem(specificVersion);
+            ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
+
+            if (!apiVersion.isUnsupported()) {
+                apiVersionComboBox.addItem(new VersionView.Specific(languageVersion));
+            }
+            if (!languageVersion.isUnsupported()) {
+                languageVersionComboBox.addItem(new VersionView.Specific(languageVersion));
+            }
         }
         languageVersionComboBox.setRenderer(new DescriptionListCellRenderer());
         kotlinJpsPluginVersionComboBox.setRenderer(new DescriptionListCellRenderer());
@@ -505,12 +518,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     @Nullable
     @Override
-    public Runnable enableSearch(String option) {
-        return null;
-    }
-
-    @Nullable
-    @Override
     public JComponent createComponent() {
         return contentPane;
     }
@@ -552,7 +559,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     }
 
     @NotNull
-    private String getSelectedJvmVersion() {
+    public String getSelectedJvmVersion() {
         return getJvmVersionOrDefault((String) jvmVersionComboBox.getSelectedItem());
     }
 
@@ -574,7 +581,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     }
 
     private static @NlsSafe @NotNull String normalizeKotlinJpsPluginVersion(@Nullable String version) {
-        return version == null || version.isEmpty() ? KotlinCompilerVersion.VERSION : version;
+        return version == null || version.isEmpty() ? KotlinPluginLayout.getInstance().getStandaloneCompilerVersion() : version;
     }
 
     public void applyTo(
@@ -851,7 +858,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                     VersionView selectedItem = (VersionView) component.getSelectedItem();
                     if (selectedItem == null) return null;
 
-                    LanguageVersion version = selectedItem.getVersion();
+                    LanguageOrApiVersion version = selectedItem.getVersion();
                     if (version.isUnsupported()) {
                         return new ValidationInfo(KotlinBundle.message(messageKey, version.getVersionString()), component);
                     }

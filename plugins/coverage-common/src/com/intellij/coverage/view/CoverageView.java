@@ -12,7 +12,9 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -27,16 +29,18 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBTreeTable;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,16 +49,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
@@ -62,12 +64,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   @NonNls public static final String HELP_ID = "reference.toolWindows.Coverage";
 
   private final CoverageTableModel myModel;
-  private final TreeTable myTable;
+  private final JBTreeTable myTable;
   private final Project myProject;
   private final CoverageViewManager.StateBean myStateBean;
   private final CoverageViewExtension myViewExtension;
   private final CoverageViewTreeStructure myTreeStructure;
-  private final int[] myMaxWidth;
 
 
   public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
@@ -79,36 +80,42 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
-
-    myMaxWidth = new int[myModel.getColumnCount()];
-    for (int column = 0; column < myModel.getColumnCount(); column++) {
-      myMaxWidth[column] = getStringWidth(myModel.getColumnName(column));
-    }
-    myTable = new TreeTable(myModel) {
+    myTable = new JBTreeTable(myModel);
+    myTable.getTree().setCellRenderer(new NodeRenderer() {
       @Override
-      public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
-        final Component component = super.prepareRenderer(renderer, row, column);
-        int preferredWidth = component.getPreferredSize().width;
-        if (preferredWidth > myMaxWidth[column]) {
-          final TableColumn tableColumn = columnModel.getColumn(column);
-          preferredWidth = Math.max(preferredWidth, tableColumn.getPreferredWidth());
-          myMaxWidth[column] = preferredWidth;
-          if (column != 0) {
-            tableColumn.setMaxWidth(preferredWidth);
-          }
-        }
+      protected @NotNull SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation,
+                                                                      Color color,
+                                                                      @NotNull Object node) {
+        if (mySelected) color = null;
+        return super.getSimpleTextAttributes(presentation, color, node);
+      }
+    });
+    myTable.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        setBackground(UIUtil.getTableBackground(isSelected, myTable.hasFocus()));
         return component;
       }
-    };
+    });
     setUpShowRootNode();
 
     addEmptyCoverageText(project, suitesBundle);
-    myTable.setRowSorter(new CoverageRowSorter(myTable, myModel));
-    myTable.getTableHeader().setReorderingAllowed(false);
-    myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
+    myTable.setRowSorter(rowSorter);
+    if (stateBean.mySortingColumn < 0 || stateBean.mySortingColumn >= myModel.getColumnCount()) {
+      stateBean.myAscendingOrder = true;
+      stateBean.mySortingColumn = 0;
+    }
+    final RowSorter.SortKey sortKey = new RowSorter.SortKey(stateBean.mySortingColumn, stateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
+    rowSorter.setSortKeys(Collections.singletonList(sortKey));
     setWidth();
-    JPanel centerPanel = JBUI.Panels.simplePanel().addToCenter(ScrollPaneFactory.createScrollPane(myTable));
-    addToCenter(centerPanel);
+    addToCenter(myTable);
 
     attachFileStatusListener();
 
@@ -118,26 +125,33 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         enterSelected(false);
         return true;
       }
-    }.installOn(myTable);
+    }.installOn(myTable.getTree());
 
-    final TreeTableSpeedSearch speedSearch = new TreeTableSpeedSearch(myTable, (path) -> path.getLastPathComponent().toString());
+    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(myTable.getTree(), (path) -> path.getLastPathComponent().toString());
     speedSearch.setCanExpand(true);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
 
-    myTable.registerKeyboardAction(e -> resetView(), KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
-    myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
-    myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
-    myTable.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
+    myTable.getTree().registerKeyboardAction(e -> resetView(), KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+    myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
+    myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
+    myTable.getTree().getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         enterSelected(true);
       }
     });
-
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(), false);
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID);
+    final boolean isHorizontalView = toolWindow != null && toolWindow.getAnchor().isHorizontal();
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(), !isHorizontalView);
     actionToolbar.setTargetComponent(myTable);
-    addToLeft(actionToolbar.getComponent());
+    final JComponent toolbarComponent = actionToolbar.getComponent();
+    if (isHorizontalView) {
+      addToLeft(toolbarComponent);
+    }
+    else {
+      addToTop(toolbarComponent);
+    }
   }
 
   private void setUpShowRootNode() {
@@ -189,7 +203,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private void addEmptyCoverageText(Project project, CoverageSuitesBundle suitesBundle) {
-    final StatusText emptyText = myTable.getEmptyText();
+    final StatusText emptyText = myTable.getTable().getEmptyText();
     emptyText.setText(CoverageBundle.message("coverage.view.no.coverage.results"));
     final RunConfigurationBase<?> configuration = suitesBundle.getRunConfiguration();
     if (configuration != null) {
@@ -217,32 +231,52 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   public void saveSize() {
-    final int columns = myTable.getColumnCount();
+    final int columns = myTable.getTable().getColumnCount();
     final List<Integer> widths = new ArrayList<>();
-    final TableColumnModel columnModel = myTable.getColumnModel();
+    final TableColumnModel columnModel = myTable.getTable().getColumnModel();
     for (int i = 0; i < columns; i++) {
       widths.add(columnModel.getColumn(i).getWidth());
     }
+    // tree width comes last
+    widths.add(myTable.getWidth() - myTable.getTable().getWidth());
     myStateBean.myColumnSize = widths;
+
+    final RowSorter<? extends TableModel> sorter = myTable.getTable().getRowSorter();
+    RowSorter.SortKey sortKey = null;
+    if (sorter != null) {
+      final List<? extends RowSorter.SortKey> keys = sorter.getSortKeys();
+      if (keys != null && !keys.isEmpty()) {
+        sortKey = keys.get(0);
+      }
+    }
+    if (sortKey != null && sortKey.getSortOrder() != SortOrder.UNSORTED) {
+      myStateBean.mySortingColumn = sortKey.getColumn();
+      myStateBean.myAscendingOrder = sortKey.getSortOrder() == SortOrder.ASCENDING;
+    }
   }
 
   private void setWidth() {
-    final int columns = myTable.getColumnCount();
-    final TableColumnModel columnModel = myTable.getColumnModel();
-    if (myStateBean.myColumnSize != null && myStateBean.myColumnSize.size() == columns) {
+    final int columns = myTable.getTable().getColumnCount();
+    final TableColumnModel columnModel = myTable.getTable().getColumnModel();
+    int tableWidth = 0;
+    final int nameWidth;
+    if (myStateBean.myColumnSize != null && myStateBean.myColumnSize.size() == columns + 1) {
       for (int column = 0; column < columns; column++) {
         final int width = myStateBean.myColumnSize.get(column);
         columnModel.getColumn(column).setPreferredWidth(width);
+        tableWidth += width;
       }
+      nameWidth = myStateBean.myColumnSize.get(columns);
     }
     else {
-      for (int column = 1; column < columns; column++) {
-        final int width = Math.max(myMaxWidth[column], getColumnWidth(column));
+      for (int column = 0; column < columns; column++) {
+        final int width = Math.max(getStringWidth(myModel.getColumnName(column)), getColumnWidth(column));
         columnModel.getColumn(column).setPreferredWidth(width);
+        tableWidth += width;
       }
-      final TableColumn nameColumn = myTable.getColumnModel().getColumn(0);
-      nameColumn.setPreferredWidth(Math.max(myMaxWidth[0], JBUIScale.scale(150)));
+      nameWidth = Math.max(getStringWidth(myModel.getColumnName(0)), JBUIScale.scale(150));
     }
+    myTable.setColumnProportion(((float)tableWidth) / (nameWidth + tableWidth) / columns);
   }
 
   private int getColumnWidth(int column) {
@@ -297,7 +331,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         myStateBean.myAutoScrollToSource = state;
       }
     };
-    autoScrollToSourceHandler.install(myTable);
+    autoScrollToSourceHandler.install(myTable.getTree());
     actionGroup.add(autoScrollToSourceHandler.createToggleAction());
   }
 
@@ -393,8 +427,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
   private void selectPath(TreePath path) {
     if (path == null) return;
-    myTable.addSelectedPath(path);
-    ScrollingUtil.ensureSelectionExists(myTable);
+    myTable.getTree().addSelectionPath(path);
+    ScrollingUtil.ensureSelectionExists(myTable.getTable());
   }
 
   private CoverageListNode getNode(PsiElement element, VirtualFile file) {

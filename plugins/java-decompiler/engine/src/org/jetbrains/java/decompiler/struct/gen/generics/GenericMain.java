@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWr
 import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -159,27 +160,16 @@ public final class GenericMain {
     return signature;
   }
 
-  public static String getGenericCastTypeName(GenericType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    List<TypeAnnotationWriteHelper> arrayPaths = new ArrayList<>();
-    List<TypeAnnotationWriteHelper> notArrayPath = typePathWriteStack.stream().filter(stack -> {
-      boolean isArrayPath = stack.getPaths().size() < type.arrayDim;
-      if (stack.getPaths().size() > type.arrayDim) {
-        for (int i = 0; i < type.arrayDim; i++) {
-          stack.getPaths().poll(); // remove all trailing
-        }
-      }
-      if (isArrayPath) {
-        arrayPaths.add(stack);
-      }
-      return !isArrayPath;
-    }).collect(Collectors.toList());
-    StringBuilder sb = new StringBuilder(getTypeName(type, notArrayPath));
-    ExprProcessor.writeArray(sb, type.arrayDim, arrayPaths);
+  public static String getGenericCastTypeName(GenericType type, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    List<TypeAnnotationWriteHelper> arrayTypeAnnWriteHelpers = ExprProcessor.arrayPath(type, typeAnnWriteHelpers);
+    List<TypeAnnotationWriteHelper> nonArrayTypeAnnWriteHelpers = ExprProcessor.nonArrayPath(type, typeAnnWriteHelpers);
+    StringBuilder sb = new StringBuilder(getTypeName(type, nonArrayTypeAnnWriteHelpers));
+    ExprProcessor.writeArray(sb, type.getArrayDim(), arrayTypeAnnWriteHelpers);
     return sb.toString();
   }
 
-  private static String getTypeName(GenericType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    int tp = type.type;
+  private static String getTypeName(GenericType type, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    int tp = type.getType();
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       return typeNames[tp];
     }
@@ -188,67 +178,51 @@ public final class GenericMain {
     }
     else if (tp == CodeConstants.TYPE_GENVAR) {
       StringBuilder sb = new StringBuilder();
-      appendTypeAnnotationBeforeType(type, sb, typePathWriteStack);
-      sb.append(type.value);
+      ExprProcessor.writeTypeAnnotationBeforeType(type, sb, typeAnnWriteHelpers);
+      sb.append(type.getValue());
       return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
       StringBuilder sb = new StringBuilder();
-      appendClassName(type, sb, typePathWriteStack);
+      appendClassName(type, sb, typeAnnWriteHelpers);
       return sb.toString();
     }
 
     throw new RuntimeException("Invalid type: " + type);
   }
 
-  private static void appendClassName(GenericType type, StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    List<GenericType> enclosingClasses = type.getEnclosingClasses();
-
-    appendTypeAnnotationBeforeType(type, sb, typePathWriteStack);
-
-    if (enclosingClasses.isEmpty()) {
-      String name = type.value.replace('/', '.');
-      sb.append(DecompilerContext.getImportCollector().getShortName(name));
+  private static void appendClassName(GenericType type, StringBuilder sb, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    List<GenericType> enclosingTypes = type.getEnclosingClasses();
+    typeAnnWriteHelpers = ExprProcessor.writeTypeAnnotationBeforeType(type, sb, typeAnnWriteHelpers);
+    if (enclosingTypes.isEmpty()) {
+      List<String> nestedTypes = Arrays.asList(
+        DecompilerContext.getImportCollector().getNestedName(type.getValue().replace('/', '.')).split("\\.")
+      );
+      ExprProcessor.writeNestedClass(sb, type, nestedTypes, typeAnnWriteHelpers);
+      ExprProcessor.popNestedTypeAnnotation(typeAnnWriteHelpers);
     }
     else {
-      for (GenericType tp : enclosingClasses) {
-        String[] nestedClasses = DecompilerContext.getImportCollector().getShortName(tp.value.replace('/', '.')).split("\\.");
-        for (int i = 0; i < nestedClasses.length; i++) {
-          String nestedType = nestedClasses[i];
-          if (i != 0) { // first annotation is written already
-            ExprProcessor.checkNestedTypeAnnotation(sb, typePathWriteStack);
-          }
-
-          sb.append(nestedType);
-          if (i != nestedClasses.length - 1) sb.append(".");
-        }
-        appendTypeArguments(tp, sb, typePathWriteStack);
+      for (GenericType tp : enclosingTypes) {
+        List<String> nestedTypes = Arrays.asList(
+          DecompilerContext.getImportCollector().getNestedName(tp.getValue().replace('/', '.')).split("\\.")
+        );
+        typeAnnWriteHelpers = ExprProcessor.writeNestedClass(sb, type, nestedTypes, typeAnnWriteHelpers);
+        typeAnnWriteHelpers = appendTypeArguments(tp, sb, typeAnnWriteHelpers);
+        ExprProcessor.popNestedTypeAnnotation(typeAnnWriteHelpers);
         sb.append('.');
-        ExprProcessor.checkNestedTypeAnnotation(sb, typePathWriteStack);
       }
-
-      sb.append(type.value);
+      typeAnnWriteHelpers = ExprProcessor.writeNestedTypeAnnotations(sb, typeAnnWriteHelpers);
+      ExprProcessor.popNestedTypeAnnotation(typeAnnWriteHelpers);
+      sb.append(type.getValue());
     }
-
-    appendTypeArguments(type, sb, typePathWriteStack);
+    appendTypeArguments(type, sb, typeAnnWriteHelpers);
   }
 
-  private static void appendTypeAnnotationBeforeType(GenericType type, StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    typePathWriteStack.removeIf(writeHelper -> {
-      StructTypePathEntry path = writeHelper.getPaths().peek();
-      if (path == null) {
-        writeHelper.writeTo(sb);
-        return true;
-      }
-      if (path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode() && type.arrayDim == writeHelper.getPaths().size()) {
-        writeHelper.writeTo(sb);
-        return true;
-      }
-      return false;
-    });
-  }
-
-  private static void appendTypeArguments(GenericType type, StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+  private static List<TypeAnnotationWriteHelper> appendTypeArguments(
+    GenericType type,
+    StringBuilder sb,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
     if (!type.getArguments().isEmpty()) {
       sb.append('<');
 
@@ -259,33 +233,11 @@ public final class GenericMain {
 
         GenericType genPar = type.getArguments().get(i);
         int wildcard = type.getWildcards().get(i);
-        final int it = i;
 
         // only take type paths that are in the generic
-        List<TypeAnnotationWriteHelper> locTypePathWriteStack = typePathWriteStack.stream().filter(writeHelper -> {
-          StructTypePathEntry path = writeHelper.getPaths().peek();
-          boolean inGeneric = path != null && path.getTypeArgumentIndex() == it && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getOpcode();
-          if (inGeneric) {
-            writeHelper.getPaths().pop();
-          }
-          return inGeneric;
-        }).collect(Collectors.toList());
-
-        locTypePathWriteStack.removeIf(writeHelper -> {
-          StructTypePathEntry path = writeHelper.getPaths().peek();
-          if (path == null && wildcard != GenericType.WILDCARD_NO) {
-            writeHelper.writeTo(sb);
-            return true;
-          }
-          if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getOpcode() && path.getTypeArgumentIndex() == it &&
-            genPar.arrayDim != 0 && genPar.arrayDim == writeHelper.getPaths().size()
-          ) {
-            writeHelper.writeTo(sb);
-            return true;
-          }
-          return false;
-        });
-
+        List<TypeAnnotationWriteHelper> locTypeAnnWriteHelpers = getGenericTypeAnnotations(i, typeAnnWriteHelpers);
+        typeAnnWriteHelpers.removeAll(locTypeAnnWriteHelpers);
+        locTypeAnnWriteHelpers = writeTypeAnnotationBeforeWildCard(sb, genPar, wildcard, locTypeAnnWriteHelpers);
         switch (wildcard) {
           case GenericType.WILDCARD_UNBOUND:
             sb.append('?');
@@ -297,31 +249,71 @@ public final class GenericMain {
             sb.append("? super ");
             break;
         }
-
-
-        typePathWriteStack.forEach(writeHelper -> { // remove all wild card entries
-          StructTypePathEntry path = writeHelper.getPaths().peek();
-          boolean isWildCard = path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getOpcode();
-          if (isWildCard && path.getTypeArgumentIndex() == it) writeHelper.getPaths().pop();
-        });
-        locTypePathWriteStack.removeIf(writeHelper -> {
-          StructTypePathEntry path = writeHelper.getPaths().peek();
-          if (path != null && path.getTypeArgumentIndex() == it &&
-              path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getOpcode() &&
-            writeHelper.getPaths().size() - 1 == genPar.arrayDim
-          ) {
-            writeHelper.writeTo(sb);
-            return true;
-          }
-          return false;
-        });
-
+        locTypeAnnWriteHelpers = writeTypeAnnotationAfterWildCard(sb, genPar, locTypeAnnWriteHelpers);
         if (genPar != null) {
-          sb.append(getGenericCastTypeName(genPar, locTypePathWriteStack));
+          sb.append(getGenericCastTypeName(genPar, locTypeAnnWriteHelpers));
         }
       }
 
       sb.append(">");
     }
+    return typeAnnWriteHelpers;
+  }
+
+  private static List<TypeAnnotationWriteHelper> getGenericTypeAnnotations(
+    int argIndex,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
+    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      StructTypePathEntry entry = typeAnnWriteHelper.getPaths().peek();
+      boolean inGeneric = entry != null && entry.getTypeArgumentIndex() == argIndex
+                          && entry.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getId();
+      if (inGeneric) typeAnnWriteHelper.getPaths().pop();
+      return inGeneric;
+    }).collect(Collectors.toList());
+  }
+
+  private static List<TypeAnnotationWriteHelper> writeTypeAnnotationBeforeWildCard(
+    StringBuilder sb,
+    GenericType type,
+    int wildcard,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
+    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
+      if (wildcard != GenericType.WILDCARD_NO && path == null) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
+      }
+      if (type.getArrayDim() == typeAnnWriteHelper.getPaths().size() && type.getArrayDim() == typeAnnWriteHelper.arrayPathCount()) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
+      }
+      return true;
+    }).collect(Collectors.toList());
+  }
+
+  private static List<TypeAnnotationWriteHelper> writeTypeAnnotationAfterWildCard(
+    StringBuilder sb,
+    GenericType type,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
+    typeAnnWriteHelpers.forEach(typeAnnWriteHelper -> { // remove all wild card path entries
+      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
+      boolean isWildCard = path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getId();
+      if (isWildCard) typeAnnWriteHelper.getPaths().pop();
+    });
+    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
+      if (type.getArrayDim() == 0 && path == null) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
+      }
+      if (type.getArrayDim() == typeAnnWriteHelper.getPaths().size() && type.getArrayDim() == typeAnnWriteHelper.arrayPathCount()) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
+      }
+      return true;
+    }).collect(Collectors.toList());
   }
 }

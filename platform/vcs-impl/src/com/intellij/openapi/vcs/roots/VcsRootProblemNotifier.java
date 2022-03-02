@@ -184,6 +184,13 @@ public final class VcsRootProblemNotifier {
     return mySettings.isIgnoredUnregisteredRoot(mapping.getDirectory());
   }
 
+  private boolean conflictsWithExistingMapping(@NotNull VcsDirectoryMapping mapping) {
+    if (mapping.isDefaultMapping()) return false;
+    return exists(myVcsManager.getDirectoryMappings(), it -> {
+      return Objects.equals(mapping.getDirectory(), it.getDirectory());
+    });
+  }
+
   private void expireNotification() {
     if (myNotification != null) {
       final Notification notification = myNotification;
@@ -286,7 +293,8 @@ public final class VcsRootProblemNotifier {
       return error.getType() == UNREGISTERED_ROOT &&
              isUnderOrAboveProjectDir(mapping) &&
              !isIgnoredOrExcludedPath(mapping) &&
-             !isExplicitlyIgnoredPath(mapping);
+             !isExplicitlyIgnoredPath(mapping) &&
+             !conflictsWithExistingMapping(mapping);
     });
   }
 

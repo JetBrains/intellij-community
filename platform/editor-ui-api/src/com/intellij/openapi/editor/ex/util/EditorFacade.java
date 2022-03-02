@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @deprecated A temporary solution to extract formatter module
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public abstract class EditorFacade {
   /**

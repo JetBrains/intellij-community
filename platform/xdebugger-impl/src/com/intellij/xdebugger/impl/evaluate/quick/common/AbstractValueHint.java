@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -125,7 +125,7 @@ public abstract class AbstractValueHint {
   public void invokeHint(Runnable hideRunnable) {
     myHideRunnable = hideRunnable;
 
-    if (!canShowHint() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
+    if (!canShowHint() || !isCurrentRangeValid()) {
       hideHint();
       return;
     }
@@ -243,12 +243,16 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      hint);
-    if (myHighlighter == null && DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) { // hint text update
+    if (myHighlighter == null && isCurrentRangeValid()) { // hint text update
       createHighlighter();
     }
     setHighlighterAttributes();
     myInsideShow = false;
     return true;
+  }
+
+  private boolean isCurrentRangeValid() {
+    return myCurrentRange != null && DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument());
   }
 
   protected void onHintHidden() {
@@ -343,7 +347,7 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    if (myEditor.isDisposed() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
+    if (myEditor.isDisposed() || !isCurrentRangeValid()) {
       hideHint();
       return;
     }
@@ -369,7 +373,7 @@ public abstract class AbstractValueHint {
                                @NotNull Pair<XValue, String> descriptor,
                                @NotNull String initialText,
                                @Nullable XFullValueEvaluator evaluator) {
-    if (myEditor.isDisposed() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
+    if (myEditor.isDisposed() || !isCurrentRangeValid()) {
       hideHint();
       return;
     }

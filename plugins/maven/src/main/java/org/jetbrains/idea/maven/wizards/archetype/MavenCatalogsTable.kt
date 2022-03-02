@@ -11,14 +11,15 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBViewport
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.annotations.Nls
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import java.awt.BorderLayout
-import java.awt.Component
-import javax.swing.*
-import javax.swing.table.TableCellRenderer
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
 
 class MavenCatalogsTable(private val project: Project) : ListTableWithButtons<MavenCatalog>() {
 
@@ -32,7 +33,7 @@ class MavenCatalogsTable(private val project: Project) : ListTableWithButtons<Ma
     val locationColumn = tableView.columnModel.getColumn(2)
 
     val search = TableSpeedSearch(tableView)
-    nameColumn.cellRenderer = CatalogNameRenderer(search) { it is MavenCatalog.System }
+    nameColumn.cellRenderer = CatalogNameRenderer(search)
     typeColumn.cellRenderer = Renderer(search)
     locationColumn.cellRenderer = Renderer(search)
 
@@ -107,35 +108,43 @@ class MavenCatalogsTable(private val project: Project) : ListTableWithButtons<Ma
     }
   }
 
-  private inner class CatalogNameRenderer(
-    search: TableSpeedSearch,
-    private val isShowLock: (MavenCatalog) -> Boolean
-  ) : TableCellRenderer {
+  private inner class CatalogNameRenderer(private val search: TableSpeedSearch) : ColoredTableCellRenderer() {
+    override fun clear() {
+      toolTipText = null
+      super.clear()
+    }
 
-    private val coloredRenderer = Renderer(search)
+    override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+      val text = value as? String ?: return
 
-    override fun getTableCellRendererComponent(
-      table: JTable?,
-      value: Any?,
-      isSelected: Boolean,
-      hasFocus: Boolean,
-      row: Int,
-      column: Int
-    ): Component {
-      val coloredComponent = coloredRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
-      return JPanel().apply {
-        layout = BorderLayout()
-        background = coloredComponent.background
-        add(coloredComponent, BorderLayout.WEST)
-        if (isShowLockIcon(row)) {
-          add(JLabel(AllIcons.Nodes.Padlock), BorderLayout.EAST)
-        }
+      iconTextGap = 0
+      myBorder = null
+      // Compensate insets from non empty border
+      ipad = JBUI.insets(0, 6 - insets.left, 0, -insets.right)
+
+      SearchUtil.appendFragments(search.enteredPrefix, text, SimpleTextAttributes.STYLE_PLAIN, null, null, this)
+      if (isShowLockIcon(row)) {
+        isTransparentIconBackground = true
+        toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.table.name.system.tooltip")
+        icon = AllIcons.Nodes.Padlock
+        alignIconOnRight(table, column)
       }
     }
 
     private fun isShowLockIcon(row: Int): Boolean {
       val catalog = elements.getOrNull(row)
-      return catalog != null && isShowLock(catalog)
+      return catalog != null && catalog is MavenCatalog.System
+    }
+
+    private fun alignIconOnRight(table: JTable, column: Int) {
+      val columnWidth = table.columnModel.getColumn(column)?.width ?: return
+      val iconWidth = icon.iconWidth
+      val ipadWidth = ipad.left + ipad.right
+      val insetsWidth = insets.left + insets.right
+      val myInsetsWidth = myBorder?.getBorderInsets(this)?.let { it.left + it.right } ?: 0
+      append("")
+      appendTextPadding(columnWidth - myInsetsWidth - insetsWidth - ipadWidth - iconTextGap - iconWidth, SwingConstants.TRAILING)
+      isIconOnTheRight = true
     }
   }
 

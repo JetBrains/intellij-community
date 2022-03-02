@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,13 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
   protected @Nullable PsiClass getElement(@NotNull ConfigurationContext context) {
     Location<?> location = context.getLocation();
     if (location == null) return null;
-    return getPsiClassForLocation(location);
+    PsiClass psiClass = getPsiClassForLocation(location);
+    if (psiClass == null) return null;
+    PsiFile psiFile = psiClass.getContainingFile();
+    if (psiFile == null) return null;
+    VirtualFile source = psiFile.getVirtualFile();
+    if (source == null) return null;
+    return psiClass;
   }
 
   @Override
@@ -95,7 +102,7 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
     @NotNull List<? extends PsiClass> chosenElements
   ) {
     Project project = Objects.requireNonNull(context.getProject());
-    VirtualFile source = element.getContainingFile().getVirtualFile();
+    VirtualFile source = Objects.requireNonNull(element.getContainingFile().getVirtualFile());
     List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(element) : chosenElements;
     List<TestTasksToRun> testsTasksToRun = new ArrayList<>();
     for (PsiClass psiClass : elements) {

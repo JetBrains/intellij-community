@@ -8,12 +8,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -22,7 +23,7 @@ public final class ActionUpdateEdtExecutor {
    * Compute the supplied value on Swing thread, but try to avoid deadlocks by periodically performing {@link ProgressManager#checkCanceled()} in the current thread.
    * Makes sense to be used in background read actions running with a progress indicator that's canceled when a write action is about to occur.
    *
-   * @see com.intellij.openapi.application.ReadAction#nonBlocking(Runnable)
+   * @see com.intellij.openapi.application.ReadAction#nonBlocking
    */
   public static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier) {
     return computeOnEdt(supplier, null);
@@ -37,16 +38,15 @@ public final class ActionUpdateEdtExecutor {
 
     Semaphore semaphore = new Semaphore(1);
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    Ref<T> result = Ref.create();
-    Ref<Throwable> error = Ref.create();
+    AtomicReference<Pair<T, Throwable>> result = new AtomicReference<>(Pair.empty());
     Runnable runnable = () -> {
       try {
         if (indicator == null || !indicator.isCanceled()) {
-          result.set(supplier.get());
+          result.set(Pair.create(supplier.get(), null));
         }
       }
       catch (Throwable ex) {
-        error.set(ex);
+        result.set(Pair.create(null, ex));
       }
       finally {
         semaphore.up();
@@ -60,10 +60,10 @@ public final class ActionUpdateEdtExecutor {
     }
 
     ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
-    ExceptionUtil.rethrowAllAsUnchecked(error.get());
+    ExceptionUtil.rethrowAllAsUnchecked(result.get().second);
 
     // check cancellation one last time, to ensure the EDT action wasn't no-op due to cancellation
     ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
-    return result.get();
+    return result.get().first;
   }
 }

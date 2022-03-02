@@ -184,8 +184,7 @@ public class JBColor extends Color {
   /**
    * @deprecated use {@link CurrentTheme.Link.Foreground#ENABLED}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Color link() {
     return CurrentTheme.Link.Foreground.ENABLED;
   }

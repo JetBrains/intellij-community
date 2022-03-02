@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.FieldAccessor;
 import org.cef.CefApp;
 import org.cef.CefClient;
@@ -44,7 +45,7 @@ public class HwFacadeHelper {
 
   @NotNull Consumer<? super JBCefBrowser> myOnBrowserMoveResizeCallback =
     browser -> {
-      if (!isActive()) activateIfNeeded(Collections.singletonList(browser.getCefBrowser()));
+      if (!browser.isOffScreenRendering()) activateIfNeeded(Collections.singletonList(browser.getCefBrowser()));
     };
 
   // [tav] todo: export visible browser bounds from jcef instead
@@ -112,7 +113,7 @@ public class HwFacadeHelper {
   }
 
   private boolean isActive() {
-    return myHwFacade != null;
+    return Registry.is("ide.browser.jcef.hwfacade.enabled") && myHwFacade != null;
   }
 
   private static boolean isCefAppActive() {
@@ -150,7 +151,9 @@ public class HwFacadeHelper {
   }
 
   private void activateIfNeeded(@NotNull List<CefBrowser> browsers) {
-    if (SystemInfo.isLinux || !isCefAppActive() || !myTarget.isShowing()) return;
+    if (isActive() || !Registry.is("ide.browser.jcef.hwfacade.enabled") || !isCefAppActive() || !myTarget.isShowing() || SystemInfo.isLinux) {
+      return;
+    }
 
     Rectangle targetBounds = new Rectangle(myTarget.getLocationOnScreen(), myTarget.getSize());
     boolean overlaps = false;
@@ -191,7 +194,7 @@ public class HwFacadeHelper {
       JdkEx.setIgnoreMouseEvents(myHwFacade, true);
       myHwFacade.setBounds(targetBounds);
       myHwFacade.setFocusableWindowState(false);
-      myHwFacade.setBackground(TRANSPARENT_COLOR);
+      JdkEx.setTransparent(myHwFacade);
       myHwFacade.setVisible(true);
     }
   }

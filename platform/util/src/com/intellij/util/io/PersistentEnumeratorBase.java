@@ -135,6 +135,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
     myStorage = storage;
 
+    boolean created = false;
     lockStorageWrite();
     try {
       if (myStorage.length() == 0) {
@@ -144,6 +145,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
           putMetaData2(0);
           setupEmptyFile();
           doFlush();
+          created = true;
         }
         catch (RuntimeException e) {
           LOG.info(e);
@@ -202,10 +204,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         throw new CorruptedException(file);
       }
     }
-  }
 
-  protected void assertWriteAccess() {
-    assert myLock.isWriteLockedByCurrentThread();
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+      LOG.info("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
+    }
   }
 
   @NotNull
@@ -463,6 +465,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         if (!myClosed) {
           myClosed = true;
           doClose();
+          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+            LOG.info("PersistentEnumeratorBase at " + myFile + " has been closed");
+          }
         }
       }
       finally {
@@ -476,12 +481,18 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   protected void doClose() throws IOException {
     IOCancellationCallbackHolder.interactWithUI();
+    lockStorageWrite();
     try {
-      force();
-      myKeyStorage.close();
+      try {
+        force();
+        myKeyStorage.close();
+      }
+      finally {
+        myStorage.close();
+      }
     }
     finally {
-      myStorage.close();
+      unlockStorageWrite();
     }
   }
 

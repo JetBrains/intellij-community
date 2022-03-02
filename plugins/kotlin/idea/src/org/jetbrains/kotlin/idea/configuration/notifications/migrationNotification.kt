@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.configuration.notifications
 
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
@@ -56,6 +59,7 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
             "${KotlinBundle.message("configuration.migration.text.migrations.for.kotlin.code.are.available")}<br/><br/>$detectedChangeMessage",
             NotificationType.WARNING
         )
+        .setSuggestionType(true)
         .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.migration.text.run.migrations")) { _, notification ->
             val projectContext = SimpleDataContext.getProjectContext(project)
             val action = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)

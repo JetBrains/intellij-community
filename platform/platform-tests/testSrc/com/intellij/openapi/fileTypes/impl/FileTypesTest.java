@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.ConflictingFileTypeMappingTracker.ResolveConflictResult;
@@ -237,18 +236,54 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File dir = createTempDirectory();
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     VirtualFile virtualFile = getVirtualFile(file);
-    assertEquals(FileTypes.UNKNOWN, getFileType(virtualFile));
+    Assume.assumeTrue(UnknownFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(virtualFile.getName())));
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
     PsiFile psi = getPsiManager().findFile(virtualFile);
-    assertTrue(psi instanceof PsiBinaryFile);
-    assertEquals(FileTypes.UNKNOWN, getFileType(virtualFile));
+    assertFalse(psi.toString(), psi instanceof PsiBinaryFile);
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
+    assertEmpty(psi.getText());
 
-    setBinaryContent(virtualFile, "x_x_x_x".getBytes(StandardCharsets.UTF_8));
+    String newText = "x_x_x_x";
+    setBinaryContent(virtualFile, newText.getBytes(StandardCharsets.UTF_8));
     assertEquals(FileTypes.PLAIN_TEXT, getFileType(virtualFile));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiFile after = getPsiManager().findFile(virtualFile);
-    assertNotSame(psi, after);
-    assertFalse(psi.isValid());
     assertTrue(after.isValid());
     assertTrue(after instanceof PsiPlainTextFile);
+    assertEquals(newText, after.getText());
+  }
+
+  public void testTypingInEmptyAutoDetectedFileMustChangeTheFileTypeAfterSave() throws IOException, JDOMException {
+    File dir = createTempDirectory();
+    File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
+    VirtualFile virtualFile = getVirtualFile(file);
+    Assume.assumeTrue(UnknownFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(virtualFile.getName())));
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
+    PsiFile psi = getPsiManager().findFile(virtualFile);
+    assertFalse(psi.toString(), psi instanceof PsiBinaryFile);
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
+    assertEmpty(psi.getText());
+
+    FileTypeManagerImpl.FileTypeWithDescriptor anySaneFtd = ContainerUtil.find(myFileTypeManager.getRegisteredFileTypeWithDescriptors(),
+      f -> !(f.fileType instanceof AbstractFileType) && !f.fileType.isBinary());
+
+    String hashBang = "xxxxx";  // make sure no other hashBang substrings here
+    associateHashBang(anySaneFtd, hashBang);
+
+    String hashBangedString = "#!" + hashBang + "\n";
+    FileTypeManagerImpl.FileTypeWithDescriptor byHashBang = myFileTypeManager.getExtensionMap().findAssociatedFileTypeByHashBang(hashBangedString);
+    assertEquals(myFileTypeManager.getExtensionMap()+"\nbyHashBang="+byHashBang+"\nhashBangedString='"+hashBangedString+"'", anySaneFtd, byHashBang);
+
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psi);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      for (char c : hashBangedString.toCharArray()) {
+        document.insertString(document.getTextLength(), String.valueOf(c));
+      }
+    });
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    FileDocumentManager.getInstance().saveAllDocuments();
+    assertEquals(anySaneFtd.fileType, getFileType(virtualFile));
+    assertEquals(hashBangedString, getPsiManager().findFile(virtualFile).getText());
   }
 
   public void testAutoDetectTextFileFromContents() throws IOException {
@@ -501,10 +536,16 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       f -> !(f.fileType instanceof AbstractFileType));
 
     String hashBang = "xxx";
+    associateHashBang(ftd, hashBang);
+
+    assertEquals(ftd, myFileTypeManager.getExtensionMap().findAssociatedFileTypeByHashBang("#!" + hashBang+"\n"));
+  }
+
+  private void associateHashBang(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor ftd, @NotNull String hashBang) throws IOException, JDOMException {
     @Language("XML")
     String xml = "<blahblah version='" + FileTypeManagerImpl.VERSION + "'>\n" +
                  "   <extensionMap>\n" +
-                 "     <hashBang value=\"" + hashBang + "\" type=\"" + ftd.getName() + "\" />\n"+
+                 "     <hashBang value=\"" + hashBang + "\" type=\"" + ftd.getName() + "\" />\n" +
                  "   </extensionMap>\n" +
                  "</blahblah>";
     Element element = JDOMUtil.load(xml);
@@ -512,8 +553,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
     reInitFileTypeManagerComponent(element);
     assertEmpty(myConflicts);
-
-    assertEquals(ftd, myFileTypeManager.getExtensionMap().findAssociatedFileTypeByHashBang("#!" + hashBang+"\n"));
   }
 
   public void testReassignedPredefinedFileType() {
@@ -1063,7 +1102,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
 
       @Override
-      public @Nullable Icon getIcon() {
+      public Icon getIcon() {
         return null;
       }
 
@@ -1145,7 +1184,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getDisplayName() { return getClass().getName(); }
     @Override public @NotNull String getDescription() { return getDisplayName(); }
     @Override public @NotNull String getDefaultExtension() { return "hs"; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override  public boolean isBinary() { return false; }
   }
 
@@ -1250,7 +1289,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getName() { return NAME; }
     @Override public @NotNull String getDescription() { return ""; }
     @Override public @NotNull String getDefaultExtension() { return EXTENSION; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override public boolean isBinary() { return false; }
   }
 
@@ -1262,7 +1301,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getName() { return NAME; }
     @Override public @NotNull String getDescription() { return ""; }
     @Override public @NotNull String getDefaultExtension() { return "hs"; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override public boolean isBinary() { return false; }
   }
 
@@ -1288,7 +1327,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     setBinaryContent(virtualFile, new byte[0]);
     myFileTypeManager.drainReDetectQueue();
-    assertEquals(UnknownFileType.INSTANCE, getFileType(virtualFile));
+    FileType type = getFileType(virtualFile);
+    assertFalse(type.toString(), type.isBinary()); // either PlainTextFile or DetectedByContent are fine
 
     setBinaryContent(virtualFile, "qwe\newq".getBytes(StandardCharsets.UTF_8));
     myFileTypeManager.drainReDetectQueue();

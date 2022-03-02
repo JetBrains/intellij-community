@@ -263,8 +263,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   /**
    * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
   }

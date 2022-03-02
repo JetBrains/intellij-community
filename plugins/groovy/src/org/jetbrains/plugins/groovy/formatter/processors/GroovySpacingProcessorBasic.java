@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.groovy.formatter.blocks.MethodCallWithoutQualifierB
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -74,7 +76,7 @@ public abstract class GroovySpacingProcessorBasic {
       return createDependentSpacingForClosure(settings, groovySettings, (GrClosableBlock)left.getParent(), false);
     }
 
-    if (leftType == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
+    if (groovySettings.isGroovyDocFormattingAllowed() && leftType == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
       return COMMON_SPACING_WITH_NL;
     }
 
@@ -136,6 +138,9 @@ public abstract class GroovySpacingProcessorBasic {
     }
 
     if (GroovyDocTokenTypes.mGDOC_ASTERISKS == leftType && GroovyDocTokenTypes.mGDOC_COMMENT_DATA == rightType) {
+      if (!groovySettings.isGroovyDocFormattingAllowed()) {
+        return LAZY_SPACING;
+      }
       String text = rightNode.getText();
       if (!text.isEmpty() && !StringUtil.startsWithChar(text, ' ')) {
         return COMMON_SPACING;
@@ -154,16 +159,21 @@ public abstract class GroovySpacingProcessorBasic {
       return getStatementSpacing(context);
     }
 
-    if (rightType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END ||
-        leftType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START ||
-        rightType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START ||
-        leftType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
-      return NO_SPACING;
+    Spacing rightSpacing = getGroovyDocBraceSpacing(right);
+    Spacing actualSpacing = rightSpacing == null ? getGroovyDocBraceSpacing(left) : rightSpacing;
+    if (actualSpacing != null) {
+      if (!groovySettings.isGroovyDocFormattingAllowed()) {
+        return LAZY_SPACING;
+      }
+      return actualSpacing;
     }
 
     if ((leftType == GroovyDocElementTypes.GDOC_INLINED_TAG && rightType == GroovyDocTokenTypes.mGDOC_COMMENT_DATA)
       || (leftType == GroovyDocTokenTypes.mGDOC_COMMENT_DATA && rightType == GroovyDocElementTypes.GDOC_INLINED_TAG))
     {
+      if (!groovySettings.isGroovyDocFormattingAllowed()) {
+        return LAZY_SPACING;
+      }
       // Keep formatting between groovy doc text and groovy doc reference tag as is.
       return NO_SPACING;
     }
@@ -183,6 +193,19 @@ public abstract class GroovySpacingProcessorBasic {
     }
 
     return COMMON_SPACING;
+  }
+
+  public static @Nullable Spacing getGroovyDocBraceSpacing(@NotNull PsiElement grDocInlineTagBrace) {
+    IElementType type = grDocInlineTagBrace.getNode().getElementType();
+    if (type != GroovyDocTokenTypes.mGDOC_INLINE_TAG_START && type != GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
+      return null;
+    }
+    PsiElement parent = grDocInlineTagBrace.getParent();
+    if (parent instanceof GrDocInlinedTag && (parent.getFirstChild() == grDocInlineTagBrace || parent.getLastChild() == grDocInlineTagBrace)) {
+      return NO_SPACING;
+    } else {
+      return LAZY_SPACING;
+    }
   }
 
   @NotNull

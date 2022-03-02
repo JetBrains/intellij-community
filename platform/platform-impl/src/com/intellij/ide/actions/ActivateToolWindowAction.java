@@ -12,8 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import org.jetbrains.annotations.NonNls;
@@ -96,7 +96,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
       icon = AllIcons.Ide.Notification.InfoEvents;
     }
-    if (ExperimentalUI.isNewUI() && icon instanceof ScalableIcon) {
+    if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
       icon = ((ScalableIcon)icon).scale(16f / icon.getIconWidth());
       presentation.setIcon(icon);
       return;
@@ -145,7 +145,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     }
     else {
       if (windowManager instanceof ToolWindowManagerImpl) {
-        ((ToolWindowManagerImpl) windowManager).hideToolWindow(myToolWindowId, false, true, source);
+        ((ToolWindowManagerImpl) windowManager).hideToolWindow(myToolWindowId, false, true, false, source);
       }
       else {
         ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);

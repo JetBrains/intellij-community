@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -290,7 +291,7 @@ public final class PluginManagerCore {
    * @deprecated Use {@link PluginManager#getPluginByClass}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
     PluginDescriptor result = getPluginDescriptorOrPlatformByClassName(className);
     PluginId id = result == null ? null : result.getPluginId();
@@ -301,7 +302,7 @@ public final class PluginManagerCore {
    * @deprecated Use {@link PluginManager#getPluginByClass}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
     PluginDescriptor result = getPluginDescriptorOrPlatformByClassName(className);
     return result == null ? null : result.getPluginId();
@@ -698,8 +699,9 @@ public final class PluginManagerCore {
     if (explicitlyEnabled != null) {
       // add all required dependencies
       List<IdeaPluginDescriptorImpl> nonOptionalDependencies = new ArrayList<>();
+      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = buildPluginIdMap();
       for (IdeaPluginDescriptorImpl descriptor : explicitlyEnabled) {
-        processAllNonOptionalDependencies(descriptor, dependency -> {
+        processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
           nonOptionalDependencies.add(dependency);
           return FileVisitResult.CONTINUE;
         });
@@ -1073,16 +1075,19 @@ public final class PluginManagerCore {
 
   @ApiStatus.Internal
   public static boolean processAllNonOptionalDependencyIds(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                           @NotNull Function<PluginId, FileVisitResult> consumer) {
-    return processAllNonOptionalDependencies(rootDescriptor, (IdeaPluginDescriptorImpl descriptor) -> {
-      return consumer.apply(descriptor.getPluginId());
-    });
+                                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                           @NotNull Function<? super PluginId, FileVisitResult> consumer) {
+    return processAllNonOptionalDependencies(rootDescriptor,
+                                             new HashSet<>(),
+                                             pluginIdMap,
+                                             (pluginId, __) -> consumer.apply(pluginId));
   }
 
   @ApiStatus.Internal
   public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                          @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-    return processAllNonOptionalDependencies(rootDescriptor, new HashSet<>(), consumer);
+                                                          @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                          @NotNull Function<? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+    return processAllNonOptionalDependencies(rootDescriptor, new HashSet<>(), pluginIdMap, consumer);
   }
 
   /**
@@ -1093,14 +1098,29 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                           @NotNull Set<IdeaPluginDescriptorImpl> depProcessed,
-                                                          @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-    for (IdeaPluginDescriptorImpl descriptor : getPluginSet().moduleGraph.getDependencies(rootDescriptor)) {
-      switch (consumer.apply(descriptor)) {
+                                                          @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                          @NotNull Function<? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+
+    return processAllNonOptionalDependencies(rootDescriptor,
+                                             depProcessed,
+                                             pluginIdMap,
+                                             (__, descriptor) -> consumer.apply(descriptor));
+  }
+
+  private static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                                           @NotNull Set<IdeaPluginDescriptorImpl> depProcessed,
+                                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                           @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+    for (PluginId dependencyId : getNonOptionalDependenciesIds(rootDescriptor)) {
+      IdeaPluginDescriptorImpl descriptor = pluginIdMap.get(dependencyId);
+      PluginId pluginId = descriptor != null ? descriptor.getPluginId() : dependencyId;
+
+      switch (consumer.apply(pluginId, descriptor)) {
         case TERMINATE:
           return false;
         case CONTINUE:
-          if (depProcessed.add(descriptor)) {
-            processAllNonOptionalDependencies(descriptor, depProcessed, consumer);
+          if (descriptor != null && depProcessed.add(descriptor)) {
+            processAllNonOptionalDependencies(descriptor, depProcessed, pluginIdMap, consumer);
           }
           break;
         case SKIP_SUBTREE:
@@ -1113,14 +1133,34 @@ public final class PluginManagerCore {
     return true;
   }
 
+  private static @NotNull List<PluginId> getNonOptionalDependenciesIds(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    List<PluginId> dependencies = new ArrayList<>();
+
+    for (PluginDependency dependency : descriptor.pluginDependencies) {
+      if (!dependency.isOptional()) {
+        dependencies.add(dependency.getPluginId());
+      }
+    }
+
+    for (ModuleDependenciesDescriptor.PluginReference plugin : descriptor.dependencies.plugins) {
+      dependencies.add(plugin.id);
+    }
+
+    return Collections.unmodifiableList(dependencies);
+  }
+
   @ApiStatus.Internal
   public static synchronized boolean isUpdatedBundledPlugin(@NotNull PluginDescriptor plugin) {
     return shadowedBundledPlugins != null && shadowedBundledPlugins.contains(plugin.getPluginId());
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated Use {@link #isDisabled(PluginId)} */
+
+  /**
+   * @deprecated Use {@link #isDisabled(PluginId)}
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isDisabled(@NotNull String pluginId) {
     return isDisabled(PluginId.getId(pluginId));
   }
@@ -1133,7 +1173,7 @@ public final class PluginManagerCore {
 
   /** @deprecated Use {@link #enablePlugin(PluginId)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static boolean enablePlugin(@NotNull String id) {
     return enablePlugin(PluginId.getId(id));
   }
@@ -1141,7 +1181,7 @@ public final class PluginManagerCore {
   /** @deprecated Use {@link DisabledPluginsState#addDisablePluginListener} directly
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   public static void addDisablePluginListener(@NotNull Runnable listener) {
     DisabledPluginsState.addDisablePluginListener(listener);
   }

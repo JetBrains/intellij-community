@@ -2,6 +2,7 @@
 package com.intellij.java.openapi.editor.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -74,6 +75,7 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     assertNotNull(moduleInfoFile);
 
     myManager.openFile(moduleInfoFile, false);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
     EditorTabbedContainer openedTabPane = myManager.getCurrentWindow().getTabbedPane();
     assertEquals(1, openedTabPane.getTabCount());

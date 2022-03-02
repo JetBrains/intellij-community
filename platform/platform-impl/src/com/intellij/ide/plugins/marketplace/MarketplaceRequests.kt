@@ -148,9 +148,11 @@ class MarketplaceRequests : PluginInfoProvider {
           if (eTag != null) {
             connection.setRequestProperty("If-None-Match", eTag)
           }
-          serviceOrNull<PluginRepositoryAuthService>()
-            ?.connectionTuner
-            ?.tune(connection)
+          if (ApplicationManager.getApplication() != null) {
+            serviceOrNull<PluginRepositoryAuthService>()
+              ?.connectionTuner
+              ?.tune(connection)
+          }
         }
         .productNameAsUserAgent()
         .connect { request ->
@@ -400,6 +402,7 @@ class MarketplaceRequests : PluginInfoProvider {
   }
 
   @Deprecated("Please use `PluginId`", replaceWith = ReplaceWith("getLastCompatiblePluginUpdate(PluginId.get(id), buildNumber, indicator)"))
+  @ApiStatus.ScheduledForRemoval
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   @JvmOverloads
@@ -511,10 +514,12 @@ class MarketplaceRequests : PluginInfoProvider {
  * NB!: any previous tuners set by {@link RequestBuilder#tuner} will be overwritten by this call
  */
 fun RequestBuilder.setHeadersViaTuner(): RequestBuilder =
-  serviceOrNull<PluginRepositoryAuthService>()
-    ?.let {
-      tuner(it.connectionTuner)
-    } ?: this
+  if (ApplicationManager.getApplication() != null) {
+    serviceOrNull<PluginRepositoryAuthService>()
+      ?.let {
+        tuner(it.connectionTuner)
+      } ?: this
+  } else this
 
 private fun loadETagForFile(file: Path): String {
   val eTagFile = getETagFile(file)

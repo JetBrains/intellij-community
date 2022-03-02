@@ -10,7 +10,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,8 +108,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withInsertHandler(InsertHandler)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Contract(pure=true)
   public @NotNull LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
     return withInsertHandler(insertHandler);
@@ -228,8 +226,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTypeText(String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Contract(pure=true)
   public @NotNull LookupElementBuilder setTypeText(@Nullable String typeText) {
     return withTypeText(typeText);
@@ -263,8 +260,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withPresentableText(String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Contract(pure=true)
   public @NotNull LookupElementBuilder setPresentableText(@NotNull String presentableText) {
     return withPresentableText(presentableText);
@@ -306,8 +302,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTailText(String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Contract(pure=true)
   public @NotNull LookupElementBuilder setTailText(@Nullable String tailText) {
     return withTailText(tailText);

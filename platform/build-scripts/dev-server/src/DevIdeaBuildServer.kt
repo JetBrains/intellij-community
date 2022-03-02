@@ -1,28 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.sun.net.httpserver.HttpContext
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import org.apache.log4j.ConsoleAppender
-import org.apache.log4j.Level
-import org.apache.log4j.PatternLayout
+import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import java.util.logging.ConsoleHandler
+import java.util.logging.Formatter
+import java.util.logging.Level
+import java.util.logging.LogRecord
 import kotlin.io.path.createDirectories
 import kotlin.system.exitProcess
 
@@ -57,11 +59,7 @@ class DevIdeaBuildServer {
 
     @JvmStatic
     fun main(args: Array<String>) {
-      // avoiding "log4j:WARN No appenders could be found"
-      System.setProperty("log4j.defaultInitOverride", "true")
-      val root = org.apache.log4j.Logger.getRootLogger()
-      root.level = Level.INFO
-      root.addAppender(ConsoleAppender(PatternLayout("%d{ABSOLUTE} %m%n")))
+      initLog()
 
       try {
         start()
@@ -70,6 +68,27 @@ class DevIdeaBuildServer {
         LOG.error(e.message)
         exitProcess(1)
       }
+    }
+
+    private fun initLog() {
+      val root = java.util.logging.Logger.getLogger("")
+      root.level = Level.INFO
+      val handlers = root.handlers
+      for (handler in handlers) {
+        root.removeHandler(handler)
+      }
+      root.addHandler(ConsoleHandler().apply {
+        formatter = object : Formatter() {
+          override fun format(record: LogRecord): String {
+            val timestamp = String.format("%1\$tT,%1\$tL", record.millis)
+            return "$timestamp ${record.message}\n" + (record.thrown?.let { thrown ->
+              StringWriter().also {
+                thrown.printStackTrace(PrintWriter(it))
+              }.toString()
+            } ?: "")
+          }
+        }
+      })
     }
 
     private fun start() {
@@ -195,13 +214,7 @@ class DevIdeaBuildServer {
     }
 
     private fun getHomePath(): Path {
-      val homePath: Path? = (PathManager.getHomePath(false) ?: PathManager.getHomePathFor(DevIdeaBuildServer::class.java))?.let {
-        Paths.get(it)
-      }
-      if (homePath == null) {
-        throw ConfigurationException("Could not find installation home path. Please specify explicitly via `idea.path` system property")
-      }
-      return homePath
+      return IdeaProjectLoaderUtil.guessUltimateHome(DevIdeaBuildServer::class.java)
     }
   }
 }

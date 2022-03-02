@@ -38,14 +38,8 @@ public class EclipseImportMap {
   }
 
   public void load() {
-    try {
-      InputStream sourceStream = getClass().getResourceAsStream(MAP_PROPERTIES);
-      try {
-        myProperties.load(sourceStream);
-      }
-      finally {
-        sourceStream.close();
-      }
+    try (InputStream sourceStream = getClass().getResourceAsStream(MAP_PROPERTIES)) {
+      myProperties.load(sourceStream);
     }
     catch (IOException e) {
       LOG.error(e);

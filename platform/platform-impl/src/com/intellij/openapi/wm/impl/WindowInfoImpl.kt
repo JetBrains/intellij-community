@@ -32,9 +32,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
   override var anchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
 
-  @get:Attribute(converter = ToolWindowAnchorConverter::class)
-  override var largeStripeAnchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
-
   @get:Attribute("auto_hide")
   override var isAutoHide by property(false)
 
@@ -71,9 +68,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   @get:Attribute("show_stripe_button")
   override var isShowStripeButton by property(true)
 
-  @get:Attribute("visibleOnLargeStripe")
-  override var isVisibleOnLargeStripe by property(false)
-
   /**
    * Internal weight of tool window. "weight" means how much of internal desktop
    * area the tool window is occupied. The weight has sense if the tool window is docked or
@@ -93,9 +87,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * Defines order of tool window button inside the stripe.
    */
   override var order by property(-1)
-
-  @get:Attribute("orderOnLargeStripe")
-  override var orderOnLargeStripe by property(-1)
 
   @get:Transient
   override var isFromPersistentSettings = true

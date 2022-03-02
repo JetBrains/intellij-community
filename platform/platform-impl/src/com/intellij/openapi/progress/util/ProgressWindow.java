@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -21,7 +20,6 @@ import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -30,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +92,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     myDialogInitialization = () -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      Window parentWindow = calcParentWindow(parentComponent);
+      Window parentWindow = calcParentWindow(parentComponent, myProject);
       myDialog = new ProgressDialog(this, shouldShowBackground, cancelText, parentWindow);
       Disposer.register(this, myDialog);
     };
@@ -117,14 +116,15 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     initialization.run();
   }
 
-  private Window calcParentWindow(@Nullable Component parent) {
-    if (parent == null && myProject == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+  @Internal
+  public static @Nullable Window calcParentWindow(@Nullable Component parent, @Nullable Project project) {
+    if (parent == null && project == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       parent = JOptionPane.getRootFrame();
     }
     if (parent != null) {
       return ComponentUtil.getWindow(parent);
     }
-    Window parentWindow = WindowManager.getInstance().suggestParentWindow(myProject);
+    Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
     return parentWindow != null ? parentWindow : WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
   }
 
@@ -167,8 +167,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       }
       else if (isPopupWasShown()) {
         Disposer.dispose(this);
-        IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-        focusManager.doWhenFocusSettlesDown(() -> focusManager.requestDefaultFocus(true), ModalityState.defaultModalityState());
       }
     }, getModalityState(), myDelayInMillis, TimeUnit.MILLISECONDS);
   }
@@ -359,10 +357,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (dialog != null) {
       dialog.enableCancelButtonIfNeeded(enable);
     }
-  }
-
-  public @NotNull KeyStroke[] getCancelShortcuts() {
-    return new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)};
   }
 
   @Override

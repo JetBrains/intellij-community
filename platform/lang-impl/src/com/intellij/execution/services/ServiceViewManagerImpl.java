@@ -35,22 +35,21 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.InternalDecorator;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.content.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +67,7 @@ import static com.intellij.execution.services.ServiceViewContributor.CONTRIBUTOR
 
 @State(name = "ServiceViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
-  @NonNls private static final String HELP_ID = "services.tool.window";
+  private static final @NonNls String HELP_ID = "services.tool.window";
 
   private final Project myProject;
   private State myState = new State();
@@ -142,8 +141,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return ContainerUtil.map2Set(myModel.getRoots(), ServiceViewItem::getRootContributor);
   }
 
-  @Nullable
-  private ServiceViewContentHolder getContentHolder(@NotNull Class<?> contributorClass) {
+  private @Nullable ServiceViewContentHolder getContentHolder(@NotNull Class<?> contributorClass) {
     for (ServiceViewContentHolder holder : myContentHolders) {
       for (ServiceViewContributor<?> rootContributor : holder.rootContributors) {
         if (contributorClass.isInstance(rootContributor)) {
@@ -171,15 +169,17 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
       myRegisteringToolWindowAvailable = active;
       try {
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.lazyAndClosableWithStripeTitle(
-          toolWindowId,
-          new ServiceViewToolWindowFactory(),
-          AllIcons.Toolwindows.ToolWindowServices,
-          toolWindowId == ToolWindowId.SERVICES ? null : () -> {
-            @NlsSafe String title = toolWindowId;
-            return title;
+        ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, builder -> {
+          builder.contentFactory = new ServiceViewToolWindowFactory();
+          builder.icon = AllIcons.Toolwindows.ToolWindowServices;
+          if (toolWindowId == ToolWindowId.SERVICES) {
+            builder.stripeTitle = () -> {
+              @NlsSafe String title = toolWindowId;
+              return title;
+            };
           }
-        ));
+          return Unit.INSTANCE;
+        });
         if (active) {
           myActiveToolWindowIds.add(toolWindowId);
         }
@@ -330,9 +330,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     });
   }
 
-  @NotNull
   @Override
-  public Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass, boolean activate, boolean focus) {
+  public @NotNull Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass, boolean activate, boolean focus) {
     AsyncPromise<Void> result = new AsyncPromise<>();
     // Ensure model is updated, then iterate over service views on EDT in order to find view with service and select it.
     myModel.getInvoker().invoke(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
@@ -413,9 +412,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     });
   }
 
-  @NotNull
   @Override
-  public Promise<Void> expand(@NotNull Object service, @NotNull Class<?> contributorClass) {
+  public @NotNull Promise<Void> expand(@NotNull Object service, @NotNull Class<?> contributorClass) {
     AsyncPromise<Void> result = new AsyncPromise<>();
     // Ensure model is updated, then iterate over service views on EDT in order to find view with service and select it.
     myModel.getInvoker().invoke(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () ->
@@ -630,8 +628,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }
   }
 
-  @NotNull
-  private Pair<ServiceViewState, List<ServiceViewState>> getServiceViewStates(@NotNull String groupId) {
+  private @NotNull Pair<ServiceViewState, List<ServiceViewState>> getServiceViewStates(@NotNull String groupId) {
     List<ServiceViewState> states = ContainerUtil.filter(myState.viewStates, state -> groupId.equals(state.groupId));
     ServiceViewState mainState = ContainerUtil.find(states, state -> StringUtil.isEmpty(state.viewType));
     if (mainState == null) {
@@ -643,9 +640,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return Pair.create(mainState, states);
   }
 
-  @NotNull
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     ContainerUtil.retainAll(myState.viewStates, state -> myGroups.containsKey(state.groupId));
     for (ServiceViewContentHolder holder : myContentHolders) {
       ContainerUtil.retainAll(myState.viewStates, state -> !holder.toolWindowId.equals(state.groupId));
@@ -783,14 +779,12 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     extract(contentManager, contributorModel, prepareViewState(new ServiceViewState()), true);
   }
 
-  @NotNull
-  public List<Object> getChildrenSafe(@NotNull AnActionEvent e, @NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass) {
+  public @NotNull List<Object> getChildrenSafe(@NotNull AnActionEvent e, @NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass) {
     ServiceView serviceView = ServiceViewActionProvider.getSelectedView(e);
     return serviceView != null ? serviceView.getChildrenSafe(valueSubPath, contributorClass) : Collections.emptyList();
   }
 
-  @Nullable
-  public String getToolWindowId(@NotNull Class<?> contributorClass) {
+  public @Nullable String getToolWindowId(@NotNull Class<?> contributorClass) {
     for (Map.Entry<String, Collection<ServiceViewContributor<?>>> entry : myGroups.entrySet()) {
       if (entry.getValue().stream().anyMatch(contributorClass::isInstance)) {
         return entry.getKey();
@@ -812,16 +806,14 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
     toolWindow.getContentManager(); // ensure decorator is initialized
     InternalDecorator decorator = ((ToolWindowEx)toolWindow).getDecorator();
-    Boolean isShared = ClientProperty.get(decorator, InternalDecoratorImpl.SHARED_ACCESS_KEY);
-    return isShared == Boolean.TRUE;
+    return ClientProperty.isTrue(decorator, InternalDecoratorImpl.Companion.getSHARED_ACCESS_KEY());
   }
 
   private static boolean isMainView(@NotNull ServiceView serviceView) {
     return serviceView.getModel() instanceof AllServicesModel;
   }
 
-  @Nullable
-  private static Content getMainContent(@NotNull ContentManager contentManager) {
+  private static @Nullable Content getMainContent(@NotNull ContentManager contentManager) {
     for (Content content : contentManager.getContents()) {
       ServiceView serviceView = getServiceView(content);
       if (serviceView != null && isMainView(serviceView)) {
@@ -831,9 +823,9 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return null;
   }
 
-  @Nullable
-  private static ServiceView getServiceView(Content content) {
-    return ObjectUtils.tryCast(content.getComponent(), ServiceView.class);
+  private static @Nullable ServiceView getServiceView(Content content) {
+    Object component = content.getComponent();
+    return component instanceof ServiceView ? (ServiceView)component : null;
   }
 
   private static void selectContentByModel(@NotNull ContentManager contentManager, @Nullable ServiceViewModel modelToSelect) {

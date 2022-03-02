@@ -13,6 +13,7 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
   protected DevKitUastInspectionBase() {
   }
 
+  @SafeVarargs
   protected DevKitUastInspectionBase(Class<? extends UElement>... uElementsTypesHint) {
     super(uElementsTypesHint);
   }

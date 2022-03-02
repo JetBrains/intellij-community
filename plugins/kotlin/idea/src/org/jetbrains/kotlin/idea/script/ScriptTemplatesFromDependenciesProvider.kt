@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.ProjectTopics
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -10,21 +11,23 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.util.runWhenSmart
+import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
 import java.nio.file.Path
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -104,15 +107,21 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         ) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
-                val (templates, classpath) = project.runReadActionInSmartMode {
-                    val files = mutableSetOf<VirtualFile>()
-                    FileTypeIndex.processFiles(ScriptDefinitionMarkerFileType, {
-                        indicator.checkCanceled()
-                        files.add(it)
-                        true
-                    }, GlobalSearchScope.allScope(project))
-                    getTemplateClassPath(files)
-                }
+                val (templates, classpath) =
+                    ReadAction.nonBlocking(Callable {
+                        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+                            val files = mutableSetOf<VirtualFile>()
+                            FileTypeIndex.processFiles(ScriptDefinitionMarkerFileType, {
+                                indicator.checkCanceled()
+                                files.add(it)
+                                true
+                            }, project.allScope())
+                            getTemplateClassPath(files)
+                        })
+                    })
+                        .expireWith(KotlinPluginDisposable.getInstance(project))
+                        .wrapProgress(indicator)
+                        .executeSynchronously() ?: return onEarlyEnd()
                 try {
                     if (!inProgress.get() || templates.isEmpty()) return onEarlyEnd()
 
@@ -161,12 +170,10 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
             }
         }
 
-        project.runWhenSmart {
-            ProgressManager.getInstance().runProcessWithProgressAsynchronously(
-                task,
-                BackgroundableProcessIndicator(task)
-            )
-        }
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(
+            task,
+            BackgroundableProcessIndicator(task)
+        )
     }
 
     private fun onEarlyEnd() {

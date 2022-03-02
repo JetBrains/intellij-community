@@ -92,7 +92,7 @@ public class ThrowExceptionAction extends DebuggerAction {
   }
 
   private static void showError(Project project, @NlsContexts.DialogMessage String message) {
-    PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ThrowException")));
+    JvmDropFrameActionHandler.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ThrowException")));
   }
 
   private static void evaluateAndReturn(final Project project,

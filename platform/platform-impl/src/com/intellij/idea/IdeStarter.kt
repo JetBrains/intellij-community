@@ -92,9 +92,7 @@ open class IdeStarter : ApplicationStarter {
     }
   }
 
-  protected open fun openProjectIfNeeded(args: List<String>,
-                                         app: ApplicationEx,
-                                         lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
+  protected open fun openProjectIfNeeded(args: List<String>, app: ApplicationEx, lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
     val frameInitActivity = startActivity("frame initialization")
     frameInitActivity.runChild("app frame created callback") {
       lifecyclePublisher.appFrameCreated(args)
@@ -117,7 +115,8 @@ open class IdeStarter : ApplicationStarter {
 
     if (uriToOpen != null || args.isNotEmpty() && args[0].contains(SCHEME_SEPARATOR)) {
       frameInitActivity.end()
-      processUriParameter(uriToOpen ?: args.first(), lifecyclePublisher)
+      processUriParameter(uriToOpen ?: args[0], lifecyclePublisher)
+      return CompletableFuture.completedFuture(null)
     }
     else {
       val recentProjectManager = RecentProjectsManager.getInstance()
@@ -136,17 +135,23 @@ open class IdeStarter : ApplicationStarter {
         else -> null
       }
 
-      if (project == null && willReopenRecentProjectOnStart) {
-        return recentProjectManager.reopenLastProjectsOnStart()
-          .thenAccept { isOpened ->
+      return when {
+        project != null -> {
+          CompletableFuture.completedFuture(null)
+        }
+        willReopenRecentProjectOnStart -> {
+          recentProjectManager.reopenLastProjectsOnStart().thenAccept { isOpened ->
             if (!isOpened) {
               WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
             }
           }
+        }
+        else -> {
+          CompletableFuture.completedFuture(null).thenRun {
+            WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+          }
+        }
       }
-    }
-    return CompletableFuture.completedFuture(null).thenRun {
-      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
     }
   }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,7 +14,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.MultiMap
-import org.apache.log4j.Logger
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.Value
 import org.jetbrains.kotlin.analyzer.AnalysisResult
@@ -76,7 +76,7 @@ class KotlinDebuggerCaches(project: Project) {
     )
 
     companion object {
-        private val LOG = Logger.getLogger(KotlinDebuggerCaches::class.java)!!
+        private val LOG = Logger.getInstance(KotlinDebuggerCaches::class.java)
 
         @get:TestOnly
         var LOG_COMPILATIONS: Boolean = false

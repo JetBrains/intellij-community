@@ -16,6 +16,7 @@ class MultipleSelectionHtmlLesson
   : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name")) {
 
   override val languageId: String = "HTML"
+  override val sampleFilePath: String = "Learning.html"
 
   private val sample = parseLessonSample("""<!doctype html>
 <html lang="en">
@@ -71,6 +72,13 @@ class MultipleSelectionHtmlLesson
         }
         stateCheck { checkMultiChange() }
         test { type("td") }
+      }
+      task("EditorEscape") {
+        stateCheck {
+          editor.caretModel.caretCount < 2
+        }
+        text(LessonsBundle.message("multiple.selections.escape", action(it)))
+        test { actions(it) }
       }
     }
 

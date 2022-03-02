@@ -84,8 +84,7 @@ public interface FileIndex {
    * @deprecated name of this method is unclear, use {@link #isInSourceContent(VirtualFile)} instead and add {@code !file.isDirectory()} check
    * if you want to accept files only.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   boolean isContentSourceFile(@NotNull VirtualFile file);
 
   /**

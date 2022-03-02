@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -13,8 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
-import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -374,9 +373,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         final PsiVariable variable = (PsiVariable)element;
         final PsiType type = getSuggestedType(variable);
         if (type != null) {
-          final TypeMigrationRules rules = new TypeMigrationRules(project);
-          rules.setBoundScope(PsiSearchHelper.getInstance(project).getUseScope(variable));
-          TypeMigrationProcessor.runHighlightingTypeMigration(project, null, rules, variable, type, false, true);
+          var handler = CommonJavaRefactoringUtil.getRefactoringSupport().getChangeTypeSignatureHandler();
+          handler.runHighlightingTypeMigrationSilently(project, null, PsiSearchHelper.getInstance(project).getUseScope(variable), variable, type);
         }
       }
     }

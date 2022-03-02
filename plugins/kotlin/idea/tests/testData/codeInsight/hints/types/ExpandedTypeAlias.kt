@@ -1,2 +1,2 @@
 // MODE: property
-val x<# [:  [jar://kotlin-stdlib-sources.jar!/common/kotlin/collections/ArrayList.kt:238]ArrayList < [jar://kotlin-stdlib-sources.jar!/kotlin/Primitives.kt:21054]Int >] #> = arrayListOf(1)
+val x<# [:  [jar://kotlin-stdlib-sources.jar!/common/kotlin/collections/ArrayList.kt:238]ArrayList < [jar://kotlin-stdlib-sources.jar!/kotlin/Primitives.kt:21362]Int >] #> = arrayListOf(1)

@@ -115,10 +115,9 @@ internal class PackagesListPanel(
     private val packagesTable = PackagesTable(project, operationExecutor, ::onSearchResultStateChanged)
 
     private val onlyStableMutableStateFlow = MutableStateFlow(true)
-    private val selectedPackageMutableStateFlow = packagesTable.selectedPackageStateFlow
 
     val onlyStableStateFlow: StateFlow<Boolean> = onlyStableMutableStateFlow
-    val selectedPackageStateFlow: StateFlow<UiPackageModel<*>?> = selectedPackageMutableStateFlow
+    val selectedPackageStateFlow: StateFlow<UiPackageModel<*>?> = packagesTable.selectedPackageStateFlow
 
     private val onlyMultiplatformStateFlow = MutableStateFlow(false)
     private val searchQueryStateFlow = MutableStateFlow("")
@@ -177,7 +176,7 @@ internal class PackagesListPanel(
     }
 
     private val searchPanel = PackageSearchUI.headerPanel {
-        PackageSearchUI.setHeight(this, PackageSearchUI.MediumHeaderHeight.get())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.MediumHeaderHeight.get())
 
         border = BorderFactory.createEmptyBorder()
 

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.testFramework.TestData
 import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 /**
  * inspired by @see AbstractCompletionIncrementalResolveTest

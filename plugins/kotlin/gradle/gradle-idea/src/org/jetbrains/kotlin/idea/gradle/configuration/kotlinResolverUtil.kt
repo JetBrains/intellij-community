@@ -16,20 +16,26 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.gradle.configuration.state.DontShowAgainKotlinAdditionPluginSuggestionService
 
-private var isNativeDebugSuggestionEnabled
-    get() =
-        PropertiesComponent.getInstance().getBoolean("isNativeDebugSuggestionEnabled", true)
+private var isNativeDebugSuggestionEnabled: Boolean
+    get() {
+        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
+        return !service.state.dontShowAgainKotlinNativeDebuggerPluginSuggestion
+    }
     set(value) {
-        PropertiesComponent.getInstance().setValue("isNativeDebugSuggestionEnabled", value)
+        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
+        service.state.dontShowAgainKotlinNativeDebuggerPluginSuggestion = !value
     }
 
-private const val isKotlinJSInspectionsPackSuggestionEnabledPropertyName = "isKotlinJSInspectionsPackSuggestionEnabled"
-
-private var isKotlinJSInspectionsPackSuggestionEnabled
-    get() = PropertiesComponent.getInstance().getBoolean(isKotlinJSInspectionsPackSuggestionEnabledPropertyName, true)
+private var isKotlinJSInspectionsPackSuggestionEnabled: Boolean
+    get() {
+        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
+        return !service.state.dontShowAgainKotlinJSInspectionPackSuggestion
+    }
     set(value) {
-        PropertiesComponent.getInstance().setValue(isKotlinJSInspectionsPackSuggestionEnabledPropertyName, value)
+        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
+        service.state.dontShowAgainKotlinJSInspectionPackSuggestion = !value
     }
 
 fun suggestNativeDebug(projectPath: String) {

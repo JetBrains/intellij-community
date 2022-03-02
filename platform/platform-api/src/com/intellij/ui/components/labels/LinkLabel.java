@@ -14,7 +14,6 @@ import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +81,6 @@ public class LinkLabel<T> extends JLabel {
    * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @Deprecated
   @NotNull
   public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
@@ -102,8 +100,7 @@ public class LinkLabel<T> extends JLabel {
    * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public LinkLabel(@NlsContexts.LinkLabel String text,
                    @Nullable Icon icon,
                    @Nullable LinkListener<T> aListener,

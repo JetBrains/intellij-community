@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.stubs;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -118,6 +118,11 @@ public class StubBuilderTestGenerated extends AbstractStubBuilderTest {
         runTest("testData/stubs/InnerClass.kt");
     }
 
+    @TestMetadata("InnerClassInEnumEntry.kt")
+    public void testInnerClassInEnumEntry() throws Exception {
+        runTest("testData/stubs/InnerClassInEnumEntry.kt");
+    }
+
     @TestMetadata("LocalClass.kt")
     public void testLocalClass() throws Exception {
         runTest("testData/stubs/LocalClass.kt");
@@ -166,6 +171,11 @@ public class StubBuilderTestGenerated extends AbstractStubBuilderTest {
     @TestMetadata("NotStorePropertyFromInitializer.kt")
     public void testNotStorePropertyFromInitializer() throws Exception {
         runTest("testData/stubs/NotStorePropertyFromInitializer.kt");
+    }
+
+    @TestMetadata("ObjectAsArgument.kt")
+    public void testObjectAsArgument() throws Exception {
+        runTest("testData/stubs/ObjectAsArgument.kt");
     }
 
     @TestMetadata("ObjectInInitializer.kt")

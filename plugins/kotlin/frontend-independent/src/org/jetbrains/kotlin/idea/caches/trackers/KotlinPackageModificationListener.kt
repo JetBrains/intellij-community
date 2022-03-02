@@ -6,8 +6,10 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.pom.PomManager
 import com.intellij.pom.PomModelAspect
 import com.intellij.pom.event.PomModelEvent
@@ -16,20 +18,22 @@ import com.intellij.pom.tree.TreeAspect
 import com.intellij.pom.tree.events.TreeChangeEvent
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiPackageStatement
 import com.intellij.psi.util.findTopmostParentOfType
+import com.intellij.vfs.AsyncVfsEventsListener
+import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Tracks potential package changes
  * - In Kotlin and Java package directives
- * - VFS changes line created new file/folder (handled by [VfsCodeBlockModificationListener])
+ * - VFS changes line created new file/folder
  * - Plugins load/unload
  *
  * Tested in [OutOfBlockModificationTestGenerated]
@@ -52,6 +56,20 @@ class KotlinPackageModificationListener(project: Project): Disposable {
             }
         })
 
+        val fileIndex = ProjectFileIndex.SERVICE.getInstance(project)
+        val vfsEventsListener = AsyncVfsEventsListener { events ->
+            val relatedVfsFileChange = events.any { event ->
+                event.takeIf { it.isFromRefresh || it is VFileContentChangeEvent }?.file?.let {
+                    it.isKotlinFileType() && fileIndex.isInContent(it)
+                } ?: false
+            }
+            if (relatedVfsFileChange) {
+                incModificationCount()
+            }
+        }
+
+        AsyncVfsEventsPostProcessor.getInstance().addListener(vfsEventsListener, this)
+
         val treeAspect: TreeAspect = TreeAspect.getInstance(project)
         val model = PomManager.getModel(project)
 
@@ -60,23 +78,19 @@ class KotlinPackageModificationListener(project: Project): Disposable {
                 override fun isAspectChangeInteresting(aspect: PomModelAspect): Boolean = aspect == treeAspect
 
                 private fun PsiElement.findPackageDirectiveFqName(): FqName? {
-                    findTopmostParentOfType<KtPackageDirective>(false)?.let {
+                    return findTopmostParentOfType<KtPackageDirective>(false)?.let {
                         return it.fqName
-                    }
-
-                    return findTopmostParentOfType<PsiPackageStatement>(false)?.let {
-                        FqName(it.packageName)
                     }
                 }
 
                 private inline fun ASTNode?.packageDirectiveChange() =
-                    this is PsiPackageStatement || this?.elementType == KtStubElementTypes.PACKAGE_DIRECTIVE
+                    this?.elementType == KtStubElementTypes.PACKAGE_DIRECTIVE
 
                 override fun modelChanged(event: PomModelEvent) {
                     val changeSet = event.getChangeSet(treeAspect).safeAs<TreeChangeEvent>() ?: return
 
-                    // track only Kotlin and Java files
-                    changeSet.rootElement.psi.containingFile.takeIf { it is KtFile || it is PsiJavaFile } ?: return
+                    // track only Kotlin
+                    changeSet.rootElement.psi.containingFile.takeIf { it is KtFile } ?: return
 
                     val packageChange = changeSet.changedElements.any { changedElement ->
                         if (changedElement.packageDirectiveChange()) return@any true
@@ -85,7 +99,10 @@ class KotlinPackageModificationListener(project: Project): Disposable {
                         changesByElement.affectedChildren.any child@ { affectedChild ->
                             if (affectedChild.packageDirectiveChange()) return@child true
                             val oldChildNode = changesByElement.getChangeByChild(affectedChild).safeAs<ChangeInfoImpl>()?.oldChildNode
-                            if (oldChildNode?.packageDirectiveChange() == true) return@child true
+                            // if oldChildNode is null and new child is Kotlin file - it means file was not exist
+                            if (oldChildNode == null && changedElement.elementType == KtFileElementType.INSTANCE ||
+                                oldChildNode?.packageDirectiveChange() == true
+                            ) return@child true
 
                             affectedChild.psi.findPackageDirectiveFqName()?.let { return@child true }
                             oldChildNode?.psi?.findPackageDirectiveFqName() != null
@@ -99,7 +116,7 @@ class KotlinPackageModificationListener(project: Project): Disposable {
         )
     }
 
-    fun incModificationCount() {
+    private fun incModificationCount() {
         trackerImpl.incModificationCount()
     }
 

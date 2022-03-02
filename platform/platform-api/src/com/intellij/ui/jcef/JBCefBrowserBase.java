@@ -143,10 +143,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
-  // Empiric observation: some client handlers may be ignored for CEF version 95 (and later) without adding at least one router
-  // TODO: remove when IDEA259472Test starts running with empty list of message routers
-  private @Nullable CefMessageRouter myEmptyRouter;
-
   /**
    * The browser instance is disposed automatically with {@link JBCefClient}
    * as the parent {@link com.intellij.openapi.Disposable} (see {@link #getJBCefClient()}).
@@ -243,8 +239,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myRequestHandler = null;
       myContextMenuHandler = null;
     }
-
-    myCefClient.getCefClient().addMessageRouter(myEmptyRouter = CefMessageRouter.create());
 
     if (builder.myCreateImmediately) createImmediately();
   }
@@ -480,12 +474,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
       if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
-
-      if (myEmptyRouter != null) {
-        myCefClient.getCefClient().removeMessageRouter(myEmptyRouter);
-        myEmptyRouter.dispose();
-        myEmptyRouter = null;
-      }
 
       myCefBrowser.stopLoad();
       myCefBrowser.setCloseAllowed();
@@ -727,7 +715,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
     myDevtoolsFrame.setLayout(new BorderLayout());
-    JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).createBrowser();
+    JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).build();
     myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
     myDevtoolsFrame.addWindowListener(new WindowAdapter() {
       @Override

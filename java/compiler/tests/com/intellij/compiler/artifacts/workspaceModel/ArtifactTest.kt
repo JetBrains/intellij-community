@@ -59,6 +59,16 @@ class ArtifactTest : ArtifactsTestCase() {
     TestCase.assertEquals(anotherName, artifactObject.name)
   }
 
+  fun `test add artifact via model 2`() = runWriteAction {
+    assumeTrue(WorkspaceModel.enabledForArtifacts)
+
+    addArtifact("A")
+    addArtifact("A2")
+
+    val artifactsCount = artifactManager.artifacts.size
+    TestCase.assertEquals(2, artifactsCount)
+  }
+
   fun `test add artifact mix bridge and model`() = runWriteAction {
     assumeTrue(WorkspaceModel.enabledForArtifacts)
 

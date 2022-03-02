@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,34 +129,29 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link RevealFileAction#FILE_SELECTING_LISTENER} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final NotificationListener FILE_SELECTING_LISTENER = RevealFileAction.FILE_SELECTING_LISTENER;
 
   /** @deprecated use {@link RevealFileAction#getFileManagerName} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull String getFileManagerName() {
     return RevealFileAction.getFileManagerName();
   }
 
   /** @deprecated use {@link RevealFileAction#openFile} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void openFile(@NotNull File file) {
     RevealFileAction.openFile(file);
   }
 
   /** @deprecated use {@link RevealFileAction#openDirectory} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void openDirectory(@NotNull File directory) {
     RevealFileAction.openDirectory(directory);
   }
 
   /** @deprecated use {@link RevealFileAction#findLocalFile} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
     return RevealFileAction.findLocalFile(file);
   }

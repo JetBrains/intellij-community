@@ -27,6 +27,7 @@ import java.util.*;
 
 /**
  * Represents annotations ("vcs blame") for some file in a specific revision
+ *
  * @see AnnotationProvider
  */
 public abstract class FileAnnotation {
@@ -246,6 +247,11 @@ public abstract class FileAnnotation {
     return createDefaultRevisionsChangesProvider(this);
   }
 
+  @Nullable
+  public LineModificationDetailsProvider getLineModificationDetailsProvider() {
+    return null;
+  }
+
 
   public interface CurrentFileRevisionProvider {
     @Nullable
@@ -273,6 +279,11 @@ public abstract class FileAnnotation {
   public interface RevisionChangesProvider {
     @Nullable
     Pair<? extends CommittedChangeList, FilePath> getChangesIn(int lineNumber) throws VcsException;
+  }
+
+  public interface LineModificationDetailsProvider {
+    @Nullable
+    AnnotatedLineModificationDetails getDetails(int lineNumber) throws VcsException;
   }
 
 
@@ -358,7 +369,8 @@ public abstract class FileAnnotation {
     List<VcsFileRevision> revisions = annotation.getRevisions();
     if (revisions == null) return null;
 
-    List<List<VcsRevisionNumber>> orderedRevisions = ContainerUtil.map(revisions, (revision) -> Collections.singletonList(revision.getRevisionNumber()));
+    List<List<VcsRevisionNumber>> orderedRevisions =
+      ContainerUtil.map(revisions, (revision) -> Collections.singletonList(revision.getRevisionNumber()));
 
     return () -> orderedRevisions;
   }

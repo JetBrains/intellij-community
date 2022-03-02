@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
@@ -24,6 +25,7 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.JBR
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
@@ -38,7 +40,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     private val LOGGER = logger<CustomHeader>()
 
     val H
-      get() = 7
+      get() = 12
     val V
       get() = 5
 
@@ -180,22 +182,27 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   }
 
   protected fun updateCustomDecorationHitTestSpots() {
-    if (!added) {
+    if (!added || !JBR.isCustomWindowDecorationSupported()) {
       return
     }
+    val decor = JBR.getCustomWindowDecoration()
     if ((window is JDialog && window.isUndecorated) ||
         (window is JFrame && window.isUndecorated)) {
-      JdkEx.setCustomDecorationHitTestSpots(window, Collections.emptyList())
-      JdkEx.setCustomDecorationTitleBarHeight(window, 0)
+      decor.setCustomDecorationHitTestSpots(window, Collections.emptyList())
+      decor.setCustomDecorationTitleBarHeight(window, 0)
     }
     else {
-      val toList = getHitTestSpots().map { it.getRectangleOn(window) }.toList()
-      JdkEx.setCustomDecorationHitTestSpots(window, toList)
-      JdkEx.setCustomDecorationTitleBarHeight(window, height)
+      if (height == 0) return
+      val toList = getHitTestSpots().map { java.util.Map.entry(it.first.getRectangleOn(window), it.second) }.toList()
+      decor.setCustomDecorationHitTestSpots(window, toList)
+      decor.setCustomDecorationTitleBarHeight(window, height)
     }
   }
 
-  abstract fun getHitTestSpots(): List<RelativeRectangle>
+  /**
+   * Pairs of rectangles and integer constants from {@link com.jetbrains.CustomWindowDecoration} describing type of the spot
+   */
+  abstract fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>>
 
   private fun setActive(value: Boolean) {
     myActive = value

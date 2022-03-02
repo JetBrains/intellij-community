@@ -28,6 +28,7 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNullElse;
@@ -39,11 +40,14 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private JPanel leftPanel = new NonOpaquePanel();
 
   TabbedWelcomeScreen() {
+    this(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList(), true, true);
+  }
+
+  public TabbedWelcomeScreen(List<WelcomeTabFactory> welcomeTabFactories, boolean addLogo, boolean addQuickAccessPanel) {
     setBackground(WelcomeScreenUIManager.getMainTabListBackground());
 
     CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> mainPanel = createCardPanel();
-
-    for (WelcomeTabFactory tabFactory : WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList()) {
+    for (WelcomeTabFactory tabFactory : welcomeTabFactories) {
       if (tabFactory.isApplicable()) {
         WelcomeScreenTab tab = tabFactory.createWelcomeTab(this);
         addTab(root, tab);
@@ -68,16 +72,21 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     });
     tree.getAccessibleContext().setAccessibleName(UIBundle.message("welcome.screen.welcome.screen.categories.accessible.name"));
 
-    JComponent logoComponent = WelcomeScreenComponentFactory.createSmallLogo();
-    logoComponent.setFocusable(false);
-    logoComponent.setBorder(JBUI.Borders.emptyLeft(16));
+    if (addLogo) {
+      JComponent logoComponent = WelcomeScreenComponentFactory.createSmallLogo();
+      logoComponent.setFocusable(false);
+      logoComponent.setBorder(JBUI.Borders.emptyLeft(16));
+      leftPanel.add(logoComponent, BorderLayout.NORTH);
+    }
 
-    leftPanel.add(logoComponent, BorderLayout.NORTH);
     leftPanel.add(tree, BorderLayout.CENTER);
 
-    JComponent quickAccessPanel = createQuickAccessPanel(this);
-    quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
-    leftPanel.add(quickAccessPanel, BorderLayout.SOUTH);
+    if (addQuickAccessPanel) {
+      JComponent quickAccessPanel = createQuickAccessPanel(this);
+      quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
+      leftPanel.add(quickAccessPanel, BorderLayout.SOUTH);
+    }
+
     leftPanel.setPreferredSize(new Dimension(JBUI.scale(215), leftPanel.getPreferredSize().height));
 
     JComponent centralPanel = mainPanel;
@@ -138,22 +147,30 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public void navigateToTabAndSetMainComponent(Component component, int tabIndex) {
+  public void navigateToTabAndSetMainComponent(@NotNull DefaultWelcomeScreenTab tab, Component component) {
+    int tabIndex = 0;
+    boolean found = false;
+    while (tabIndex < tree.getRowCount()) {
+      var t = getTabByIndex(tabIndex);
+      if (t == tab) {
+        found = true;
+        break;
+      }
+      tabIndex++;
+    }
+    if (!found) return;
     tree.setSelectionRow(tabIndex);
-    var selectedTab = getSelectedTab();
-    if(selectedTab == null) return;
-    if(selectedTab.myAssociatedComponent.getComponentCount() == 0) return;
 
-    var panel = selectedTab.myAssociatedComponent.getComponent(0);
-    ((JComponent)panel).removeAll();
-    ((JComponent)panel).add(component, BorderLayout.CENTER);
+    var panel = (JComponent)tab.myAssociatedComponent.getComponent(0);
+    panel.removeAll();
+    panel.add(component, BorderLayout.CENTER);
     revalidate();
     repaint();
     leftPanel.setVisible(false);
   }
 
-  private DefaultWelcomeScreenTab getSelectedTab() {
-    var tab = tree.getLastSelectedPathComponent();
+  private DefaultWelcomeScreenTab getTabByIndex(int index) {
+    var tab = tree.getPathForRow(index).getLastPathComponent();
     if (tab == null) return null;
     if (tab instanceof DefaultMutableTreeNode) {
       var panel = ((DefaultMutableTreeNode)tab).getUserObject();

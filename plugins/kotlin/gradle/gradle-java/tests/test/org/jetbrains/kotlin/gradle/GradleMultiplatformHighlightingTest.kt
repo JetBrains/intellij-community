@@ -25,9 +25,9 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.TagsTestDataUtil
-import org.jetbrains.kotlin.test.TagsTestDataUtil.TagInfo
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil.TagInfo
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Assert
 import org.junit.Test

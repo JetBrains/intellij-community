@@ -6,7 +6,6 @@ import com.intellij.debugger.engine.MethodFilter
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Range
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -16,28 +15,23 @@ class KotlinLambdaSmartStepTarget(
     highlightElement: KtFunction,
     declaration: KtDeclaration,
     lines: Range<Int>,
-    private val info: KotlinLambdaInfo
-) : KotlinSmartStepTarget(
-        info.getLabel(),
-        highlightElement,
-        true,
-        lines
-) {
+    private val lambdaInfo: KotlinLambdaInfo
+) : KotlinSmartStepTarget(lambdaInfo.getLabel(), highlightElement, true, lines) {
     private val declarationPtr = declaration.createSmartPointer()
 
     override fun createMethodFilter(): MethodFilter {
         val lambdaMethodFilter = KotlinLambdaMethodFilter(
             highlightElement as KtFunction,
             callingExpressionLines,
-            info
+            lambdaInfo
         )
 
-        if (!info.isSuspend && !info.isCallerMethodInline && Registry.get("debugger.async.smart.step.into").asBoolean()) {
-            val declaration = runReadAction { declarationPtr.element }
+        if (!lambdaInfo.isSuspend && !lambdaInfo.callerMethodInfo.isInline && Registry.get("debugger.async.smart.step.into").asBoolean()) {
+            val declaration = declarationPtr.getElementInReadAction()
             return KotlinLambdaAsyncMethodFilter(
                 declaration,
                 callingExpressionLines,
-                info,
+                lambdaInfo,
                 lambdaMethodFilter
             )
         }

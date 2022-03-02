@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.formatter;
 
 import com.intellij.application.options.CodeStyle;
@@ -65,8 +65,7 @@ public class ShLineEndingsAdapter implements FileDocumentManagerListener {
       StatusBarWidget widget = statusBar != null ? statusBar.getWidget(LINE_SEPARATOR_PANEL) : null;
 
       if (widget instanceof LineSeparatorPanel) {
-        FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(project),
-                                                                  null, null, null, null);
+        FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(project), null, null);
         ((LineSeparatorPanel)widget).selectionChanged(event);
       }
     });

@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.util.flow.throttle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -40,7 +41,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.TimedValue
 import kotlin.time.measureTimedValue
@@ -62,7 +62,7 @@ internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlo
         .launchIn(this)
 }
 
-internal suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend (T) -> R) = coroutineScope {
+suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend CoroutineScope.(T) -> R) = coroutineScope {
     map { async { transform(it) } }.awaitAll()
 }
 
@@ -72,7 +72,7 @@ internal suspend fun <T> Iterable<T>.parallelFilterNot(transform: suspend (T) ->
 internal suspend fun <T, R> Iterable<T>.parallelMapNotNull(transform: suspend (T) -> R?) =
     channelFlow { parallelForEach { transform(it)?.let { send(it) } } }.toList()
 
-internal suspend fun <T> Iterable<T>.parallelForEach(action: suspend (T) -> Unit) = coroutineScope {
+internal suspend fun <T> Iterable<T>.parallelForEach(action: suspend CoroutineScope.(T) -> Unit) = coroutineScope {
     forEach { launch { action(it) } }
 }
 
@@ -98,30 +98,8 @@ internal fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
     }
 }
 
-internal fun <T> Flow<T>.throttle(time: Duration, debounce: Boolean = true) =
-    throttle(time.inWholeMilliseconds, debounce)
-
-internal fun <T> Flow<T>.throttle(timeMillis: Int, debounce: Boolean = true) =
-    throttle(timeMillis.toLong(), debounce)
-
-internal fun <T> Flow<T>.throttle(timeMillis: Long, debounce: Boolean = true) = channelFlow {
-    var last = System.currentTimeMillis() - timeMillis * 2
-    var refireJob: Job? = null
-    collect {
-        val elapsedTime = System.currentTimeMillis() - last
-        refireJob?.cancel()
-        when {
-            elapsedTime > timeMillis -> {
-                send(it)
-                last = System.currentTimeMillis()
-            }
-            debounce -> refireJob = launch {
-                delay(max(timeMillis - elapsedTime, 0))
-                send(it)
-            }
-        }
-    }
-}
+internal fun <T> Flow<T>.throttle(time: Duration) =
+    throttle(time.inWholeMilliseconds)
 
 internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
     modifierFlow: Flow<R>,
@@ -168,7 +146,7 @@ internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
             result
         }
     }.map {
-        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to elaborate" }
+        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to process" }
         it.value
     }
 

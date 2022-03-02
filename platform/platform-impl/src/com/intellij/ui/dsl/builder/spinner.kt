@@ -2,30 +2,29 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.layout.*
 import javax.swing.JSpinner
 import kotlin.reflect.KMutableProperty0
 
-fun <T : JBIntSpinner> Cell<T>.bindIntValue(binding: PropertyBinding<Int>): Cell<T> {
-  return bind(JBIntSpinner::getNumber, JBIntSpinner::setNumber, binding)
-}
-
 fun <T : JBIntSpinner> Cell<T>.bindIntValue(prop: KMutableProperty0<Int>): Cell<T> {
-  return bindIntValue(prop.toBinding())
+  return bindIntValue(prop.toMutableProperty())
 }
 
 fun <T : JBIntSpinner> Cell<T>.bindIntValue(getter: () -> Int, setter: (Int) -> Unit): Cell<T> {
-  return bindIntValue(PropertyBinding(getter, setter))
-}
-
-fun <T : JSpinner> Cell<T>.bindValue(binding: PropertyBinding<Double>): Cell<T> {
-  return bind({ it.value as Double }, JSpinner::setValue, binding)
+  return bindIntValue(MutableProperty(getter, setter))
 }
 
 fun <T : JSpinner> Cell<T>.bindValue(prop: KMutableProperty0<Double>): Cell<T> {
-  return bindValue(prop.toBinding())
+  return bindValue(prop.toMutableProperty())
 }
 
 fun <T : JSpinner> Cell<T>.bindValue(getter: () -> Double, setter: (Double) -> Unit): Cell<T> {
-  return bindValue(PropertyBinding(getter, setter))
+  return bindValue(MutableProperty(getter, setter))
+}
+
+private fun <T : JBIntSpinner> Cell<T>.bindIntValue(prop: MutableProperty<Int>): Cell<T> {
+  return bind(JBIntSpinner::getNumber, JBIntSpinner::setNumber, prop)
+}
+
+private fun <T : JSpinner> Cell<T>.bindValue(prop: MutableProperty<Double>): Cell<T> {
+  return bind({ it.value as Double }, JSpinner::setValue, prop)
 }

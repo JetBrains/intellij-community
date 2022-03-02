@@ -1,0 +1,49 @@
+<html>
+<body>
+Reports fields in <code>LocalQuickFix</code> implementations that prevent intention preview action from functioning properly.
+<p>
+  Intention preview is an IntelliJ platform feature that displays how quick-fix or intention action
+  will change the current file when applied. To implement this, <code>LocalQuickFix.generatePreview()</code>
+  is called with a custom <code>ProblemDescriptor</code> that points to the non-physical copy of current file.
+  Normally, it just delegates to <code>LocalQuickFix.applyFix()</code>. However, some quick-fixes
+  may refer directly or indirectly to physical elements and use them for writing. As a result,
+  preview won't work, as the quick-fix will attempt to update physical PSI instead of non-physical one.
+  To avoid this, default implementation of <code>generatePreview()</code> delegates only if all the
+  instance fields of a quick-fix class have safe types: primitives, Strings, etc.
+</p>
+<p>
+  You may fix this problem in a number of ways:
+</p>
+<ol>
+  <li>
+    If the field does not actually store any PSI reference, or that PSI is used only for reading,
+    you may annotate the field with <code>@SafeFieldForPreview</code>
+  </li>
+  <li>
+    You may override <code>getFileModifierForPreview()</code> method and create a copy of the quick-fix
+    rebinding it to the non-physical file copy which is supplied as a parameter. Use
+    <code>PsiTreeUtil.findSameElementInCopy()</code> to find the corresponding PSI elements inside the
+    supplied non-physical copy.
+  </li>
+  <li>
+    Instead of storing PSI references in fields, try to extract all the necessary information from
+    <code>ProblemDescriptor.getPsiElement()</code>.
+  </li>
+  <li>
+    You may override <code>generatePreview()</code> method and provide completely custom preview behavior.
+    For example, it's possible to display a custom HTML document instead of actual preview if your action
+    does something besides modifying a current file.
+  </li>
+</ol>
+<p>
+  This inspection does not report if a custom implementation of <code>getFileModifierForPreview()</code>
+  or <code>generatePreview()</code> exists. However, this doesn't mean that the implementation is correct and preview works.
+  Please test. Also note that preview result is calculated in background thread, so you cannot start a write action
+  during the preview or do any operation that requires a write action. Finally, no preview is generated automatically
+  if <code>startInWriteAction()</code> returns <code>false</code>. In this case, having custom <code>generatePreview()</code>
+  implementation is desired.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2022.1</small></p>
+</body>
+</html>

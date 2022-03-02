@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
@@ -48,7 +47,7 @@ internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
                 }
                 .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
                 .onEach { toolWindow -> toolWindow.initialize(project) }
-                .flowOn(Dispatchers.EDT)
+                .flowOn(Dispatchers.toolWindowManager(project))
                 .launchIn(project.lifecycleScope)
         }
         return isAvailable

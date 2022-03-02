@@ -446,7 +446,6 @@ public final class UIUtil {
    * @deprecated use {@link ClientProperty#isTrue(Component, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
     return ClientProperty.isTrue(window, key);
   }
@@ -455,7 +454,6 @@ public final class UIUtil {
    * @deprecated use {@link ClientProperty#get(Component, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static Object getWindowClientProperty(Window window, @NotNull Object key) {
     return ClientProperty.get(window, key);
   }
@@ -464,7 +462,6 @@ public final class UIUtil {
    * @deprecated use {@link ClientProperty#put(Window, Object, Object)}  instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
     ClientProperty.put(window, key, value);
   }
@@ -476,7 +473,6 @@ public final class UIUtil {
    * @deprecated use {@link ClientProperty#isTrue(Component, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
     return component instanceof Component && ClientProperty.isTrue((Component)component, key);
   }
@@ -488,7 +484,6 @@ public final class UIUtil {
    * @deprecated use {@link ClientProperty#get(Component, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
     return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
@@ -535,7 +530,6 @@ public final class UIUtil {
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> T getClientProperty(Object component, @NotNull Key<T> key) {
     return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
@@ -545,7 +539,6 @@ public final class UIUtil {
    * or {@link ClientProperty#put(JComponent, Key, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
     component.putClientProperty(key, value);
   }
@@ -691,8 +684,7 @@ public final class UIUtil {
   /**
    * @deprecated Use {@link LinePainter2D#paint(Graphics2D, double, double, double, double)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void drawLine(@NotNull Graphics g, int x1, int y1, int x2, int y2) {
     LinePainter2D.paint((Graphics2D)g, x1, y1, x2, y2);
   }
@@ -891,8 +883,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getTreeForeground()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getTreeTextForeground() {
     return getTreeForeground();
   }
@@ -1036,8 +1027,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getSeparatorColor() {
     return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
@@ -1143,8 +1133,7 @@ public final class UIUtil {
   /**
    * @deprecated Aqua Look-n-Feel is not supported anymore
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
@@ -1152,8 +1141,7 @@ public final class UIUtil {
   /**
    * @deprecated Nimbus Look-n-Feel is deprecated and not supported anymore
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public static boolean isUnderNimbusLookAndFeel() {
     return false;
   }
@@ -1192,19 +1180,22 @@ public final class UIUtil {
     return UIManager.getLookAndFeel().getName().contains("IntelliJ") || isUnderDefaultMacTheme() || isUnderWin10LookAndFeel();
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public static boolean isUnderGTKLookAndFeel() {
     return SystemInfoRt.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static boolean isGraphite() {
-    if (!SystemInfoRt.isMac) return false;
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
+
     try {
       // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
       // NSGraphiteControlTint = 6
       return Foundation.invoke("NSColor", "currentControlTint").intValue() == 6;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return false;
     }
   }
@@ -1569,7 +1560,7 @@ public final class UIUtil {
     painter.paint(g, startX, endX, lineY);
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void applyRenderingHints(@NotNull Graphics g) {
     GraphicsUtil.applyRenderingHints((Graphics2D)g);
   }
@@ -1813,8 +1804,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link ComponentUtil#findParentByCondition(Component, java.util.function.Predicate)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
     return ComponentUtil.findParentByCondition(c, it -> condition.value(it));
   }
@@ -2039,6 +2029,10 @@ public final class UIUtil {
   }
 
   public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
+    return StartupUiUtil.getFontWithFallback(familyName, style, size);
+  }
+
+  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, float size) {
     return StartupUiUtil.getFontWithFallback(familyName, style, size);
   }
 
@@ -3120,8 +3114,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getListSelectionBackground(boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getListUnfocusedSelectionBackground() {
     return getListSelectionBackground(false);
   }
@@ -3152,8 +3145,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getListForeground(boolean, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getListForeground(boolean selected) {
     return getListForeground(selected, true);
   }
@@ -3306,8 +3298,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getTableForeground(boolean, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getTableForeground(boolean selected) {
     return getTableForeground(selected, true);
   }

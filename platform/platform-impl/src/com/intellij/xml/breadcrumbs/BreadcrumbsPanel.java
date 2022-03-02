@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
@@ -326,7 +327,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
 
   private static Font getNewFont(Editor editor) {
     Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? StartupUiUtil.getLabelFont() : getEditorFont(editor);
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? SMALL.derive(font) : font;
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() && !ExperimentalUI.isNewUI() ? SMALL.derive(font) : font;
   }
 
   private static Font getEditorFont(Editor editor) {

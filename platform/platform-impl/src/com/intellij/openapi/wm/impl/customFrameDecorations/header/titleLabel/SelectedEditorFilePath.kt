@@ -1,25 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.displayUrlRelativeToProject
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
@@ -106,10 +113,11 @@ internal open class SelectedEditorFilePath {
   }
 
   private fun updateTitlePaths() {
-    projectTitle.active = instance.fullPathsInWindowHeader || multipleSameNamed
+    val uiSettings = UISettings.getInstance()
+    projectTitle.active = uiSettings.fullPathsInWindowHeader || multipleSameNamed
     classTitle.active = captionInTitle || classPathNeeded
 
-    classTitle.fullPath = instance.fullPathsInWindowHeader || classPathNeeded
+    classTitle.fullPath = uiSettings.fullPathsInWindowHeader || classPathNeeded
     updatePath()
   }
 
@@ -252,14 +260,46 @@ internal open class SelectedEditorFilePath {
   }
 
   private fun updatePath() {
-    classTitle.updatePath(view)
-    update()
+    val project = project
+    if (project == null || project.isDisposed) {
+      return
+    }
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val file = (fileEditorManager as? FileEditorManagerEx)?.getSplittersFor(view)?.currentFile
+               ?: fileEditorManager?.selectedEditor?.file
+    if (file == null) {
+      classTitle.classPath = ""
+      classTitle.longText = ""
+      update()
+    }
+    else {
+      ReadAction.nonBlocking<Pair<String, String>> {
+        val titleBuilder = FrameTitleBuilder.getInstance()
+        val baseTitle = titleBuilder.getFileTitle(project, file)
+        Pair(
+          (titleBuilder as? PlatformFrameTitleBuilder)?.run {
+            val fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file)
+            if (!fileTitle.endsWith(file.presentableName) || file.parent == null) {
+              fileTitle
+            }
+            else {
+              displayUrlRelativeToProject(file, file.presentableUrl, project, true, false)
+            }
+          } ?: baseTitle, baseTitle)
+      }
+        .expireWith(project)
+        .finishOnUiThread(ModalityState.any()) {
+          classTitle.classPath = it.first
+          classTitle.longText = if (classTitle.fullPath) it.first else it.second
+          update()
+        }
+        .submit(NonUrgentExecutor.getInstance())
+    }
   }
 
   private fun updateProject() {
     project?.let {
       projectTitle.project = it
-      classTitle.project = it
       update()
     }
   }
@@ -325,7 +365,7 @@ internal open class SelectedEditorFilePath {
   }
 
   private fun shrinkSimplePaths(simplePaths: List<TitlePart>, simpleWidth: Int): String? {
-    isClipped = simplePaths.sumBy { it.longWidth } > simpleWidth
+    isClipped = simplePaths.sumOf { it.longWidth } > simpleWidth
 
     for (i in simplePaths.size - 1 downTo 0) {
       var beforeWidth = 0

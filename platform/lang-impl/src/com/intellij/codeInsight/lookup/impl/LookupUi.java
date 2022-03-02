@@ -103,7 +103,9 @@ class LookupUi {
     myBottomPanel.add(myMenuButton);
 
     LookupLayeredPane layeredPane = new LookupLayeredPane();
-    layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
+    if (CodeInsightSettings.getInstance().SHOW_BOTTOM_PANEL_IN_LOOKUP_UI) {
+      layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
+    }
 
     myScrollPane = ScrollPaneFactory.createScrollPane(lookup.getList(), true);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

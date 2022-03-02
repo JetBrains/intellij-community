@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -14,8 +15,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManagerEx
 import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,6 +29,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.toBuilder
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -171,19 +179,42 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   private fun updateSourceFolders(sourceFoldersToChange: Map<Module, List<Pair<VirtualFile, SourceFolderModel>>>) {
-    ModuleRootModificationUtil.batchUpdateModels(sourceFoldersToChange.keys) { model ->
-      val p = sourceFoldersToChange[model.module] ?: return@batchUpdateModels false
-      for ((eventFile, sourceFolders) in p) {
-        val (_, url, type, packagePrefix, generated) = sourceFolders
-        val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
-                           ?: model.addContentEntry(url)
-        val sourceFolder = contentEntry.addSourceFolder(url, type)
-        if (packagePrefix != null && packagePrefix.isNotEmpty()) {
-          sourceFolder.packagePrefix = packagePrefix
+    sourceFoldersToChange.keys.groupBy { it.project }.forEach { (key, values) ->
+      batchUpdateModels(key, values) { model ->
+        val p = sourceFoldersToChange[model.module] ?: error("Value for the module ${model.module.name} should be available")
+        for ((eventFile, sourceFolders) in p) {
+          val (_, url, type, packagePrefix, generated) = sourceFolders
+          val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
+                             ?: model.addContentEntry(url)
+          val sourceFolder = contentEntry.addSourceFolder(url, type)
+          if (packagePrefix != null && packagePrefix.isNotEmpty()) {
+            sourceFolder.packagePrefix = packagePrefix
+          }
+          setForGeneratedSources(sourceFolder, generated)
         }
-        setForGeneratedSources(sourceFolder, generated)
       }
-      true
+    }
+  }
+
+  private fun batchUpdateModels(project: Project, modules: Collection<Module>, modifier: (ModifiableRootModel) -> Unit) {
+    val diffBuilder = WorkspaceModel.getInstance(project).entityStorage.current.toBuilder()
+    val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
+      val modifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(
+        ExternalSystemRootConfigurationAccessor(diffBuilder))
+      modifiableRootModel as ModifiableRootModelBridge
+      modifier.invoke(modifiableRootModel)
+      modifiableRootModel.prepareForCommit()
+      modifiableRootModel
+    }.toList()
+
+    ApplicationManager.getApplication().invokeAndWait {
+      WriteAction.run<RuntimeException> {
+        if (project.isDisposed) return@run
+        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+          updater.addDiff(diffBuilder)
+        }
+        modifiableRootModels.forEach { it.postCommit() }
+      }
     }
   }
 
@@ -271,6 +302,9 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     )
   }
 }
+
+class ExternalSystemRootConfigurationAccessor(override val actualDiffBuilder: WorkspaceEntityStorageBuilder) : RootConfigurationAccessor(),
+                                                                                                                RootConfigurationAccessorForWorkspaceModel
 
 data class SourceFolderManagerState(@get:XCollection(style = XCollection.Style.v2) val sourceFolders: Collection<SourceFolderModelState>) {
   constructor() : this(mutableListOf())

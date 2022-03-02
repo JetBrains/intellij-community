@@ -278,30 +278,7 @@ public final class IncProjectBuilder {
       }
     }
     // compute estimated times for dirty targets
-    long estimatedWorkTime = 0L;
-
-    final Predicate<BuildTarget<?>> isAffected = new Predicate<BuildTarget<?>>() {
-      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
-      @Override
-      public boolean test(BuildTarget<?> target) {
-        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
-        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
-      }
-    };
-    final BuildTargetIndex targetIndex = myProjectDescriptor.getBuildTargetIndex();
-    for (BuildTarget<?> target : targetIndex.getAllTargets()) {
-      if (!targetIndex.isDummy(target)) {
-        final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
-        if (avgTimeToBuild > 0) {
-          // 1. in general case this time should include dependency analysis and cache update times
-          // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
-          if (targetsState.getTargetConfiguration(target).isTargetDirty(myProjectDescriptor) && isAffected.test(target)) {
-            estimatedWorkTime += avgTimeToBuild;
-          }
-        }
-      }
-    }
-
+    long estimatedWorkTime = calculateEstimatedBuildTime(myProjectDescriptor, targetsState, scope);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Rebuild heuristic: estimated build time / timeThreshold : " + estimatedWorkTime + " / " + timeThreshold);
     }
@@ -315,6 +292,37 @@ public final class IncProjectBuilder {
       myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message));
       throw new RebuildRequestedException(null);
     }
+  }
+
+  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, BuildTargetsState targetsState, CompileScope scope) {
+    // compute estimated times for dirty targets
+    long estimatedBuildTime = 0L;
+
+    final Predicate<BuildTarget<?>> isAffected = new Predicate<BuildTarget<?>>() {
+      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
+      @Override
+      public boolean test(BuildTarget<?> target) {
+        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
+        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
+      }
+    };
+    final BuildTargetIndex targetIndex = projectDescriptor.getBuildTargetIndex();
+    List<BuildTarget<?>> affectedTarget = new ArrayList<>();
+    for (BuildTarget<?> target : targetIndex.getAllTargets()) {
+      if (!targetIndex.isDummy(target)) {
+        final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
+        if (avgTimeToBuild > 0) {
+          // 1. in general case this time should include dependency analysis and cache update times
+          // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
+          if (targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor) && isAffected.test(target)) {
+            estimatedBuildTime += avgTimeToBuild;
+            affectedTarget.add(target);
+          }
+        }
+      }
+    }
+    LOG.info("Affected build targets count: " + affectedTarget.size());
+    return estimatedBuildTime;
   }
 
   private void requestRebuild(Exception e, Throwable cause) throws RebuildRequestedException {
@@ -1197,13 +1205,16 @@ public final class IncProjectBuilder {
 
     final List<SourceToOutputMapping> mappings = new ArrayList<>();
     for (T target : targets) {
-      final SourceToOutputMapping srcToOut = pd.dataManager.getSourceToOutputMap(target);
-      mappings.add(srcToOut);
       pd.fsState.processFilesToRecompile(context, target, new FileProcessor<R, T>() {
+        private SourceToOutputMapping srcToOut;
         @Override
         public boolean apply(T target, File file, R root) throws IOException {
           final String src = FileUtil.toSystemIndependentName(file.getPath());
           if (affectedSources.add(src)) {
+            if (srcToOut == null) { // lazy init
+              srcToOut = pd.dataManager.getSourceToOutputMap(target);
+              mappings.add(srcToOut);
+            }
             final Collection<String> outs = srcToOut.getOutputs(src);
             if (outs != null) {
               // Temporary hack for KTIJ-197
@@ -1501,6 +1512,7 @@ public final class IncProjectBuilder {
 
             try {
               for (ModuleLevelBuilder builder : builders) {
+                outputConsumer.setCurrentBuilderName(builder.getPresentableName());
                 processDeletedPaths(context, chunk.getTargets());
                 long start = System.nanoTime();
                 int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
@@ -1548,6 +1560,7 @@ public final class IncProjectBuilder {
               }
             }
             finally {
+              outputConsumer.setCurrentBuilderName(null);
               final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
               if (moreToCompile) {
                 nextPassRequired = true;

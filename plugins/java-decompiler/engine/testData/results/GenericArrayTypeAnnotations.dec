@@ -27,6 +27,10 @@ public class GenericArrayTypeAnnotations {
    @A List<@B Object @C [] @D []> @E [] @F [] l2() {
       return null;// 28
    }
+
+   @L List<Object[][]>[] @L [] l3() {
+      return null;// 32
+   }
 }
 
 class 'typeAnnotations/GenericArrayTypeAnnotations' {
@@ -44,9 +48,15 @@ class 'typeAnnotations/GenericArrayTypeAnnotations' {
       0      27
       1      27
    }
+
+   method 'l3 ()[[Ljava/util/List;' {
+      0      31
+      1      31
+   }
 }
 
 Lines mapping:
 20 <-> 20
 24 <-> 24
 28 <-> 28
+32 <-> 32

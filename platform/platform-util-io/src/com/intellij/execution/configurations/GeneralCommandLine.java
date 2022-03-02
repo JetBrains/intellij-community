@@ -19,7 +19,6 @@ import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,8 +181,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setPassParentEnvironment(boolean passParentEnvironment) {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }

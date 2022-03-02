@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -69,7 +70,7 @@ abstract class AbstractLargeProjectTest : UsefulTestCase() {
 
   private fun openTestProject(): Project {
     val project = ProjectManagerEx.getInstanceEx().openProject(testProjectPath, OpenProjectTask())!!
-    disposeOnTearDownInEdt(Runnable { ProjectManagerEx.getInstanceEx().closeAndDispose(project) })
+    disposeOnTearDownInEdt(Runnable { ProjectManager.getInstance().closeAndDispose(project) })
 
     runWriteActionAndWait {
       val tableModel = LibraryTablesRegistrar.getInstance().getLibraryTable(project).modifiableModel

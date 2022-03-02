@@ -31,6 +31,11 @@
       <artifactId>javafx-web</artifactId>
       <version>${context.getProperty("javafx.version")}</version>
     </dependency>#end
+    #if ($context.hasLibrary("fxgl"))<dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-media</artifactId>
+      <version>${context.getProperty("javafx.version")}</version>
+    </dependency>#end
     #if ($context.hasLibrary("controlsfx"))<dependency>
       <groupId>org.controlsfx</groupId>
       <artifactId>controlsfx</artifactId>
@@ -72,6 +77,17 @@
       <groupId>eu.hansolo</groupId>
       <artifactId>tilesfx</artifactId>
       <version>${context.getVersion("eu.hansolo", "tilesfx")}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>#end
+    #if ($context.hasLibrary("fxgl"))<dependency>
+      <groupId>com.github.almasb</groupId>
+      <artifactId>fxgl</artifactId>
+      <version>#if ($context.sdkFeatureVersion >= 17)${context.getBomProperty("fxgl17.version")}#else${context.getBomProperty("fxgl11.version")}#end</version>
       <exclusions>
         <exclusion>
           <groupId>org.openjfx</groupId>

@@ -26,10 +26,7 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public class OnePixelDivider extends Divider {
-  public static final Color BACKGROUND = JBColor.lazy(() -> {
-    final Color bg = UIManager.getColor("OnePixelDivider.background");
-    return bg != null ? bg : JBColor.border();
-  });
+  public static final Color BACKGROUND = JBColor.border();
 
   private boolean myVertical;
   private final Splittable mySplitter;

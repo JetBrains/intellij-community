@@ -3,15 +3,18 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
-import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.List;
 
 public final class SnippetDocTagManipulator extends AbstractElementManipulator<PsiSnippetDocTagImpl> {
 
@@ -19,32 +22,32 @@ public final class SnippetDocTagManipulator extends AbstractElementManipulator<P
   public PsiSnippetDocTagImpl handleContentChange(@NotNull PsiSnippetDocTagImpl element,
                                                   @NotNull TextRange range,
                                                   String newContent) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("Not implemented");
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+
+    final JavaFileCodeStyleFacade codeStyleFacade = JavaFileCodeStyleFacade.forContext(element.getContainingFile());
+    final String newSnippetTagContent = codeStyleFacade.isJavaDocLeadingAsterisksEnabled()
+                                        ? prependAbsentAsterisks(newContent)
+                                        : newContent;
+
+    final PsiDocComment text = factory.createDocCommentFromText("/**\n" + newSnippetTagContent + "\n*/");
+    final PsiSnippetDocTag snippet = PsiTreeUtil.findChildOfType(text, PsiSnippetDocTag.class);
+    if (snippet == null) {
+      return element;
+    }
+    return (PsiSnippetDocTagImpl)element.replace(snippet);
+  }
+
+  @Contract(pure = true)
+  private static @NotNull String prependAbsentAsterisks(@NotNull String input) {
+    return input.replaceAll("(\\n\\s*)([^*\\s])", "$1 * $2");
   }
 
   @Override
   public @NotNull TextRange getRangeInElement(@NotNull PsiSnippetDocTagImpl element) {
-    final PsiSnippetDocTagValue valueElement = element.getValueElement();
-    if (valueElement == null) return super.getRangeInElement(element);
-
-    final PsiSnippetDocTagBody body = valueElement.getBody();
-    if (body == null) return super.getRangeInElement(element);
-
-    Optional<PsiElement> first = Arrays.stream(body.getChildren())
-      .filter(e -> e.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_DATA)
-      .findFirst();
-    if (!first.isPresent()) {
-      return super.getRangeInElement(element);
-    }
-    final PsiElement start = first.get();
-    PsiElement last = start;
-    for (PsiElement e = start.getNextSibling(); e != null; e = e.getNextSibling()) {
-      if (e.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
-        last = e;
-      }
-    }
-    final TextRange elementTextRange = element.getTextRange();
-    return TextRange.from(start.getTextRange().getStartOffset() - elementTextRange.getStartOffset(),
-                         last.getTextRange().getEndOffset() - start.getTextRange().getStartOffset());
+    final List<TextRange> ranges = element.getContentRanges();
+    if (ranges.isEmpty()) return TextRange.EMPTY_RANGE;
+    final int startOffset = ranges.get(0).getStartOffset();
+    final int endOffset = ContainerUtil.getLastItem(ranges).getEndOffset();
+    return TextRange.create(startOffset, endOffset);
   }
 }

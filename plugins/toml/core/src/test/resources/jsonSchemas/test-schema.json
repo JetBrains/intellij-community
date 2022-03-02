@@ -39,6 +39,9 @@
                     },
                     "path": {
                         "type": "string"
+                    },
+                    "test": {
+                        "type": "boolean"
                     }
                 }
             }
@@ -96,6 +99,10 @@
                 },
                 "a": {
                     "type": "integer"
+                },
+                "number-enum": {
+                    "type": "number",
+                    "enum": [1, 2, 3]
                 }
             }
         }

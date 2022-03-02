@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.application.Topics;
@@ -65,7 +65,7 @@ public final class WelcomeScreenComponentFactory {
 
     String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
     if (welcomeScreenLogoUrl != null) {
-      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl);
+      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
       float scale = 28f / icon.getIconWidth();
       Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
       JLabel logo = new JLabel(smallLogoIcon);
@@ -124,7 +124,7 @@ public final class WelcomeScreenComponentFactory {
 
     String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
     if (welcomeScreenLogoUrl != null) {
-      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl));
+      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader()));
       logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);

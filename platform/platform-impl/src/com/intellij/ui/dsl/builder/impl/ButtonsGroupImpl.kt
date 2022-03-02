@@ -4,7 +4,7 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.ButtonsGroup
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.MutableProperty
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.AbstractButton
 import javax.swing.ButtonGroup
@@ -16,11 +16,11 @@ internal class ButtonsGroupImpl : ButtonsGroup {
   private val boundRadioButtons = mutableMapOf<Cell<AbstractButton>, Any>()
   private var groupBinding: GroupBinding<*>? = null
 
-  override fun <T> bind(binding: PropertyBinding<T>, type: Class<T>): ButtonsGroup {
+  override fun <T> bind(prop: MutableProperty<T>, type: Class<T>): ButtonsGroup {
     if (groupBinding != null) {
       throw UiDslException("The group is bound already")
     }
-    groupBinding = GroupBinding(binding, type)
+    groupBinding = GroupBinding(prop, type)
     return this
   }
 
@@ -52,10 +52,10 @@ internal class ButtonsGroupImpl : ButtonsGroup {
       groupBinding.validate(value)
       buttonGroup.add(cell.component)
 
-      cell.component.isSelected = groupBinding.binding.get() == value
+      cell.component.isSelected = groupBinding.prop.get() == value
       cell.onApply { if (cell.component.isSelected) groupBinding.set(value) }
-      cell.onReset { cell.component.isSelected = groupBinding.binding.get() == value }
-      cell.onIsModified { cell.component.isSelected != (groupBinding.binding.get() == value) }
+      cell.onReset { cell.component.isSelected = groupBinding.prop.get() == value }
+      cell.onIsModified { cell.component.isSelected != (groupBinding.prop.get() == value) }
     }
   }
 
@@ -71,10 +71,10 @@ internal class ButtonsGroupImpl : ButtonsGroup {
   }
 }
 
-private class GroupBinding<T>(val binding: PropertyBinding<T>, val type: Class<T>) {
+private class GroupBinding<T>(val prop: MutableProperty<T>, val type: Class<T>) {
 
   fun set(value: Any) {
-    binding.set(type.cast(value))
+    prop.set(type.cast(value))
   }
 
   fun validate(value: Any) {

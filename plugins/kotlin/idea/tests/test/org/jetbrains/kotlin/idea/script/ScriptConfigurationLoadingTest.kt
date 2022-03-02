@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.script
 
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)

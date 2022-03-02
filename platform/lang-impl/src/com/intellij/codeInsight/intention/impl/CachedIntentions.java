@@ -39,11 +39,11 @@ import java.util.function.Predicate;
 public final class CachedIntentions {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
 
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myIntentions = new CopyOnWriteArraySet<>();
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myErrorFixes = new CopyOnWriteArraySet<>();
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myInspectionFixes = new CopyOnWriteArraySet<>();
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myGutters = new CopyOnWriteArraySet<>();
-  private final CopyOnWriteArraySet<IntentionActionWithTextCaching> myNotifications = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myIntentions = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myErrorFixes = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myInspectionFixes = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myGutters = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myNotifications = new CopyOnWriteArraySet<>();
   private int myOffset;
   private HighlightInfoType myHighlightInfoType;
 
@@ -161,7 +161,7 @@ public final class CachedIntentions {
     DataContext dataContext = Utils.wrapDataContext(EditorUtil.getEditorDataContext(myEditor));
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
-      false, new DefaultActionGroup(myGuttersRaw), presentationFactory,
+      new DefaultActionGroup(myGuttersRaw), presentationFactory,
       dataContext, ActionPlaces.INTENTION_MENU);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
@@ -181,20 +181,24 @@ public final class CachedIntentions {
 
   private boolean addActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                @NotNull Set<? super IntentionActionWithTextCaching> cachedActions) {
-    List<IntentionActionWithTextCaching> actions =
-      ContainerUtil.map(newDescriptors, descriptor -> wrapAction(descriptor, myFile, myFile, myEditor));
-    return cachedActions.addAll(actions);
+    boolean changed = false;
+    for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
+      changed |= cachedActions.add(wrapAction(descriptor, myFile, myFile, myEditor));
+    }
+    return changed;
   }
 
   private boolean wrapActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
-                                @NotNull CopyOnWriteArraySet<IntentionActionWithTextCaching> cachedActions,
+                                @NotNull Set<? super IntentionActionWithTextCaching> cachedActions,
                                 boolean shouldCallIsAvailable) {
     if (cachedActions.isEmpty() && newDescriptors.isEmpty()) return false;
+    boolean changed = false;
     if (myEditor == null) {
       LOG.assertTrue(!shouldCallIsAvailable);
-      List<IntentionActionWithTextCaching> actions =
-        ContainerUtil.map(newDescriptors, descriptor -> wrapAction(descriptor, myFile, myFile, null));
-      return cachedActions.addAll(actions);
+      for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
+        changed |= cachedActions.add(wrapAction(descriptor, myFile, myFile, null));
+      }
+      return changed;
     }
     final int caretOffset = myEditor.getCaretModel().getOffset();
     final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
@@ -240,11 +244,10 @@ public final class CachedIntentions {
 
     if (cachedActions.equals(wrappedNew)) {
       return false;
-    } else {
-      cachedActions.clear();
-      cachedActions.addAll(wrappedNew);
-      return true;
     }
+    cachedActions.clear();
+    cachedActions.addAll(wrappedNew);
+    return true;
   }
 
   @NotNull
@@ -252,21 +255,22 @@ public final class CachedIntentions {
                                             @NotNull PsiElement element,
                                             @NotNull  PsiFile containingFile,
                                             @Nullable Editor containingEditor) {
-    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor, (cached, action) -> {
-      if (action instanceof QuickFixWrapper) {
-        // remove only inspection fixes after invocation,
-        // since intention actions might be still available
-        removeActionFromCached(cached);
-        markInvoked(action);
-      }
-    });
+    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(),
+                                                                                     (cached, action) -> {
+          if (action instanceof QuickFixWrapper) {
+            // remove only inspection fixes after invocation,
+            // since intention actions might be still available
+            removeActionFromCached(cached);
+            markInvoked(action);
+          }
+        });
     for (IntentionAction option : descriptor.getOptions(element, containingEditor)) {
       Editor editor = ObjectUtils.chooseNotNull(myEditor, containingEditor);
       if (editor == null) continue;
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
         .chooseBetweenHostAndInjected(myFile, editor, containingFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, option));
       if (availableIn == null) continue;
-      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
+      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, (__1, __2) -> {});
       boolean isErrorFix = myErrorFixes.contains(textCaching);
       if (isErrorFix) {
         cachedAction.addErrorFix(option);
@@ -290,7 +294,7 @@ public final class CachedIntentions {
 
   private void removeActionFromCached(@NotNull IntentionActionWithTextCaching action) {
     // remove from the action from the list after invocation to make it appear unavailable sooner.
-    // (the highlighting will process the whole file and remove the no more available action from the list automatically - but it's may be too long)
+    // (the highlighting will process the whole file and remove the no more available action from the list automatically - but it may be too long)
     myErrorFixes.remove(action);
     myGutters.remove(action);
     myInspectionFixes.remove(action);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -50,7 +50,6 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -351,7 +350,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     toolWindow.setTitleActions(component.getNavigationActions());
     DefaultActionGroup group = new DefaultActionGroup(createActions());
     group.add(component.getFontSizeAction());
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
+    toolWindow.setAdditionalGearActions(group);
     component.removeCornerMenu();
   }
 
@@ -1766,18 +1765,22 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       getScope(psiFile.getProject(), file),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.size.label")),
+        HtmlChunk.nbsp(),
         HtmlChunk.text(StringUtil.formatFileSize(attr.size()))
       ),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.type.label")),
+        HtmlChunk.nbsp(),
         HtmlChunk.text(typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")"))
       ),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.modification.datetime.label")),
+        HtmlChunk.nbsp(),
         HtmlChunk.text(DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()))
       ),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.creation.datetime.label")),
+        HtmlChunk.nbsp(),
         HtmlChunk.text(DateFormatUtil.formatDateTime(attr.creationTime().toMillis()))
       )
     );
@@ -1808,6 +1811,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             colorManager.getScopeColor(name) == color) {
           return HtmlChunk.p().children(
             GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.scope.label")),
+            HtmlChunk.nbsp(),
             HtmlChunk.span().attr("bgcolor", ColorUtil.toHex(color)).addText(scope.getPresentableName())
           );
         }
@@ -1825,6 +1829,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     Color color = status.getColor();
     return HtmlChunk.p().children(
       GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.vcs.status.label")),
+      HtmlChunk.nbsp(),
       color == null ? vcsText : vcsText.wrapWith(HtmlChunk.span().attr("color", ColorUtil.toHex(color)))
     );
   }

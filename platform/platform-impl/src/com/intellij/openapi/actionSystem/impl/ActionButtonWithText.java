@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -65,7 +65,7 @@ public class ActionButtonWithText extends ActionButton {
         click();
       }
     });
-    updateMnemonic(0, myPresentation.getMnemonic());
+    updateMnemonic(KeyEvent.VK_UNDEFINED, myPresentation.getMnemonic());
     ComponentUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
   }
 
@@ -280,6 +280,6 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   public int getMnemonic() {
-    return KeyEvent.getExtendedKeyCodeForChar(myPresentation.getMnemonic());
+    return myPresentation.getMnemonic();
   }
 }

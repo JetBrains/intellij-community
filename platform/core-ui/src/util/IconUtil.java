@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
@@ -308,10 +308,9 @@ public final class IconUtil {
   /**
    * @deprecated This icon is not used by platform anymore.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Icon getAnalyzeIcon() {
-    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class);
+    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class.getClassLoader());
   }
 
   public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
@@ -321,7 +320,7 @@ public final class IconUtil {
   }
 
   private static @NotNull @NonNls String getToolbarDecoratorIconsFolder() {
-    return "/toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
+    return "toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
   }
 
   /**
@@ -656,6 +655,28 @@ public final class IconUtil {
   }
 
   /**
+   * @param icon  the icon to scale
+   * @param scale the scale factor
+   * @return the scaled icon
+   */
+  @ApiStatus.Internal
+  public static @NotNull Icon scaleOrLoadCustomVersion(@NotNull Icon icon, float scale) {
+    if (icon instanceof IconLoader.CachedImageIcon) {
+      int oldWidth = icon.getIconWidth();
+      int oldHeight = icon.getIconHeight();
+      int newWidth = Math.round(scale * oldWidth);
+      int newHeight = Math.round(scale * oldHeight);
+      if (oldWidth == newWidth && oldHeight == newHeight) return icon;
+      Icon version = IconLoader.loadCustomVersion((IconLoader.CachedImageIcon)icon, newWidth, newHeight);
+      if (version != null) return version;
+    }
+    if (icon instanceof ScalableIcon) {
+      return ((ScalableIcon)icon).scale(scale);
+    }
+    return scale(icon, null, scale);
+  }
+
+  /**
    * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
    *
    * @see UserScaleContext#overrideScale(Scale)
@@ -791,8 +812,7 @@ public final class IconUtil {
   /**
    * @deprecated Use {@link #createImageIcon(Image)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull JBImageIcon createImageIcon(final @NotNull BufferedImage img) {
     return createImageIcon((Image)img);
   }
@@ -941,7 +961,7 @@ public final class IconUtil {
           Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
           float s = JBUIScale.sysScale();
           newG.scale(1.0 / s, 1.0 / s);
-          newG.drawImage(image, (int)(x / s), (int)(y / s), null);
+          newG.drawImage(image, 0, 0, null);
           newG.scale(1.0, 1.0);
           newG.dispose();
         }

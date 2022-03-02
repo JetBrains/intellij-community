@@ -5,8 +5,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import training.featuresSuggester.SuggesterSupport
+import training.featuresSuggester.SuggestingUtils.handleAction
 import training.featuresSuggester.actions.*
-import training.featuresSuggester.handleAction
 
 class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() {
   override fun beforePropertyChange(event: PsiTreeChangeEvent) {

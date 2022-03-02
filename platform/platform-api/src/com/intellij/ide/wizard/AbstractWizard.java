@@ -24,7 +24,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +36,6 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
-import java.util.function.Supplier;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
@@ -495,7 +493,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    requestFocusToPreferredFocusedComponent();
+    UiNotifyConnector.doWhenFirstShown(myCurrentStepComponent, () -> {
+      requestFocusTo(getPreferredFocusedComponent());
+    });
   }
 
   @Override
@@ -505,18 +505,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return ObjectUtils.chooseNotNull(component, myNextButton);
   }
 
-  private void requestFocusToPreferredFocusedComponent() {
-    requestFocusTo(this::getPreferredFocusedComponent);
-  }
-
-  private void requestFocusTo(@NotNull Supplier<? extends @Nullable JComponent> supplier) {
-    UiNotifyConnector.doWhenFirstShown(myContentPanel, () -> {
-      var component = supplier.get();
-      if (component != null) {
+  private static void requestFocusTo(@Nullable JComponent component) {
+    if (component != null) {
+      UiNotifyConnector.doWhenFirstShown(component, () -> {
         var focusManager = IdeFocusManager.findInstanceByComponent(component);
         focusManager.requestFocus(component, false);
-      }
-    });
+      });
+    }
   }
 
   protected boolean canGoNext() {
@@ -594,8 +589,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected JButton getFinishButton() {
     return new JButton();
   }

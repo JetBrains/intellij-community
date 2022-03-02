@@ -296,22 +296,8 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
 
     // TODO [targets] Apply environment variables: setPythonUnbuffered(...), setPythonDontWriteBytecode(...), resetHomePathChanges(...)
     // TODO [targets] Apply flavor from PythonSdkFlavor.getFlavor(mySdk)
-    final boolean useSudo = askForSudo && PySdkExtKt.adminPermissionsNeeded(mySdk);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    Process process;
-    if (useSudo && targetEnvironment instanceof LocalTargetEnvironment) {
-      // This is hack to process sudo flag in the local environment
-      GeneralCommandLine localCommandLine = ((LocalTargetEnvironment)targetEnvironment).createGeneralCommandLine(targetedCommandLine);
-      process = executeOnLocalMachineWithSudo(localCommandLine);
-    }
-    else {
-      if (useSudo) {
-        // TODO [targets] Execute process on non-local target using sudo
-        LOG.warn("Sudo flag is ignored");
-      }
-      // TODO [targets] Pass meaningful progress indicator
-      process = targetEnvironment.createProcess(targetedCommandLine, Objects.requireNonNullElseGet(indicator, EmptyProgressIndicator::new));
-    }
+    Process process = createProcess(targetEnvironment, targetedCommandLine, askForSudo, indicator);
     List<String> commandLine = targetedCommandLine.collectCommandsSynchronously();
     String commandLineString = StringUtil.join(commandLine, " ");
     final CapturingProcessHandler handler =
@@ -339,6 +325,26 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       throw new PyExecutionException(message, helperPath, args, result);
     }
     return new ProcessOutputWithCommandLine(helperPath, args, result);
+  }
+
+  @NotNull
+  private Process createProcess(@NotNull TargetEnvironment targetEnvironment,
+                                @NotNull TargetedCommandLine targetedCommandLine,
+                                boolean askForSudo,
+                                @Nullable ProgressIndicator indicator) throws ExecutionException {
+    if (askForSudo) {
+      if (!(targetEnvironment instanceof LocalTargetEnvironment)) {
+        // TODO [targets] Execute process on non-local target using sudo
+        LOG.warn("Sudo flag is ignored");
+      }
+      else if (PySdkExtKt.adminPermissionsNeeded(mySdk)) {
+        // This is hack to process sudo flag in the local environment
+        GeneralCommandLine localCommandLine = ((LocalTargetEnvironment)targetEnvironment).createGeneralCommandLine(targetedCommandLine);
+        return executeOnLocalMachineWithSudo(localCommandLine);
+      }
+    }
+    // TODO [targets] Pass meaningful progress indicator
+    return targetEnvironment.createProcess(targetedCommandLine, Objects.requireNonNullElseGet(indicator, EmptyProgressIndicator::new));
   }
 
   @NotNull

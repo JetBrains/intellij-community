@@ -17,7 +17,6 @@ import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -63,11 +62,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   @ApiStatus.Internal
   public final @NotNull ClassPath getClassPath() {
     return classPath;
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Collection<Map.Entry<String, Path>> getLoadedClasses() {
-    return ClassPath.getLoadedClasses();
   }
 
   /**
@@ -242,10 +236,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return getPackage(packageName) != null;
   }
 
-  protected ProtectionDomain getProtectionDomain() {
-    return null;
-  }
-
   @Override
   public boolean isByteBufferSupported(@NotNull String name) {
     return true;
@@ -258,7 +248,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader) throws IOException {
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader) {
     definePackageIfNeeded(name);
     return super.defineClass(name, data, null);
   }
@@ -572,7 +562,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     /**
      * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@link Path}.
      */
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated
     public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {
       List<Path> files = new ArrayList<>(urls.size());

@@ -354,7 +354,8 @@ public class DefaultActionGroup extends ActionGroup {
     boolean hasNulls = false;
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
-    AnAction[] children = new AnAction[sortedSize + myPairs.size()];
+    int pairsSize = myPairs.size();
+    AnAction[] children = new AnAction[sortedSize + pairsSize];
     for (int i = 0; i < sortedSize; i++) {
       AnAction action = mySortedChildren.get(i);
       if (action == null) {
@@ -362,35 +363,39 @@ public class DefaultActionGroup extends ActionGroup {
       }
       if (action instanceof ActionStubBase) {
         action = unStub(actionManager, (ActionStubBase)action);
-        if (action == null) {
-          LOG.error("Can't unstub " + mySortedChildren.get(i));
-        }
-        else {
+        if (action != null) {
           mySortedChildren.set(i, action);
         }
       }
 
       hasNulls |= action == null;
       children[i] = action;
+      if (action == null && sortedSize == mySortedChildren.size() + 1) {
+        sortedSize--;
+        //noinspection AssignmentToForLoopParameter
+        i--;
+      }
     }
-    for (int i = 0; i < myPairs.size(); i++) {
-      final Pair<AnAction, Constraints> pair = myPairs.get(i);
+    for (int i = 0; i < pairsSize; i++) {
+      Pair<AnAction, Constraints> pair = myPairs.get(i);
       AnAction action = pair.first;
       if (action == null) {
         LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
       }
       else if (action instanceof ActionStubBase) {
         action = unStub(actionManager, (ActionStubBase)action);
-        if (action == null) {
-          LOG.error("Can't unstub " + pair);
-        }
-        else {
+        if (action != null) {
           myPairs.set(i, Pair.create(action, pair.second));
         }
       }
 
       hasNulls |= action == null;
       children[i + sortedSize] = action;
+      if (action == null && pairsSize == myPairs.size() + 1) {
+        pairsSize--;
+        //noinspection AssignmentToForLoopParameter
+        i--;
+      }
     }
 
     if (hasNulls) {
@@ -403,7 +408,9 @@ public class DefaultActionGroup extends ActionGroup {
     try {
       AnAction action = actionManager.getAction(stub.getId());
       if (action == null) {
-        LOG.error("Null child action in group " + this + " of class " + getClass() + ", id=" + stub.getId());
+        if (containsAction((AnAction)stub)) {
+          LOG.error("Null action returned for stub in group " + this + " of class " + getClass() + ", id=" + stub.getId());
+        }
         return null;
       }
       replace((AnAction)stub, action);

@@ -11,14 +11,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
+import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 public final class GitFileAnnotation extends FileAnnotation {
@@ -280,6 +279,7 @@ public final class GitFileAnnotation extends FileAnnotation {
           shownInLog = CompletableFuture.completedFuture(false); // can't use log tabs in modal dialogs (ex: commit, merge)
         }
         shownInLog.whenCompleteAsync((success, ex) -> {
+          if (ex instanceof CancellationException) return;
           if (ex != null) {
             LOG.error(ex);
           }
@@ -301,7 +301,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     @NotNull private final Date myCommitterDate;
     @NotNull private final Date myAuthorDate;
     @NotNull private final VcsUser myAuthor;
-    @NotNull private final String mySubject;
+    @NotNull private final @NlsSafe String mySubject;
 
     CommitInfo(@NotNull Project project,
                @NotNull GitRevisionNumber revision,
@@ -309,7 +309,7 @@ public final class GitFileAnnotation extends FileAnnotation {
                @NotNull Date committerDate,
                @NotNull Date authorDate,
                @NotNull VcsUser author,
-               @NotNull String subject,
+               @NotNull @NlsSafe String subject,
                @Nullable GitRevisionNumber previousRevision,
                @Nullable FilePath previousPath) {
       myProject = project;
@@ -461,110 +461,163 @@ public final class GitFileAnnotation extends FileAnnotation {
   }
 
 
-  @Nullable
+  @NotNull
   @Override
   public CurrentFileRevisionProvider getCurrentFileRevisionProvider() {
-    return (lineNumber) -> {
-      LineInfo lineInfo = getLineInfo(lineNumber);
-      return lineInfo != null ? lineInfo.getFileRevision() : null;
-    };
+    return new GitCurrentFileRevisionProvider();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public PreviousFileRevisionProvider getPreviousFileRevisionProvider() {
-    return new PreviousFileRevisionProvider() {
-      @Nullable
-      @Override
-      public VcsFileRevision getPreviousRevision(int lineNumber) {
-        LineInfo lineInfo = getLineInfo(lineNumber);
-        if (lineInfo == null) return null;
-
-        VcsFileRevision previousFileRevision = lineInfo.getPreviousFileRevision();
-        if (previousFileRevision != null) return previousFileRevision;
-
-        GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
-        if (myRevisions != null && myRevisionMap != null &&
-            myRevisionMap.containsKey(revisionNumber)) {
-          int index = myRevisionMap.getInt(revisionNumber);
-          if (index + 1 < myRevisions.size()) {
-            return myRevisions.get(index + 1);
-          }
-        }
-
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public VcsFileRevision getLastRevision() {
-        if (myBaseRevision instanceof GitRevisionNumber) {
-          return new GitFileRevision(myProject, myFilePath, (GitRevisionNumber)myBaseRevision);
-        }
-        else {
-          return ContainerUtil.getFirstItem(getRevisions());
-        }
-      }
-    };
+    return new GitPreviousFileRevisionProvider();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public AuthorsMappingProvider getAuthorsMappingProvider() {
-    Map<VcsRevisionNumber, String> authorsMap = new HashMap<>();
-    for (int i = 0; i < getLineCount(); i++) {
-      LineInfo lineInfo = getLineInfo(i);
-      if (lineInfo == null) continue;
-
-      if (!authorsMap.containsKey(lineInfo.getRevisionNumber())) {
-        authorsMap.put(lineInfo.getRevisionNumber(), lineInfo.getAuthor());
-      }
-    }
-
-    return () -> authorsMap;
+    return new GitAuthorsMappingProvider();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public RevisionsOrderProvider getRevisionsOrderProvider() {
-    ContainerUtil.KeyOrderedMultiMap<Date, VcsRevisionNumber> dates = new ContainerUtil.KeyOrderedMultiMap<>();
-
-    for (int i = 0; i < getLineCount(); i++) {
-      LineInfo lineInfo = getLineInfo(i);
-      if (lineInfo == null) continue;
-
-      VcsRevisionNumber number = lineInfo.getRevisionNumber();
-      Date date = lineInfo.getCommitterDate();
-
-      dates.putValue(date, number);
-    }
-
-    List<List<VcsRevisionNumber>> orderedRevisions = new ArrayList<>();
-    NavigableSet<Date> orderedDates = dates.navigableKeySet();
-    for (Date date : orderedDates.descendingSet()) {
-      Collection<VcsRevisionNumber> revisionNumbers = dates.get(date);
-      orderedRevisions.add(new ArrayList<>(revisionNumbers));
-    }
-
-    return () -> orderedRevisions;
+    return new GitRevisionsOrderProvider();
   }
 
-  /**
-   * Do not use {@link CommittedChangesProvider#getOneList} to avoid unnecessary rename detections (as we know FilePath already)
-   */
   @NotNull
   @Override
   public RevisionChangesProvider getRevisionsChangesProvider() {
-    return (lineNumber) -> {
+    return new GitRevisionChangesProvider();
+  }
+
+  @NotNull
+  @Override
+  public LineModificationDetailsProvider getLineModificationDetailsProvider() {
+    return new GitLineModificationDetailsProvider();
+  }
+
+
+  private class GitCurrentFileRevisionProvider implements CurrentFileRevisionProvider {
+    @Override
+    public @Nullable VcsFileRevision getRevision(int lineNumber) {
+      LineInfo lineInfo = getLineInfo(lineNumber);
+      return lineInfo != null ? lineInfo.getFileRevision() : null;
+    }
+  }
+
+  private class GitPreviousFileRevisionProvider implements PreviousFileRevisionProvider {
+    @Nullable
+    @Override
+    public VcsFileRevision getPreviousRevision(int lineNumber) {
+      LineInfo lineInfo = getLineInfo(lineNumber);
+      if (lineInfo == null) return null;
+
+      VcsFileRevision previousFileRevision = lineInfo.getPreviousFileRevision();
+      if (previousFileRevision != null) return previousFileRevision;
+
+      GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
+      if (myRevisions != null && myRevisionMap != null &&
+          myRevisionMap.containsKey(revisionNumber)) {
+        int index = myRevisionMap.getInt(revisionNumber);
+        if (index + 1 < myRevisions.size()) {
+          return myRevisions.get(index + 1);
+        }
+      }
+
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public VcsFileRevision getLastRevision() {
+      if (myBaseRevision instanceof GitRevisionNumber) {
+        return new GitFileRevision(myProject, myFilePath, (GitRevisionNumber)myBaseRevision);
+      }
+      else {
+        return ContainerUtil.getFirstItem(getRevisions());
+      }
+    }
+  }
+
+  private class GitAuthorsMappingProvider implements AuthorsMappingProvider {
+    private final Map<VcsRevisionNumber, String> myAuthorsMap = new HashMap<>();
+
+    GitAuthorsMappingProvider() {
+      for (int i = 0; i < getLineCount(); i++) {
+        LineInfo lineInfo = getLineInfo(i);
+        if (lineInfo == null) continue;
+
+        if (!myAuthorsMap.containsKey(lineInfo.getRevisionNumber())) {
+          myAuthorsMap.put(lineInfo.getRevisionNumber(), lineInfo.getAuthor());
+        }
+      }
+    }
+
+    @Override
+    public @NotNull Map<VcsRevisionNumber, String> getAuthors() {
+      return myAuthorsMap;
+    }
+  }
+
+  private class GitRevisionsOrderProvider implements RevisionsOrderProvider {
+    private final List<List<VcsRevisionNumber>> myOrderedRevisions = new ArrayList<>();
+
+    GitRevisionsOrderProvider() {
+      ContainerUtil.KeyOrderedMultiMap<Date, VcsRevisionNumber> dates = new ContainerUtil.KeyOrderedMultiMap<>();
+
+      for (int i = 0; i < getLineCount(); i++) {
+        LineInfo lineInfo = getLineInfo(i);
+        if (lineInfo == null) continue;
+
+        VcsRevisionNumber number = lineInfo.getRevisionNumber();
+        Date date = lineInfo.getCommitterDate();
+
+        dates.putValue(date, number);
+      }
+
+      NavigableSet<Date> orderedDates = dates.navigableKeySet();
+      for (Date date : orderedDates.descendingSet()) {
+        Collection<VcsRevisionNumber> revisionNumbers = dates.get(date);
+        myOrderedRevisions.add(new ArrayList<>(revisionNumbers));
+      }
+    }
+
+    @Override
+    public @NotNull List<List<VcsRevisionNumber>> getOrderedRevisions() {
+      return myOrderedRevisions;
+    }
+  }
+
+  private class GitRevisionChangesProvider implements RevisionChangesProvider {
+    @Override
+    public @Nullable Pair<? extends CommittedChangeList, FilePath> getChangesIn(int lineNumber) throws VcsException {
       LineInfo lineInfo = getLineInfo(lineNumber);
       if (lineInfo == null) return null;
 
       GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(lineInfo.getFilePath());
       if (repository == null) return null;
 
+      // Do not use CommittedChangesProvider#getOneList to avoid unnecessary rename detections (as we know FilePath already).
       GitCommittedChangeList changeList =
         GitCommittedChangeListProvider.getCommittedChangeList(myProject, repository.getRoot(), lineInfo.getRevisionNumber());
       return Pair.create(changeList, lineInfo.getFilePath());
-    };
+    }
+  }
+
+  private class GitLineModificationDetailsProvider implements LineModificationDetailsProvider {
+    @Override
+    public @Nullable AnnotatedLineModificationDetails getDetails(int lineNumber) throws VcsException {
+      LineInfo lineInfo = getLineInfo(lineNumber);
+      if (lineInfo == null) return null;
+
+      String afterContent = DefaultLineModificationDetailsProvider.loadRevision(myProject, lineInfo.getFileRevision(), myFilePath);
+      if (afterContent == null) return null;
+
+      String beforeContent = DefaultLineModificationDetailsProvider.loadRevision(myProject, lineInfo.getPreviousFileRevision(), myFilePath);
+
+      int originalLineNumber = lineInfo.getOriginalLineNumber() - 1;
+      return DefaultLineModificationDetailsProvider.createDetailsFor(beforeContent, afterContent, originalLineNumber);
+    }
   }
 }

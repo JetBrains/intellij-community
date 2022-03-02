@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.startup
 
 import com.intellij.notification.NotificationAction
@@ -20,13 +20,14 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.service.project.GradleNotification.NOTIFICATION_GROUP
+import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import org.jetbrains.plugins.gradle.util.isSupported
 
-class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
+private class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
   override fun onProjectsLoaded(
     project: Project,
     manager: ExternalSystemManager<*, *, *, *, *>,
@@ -34,7 +35,7 @@ class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
   ) {
     /**
      * 1. Internal JDK can be uses for tests
-     * 2. Some tests creates fake SDKs. Those SDKs must not be replaced
+     * 2. Some tests create fake SDKs. Those SDKs must not be replaced
      */
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
@@ -102,6 +103,7 @@ class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
     val notificationContent = GradleBundle.message("gradle.notifications.java.home.change.content", gradleJvm, versionString,
                                                    presentablePath)
     val notification = NOTIFICATION_GROUP.createNotification(notificationTitle, notificationContent, INFORMATION)
+    notification.setDisplayId(GradleNotificationIdsHolder.jvmConfigured)
     notification.addAction(NotificationAction.createSimple(GradleBundle.message("gradle.open.gradle.settings")) {
       showGradleProjectSettings(project, externalProjectPath)
     })
@@ -125,14 +127,14 @@ class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
     return sdk == null
   }
 
-  private fun isSdkName(jdkReference: String?) =
-    jdkReference != null && !jdkReference.startsWith('#')
+  private fun isSdkName(jdkReference: String?) = jdkReference != null && !jdkReference.startsWith('#')
 
-  private fun isInternalSdk(jdkReference: String?) =
-    jdkReference == ExternalSystemJdkUtil.USE_INTERNAL_JAVA
+  private fun isInternalSdk(jdkReference: String?) = jdkReference == ExternalSystemJdkUtil.USE_INTERNAL_JAVA
 
-  private fun findRegisteredSdk(sdk: Sdk): Sdk? = runReadAction {
-    val projectJdkTable = ProjectJdkTable.getInstance()
-    projectJdkTable.findJdk(sdk.name, sdk.sdkType.name)
+  private fun findRegisteredSdk(sdk: Sdk): Sdk? {
+    return runReadAction {
+      val projectJdkTable = ProjectJdkTable.getInstance()
+      projectJdkTable.findJdk(sdk.name, sdk.sdkType.name)
+    }
   }
 }

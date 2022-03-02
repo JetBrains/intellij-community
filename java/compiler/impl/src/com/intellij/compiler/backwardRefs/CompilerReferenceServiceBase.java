@@ -115,18 +115,36 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
       }
     });
+  }
 
-    connection.subscribe(IsUpToDateCheckListener.TOPIC, new IsUpToDateCheckListener() {
-      @Override
-      public void isUpToDateCheckFinished(boolean isUpToDate) {
-        if (!isUpToDate) return;
+  private boolean hasIndex() {
+    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+    return buildDir != null && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
+  }
 
-        File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-        if (buildDir == null || CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion())) return;
+  public static class JCRIIsUpToDateConsumer implements IsUpToDateCheckConsumer {
+    @Override
+    public boolean isApplicable(@NotNull Project project) {
+      CompilerReferenceServiceBase<?> serviceBase = getInstanceIfEnabled(project);
+      return serviceBase != null && serviceBase.hasIndex();
+    }
 
-        markAsUpToDate();
+    @Override
+    public void isUpToDate(@NotNull Project project, boolean isUpToDate) {
+      if (!isUpToDate) return;
+
+      CompilerReferenceServiceBase<?> service = getInstanceIfEnabled(project);
+      if (service != null) {
+        executeOnBuildThread(service::markAsUpToDate);
       }
-    });
+    }
+  }
+
+  private static CompilerReferenceServiceBase<?> getInstanceIfEnabled(Project project) {
+    CompilerReferenceService service = CompilerReferenceService.getInstanceIfEnabled(project);
+    if (service instanceof CompilerReferenceServiceBase<?>) return (CompilerReferenceServiceBase<?>)service;
+
+    return null;
   }
 
   public static boolean isEnabled() {

@@ -64,7 +64,7 @@ public abstract class JobLauncher {
    * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      boolean failFastOnAcquireReadAction,

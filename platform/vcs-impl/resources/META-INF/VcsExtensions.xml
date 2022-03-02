@@ -53,8 +53,6 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"
                     overrides="true"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManager"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsDirtyScopeManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
@@ -89,6 +87,8 @@
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase$ShowStandaloneDiff"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ShowEditorDiffPreviewActionProvider" order="first"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction" order="last"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.savedPatches.ShowDiffForSavedPatchesAction"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.savedPatches.ShowDiffForSavedPatchesAction"/>
 
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
       implementation="com.intellij.openapi.vcs.changes.actions.diff.DiffViewerCreatePatchActionProvider$Dialog"/>
@@ -114,6 +114,11 @@
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAfterWithLocalAction"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAction"/>
+
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.savedPatches.CompareWithLocalForSavedPatchesAction"/>
+    <openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.savedPatches.CompareBeforeWithLocalForSavedPatchesAction"/>
 
     <applicationService serviceInterface="com.intellij.diff.vcs.DiffVcsFacade"
                         serviceImplementation="com.intellij.diff.DiffVcsFacadeImpl"
@@ -156,7 +161,7 @@
                 factoryClass="com.intellij.openapi.vcs.changes.ui.CommitToolWindowFactory"/>
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
-                factoryClass="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowFactory"/>
+                factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>
 
     <changesViewContent tabName="Repository"
                         className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
@@ -277,11 +282,11 @@
     <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyFileDocumentManagerListener"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
-    <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
-    <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
-    <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Vcs Notifications" displayType="BALLOON"/>
-    <notificationGroup id="Vcs Silent Notifications" displayType="NONE"/>
+    <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.messages"/>
+    <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.common.messages"/>
+    <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.important.messages"/>
+    <notificationGroup id="Vcs Notifications" displayType="BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.notifications"/>
+    <notificationGroup id="Vcs Silent Notifications" displayType="NONE" bundle="messages.VcsBundle" key="notification.group.vcs.silent.notifications"/>
     <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
                     serviceImplementation="com.intellij.impl.RunConfigurationVcsSupportImpl"
                     overrides="true"/>
@@ -324,6 +329,8 @@
     <advancedSetting id="vcs.push.all.with.commits" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
 
     <notificationGroup id="External Executable Critical Failures" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.external.executable"/>
+
+    <codeInsight.codeVisionProvider implementation="com.intellij.codeInsight.hints.VcsCodeVisionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

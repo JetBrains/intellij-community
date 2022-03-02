@@ -50,7 +50,7 @@ public final class TrailingSpacesInPropertyInspection extends PropertiesInspecti
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     final String attributeValue = node.getAttributeValue("ignoreVisibleSpaces");
     if (attributeValue != null) {
-      myIgnoreVisibleSpaces = Boolean.valueOf(attributeValue);
+      myIgnoreVisibleSpaces = Boolean.parseBoolean(attributeValue);
     }
   }
 

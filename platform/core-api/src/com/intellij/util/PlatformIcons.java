@@ -103,6 +103,6 @@ public interface PlatformIcons {
    * @deprecated use {@link #FOLDER_ICON}
    */
   @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @ApiStatus.ScheduledForRemoval
   Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
 }

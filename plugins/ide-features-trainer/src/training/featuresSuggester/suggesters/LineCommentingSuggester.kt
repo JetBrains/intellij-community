@@ -20,6 +20,7 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("line.commenting.message")
   override val suggestingActionId = "CommentByLineComment"
   override val suggestingTipFileName = "CommentCode.html"
+  override val minSuggestingIntervalDays = 14
 
   private data class DocumentLine(val startOffset: Int, val endOffset: Int, val text: String)
   private data class CommentData(val lineNumber: Int, val documentRef: WeakReference<Document>, val timeMillis: Long)

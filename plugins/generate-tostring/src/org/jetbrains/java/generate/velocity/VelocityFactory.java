@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ClassLoaderUtil;
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.log.JdkLogChute;
 import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
 
 /**
@@ -47,8 +48,8 @@ public final class VelocityFactory {
    */
   private static VelocityEngine newVelocityEngine() {
     ExtendedProperties prop = new ExtendedProperties();
-    prop.addProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, SimpleLog4JLogSystem.class.getName());
-    prop.addProperty("runtime.log.logsystem.log4j.category", "GenerateToString");
+    prop.addProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, JdkLogChute.class.getName());
+    prop.addProperty(JdkLogChute.RUNTIME_LOG_JDK_LOGGER, "GenerateToString");
     prop.addProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
     prop.addProperty("includes.resource.loader.class", VelocityIncludesClassLoader.class.getName());
     prop.addProperty(RuntimeConstants.VM_PERM_ALLOW_INLINE_REPLACE_GLOBAL, "true");

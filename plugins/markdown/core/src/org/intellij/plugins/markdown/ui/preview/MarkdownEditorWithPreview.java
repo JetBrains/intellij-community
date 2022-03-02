@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.Key;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -26,7 +24,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class MarkdownEditorWithPreview extends TextEditorWithPreview {
+public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   public static final Key<MarkdownEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
   private boolean myAutoScrollPreview;
   private final List<SplitLayoutListener> myLayoutListeners = new ArrayList<>();
@@ -50,19 +48,24 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
     myAutoScrollPreview = settings.isAutoScrollEnabled();
 
     final var settingsChangedListener = new MarkdownSettings.ChangeListener() {
+      private boolean wasVerticalSplitBefore = settings.isVerticalSplit();
+
       @Override
-      public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {}
+      public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {
+        wasVerticalSplitBefore = settings.isVerticalSplit();
+      }
 
       @Override
       public void settingsChanged(@NotNull MarkdownSettings settings) {
         setAutoScrollPreview(settings.isAutoScrollEnabled());
-        handleLayoutChange(!settings.isVerticalSplit());
+        if (wasVerticalSplitBefore != settings.isVerticalSplit()) {
+          handleLayoutChange(!settings.isVerticalSplit());
+        }
       }
     };
     project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
     getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener());
   }
-
 
   public void addLayoutListener(SplitLayoutListener listener) {
     myLayoutListeners.add(listener);
@@ -104,11 +107,6 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
   @Override
   protected @NotNull ToggleAction getShowPreviewAction() {
     return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.PreviewOnly"));
-  }
-
-  @Override
-  protected @Nullable ActionGroup createLeftToolbarActionGroup() {
-    return null;
   }
 
   public interface SplitLayoutListener extends EventListener {

@@ -1,12 +1,13 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
 MODES: Any
 
 class PsdImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["PSD"]]
+    format_description: ClassVar[str]
     mode: Any
     tile: Any
     frame: Any

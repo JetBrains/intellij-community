@@ -54,8 +54,12 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     ComboBoxCompositeEditorStrategy strategy = null;
     if (focusableComponent instanceof JTextField) {
       strategy = jTextFieldStrategy;
-    } else if (focusableComponent instanceof EditorTextField) {
+    }
+    else if (focusableComponent instanceof EditorTextField) {
       strategy = editorTextFieldStrategy;
+    }
+    else if (focusableComponent instanceof JLabel) {
+      strategy = jLabelStrategy;
     }
     return strategy;
   }
@@ -149,6 +153,38 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     }
   };
 
+  private final ComboBoxCompositeEditorStrategy jLabelStrategy =  new ComboBoxCompositeEditorStrategy() {
+    final BiConsumer<I, JLabel> defaultOnSetHandler = (anObject, component) ->  component.setText((anObject == null) ? "" : anObject.toString());
+
+    @Override
+    public void setItem(F component, I anObject) {
+      if (myOnSetItemHandler == null) {
+        defaultOnSetHandler.accept(anObject, (JLabel)component);
+      } else {
+        myOnSetItemHandler.accept(anObject, component);
+      }
+    }
+
+    @Override
+    public I getItem(F component, I anObject) {
+      if (myOnGetItemHandler == null) {
+        return anObject;
+      } else {
+        return myOnGetItemHandler.apply(anObject, component);
+      }
+    }
+
+    @Override
+    public void selectAll(JComponent component) {}
+
+    @Override
+    public void addActionListener(JComponent component, ActionListener l) {}
+
+    @Override
+    public void removeActionListener(JComponent component, ActionListener l) {}
+  };
+
+  private final ComboBoxCompositeEditorStrategy myStrategy;
   private final EditorComponent<F,I> myComponent;
 
   public ComboBoxCompositeEditor(final F editableComponent, final JComponent ... components) {
@@ -174,7 +210,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
       add(components[i], c);
     }
 
-    final ComboBoxCompositeEditorStrategy strategy = getStrategy(editableComponent);
+    myStrategy = getStrategy(editableComponent);
 
     myComponent = new ComboBoxCompositeEditor.EditorComponent<>() {
 
@@ -183,27 +219,27 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
       @Override
       public void setItem(I anObject) {
         myItem = anObject;
-        strategy.setItem(editableComponent, anObject);
+        myStrategy.setItem(editableComponent, anObject);
       }
 
       @Override
       public I getItem() {
-        return strategy.getItem(editableComponent, myItem);
+        return myStrategy.getItem(editableComponent, myItem);
       }
 
       @Override
       public void selectAll() {
-        strategy.selectAll(editableComponent);
+        myStrategy.selectAll(editableComponent);
       }
 
       @Override
       public void addActionListener(ActionListener l) {
-        strategy.addActionListener(editableComponent, l);
+        myStrategy.addActionListener(editableComponent, l);
       }
 
       @Override
       public void removeActionListener(ActionListener l) {
-        strategy.removeActionListener(editableComponent, l);
+        myStrategy.removeActionListener(editableComponent, l);
       }
 
       @Override
@@ -230,6 +266,10 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
         parent.repaint();
       }
     });
+  }
+
+  public boolean isEditable() {
+    return myStrategy != jLabelStrategy;
   }
 
   @Override

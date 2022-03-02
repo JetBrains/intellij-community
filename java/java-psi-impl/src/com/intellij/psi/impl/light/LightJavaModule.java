@@ -220,7 +220,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
 
   /** @deprecated caching problems; please consider using {@code JavaModuleGraphUtil} methods instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable LightJavaModule findModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
     PsiElement directory = manager.findDirectory(root);
     if (directory == null) return null;

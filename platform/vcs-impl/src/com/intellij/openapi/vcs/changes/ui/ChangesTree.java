@@ -94,10 +94,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private AWTEvent myEventProcessingInProgress;
 
   public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
-    this(project, showCheckboxes, highlightProblems, false);
+    this(project, showCheckboxes, highlightProblems, true);
   }
 
-  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean expandInSpeedSearch) {
+  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean withSpeedSearch) {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
@@ -108,7 +108,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
-    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
+    if (withSpeedSearch) {
+      new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, false);
+    }
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new ChangesTreeCellRenderer(nodeRenderer));
@@ -563,8 +565,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   /**
    * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public AnAction[] getTreeActions() {
     return new AnAction[]{
       ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),

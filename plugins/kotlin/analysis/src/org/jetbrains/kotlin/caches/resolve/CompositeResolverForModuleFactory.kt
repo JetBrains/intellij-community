@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.incremental.components.LookupTracker
+import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolver
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolverImpl
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
@@ -112,7 +113,13 @@ class CompositeResolverForModuleFactory(
             yieldAll(getExtensionsProvidersIfAny(moduleInfo, moduleContext, trace))
         }.toList()
 
-        return ResolverForModule(CompositePackageFragmentProvider(packageFragmentProviders), container)
+        return ResolverForModule(
+            CompositePackageFragmentProvider(
+                packageFragmentProviders,
+                "CompositeProvider@CompositeResolver for $moduleDescriptor"
+            ),
+            container
+        )
     }
 
     private fun getCommonProvidersIfAny(
@@ -210,6 +217,7 @@ class CompositeResolverForModuleFactory(
         configureStandardResolveComponents()
         useInstance(moduleContentScope)
         useInstance(declarationProviderFactory)
+        useInstance(InlineConstTracker.DoNothing)
 
         // Probably, should be in StandardResolveComponents, but
         useInstance(VirtualFileFinderFactory.getInstance(moduleContext.project).create(moduleContentScope))
@@ -272,8 +280,8 @@ class CompositePlatformConfigurator(private val componentConfigurators: List<Pla
             }
         }
 
-    override fun configureModuleComponents(container: StorageComponentContainer, languageVersionSettings: LanguageVersionSettings) {
-        componentConfigurators.forEach { it.configureModuleComponents(container, languageVersionSettings) }
+    override fun configureModuleComponents(container: StorageComponentContainer) {
+        componentConfigurators.forEach { it.configureModuleComponents(container) }
     }
 
     override fun configureModuleDependentCheckers(container: StorageComponentContainer) {

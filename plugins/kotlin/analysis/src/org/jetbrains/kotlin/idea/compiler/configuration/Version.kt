@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 
 fun LanguageVersion.coerceAtMostVersion(version: Version): LanguageVersion {
@@ -18,8 +17,6 @@ class Version(val major: Int, val minor: Int, val patch: Int) {
     val languageVersion: LanguageVersion
         get() = lookup(major, minor)
 
-    private constructor(languageVersion: LanguageVersion): this(languageVersion.major, languageVersion.minor, 0)
-
     fun coerceAtMost(languageVersion: LanguageVersion): LanguageVersion {
         // 1.4.30+ and 1.5.30+ have full support of next language version
         val version = if (major == 1 && (minor == 4 || minor == 5) && patch >= 30) {
@@ -32,7 +29,7 @@ class Version(val major: Int, val minor: Int, val patch: Int) {
 
     companion object {
         private val VERSION_REGEX = Regex("(\\d+)\\.(\\d+)(\\.(\\d+).*)?")
-        val CURRENT_VERSION = parse(KotlinCompilerVersion.VERSION)
+        private val CURRENT_VERSION = parse(KotlinPluginLayout.instance.standaloneCompilerVersion)
 
         internal fun lookup(major: Int, minor: Int) =
             LanguageVersion.values().firstOrNull { it.major == major && it.minor == minor } ?: LanguageVersion.LATEST_STABLE

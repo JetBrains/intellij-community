@@ -4,6 +4,8 @@ package com.intellij.sh.run;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,25 +34,32 @@ final class ShRunFileAction extends DumbAwareAction {
     if (virtualFile == null) return;
 
     Project project = file.getProject();
-    RunnerAndConfigurationSettings configurationSettings =
-      RunManager.getInstance(project).createConfiguration(file.getName(), ShConfigurationType.class);
-    ShRunConfiguration runConfiguration = (ShRunConfiguration)configurationSettings.getConfiguration();
-    runConfiguration.setScriptPath(virtualFile.getPath());
-    runConfiguration.setExecuteScriptFile(true);
-    runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
-    if (file instanceof ShFile) {
-      @NlsSafe String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
-      String shebang = ShShebangParserUtil.getShebangExecutable((ShFile)file);
-      if (shebang != null) {
-        Pair<String, String> result = parseInterpreterAndOptions(shebang);
-        runConfiguration.setInterpreterPath(result.first);
-        runConfiguration.setInterpreterOptions(result.second);
-      } else {
-        runConfiguration.setInterpreterPath(defaultShell);
+    ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace());
+    ShRunConfigurationProducer configProducer = RunConfigurationProducer.getInstance(ShRunConfigurationProducer.class);
+    RunnerAndConfigurationSettings configurationSettings = configProducer.findExistingConfiguration(context);
+    ShRunConfiguration runConfiguration;
+    if (configurationSettings == null) {
+      configurationSettings = RunManager.getInstance(project).createConfiguration(file.getName(), ShConfigurationType.class);
+      runConfiguration = (ShRunConfiguration)configurationSettings.getConfiguration();
+      runConfiguration.setScriptPath(virtualFile.getPath());
+      runConfiguration.setExecuteScriptFile(true);
+      runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
+      if (file instanceof ShFile) {
+        @NlsSafe String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
+        String shebang = ShShebangParserUtil.getShebangExecutable((ShFile)file);
+        if (shebang != null) {
+          Pair<String, String> result = parseInterpreterAndOptions(shebang);
+          runConfiguration.setInterpreterPath(result.first);
+          runConfiguration.setInterpreterOptions(result.second);
+        } else {
+          runConfiguration.setInterpreterPath(defaultShell);
+        }
       }
-    }
-    else {
-      runConfiguration.setInterpreterPath("");
+      else {
+        runConfiguration.setInterpreterPath("");
+      }
+    } else {
+      runConfiguration = (ShRunConfiguration)configurationSettings.getConfiguration();
     }
 
     ExecutionEnvironmentBuilder builder =

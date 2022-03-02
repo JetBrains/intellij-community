@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
@@ -89,17 +89,20 @@ public final class ActionUtil {
     return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
   }
 
+  /** @deprecated Use {@link #performDumbAwareUpdate(AnAction, AnActionEvent, boolean)} instead */
+  @Deprecated(forRemoval = true)
+  public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+    return performDumbAwareUpdate(action, e, beforeActionPerformed);
+  }
+
   /**
-   * @param action action
-   * @param e action event
-   * @param beforeActionPerformed whether to call
-   * {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}
-   * or
-   * {@link AnAction#update(AnActionEvent)}
+   * Calls {@link AnAction#update(AnActionEvent)} or {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}
+   * depending on {@code beforeActionPerformed} value with all the required extra logic around it.
+   *
    * @return true if update tried to access indices in dumb mode
    */
-  public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
-    final Presentation presentation = e.getPresentation();
+  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+    Presentation presentation = e.getPresentation();
     if (LightEdit.owns(e.getProject()) && !LightEdit.isActionCompatible(action)) {
       presentation.setEnabledAndVisible(false);
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false);
@@ -108,19 +111,16 @@ public final class ActionUtil {
     }
 
     Boolean wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
-    final boolean dumbMode = isDumbMode(e.getProject());
+    boolean dumbMode = isDumbMode(e.getProject());
     if (wasEnabledBefore != null && !dumbMode) {
       presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null);
       presentation.setEnabled(wasEnabledBefore.booleanValue());
       presentation.setVisible(true);
     }
-    final boolean enabledBeforeUpdate = presentation.isEnabled();
-
-    boolean allowed = (!dumbMode || action.isDumbAware()) &&
-                      (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
+    boolean enabledBeforeUpdate = presentation.isEnabled();
+    boolean allowed = !dumbMode || action.isDumbAware();
 
     action.applyTextOverride(e);
-
     try {
       Runnable runnable = () -> {
         e.setInjectedContext(action.isInInjectedContext());
@@ -166,15 +166,6 @@ public final class ActionUtil {
   }
 
   /**
-   * @deprecated use {@link #performDumbAwareUpdate(boolean, AnAction, AnActionEvent, boolean)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
-    return performDumbAwareUpdate(false, action, e, beforeActionPerformed);
-  }
-
-  /**
    * Show a cancellable modal progress running the given computation under read action with the same {@link DumbService#isAlternativeResolveEnabled()}
    * as the caller. To be used in actions which need to perform potentially long-running computations synchronously without freezing UI.
    * @throws ProcessCanceledException if the user has canceled the progress. If the action can be safely stopped at this point
@@ -213,7 +204,7 @@ public final class ActionUtil {
     if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
     }
-    performDumbAwareUpdate(false, action, e, true);
+    performDumbAwareUpdate(action, e, true);
 
     if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {
       if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
@@ -461,7 +452,7 @@ public final class ActionUtil {
   }
 
   public static @Nullable ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
-    return KeymapUtil.getMnemonicAsShortcut(action.getTemplatePresentation().getMnemonic());
+    return KeymapUtil.getShortcutsForMnemonicCode(action.getTemplatePresentation().getMnemonic());
   }
 
   @ApiStatus.Experimental

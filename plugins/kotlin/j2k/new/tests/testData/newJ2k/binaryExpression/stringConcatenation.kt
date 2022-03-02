@@ -1,4 +1,3 @@
-// ERROR: The character literal does not conform to the expected type Int
 internal object Foo {
     private val s: String? = null
     private val i: Int? = null
@@ -19,7 +18,7 @@ internal object Foo {
         println((1 + 3 + 4).toString() + "5")
         println("5" + 1 + 3 + 4)
         println('c'.toString() + "5")
-        println(('c' + 'd').toString() + "5") // TODO: fix KTIJ-8532
+        println(('c'.code + 'd'.code).toString() + "5")
         println("5" + 'c')
         println("5" + 'c' + 'd')
         println(c.toString() + "s")

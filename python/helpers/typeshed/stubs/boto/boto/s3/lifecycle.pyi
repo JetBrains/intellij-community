@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 class Rule:
     id: Any
@@ -33,7 +33,7 @@ class Transition:
     def __init__(self, days: Any | None = ..., date: Any | None = ..., storage_class: Any | None = ...) -> None: ...
     def to_xml(self): ...
 
-class Transitions(List[Transition]):
+class Transitions(list[Transition]):
     transition_properties: int
     current_transition_property: int
     temp_days: Any
@@ -51,7 +51,7 @@ class Transitions(List[Transition]):
     @property
     def storage_class(self): ...
 
-class Lifecycle(List[Rule]):
+class Lifecycle(list[Rule]):
     def startElement(self, name, attrs, connection): ...
     def endElement(self, name, value, connection): ...
     def to_xml(self): ...

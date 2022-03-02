@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
       values = Collections.emptyList();
     }
 
-    return new AnnotationExprent(new VarType(className).value, names, values);
+    return new AnnotationExprent(new VarType(className).getValue(), names, values);
   }
 
   public static Exprent parseAnnotationElement(DataInputStream data, ConstantPool pool) throws IOException {
@@ -68,16 +68,16 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
         String className = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         String constName = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         FieldDescriptor descr = FieldDescriptor.parseDescriptor(className);
-        return new FieldExprent(constName, descr.type.value, true, null, descr, null);
+        return new FieldExprent(constName, descr.type.getValue(), true, null, descr, null);
 
       case 'c': // class
         String descriptor = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         VarType type = FieldDescriptor.parseDescriptor(descriptor).type;
 
         String value;
-        switch (type.type) {
+        switch (type.getType()) {
           case CodeConstants.TYPE_OBJECT:
-            value = type.value;
+            value = type.getValue();
             break;
           case CodeConstants.TYPE_BYTE:
             value = byte.class.getName();
@@ -107,7 +107,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
             value = void.class.getName();
             break;
           default:
-            throw new RuntimeException("invalid class type: " + type.type);
+            throw new RuntimeException("invalid class type: " + type.getType());
         }
         return new ConstExprent(VarType.VARTYPE_CLASS, value, null);
 
@@ -127,7 +127,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
         }
         else {
           VarType elementType = elements.get(0).getExprType();
-          newType = new VarType(elementType.type, 1, elementType.value);
+          newType = new VarType(elementType.getType(), 1, elementType.getValue());
         }
 
         NewExprent newExpr = new NewExprent(newType, Collections.emptyList(), null);

@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.execution.ui
 
 import com.intellij.execution.ExecutionBundle
@@ -14,7 +16,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
-import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -23,17 +24,20 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.AppUIUtil
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
@@ -41,6 +45,7 @@ import com.intellij.ui.docking.DockManager
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -97,6 +102,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     @JvmStatic
     fun getExecutorByContent(content: Content): Executor? = content.getUserData(EXECUTOR_KEY)
+
+    @JvmStatic
+    fun getLiveIndicator(icon: Icon?): Icon = when (ExperimentalUI.isNewUI()) {
+      true -> IconManager.getInstance().withIconBadge(icon ?: EmptyIcon.ICON_13, JBUI.CurrentTheme.IconBadge.SUCCESS)
+      else -> ExecutionUtil.getLiveIndicator(icon)
+    }
   }
 
   // must be called on EDT
@@ -137,18 +148,23 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     }
 
     toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
-      id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
+      id = toolWindowId,
+      icon = executor.toolWindowIcon,
+      stripeTitle = executor::getActionName
+    ))
+    toolWindow.setToHideOnEmptyContent(true)
     if (DefaultRunExecutor.EXECUTOR_ID == executor.id) {
-      UIUtil.putClientProperty(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
+      toolWindow.component.putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
     }
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       override fun getData(dataId: String): Any? {
-        if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) return executor.helpId
+        if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) {
+          return executor.helpId
+        }
         return null
       }
     })
-    ContentManagerWatcher.watchContentManager(toolWindow, contentManager)
     initToolWindow(executor, toolWindowId, executor.toolWindowIcon, contentManager)
     return contentManager
   }
@@ -262,8 +278,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       val processAdapter = object : ProcessAdapter() {
         override fun startNotified(event: ProcessEvent) {
           UIUtil.invokeLaterIfNeeded {
-            content.icon = ExecutionUtil.getLiveIndicator(descriptor.icon)
-            toolWindow!!.setIcon(ExecutionUtil.getLiveIndicator(toolWindowIdToBaseIcon[toolWindowId]))
+            content.icon = getLiveIndicator(descriptor.icon)
+            var icon = toolWindowIdToBaseIcon[toolWindowId]
+            if (ExperimentalUI.isNewUI() && icon is ScalableIcon) {
+              icon = IconLoader.loadCustomVersionOrScale(icon, 20f)
+            }
+            toolWindow!!.setIcon(getLiveIndicator(icon))
           }
         }
 
@@ -398,8 +418,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     getToolWindowManager().getToolWindow(id)?.apply {
       stripeTitle = executor.actionName
-      setIcon(executor.icon)
-      toolWindowIdToBaseIcon[id] = executor.icon
+      setIcon(executor.toolWindowIcon)
+      toolWindowIdToBaseIcon[id] = executor.toolWindowIcon
     }
   }
 
@@ -518,7 +538,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   private fun setToolWindowIcon(alive: Boolean, toolWindow: ToolWindow) {
     val base = toolWindowIdToBaseIcon.get(toolWindow.id)
-    toolWindow.setIcon(if (alive) ExecutionUtil.getLiveIndicator(base) else ObjectUtils.notNull(base, EmptyIcon.ICON_13))
+    toolWindow.setIcon(if (alive) getLiveIndicator(base) else ObjectUtils.notNull(base, EmptyIcon.ICON_13))
   }
 
   private inner class CloseListener(content: Content, private val myExecutor: Executor) : BaseContentCloseListener(content, project) {
@@ -648,7 +668,7 @@ private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentD
 private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {
   val content = ContentFactory.SERVICE.getInstance().createContent(descriptor.component, descriptor.displayName, true)
   content.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
-  if (Registry.`is`("start.run.configurations.pinned", false)) content.isPinned = true
+  if (AdvancedSettings.getBoolean("start.run.configurations.pinned")) content.isPinned = true
   content.icon = descriptor.icon ?: executor.toolWindowIcon
   return content
 }

@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 
@@ -234,7 +233,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final PsiFile scriptFile = containingClass.getContainingFile();
     LOG.assertTrue(scriptFile instanceof GroovyFile);
     LOG.assertTrue(((GroovyFile)scriptFile).isScript());
-    final List<GrStatement> exitPoints = ControlFlowUtils.collectReturns(scriptFile);
+    final List<GrStatement> exitPoints = ControlFlowUtils.collectReturns((GroovyFile)scriptFile);
 
 
     ExpressionContext extended = context.extend();

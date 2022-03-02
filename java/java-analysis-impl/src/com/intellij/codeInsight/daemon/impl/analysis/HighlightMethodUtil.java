@@ -427,6 +427,7 @@ public final class HighlightMethodUtil {
           highlightInfo = createIncompatibleCallHighlightInfo(holder, list, candidateInfo);
 
           if (highlightInfo != null) {
+            HighlightFixUtil.registerQualifyMethodCallFix(resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, list, highlightInfo);
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(highlightInfo, candidateInfo, methodCall);
             registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidateInfo, resolvedMethod, highlightInfo);
@@ -490,7 +491,7 @@ public final class HighlightMethodUtil {
     String methodName = HighlightMessageUtil.getSymbolName(resolvedMethod, substitutor);
     PsiClass parent = resolvedMethod.getContainingClass();
     String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, substitutor);
-    String argTypes = buildArgTypesList(list);
+    String argTypes = buildArgTypesList(list, false);
     String description = JavaErrorBundle.message("wrong.method.arguments", methodName, containerName, argTypes);
     String toolTip = null;
     List<PsiExpression> mismatchedExpressions;
@@ -784,7 +785,7 @@ public final class HighlightMethodUtil {
       description = qualifier != null ? JavaErrorBundle
         .message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
                                       : JavaErrorBundle
-                      .message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list));
+                      .message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
       highlightInfoType = HighlightInfoType.WRONG_REF;
     }
     else {
@@ -857,7 +858,7 @@ public final class HighlightMethodUtil {
       if (element != null && !resolveResult.isStaticsScopeCorrect()) {
         return null;
       }
-      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
+      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list, true);
       description = JavaErrorBundle.message("cannot.resolve.method", methodName);
       if (candidates.length == 0) {
         return null;
@@ -1527,6 +1528,10 @@ public final class HighlightMethodUtil {
     String description = null;
     boolean appendImplementMethodFix = true;
     Collection<HierarchicalMethodSignature> visibleSignatures = aClass.getVisibleSignatures();
+    if (aClass.getImplementsListTypes().length == 0 && aClass.getExtendsListTypes().length == 0) {
+      // optimization: do not analyze unrelated methods from Object: in case of no inheritance they can't conflict
+      return null;
+    }
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
 
     Ultimate:
@@ -1708,7 +1713,7 @@ public final class HighlightMethodUtil {
     if (constructors.length == 0) {
       if (!list.isEmpty()) {
         String constructorName = aClass.getName();
-        String argTypes = buildArgTypesList(list);
+        String argTypes = buildArgTypesList(list, false);
         String description = JavaErrorBundle.message("wrong.constructor.arguments", constructorName + "()", argTypes);
         String tooltip = createMismatchedArgumentsHtmlTooltip(list, null, PsiParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).description(description).escapedToolTip(tooltip).navigationShift(+1).create();
@@ -1768,7 +1773,7 @@ public final class HighlightMethodUtil {
 
       if (constructor == null) {
         String name = aClass.getName();
-        name += buildArgTypesList(list);
+        name += buildArgTypesList(list, true);
         String description = JavaErrorBundle.message("cannot.resolve.constructor", name);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(elementToHighlight).descriptionAndTooltip(description).create();
@@ -1889,14 +1894,14 @@ public final class HighlightMethodUtil {
   }
 
   @NotNull
-  private static String buildArgTypesList(@NotNull PsiExpressionList list) {
+  private static String buildArgTypesList(@NotNull PsiExpressionList list, boolean shortNames) {
     StringBuilder builder = new StringBuilder();
     builder.append("(");
     PsiExpression[] args = list.getExpressions();
     for (int i = 0; i < args.length; i++) {
       if (i > 0) builder.append(", ");
       PsiType argType = args[i].getType();
-      builder.append(argType != null ? JavaHighlightUtil.formatType(argType) : "?");
+      builder.append(argType != null ? (shortNames ? argType.getPresentableText() : JavaHighlightUtil.formatType(argType)) : "?");
     }
     builder.append(")");
     return builder.toString();

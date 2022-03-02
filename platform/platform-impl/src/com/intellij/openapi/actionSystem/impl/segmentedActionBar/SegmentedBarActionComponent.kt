@@ -11,7 +11,6 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Paint
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -28,7 +27,6 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
     fun paintButtonDecorations(g: Graphics2D, c: JComponent, paint: Paint): Boolean {
       return SegmentedActionToolbarComponent.paintButtonDecorations(g, c, paint)
     }
-    val TOOLBAR_GAP = 4
   }
 
   enum class ControlBarProperty {
@@ -66,7 +64,6 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
       }
       bar.targetComponent = bar
       add(bar.component, BorderLayout.CENTER)
-      border = BorderFactory.createEmptyBorder(0, TOOLBAR_GAP, 0, TOOLBAR_GAP)
     }
   }
 

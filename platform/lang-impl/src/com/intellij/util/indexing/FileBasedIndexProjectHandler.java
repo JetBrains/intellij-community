@@ -108,7 +108,7 @@ public final class FileBasedIndexProjectHandler {
         String fileSetName = "Refreshed files";
         IndexUpdateRunner.FileSet fileSet = new IndexUpdateRunner.FileSet(project, fileSetName, files);
         try {
-          indexUpdateRunner.indexFiles(project, Collections.singletonList(fileSet), indicator);
+          indexUpdateRunner.indexFiles(project, Collections.singletonList(fileSet), indicator, projectIndexingHistory);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           projectIndexingHistory.setWasInterrupted(true);

@@ -17,11 +17,11 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.textMatching.PrefixMatchingUtil
+import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.util.Time
 
-abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<out SearchEverywhereContributor<*>>)
-  : SearchEverywhereElementFeaturesProvider(supportedTab) {
+abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: Class<out SearchEverywhereContributor<*>>)
+  : SearchEverywhereElementFeaturesProvider(*supportedTab) {
   companion object {
     internal const val IS_SAME_MODULE_DATA_KEY = "isSameModule"
     internal const val PACKAGE_DISTANCE_DATA_KEY = "packageDistance"
@@ -82,7 +82,11 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
   }
   else {
     ReadAction.compute<VirtualFile?, Nothing> {
-      item.containingFile?.virtualFile
+      try {
+        item.containingFile?.virtualFile
+      } catch (ex: PsiInvalidElementAccessException) {
+        null
+      }
     }
   }
 
@@ -185,9 +189,12 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
 
     val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<String?, String?>, Nothing> {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
-      val foundFileDirectory = if (file.isDirectory) file else file.parent
 
-      val openedFilePackageName = openedFile.parent?.let { fileIndex.getPackageNameByDirectory(it) }
+      // Parents of some files may still not be directories
+      val openedFileDirectory = openedFile.parent?.takeIf { it.isDirectory }
+      val foundFileDirectory = if (file.isDirectory) file else file.parent?.takeIf { it.isDirectory }
+
+      val openedFilePackageName = openedFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
       val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
 
       Pair(openedFilePackageName, foundFilePackageName)
@@ -242,26 +249,6 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
         IS_EXCLUDED_DATA_KEY to fileIndex.isExcluded(file),
       )
     }
-  }
-
-  protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Map<String, Any> {
-    fun changeToCamelCase(str: String): String {
-      val words = str.split('_')
-      val firstWord = words.first()
-      if (words.size == 1) {
-        return firstWord
-      } else {
-        return firstWord.plus(
-          words.subList(1, words.size)
-            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
-        )
-      }
-    }
-
-    val features = mutableMapOf<String, Any>()
-    PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
-    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
-      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
   }
 
   protected data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)

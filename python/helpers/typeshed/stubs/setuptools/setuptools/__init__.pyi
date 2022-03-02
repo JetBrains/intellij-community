@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Iterable, Mapping
 from distutils.core import Command as _Command
-from typing import Any, Type
+from typing import Any
 
 from setuptools._deprecation_warning import SetuptoolsDeprecationWarning as SetuptoolsDeprecationWarning
 from setuptools.depends import Require as Require
@@ -36,14 +36,14 @@ def setup(
     scripts: list[str] = ...,
     ext_modules: list[Extension] = ...,
     classifiers: list[str] = ...,
-    distclass: Type[Distribution] = ...,
+    distclass: type[Distribution] = ...,
     script_name: str = ...,
     script_args: list[str] = ...,
     options: Mapping[str, Any] = ...,
     license: str = ...,
     keywords: list[str] | str = ...,
     platforms: list[str] | str = ...,
-    cmdclass: Mapping[str, Type[Command]] = ...,
+    cmdclass: Mapping[str, type[Command]] = ...,
     data_files: list[tuple[str, list[str]]] = ...,
     package_dir: Mapping[str, str] = ...,
     obsoletes: list[str] = ...,

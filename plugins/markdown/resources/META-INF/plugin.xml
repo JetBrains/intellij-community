@@ -160,6 +160,7 @@ Includes the following features:</p>
 
     <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager"
                         serviceImplementation="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager$Impl"/>
+    <search.optionContributor implementation="org.intellij.plugins.markdown.extensions.ExtensionSearchableOptionContributor"/>
 
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="org.intellij.plugins.markdown.ui.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
@@ -178,7 +179,8 @@ Includes the following features:</p>
                          key="markdown.settings.name"
                          instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
 
-    <applicationConfigurable parentId="Settings.Markdown" instance="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurable"/>
+    <applicationConfigurable parentId="Settings.Markdown"
+                             provider="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurableProvider"/>
 
     <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
@@ -225,6 +227,7 @@ Includes the following features:</p>
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
+    <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
 
     <!--Formatting-->
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
@@ -266,7 +269,7 @@ Includes the following features:</p>
                  defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2021.12-3.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
     <registryKey key="markdown.mermaid.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-8.13.6-4.js"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-8.14.0-5.js"
                  description="Link which Markdown plugin will use to download Mermaid.js library"/>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"
@@ -289,18 +292,22 @@ Includes the following features:</p>
                  defaultValue="false"
                  description="Temporarily disable the action of the import docs from google"/>
 
+    <registryKey key="markdown.google.accounts.enable"
+                 defaultValue="false"
+                 description="Temporarily disabling the use of Google accounts, as the functionality is available only for internal users"/>
+
     <registryKey key="markdown.tables.editing.support.enable"
                  defaultValue="true"
                  description="Enables Markdown tables editing support"/>
 
     <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
-                 defaultValue="false"
-                 description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview). Any opened Markdown editors should be manually reopened."/>
-    <registryKey key="markdown.experimental.boundary.precise.scroll.multiplier"
-                 defaultValue="8"
-                 description="A multiplier used in translation of awt scroll event to the browser one"/>
+                 defaultValue="true"
+                 description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
+                              Any opened Markdown editors should be manually reopened.
+                              Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
+    <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
   </extensions>
 
   <applicationListeners>
@@ -433,43 +440,51 @@ Includes the following features:</p>
       </group>
     </group>
 
-    <group id="Markdown.Toolbar.Floating" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+    <!--Old id org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction-->
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
+            id="Markdown.Styling.CreateLink"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Link">
+      <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
+    </action>
+
+    <group id="Markdown.Toolbar.Floating">
+      <action id="Markdown.Styling.SetHeaderLevel"
+              class="org.intellij.plugins.markdown.ui.actions.styling.SetHeaderLevelAction"/>
+      <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Bold">
         <keyboard-shortcut first-keystroke="control B" keymap="$default"/>
       </action>
-
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Italic">
         <keyboard-shortcut first-keystroke="control I" keymap="$default"/>
       </action>
-
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Strike_through">
         <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
       </action>
-
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Code_span">
         <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
-
+      <reference id="Markdown.Styling.CreateLink"/>
       <separator/>
-
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
-              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_down">
-      </action>
-
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
-              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_up">
-      </action>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.CreateOrChangeListPopupAction"
+              id="Markdown.Styling.CreateOrChangeList"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>
     </group>
+
+
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_down"/>
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_up"/>
 
     <!--
       This group is supposed to override default generate popup.
@@ -478,11 +493,7 @@ Includes the following features:</p>
     <group id="Markdown.InsertGroup">
       <!-- Also add all insert actions into default generate popup -->
       <add-to-group group-id="GenerateGroup" anchor="last"/>
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
-              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Link">
-        <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
-      </action>
+      <reference id="Markdown.Styling.CreateLink"/>
       <action id="Markdown.InsertEmptyTable"
               class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table"/>

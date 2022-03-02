@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.gradle.checkFiles
-import org.jetbrains.kotlin.test.TagsTestDataUtil
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
 import java.io.File

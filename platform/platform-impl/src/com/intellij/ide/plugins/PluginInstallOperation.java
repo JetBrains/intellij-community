@@ -57,8 +57,7 @@ public final class PluginInstallOperation {
   /**
    * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginEnabler, ProgressIndicator)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 @NotNull List<? extends IdeaPluginDescriptor> customReposPlugins,
                                 @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
@@ -200,6 +199,7 @@ public final class PluginInstallOperation {
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
+        LOG.warn(e);
         NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Plugin Error");
         Notifications.Bus.notify(group.createNotification(title, pluginNode.getName() + ": " + e.getMessage(), NotificationType.ERROR));
         return false;

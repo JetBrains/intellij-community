@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -538,6 +538,11 @@ public final class ResolveUtil {
         //method1 is more general than method2
         return t1.isAssignableFrom(t2);
       }
+    }
+
+    if (GdkMethodUtil.isMacro(method1)) {
+      // macro expansion happens during compilation, so macros always win overload resolution
+      return false;
     }
 
     return true;

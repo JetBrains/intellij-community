@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.application
 
-import com.intellij.openapi.progress.withJob
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asContextElement
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
@@ -18,7 +17,7 @@ import kotlin.coroutines.CoroutineContext
  * @see readActionBlocking
  */
 suspend fun <T> readAction(action: () -> T): T {
-  return constrainedReadAction(constraints = emptyList(), action)
+  return constrainedReadAction(action = action)
 }
 
 /**
@@ -29,7 +28,7 @@ suspend fun <T> readAction(action: () -> T): T {
  * @see smartReadActionBlocking
  */
 suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
-  return constrainedReadAction(constraints = listOf(ReadConstraint.inSmartMode(project)), action)
+  return constrainedReadAction(ReadConstraint.inSmartMode(project), action = action)
 }
 
 /**
@@ -47,8 +46,8 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  *
  * @see constrainedReadActionBlocking
  */
-suspend fun <T> constrainedReadAction(constraints: List<ReadConstraint>, action: () -> T): T {
-  return readActionSupport().executeReadAction(constraints, blocking = false, action)
+suspend fun <T> constrainedReadAction(vararg constraints: ReadConstraint, action: () -> T): T {
+  return readActionSupport().executeReadAction(constraints.toList(), blocking = false, action)
 }
 
 /**
@@ -59,7 +58,7 @@ suspend fun <T> constrainedReadAction(constraints: List<ReadConstraint>, action:
  * @see readAction
  */
 suspend fun <T> readActionBlocking(action: () -> T): T {
-  return constrainedReadActionBlocking(constraints = emptyList(), action)
+  return constrainedReadActionBlocking(action = action)
 }
 
 /**
@@ -70,7 +69,7 @@ suspend fun <T> readActionBlocking(action: () -> T): T {
  * @see smartReadAction
  */
 suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
-  return constrainedReadActionBlocking(constraints = listOf(ReadConstraint.inSmartMode(project)), action)
+  return constrainedReadActionBlocking(ReadConstraint.inSmartMode(project), action = action)
 }
 
 /**
@@ -87,51 +86,20 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
  *
  * @see constrainedReadAction
  */
-suspend fun <T> constrainedReadActionBlocking(constraints: List<ReadConstraint>, action: () -> T): T {
-  return readActionSupport().executeReadAction(constraints, blocking = true, action)
+suspend fun <T> constrainedReadActionBlocking(vararg constraints: ReadConstraint, action: () -> T): T {
+  return readActionSupport().executeReadAction(constraints.toList(), blocking = true, action)
 }
 
 private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
 
 /**
- * Suspends until dumb mode is over and runs [action] in Smart Mode on EDT
+ * The code [without][ModalityState.any] context modality state must only perform pure UI operations,
+ * it must not access any PSI, VFS, project model, or indexes.
  */
-suspend fun <T> smartAction(project: Project, action: (ctx: CoroutineContext) -> T): T {
-  return suspendCancellableCoroutine { continuation ->
-    DumbService.getInstance(project).runWhenSmart(SmartRunnable({ ctx -> withJob(ctx.job) { action(ctx) } }, continuation))
-  }
-}
-
-private class SmartRunnable<T>(action: (ctx: CoroutineContext) -> T, continuation: CancellableContinuation<T>) : Runnable {
-
-  @Volatile
-  private var myAction: ((ctx: CoroutineContext) -> T)? = action
-
-  @Volatile
-  private var myContinuation: CancellableContinuation<T>? = continuation
-
-  init {
-    continuation.invokeOnCancellation {
-      myAction = null
-      myContinuation = null // it's not possible to unschedule the runnable, so we make it do nothing instead
-    }
-  }
-
-  override fun run() {
-    val continuation = myContinuation ?: return
-    val action = myAction ?: return
-    continuation.resumeWith(kotlin.runCatching { action.invoke(continuation.context) })
-  }
-}
-
 fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
 
 /**
- * Please don't use unless you know what you are doing.
- * The code in this context can only perform pure UI operations,
- * it must not access any PSI, VFS, project model, or indexes.
- *
- * @return a special coroutine dispatcher that's equivalent to using no modality state at all in `invokeLater`.
+ * @return UI dispatcher which dispatches within the [context modality state][asContextElement].
  */
 @Suppress("unused") // unused receiver
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()

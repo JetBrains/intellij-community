@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 interface I {
     fun foo(p: Int)
 }

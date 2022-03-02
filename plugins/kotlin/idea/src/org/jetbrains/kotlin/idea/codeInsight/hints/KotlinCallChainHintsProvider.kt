@@ -12,7 +12,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
 import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.types.isError
 class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
 
     override val group: InlayGroup
-        get() = InlayGroup.METHOD_CHAINS_GROUP
+        get() = InlayGroup.TYPES_GROUP
 
     override val previewText: String
         get() = """
@@ -43,6 +43,9 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
                     ?.forEach { println(it) }
             }
         """.trimIndent()
+
+    override val description: String
+        get() = KotlinBundle.message("inlay.kotlin.call.chains.hints")
 
     override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
         KotlinAbstractHintsProvider.createKtFile(project, document, fileType)

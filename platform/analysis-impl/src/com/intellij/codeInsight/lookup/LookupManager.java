@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,13 +58,11 @@ public abstract class LookupManager {
   public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   /** @deprecated Use {@link LookupManagerListener#TOPIC} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable);
 
   /** @deprecated Use {@link LookupManagerListener#TOPIC} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   public abstract @NotNull Lookup createLookup(@NotNull Editor editor, LookupElement @NotNull [] items, final @NotNull String prefix, @NotNull LookupArranger arranger);

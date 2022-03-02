@@ -2,13 +2,12 @@
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -24,7 +23,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class StatisticsStateCollectorsScheduler extends PreloadingActivity {
+final class StatisticsStateCollectorsScheduler implements ApplicationInitializedListener {
   public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 10;
   public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
   private static final int LOG_APPLICATION_STATE_SMART_MODE_DELAY_IN_SECONDS = 60;
@@ -35,7 +34,7 @@ final class StatisticsStateCollectorsScheduler extends PreloadingActivity {
   private final AtomicBoolean allowExecution = new AtomicBoolean(true);
 
   @Override
-  public void preload(@NotNull ProgressIndicator indicator) {
+  public void componentsInitialized() {
     runStatesLogging();
   }
 

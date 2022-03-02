@@ -129,9 +129,4 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
       doNotAddFoldingAgain = true;
     }
   }
-
-  @Override
-  public void onFoldProcessingEnd() {
-
-  }
 }

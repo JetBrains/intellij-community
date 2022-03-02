@@ -13,9 +13,9 @@ import com.intellij.util.containers.ContainerUtil
  * calculates all markers and intervals from scratch for each document update
  */
 class NonIncrementalCellLines private constructor(private val document: Document,
-                                                  private val intervalsGenerator: (Document) -> List<NotebookCellLines.Interval>) : NotebookCellLines {
+                                                  private val intervalsGenerator: IntervalsGenerator) : NotebookCellLines {
 
-  override var intervals: List<NotebookCellLines.Interval> = intervalsGenerator(document)
+  override var intervals: List<NotebookCellLines.Interval> = intervalsGenerator.makeIntervals(document)
     private set
 
   private val documentListener = createDocumentListener()
@@ -39,6 +39,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
                             newCells: List<NotebookCellLines.Interval>,
                             newAffectedCells: List<NotebookCellLines.Interval>) {
     if (oldCells == newCells) {
+      intervalListeners.multicaster.segmentChanged(emptyList(), oldAffectedCells, emptyList(), newAffectedCells)
       return
     }
 
@@ -56,7 +57,9 @@ class NonIncrementalCellLines private constructor(private val document: Document
 
     intervalListeners.multicaster.segmentChanged(
       trimmed(oldCells, trimAtBegin, trimAtEnd),
-      trimmed(newCells, trimAtBegin, trimAtEnd)
+      oldAffectedCells,
+      trimmed(newCells, trimAtBegin, trimAtEnd),
+      newAffectedCells,
     )
   }
 
@@ -70,7 +73,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
     override fun documentChanged(event: DocumentEvent) {
       ApplicationManager.getApplication().assertWriteAccessAllowed()
       val oldIntervals = intervals
-      intervals = intervalsGenerator(document)
+      intervals = intervalsGenerator.makeIntervals(document)
 
       val newAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.newLength))
       notifyChanged(oldIntervals, oldAffectedCells, intervals, newAffectedCells)
@@ -80,10 +83,13 @@ class NonIncrementalCellLines private constructor(private val document: Document
   companion object {
     private val map = ContainerUtil.createConcurrentWeakMap<Document, NotebookCellLines>()
 
-    fun get(document: Document, intervalsGenerator: (Document) -> List<NotebookCellLines.Interval>): NotebookCellLines =
+    fun get(document: Document, intervalsGenerator: IntervalsGenerator): NotebookCellLines =
       map.computeIfAbsent(document) {
         NonIncrementalCellLines(document, intervalsGenerator)
       }
+
+    fun getOrNull(document: Document): NotebookCellLines? =
+      map[document]
   }
 }
 

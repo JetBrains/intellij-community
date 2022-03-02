@@ -17,7 +17,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.*;
+import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -39,10 +42,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.lang.reflect.Field;
@@ -256,7 +256,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     @Override
     public String toString() {
-      return fileType +" from '"+(pluginDescriptor==WILD_CARD ? "*" : pluginDescriptor)+"'";
+      return fileType + " from '" + (pluginDescriptor==WILD_CARD ? "*" : PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId())
+                                                                         ? "CORE" : pluginDescriptor) + "'";
     }
 
     // equals to all FileTypeWithDescriptor with this fileType
@@ -347,31 +348,37 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @TestOnly
   void clearStandardFileTypesBeforeTest() {
-    myPendingAssociations.clear();
-    myPendingFileTypes.clear();
-    for (Map.Entry<String, StandardFileType> entry : myStandardFileTypes.entrySet()) {
-      String name = entry.getKey();
-      StandardFileType stdType = entry.getValue();
-      FileType type = stdType.fileType;
-      FileTypeWithDescriptor ftd = stdType.getDescriptor();
-      for (FileNameMatcher matcher : stdType.matchers) {
-        removeAssociation(ftd, matcher, false);
+    myPendingInitializationLock.writeLock().lock();
+    try {
+      myPendingAssociations.clear();
+      myPendingFileTypes.clear();
+      for (Map.Entry<String, StandardFileType> entry : myStandardFileTypes.entrySet()) {
+        String name = entry.getKey();
+        StandardFileType stdType = entry.getValue();
+        FileType type = stdType.fileType;
+        FileTypeWithDescriptor ftd = stdType.getDescriptor();
+        for (FileNameMatcher matcher : stdType.matchers) {
+          removeAssociation(ftd, matcher, false);
+        }
+        mySchemeManager.removeScheme(name);
+        removeFromDuplicates(type, ftd.pluginDescriptor);
       }
-      mySchemeManager.removeScheme(name);
-      removeFromDuplicates(type, ftd.pluginDescriptor);
-    }
-    myStandardFileTypes.clear();
-    for (FileTypeWithDescriptor ftd : myDefaultTypes) {
-      String name = ftd.getName();
-      FileType defaultType = ftd.fileType;
-      List<FileNameMatcher> matchers = getAssociations(defaultType);
-      for (FileNameMatcher matcher : matchers) {
-        removeAssociation(ftd, matcher, false);
+      myStandardFileTypes.clear();
+      for (FileTypeWithDescriptor ftd : myDefaultTypes) {
+        String name = ftd.getName();
+        FileType defaultType = ftd.fileType;
+        List<FileNameMatcher> matchers = getAssociations(defaultType);
+        for (FileNameMatcher matcher : matchers) {
+          removeAssociation(ftd, matcher, false);
+        }
+        mySchemeManager.removeScheme(name);
+        removeFromDuplicates(defaultType, ftd.pluginDescriptor);
       }
-      mySchemeManager.removeScheme(name);
-      removeFromDuplicates(defaultType, ftd.pluginDescriptor);
+      myDefaultTypes.clear();
     }
-    myDefaultTypes.clear();
+    finally {
+      myPendingInitializationLock.writeLock().unlock();
+    }
   }
 
   private void removeFromDuplicates(@NotNull FileType type, @NotNull PluginDescriptor pluginDescriptor) {
@@ -695,7 +702,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return PlainTextFileType.INSTANCE.equals(requestedFileType);
     }
     if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      FileType detected = myDetectionService.getOrDetectFromContent(file, null, false);
+      FileType detected = myDetectionService.getOrDetectFromContent(file, null, fileType);
       if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
         return DetectedByContentFileType.INSTANCE.equals(requestedFileType);
       }
@@ -718,21 +725,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      FileType detected = detectFileTypeByFile(file, content);
-      if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
-        return DetectedByContentFileType.INSTANCE;
-      }
-      return detected;
+      fileType = internalContinueToDetectFileTypeByFile(file, content, fileType);
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
   }
 
-  protected @NotNull FileType detectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
+  // do not use
+  @ApiStatus.Internal
+  protected @NotNull FileType internalContinueToDetectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) {
     // should run detectors for 'DetectedByContentFileType' type and if failed, return text
-    return myDetectionService.getOrDetectFromContent(file, content);
+    return myDetectionService.getOrDetectFromContent(file, content, fileTypeByName);
   }
 
   // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
+  @SuppressWarnings("DanglingJavadoc")
   @Override
   public @Nullable FileType getByFile(@NotNull VirtualFile file) {
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
@@ -758,6 +764,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
         return specialType;
       }
+    }
+
+    /**
+      {@link DetectedByContentFileType} is a special SpecialFileType (and not actual {@link FileTypeIdentifiableByVirtualFile} at that):
+      Its {@link DetectedByContentFileType#isMyFileType(VirtualFile)} has to be called after all other {@link FileTypeIdentifiableByVirtualFile#isMyFileType(VirtualFile)}
+      to avoid (mis)detecting some empty special file as DetectedByContentFileType
+     */
+    if (DetectedByContentFileType.isMyFileType(file)) {
+      return DetectedByContentFileType.INSTANCE;
     }
 
     FileType fileType = getFileTypeByFileName(file.getNameSequence());

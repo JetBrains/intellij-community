@@ -10,15 +10,17 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actions.*
 import com.intellij.openapi.ide.CopyPasteManager
+import training.featuresSuggester.SuggestingUtils
+import training.featuresSuggester.SuggestingUtils.asString
+import training.featuresSuggester.SuggestingUtils.getSelection
+import training.featuresSuggester.SuggestingUtils.handleAction
 import training.featuresSuggester.actions.*
-import training.featuresSuggester.asString
-import training.featuresSuggester.getSelection
-import training.featuresSuggester.handleAction
-import training.featuresSuggester.isActionsProcessingEnabled
+import training.featuresSuggester.settings.FeatureSuggesterSettings
 
 class EditorActionsListener : AnActionListener {
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    if (!isActionsProcessingEnabled || !action.isSupportedAction()) return
+    FeatureSuggesterSettings.instance().updateWorkingDays()
+    if (!SuggestingUtils.isActionsProcessingEnabled || !action.isSupportedAction()) return
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val project = event.getData(CommonDataKeys.PROJECT) ?: return
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
@@ -120,7 +122,7 @@ class EditorActionsListener : AnActionListener {
   }
 
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-    if (!isActionsProcessingEnabled || !action.isSupportedAction()) return
+    if (!SuggestingUtils.isActionsProcessingEnabled || !action.isSupportedAction()) return
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val project = event.getData(CommonDataKeys.PROJECT) ?: return
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return

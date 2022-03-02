@@ -5,13 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 
 /** @deprecated use {@link StringBuilder} instead */
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public final class StringBuilderSpinAllocator {
   private StringBuilderSpinAllocator() { }
 
   /** @deprecated use {@code new StringBuilder()} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static StringBuilder alloc() {
     Logger.getInstance(StringBuilderSpinAllocator.class).warn(new Exception("Use 'new StringBuilder()' instead"));
@@ -19,7 +19,7 @@ public final class StringBuilderSpinAllocator {
   }
 
   /** @deprecated just delete the call */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void dispose(StringBuilder instance) {
     Logger.getInstance(StringBuilderSpinAllocator.class).warn(new Exception("Do not use"));

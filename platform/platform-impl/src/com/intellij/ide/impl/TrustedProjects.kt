@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("TrustedProjects")
 @file:ApiStatus.Experimental
 
@@ -26,6 +26,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Consumer
 import kotlin.io.path.isDirectory
+import kotlin.io.path.pathString
 
 /**
  * Shows the "Trust this project?" dialog, if the user wasn't asked yet if they trust this project,
@@ -53,14 +54,17 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boo
   }
 }
 
-private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
-  projectDir,
-  IdeBundle.message("untrusted.project.open.dialog.title", projectDir.fileName),
-  IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
-  IdeBundle.message("untrusted.project.dialog.trust.button"),
-  IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-  IdeBundle.message("untrusted.project.open.dialog.cancel.button")
-)
+private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice {
+  val fileName = projectDir.fileName ?: projectDir.pathString
+  return confirmOpeningUntrustedProject(
+    projectDir,
+    IdeBundle.message("untrusted.project.open.dialog.title", fileName),
+    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
+    IdeBundle.message("untrusted.project.dialog.trust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+  )
+}
 
 private fun confirmOpeningUntrustedProject(
   projectDir: Path,
@@ -74,11 +78,12 @@ private fun confirmOpeningUntrustedProject(
     return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.TRUST_AND_OPEN
   }
 
+  val doNotAskOption = projectDir.parent?.let { createDoNotAskOptionForLocation(it) }
   val choice = MessageDialogBuilder.Message(title, message)
     .buttons(trustButtonText, distrustButtonText, cancelButtonText)
     .defaultButton(trustButtonText)
     .focusedButton(distrustButtonText)
-    .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent))
+    .doNotAsk(doNotAskOption)
     .asWarning()
     .help(TRUSTED_PROJECTS_HELP_TOPIC)
     .show()

@@ -38,6 +38,10 @@ public final class SimpleStringPersistentEnumerator implements DataEnumerator<St
     myForwardState = pair.getSecond();
   }
 
+  public @NotNull Path getFile() {
+    return myFile;
+  }
+
   @Override
   public synchronized int enumerate(@Nullable String value) {
     int id = myInvertedState.getInt(value);
@@ -58,6 +62,10 @@ public final class SimpleStringPersistentEnumerator implements DataEnumerator<St
 
   public synchronized @NotNull Collection<String> entries() {
     return new ArrayList<>(myInvertedState.keySet());
+  }
+
+  public synchronized @NotNull Map<String, Integer> getInvertedState() {
+    return Collections.unmodifiableMap(myInvertedState);
   }
 
   @Override

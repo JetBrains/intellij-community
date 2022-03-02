@@ -5,17 +5,14 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.*;
@@ -45,7 +42,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
   @NonInjectable
   public UsageViewContentManagerImpl(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager) {
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.build(
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(
       ToolWindowId.FIND,
       builder -> {
         builder.stripeTitle = UIBundle.messagePointer("tool.window.name.find");
@@ -53,7 +50,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         builder.shouldBeAvailable = false;
         return Unit.INSTANCE;
       }
-    ));
+    );
     toolWindow.setHelpId(UsageViewImpl.HELP_ID);
     toolWindow.setToHideOnEmptyContent(true);
 
@@ -99,7 +96,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
     DefaultActionGroup gearActions = DefaultActionGroup.createPopupGroup(IdeBundle.messagePointer("group.view.options"));
     gearActions.addAll(toggleAutoscrollAction, toggleSortAction, toggleNewTabAction);
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
+    toolWindow.setAdditionalGearActions(gearActions);
 
     myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerListener() {
@@ -108,7 +105,6 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         event.getContent().release();
       }
     });
-    ContentManagerWatcher.watchContentManager(toolWindow, myFindContentManager);
   }
 
   @NotNull

@@ -135,12 +135,16 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
                 withWriteLock { closeStorage() }
             }
         })
+    }
 
-        connection.subscribe(IsUpToDateCheckListener.TOPIC, IsUpToDateCheckListener { isUpToDate ->
-            if (isUpToDate && KotlinCompilerReferenceIndexStorage.hasIndex(project)) {
-                markAsUpToDate()
-            }
-        })
+    class KCRIIsUpToDateConsumer : IsUpToDateCheckConsumer {
+        override fun isApplicable(project: Project): Boolean = KotlinCompilerReferenceIndexStorage.hasIndex(project)
+        override fun isUpToDate(project: Project, isUpToDate: Boolean) {
+            if (!isUpToDate) return
+
+            val service = getInstanceIfEnabled(project) ?: return
+            executeOnBuildThread(service::markAsUpToDate)
+        }
     }
 
     private val projectIfNotDisposed: Project? get() = project.takeUnless(Project::isDisposed)
@@ -349,7 +353,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         }.orEmpty()
 
     private val compilerReferenceServiceBase: CompilerReferenceServiceBase<*>?
-        get() = CompilerReferenceService.getInstanceIfEnabled(project)?.safeAs()
+        get() = CompilerReferenceService.getInstanceIfEnabled(project)?.safeAs<CompilerReferenceServiceBase<*>>()
 
     private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
     private fun isInsideLibraryScope(): Boolean =

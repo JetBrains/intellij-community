@@ -48,7 +48,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
     row {
       text("If needed text color of Row.text() can be changed to comment color with the following code:<br>" +
            "foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND<br>" +
-           "It differs from Row.comment() because comments can use smaller font size on macOS")
+           "It differs from Row.comment() because comments can use smaller font size on macOS and Linux")
         .applyToComponent { foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND }
     }
 

@@ -1,6 +1,6 @@
 package sealed;
 
-sealed interface RootWithClassInner {
-  final class Inner implements RootWithClassInner {
+sealed class RootWithClassInner {
+  static final class Inner extends RootWithClassInner {
   }
 }

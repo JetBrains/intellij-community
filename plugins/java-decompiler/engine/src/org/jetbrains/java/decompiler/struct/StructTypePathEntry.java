@@ -21,12 +21,17 @@ public class StructTypePathEntry {
   }
 
   /**
-   * @return {@link Kind#opcode} of this type path entry.
+   * @return {@link Kind#id} of this type path entry.
    */
   public int getTypePathEntryKind() {
     return typePathEntryKind;
   }
 
+  /**
+   * The type_path_kind.
+   *
+   * @see <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html">The JVM class File Format Spec</a> Table 4.7.20.2 A
+   */
   public enum Kind {
     /**
      *  Type path entry is an array type contained in e.g. <code>@I String[] @G [] @H []</code>
@@ -48,14 +53,14 @@ public class StructTypePathEntry {
      */
     TYPE(3);
 
-    private final int opcode;
+    private final int id;
 
-    Kind(int opcode) {
-      this.opcode = opcode;
+    Kind(int id) {
+      this.id = id;
     }
 
-    public int getOpcode() {
-      return opcode;
+    public int getId() {
+      return id;
     }
   }
 }

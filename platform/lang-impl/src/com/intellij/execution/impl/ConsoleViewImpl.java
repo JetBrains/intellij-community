@@ -59,6 +59,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
@@ -445,7 +446,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     getComponent(); // Make sure component exists
     component.setOpaque(false);
     component.setVisible(true);
-    myJLayeredPane.add(component, 0);
+    myJLayeredPane.add(component, null, 0);
   }
 
   @NotNull
@@ -593,7 +594,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
-    text = StringUtil.convertLineSeparators(text, keepSlashR);
+    text = Strings.convertLineSeparators(text, keepSlashR);
     synchronized (LOCK) {
       boolean hasEditor = getEditor() != null;
       myDeferredBuffer.print(text, contentType, info);
@@ -1117,8 +1118,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   /**
    * @deprecated use {@link ClearConsoleAction} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static class ClearAllAction extends ClearConsoleAction {
   }
 

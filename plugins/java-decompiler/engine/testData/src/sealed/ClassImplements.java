@@ -1,4 +1,4 @@
 package sealed;
 
-final class FinalImplements implements RootWithInterfaceOuter {
+final class ClassImplements implements RootWithInterfaceOuter {
 }

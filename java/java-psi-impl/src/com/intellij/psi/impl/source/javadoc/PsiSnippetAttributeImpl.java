@@ -2,7 +2,9 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiSnippetAttribute;
@@ -19,6 +21,17 @@ public class PsiSnippetAttributeImpl extends CompositePsiElement implements PsiS
   @Override
   public @NotNull PsiElement getNameIdentifier() {
     return Objects.requireNonNull(findPsiChildByType(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME));
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    super.accept(visitor);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitSnippetAttribute(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

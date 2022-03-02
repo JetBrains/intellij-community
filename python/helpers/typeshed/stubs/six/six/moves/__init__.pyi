@@ -20,7 +20,6 @@ from sys import intern as intern
 # import tkinter.scrolledtext as tkinter_scrolledtext
 # import tkinter.simpledialog as tkinter_simpledialog
 # import tkinter.tix as tkinter_tix
-# import copyreg as copyreg
 # import dbm.gnu as dbm_gnu
 from . import (
     BaseHTTPServer as BaseHTTPServer,
@@ -30,6 +29,7 @@ from . import (
     _thread as _thread,
     builtins as builtins,
     configparser as configparser,
+    copyreg as copyreg,
     cPickle as cPickle,
     email_mime_base as email_mime_base,
     email_mime_multipart as email_mime_multipart,

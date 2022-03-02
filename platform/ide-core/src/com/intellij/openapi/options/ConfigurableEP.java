@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.xmlb.annotations.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,8 +232,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   /**
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Attribute("implementation")
   public String implementationClass;
 
@@ -454,11 +452,6 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     @Override
     protected boolean canCreateElement() {
       return true;
-    }
-
-    @Override
-    protected Class<?> getType() {
-      return null;
     }
   }
 }

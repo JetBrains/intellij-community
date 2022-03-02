@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -60,7 +60,11 @@ class LightClassesClasspathSortingTest07 : KotlinLightCodeInsightFixtureTestCase
         val psiClass = JavaPsiFacade.getInstance(project).findClass(fqName, ResolveScopeManager.getElementResolveScope(file))
 
         assertNotNull(psiClass, "Can't find class for $fqName")
-        assert(psiClass is KtLightClassForSourceDeclaration || psiClass is KtLightClassForFacade) { "Should be an explicit light class, but was $fqName ${psiClass::class.java}" }
-        assert(psiClass !is KtLightClassForDecompiledDeclaration) { "Should not be decompiled light class: $fqName ${psiClass::class.java}" }
+        assert(psiClass is KtLightClassForSourceDeclaration || psiClass is KtLightClassForFacade) {
+            "Should be an explicit light class, but was $fqName ${psiClass::class.java}"
+        }
+        assert(psiClass !is KtLightClassForDecompiledDeclaration) {
+            "Should not be decompiled light class: $fqName ${psiClass::class.java}"
+        }
     }
 }

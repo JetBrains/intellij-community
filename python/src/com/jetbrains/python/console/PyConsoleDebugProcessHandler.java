@@ -32,11 +32,6 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler implements Posi
       }
 
       @Override
-      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-
-      }
-
-      @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         PyConsoleDebugProcessHandler.this.notifyTextAvailable(event.getText(), outputType);
       }

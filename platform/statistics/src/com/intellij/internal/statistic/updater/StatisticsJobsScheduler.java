@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.StatisticsNotificationManager;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogMigration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
@@ -12,17 +13,15 @@ import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploade
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @InternalIgnoreDependencyViolation
-final class StatisticsJobsScheduler extends PreloadingActivity {
+final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 1;
   private static final int CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN = 3;
@@ -34,7 +33,7 @@ final class StatisticsJobsScheduler extends PreloadingActivity {
   }
 
   @Override
-  public void preload(@NotNull ProgressIndicator indicator) {
+  public void componentsInitialized() {
     StatisticsNotificationManager notificationManager = ApplicationManager.getApplication().getService(StatisticsNotificationManager.class);
     if (notificationManager != null) {
       notificationManager.showNotificationIfNeeded();

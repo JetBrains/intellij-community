@@ -1,5 +1,7 @@
 package com.intellij.grazie.ide.language
 
+import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionBean
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
@@ -35,6 +37,20 @@ class ReportingTest : BasePlatformTestCase() {
     val message = "Use a instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
     assertEquals(info.description, message)
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Incorrect:.*Correct:.*")))
+  }
+
+  fun `test changed range highlighting`() {
+    myFixture.enableInspections(GrazieInspection::class.java)
+    myFixture.configureByText("a.txt", "Hello there! You <TYPO>are <caret>best</TYPO> person!")
+    myFixture.checkHighlighting()
+
+    val editor = myFixture.editor
+
+    val intention = myFixture.findSingleIntention("are the best")
+    val highlighted = assertOneElement((intention as CustomizableIntentionAction).getRangesToHighlight(editor, myFixture.file))
+
+    val text = editor.document.text
+    assertEquals(TextRange(text.indexOf("are"), text.indexOf(" person")), highlighted.rangeInFile)
   }
 
   fun `test quick fix presentation`() {
@@ -108,7 +124,13 @@ class ReportingTest : BasePlatformTestCase() {
   }
 
   private fun isAuxiliaryIntention(text: String) =
-    text.contains("Edit inspection") || text.contains("Run inspection") || text.contains("Disable inspection") || text.contains("Fix all")
+    text.contains("Edit inspection")
+    || text.contains("Run inspection")
+    || text.contains("Disable inspection")
+    || text.contains("Fix all")
+    || text == CodeInsightBundle.message("assign.intention.shortcut")
+    || text == CodeInsightBundle.message("edit.intention.shortcut")
+    || text == CodeInsightBundle.message("remove.intention.shortcut")
 
   private fun mockProblem(text: TextContent, range: TextRange, corrections: List<String>, customFixes: List<LocalQuickFix>): TextProblem {
     val rule = object : Rule("something.something", "something", "something") {

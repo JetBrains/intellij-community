@@ -13,7 +13,7 @@ public class MockParameterInfoUIContext implements ParameterInfoUIContext {
     private final PsiElement myParameterOwner;
     private final int myCurrentParameterIndex;
 
-    private final ArrayList<String> result = new ArrayList<String>();
+    private final ArrayList<String> result = new ArrayList<>();
 
     MockParameterInfoUIContext(PsiElement parameterOwner, int currentParameterIndex) {
         myParameterOwner = parameterOwner;
@@ -100,6 +100,9 @@ public class MockParameterInfoUIContext implements ParameterInfoUIContext {
     }
     
     public String getResultText() {
+        if (result.isEmpty()) {
+            return "NO_CANDIDATES";
+        }
         StringBuilder stringBuilder = new StringBuilder();
         Collections.sort(result);
         for (String s : result) {

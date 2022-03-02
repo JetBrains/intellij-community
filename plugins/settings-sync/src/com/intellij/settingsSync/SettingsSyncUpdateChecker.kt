@@ -16,7 +16,4 @@ internal class SettingsSyncUpdateChecker(private val application: Application,
     return updateResult
   }
 
-  fun isUpdateNeeded(): Boolean {
-    return remoteCommunicator.isUpdateNeeded()
-  }
 }

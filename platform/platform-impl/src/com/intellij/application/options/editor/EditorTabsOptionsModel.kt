@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -9,7 +9,7 @@ import com.intellij.ui.layout.*
 internal const val EDITOR_TABS_OPTIONS_ID = "editor.preferences.tabs"
 
 private val ui: UISettingsState
-  get() = UISettings.instance.state
+  get() = UISettings.getInstance().state
 
 internal val showDirectoryForNonUniqueFilenames
   get() = CheckboxDescriptor(message("checkbox.show.directory.for.non.unique.files"), ui::showDirectoryForNonUniqueFilenames)

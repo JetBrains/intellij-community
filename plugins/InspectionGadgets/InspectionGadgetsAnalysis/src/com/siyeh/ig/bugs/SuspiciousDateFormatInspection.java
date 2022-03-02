@@ -187,7 +187,9 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static class IncorrectDateFormatFix implements LocalQuickFix {
+    @SafeFieldForPreview
     private final Token myToken;
+    @SafeFieldForPreview
     private final TextRange myRange;
 
     IncorrectDateFormatFix(Token token, TextRange range) {

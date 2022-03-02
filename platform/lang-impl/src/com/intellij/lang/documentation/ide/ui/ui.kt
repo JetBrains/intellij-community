@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.documentation.CornerAwareScrollPaneLayout
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.DocumentationData
+import com.intellij.lang.documentation.LinkData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -92,14 +94,13 @@ internal fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, c
   return layeredPane
 }
 
-@Suppress("TestOnlyProblems")
-internal fun linkChunk(presentableText: @Nls String, data: DocumentationData): HtmlChunk? {
-  val externalUrl = data.externalUrl
+internal fun linkChunk(presentableText: @Nls String, links: LinkData): HtmlChunk? {
+  val externalUrl = links.externalUrl
   if (externalUrl != null) {
     return DocumentationManager.getLink(presentableText, externalUrl)
            ?: DocumentationManager.getGenericExternalDocumentationLink(presentableText)
   }
-  val linkUrls = data.linkUrls
+  val linkUrls = links.linkUrls
   if (linkUrls.isNotEmpty()) {
     return DocumentationManager.getExternalLinks(presentableText, linkUrls)
            ?: DocumentationManager.getGenericExternalDocumentationLink(presentableText)

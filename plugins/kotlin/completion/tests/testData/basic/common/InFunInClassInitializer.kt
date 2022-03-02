@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val some = 12
 class Some(someParam : Int) {
   init {
@@ -8,4 +9,4 @@ class Some(someParam : Int) {
 }
 
 // EXIST: some, someInternal, someParam
-
+// FIR_COMPARISON

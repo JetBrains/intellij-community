@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -22,15 +22,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.Log4jBasedLogger;
+import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.ExceptionUtil;
-import org.apache.log4j.DefaultThrowableRenderer;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerRepository;
-import org.apache.log4j.spi.ThrowableRenderer;
-import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +34,10 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public final class IdeaLogger extends Log4jBasedLogger {
+public final class IdeaLogger extends JulLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
   // when not null, holds the first of errors that occurred
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;
@@ -110,36 +107,14 @@ public final class IdeaLogger extends Log4jBasedLogger {
     return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
   };
 
-  private static final ThrowableRenderer ourThrowableRenderer = t -> {
-    String[] lines = DefaultThrowableRenderer.render(t);
-    int maxStackSize = 1024;
-    int maxExtraSize = 256;
-    if (lines.length > maxStackSize + maxExtraSize) {
-      String[] res = new String[maxStackSize + maxExtraSize + 1];
-      System.arraycopy(lines, 0, res, 0, maxStackSize);
-      res[maxStackSize] = "\t...";
-      System.arraycopy(lines, lines.length - maxExtraSize, res, maxStackSize + 1, maxExtraSize);
-      return res;
-    }
-    return lines;
-  };
-
-  public static @NotNull ThrowableRenderer getThrowableRenderer() {
-    return ourThrowableRenderer;
-  }
-
   IdeaLogger(@NotNull Logger logger) {
     super(logger);
-    LoggerRepository repository = myLogger.getLoggerRepository();
-    if (repository instanceof ThrowableRendererSupport) {
-      ((ThrowableRendererSupport)repository).setThrowableRenderer(ourThrowableRenderer);
-    }
   }
 
   @Override
   public void error(Object message) {
     if (message instanceof IdeaLoggingEvent) {
-      myLogger.error(message);
+       myLogger.log(Level.SEVERE, "{0}", message);
     }
     else {
       super.error(message);
@@ -149,7 +124,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
   @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     if (isTooFrequentException(t)) return;
-    myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
+    myLogger.log(Level.SEVERE, "{0}", LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
     if (t != null) {
       reportToFus(t);
     }
@@ -171,21 +146,9 @@ public final class IdeaLogger extends Log4jBasedLogger {
     }
   }
 
-  @Override
-  public void debug(@Nullable Throwable t) {
-    if (isTooFrequentException(t)) return;
-    super.debug(t);
-  }
-
-  @Override
-  public void debug(String message, @Nullable Throwable t) {
-    if (isTooFrequentException(t)) return;
-    super.debug(message, t);
-  }
-
   private void doLogError(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
-      myLogger.error(message, ensureNotControlFlow(t));
+      myLogger.log(Level.SEVERE, message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
     }
 
@@ -200,23 +163,23 @@ public final class IdeaLogger extends Log4jBasedLogger {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
-    myLogger.error(message + detailString, t);
+    myLogger.log(Level.SEVERE, message + detailString, t);
   }
 
   private void logErrorHeader(@Nullable Throwable t) {
-    myLogger.error(ourApplicationInfoProvider.get());
+    myLogger.severe(ourApplicationInfoProvider.get());
 
     Properties properties = System.getProperties();
-    myLogger.error("JDK: " + properties.getProperty("java.version", "unknown") +
-                   "; VM: " + properties.getProperty("java.vm.name", "unknown") +
-                   "; Vendor: " + properties.getProperty("java.vendor", "unknown"));
-    myLogger.error("OS: " + properties.getProperty("os.name", "unknown"));
+    myLogger.severe("JDK: " + properties.getProperty("java.version", "unknown") +
+                    "; VM: " + properties.getProperty("java.vm.name", "unknown") +
+                    "; Vendor: " + properties.getProperty("java.vendor", "unknown"));
+    myLogger.severe("OS: " + properties.getProperty("os.name", "unknown"));
 
     // do not use getInstance here - container maybe already disposed
     if (t != null && PluginManagerCore.arePluginsInitialized()) {
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t));
       if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
-        myLogger.error("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
+         myLogger.severe("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
       }
     }
 
@@ -224,14 +187,14 @@ public final class IdeaLogger extends Log4jBasedLogger {
     if (application != null && application.isComponentCreated() && !application.isDisposed()) {
       String lastPreformedActionId = ourLastActionId;
       if (lastPreformedActionId != null) {
-        myLogger.error("Last Action: " + lastPreformedActionId);
+         myLogger.severe("Last Action: " + lastPreformedActionId);
       }
 
       CommandProcessor commandProcessor = application.getServiceIfCreated(CommandProcessor.class);
       if (commandProcessor != null) {
         String currentCommandName = commandProcessor.getCurrentCommandName();
         if (currentCommandName != null) {
-          myLogger.error("Current Command: " + currentCommandName);
+           myLogger.severe("Current Command: " + currentCommandName);
         }
       }
     }

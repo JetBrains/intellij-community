@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
@@ -6,10 +6,10 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.tasks.ArchiveKt
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
@@ -44,9 +44,9 @@ final class KotlinPluginBuilder {
     "kotlin.compiler-plugins.allopen.common",
     "kotlin.compiler-plugins.allopen.gradle",
     "kotlin.compiler-plugins.allopen.maven",
-    "kotlin.compiler-plugins.annotation-based-compiler-support.common",
-    "kotlin.compiler-plugins.annotation-based-compiler-support.gradle",
-    "kotlin.compiler-plugins.annotation-based-compiler-support.maven",
+    "kotlin.compiler-plugins.compiler-plugin-support.common",
+    "kotlin.compiler-plugins.compiler-plugin-support.gradle",
+    "kotlin.compiler-plugins.compiler-plugin-support.maven",
     "kotlin.compiler-plugins.kapt",
     "kotlin.compiler-plugins.kotlinx-serialization.common",
     "kotlin.compiler-plugins.kotlinx-serialization.gradle",
@@ -57,7 +57,11 @@ final class KotlinPluginBuilder {
     "kotlin.compiler-plugins.sam-with-receiver.common",
     "kotlin.compiler-plugins.sam-with-receiver.gradle",
     "kotlin.compiler-plugins.sam-with-receiver.maven",
+    "kotlin.compiler-plugins.lombok.gradle",
+    "kotlin.compiler-plugins.lombok.maven",
     "kotlin.compiler-plugins.scripting",
+    "kotlin.compiler-plugins.android-extensions-stubs",
+    "kotlin.jvm-run-configurations",
     "kotlin.maven",
     "kotlin.gradle.gradle-tooling",
     "kotlin.gradle.gradle-idea",
@@ -88,13 +92,16 @@ final class KotlinPluginBuilder {
     "kotlin.project-wizard.idea",
     "kotlin.project-wizard.maven",
     "kotlin.project-wizard.gradle",
+    "kotlin.project-wizard-compose",
     "kotlin.jvm-debugger.util",
     "kotlin.jvm-debugger.core",
     "kotlin.jvm-debugger.evaluation",
     "kotlin.jvm-debugger.coroutines",
     "kotlin.jvm-debugger.sequence",
     "kotlin.jvm-debugger.eval4j",
+    "kotlin.uast.uast-kotlin-base",
     "kotlin.uast.uast-kotlin",
+    "kotlin.uast.uast-kotlin-idea-base",
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
     "kotlin.project-model",
@@ -103,17 +110,22 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
+    "kotlin-script-runtime",
+    "kotlinc.kotlin-scripting-compiler-impl",
+    "kotlinc.kotlin-scripting-common",
+    "kotlinc.kotlin-scripting-jvm",
+    "kotlinc.kotlin-gradle-statistics"
+  )
+
+  private static final List<String> COMPILER_PLUGINS = List.of(
     "kotlinc.android-extensions-compiler-plugin",
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
     "kotlinc.sam-with-receiver-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
-    "kotlinc.kotlin-script-util",
-    "kotlin-script-runtime",
-    "kotlinc.kotlin-scripting-compiler",
-    "kotlinc.kotlin-gradle-statistics",
-    )
+    "kotlinc.lombok-compiler-plugin"
+  )
 
   KotlinPluginBuilder(String communityHome, String home, ProductProperties properties) {
     this.communityHome = communityHome
@@ -148,31 +160,34 @@ final class KotlinPluginBuilder {
       for (String library : LIBRARIES) {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
+      for (String library : COMPILER_PLUGINS) {
+        withProjectLibrary(library, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      }
 
       if (isUltimate && kind == KotlinPluginKind.IJ) {
         withModule("kotlin-ultimate.common-native")
+        withModule("kotlin-ultimate.common-for-kotlin")
         //noinspection SpellCheckingInspection
-        withModule("kotlin-ultimate.common-noncidr-native")
         withModule("kotlin-ultimate.javascript.debugger")
         withModule("kotlin-ultimate.javascript.nodeJs")
         withModule("kotlin-ultimate.ultimate-plugin")
         withModule("kotlin-ultimate.ultimate-native")
       }
 
-      String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
-      withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      String kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
+      withProjectLibrary(kotlincKotlinCompilerCommon, ProjectLibraryData.PackMode.STANDALONE_MERGED)
 
       withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
         @Override
         void accept(ModuleOutputPatcher patcher, BuildContext context) {
-          JpsLibrary library = context.project.libraryCollection.findLibrary(kotlincKotlinCompiler)
+          JpsLibrary library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)
           List<File> jars = library.getFiles(JpsOrderRootType.COMPILED)
           if (jars.size() != 1) {
-            throw new IllegalStateException("$kotlincKotlinCompiler is expected to have only one jar")
+            throw new IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
           }
 
-          BuildHelper.getInstance(context).consumeDataByPrefix
-            .invokeWithArguments(jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
+          ArchiveKt.consumeDataByPrefix(
+            jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
               @Override
               void accept(String name, byte[] data) {
                 patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
@@ -181,8 +196,12 @@ final class KotlinPluginBuilder {
         }
       })
 
+      withProjectLibrary("kotlinc.kotlin-compiler-fe10")
+      withProjectLibrary("kotlinc.kotlin-compiler-ir")
+
       withModule("kotlin.common", "kotlin-common.jar")
 
+      withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       withProjectLibrary("kotlinc.kotlin-reflect", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-jps-common")
@@ -190,7 +209,6 @@ final class KotlinPluginBuilder {
       withProjectLibrary("javaslang", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("kotlinx-collections-immutable-jvm", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("javax-inject", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlinx-coroutines-jdk8", "kotlinc-lib.jar")
       withProjectLibrary("completion-ranking-kotlin")
 
       withGeneratedResources(new BiConsumer<Path, BuildContext>() {
@@ -224,27 +242,15 @@ final class KotlinPluginBuilder {
             context.messages.info("version: $version")
             return version
           }
-          else {
-            // 221-1.5.10-release-IJ916
-            Matcher kotlinPluginIJBuildNumber = Pattern.compile("^(\\d+)-([.\\d]+)-(\\w+)-([A-Z]+)(\\d+)\$").matcher(buildNumber)
-
-            if (kotlinPluginIJBuildNumber.matches()) {
-              String major = kotlinPluginIJBuildNumber.group(1)
-              String kotlinVersion = kotlinPluginIJBuildNumber.group(2)
-              String type = kotlinPluginIJBuildNumber.group(3)
-              //String buildKind = kotlinPluginIJBuildNumber.group(4)
-              String minor = kotlinPluginIJBuildNumber.group(5)
-
-              String version = "${major}-${kotlinVersion}-${type}-${kind}${minor}"
-              context.messages.info("Kotlin plugin IJ version: $version")
-              return version
-            }
-
-            // Build number isn't recognized as IJ build number then it means build
-            // number must be plain Kotlin plugin version which we can use directly
-            context.messages.info("buildNumber version: $buildNumber")
-            return buildNumber
+          // Build number isn't recognized as IJ build number then it means build
+          // number must be plain Kotlin plugin version (build configuration in kt-branch)
+          if (buildNumber.contains("IJ")) {
+            String version = buildNumber.replace("IJ", kind.toString())
+            context.messages.info("Kotlin plugin IJ version: $version")
+            return version
           }
+
+          throw new IllegalStateException("Can't parse build number: $buildNumber")
         }
       })
 
@@ -277,7 +283,8 @@ final class KotlinPluginBuilder {
               )
               break
             case KotlinPluginKind.AC_KMM:
-              text = replace(text, "<plugin id=\"com.intellij.java\"/>", "<plugin id=\"com.intellij.kotlinNative.platformDeps\"/>")
+              text = replace(text, "<plugin id=\"com.intellij.java\"/>", "<plugin id=\"com.intellij.kotlinNative.platformDeps\"/>\n" +
+                                                                         "<plugin id=\"com.intellij.modules.appcode\"/>")
               break
             default:
               throw new IllegalStateException("Unknown kind = $kind")

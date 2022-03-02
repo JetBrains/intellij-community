@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.*;
@@ -6,6 +6,8 @@ import org.jetbrains.java.decompiler.struct.attr.StructCodeAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
@@ -365,6 +367,11 @@ public class StructMethod extends StructMember {
 
   public StructLocalVariableTableAttribute getLocalVariableAttr() {
     return getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+  }
+
+  @Override
+  protected Type getType() {
+    return MethodDescriptor.parseDescriptor(getDescriptor()).ret;
   }
 
   @Override

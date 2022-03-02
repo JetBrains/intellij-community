@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -12,6 +12,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.toNullableProperty
 import org.jetbrains.annotations.Nls
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
@@ -31,19 +32,19 @@ internal fun Row.tabPlacementComboBox(): Cell<ComboBox<Int>> {
 }
 
 internal fun Row.tabPlacementComboBox(model: ComboBoxModel<Int>): Cell<ComboBox<Int>> {
-  val ui = UISettings.instance.state
+  val ui = UISettings.getInstance().state
   return comboBox(model,
                   renderer = SimpleListCellRenderer.create { label, value, _ ->
                     label.text = value.asTabPlacement()
-                  }).bindItem(ui::editorTabPlacement)
+                  }).bindItem(ui::editorTabPlacement.toNullableProperty())
 }
 
 private fun asOptionDescriptor(i: Int): BooleanOptionDescription {
   return object : BooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), EDITOR_TABS_OPTIONS_ID), NotABooleanOptionDescription {
-    override fun isOptionEnabled() = UISettings.instance.state.editorTabPlacement == i
+    override fun isOptionEnabled() = UISettings.getInstance().state.editorTabPlacement == i
 
     override fun setOptionState(enabled: Boolean) {
-      val ui = UISettings.instance
+      val ui = UISettings.getInstance()
       ui.state.editorTabPlacement = next(ui.editorTabPlacement, enabled)
       ui.fireUISettingsChanged()
     }

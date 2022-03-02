@@ -31,8 +31,9 @@ public final class IOUtil {
    * if false then storages will use {@link java.nio.ByteOrder#BIG_ENDIAN}
    */
   @ApiStatus.Internal
-  public static final boolean BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER =
-    SystemProperties.getBooleanProperty(BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP, true);
+  public static boolean useNativeByteOrderForByteBuffers() {
+    return SystemProperties.getBooleanProperty(BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP, true);
+  }
 
   private static final int STRING_HEADER_SIZE = 1;
   private static final int STRING_LENGTH_THRESHOLD = 255;

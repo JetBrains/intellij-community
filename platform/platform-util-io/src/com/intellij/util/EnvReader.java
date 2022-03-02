@@ -67,48 +67,40 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     if (batchFile != null && !Files.exists(batchFile)) {
       throw new NoSuchFileException(batchFile.toString());
     }
+    final Path envDataFile = Files.createTempFile("intellij-cmd-env-data.", ".tmp"); // NON-NLS
 
-    final Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp"); // NON-NLS
-    try {
-      final List<String> callArgs = new ArrayList<>();
-      if (batchFile != null) {
-        callArgs.add("call");
-        callArgs.add(batchFile.toString());
-        if (args != null) {
-          callArgs.addAll(args);
-        }
-        callArgs.add("&&");
+    final List<String> callArgs = new ArrayList<>();
+    if (batchFile != null) {
+      callArgs.add("call");
+      callArgs.add(batchFile.toString());
+      if (args != null) {
+        callArgs.addAll(args);
       }
-
-      callArgs.add((System.getProperty("java.home") + "/bin/java").replace('/', File.separatorChar)); // NON-NLS
-      callArgs.add("-cp"); // NON-NLS
-      callArgs.add(PathManager.getJarPathForClass(ReadEnv.class));
-      callArgs.add(ReadEnv.class.getCanonicalName());
-
-      callArgs.add(envFile.toString());
-      callArgs.add("||");
-      callArgs.add("exit"); // NON-NLS
-      callArgs.add("/B"); // NON-NLS
-      callArgs.add("%ERRORLEVEL%"); // NON-NLS
-
-      final List<@NonNls String> cl = new ArrayList<>();
-      cl.add(cmdExePath);
-      cl.add("/c");
-      cl.add(prepareCallArgs(callArgs));
-      Map.Entry<String, Map<String, String>> entry =
-        runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, scriptEnvironmentProcessor, envFile);
-      return new Pair<>(entry.getKey(), entry.getValue());
+      // Scripts like `vcvarsall.bat` may write debugging logs to stdout.
+      // They would interfere with environment variables, if there was no stream redirection.
+      callArgs.add("1>&2");
+      callArgs.add("&&");
     }
-    finally {
-      try {
-        Files.delete(envFile);
-      }
-      catch (NoSuchFileException ignore) {
-      }
-      catch (IOException e) {
-        Logger.getInstance(EnvironmentUtil.class).warn("Cannot delete temporary file", e);
-      }
-    }
+
+    callArgs.add((System.getProperty("java.home") + "/bin/java").replace('/', File.separatorChar)); // NON-NLS
+    callArgs.add("-cp"); // NON-NLS
+    callArgs.add(PathManager.getJarPathForClass(ReadEnv.class));
+    callArgs.add(ReadEnv.class.getCanonicalName());
+
+    callArgs.add(">");
+    callArgs.add(envDataFile.toString());
+    callArgs.add("||");
+    callArgs.add("exit"); // NON-NLS
+    callArgs.add("/B"); // NON-NLS
+    callArgs.add("%ERRORLEVEL%"); // NON-NLS
+
+    final List<@NonNls String> cl = new ArrayList<>();
+    cl.add(cmdExePath);
+    cl.add("/c");
+    cl.add(prepareCallArgs(callArgs));
+    Map.Entry<String, Map<String, String>> entry =
+      runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, scriptEnvironmentProcessor, envDataFile);
+    return new Pair<>(entry.getKey(), entry.getValue());
   }
 
   @NotNull

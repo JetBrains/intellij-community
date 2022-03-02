@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
+import com.intellij.codeWithMe.ClientId
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.*
 import com.intellij.openapi.Disposable
@@ -46,6 +47,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   private val refreshDelayAlarm = SingleAlarm(Runnable { doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
+
   @Volatile
   private var refreshSessionId = -1L
 
@@ -115,7 +117,9 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
     val settings = GeneralSettings.getInstance()
     val idleListener = Runnable {
       if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
-        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+        ClientId.withClientId(ClientId.ownerId) {
+          (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+        }
       }
     }
 
@@ -283,7 +287,9 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   override fun refreshOpenFiles() {
     val files = ArrayList<VirtualFile>()
     processOpenedProjects { project ->
-      FileEditorManager.getInstance(project).selectedFiles.filterTo(files) { it is NewVirtualFile }
+      FileEditorManager.getInstance(project).selectedEditors
+        .flatMap { it.filesToRefresh }
+        .filterTo(files) { it is NewVirtualFile }
     }
 
     if (files.isNotEmpty()) {

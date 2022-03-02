@@ -61,6 +61,7 @@ import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
+import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -71,6 +72,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -105,6 +107,17 @@ public abstract class PythonCommandLineState extends CommandLineState {
   //TODO: DOC ParametersListUtil
   public static final String GROUP_SCRIPT = "Script";
   public static final String MODULE_PARAMETER = "-m";
+
+  /**
+   * The port number to use for a server socket. '0' means the port will be automatically allocated.
+   */
+  private static final int SERVER_SOCKET_PORT = 0;
+
+  /**
+   * The length of the backlog to use for a server socket. '0' means the length of queue will be chosen by Java Platform.
+   */
+  private static final int SERVER_SOCKET_BACKLOG = 0;
+
   private final AbstractPythonRunConfiguration<?> myConfig;
 
   private Boolean myMultiprocessDebug = null;
@@ -121,8 +134,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
-      //noinspection SocketOpenedButNotSafelyClosed
-      serverSocket = new ServerSocket(0);
+      serverSocket = new ServerSocket(SERVER_SOCKET_PORT, SERVER_SOCKET_BACKLOG, InetAddress.getLoopbackAddress());
     }
     catch (IOException e) {
       throw new ExecutionException(PyBundle.message("runcfg.error.message.failed.to.find.free.socket.port"), e);
@@ -148,7 +160,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    return execute(executor, (CommandLinePatcher[])null);
+    return execute(executor, new CommandLinePatcher[0]);
   }
 
   /**
@@ -335,8 +347,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
     PythonExecution pythonExecution = buildPythonExecution(helpersAwareTargetRequest);
     pythonExecution.setWorkingDir(getPythonExecutionWorkingDir(targetEnvironmentRequest));
-    initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), targetEnvironmentRequest);
-    customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
+    initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), helpersAwareTargetRequest);
+    customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
     PythonScripts.ensureProjectDirIsOnTarget(targetEnvironmentRequest, myConfig.getProject());
     return pythonExecution;
   }
@@ -589,9 +601,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static void initEnvironment(@NotNull Project project,
                                      @NotNull PythonExecution commandLine,
                                      @NotNull PythonRunParams runParams,
-                                     @NotNull TargetEnvironmentRequest targetEnvironmentRequest,
+                                     @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                      @Nullable PyRemotePathMapper pathMapper) {
-    initEnvironment(project, commandLine, runParams, pathMapper, false, targetEnvironmentRequest);
+    initEnvironment(project, commandLine, runParams, pathMapper, false, helpersAwareTargetRequest);
   }
 
   /**
@@ -603,7 +615,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                       @NotNull PythonRunParams runParams,
                                       @Nullable PyRemotePathMapper pathMapper,
                                       boolean isDebug,
-                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+                                      @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
     Map<String, String> env = Maps.newHashMap();
 
     if (runParams.getEnvs() != null) {
@@ -616,6 +628,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // Carefully patch environment variables
     Map<String, Function<TargetEnvironment, String>> map =
       ContainerUtil.map2Map(env.entrySet(), e -> Pair.create(e.getKey(), TargetEnvironmentFunctions.constant(e.getValue())));
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
     PythonScripts.extendEnvs(commandLine, map, targetEnvironmentRequest.getTargetPlatform());
 
     Charset charset = commandLine.getCharset();
@@ -625,7 +638,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     buildPythonPath(project, commandLine, runParams, pathMapper, isDebug, targetEnvironmentRequest);
 
-    // TODO [Targets API] [major] `PythonCommandLineEnvironmentProvider` is not applied and `PySciEnvironmentProvider` functionality is lost
+    for (PythonCommandLineTargetEnvironmentProvider envProvider : PythonCommandLineTargetEnvironmentProvider.EP_NAME.getExtensionList()) {
+      envProvider.extendTargetEnvironment(project, helpersAwareTargetRequest, commandLine, runParams);
+    }
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
@@ -660,9 +675,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
   }
 
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
+  protected void customizePythonExecutionEnvironmentVars(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
   }
 
   /**

@@ -5,12 +5,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.TracerManager
 import org.jetbrains.intellij.build.impl.TracerProviderManager
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import org.junit.AssumptionViolatedException
+import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -74,7 +77,13 @@ fun runTestBuild(homePath: String,
 
       copyDebugLog(productProperties, messages)
 
-      throw e
+      if (ExceptionUtil.causedBy(e, HttpConnectTimeoutException::class.java)) {
+        //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
+        throw AssumptionViolatedException("failed to load data for build scripts", e)
+      }
+      else {
+        throw e
+      }
     }
     finally {
       // redirect debug logging to some other file to prevent locking of output directory on Windows

@@ -1,12 +1,12 @@
 package pkg;
 
-import java.util.Calendar;
-
 class TestShadowing extends TestShadowingSuperClass {
   ext.Shadow.B instanceOfB = new ext.Shadow.B();
-  Calendar.Builder calBuilder = new Calendar.Builder();
+  java.util.Calendar.Builder calBuilder = new java.util.Calendar.Builder();
 }
 
 class TestShadowingSuperClass {
-  static class Builder { }
+  static class Calendar {
+    static class Builder { }
+  }
 }

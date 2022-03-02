@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -39,7 +38,6 @@ import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -164,11 +162,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     if (oldState != active) {
       inlay.update();
     }
-  }
-
-  @Override
-  public @Nullable ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
-    return null;
   }
 
   @Override

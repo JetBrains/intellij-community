@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.components.SegmentedButtonBorder
 import com.intellij.ui.dsl.builder.components.SegmentedButtonLook
@@ -45,7 +46,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     }
   }
 
-  var spacing = SpacingConfiguration.EMPTY
+  var spacing: SpacingConfiguration = EmptySpacingConfiguration()
     set(value) {
       field = value
       // Rebuild buttons with correct spacing

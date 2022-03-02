@@ -60,8 +60,7 @@ public final class RepositoryHelper {
    *
    * @deprecated Please use {@link #loadPlugins(String, BuildNumber, ProgressIndicator)} to get a list of {@link PluginNode}s.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                                 @Nullable ProgressIndicator indicator) throws IOException {
     return new ArrayList<>(loadPlugins(repositoryUrl, null, indicator));

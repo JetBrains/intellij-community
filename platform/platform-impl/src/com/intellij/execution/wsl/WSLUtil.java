@@ -16,7 +16,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +47,7 @@ public final class WSLUtil {
    * @deprecated use {@link WslDistributionManager#getInstalledDistributions()} instead.
    * Method will be removed after we check statistics and make sure versions before 1903 aren't used.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
     if (!isSystemCompatible()) return Collections.emptyList();
@@ -231,8 +229,7 @@ public final class WSLUtil {
    *
    * @deprecated remove after everyone migrates to the new prefix
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void fixWslPrefix(@NotNull Sdk sdk) {
     if (sdk instanceof ProjectJdkImpl) {
       var path = sdk.getHomePath();

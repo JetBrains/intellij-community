@@ -3,6 +3,7 @@ package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.ActionCenter
+import com.intellij.notification.NotificationGroup
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
@@ -23,7 +24,17 @@ import javax.swing.ListSelectionModel
 class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl> {
   private val ui: DialogPanel
   private val notificationsList = createNotificationsList()
-  private val speedSearch = ListSpeedSearch(notificationsList) { it.toString() }
+  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList) {
+    override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
+      if (super.isMatchingElement(element, pattern)) {
+        return true
+      }
+      if (element != null && pattern != null) {
+        return super.isMatchingElement(element, NotificationGroup.getGroupTitle(pattern))
+      }
+      return false
+    }
+  }
   private lateinit var useBalloonNotifications: JCheckBox
   private lateinit var useSystemNotifications: JCheckBox
   private lateinit var notificationSettings: NotificationSettingsUi

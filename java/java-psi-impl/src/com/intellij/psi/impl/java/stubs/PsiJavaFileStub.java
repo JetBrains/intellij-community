@@ -18,6 +18,6 @@ public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
 
   /** @deprecated override {@link #getPsiFactory()} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   void setPsiFactory(StubPsiFactory factory);
 }

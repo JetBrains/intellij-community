@@ -4,7 +4,9 @@ package com.intellij.psi.templateLanguages;
 import com.intellij.FileStringPropertyPusher;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
@@ -54,8 +56,12 @@ public class TemplateDataLanguagePusher implements FileStringPropertyPusher<Lang
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file, @NotNull Project project) {
-    FileType type = file.getFileType();
-    return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof TemplateLanguage;
+    FileType type = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
+    if (type != UnknownFileType.INSTANCE) {
+      return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof TemplateLanguage;
+    }
+    // might be cheaper than file type detection
+    return TemplateDataLanguageMappings.getInstance(project).getImmediateMapping(file) != null;
   }
 
   @Override

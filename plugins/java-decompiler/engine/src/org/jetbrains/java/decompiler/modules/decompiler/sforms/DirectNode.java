@@ -30,7 +30,7 @@ public class DirectNode {
   public DirectNode(@NotNull DirectNodeType type, @NotNull Statement statement, @NotNull BasicBlockStatement block) {
     this.type = type;
     this.statement = statement;
-    this.id = block.id.toString();
+    this.id = Integer.toString(block.id);
     this.block = block;
   }
 

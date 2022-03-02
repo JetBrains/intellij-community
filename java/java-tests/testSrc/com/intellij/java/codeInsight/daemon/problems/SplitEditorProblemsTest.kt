@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.registerComponentInstance
@@ -49,13 +49,13 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     val editorManager = myManager!!
     editorManager.openFileInNewWindow(childClass.containingFile.virtualFile).first[0]
     val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditorImpl).editor
-    rehighlight(parentClass, parentEditor)
+    rehighlight(parentEditor)
 
     WriteCommandAction.runWriteCommandAction(project) {
       val factory = JavaPsiFacade.getInstance(project).elementFactory
       parentClass.nameIdentifier?.replace(factory.createIdentifier("Parent"))
     }
-    rehighlight(parentClass, parentEditor)
+    rehighlight(parentEditor)
     assertSize(2, getProblems(parentEditor))
 
     DockManager.getInstance(project).containers.forEach { it.closeAll() }
@@ -81,7 +81,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     val editorManager = myManager!!
     val parentTextEditor = editorManager.openFile(parentClass.containingFile.virtualFile, true)[0] as TextEditorImpl
     val parentEditor = parentTextEditor.editor
-    rehighlight(parentClass, parentEditor)
+    rehighlight(parentEditor)
     assertEmpty(getProblems(parentEditor))
 
     // open child class in horizontal split, focus stays in parent editor
@@ -95,7 +95,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
       val factory = JavaPsiFacade.getInstance(project).elementFactory
       parentClass.nameIdentifier?.replace(factory.createIdentifier("Parent"))
     }
-    rehighlight(parentClass, parentEditor)
+    rehighlight(parentEditor)
     assertSize(2, getProblems(parentEditor))
 
     // select child editor, remove parent from child extends list, check that number of problems changed
@@ -104,14 +104,14 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
       val factory = JavaPsiFacade.getInstance(project).elementFactory
       childClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
     }
-    rehighlight(childClass, parentEditor)
+    rehighlight(parentEditor)
     assertSize(1, getProblems(parentEditor))
 
     // undo child change
     WriteCommandAction.runWriteCommandAction(project) {
       UndoManager.getInstance(project).undo(childEditor)
     }
-    rehighlight(childClass, parentEditor)
+    rehighlight(parentEditor)
     assertSize(2, getProblems(parentEditor))
 
     // undo parent rename, check that problems are gone
@@ -119,12 +119,12 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     WriteCommandAction.runWriteCommandAction(project) {
       UndoManager.getInstance(project).undo(parentTextEditor)
     }
-    rehighlight(childClass, parentEditor)
+    rehighlight(parentEditor)
     assertEmpty(getProblems(parentEditor))
   }
 
-  companion object {
-    private fun rehighlight(psiClass: PsiClass, editor: Editor) =
-      CodeInsightTestFixtureImpl.instantiateAndRun(psiClass.containingFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
+  private fun rehighlight(editor: Editor) {
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    CodeInsightTestFixtureImpl.instantiateAndRun(psiFile!!, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
   }
 }

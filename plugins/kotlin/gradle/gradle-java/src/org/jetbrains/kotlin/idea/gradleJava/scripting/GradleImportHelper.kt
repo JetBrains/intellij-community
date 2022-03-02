@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,13 +20,13 @@ import com.intellij.testFramework.LightVirtualFileBase
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelResolver
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -132,7 +131,7 @@ class LoadConfigurationAction : AnAction(
             ?.takeIf {
                 it !is LightVirtualFileBase
                         && it.isValid
-                        && FileTypeRegistry.getInstance().isFileOfType(it, KotlinFileType.INSTANCE)
+                        && it.isKotlinFileType()
                         && isGradleKotlinScript(it)
             }
     }

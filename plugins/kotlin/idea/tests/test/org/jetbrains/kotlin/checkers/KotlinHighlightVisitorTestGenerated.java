@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.checkers;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -223,6 +223,11 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
         @TestMetadata("OverridesAndGenerics.kt")
         public void testOverridesAndGenerics() throws Exception {
             runTest("testData/checker/OverridesAndGenerics.kt");
+        }
+
+        @TestMetadata("PackageInExpressionPosition.kt")
+        public void testPackageInExpressionPosition() throws Exception {
+            runTest("testData/checker/PackageInExpressionPosition.kt");
         }
 
         @TestMetadata("PackageQualified.kt")
@@ -884,6 +889,11 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
         @TestMetadata("operatorCallDiagnosticsOnInOperator.kt")
         public void testOperatorCallDiagnosticsOnInOperator() throws Exception {
             runTest("testData/checker/diagnosticsMessage/operatorCallDiagnosticsOnInOperator.kt");
+        }
+
+        @TestMetadata("valOrVarOnParameter.kt")
+        public void testValOrVarOnParameter() throws Exception {
+            runTest("testData/checker/diagnosticsMessage/valOrVarOnParameter.kt");
         }
     }
 }

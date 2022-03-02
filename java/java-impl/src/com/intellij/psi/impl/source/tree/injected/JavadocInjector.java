@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.JShellLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
@@ -32,17 +32,27 @@ public class JavadocInjector implements MultiHostInjector {
 
     final Language language = getLanguage(snippet);
 
-    final String prefix = language == JavaLanguage.INSTANCE ? "class ___JavadocSnippetPlaceholder { " : null;
-    final String suffix = language == JavaLanguage.INSTANCE ? " }" : null;
+    final List<TextRange> ranges = snippet.getContentRanges();
+    if (ranges.isEmpty()) return;
 
-    registrar.startInjecting(language)
-      .addPlace(prefix, suffix, snippet, innerRangeStrippingQuotes(snippet))
-      .doneInjecting();
+    registrar.startInjecting(language);
+    if (ranges.size() == 1) {
+        registrar.addPlace(null, null, snippet, ranges.get(0));
+    }
+    else {
+      registrar.addPlace(null, null, snippet, ranges.get(0));
+      for (TextRange range : ranges.subList(1, ranges.size() - 1)) {
+        registrar.addPlace(null, null, snippet, range);
+      }
+      registrar.addPlace(null, null, snippet, ContainerUtil.getLastItem(ranges));
+    }
+    registrar.doneInjecting();
+
   }
 
   private static @NotNull Language getLanguage(@NotNull PsiSnippetDocTagImpl snippet) {
     PsiSnippetDocTagValue valueElement = snippet.getValueElement();
-    if (valueElement == null) return JavaLanguage.INSTANCE;
+    if (valueElement == null) return JShellLanguage.INSTANCE;
     final PsiSnippetAttributeList attributeList = valueElement.getAttributeList();
 
     for (PsiSnippetAttribute attribute : attributeList.getAttributes()) {
@@ -58,7 +68,7 @@ public class JavadocInjector implements MultiHostInjector {
 
       return language;
     }
-    return JavaLanguage.INSTANCE;
+    return JShellLanguage.INSTANCE;
   }
 
   private static @Nullable Language findRegisteredLanguage(@NotNull String langValueText) {

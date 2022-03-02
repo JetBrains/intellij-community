@@ -22,13 +22,11 @@ import javax.swing.JLabel
 // todo remove 'open' in version 2022.2
 @ApiStatus.Internal
 internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                         private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+                              var spacingConfiguration: SpacingConfiguration,
+                              private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
-
-  var spacingConfiguration: SpacingConfiguration? = null
-    private set
 
   private var panelContext = PanelContext()
 
@@ -176,8 +174,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
         }
       }.verticalAlign(VerticalAlign.FILL)
     }
-    result.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
-    result.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
+    result.internalTopGap = spacingConfiguration.verticalMediumGap
+    result.internalBottomGap = spacingConfiguration.verticalMediumGap
 
     return result
   }
@@ -240,8 +238,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
 
     result.expanded = false
-    result.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
-    result.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
+    result.internalTopGap = spacingConfiguration.verticalMediumGap
+    result.internalBottomGap = spacingConfiguration.verticalMediumGap
     _rows.add(result)
 
     return result
@@ -271,13 +269,17 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  @Deprecated("Use buttonsGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun buttonGroup(title: String?, indent: Boolean, init: Panel.() -> Unit) {
     buttonsGroup(title, indent, init)
   }
 
+  @Deprecated("Use buttonsGroup(...) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, indent: Boolean, init: Panel.() -> Unit) {
     buttonsGroup(title, indent, init)
-      .bind(binding, type)
+      .bind(MutableProperty(binding.get, binding.set), type)
   }
 
   override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
@@ -289,7 +291,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
           label(title)
             .applyToComponent { putClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP, true) }
         }
-        row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
+        row.internalBottomGap = spacingConfiguration.buttonGroupHeaderBottomGap
       }
 
       if (indent) {
@@ -321,15 +323,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit) {
-    val prevSpacingConfiguration = dialogPanelConfig.spacing
-    dialogPanelConfig.spacing = spacingConfiguration
     this.spacingConfiguration = spacingConfiguration
-    try {
-      this.init()
-    }
-    finally {
-      dialogPanelConfig.spacing = prevSpacingConfiguration
-    }
+    this.init()
   }
 
   override fun customize(customGaps: Gaps): PanelImpl {
@@ -445,7 +440,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun setTopGroupGap(row: RowImpl, topGap: Boolean?) {
     if (topGap == null) {
-      row.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
+      row.internalTopGap = spacingConfiguration.verticalMediumGap
     }
     else {
       row.topGap(if (topGap) TopGap.MEDIUM else TopGap.NONE)
@@ -454,7 +449,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun setBottomGroupGap(row: RowImpl, bottomGap: Boolean?) {
     if (bottomGap == null) {
-      row.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
+      row.internalBottomGap = spacingConfiguration.verticalMediumGap
     }
     else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)

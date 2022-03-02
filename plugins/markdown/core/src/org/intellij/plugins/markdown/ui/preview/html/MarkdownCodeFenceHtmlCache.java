@@ -15,8 +15,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider;
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider;
+import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,8 +30,7 @@ public final class MarkdownCodeFenceHtmlCache implements Disposable {
   @NotNull public static final String MARKDOWN_FILE_PATH_KEY = "markdown-md5-file-path";
 
   @NotNull private final Alarm myAlarm = new Alarm(this);
-  @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches =
-    ContainerUtil.newConcurrentSet();
+  @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches = ContainerUtil.newConcurrentSet();
   @NotNull private final Collection<File> myAdditionalCacheToDelete = ContainerUtil.newConcurrentSet();
 
   public static MarkdownCodeFenceHtmlCache getInstance() {
@@ -61,7 +60,7 @@ public final class MarkdownCodeFenceHtmlCache implements Disposable {
   }
 
   private static List<File> getPluginSystemPaths() {
-    return CodeFenceGeneratingProvider.Companion.getAll().stream()
+    return CodeFenceGeneratingProvider.Companion.getAll$intellij_markdown_core().stream()
       .filter(MarkdownCodeFenceCacheableProvider.class::isInstance)
       .map(MarkdownCodeFenceCacheableProvider.class::cast)
       .map(provider -> provider.getCacheRootPath().toFile())

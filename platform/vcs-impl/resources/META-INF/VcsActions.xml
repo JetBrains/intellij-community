@@ -73,10 +73,14 @@
       <override-text place="GoToAction" use-text-of-place="MainMenu"/>
     </action>
 
+    <action id="ChangesView.SingleClickPreview" class="com.intellij.openapi.vcs.changes.ToggleDetailsAction"/>
+
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsGroupsActionGroup" popup="true">
       <group id="Vcs.MainMenu" class="com.intellij.openapi.vcs.actions.VcsMainMenuActionGroup">
-        <action id="Start.Use.Vcs" class="com.intellij.ide.actions.StartUseVcsAction"/>
+        <action id="Start.Use.Vcs" class="com.intellij.ide.actions.StartUseVcsAction">
+          <override-text place="Vcs.Toolbar.Widget"/>
+        </action>
         <separator/>
         <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup">
 
@@ -239,6 +243,45 @@
       <reference ref="CollapseAll"/>
     </group>
 
+    <action id="Vcs.Shelf.Apply" class="com.intellij.openapi.vcs.changes.savedPatches.ApplyShelfAction"/>
+    <action id="Vcs.Shelf.Pop" class="com.intellij.openapi.vcs.changes.savedPatches.PopShelfAction"/>
+    <action id="Vcs.Shelf.Drop" class="com.intellij.openapi.vcs.changes.savedPatches.DropShelfAction" use-shortcut-of="$Delete"/>
+    <action id="Vcs.Shelf.UnshelveChanges" class="com.intellij.openapi.vcs.changes.savedPatches.UnshelveChangesAction"/>
+    <action id="Vcs.Shelf.UnshelveChangesAndRemove" class="com.intellij.openapi.vcs.changes.savedPatches.UnshelveChangesAndRemoveAction"/>
+
+    <group id="Vcs.Shelf.Operations.ContextMenu" class="com.intellij.openapi.vcs.changes.savedPatches.ShelfOperationsGroup">
+      <reference id="Vcs.Shelf.Apply"/>
+      <reference id="Vcs.Shelf.Pop"/>
+      <reference id="ShelveChanges.UnshelveWithDialog"/>
+      <reference ref="Vcs.Shelf.Drop"/>
+      <reference ref="ShelvedChanges.Restore"/>
+      <reference ref="ShelvedChanges.ImportPatches"/>
+    </group>
+
+    <group id="Vcs.Shelf.ChangesBrowser.ContextMenu" class="com.intellij.openapi.vcs.changes.savedPatches.ShelfOperationsGroup">
+      <reference ref="Vcs.Shelf.UnshelveChanges"/>
+      <reference ref="Vcs.Shelf.UnshelveChangesAndRemove"/>
+    </group>
+
+    <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
+            icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"/>
+    <action id="Vcs.OpenRepositoryVersion" class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction"/>
+    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Revert"
+            icon="AllIcons.Actions.Rollback"/>
+    <action id="Vcs.ApplySelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Apply"/>
+
+    <group id="Vcs.SavedPatches.ContextMenu">
+      <reference id="Vcs.Shelf.Operations.ContextMenu"/>
+      <separator/>
+      <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+    </group>
+    <group id="Vcs.SavedPatches.ChangesBrowser.ContextMenu">
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.Shelf.ChangesBrowser.ContextMenu"/>
+    </group>
+
     <!--a group for plugins to add their actions-->
     <group id="VcsHistoryActionsGroup"/>
     <group id="VcsHistoryActionsGroup.Toolbar"/>
@@ -273,13 +316,6 @@
       <action id="CommittedChanges.Clear" class="com.intellij.openapi.vcs.changes.committed.ClearCommittedAction"
               icon="AllIcons.Actions.GC"/>
     </group>
-
-    <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
-            icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"/>
-    <action id="Vcs.OpenRepositoryVersion" class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction"/>
-    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Revert"
-            icon="AllIcons.Actions.Rollback"/>
-    <action id="Vcs.ApplySelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Apply"/>
 
     <group id="Vcs.RepositoryChangesBrowserToolbar">
       <reference ref="Vcs.RevertSelectedChanges"/>

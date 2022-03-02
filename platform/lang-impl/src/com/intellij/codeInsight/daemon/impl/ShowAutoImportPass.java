@@ -17,7 +17,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
@@ -54,13 +53,12 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final int myEndOffset;
   private final boolean hasDirtyTextRange;
 
-  ShowAutoImportPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
-    super(project, editor.getDocument(), false);
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  ShowAutoImportPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    super(file.getProject(), editor.getDocument(), false);
 
     myEditor = editor;
 
-    TextRange range = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
+    TextRange range = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
     myStartOffset = range.getStartOffset();
     myEndOffset = range.getEndOffset();
 
@@ -79,8 +77,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private void showImports() {
-    Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!UIUtil.hasFocus(myEditor.getContentComponent())) return;
     if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
     if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;

@@ -22,9 +22,9 @@ public abstract class TextEditorHighlightingPassRegistrar {
    * @param anchorPassId id of the anchor pass. Predefined pass Ids are declared in {@link Pass}
    * @return the id of the new pass which, e.g., can be used as an anchor for the other pass.
    */
-  public int registerTextEditorHighlightingPass(final TextEditorHighlightingPassFactory factory,
-                                                final Anchor anchor,
-                                                final int anchorPassId,
+  public int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory,
+                                                @NotNull Anchor anchor,
+                                                int anchorPassId,
                                                 boolean needAdditionalIntentionsPass,
                                                 boolean inPostHighlightingPass) {
     int[] ids = null;
@@ -51,7 +51,7 @@ public abstract class TextEditorHighlightingPassRegistrar {
   }
 
   public abstract int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory,
-                                                         final int @Nullable [] runAfterCompletionOf,
+                                                         int @Nullable [] runAfterCompletionOf,
                                                          int @Nullable [] runAfterStartingOf,
                                                          boolean runIntentionsPassAfter,
                                                          int forcedPassId);

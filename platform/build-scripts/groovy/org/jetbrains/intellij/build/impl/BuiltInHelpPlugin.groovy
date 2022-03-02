@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.tasks.HelpPluginKt
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,11 +37,11 @@ final class BuiltInHelpPlugin {
       @Override
       void accept(Path targetDir, BuildContext context) {
         Path assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
-        BuildHelper.getInstance(context).buildResourcesForHelpPlugin
-          .invokeWithArguments(resourceRoot,
-                               context.getModuleRuntimeClasspath(context.findRequiredModule(MODULE_NAME), false),
-                               assetJar,
-                               context.messages)
+        HelpPluginKt.buildResourcesForHelpPlugin(
+          resourceRoot,
+          context.getModuleRuntimeClasspath(context.findRequiredModule(MODULE_NAME), false),
+          assetJar,
+          context.messages)
       }
     })
     spec.withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {

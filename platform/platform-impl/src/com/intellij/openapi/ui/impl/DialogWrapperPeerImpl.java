@@ -44,6 +44,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -625,7 +626,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        JdkEx.setHasCustomDecoration(this);
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
       }
       super.addNotify();
     }

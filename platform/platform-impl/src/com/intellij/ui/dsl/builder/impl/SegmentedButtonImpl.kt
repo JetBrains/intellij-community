@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.RightGap
@@ -24,7 +25,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
 
   private var items: Collection<T> = emptyList()
-  private var property: GraphProperty<T>? = null
+  private var property: ObservableProperty<T>? = null
   private var maxButtonsCount = SegmentedButton.DEFAULT_MAX_BUTTONS_COUNT
 
   private val comboBox = ComboBox<T>()
@@ -76,7 +77,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     return this
   }
 
-  override fun bind(property: GraphProperty<T>): SegmentedButton<T> {
+  override fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T> {
     this.property = property
     comboBox.bind(property)
     bindSegmentedButtonComponent(property)
@@ -139,7 +140,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     }
   }
 
-  private fun bindSegmentedButtonComponent(property: GraphProperty<T>) {
+  private fun bindSegmentedButtonComponent(property: ObservableMutableProperty<T>) {
     val mutex = AtomicBoolean()
     property.afterChange {
       mutex.lockOrSkip {

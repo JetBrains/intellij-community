@@ -1,15 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import junit.framework.TestCase.assertFalse
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.*
-import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
@@ -22,7 +19,7 @@ import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 const val TEST_TIMEOUT_MS: Long = 1000
 
-internal fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
+fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
   runBlocking {
     withTimeout(TEST_TIMEOUT_MS, action)
   }
@@ -35,17 +32,12 @@ fun neverEndingStory(): Nothing {
   }
 }
 
-fun timeoutRunBlockingWithContext(action: suspend CoroutineScope.() -> Unit) {
-  timeoutRunBlocking {
-    resetThreadContext().use {
-      action()
-    }
-  }
-}
-
 fun withRootJob(action: (rootJob: Job) -> Unit): Job {
   return CoroutineScope(Dispatchers.Default).async {
-    withJob(action)
+    blockingContext {
+      val currentJob = requireNotNull(Cancellation.currentJob())
+      action(currentJob)
+    }
   }
 }
 
@@ -143,6 +135,24 @@ fun loggedError(canThrow: Semaphore): Throwable {
   return throwable
 }
 
+fun currentJobTest(test: (Job) -> Unit) {
+  val job = Job()
+  withJob(job) {
+    test(job)
+  }
+  assertTrue(job.isActive)
+  assertFalse(job.isCompleted)
+  assertFalse(job.isCancelled)
+}
+
+fun indicatorTest(test: (ProgressIndicator) -> Unit) {
+  val indicator = EmptyProgressIndicator()
+  withIndicator(indicator) {
+    test(indicator)
+  }
+  assertFalse(indicator.isCanceled)
+}
+
 internal fun withIndicator(indicator: ProgressIndicator, action: () -> Unit) {
   ProgressManager.getInstance().runProcess(action, indicator)
 }
@@ -172,4 +182,8 @@ internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Cal
   }
   lock.acquire()
   return callable
+}
+
+inline fun <reified T> assertInstanceOf(instance: Any?): T {
+  return assertInstanceOf(T::class.java, instance)
 }

@@ -40,8 +40,7 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
    * @deprecated use {@link SerializationManagerEx#repairNameStorage(Exception)}
    * with specified corruption cause
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void repairNameStorage() {
     repairNameStorage(new Exception());
   }

@@ -28,7 +28,7 @@ public abstract class PyPsiFacade {
   /**
    * @deprecated use {@link #createClassByQName(String, PsiElement)} or skeleton may be found
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public abstract PyClass findClass(String qName);
 

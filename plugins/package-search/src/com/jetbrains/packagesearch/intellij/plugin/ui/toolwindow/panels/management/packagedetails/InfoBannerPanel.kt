@@ -36,7 +36,7 @@ class InfoBannerPanel(
 
     init {
         background = backgroundColor
-        PackageSearchUI.setHeight(this, 28.scaled())
+        PackageSearchUI.setHeight(this, 28)
 
         layout = HorizontalLayout(16.scaled())
         border = emptyBorder(vSize = 6, hSize = 12)

@@ -2,7 +2,6 @@
 package com.intellij.usageView;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +28,6 @@ public class BaseUsageViewDescriptor implements UsageViewDescriptor {
 
   @Override
   public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getCodeReferencesText(int usagesCount, int filesCount) {
-    return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
+    return UsageViewBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 }

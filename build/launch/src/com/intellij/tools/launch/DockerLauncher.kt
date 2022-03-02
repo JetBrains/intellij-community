@@ -3,15 +3,15 @@ package com.intellij.tools.launch
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.Launcher.affixIO
 import com.sun.security.auth.module.UnixSystem
-import org.apache.log4j.Logger
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 import kotlin.math.pow
 
 class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
-    private val logger = Logger.getLogger(DockerLauncher::class.java)
+    private val logger = Logger.getLogger(DockerLauncher::class.java.name)
 
     // e.g. ~/.m2/ will be /mnt/cache/.m2 on TC
     fun File.pathNotResolvingSymlinks(): String = this.absoluteFile.normalize().path
@@ -236,7 +236,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
            true,
            *dockerBuildCmd.toTypedArray())
 
-    logger.info(res)
+    logger.info(res.toString())
   }
 
 

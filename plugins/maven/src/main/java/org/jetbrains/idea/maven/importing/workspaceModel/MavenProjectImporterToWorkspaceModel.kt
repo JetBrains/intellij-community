@@ -62,7 +62,7 @@ class MavenProjectImporterToWorkspaceModel(
         }
       }
     }
-    configureMavenProjects(allProjects, mavenProjectToModule, project)
+    configureMavenProjectsInBackground(allProjects, mavenProjectToModule, project)
   }
 
   override val createdModules: List<Module>

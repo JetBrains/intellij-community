@@ -4,7 +4,6 @@ package org.editorconfig.language.psi.base
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.psi.PsiReference
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigSection
@@ -31,10 +30,9 @@ abstract class EditorConfigDescribableElementBase(node: ASTNode) : ASTWrapperPsi
 
   override val declarationSite: String
     get() {
-      val project = project
       val header = section.header.text
       val virtualFile = containingFile.virtualFile ?: return header
-      val fileName = VfsPresentationUtil.getPresentableNameForUI(project, virtualFile)
+      val fileName = virtualFile.presentableName
       return "$header ($fileName)"
     }
 

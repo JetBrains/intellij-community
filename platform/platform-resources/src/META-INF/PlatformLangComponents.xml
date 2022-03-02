@@ -26,7 +26,7 @@
     <component>
       <interface-class>com.intellij.problems.WolfTheProblemSolver</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl</implementation-class>
-      <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
+      <headless-implementation-class>com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver</headless-implementation-class>
     </component>
 
     <component>
@@ -43,7 +43,7 @@
   <extensionPoints>
     <!-- only bundled plugin can define extension -->
     <!--suppress PluginXmlDynamicPlugin -->
-    <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.openapi.wm.impl.RegisterToolWindowTaskProvider"/>
+    <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -55,13 +55,13 @@
 
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
-                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl" preload="true" order="first"/>
+                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.TestWindowManager" preload="notHeadless"/>
-    <applicationService serviceInterface="com.intellij.openapi.wm.impl.DefaultToolWindowLayoutProvider"
-                        serviceImplementation="com.intellij.openapi.wm.impl.IntellijPlatformDefaultToolWindowLayoutProvider"/>
+    <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider"
+                        serviceImplementation="com.intellij.toolWindow.IntellijPlatformDefaultToolWindowLayoutProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.IdeFocusManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.FocusManagerImpl"
@@ -87,9 +87,9 @@
 
     <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
-                    headlessImplementation="com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
+                    headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler" preload="await"/>
+    <ideEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
 
     <applicationService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
                         serviceImplementation="com.intellij.openapi.client.ClientAppSessionsManager"/>
@@ -105,13 +105,22 @@
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonListeners" preload="await"/>
     <projectService serviceImplementation="com.intellij.codeInsight.navigation.CtrlMouseHandler" preload="await"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"/>
 
     <projectService serviceImplementation="com.intellij.facet.impl.pointers.FacetPointersManagerImpl"
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
     <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
 
+    <applicationService
+      serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
+      serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl"/>
+
+    <postStartupActivity implementation="com.intellij.formatting.visualLayer.VisualFormattingLayerStartup" />
+
     <!-- as last - to preload after all others preloaded services -->
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
+
+    <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -184,6 +193,9 @@
 
     <listener class="com.intellij.ide.IdeTooltipManager$MyRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+
+    <listener class="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyAnActionListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"

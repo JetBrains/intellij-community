@@ -1,1 +1,2 @@
-deprecated: showViewer.png; to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/)
+deprecated: showViewer.png; to be removed (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/)
+deprecated: showHiddens.png; use {@link #ToggleVisibility}

@@ -1,5 +1,34 @@
 from . import client, connection, exceptions, sentinel, utils
 
+__all__ = [
+    "AuthenticationError",
+    "AuthenticationWrongNumberOfArgsError",
+    "BlockingConnectionPool",
+    "BusyLoadingError",
+    "ChildDeadlockedError",
+    "Connection",
+    "ConnectionError",
+    "ConnectionPool",
+    "DataError",
+    "from_url",
+    "InvalidResponse",
+    "PubSubError",
+    "ReadOnlyError",
+    "Redis",
+    "RedisCluster",
+    "RedisError",
+    "ResponseError",
+    "Sentinel",
+    "SentinelConnectionPool",
+    "SentinelManagedConnection",
+    "SentinelManagedSSLConnection",
+    "SSLConnection",
+    "StrictRedis",
+    "TimeoutError",
+    "UnixDomainSocketConnection",
+    "WatchError",
+]
+
 Redis = client.Redis
 
 BlockingConnectionPool = connection.BlockingConnectionPool

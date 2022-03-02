@@ -14,15 +14,19 @@ import java.nio.charset.StandardCharsets
 internal fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
   val settingsSnapshotBuilder = SettingsSnapshotBuilder()
   settingsSnapshotBuilder.build()
-  val actualMap = this.fileStates.associate { it.file to String(it.content, StandardCharsets.UTF_8) }
-  val expectedMap = settingsSnapshotBuilder.fileStates.associate { it.file to String(it.content, StandardCharsets.UTF_8) }
+  val transformation = { fileState: FileState ->
+    val content = if (fileState is FileState.Modified) String(fileState.content, StandardCharsets.UTF_8) else DELETED_FILE_MARKER
+    fileState.file to content
+  }
+  val actualMap = this.fileStates.associate(transformation)
+  val expectedMap = settingsSnapshotBuilder.fileStates.associate(transformation)
   Assert.assertEquals(expectedMap, actualMap)
 }
 
 internal fun PersistentStateComponent<*>.toFileState() : FileState {
   val file = PathManager.OPTIONS_DIRECTORY + "/" + getDefaultStoragePathSpec(this::class.java)
   val content = this.serialize()
-  return FileState(file, content, content.size)
+  return FileState.Modified(file, content, content.size)
 }
 
 internal val <T> PersistentStateComponent<T>.name: String
@@ -58,6 +62,6 @@ internal class SettingsSnapshotBuilder {
 
   fun fileState(file: String, content: String) {
     val byteArray = content.toByteArray()
-    fileState(FileState(file, byteArray, byteArray.size))
+    fileState(FileState.Modified(file, byteArray, byteArray.size))
   }
 }

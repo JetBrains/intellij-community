@@ -5,8 +5,7 @@
  * {@snippet :
  * class HelloWorld {
  *     public void f() {
- *     <caret>
- * }
+ *     }
  * }
  * }
  */

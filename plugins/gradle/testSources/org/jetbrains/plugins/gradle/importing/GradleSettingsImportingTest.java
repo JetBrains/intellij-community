@@ -11,7 +11,6 @@ import com.intellij.execution.application.JavaApplicationRunConfigurationImporte
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.jar.JarApplicationRunConfigurationImporter;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -415,9 +414,8 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
-  @Bombed(year = 2021, month = Calendar.DECEMBER, day=1, user = "Nikita.Skvortsov", description = "Waiting for next version of IDEA Ext plugin")
   public void testIdeaPostProcessingHook() throws Exception {
-    File layoutFile = new File(getProjectPath(), "layout.json");
+    File layoutFile = new File(getProjectPath(), "test_output.txt");
     assertThat(layoutFile).doesNotExist();
 
     importProject(
@@ -427,13 +425,14 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
                     "idea {\n" +
                     "  project.settings {\n" +
                     "    withIDEADir { File dir ->\n" +
-                    "      println(\"Callback executed with: \" + dir.absolutePath)\n" +
+                    "        def f = file(\"test_output.txt\")\n" +
+                    "        f.createNewFile()\n" +
+                    "        f.text = \"Expected file content\"\n" +
                     "    }  \n" +
                     "  }\n" +
                     "}")
         .generate()
     );
-
     final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
       ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
 
@@ -451,12 +450,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     String moduleFile = getModule("project").getModuleFilePath();
     assertThat(layoutFile)
       .exists()
-      .hasContent("{\n"+
-      "  \"ideaDirPath\": \""+ ideaDir + "\",\n" +
-      "  \"modulesMap\": {\n"+
-      "    \"project\": \"" + moduleFile + "\"\n"+
-      "  }\n"+
-      "}");
+      .hasContent("Expected file content");
   }
 
   @Test

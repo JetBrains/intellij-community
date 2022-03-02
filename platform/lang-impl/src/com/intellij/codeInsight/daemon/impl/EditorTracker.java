@@ -151,7 +151,7 @@ public class EditorTracker implements Disposable {
 
       if (editorsList.isEmpty()) {
         myWindowToEditorsMap.remove(oldWindow);
-        final WindowAdapter listener = myWindowToWindowFocusListenerMap.remove(oldWindow);
+        WindowAdapter listener = myWindowToWindowFocusListenerMap.remove(oldWindow);
         if (listener != null) {
           oldWindow.removeWindowFocusListener(listener);
           oldWindow.removeWindowListener(listener);
@@ -213,22 +213,22 @@ public class EditorTracker implements Disposable {
   }
 
   private void editorCreated(@NotNull EditorFactoryEvent event) {
-    final Editor editor = event.getEditor();
+    Editor editor = event.getEditor();
     if ((editor.getProject() != null && editor.getProject() != myProject) || myProject.isDisposed()) {
       return;
     }
 
-    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     if (psiFile == null) return;
 
     createEditorImpl(editor);
   }
 
   protected void createEditorImpl(@NotNull Editor editor) {
-    final JComponent component = editor.getComponent();
-    final JComponent contentComponent = editor.getContentComponent();
+    JComponent component = editor.getComponent();
+    JComponent contentComponent = editor.getContentComponent();
 
-    final PropertyChangeListener propertyChangeListener = evt -> {
+    PropertyChangeListener propertyChangeListener = evt -> {
       if (evt.getOldValue() == null && evt.getNewValue() != null) {
         registerEditor(editor);
       }
@@ -270,7 +270,7 @@ public class EditorTracker implements Disposable {
   }
 
   private void editorReleased(@NotNull EditorFactoryEvent event) {
-    final Editor editor = event.getEditor();
+    Editor editor = event.getEditor();
     if (editor.getProject() != null && editor.getProject() != myProject) return;
 
     editorReleasedImpl(editor);
@@ -294,7 +294,7 @@ public class EditorTracker implements Disposable {
       myExecuteOnEditorRelease.clear();
     }
     else {
-      final Runnable runnable = myExecuteOnEditorRelease.get(editor);
+      Runnable runnable = myExecuteOnEditorRelease.get(editor);
       if (runnable != null) {
         runnable.run();
         myExecuteOnEditorRelease.remove(editor);

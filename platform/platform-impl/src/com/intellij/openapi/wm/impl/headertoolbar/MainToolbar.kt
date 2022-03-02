@@ -5,13 +5,19 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -53,6 +59,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 
   override fun removeNotify() {
+    super.removeNotify()
     Disposer.dispose(disposable)
   }
 
@@ -64,7 +71,16 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   private fun createActionsBar(): JComponent? {
     val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
-    return group?.let { ActionToolbar(it.getChildren(null).asList()) }
+    return group?.let {
+      val toolbar = TitleActionToolbar(ActionPlaces.MAIN_TOOLBAR, it, true)
+      toolbar.setMinimumButtonSize(Dimension(40, 40))
+      toolbar.targetComponent = null
+      toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+      val comp = toolbar.component
+      comp.border = JBUI.Borders.empty()
+      comp.isOpaque = false
+      comp
+    }
   }
 
   private inner class ResizeListener : ComponentAdapter() {
@@ -125,6 +141,7 @@ private class VisibleComponentsPool {
   }
 }
 
-internal fun isToolbarInHeader(settings: UISettings? = null) : Boolean {
-  return SystemInfoRt.isWindows && !(settings ?: UISettings.shadowInstance).separateMainMenu
+@JvmOverloads internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
+  return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos"))
+          || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable();
 }

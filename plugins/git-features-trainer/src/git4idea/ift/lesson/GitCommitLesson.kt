@@ -61,7 +61,7 @@ import javax.swing.KeyStroke
 import javax.swing.tree.TreePath
 
 class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.commit.lesson.name")) {
-  override val existedFile = "git/puss_in_boots.yml"
+  override val sampleFilePath = "git/puss_in_boots.yml"
   override val branchName = "feature"
   private val firstFileName = "simple_cat.yml"
   private val secondFileName = "puss_in_boots.yml"
@@ -111,7 +111,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
-      triggerByPartOfComponent(false) l@{ ui: ChangesListView ->
+      triggerUI().componentPart l@{ ui: ChangesListView ->
         val path = TreeUtil.treePathTraverser(ui).find { it.getPathComponent(it.pathCount - 1).toString().contains(firstFileName) }
                    ?: return@l null
         val rect = ui.getPathBounds(path) ?: return@l null
@@ -133,7 +133,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
         ActionManager.getInstance().getId(ui.action) == "ChangesView.ShowCommitOptions"
       }
     }
@@ -144,7 +144,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.open.before.commit.options", icon(AllIcons.General.Gear)))
       text(GitLessonsBundle.message("git.commit.open.options.tooltip", strong(commitWindowName)),
            LearningBalloonConfig(Balloon.Position.above, 0))
-      triggerByUiComponentAndHighlight(false, false) { _: CommitOptionsPanel -> true }
+      triggerUI().component { _: CommitOptionsPanel -> true }
       showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
@@ -155,7 +155,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     val reformatCodeButtonText = VcsBundle.message("checkbox.checkin.options.reformat.code").dropMnemonic()
     task {
-      triggerByUiComponentAndHighlight { ui: JBCheckBox ->
+      triggerAndFullHighlight().component { ui: JBCheckBox ->
         ui.text?.contains(reformatCodeButtonText) == true
       }
     }
@@ -164,7 +164,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       val analyzeOptionText = VcsBundle.message("before.checkin.standard.options.check.smells").dropMnemonic()
       text(GitLessonsBundle.message("git.commit.analyze.code.explanation", strong(analyzeOptionText)))
       text(GitLessonsBundle.message("git.commit.enable.reformat.code", strong(reformatCodeButtonText)))
-      triggerByUiComponentAndHighlight(false, false) { ui: JBCheckBox ->
+      triggerUI().component { ui: JBCheckBox ->
         ui.text?.contains(reformatCodeButtonText) == true && ui.isSelected
       }
       restoreByUi(showOptionsTaskId)
@@ -187,7 +187,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     val commitButtonText = GitBundle.message("commit.action.name").dropMnemonic()
     task {
       text(GitLessonsBundle.message("git.commit.perform.commit", strong(commitButtonText)))
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: JBOptionButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: JBOptionButton ->
         ui.text?.contains(commitButtonText) == true
       }
       triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
@@ -227,7 +227,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     task {
       text(GitLessonsBundle.message("git.commit.committed.file.explanation"))
-      triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: VcsLogChangesBrowser -> true }
+      triggerAndBorderHighlight { usePulsation = true }.component { _: VcsLogChangesBrowser -> true }
       proceedLink()
       showWarningIfGitWindowClosed()
     }
@@ -239,10 +239,10 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
                                     strong(amendCheckboxText),
                                     LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK)),
                                     strong(commitWindowName)))
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: JBCheckBox ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: JBCheckBox ->
         ui.text?.contains(amendCheckboxText) == true
       }
-      triggerByUiComponentAndHighlight(false, false) { ui: JBCheckBox ->
+      triggerUI().component { ui: JBCheckBox ->
         ui.text?.contains(amendCheckboxText) == true && ui.isSelected
       }
       showWarningIfCommitWindowClosed()
@@ -267,7 +267,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     task {
       val amendButtonText = VcsBundle.message("amend.action.name", commitButtonText)
       text(GitLessonsBundle.message("git.commit.amend.commit", strong(amendButtonText)))
-      triggerByUiComponentAndHighlight { ui: JBOptionButton ->
+      triggerAndFullHighlight().component { ui: JBOptionButton ->
         UIUtil.getParentOfType(CommitActionsPanel::class.java, ui) != null
       }
       triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
@@ -297,13 +297,13 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
   }
 
   private fun TaskContext.highlightVcsChange(changeFileName: String, highlightBorder: Boolean = true) {
-    triggerByFoundPathAndHighlight(highlightBorder) { _: JTree, path: TreePath ->
+    triggerAndBorderHighlight().treeItem { _: JTree, path: TreePath ->
       path.pathCount > 2 && path.getPathComponent(2).toString().contains(changeFileName)
     }
   }
 
   private fun TaskContext.triggerOnOneChangeIncluded(changeFileName: String) {
-    triggerByUiComponentAndHighlight(false, false) l@{ ui: ChangesListView ->
+    triggerUI().component l@{ ui: ChangesListView ->
       val includedChanges = ui.includedSet
       if (includedChanges.size != 1) return@l false
       val change = includedChanges.first() as? ChangeListChange ?: return@l false
@@ -313,14 +313,14 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
   private fun TaskContext.triggerOnTopCommitSelected() {
     highlightSubsequentCommitsInGitLog(0)
-    triggerByUiComponentAndHighlight(false, false) { ui: VcsLogGraphTable ->
+    triggerUI().component { ui: VcsLogGraphTable ->
       ui.isCellSelected(0, 1)
     }
   }
 
   private fun TaskRuntimeContext.modifyFiles() = invokeLater {
     DocumentUtil.writeInRunUndoTransparentAction {
-      val projectRoot = ProjectUtils.getProjectRoot(project)
+      val projectRoot = ProjectUtils.getCurrentLearningProjectRoot()
       appendToFile(projectRoot, firstFileName, firstFileAddition)
       appendToFile(projectRoot, secondFileName, secondFileAddition)
       PsiDocumentManager.getInstance(project).commitAllDocuments()

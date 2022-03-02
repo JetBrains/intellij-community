@@ -5,9 +5,9 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggestingUtils.findBreakpointOnPosition
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
-import training.featuresSuggester.findBreakpointOnPosition
 import kotlin.math.abs
 
 class MuteBreakpointsSuggester : AbstractFeatureSuggester() {
@@ -17,6 +17,7 @@ class MuteBreakpointsSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("mute.breakpoints.message")
   override val suggestingActionId = "XDebugger.MuteBreakpoints"
   override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/using-breakpoints.html#mute"
+  override val minSuggestingIntervalDays = 30
 
   override val languages = listOf(Language.ANY.id)
 

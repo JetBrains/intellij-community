@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,6 +41,8 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.MavenWslUtil;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
 import java.io.File;
 import java.io.IOException;
@@ -331,8 +334,7 @@ public final class MavenServerManager implements Disposable {
    * @deprecated use {@link MavenGeneralSettings.mavenHome} and {@link MavenUtil.getMavenVersion}
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String getCurrentMavenVersion() {
     return null;
   }
@@ -392,6 +394,9 @@ public final class MavenServerManager implements Disposable {
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
+    BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+    BundledMavenDownloader.downloadMavenCommonLibs(communityRoot);
+
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
     File parentFile = MavenUtil.getMavenPluginParentFile();
@@ -537,21 +542,21 @@ public final class MavenServerManager implements Disposable {
     result.setOffline(settings.isWorkOffline());
     File mavenHome = settings.getEffectiveMavenHome();
     if (mavenHome != null) {
-      String remotePath = transformer.toRemotePath(mavenHome.getAbsolutePath());
+      String remotePath = transformer.toRemotePath(mavenHome.toPath().toAbsolutePath().toString());
       result.setMavenHomePath(remotePath);
     }
 
 
-    String userSettingsPath =
-      MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig()).getAbsolutePath();
+    File userSettings = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig());
+    String userSettingsPath = userSettings.toPath().toAbsolutePath().toString();
     result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
 
     File globalSettings = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig());
     if (globalSettings != null) {
-      result.setGlobalSettingsPath(transformer.toRemotePath(globalSettings.getAbsolutePath()));
+      result.setGlobalSettingsPath(transformer.toRemotePath(globalSettings.toPath().toAbsolutePath().toString()));
     }
 
-    String localRepository = settings.getEffectiveLocalRepository().getAbsolutePath();
+    String localRepository = settings.getEffectiveLocalRepository().toPath().toAbsolutePath().toString();
 
     result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());

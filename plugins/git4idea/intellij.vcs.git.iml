@@ -5,7 +5,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend" />
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend -opt-in=kotlin.RequiresOptIn" />
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="11" />
@@ -16,7 +16,8 @@
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.6.10-release-952/kotlinx-serialization-compiler-plugin-for-ide-1.6.10-release-952.jar" />
+              <option value="kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
           <option name="errors">
@@ -83,5 +84,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" scope="TEST" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
   </component>
 </module>

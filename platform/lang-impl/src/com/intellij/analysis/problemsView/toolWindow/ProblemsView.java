@@ -9,12 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -47,7 +46,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
     else if (file.equals(panel.getCurrentFile())) {
-      toolWindowManager.hideToolWindow(window.getId(), false, true, ToolWindowEventSource.InspectionsWidget);
+      toolWindowManager.hideToolWindow(window.getId(), false, true, false, ToolWindowEventSource.InspectionsWidget);
     }
     else {
       panel.setCurrentFile(file);
@@ -103,7 +102,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
 
   @Override
   public void init(@NotNull ToolWindow window) {
-    Project project = ((ToolWindowEx)window).getProject();
+    Project project = window.getProject();
     HighlightingErrorsProviderBase.getInstance(project);
   }
 

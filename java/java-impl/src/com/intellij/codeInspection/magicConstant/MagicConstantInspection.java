@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
@@ -135,11 +135,30 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         checkBinary(r, l);
       }
 
+      @Override
+      public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+        PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(list, PsiSwitchBlock.class);
+        if (switchBlock == null) return;
+        PsiExpression selector = switchBlock.getExpression();
+        PsiModifierListOwner owner = null;
+        if (selector instanceof PsiReference) {
+          owner = ObjectUtils.tryCast(((PsiReference)selector).resolve(), PsiModifierListOwner.class);
+        }
+        else if (selector instanceof PsiMethodCallExpression) {
+          owner = ((PsiCallExpression)selector).resolveMethod();
+        }
+        if (owner == null) return;
+        for (PsiCaseLabelElement element : list.getElements()) {
+          if (!(element instanceof PsiExpression)) continue;
+          checkExpression((PsiExpression)element, owner, PsiUtil.getTypeByPsiElement(owner), holder);
+        }
+      }
+
       private void checkBinary(@NotNull PsiExpression l, @NotNull PsiExpression r) {
         if (l instanceof PsiReference) {
           PsiElement resolved = ((PsiReference)l).resolve();
           if (resolved instanceof PsiModifierListOwner) {
-            checkExpression(r, (PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), holder);
+            checkExpression(r, (PsiModifierListOwner)resolved, PsiUtil.getTypeByPsiElement(resolved), holder);
           }
         }
         else if (l instanceof PsiMethodCallExpression) {
@@ -273,10 +292,6 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       map.put(Calendar.AM_PM, converter.apply(amPm));
       return CachedValueProvider.Result.create(map, method);
     }).get(argument);
-  }
-
-  private static PsiType getType(@NotNull PsiModifierListOwner element) {
-    return element instanceof PsiVariable ? ((PsiVariable)element).getType() : element instanceof PsiMethod ? ((PsiMethod)element).getReturnType() : null;
   }
 
   private static void checkMagicParameterArgument(@NotNull PsiParameter parameter,
@@ -426,18 +441,18 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
     }
 
-    PsiElement resolved = null;
+    PsiModifierListOwner owner = null;
     AllowedValues allowedForRef = null;
     if (expression instanceof PsiReference) {
-      resolved = ((PsiReference)expression).resolve();
+      owner = ObjectUtils.tryCast(((PsiReference)expression).resolve(), PsiModifierListOwner.class);
     }
     else if (expression instanceof PsiMethodCallExpression) {
       allowedForRef = SPECIAL_CASES.mapFirst((PsiMethodCallExpression)expression);
-      resolved = ((PsiCallExpression)expression).resolveMethod();
+      owner = ((PsiCallExpression)expression).resolveMethod();
     }
 
-    if (allowedForRef == null && resolved instanceof PsiModifierListOwner) {
-      allowedForRef = MagicConstantUtils.getAllowedValues((PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), expression);
+    if (allowedForRef == null && owner != null) {
+      allowedForRef = MagicConstantUtils.getAllowedValues(owner, PsiUtil.getTypeByPsiElement(owner), expression);
     }
     if (allowedForRef != null && allowedForRef.isSubsetOf(allowedValues, manager)) {
       return true;

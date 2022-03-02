@@ -19,10 +19,10 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
@@ -189,11 +189,11 @@ internal object OpenLessonActivities {
 
     val vf: VirtualFile? = if (lesson.lessonType == LessonType.SCRATCH) {
       LOG.debug("${project.name}: scratch based lesson")
-      getScratchFile(project, lesson, langSupport.filename)
+      getScratchFile(project, lesson, lesson.sampleFilePath ?: langSupport.scratchFileName)
     }
     else {
       LOG.debug("${project.name}: 4. LearnProject is the current project")
-      getFileInLearnProject(lesson)
+      getFileInLearnProject(langSupport, lesson)
     }
 
     if (lesson.lessonType != LessonType.SCRATCH) {
@@ -308,7 +308,7 @@ internal object OpenLessonActivities {
   }
 
   private fun openReadme(project: Project) {
-    val root = ProjectUtils.getProjectRoot(project)
+    val root = ProjectUtils.getCurrentLearningProjectRoot()
     val readme = root.findFileByRelativePath("README.md") ?: return
     TextEditorWithPreview.openPreviewForFile(project, readme)
   }
@@ -397,31 +397,14 @@ internal object OpenLessonActivities {
     }
   }
 
-  @Throws(IOException::class)
   private fun getScratchFile(project: Project, lesson: Lesson, filename: String): VirtualFile {
     val languageId = lesson.languageId ?: error("Scratch lesson ${lesson.id} should define language")
-    var vf: VirtualFile? = null
     val languageByID = findLanguageByID(languageId)
-    if (CourseManager.instance.mapModuleVirtualFile.containsKey(lesson.module)) {
-      vf = CourseManager.instance.mapModuleVirtualFile[lesson.module]
-      ScratchFileService.getInstance().scratchesMapping.setMapping(vf, languageByID)
-    }
-    if (vf == null || !vf.isValid) {
-      //while module info is not stored
 
-      //find file if it is existed
-      vf = ScratchFileService.getInstance().findFile(ScratchRootType.getInstance(), filename, ScratchFileService.Option.existing_only)
-      if (vf != null) {
-        FileEditorManager.getInstance(project).closeFile(vf)
-        ScratchFileService.getInstance().scratchesMapping.setMapping(vf, languageByID)
-      }
-
-      if (vf == null || !vf.isValid) {
-        vf = ScratchRootType.getInstance().createScratchFile(project, filename, languageByID, "")
-        assert(vf != null)
-      }
-      CourseManager.instance.registerVirtualFile(lesson.module, vf!!)
-    }
+    val vf = ScratchFileService.getInstance().findFile(ScratchRootType.getInstance(), filename, ScratchFileService.Option.create_if_missing)
+            ?: error("Cannot create scratch file $filename for $languageByID language ID in ${project.name}")
+    ScratchFileService.getInstance().scratchesMapping.setMapping(vf, languageByID)
+    FileEditorManager.getInstance(project).closeFile(vf)
     return vf
   }
 
@@ -431,49 +414,30 @@ internal object OpenLessonActivities {
                              LearnBundle.message("dialog.askToSwitchToLearnProject.title"))
   }
 
-  @Throws(IOException::class)
-  private fun getFileInLearnProject(lesson: Lesson): VirtualFile? {
+  private fun getFileInLearnProject(langSupport: LangSupport, lesson: Lesson): VirtualFile? {
     if (!lesson.properties.openFileAtStart) {
       LOG.debug("${lesson.name} does not open any file at the start")
       return null
     }
     val function = object : Computable<VirtualFile> {
       override fun compute(): VirtualFile {
-        val learnProject = LearningUiManager.learnProject!!
+        val relativeFilePath = lesson.sampleFilePath
+                               ?: lesson.module.sampleFilePath
+                               ?: lesson.module.primaryLanguage?.sampleFilePath
+                               ?: error("No file provided to start lesson ${lesson.name} (${lesson.id}) for ${langSupport.primaryLanguage} course")
+        val root = ProjectUtils.getProjectRoot(langSupport)
 
-        val existedFile = lesson.existedFile ?: lesson.module.primaryLanguage?.projectSandboxRelativePath
-        val manager = ProjectRootManager.getInstance(learnProject)
-        if (existedFile != null) {
-          val root = ProjectUtils.getProjectRoot(learnProject)
-          val findFileByRelativePath = root.findFileByRelativePath(existedFile)
-          if (findFileByRelativePath != null) return findFileByRelativePath
+        root.findFileByRelativePath(relativeFilePath)?.let {
+          return it
         }
 
-        val fileName = existedFile ?: lesson.fileName
-
-        var lessonVirtualFile: VirtualFile? = null
-        var roots = manager.contentSourceRoots
-        if (roots.isEmpty()) {
-          roots = manager.contentRoots
+        val lastSeparator = relativeFilePath.lastIndexOf("/")
+        val dir = if (lastSeparator != -1) {
+          VfsUtil.createDirectoryIfMissing(root, relativeFilePath.substring(0, lastSeparator))
         }
-        for (file in roots) {
-          if (file.name == fileName) {
-            lessonVirtualFile = file
-            break
-          }
-          else {
-            lessonVirtualFile = file.findChild(fileName)
-            if (lessonVirtualFile != null) {
-              break
-            }
-          }
-        }
-        if (lessonVirtualFile == null) {
-          lessonVirtualFile = roots[0].createChildData(this, fileName)
-        }
-
-        CourseManager.instance.registerVirtualFile(lesson.module, lessonVirtualFile)
-        return lessonVirtualFile
+        else root
+        val fileName = if (lastSeparator == -1) relativeFilePath else relativeFilePath.substring(lastSeparator + 1)
+        return dir.createChildData(this, fileName)
       }
     }
 

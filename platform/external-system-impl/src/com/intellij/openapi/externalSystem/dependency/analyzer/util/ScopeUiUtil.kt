@@ -6,8 +6,7 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.popup.JBPopup
@@ -25,7 +24,7 @@ import java.awt.Component
 import javax.swing.*
 
 
-internal class SearchScopeSelector(property: ObservableClearableProperty<List<ScopeItem>>) : JPanel() {
+internal class SearchScopeSelector(property: ObservableMutableProperty<List<ScopeItem>>) : JPanel() {
   init {
     val dropDownLink = SearchScopeDropDownLink(property)
       .apply { border = JBUI.Borders.empty(BORDER, ICON_TEXT_GAP / 2, BORDER, BORDER) }
@@ -43,8 +42,8 @@ internal class SearchScopeSelector(property: ObservableClearableProperty<List<Sc
 private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<ScopeProperty>() {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
-  private val anyScopeProperty = propertyGraph.graphProperty(::suggestAnyScopeState)
-  private val scopeProperties = scopes.map { ScopeProperty.Just(it.scope, propertyGraph.graphProperty { it.isSelected }) }
+  private val anyScopeProperty = propertyGraph.lazyProperty(::suggestAnyScopeState)
+  private val scopeProperties = scopes.map { ScopeProperty.Just(it.scope, propertyGraph.lazyProperty { it.isSelected }) }
 
   private fun suggestAnyScopeState(): ThreeStateCheckBox.State {
     return when {
@@ -89,7 +88,9 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<ScopePro
       repaint()
     }
     for (scope in scopeProperties) {
-      anyScopeProperty.dependsOn(scope.property)
+      anyScopeProperty.dependsOn(scope.property) {
+        suggestAnyScopeState()
+      }
       scope.property.dependsOn(anyScopeProperty) {
         suggestScopeState(scope.property.get())
       }
@@ -137,7 +138,7 @@ private class SearchScopePropertyRenderer : ListCellRenderer<ScopeProperty> {
 }
 
 private class SearchScopeDropDownLink(
-  property: ObservableClearableProperty<List<ScopeItem>>
+  property: ObservableMutableProperty<List<ScopeItem>>
 ) : DropDownLink<List<ScopeItem>>(
   property.get(),
   { SearchScopePopupContent.createPopup(property.get(), it::selectedItem.setter) }

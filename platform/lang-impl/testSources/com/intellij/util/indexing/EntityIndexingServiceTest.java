@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.WriteAction;
@@ -22,6 +22,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
@@ -63,7 +64,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingProjectLibrary() throws Exception {
-    doTest(this::createProjectLibrary, this::removeProjectLibrary, IndexableEntityProviderMethods.INSTANCE::createIterators);
+    doTest(this::createProjectLibrary, this::removeProjectLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
   }
 
   @NotNull
@@ -98,7 +99,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
   public void testIndexingGlobalLibrary() throws Exception {
     doTest(this::createGlobalLibrary, this::removeGlobalLibrary,
-           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst()));
+           pair -> LibraryIndexableFilesIteratorImpl.createIteratorList(pair.getFirst()));
   }
 
   @NotNull
@@ -113,7 +114,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingModuleLibrary() throws Exception {
-    doTest(this::createModuleLibrary, this::removeModuleLibrary, IndexableEntityProviderMethods.INSTANCE::createIterators);
+    doTest(this::createModuleLibrary, this::removeModuleLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
   }
 
   private void removeModuleLibrary(Library library) {

@@ -18,10 +18,8 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
-import org.jetbrains.annotations.ApiStatus;
 
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public abstract class AbstractTestClassConfigurationProducer extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
   protected AbstractTestClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);

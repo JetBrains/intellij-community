@@ -30,7 +30,7 @@ public class ActionCommand extends TypeCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final String actionName = getText().substring(PREFIX.length()).trim();
 
     final ActionManager am = ActionManager.getInstance();

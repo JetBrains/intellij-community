@@ -1,30 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ConnectException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
-  public static final int MAX_CONTENT_LENGTH = Registry.intValue("ide.netty.max.frame.size.in.mb") * 1024 * 1024;
+  public static final int MAX_CONTENT_LENGTH;
+
+  static {
+    int maxContentLength = 180;
+    try {
+      maxContentLength = Integer.parseInt(System.getProperty("ide.netty.max.frame.size.in.mb", "180")) * 1024 * 1024;
+    }
+    catch (NumberFormatException ignore) {
+    }
+    MAX_CONTENT_LENGTH = maxContentLength;
+  }
 
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
@@ -103,6 +112,22 @@ public final class NettyUtil {
                                                       .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt", "x-requested-with") //NON-NLS
                                                       .build()));
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull FullHttpRequest ensureRequestUriIsRelative(@NotNull FullHttpRequest httpRequest) {
+    try {
+      URI uri = new URI(httpRequest.uri());
+      if (uri.getHost() != null) {
+        URI patchedRequestURI = new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment());
+        FullHttpRequest httpRequestCopy = httpRequest.copy();
+        httpRequestCopy.setUri(patchedRequestURI.toString());
+        return httpRequestCopy;
+      }
+    }
+    catch (URISyntaxException ignored) {
+    }
+    return httpRequest;
   }
 
   @TestOnly

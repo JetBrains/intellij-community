@@ -2,7 +2,6 @@
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -91,16 +90,6 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   }
 
   @Override
-  public void selectNotify() {
-
-  }
-
-  @Override
-  public void deselectNotify() {
-
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
@@ -108,12 +97,6 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
-  }
-
-  @Nullable
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
   }
 
   @Nullable

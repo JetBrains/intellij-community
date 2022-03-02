@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -25,7 +25,6 @@ import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.util.TipDialog
 import com.intellij.idea.IdeaLogger
 import com.intellij.lang.Language
-import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
@@ -56,6 +55,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
@@ -92,8 +92,6 @@ import kotlin.collections.component2
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
-
-private const val GROUP_ID = "Dynamic plugin installation"
 
 object DynamicPlugins {
   @JvmStatic
@@ -438,10 +436,6 @@ object DynamicPlugins {
     }
   }
 
-  fun unloadAndUninstallPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
-    return unloadPlugin(pluginDescriptor, UnloadPluginOptions(disable = false))
-  }
-
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
                    options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
@@ -689,7 +683,7 @@ object DynamicPlugins {
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    val notification = NotificationGroupManager.getInstance().getNotificationGroup(GROUP_ID).createNotification(text, notificationType)
+    val notification = UpdateChecker.getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)
     }
@@ -835,11 +829,15 @@ object DynamicPlugins {
     app.runWriteAction {
       try {
         PluginManagerCore.setPluginSet(pluginSet)
+
         val listenerCallbacks = mutableListOf<Runnable>()
         loadModule(pluginWithContentModules, app, listenerCallbacks)
-        loadOptionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet, listenerCallbacks)
-        clearPluginClassLoaderParentListCache(pluginSet)
+        for (module in optionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet)) {
+          // 4. load into service container
+          loadModule(sequenceOf(module), app, listenerCallbacks)
+        }
 
+        clearPluginClassLoaderParentListCache(pluginSet)
         clearCachedValues()
 
         listenerCallbacks.forEach(Runnable::run)
@@ -999,35 +997,41 @@ private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: Id
 /**
  * Load all sub plugins that depend on specified [dependencyPlugin].
  */
-private fun loadOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDescriptorImpl,
-                                             classLoaderConfigurator: ClassLoaderConfigurator,
-                                             pluginSet: PluginSet,
-                                             listenerCallbacks: MutableList<Runnable>) {
+private fun optionalDependenciesOnPlugin(
+  dependencyPlugin: IdeaPluginDescriptorImpl,
+  classLoaderConfigurator: ClassLoaderConfigurator,
+  pluginSet: PluginSet,
+): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val mainToModule = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
+  val mainToModules = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
+  val modulesToMain = LinkedHashMap<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>()
 
-  processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { mainDescriptor, subDescriptor ->
-    val subDescriptors = mainToModule.computeIfAbsent(mainDescriptor) { mutableListOf() }
-    if (subDescriptors.any { it === subDescriptor }) {
-      throw PluginException("Descriptor has already been added: $subDescriptor", subDescriptor.pluginId)
+  processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
+    val modules = mainToModules.computeIfAbsent(main) {
+      mutableListOf()
     }
-    subDescriptors.add(subDescriptor)
-  }
-
-  if (mainToModule.isEmpty()) {
-    return
-  }
-
-  // 2. setup classloaders
-  classLoaderConfigurator.configureDependenciesIfNeeded(mainToModule)
-
-  val app = ApplicationManager.getApplication() as ApplicationImpl
-  // 3. load into service container
-  for (entry in mainToModule.entries) {
-    for (subDescriptor in entry.value) {
-      loadModule(sequenceOf(subDescriptor), app, listenerCallbacks)
+    if (modules.any { it === module }) {
+      throw PluginException("Descriptor has already been added: $module", module.pluginId)
     }
+
+    modulesToMain[module] = main
+    modules.add(module)
   }
+
+  if (mainToModules.isEmpty()) {
+    return emptySet()
+  }
+
+  // 2. sort topologically
+  val sortedModulesToMain = modulesToMain.toSortedMap(PluginSetBuilder(mainToModules.keys.toList())
+                                                        .moduleGraph
+                                                        .topologicalComparator)
+  // 3. setup classloaders
+  for ((moduleDescriptor, mainDescriptor) in sortedModulesToMain) {
+    classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
+  }
+
+  return sortedModulesToMain.keys
 }
 
 private fun loadModule(modules: Sequence<IdeaPluginDescriptorImpl>,

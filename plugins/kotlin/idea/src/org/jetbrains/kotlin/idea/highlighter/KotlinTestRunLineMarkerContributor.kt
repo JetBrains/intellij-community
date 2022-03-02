@@ -8,11 +8,10 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService
 import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
@@ -91,8 +89,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     }
 
     private fun getOrder(declaration: KtNamedDeclaration): Int {
-        val mainFunctionDetector =
-                MainFunctionDetector(declaration.languageVersionSettings) { it.resolveToDescriptorIfAny(BodyResolveMode.FULL) }
+        val mainFunctionDetector = KotlinMainFunctionLocatingService.getInstance()
 
         if (declaration is KtClassOrObject && mainFunctionDetector.hasMain(declaration.companionObjects)) {
             return 1

@@ -6,6 +6,10 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
@@ -240,7 +244,12 @@ abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(confi
 
   override fun getTestLocator(): SMTestLocator = PyTestsLocator
 
-  override fun getTestSpecs(): MutableList<String> = java.util.ArrayList(configuration.getTestSpec())
+  /**
+   * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
+   */
+  override fun getTestSpecs(): List<String> = configuration.getTestSpec()
+
+  override fun getTestSpecs(request: TargetEnvironmentRequest): List<TargetEnvironmentFunction<String>> = configuration.getTestSpec(request)
 
   override fun generateCommandLine(): GeneralCommandLine {
     val line = super.generateCommandLine()
@@ -300,11 +309,22 @@ data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target")
   fun asPsiElement(configuration: PyAbstractTestConfiguration): PsiElement? =
     asPsiElement(configuration, configuration.getWorkingDirectoryAsVirtual())
 
+  /**
+   * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
+   */
   fun generateArgumentsLine(configuration: PyAbstractTestConfiguration): List<String> =
     when (targetType) {
       PyRunTargetVariant.CUSTOM -> emptyList()
       PyRunTargetVariant.PYTHON -> getArgumentsForPythonTarget(configuration)
       PyRunTargetVariant.PATH -> listOf("--path", target.trim())
+    }
+
+  fun generateArgumentsLine(request: TargetEnvironmentRequest,
+                            configuration: PyAbstractTestConfiguration): List<TargetEnvironmentFunction<String>> =
+    when (targetType) {
+      PyRunTargetVariant.CUSTOM -> emptyList()
+      PyRunTargetVariant.PYTHON -> getArgumentsForPythonTarget(configuration).map(::constant)
+      PyRunTargetVariant.PATH -> listOf(constant("--path"), request.getTargetEnvironmentValueForLocalPath(target.trim()))
     }
 
   private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> = runReadAction ra@{
@@ -425,8 +445,10 @@ internal interface PyTestConfigurationWithCustomSymbol {
  */
 abstract class PyAbstractTestConfiguration(project: Project,
                                            private val testFactory: PyAbstractTestFactory<*>)
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired), PyRerunAwareConfiguration,
-    RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired),
+    PyRerunAwareConfiguration,
+    RefactoringListenerProvider,
+    SMRunnerConsolePropertiesProvider {
 
   override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties =
     PythonTRunnerConsoleProperties(this, executor, true, PyTestsLocator).also { properties ->
@@ -501,6 +523,9 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   override fun isIdTestBased(): Boolean = true
 
+  /**
+   * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
+   */
   private fun getPythonTestSpecByLocation(location: Location<*>): List<String> {
 
     if (location is PyTargetBasedPsiLocation) {
@@ -519,6 +544,24 @@ abstract class PyAbstractTestConfiguration(project: Project,
     return ConfigurationTarget(qualifiedName, PyRunTargetVariant.PYTHON).generateArgumentsLine(this)
   }
 
+  private fun getPythonTestSpecByLocation(request: TargetEnvironmentRequest,
+                                          location: Location<*>): List<TargetEnvironmentFunction<String>> {
+    if (location is PyTargetBasedPsiLocation) {
+      return location.target.generateArgumentsLine(request, this)
+    }
+
+    if (location !is PsiLocation) {
+      return emptyList()
+    }
+    if (location.psiElement !is PyQualifiedNameOwner) {
+      return emptyList()
+    }
+    val qualifiedName = (location.psiElement as PyQualifiedNameOwner).qualifiedName ?: return emptyList()
+
+    // Resolve name as python qname as last resort
+    return ConfigurationTarget(qualifiedName, PyRunTargetVariant.PYTHON).generateArgumentsLine(request, this)
+  }
+
   final override fun getTestSpec(location: Location<*>,
                                  failedTest: AbstractTestProxy): String? {
     val list = getPythonTestSpecByLocation(location)
@@ -530,17 +573,33 @@ abstract class PyAbstractTestConfiguration(project: Project,
     }
   }
 
-  override fun getTestSpecsForRerun(scope: com.intellij.psi.search.GlobalSearchScope,
-                                    locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
-    val result = java.util.ArrayList<String>()
+  /**
+   * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
+   */
+  override fun getTestSpecsForRerun(scope: GlobalSearchScope,
+                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<String> =
     // Set used to remove duplicate targets
-    locations.map { it.first }.distinctBy { it.psiElement }.map { getPythonTestSpecByLocation(it) }.forEach {
-      result.addAll(it)
-    }
-    return result + generateRawArguments(true)
-  }
+    locations
+      .map { it.first }
+      .distinctBy { it.psiElement }
+      .flatMap { getPythonTestSpecByLocation(it) } + generateRawArguments(true)
 
+  override fun getTestSpecsForRerun(request: TargetEnvironmentRequest,
+                                    scope: GlobalSearchScope,
+                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<TargetEnvironmentFunction<String>> =
+    // Set used to remove duplicate targets
+    locations
+      .map { it.first }
+      .distinctBy { it.psiElement }
+      .flatMap { getPythonTestSpecByLocation(request, it) } + generateRawArguments(true).map(::constant)
+
+  /**
+   * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
+   */
   fun getTestSpec(): List<String> = target.generateArgumentsLine(this) + generateRawArguments()
+
+  fun getTestSpec(request: TargetEnvironmentRequest): List<TargetEnvironmentFunction<String>> =
+    target.generateArgumentsLine(request, this) + generateRawArguments().map(::constant)
 
   /**
    * raw arguments to be added after "--" and passed to runner directly

@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
+                    serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.rename.RenameUsagesCollector"/>
+  </extensions>
+</idea-plugin>

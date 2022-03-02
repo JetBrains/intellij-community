@@ -2,7 +2,10 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.wizard.*
+import com.intellij.openapi.project.Project
 
 class JavaNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = JAVA
@@ -22,8 +25,17 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
     override val buildSystemProperty by ::stepProperty
     override var buildSystem by ::step
 
+
+    override fun setupProject(project: Project) {
+      super.setupProject(project)
+
+      logBuildSystemFinished()
+    }
+
     init {
       data.putUserData(BuildSystemJavaNewProjectWizardData.KEY, this)
+
+      buildSystemProperty.afterChange { logBuildSystemChanged() }
     }
   }
 

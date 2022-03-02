@@ -146,6 +146,9 @@
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.packageSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.packageSearch.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.packageSearch.kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.packageSearch.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater.tests" scope="TEST" />
@@ -156,8 +159,24 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ml.models.local.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.commander" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.configurationScript" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.configurationScript.test.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.envTests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.toml.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.googleAppEngine" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.googleAppEngine.jps" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.reStructuredText" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.uast.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.remoteServers.targetsIntegrationTests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.commonTests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.reStructuredText" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.laf.macos" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.laf.win10" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
@@ -165,5 +184,9 @@
     <orderEntry type="module" module-name="intellij.platform.tracing.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.refactoring.detector" scope="RUNTIME" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinx.kotlinx-serialization-compiler-plugin-for-compilation" level="project" />
+    <orderEntry type="module" module-name="intellij.keymap.eclipse" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.keymap.visualStudio" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.keymap.netbeans" scope="RUNTIME" />
   </component>
 </module>

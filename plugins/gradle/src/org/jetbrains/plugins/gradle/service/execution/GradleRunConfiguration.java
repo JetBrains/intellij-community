@@ -103,11 +103,11 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     super.readExternal(element);
     final Element child = element.getChild(DEBUG_FLAG_NAME);
     if (child != null) {
-      setDebugServerProcess(Boolean.valueOf(child.getText()));
+      setDebugServerProcess(Boolean.parseBoolean(child.getText()));
     }
     final Element debugAll = element.getChild(DEBUG_ALL_NAME);
     if (debugAll != null) {
-      isDebugAllEnabled = Boolean.valueOf(debugAll.getText());
+      isDebugAllEnabled = Boolean.parseBoolean(debugAll.getText());
     }
   }
 

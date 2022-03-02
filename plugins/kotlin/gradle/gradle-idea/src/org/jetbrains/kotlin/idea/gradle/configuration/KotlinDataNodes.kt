@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.serialization.PropertyMapping
 import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.Serializable
@@ -27,6 +28,7 @@ class KotlinGradleProjectData : AbstractExternalEntityData(GradleConstants.SYSTE
     var hasKotlinPlugin: Boolean = false
     var coroutines: String? = null
     var isHmpp: Boolean = false
+    var kotlinImportingDiagnosticsContainer: Set<KotlinImportingDiagnostic>? = null
     var platformPluginId: String? = null
     lateinit var kotlinNativeHome: String
     override var implementedModuleNames: List<String> = emptyList()

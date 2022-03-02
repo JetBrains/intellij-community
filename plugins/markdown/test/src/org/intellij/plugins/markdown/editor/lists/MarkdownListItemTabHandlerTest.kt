@@ -10,6 +10,8 @@ class MarkdownListItemTabHandlerTest: LightPlatformCodeInsightTestCase() {
 
   fun testCreateSubItemWithChildren() = doTest()
 
+  fun testCreateSubItemWithChildrenInBlockQuote() = doTest()
+
   fun testHeterogeneousDocument() = doTest()
 
   fun testComplexListItemContent() = doTest()

@@ -4,7 +4,7 @@ package com.intellij.util.containers;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 /**
- * @deprecated use {@link it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap} instead
+ * @deprecated use {@link Int2IntOpenHashMap} instead
  */
 @Deprecated
 public final class IntIntHashMap extends Int2IntOpenHashMap {

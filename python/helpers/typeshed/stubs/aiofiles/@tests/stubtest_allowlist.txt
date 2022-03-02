@@ -1,3 +1,8 @@
+# Some arguments only exist on FreeBSD and MacOS
+aiofiles.os.sendfile
+
+# These all delegate using *args,**kwargs, but stubs use signature of
+# method they are being delegated to.
 aiofiles.threadpool.binary.AsyncBufferedIOBase.close
 aiofiles.threadpool.binary.AsyncBufferedIOBase.detach
 aiofiles.threadpool.binary.AsyncBufferedIOBase.fileno
@@ -25,3 +30,22 @@ aiofiles.threadpool.text.AsyncTextIOWrapper.readable
 aiofiles.threadpool.text.AsyncTextIOWrapper.seekable
 aiofiles.threadpool.text.AsyncTextIOWrapper.tell
 aiofiles.threadpool.text.AsyncTextIOWrapper.writable
+
+# These functions get the wrong signature from functools.wraps()
+aiofiles.os.stat
+aiofiles.os.rename
+aiofiles.os.replace
+aiofiles.os.remove
+aiofiles.os.mkdir
+aiofiles.os.makedirs
+aiofiles.os.rmdir
+aiofiles.os.removedirs
+aiofiles.ospath.exists
+aiofiles.ospath.isfile
+aiofiles.ospath.isdir
+aiofiles.ospath.getsize
+aiofiles.ospath.getmtime
+aiofiles.ospath.getatime
+aiofiles.ospath.getctime
+aiofiles.ospath.samefile
+aiofiles.ospath.sameopenfile

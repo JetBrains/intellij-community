@@ -13,7 +13,6 @@ import org.jetbrains.concurrency.Promise;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * {@link ProjectTaskRunner} provides an extension point to run any IDE tasks using {@link ProjectTaskManager} api.
@@ -103,8 +102,7 @@ public abstract class ProjectTaskRunner {
   /**
    * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void run(@NotNull Project project,
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,

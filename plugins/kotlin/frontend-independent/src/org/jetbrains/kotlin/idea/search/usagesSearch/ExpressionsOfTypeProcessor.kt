@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.usagesSearch
 
@@ -19,15 +19,16 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightClass
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.hasType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInProjectSource
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isSamInterface
+import org.jetbrains.kotlin.idea.search.everythingScopeExcludeFileTypes
 import org.jetbrains.kotlin.idea.search.excludeFileTypes
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -35,9 +36,11 @@ import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.*
 
 //TODO: check if smart search is too expensive
@@ -204,8 +207,7 @@ class ExpressionsOfTypeProcessor(
                 val debugInfo: StringBuilder? = if (isUnitTestMode()) StringBuilder() else null
                 testLog { "Searched references to ${logPresentation(classToSearch)}" }
                 debugInfo?.apply { append("Searched references to ").append(logPresentation(classToSearch)) }
-                val scope = GlobalSearchScope.allScope(project)
-                    .excludeFileTypes(XmlFileType.INSTANCE) // ignore usages in XML - they don't affect us
+                val scope = project.everythingScopeExcludeFileTypes(XmlFileType.INSTANCE) // ignore usages in XML - they don't affect us
                 searchReferences(classToSearch, scope) { reference ->
                     val element = reference.element
                     val language = element.language
@@ -236,7 +238,9 @@ class ExpressionsOfTypeProcessor(
                         return@searchReferences false
                     }
 
-                    error(getFallbackDiagnosticsMessage(reference, debugInfo))
+                    throw KotlinExceptionWithAttachments("Unsupported reference")
+                        .withPsiAttachment("reference.txt", element)
+                        .withAttachment("diagnostic_message.txt", getFallbackDiagnosticsMessage(reference, debugInfo))
                 }
 
                 // we must use plain search inside our class (and inheritors) because implicit 'this' can happen anywhere
@@ -434,7 +438,7 @@ class ExpressionsOfTypeProcessor(
      */
     private fun addCallableDeclarationToProcessLambdasInCalls(declaration: PsiElement) {
         // we don't need to search usages of declarations in Java because Java doesn't have implicitly typed declarations so such usages cannot affect Kotlin code
-        val scope = GlobalSearchScope.projectScope(project).excludeFileTypes(JavaFileType.INSTANCE, XmlFileType.INSTANCE)
+        val scope = GlobalSearchScope.projectScope(project).excludeFileTypes(project, JavaFileType.INSTANCE, XmlFileType.INSTANCE)
         addCallableDeclarationToProcess(declaration, scope, ReferenceProcessor.ProcessLambdasInCalls)
     }
 
@@ -462,7 +466,7 @@ class ExpressionsOfTypeProcessor(
 
         data class ProcessSamInterfaceTask(val psiClass: PsiClass) : Task {
             override fun perform() {
-                val scope = GlobalSearchScope.projectScope(project).excludeFileTypes(KotlinFileType.INSTANCE, XmlFileType.INSTANCE)
+                val scope = GlobalSearchScope.projectScope(project).excludeFileTypes(project, KotlinFileType.INSTANCE, XmlFileType.INSTANCE)
                 testLog { "Searched references to ${logPresentation(psiClass)} in non-Kotlin files" }
                 searchReferences(psiClass, scope) { reference ->
                     // reference in some JVM language can be method parameter (but we don't know)
@@ -493,6 +497,11 @@ class ExpressionsOfTypeProcessor(
                 debugInfo?.apply { append(", elementParent: $elementParent") }
                 when (elementParent) {
                     is KtUserType -> { // usage in type
+                        val userTypeParent = elementParent.parent
+                        if (userTypeParent is KtUserType && userTypeParent.qualifier == elementParent) {
+                            return true // type qualifier
+                        }
+
                         return processClassUsageInUserType(elementParent)
                     }
 
@@ -511,8 +520,11 @@ class ExpressionsOfTypeProcessor(
                     }
 
                     is KtQualifiedExpression -> {
-                        // <class name>.memberName or some.<class name>.memberName
-                        if (element == elementParent.receiverExpression || elementParent.parent is KtQualifiedExpression) {
+                        // <class name>.memberName or some.<class name>.memberName or some.<class name>::class
+                        if (element == elementParent.receiverExpression ||
+                            elementParent.parent is KtQualifiedExpression ||
+                            elementParent.parent is KtClassLiteralExpression
+                        ) {
                             return true // companion object member or static member access - ignore it
                         }
                     }
@@ -595,7 +607,7 @@ class ExpressionsOfTypeProcessor(
                 val parent = typeRefParent.parent
                 if (parent is KtSuperTypeCallEntry) {
                     val classOrObject = (parent.parent as KtSuperTypeList).parent as KtClassOrObject
-                    val psiClass = classOrObject.providedToLightClass()
+                    val psiClass = classOrObject.toLightClass()
                     psiClass?.let { addClassToProcess(it) }
                     return true
                 }
@@ -604,7 +616,7 @@ class ExpressionsOfTypeProcessor(
             is KtSuperTypeListEntry -> { // super-interface name in the list of bases
                 if (typeRef == typeRefParent.typeReference) {
                     val classOrObject = (typeRefParent.parent as KtSuperTypeList).parent as KtClassOrObject
-                    val psiClass = classOrObject.providedToLightClass()
+                    val psiClass = classOrObject.toLightClass()
                     psiClass?.let { addClassToProcess(it) }
                     return true
                 }

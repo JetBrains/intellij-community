@@ -5,11 +5,11 @@ import com.intellij.lang.Language
 import com.intellij.openapi.ide.CopyPasteManager
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggestingUtils.asString
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.BeforeEditorCopyAction
 import training.featuresSuggester.actions.EditorCopyAction
-import training.featuresSuggester.asString
 import java.awt.datatransfer.Transferable
 import java.util.*
 
@@ -20,6 +20,7 @@ class CopyPasteSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("paste.from.history.message")
   override val suggestingActionId = "PasteMultiple"
   override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/working-with-source-code.html#copy_paste"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf(Language.ANY.id)
 

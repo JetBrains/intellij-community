@@ -14,7 +14,8 @@ public class GenericTypeAnnotations {
    Map<? extends @C @D String, List<Object>> m8;
    Map<? extends String, @D @E List<Object>> m9;
    Map<? extends String, List<@E @F Object>> m10;
-   @A Map<@B ? extends @C String, @D List<@E Object>> m11;
+   @A Map<@B ? extends @C String, @L @D List<@E Object>> m11;
+   @L Map<? extends String, List<Object>> m13;
 
    @A Map<@A Object, @B List<@C Object>> m12() {
       return null;// 18
@@ -27,16 +28,16 @@ public class GenericTypeAnnotations {
 
 class 'typeAnnotations/GenericTypeAnnotations' {
    method 'm12 ()Ljava/util/Map;' {
-      0      19
-      1      19
+      0      20
+      1      20
    }
 
    method 'l1 ()Ljava/util/List;' {
-      0      23
-      1      23
+      0      24
+      1      24
    }
 }
 
 Lines mapping:
-18 <-> 20
-19 <-> 24
+18 <-> 21
+19 <-> 25

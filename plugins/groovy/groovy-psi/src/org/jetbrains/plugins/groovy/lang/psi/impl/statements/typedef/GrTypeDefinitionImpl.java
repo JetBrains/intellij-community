@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
@@ -154,11 +154,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     PsiElement result = findChildByType(TokenSets.PROPERTY_NAMES);
     assert result != null;
     return result;
-  }
-
-  @Override
-  public void checkDelete() throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
   }
 
   @Override
@@ -336,12 +331,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   @Override
-  public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
   @Override
-  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
@@ -362,7 +357,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   @Override
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
+  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
     return GrClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
@@ -437,7 +432,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @Override
-  public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
+  public boolean isInheritorDeep(@NotNull PsiClass baseClass, @Nullable PsiClass classToByPass) {
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
@@ -569,6 +564,10 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     if (isInterface()) return JetgroovyIcons.Groovy.Interface;
 
     if (isEnum()) return JetgroovyIcons.Groovy.Enum;
+
+    if (this instanceof GrRecordDefinition) {
+      return JetgroovyIcons.Groovy.Record;
+    }
 
     if (hasModifierProperty(PsiModifier.ABSTRACT)) return JetgroovyIcons.Groovy.AbstractClass;
 

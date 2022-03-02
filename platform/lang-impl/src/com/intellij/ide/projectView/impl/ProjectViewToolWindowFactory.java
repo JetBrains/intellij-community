@@ -37,7 +37,7 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
       return AllIcons.Toolwindows.ToolWindowProject;
     }
     else {
-      return Objects.requireNonNull(IconLoader.findIcon(path, null, ProjectViewToolWindowFactory.class.getClassLoader(), null, false));
+      return Objects.requireNonNull(IconLoader.findIcon(path, ProjectViewToolWindowFactory.class.getClassLoader()));
     }
   }
 
@@ -47,7 +47,7 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
       return;
     }
 
-    Project project = ((ToolWindowEx)window).getProject();
+    Project project = window.getProject();
     if (Boolean.TRUE.equals(project.getUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START)) &&
         !ProjectUtil.isNotificationSilentMode(project)) {
       RunOnceUtil.runOnceForProject(project, "OpenProjectViewOnStart", () -> {

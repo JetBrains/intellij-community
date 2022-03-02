@@ -50,6 +50,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport
   implements InputRedirectAware, TargetEnvironmentAwareRunProfile {
@@ -337,6 +338,21 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
     setGeneratedName();
+  }
+
+  @Override
+  public void withNestedClass(PsiClass aClass) {
+    String className = aClass.getName();
+    myData.MAIN_CLASS_NAME += "$" + className;
+    Set<@NlsSafe String> patterns = myData.getPatterns();
+    if (!patterns.isEmpty()) {
+      myData.setPatterns(patterns.stream().map(name -> {
+        if (name.contains(",")) {
+          return StringUtil.getPackageName(name, ',') + "$" + className + "," + StringUtil.getShortName(name, ',');
+        }
+        return name + "$" + className;
+      }).collect(Collectors.toCollection(() -> new LinkedHashSet<>())));
+    }
   }
 
   @Override
@@ -787,7 +803,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
     public static @NlsSafe String getMethodPresentation(PsiMethod method) {
       String methodName = method.getName();
-      if ((!method.getParameterList().isEmpty() || methodName.contains("(") || methodName.contains(")")) && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+      if ((!method.getParameterList().isEmpty() || methodName.contains("(") || methodName.contains(")")) && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION_LIST)) {
         return methodName + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {
@@ -853,7 +869,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       return className;
     }
 
-    public @NlsSafe String getMainClassName() {
+    public @NlsSafe @NotNull String getMainClassName() {
       return MAIN_CLASS_NAME != null ? MAIN_CLASS_NAME : "";
     }
 

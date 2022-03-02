@@ -10,11 +10,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Log4JLoggerFactory;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+import io.netty.util.internal.logging.JdkLoggerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
@@ -25,6 +21,8 @@ import javax.tools.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.*;
+import java.util.logging.Formatter;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,12 +37,19 @@ public final class ExternalJavacProcess {
   private final Executor myThreadPool = Executors.newCachedThreadPool();
 
   static {
-    Logger root = Logger.getRootLogger();
-    if (!root.getAllAppenders().hasMoreElements()) {
+    Logger root = Logger.getLogger("");
+    if (root.getHandlers().length == 0) {
       root.setLevel(Level.INFO);
-      root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+      ConsoleHandler handler = new ConsoleHandler();
+      handler.setFormatter(new Formatter() {
+        @Override
+        public String format(LogRecord record) {
+          return record.getMessage() + "\n";
+        }
+      });
+      root.addHandler(handler);
     }
-    InternalLoggerFactory.setDefaultFactory(Log4JLoggerFactory.INSTANCE);
+    InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE);
   }
 
   public ExternalJavacProcess(boolean keepRunning) {
@@ -96,7 +101,7 @@ public final class ExternalJavacProcess {
       }
 
       if (args.length > 3) {
-        keepRunning = Boolean.valueOf(args[3]);
+        keepRunning = Boolean.parseBoolean(args[3]);
       }
     }
     else {

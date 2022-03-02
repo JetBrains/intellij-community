@@ -707,18 +707,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static boolean morePluginsAffected(@NotNull Set<PluginId> pluginIdsToDisable) {
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
       if (!rootDescriptor.isEnabled() || pluginIdsToDisable.contains(rootDescriptor.getPluginId())) {
         continue;
       }
 
-      if (!PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor,
-                                                               descriptor ->
-                                                                 descriptor.isEnabled() ?
-                                                                 pluginIdsToDisable.contains(descriptor.getPluginId()) ?
-                                                                 FileVisitResult.TERMINATE :
-                                                                 FileVisitResult.CONTINUE :
-                                                                 FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
+      if (!PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, descriptor ->
+        descriptor.isEnabled() ?
+        pluginIdsToDisable.contains(descriptor.getPluginId()) ?
+        FileVisitResult.TERMINATE :
+        FileVisitResult.CONTINUE :
+        FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
       )) {
         return true;
       }

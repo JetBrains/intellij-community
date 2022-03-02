@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -37,14 +37,14 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   private volatile boolean myDumb;
   private EditorColorsScheme myColorsScheme;
 
-  protected TextEditorHighlightingPass(@NotNull final Project project, @NotNull final Document document, boolean runIntentionPassAfter) {
+  protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document, boolean runIntentionPassAfter) {
     myDocument = document;
     myProject = project;
     myRunIntentionPassAfter = runIntentionPassAfter;
     myInitialDocStamp = document.getModificationStamp();
-    myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
+    myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(project).getModificationCount();
   }
-  protected TextEditorHighlightingPass(@NotNull final Project project, @NotNull Document document) {
+  protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document) {
     this(project, document, true);
   }
 
@@ -74,6 +74,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return (Condition<Object>)o -> ReadAction.compute(() -> !isValid());
   }
 
+  /**
+   * @return true if the file being highlighted hasn't changed since the pass instantiation and the highlighting results can be applied safely.
+   */
   protected boolean isValid() {
     if (myProject.isDisposed()) {
       return false;
@@ -112,7 +115,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return myId;
   }
 
-  public final void setId(final int id) {
+  public final void setId(int id) {
     myId = id;
   }
 
@@ -138,7 +141,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return myStartingPredecessorIds;
   }
 
-  public final void setStartingPredecessorIds(final int @NotNull [] startingPredecessorIds) {
+  public final void setStartingPredecessorIds(int @NotNull [] startingPredecessorIds) {
     myStartingPredecessorIds = startingPredecessorIds;
   }
 

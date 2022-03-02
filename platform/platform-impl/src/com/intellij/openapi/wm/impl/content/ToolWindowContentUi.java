@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeBundle;
@@ -19,7 +19,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.*;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.toolWindow.ToolWindowEventSource;
+import com.intellij.toolWindow.ToolWindowPane;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
@@ -35,6 +40,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -58,8 +64,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
 
   private final @NotNull ContentManager contentManager;
-  int myDropOverIndex = -1;
-  int myDropOverWidth = 0;
+  int dropOverIndex = -1;
+  int dropOverWidth = 0;
 
   public @NotNull ContentManager getContentManager() {
     return contentManager;
@@ -78,7 +84,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   private final ShowContentAction showContent;
 
   private final TabContentLayout tabsLayout;
-  private ContentLayout myComboLayout;
+  private ContentLayout comboLayout;
 
   private ToolWindowContentUiType type;
 
@@ -118,6 +124,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         getCurrentLayout().contentAdded(event);
         event.getContent().addPropertyChangeListener(propertyChangeListener);
         rebuild();
+
+        if (window.isToHideOnEmptyContent()) {
+          window.setAvailable(true);
+        }
       }
 
       @Override
@@ -127,8 +137,19 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         ensureSelectedContentVisible();
         rebuild();
 
-        if (contentManager.isEmpty() && window.isToHideOnEmptyContent()) {
-          window.hide(null);
+        if (contentManager.isEmpty()) {
+          boolean removeFromStripe;
+          if (window.isToHideOnEmptyContent()) {
+            removeFromStripe = true;
+          }
+          else if (window.canCloseContents() && StatusText.getDefaultEmptyText().equals(window.getEmptyText().getText())) {
+            removeFromStripe = false;
+          }
+          else {
+            return;
+          }
+          window.getToolWindowManager()
+            .hideToolWindow(window.getId(), /* hideSide = */ false, /* moveFocus = */ true, removeFromStripe, /* source = */ null);
         }
       }
 
@@ -213,10 +234,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       return tabsLayout;
     }
     else {
-      if (myComboLayout == null) {
-        myComboLayout = new ComboContentLayout(this);
+      if (comboLayout == null) {
+        comboLayout = new ComboContentLayout(this);
       }
-      return myComboLayout;
+      return comboLayout;
     }
   }
 
@@ -323,6 +344,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize) {
     initMouseListeners(c, ui, allowResize, false);
   }
+
   public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize, boolean allowDrag) {
     if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) {
       return;
@@ -343,7 +365,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         Component component = c;
         Component parent = component.getParent();
         while(parent != null) {
-
           if (parent instanceof ThreeComponentsSplitter && ((ThreeComponentsSplitter)parent).getOrientation()) {
             if (component != ((ThreeComponentsSplitter)parent).getFirstComponent()) {
               return parent;
@@ -354,7 +375,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
               && ((Splitter)parent).getFirstComponent() != null) {
             return parent;
           }
-          if (parent instanceof ToolWindowsPane) {
+          if (parent instanceof ToolWindowPane) {
             return parent;
           }
           component = parent;
@@ -377,7 +398,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           myInitialHeight.set(splitter.getSecondComponent().getHeight());
           return;
         }
-        if (component instanceof ToolWindowsPane) {
+        if (component instanceof ToolWindowPane) {
           myIsLastComponent.set(ui.window.getAnchor() == ToolWindowAnchor.BOTTOM || ui.window.getAnchor() == ToolWindowAnchor.RIGHT);
           myInitialHeight.set(ui.window.getAnchor().isHorizontal() ? ui.window.getDecorator().getHeight() : ui.window.getDecorator().getWidth());
           return;
@@ -406,7 +427,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-          if (ui.tabsLayout.myDoubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
+          if (ui.tabsLayout.doubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
             ToolWindowManagerEx manager = ui.window.getToolWindowManager();
             manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
           }
@@ -440,12 +461,21 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       private boolean isToolWindowDrag(MouseEvent e) {
-        if (!Registry.is("ide.new.tool.window.dnd")) return false;
+        if (!Registry.is("ide.new.tool.window.dnd")) {
+          return false;
+        }
+
         Component realMouseTarget = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
         Component decorator = InternalDecoratorImpl.findTopLevelDecorator(realMouseTarget);
-        if (decorator == null || ui.window.getType() == ToolWindowType.FLOATING || ui.window.getType() == ToolWindowType.WINDOWED) return false;
-        if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM) return true;
-        if (SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() > ToolWindowsPane.getHeaderResizeArea()) return true;//it's drag, not resize!
+        if (decorator == null || ui.window.getType() == ToolWindowType.FLOATING || ui.window.getType() == ToolWindowType.WINDOWED) {
+          return false;
+        }
+        if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM ||
+            SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() >
+            ToolWindowPane.Companion.getHeaderResizeArea$intellij_platform_ide_impl()) {
+          return true;
+        }
+        //it's drag, not resize!
         return false;
       }
 
@@ -453,7 +483,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       public void mouseDragged(MouseEvent e) {
         if (myLastPoint.isNull() || myPressPoint.isNull() || myDragTracker.isNull()) return;
         //"Dock" modes,
-        // for "Undock" mode processing see com.intellij.openapi.wm.impl.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
+        // for "Undock" mode processing see com.intellij.toolWindow.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
         PointerInfo info = MouseInfo.getPointerInfo();
         if (info == null) return;
         Point newMouseLocation = info.getLocation();
@@ -478,7 +508,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           Splitter splitter = (Splitter)component;
           splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
         }
-        if (component instanceof ToolWindowsPane) {
+        if (component instanceof ToolWindowPane) {
           if (ui.window.getType() == ToolWindowType.SLIDING) {
             ui.window.getDecorator().updateBounds(e);
           } else {
@@ -516,8 +546,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     group.add(closeAllAction);
     group.add(new TabbedContentAction.CloseAllButThisAction(content));
     group.addSeparator();
-    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false)
-        && UIUtil.isClientPropertyTrue(window.getComponent(), ALLOW_DND_FOR_TABS)) {
+    Component component = window.getComponent();
+    if (ClientProperty.isTrue(component, ALLOW_DND_FOR_TABS) && Registry.is("ide.allow.split.and.reorder.in.tool.window", false)) {
       group.add(splitRightTabAction);
       group.add(splitDownTabAction);
       group.add(unsplitTabAction);
@@ -703,9 +733,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   public void setDropInfoIndex(int dropIndex, int dropWidth) {
-    if (dropIndex != myDropOverIndex || dropWidth != myDropOverWidth) {
-      myDropOverIndex = dropIndex;
-      myDropOverWidth = dropWidth;
+    if (dropIndex != dropOverIndex || dropWidth != dropOverWidth) {
+      dropOverIndex = dropIndex;
+      dropOverWidth = dropWidth;
       dropCaches();
       rebuild();
     }
@@ -715,7 +745,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     private TabPanel() {
       super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
       setBorder(JBUI.Borders.emptyRight(2));
-      if (ExperimentalUI.isNewToolWindowsStripes()) {
+      if (ExperimentalUI.isNewUI()) {
         setBorder(JBUI.Borders.empty());
       }
     }

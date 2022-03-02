@@ -39,10 +39,6 @@ import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.helpers.LogLog;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,12 +72,17 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 
 @ApiStatus.Internal
 @SuppressWarnings("LoggerInitializedWithForeignClass")
 public final class StartupUtil {
   @SuppressWarnings("StaticNonFinalField")
   public static BiFunction<String, String[], Integer> LISTENER = (integer, s) -> Main.ACTIVATE_NOT_INITIALIZED;
+
+  @SuppressWarnings("StaticNonFinalField")
+  public static Activity startupStart;
 
   private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
@@ -96,9 +97,6 @@ public final class StartupUtil {
 
   private StartupUtil() { }
 
-  @SuppressWarnings("StaticNonFinalField")
-  public static Activity startupStart;
-
   /** Called via reflection from {@link Main#bootstrap}. */
   public static void start(@NotNull String mainClass,
                            boolean isHeadless,
@@ -108,7 +106,7 @@ public final class StartupUtil {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
     startupStart = StartUpMeasurer.startActivity("app initialization preparation");
 
-    // required if unified class loader is not used
+    // required if the unified class loader is not used
     if (setFlagsAgain) {
       Main.setFlags(args);
     }
@@ -159,20 +157,29 @@ public final class StartupUtil {
       System.exit(Main.NO_GRAPHICS);
     }
 
+    activity = activity.endAndStart("config path computing");
+    Path configPath = canonicalPath(PathManager.getConfigPath());
+    Path systemPath = canonicalPath(PathManager.getSystemPath());
+
+    activity = activity.endAndStart("system dirs locking");
+    // This needs to happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
+    // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
+    boolean configImportNeeded = lockSystemDirs(!isHeadless, configPath, systemPath, args);
+
     activity = activity.endAndStart("LaF init scheduling");
     Thread busyThread = Thread.currentThread();
     // LookAndFeel type is not specified to avoid class loading
     CompletableFuture<Object/*LookAndFeel*/> initUiFuture = scheduleInitUi(busyThread, isHeadless);
 
-    // splash instance must be not created before base LaF is created,
-    // it is important on Linux, where GTK LaF must be initialized (to properly setup scale factor).
+    // A splash instance must not be created before base LaF is created.
+    // It is important on Linux, where GTK LaF must be initialized (to properly setup scale factor).
     // https://youtrack.jetbrains.com/issue/IDEA-286544
     CompletableFuture<Runnable> splashTaskFuture = isHeadless || Main.isLightEdit() ? null : initUiFuture.thenApplyAsync(__ -> {
       return prepareSplash(args);
     }, forkJoinPool);
 
-    activity = activity.endAndStart("log4j configuration");
-    configureLog4j();
+    activity = activity.endAndStart("java.util.logging configuration");
+    configureJavaUtilLogging();
     activity = activity.endAndStart("eua and splash scheduling");
 
     CompletableFuture<Boolean> showEuaIfNeededFuture;
@@ -185,37 +192,24 @@ public final class StartupUtil {
       });
 
       if (splashTaskFuture != null) {
-        // do not use method reference here for invokeLater
+        // please do not use a method-reference here
         showEuaIfNeededFuture.thenAcceptBothAsync(splashTaskFuture, (__, runnable) -> {
           runnable.run();
         }, it -> EventQueue.invokeLater(it));
       }
     }
 
-    activity = activity.endAndStart("config path computing");
-    Path configPath = canonicalPath(PathManager.getConfigPath());
-    Path systemPath = canonicalPath(PathManager.getSystemPath());
-    activity = activity.endAndStart("config path existence check");
-
-    // this check must be performed before system directories are locked
-    boolean configImportNeeded = !isHeadless &&
-                                 (!Files.exists(configPath) ||
-                                  Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)));
-
     activity = activity.endAndStart("system dirs checking");
-    // note: uses config directory
     if (!checkSystemDirs(configPath, systemPath)) {
       System.exit(Main.DIR_CHECK_FAILED);
     }
 
-    activity = activity.endAndStart("system dirs locking");
-    lockSystemDirs(configPath, systemPath, args);
     activity = activity.endAndStart("file logger configuration");
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();
     activity.end();
 
-    // plugins cannot be loaded when config import is needed, because plugins may be added after importing
+    // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     Java11Shim.INSTANCE = new Java11ShimImpl();
     if (!configImportNeeded) {
       ZipFilePool.POOL = new ZipFilePoolImpl();
@@ -230,7 +224,7 @@ public final class StartupUtil {
       setupSystemLibraries();
       loadSystemLibraries(log);
 
-      // JNA and Swing is used - invoke only after both are loaded
+      // JNA and Swing are used; invoke only after both are loaded
       if (!isHeadless && SystemInfoRt.isMac) {
         initUiFuture.thenRunAsync(() -> {
           Activity subActivity = StartUpMeasurer.startActivity("mac app init");
@@ -349,8 +343,7 @@ public final class StartupUtil {
 
   // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
   @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static synchronized @Nullable BuiltInServer getServer() {
     return socketLock == null ? null : socketLock.getServer();
   }
@@ -469,9 +462,6 @@ public final class StartupUtil {
 
         //noinspection SpellCheckingInspection
         System.setProperty("sun.awt.noerasebackground", "true");
-        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
-          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-        }
 
         Activity activity = activityQueue.startChild("awt toolkit creating");
         Toolkit.getDefaultToolkit();
@@ -514,7 +504,7 @@ public final class StartupUtil {
         // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
         baseLaF.initialize();
 
-        // to compute system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
+        // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
         // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
         activity = activity.endAndStart("system font data initialization");
 
@@ -546,13 +536,13 @@ public final class StartupUtil {
 
         if (!isHeadless) {
           ForkJoinPool.commonPool().execute(() -> {
-            // as one FJ task - execute one by one to make a room for a more important tasks
+            // as one FJ task - execute one by one to make room for more important tasks
             updateFrameClassAndWindowIcon();
             loadSystemFontsAndDnDCursors();
           });
         }
         return baseLaF;
-      }, it -> EventQueue.invokeLater(it) /* don't use a method reference here (`EventQueue` class must be loaded on demand) */);
+      }, it -> EventQueue.invokeLater(it) /* do not use a method-reference here (`EventQueue` class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {
       return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(() -> {
@@ -582,7 +572,7 @@ public final class StartupUtil {
 
     Activity activity = StartUpMeasurer.startActivity("atk wrapper blocking");
     if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
-      // Replace AtkWrapper with a dummy Object. It'll be instantiated & garbage collected right away, a NOP.
+      // Replacing `AtkWrapper` with a dummy `Object`. It'll be instantiated & garbage collected right away, a NOP.
       System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
       Logger.getInstance(StartupUiUtil.class).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
@@ -591,9 +581,9 @@ public final class StartupUtil {
 
   private static void loadSystemFontsAndDnDCursors() {
     Activity activity = StartUpMeasurer.startActivity("system fonts loading");
-    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
+    // this forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
     new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
-    // caches available font family names (for the default locale), to speed up editor reopening (`ComplementaryFontsRegistry` initialization)
+    // this caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
     GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
 
     // preload cursors used by drag-n-drop AWT subsystem
@@ -642,14 +632,14 @@ public final class StartupUtil {
     activity.end();
   }
 
-  private static void configureLog4j() {
+  private static void configureJavaUtilLogging() {
     Activity activity = StartUpMeasurer.startActivity("console logger configuration");
-    System.setProperty("log4j.defaultInitOverride", "true");  // suppresses Log4j "no appenders" warning
-    @SuppressWarnings("deprecation")
-    org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
-    if (!root.getAllAppenders().hasMoreElements()) {
-      root.setLevel(Level.WARN);
-      root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+    java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+    if (rootLogger.getHandlers().length == 0) {
+      rootLogger.setLevel(Level.WARNING);
+      ConsoleHandler consoleHandler = new ConsoleHandler();
+      consoleHandler.setLevel(Level.WARNING);
+      rootLogger.addHandler(consoleHandler);
     }
     activity.end();
   }
@@ -774,10 +764,16 @@ public final class StartupUtil {
     }
   }
 
-  private static void lockSystemDirs(Path configPath, Path systemPath, String[] args) throws Exception {
+  /** Returns {@code true} when {@code checkConfig} is requested and config import is needed. */
+  private static boolean lockSystemDirs(boolean checkConfig, Path configPath, Path systemPath, String[] args) throws Exception {
     if (socketLock != null) {
       throw new AssertionError("Already initialized");
     }
+
+    // this check must be performed before system directories are locked
+    boolean importNeeded =
+      checkConfig && (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)));
+
     socketLock = new SocketLock(configPath, systemPath);
 
     Map.Entry<SocketLock.ActivationStatus, CliResult> status = socketLock.lockAndTryActivate(args);
@@ -808,6 +804,8 @@ public final class StartupUtil {
         System.exit(Main.INSTANCE_CHECK_FAILED);
       }
     }
+
+    return importNeeded;
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -827,10 +825,6 @@ public final class StartupUtil {
     if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
-      // Disabling output to `System.err` seems to be the only way to avoid deadlock (https://youtrack.jetbrains.com/issue/IDEA-243708)
-      // with Log4j 1.x if an internal error happens during logging (e.g. a disk space issue).
-      // Should be revisited in case of migration to Log4j 2.
-      LogLog.setQuietMode(true);
     }
     return log;
   }

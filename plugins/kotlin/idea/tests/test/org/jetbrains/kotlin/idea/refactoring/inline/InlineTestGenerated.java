@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.refactoring.inline;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -1769,6 +1769,16 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("returnNull.kt")
             public void testReturnNull() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/returnAtEnd/returnNull.kt");
+            }
+
+            @TestMetadata("returnNullOfGenericTypeParametrizedWithTypeAlias.kt")
+            public void testReturnNullOfGenericTypeParametrizedWithTypeAlias() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/returnAtEnd/returnNullOfGenericTypeParametrizedWithTypeAlias.kt");
+            }
+
+            @TestMetadata("returnNullOfTypeAliasedType.kt")
+            public void testReturnNullOfTypeAliasedType() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/returnAtEnd/returnNullOfTypeAliasedType.kt");
             }
 
             @TestMetadata("SafeCall.kt")

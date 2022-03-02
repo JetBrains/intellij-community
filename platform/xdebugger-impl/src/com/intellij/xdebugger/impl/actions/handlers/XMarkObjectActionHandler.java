@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.actions.handlers;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -17,6 +18,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,8 +40,9 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
     XDebuggerTreeState treeState = XDebuggerTreeState.saveState(node.getTree());
 
     ValueMarkup existing = markers.getMarkup(value);
+    Promise<Object> markPromise;
     if (existing != null) {
-      markers.unmarkValue(value);
+      markPromise = markers.unmarkValueAsync(value);
     }
     else {
       Component component = event.getData(CONTEXT_COMPONENT);
@@ -52,13 +55,19 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
       dialog.show();
       ValueMarkup markup = dialog.getConfiguredMarkup();
       if (dialog.isOK() && markup != null) {
-        markers.markValue(value, markup);
+        markPromise = markers.markValueAsync(value, markup);
+      } else {
+        return;
       }
     }
-    if (detachedView) {
-      node.getTree().rebuildAndRestore(treeState);
-    }
-    session.rebuildViews();
+    markPromise.onSuccess(__ ->
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (detachedView) {
+          node.getTree().rebuildAndRestore(treeState);
+        }
+        session.rebuildViews();
+      })
+    );
   }
 
   @Override

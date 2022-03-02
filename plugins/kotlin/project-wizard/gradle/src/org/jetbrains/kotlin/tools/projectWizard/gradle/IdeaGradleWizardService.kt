@@ -15,7 +15,6 @@ import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradlePro
 import java.nio.file.Path
 
 internal class IdeaGradleWizardService(private val project: Project) : ProjectImportingWizardService, IdeaWizardService {
-
     override fun isSuitableFor(buildSystemType: BuildSystemType): Boolean = buildSystemType.isGradle
 
     override fun importProject(

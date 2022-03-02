@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
  * @deprecated use {@link ContainerUtil#createWeakValueMap()} instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@ApiStatus.ScheduledForRemoval
 public final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
   private static final class MyWeakReference<K, T> extends WeakReference<T> implements MyReference<K, T> {
     private final K key;
@@ -32,7 +32,7 @@ public final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
    * @deprecated use {@link ContainerUtil#createWeakValueMap()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public WeakValueHashMap() {
   }
 

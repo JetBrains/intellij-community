@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.rd.GraphicsExKt;
+import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
@@ -28,21 +29,13 @@ import java.awt.event.MouseEvent;
 final class ContentComboLabel extends ContentLabel {
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
-  private final ComboIcon myComboIcon = new ComboIcon() {
-    @Override
-    public Rectangle getIconRec() {
-      return new Rectangle(getWidth() - getIconWidth() - ICONS_GAP, 0, getIconWidth(), getHeight());
-    }
+  private final ActiveIcon myComboIcon = new ActiveIcon(AllIcons.General.ArrowDown);
+  private final Point myComboIconPoint = new Point();
 
-    @Override
-    public boolean isActive() {
-      return myUi.window.isActive();
-    }
-  };
   private final ComboContentLayout myLayout;
 
   ContentComboLabel(@NotNull ComboContentLayout layout) {
-    super(layout.myUi, true);
+    super(layout.ui, true);
 
     myLayout = layout;
     addMouseListener(new MouseAdapter(){});
@@ -84,7 +77,7 @@ final class ContentComboLabel extends ContentLabel {
 
   void update() {
     setBorder(isToDrawCombo() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty());
-    updateTextAndIcon(getContent(), true, Registry.is("ide.experimental.ui"));
+    updateTextAndIcon(getContent(), true, ExperimentalUI.isNewUI());
     updateAdditionalActions();
   }
 
@@ -111,10 +104,12 @@ final class ContentComboLabel extends ContentLabel {
     Dimension size = super.getPreferredSize();
     if (!isPreferredSizeSet() && isToDrawCombo()) {
       if (hasActiveIcons()) size.width -= ICONS_GAP;
+      myComboIconPoint.x = size.width;
+      myComboIconPoint.y = getHeight() / 2 - myComboIcon.getIconHeight() / 2 + 1;
       size.width += myComboIcon.getIconWidth();
     }
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       setBorder(myLayout.shouldShowId()
                 ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, ICONS_GAP)
                 : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, ICONS_GAP));
@@ -143,7 +138,8 @@ final class ContentComboLabel extends ContentLabel {
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
     if (isToDrawCombo()) {
-      myComboIcon.paintIcon(this, g);
+      myComboIcon.setActive(myUi.window.isActive());
+      myComboIcon.paintIcon(this, g, myComboIconPoint.x, myComboIconPoint.y);
       g.setColor(Gray._255.withAlpha(100));
     }
   }

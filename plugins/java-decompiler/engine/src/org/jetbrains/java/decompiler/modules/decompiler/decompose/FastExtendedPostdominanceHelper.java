@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
@@ -96,7 +97,7 @@ public class FastExtendedPostdominanceHelper {
           continue;
         }
 
-        for (StatEdge edge : stat.getSuccessorEdges(StatEdge.TYPE_REGULAR)) {
+        for (StatEdge edge : stat.getSuccessorEdges(EdgeType.REGULAR)) {
 
           Statement edge_destination = edge.getDestination();
 
@@ -133,7 +134,7 @@ public class FastExtendedPostdominanceHelper {
   private void removeErroneousNodes() {
     mapSupportPoints = new HashMap<>();
 
-    calcReachabilitySuppPoints(StatEdge.TYPE_REGULAR);
+    calcReachabilitySuppPoints(EdgeType.REGULAR);
 
     iterateReachability((node, mapSets) -> {
       Integer nodeid = node.id;
@@ -141,7 +142,7 @@ public class FastExtendedPostdominanceHelper {
       FastFixedSet<Integer> setReachability = mapSets.get(nodeid);
       List<FastFixedSet<Integer>> lstPredSets = new ArrayList<>();
 
-      for (StatEdge prededge : node.getPredecessorEdges(StatEdge.TYPE_REGULAR)) {
+      for (StatEdge prededge : node.getPredecessorEdges(EdgeType.REGULAR)) {
         FastFixedSet<Integer> setPred = mapSets.get(prededge.getSource().id);
         if (setPred == null) {
           setPred = mapSupportPoints.get(prededge.getSource().id);
@@ -183,7 +184,7 @@ public class FastExtendedPostdominanceHelper {
       }
 
       return false;
-    }, StatEdge.TYPE_REGULAR);
+    }, EdgeType.REGULAR);
 
     // exception handlers cannot be postdominator nodes
     // TODO: replace with a standard set?
@@ -191,8 +192,8 @@ public class FastExtendedPostdominanceHelper {
     boolean handlerfound = false;
 
     for (Statement stat : statement.getStats()) {
-      if (stat.getPredecessorEdges(Statement.STATEDGE_DIRECT_ALL).isEmpty() &&
-          !stat.getPredecessorEdges(StatEdge.TYPE_EXCEPTION).isEmpty()) { // exception handler
+      if (stat.getPredecessorEdges(EdgeType.DIRECT_ALL).isEmpty() &&
+          !stat.getPredecessorEdges(EdgeType.EXCEPTION).isEmpty()) { // exception handler
         setHandlers.add(stat.id);
         handlerfound = true;
       }
@@ -206,7 +207,7 @@ public class FastExtendedPostdominanceHelper {
   }
 
   private void calcDefaultReachableSets() {
-    int edgetype = StatEdge.TYPE_REGULAR | StatEdge.TYPE_EXCEPTION;
+    EdgeType edgetype = EdgeType.REGULAR.unite(EdgeType.EXCEPTION);
 
     calcReachabilitySuppPoints(edgetype);
 
@@ -226,11 +227,11 @@ public class FastExtendedPostdominanceHelper {
     }, edgetype);
   }
 
-  private void calcReachabilitySuppPoints(final int edgetype) {
+  private void calcReachabilitySuppPoints(final EdgeType edgetype) {
     iterateReachability((node, mapSets) -> {
       // consider to be a support point
       for (StatEdge sucedge : node.getAllSuccessorEdges()) {
-        if ((sucedge.getType() & edgetype) != 0) {
+        if ((sucedge.getType().mask() & edgetype.mask()) != 0) {
           if (mapSets.containsKey(sucedge.getDestination().id)) {
             FastFixedSet<Integer> setReachability = mapSets.get(node.id);
 
@@ -246,7 +247,7 @@ public class FastExtendedPostdominanceHelper {
     }, edgetype);
   }
 
-  private void iterateReachability(IReachabilityAction action, int edgetype) {
+  private void iterateReachability(IReachabilityAction action, EdgeType edgetype) {
     while (true) {
       boolean iterate = false;
 
@@ -258,7 +259,7 @@ public class FastExtendedPostdominanceHelper {
         set.add(stat.id);
 
         for (StatEdge prededge : stat.getAllPredecessorEdges()) {
-          if ((prededge.getType() & edgetype) != 0) {
+          if ((prededge.getType().mask() & edgetype.mask()) != 0) {
             Statement pred = prededge.getSource();
 
             FastFixedSet<Integer> setPred = mapSets.get(pred.id);
@@ -280,13 +281,13 @@ public class FastExtendedPostdominanceHelper {
 
         // remove reachability information of fully processed nodes (saves memory)
         for (StatEdge prededge : stat.getAllPredecessorEdges()) {
-          if ((prededge.getType() & edgetype) != 0) {
+          if ((prededge.getType().mask() & edgetype.mask()) != 0) {
             Statement pred = prededge.getSource();
 
             if (mapSets.containsKey(pred.id)) {
               boolean remstat = true;
               for (StatEdge sucedge : pred.getAllSuccessorEdges()) {
-                if ((sucedge.getType() & edgetype) != 0) {
+                if ((sucedge.getType().mask() & edgetype.mask()) != 0) {
                   if (!mapSets.containsKey(sucedge.getDestination().id)) {
                     remstat = false;
                     break;

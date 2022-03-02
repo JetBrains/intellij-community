@@ -416,6 +416,7 @@
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction">
         <override-text place="MainMenu"/>
       </action>
+      <action id="TextSearchAction" class="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchAction"/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GotoLine"/>
 
@@ -1126,7 +1127,6 @@
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
-        <override-text place="XDebuggerTreePopup"/>
       </action>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
@@ -1274,14 +1274,9 @@
       <reference ref="XDebugger.MoveWatchUp"/>
       <reference ref="XDebugger.MoveWatchDown"/>
       <reference ref="XDebugger.CopyWatch"/>
-      <group id="XDebugger.Watches.Presentation" icon="AllIcons.General.InspectionsEye" popup="true">
-        <reference ref="XDebugger.ToggleEvaluateExpressionField"/>
-        <reference ref="XDebugger.SwitchWatchesInVariables"/>
-      </group>
     </group>
 
     <group id="XDebugger.Watches.Inline.Popup" popup="true">
-      <reference ref="XDebugger.SetValue"/>
     </group>
 
     <group id="XDebugger.Inspect.Tree.Popup">
@@ -1305,6 +1300,7 @@
     </group>
 
     <group id="RunnerLayoutActions">
+      <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
       <group id="Runner.Layout">
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
                 icon="AllIcons.Debugger.RestoreLayout"/>
@@ -1443,6 +1439,8 @@
     </group>
 
     <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
+
+    <action class="com.intellij.codeInsight.codeVision.ShowCodeVisionPopupAction" id="CodeVision.ShowMore" />
 
     <group id="InspectionToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>

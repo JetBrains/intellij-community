@@ -5,11 +5,10 @@ package com.intellij.openapi.observable.util
 
 import java.util.concurrent.atomic.AtomicBoolean
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.ui.getTreePath
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.DropDownLink
@@ -43,6 +42,7 @@ inline fun AtomicBoolean.lockOrSkip(action: () -> Unit) {
  */
 fun <T> ObservableMutableProperty<T>.bind(property: ObservableMutableProperty<T>) {
   val mutex = AtomicBoolean()
+  set(property.get())
   property.afterChange {
     mutex.lockOrSkip {
       set(it)
@@ -55,12 +55,12 @@ fun <T> ObservableMutableProperty<T>.bind(property: ObservableMutableProperty<T>
   }
 }
 
-fun <P : ObservableClearableProperty<Boolean>> P.bindBooleanStorage(propertyName: String): P = apply {
+fun <P : ObservableMutableProperty<Boolean>> P.bindBooleanStorage(propertyName: String): P = apply {
   transform({ it.toString() }, { it.toBoolean() })
     .bindStorage(propertyName)
 }
 
-fun <P : ObservableClearableProperty<String>> P.bindStorage(propertyName: String): P = apply {
+fun <P : ObservableMutableProperty<String>> P.bindStorage(propertyName: String): P = apply {
   val properties = PropertiesComponent.getInstance()
   val value = properties.getValue(propertyName)
   if (value != null) {
@@ -82,6 +82,12 @@ fun <C : Component> C.bindVisible(property: ObservableProperty<Boolean>): C = ap
 }
 
 fun <C : ComponentWithEmptyText> C.bindEmptyText(property: ObservableProperty<@NlsContexts.StatusText String>): C = apply {
+  emptyText.text = property.get()
+  emptyText.bind(property)
+}
+
+fun <C : TextFieldWithBrowseButton> C.bindEmptyText(property: ObservableProperty<@NlsContexts.StatusText String>): C = apply {
+  emptyText.text = property.get()
   emptyText.bind(property)
 }
 
@@ -90,7 +96,8 @@ fun <C : ComponentWithEmptyText> C.bindEmptyText(property: ObservableProperty<@N
  * Note: Ignores proportion of selected item for deselected event.
  * @see java.awt.event.ItemEvent.DESELECTED
  */
-fun <T, C : JComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+fun <T, C : JComboBox<T>> C.bind(property: ObservableMutableProperty<T>): C = apply {
+  selectedItem = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -104,11 +111,12 @@ fun <T, C : JComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = 
   }
 }
 
-fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+fun <T, C : DropDownLink<T>> C.bind(property: ObservableMutableProperty<T>): C = apply {
+  selectedItem = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
-      selectedItem = property.get()
+      selectedItem = it
     }
   }
   whenItemSelected {
@@ -118,7 +126,8 @@ fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C
   }
 }
 
-fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T?>): C = apply {
+fun <T, C : JList<T>> C.bind(property: ObservableMutableProperty<T?>): C = apply {
+  setSelectedValue(property.get(), true)
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -134,11 +143,12 @@ fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T?>): C = app
   }
 }
 
-fun <T, C : JTree> C.bind(property: ObservableClearableProperty<T?>) = apply {
+fun <T, C : JTree> C.bind(property: ObservableMutableProperty<T?>) = apply {
+  selectionPath = model.getTreePath(property.get())
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
-      selectionPath = model.getTreePath(property.get())
+      selectionPath = model.getTreePath(it)
     }
   }
   addTreeSelectionListener {
@@ -151,18 +161,21 @@ fun <T, C : JTree> C.bind(property: ObservableClearableProperty<T?>) = apply {
 }
 
 fun <C : StatusText> C.bind(property: ObservableProperty<@NlsContexts.StatusText String>): C = apply {
+  text = property.get()
   property.afterChange {
     text = it
   }
 }
 
 fun <C : JLabel> C.bind(property: ObservableProperty<@NlsContexts.Label String>): C = apply {
+  text = property.get()
   property.afterChange {
     text = it
   }
 }
 
 fun <C : JCheckBox> C.bind(property: ObservableMutableProperty<Boolean>): C = apply {
+  isSelected = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -177,6 +190,7 @@ fun <C : JCheckBox> C.bind(property: ObservableMutableProperty<Boolean>): C = ap
 }
 
 fun <C : ThreeStateCheckBox> C.bind(property: ObservableMutableProperty<ThreeStateCheckBox.State>): C = apply {
+  state = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -190,11 +204,12 @@ fun <C : ThreeStateCheckBox> C.bind(property: ObservableMutableProperty<ThreeSta
   }
 }
 
-fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableClearableProperty<String>): C = apply {
+fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableMutableProperty<String>): C = apply {
   textField.bind(property)
 }
 
-fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): C = apply {
+fun <C : JTextComponent> C.bind(property: ObservableMutableProperty<String>): C = apply {
+  text = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

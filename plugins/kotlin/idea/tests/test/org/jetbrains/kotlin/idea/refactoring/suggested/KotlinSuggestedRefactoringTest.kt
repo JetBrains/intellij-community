@@ -30,7 +30,7 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
 
     override fun tearDown() {
-        _suggestedChangeSignatureNewParameterValuesForTests = null
+        _suggestedChangeSignatureNewParameterValuesForTests = { SuggestedRefactoringExecution.NewParameterValue.None }
         super.tearDown()
     }
 

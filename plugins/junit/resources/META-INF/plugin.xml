@@ -76,6 +76,11 @@
                      key="junit5.nested.test.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
+ 
+    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedExtensions" bundle="messages.JUnitBundle"
+                     key="junit5.extensions.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedExtensionsInspection"/>
 
     <localInspection language="UAST" shortName="Junit5MalformedParameterized" bundle="messages.JUnitBundle"
                      key="junit5.malformed.parameterized.display.name"

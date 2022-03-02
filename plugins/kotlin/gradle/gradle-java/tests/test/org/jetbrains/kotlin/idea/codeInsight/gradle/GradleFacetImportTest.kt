@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
@@ -66,7 +67,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.3", apiLevel!!.versionString)
             assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
-            assertEquals(JvmPlatforms.jvm18, targetPlatform)
+            assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
                 "-Xallow-no-source-files -Xdump-declarations-to=tmp -Xsingle-module",
@@ -79,7 +80,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.0", apiLevel!!.versionString)
             assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
-            assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
                 "-Xallow-no-source-files -Xdump-declarations-to=tmpTest",
@@ -124,7 +125,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         with(facetSettings("project.myMain")) {
             assertEquals("1.3", languageLevel!!.versionString)
             assertEquals("1.3", apiLevel!!.versionString)
-            assertEquals(JvmPlatforms.jvm18, targetPlatform)
+            assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
                 "-Xallow-no-source-files -Xdump-declarations-to=tmp -Xsingle-module",
@@ -135,7 +136,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         with(facetSettings("project.myTest")) {
             assertEquals("1.3", languageLevel!!.versionString)
             assertEquals("1.0", apiLevel!!.versionString)
-            assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
                 "-Xallow-no-source-files -Xdump-declarations-to=tmpTest",
@@ -338,7 +339,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         with(facetSettings) {
             assertEquals("1.3", languageLevel!!.versionString)
             assertEquals("1.3", apiLevel!!.versionString)
-            assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
         assertEquals(
@@ -436,7 +437,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         with(facetSettings) {
             assertEquals("1.3", languageLevel!!.versionString)
             assertEquals("1.3", apiLevel!!.versionString)
-            assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
         assertEquals(

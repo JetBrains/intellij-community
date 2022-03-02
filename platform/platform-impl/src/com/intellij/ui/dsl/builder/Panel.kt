@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -11,13 +12,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.JLabel
-import kotlin.reflect.KMutableProperty0
 
 /**
  * Empty label parameter for [Panel.row] method in case label is omitted.
  */
 val EMPTY_LABEL = String()
 
+@ApiStatus.NonExtendable
 interface Panel : CellBase<Panel> {
 
   override fun visible(isVisible: Boolean): Panel
@@ -39,7 +40,9 @@ interface Panel : CellBase<Panel> {
   override fun customize(customGaps: Gaps): Panel
 
   /**
-   * Adds standard left indent
+   * Adds standard left indent and groups rows into [RowsRange] that allows to use some groups operations on the rows
+   *
+   * @see [rowsRange]
    */
   fun indent(init: Panel.() -> Unit): RowsRange
 
@@ -76,7 +79,9 @@ interface Panel : CellBase<Panel> {
   fun panel(init: Panel.() -> Unit): Panel
 
   /**
-   * @see [RowsRange]
+   * Groups rows into [RowsRange] that allows to use some groups operations on the rows
+   *
+   * @see [indent]
    */
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
@@ -93,7 +98,7 @@ interface Panel : CellBase<Panel> {
             init: Panel.() -> Unit): Row
 
   @Deprecated("Use overloaded group(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun group(@NlsContexts.BorderTitle title: String? = null,
             indent: Boolean = true,
             topGroupGap: Boolean? = null,
@@ -123,7 +128,7 @@ interface Panel : CellBase<Panel> {
                        init: Panel.() -> Unit): CollapsibleRow
 
   @Deprecated("Use overloaded collapsibleGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
                        indent: Boolean = true,
                        topGroupGap: Boolean? = null,
@@ -131,11 +136,11 @@ interface Panel : CellBase<Panel> {
                        init: Panel.() -> Unit): CollapsiblePanel
 
   @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun buttonGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit)
 
   @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
                       indent: Boolean = title != null, init: Panel.() -> Unit)
 
@@ -170,26 +175,18 @@ interface Panel : CellBase<Panel> {
 }
 
 @Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
                                                noinline setter: (T) -> Unit,
-                                               @NlsContexts.BorderTitle title: String? = null,
+                                               title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), title, indent, init)
 }
 
 @Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsContexts.BorderTitle title: String? = null,
-                                               indent: Boolean = title != null,
-                                               crossinline init: Panel.() -> Unit) {
-  buttonGroup(prop.toBinding(), title, indent, init)
-}
-
-@Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, @NlsContexts.BorderTitle title: String? = null,
+@ApiStatus.ScheduledForRemoval
+inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(binding, T::class.java, title, indent) {

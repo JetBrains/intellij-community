@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -32,12 +33,14 @@ public abstract class SourcePositionProvider {
                                                  @NotNull DebuggerContextImpl context,
                                                  boolean nearest
   ) {
-    try {
-      return EP_NAME.computeSafeIfAny(provider -> provider.computeSourcePosition(descriptor, project, context, nearest));
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
+    return DebuggerUtilsImpl.computeSafeIfAny(EP_NAME, provider -> {
+      try {
+        return provider.computeSourcePosition(descriptor, project, context, nearest);
+      }
+      catch (IndexNotReadyException e) {
+        return null;
+      }
+    });
   }
 
   @Nullable

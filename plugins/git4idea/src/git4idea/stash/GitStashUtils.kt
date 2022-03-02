@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitStashUtils")
 
 package git4idea.stash
@@ -37,6 +37,7 @@ import git4idea.commands.*
 import git4idea.config.GitConfigUtil
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT
 import git4idea.history.GitCommitRequirements.DiffRenameLimit.NoRenames
 import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
@@ -127,11 +128,11 @@ object GitStashOperations {
     val stashCommits = mutableListOf<GitCommit>()
     GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()) + parentHashes.map { it.asString() },
                                         GitCommitRequirements(true, // untracked changes commit has no parents
-                                                              diffInMergeCommits = DIFF_TO_PARENTS),
+                                                              diffInMergeCommits = FIRST_PARENT), // only changes to the branch head are needed
                                         Consumer { stashCommits.add(it) })
     if (stashCommits.isEmpty()) throw VcsException(GitBundle.message("stash.load.changes.error", root.name, hash.asString()))
     return Pair(stashCommits.first().getChanges(0), // returning changes to the branch head
-                stashCommits.subList(1, stashCommits.size))
+                stashCommits.drop(1))
   }
 
   @JvmStatic
@@ -272,7 +273,7 @@ private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : M
 }
 
 @Deprecated("use the simpler overloading method which returns a list")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<StashInfo>) {
   for (stash in loadStashStack(project, root)) {
     consumer.consume(stash)

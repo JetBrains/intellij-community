@@ -33,17 +33,14 @@ internal class BundledPluginsLister : ApplicationStarter {
         OutputStreamWriter(System.out, StandardCharsets.UTF_8)
       }
       JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
-        val pluginSet = PluginManagerCore.getPluginSet()
-        val plugins = pluginSet.enabledPlugins
+        val plugins = PluginManagerCore.getPluginSet().enabledPlugins
         val modules = HashSet<String>()
         val pluginIds = ArrayList<String>(plugins.size)
         for (plugin in plugins) {
           pluginIds.add(plugin.pluginId.idString)
           plugin.modules.mapTo(modules) { it.idString }
+          plugin.content.modules.mapTo(modules) { it.name }
         }
-
-        pluginSet.getEnabledModules().mapTo(modules) { it.name }
-
         pluginIds.sort()
         val fileTypeManager = FileTypeManager.getInstance()
         val extensions = ArrayList<String>()

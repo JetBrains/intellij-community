@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.util
 
@@ -20,13 +20,13 @@ import org.jetbrains.kotlin.resolve.calls.CallResolver
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext
 import org.jetbrains.kotlin.resolve.calls.context.CheckArgumentTypesMode
 import org.jetbrains.kotlin.resolve.calls.context.ContextDependency
+import org.jetbrains.kotlin.resolve.multiplatform.findExpects
 import org.jetbrains.kotlin.resolve.scopes.ExplicitImportsScope
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.resolve.scopes.utils.addImportingScope
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.util.descriptorsEqualWithSubstitution
-import java.util.*
 
 class ShadowedDeclarationsFilter(
     private val bindingContext: BindingContext,
@@ -66,14 +66,26 @@ class ShadowedDeclarationsFilter(
         declarations.groupBy { signature(it) }.values.flatMap { group -> filterEqualSignatureGroup(group) }
 
     fun <TDescriptor : DeclarationDescriptor> createNonImportedDeclarationsFilter(
-        importedDeclarations: Collection<DeclarationDescriptor>
+        importedDeclarations: Collection<DeclarationDescriptor>,
+        allowExpectedDeclarations: Boolean,
     ): (Collection<TDescriptor>) -> Collection<TDescriptor> {
-        val importedDeclarationsSet = importedDeclarations.toSet()
+        val importedDeclarationsSet = if (allowExpectedDeclarations) {
+            importedDeclarations.asSequence().flatMap {
+                if (it is MemberDescriptor && it.isActual) {
+                    sequenceOf(it) + it.findExpects().asSequence()
+                } else {
+                    sequenceOf(it)
+                }
+            }.toSet()
+        } else {
+            importedDeclarations.toSet()
+        }
+
         val importedDeclarationsBySignature = importedDeclarationsSet.groupBy { signature(it) }
 
         return filter@{ declarations ->
             // optimization
-            if (declarations.size == 1 && importedDeclarationsBySignature[signature(declarations.single())] == null) return@filter declarations
+            if (declarations.isEmpty() || declarations.size == 1 && importedDeclarationsBySignature[signature(declarations.single())] == null) return@filter declarations
 
             val nonImportedDeclarations = declarations.filter { it !in importedDeclarationsSet }
 

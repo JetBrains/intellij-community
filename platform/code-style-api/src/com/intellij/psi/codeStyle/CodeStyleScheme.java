@@ -38,6 +38,12 @@ public interface CodeStyleScheme extends Scheme {
 
   boolean isDefault();
 
+  default boolean isUsedForVisualFormatting() {
+    return false;
+  }
+
+  default void setUsedForVisualFormatting(boolean isUsedForVisualFormatting) { }
+
   @NotNull
   CodeStyleSettings getCodeStyleSettings();
 }

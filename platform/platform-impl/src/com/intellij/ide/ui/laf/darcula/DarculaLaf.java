@@ -237,8 +237,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   /**
    * @deprecated Use {@link UITheme#parseValue(String, String, ClassLoader)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   protected Object parseValue(String key, @NotNull String value) {
     return UITheme.parseValue(key, value, getClass().getClassLoader());
   }
@@ -275,12 +274,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         base = preInitializedBaseLaf.getAndSet(null);
         if (base == null) {
           base = createBaseLaF();
-          base.initialize();
         }
       }
-      else {
-        base.initialize();
-      }
+      base.initialize();
     }
     catch (Throwable e) {
       log(e);

@@ -14,5 +14,6 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
   </component>
 </module>

@@ -51,9 +51,10 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     val suggestion = suggester.getSuggestion(action)
     if (suggestion is PopupSuggestion) {
       FeatureSuggesterStatistics.logSuggestionFound(suggester.id)
-      if (suggester.isSuggestionNeeded(FeatureSuggesterSettings.instance().suggestingIntervalDays)) {
-        suggestionPresenter.showSuggestion(project, suggestion)
+      if (SuggestingUtils.forceShowSuggestions || suggester.isSuggestionNeeded()) {
+        suggestionPresenter.showSuggestion(project, suggestion, disposable = this)
         fireSuggestionFound(suggestion)
+        FeatureSuggesterSettings.instance().updateSuggestionShownTime(suggestion.suggesterId)
       }
     }
   }

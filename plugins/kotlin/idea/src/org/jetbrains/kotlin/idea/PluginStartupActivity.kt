@@ -1,29 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
-import com.intellij.ProjectTopics
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.excludedFromUpdateCheckPlugins
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinPluginCompatibilityVerifier.checkCompatibility
-import org.jetbrains.kotlin.idea.configuration.notifications.checkExternalKotlinCompilerVersion
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
-import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import java.util.concurrent.Callable
@@ -33,34 +25,6 @@ internal class PluginStartupActivity : StartupActivity.Background {
         val startupService = PluginStartupService.getInstance(project)
 
         startupService.register()
-        val connection = project.messageBus.connect(startupService)
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-            override fun rootsChanged(event: ModuleRootEvent) {
-                KotlinJavaPsiFacade.getInstance(project).clearPackageCaches()
-            }
-        })
-
-        connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-            override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-                clearPackageCaches()
-            }
-
-            override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-                clearPackageCaches()
-            }
-
-            override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-                clearPackageCaches()
-            }
-
-            private fun clearPackageCaches() {
-                KotlinJavaPsiFacade.getInstance(project).clearPackageCaches()
-            }
-        })
-
-        connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener {
-            checkExternalKotlinCompilerVersion(project)
-        })
 
         initializeDiagnostics()
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")

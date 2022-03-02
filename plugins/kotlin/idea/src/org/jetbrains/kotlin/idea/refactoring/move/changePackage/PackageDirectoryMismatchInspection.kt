@@ -15,7 +15,9 @@ import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil
 import com.intellij.refactoring.util.RefactoringMessageUtil
+import com.intellij.util.CommonJavaRefactoringUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
@@ -85,7 +87,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
             val fileToMove = directive.containingFile
             val chosenRoot =
                 sourceRoots.singleOrNull()
-                    ?: MoveClassesOrPackagesUtil.chooseSourceRoot(packageWrapper, sourceRoots, fileToMove.containingDirectory)
+                    ?: CommonMoveClassesOrPackagesUtil.chooseSourceRoot(packageWrapper, sourceRoots, fileToMove.containingDirectory)
                     ?: return
 
             val targetDirFactory = AutocreatingSingleSourceRootMoveDestination(packageWrapper, chosenRoot)

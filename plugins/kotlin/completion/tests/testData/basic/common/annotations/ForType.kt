@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 @Target(AnnotationTarget.TYPE)
 annotation class AnnType
 

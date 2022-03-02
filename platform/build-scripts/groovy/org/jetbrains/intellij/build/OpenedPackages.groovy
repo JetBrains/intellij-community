@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
+import java.nio.file.Files
+
 @CompileStatic
 final class OpenedPackages {
 
@@ -10,9 +12,8 @@ final class OpenedPackages {
    * @return List of JVM args for opened packages (JBR17+) in a format `--add-opens=PACKAGE=ALL-UNNAMED`
    * */
   static final List<String> getCommandLineArguments(CompilationContext compilationContext) {
-    return compilationContext.paths.communityHomeDir
-      .resolve("platform/build-scripts/resources/OpenedPackages.txt")
-      .readLines()
+    return Files.readAllLines(compilationContext.paths.communityHomeDir
+                                .resolve("platform/build-scripts/resources/OpenedPackages.txt"))
       .stream()
       .collect { "--add-opens=${it.toString()}".toString() }
   }

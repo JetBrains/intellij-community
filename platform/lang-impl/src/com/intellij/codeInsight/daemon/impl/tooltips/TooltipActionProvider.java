@@ -26,11 +26,11 @@ public interface TooltipActionProvider {
   boolean SHOW_FIXES_DEFAULT_VALUE = true;
 
   @Nullable
-  TooltipAction getTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile psiFile);
+  TooltipAction getTooltipAction(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile psiFile);
 
 
   @Nullable
-  static TooltipAction calcTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor) {
+  static TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Editor editor) {
     Project project = editor.getProject();
     if (project == null) return null;
 

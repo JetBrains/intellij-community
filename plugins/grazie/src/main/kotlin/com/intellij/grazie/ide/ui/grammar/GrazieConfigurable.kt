@@ -10,12 +10,16 @@ import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.ConfigurableBase
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JComponent
 
-internal class GrazieConfigurable : ConfigurableBase<GrazieSettingsPanel, GrazieConfig>("reference.settingsdialog.project.grazie",
-                                                                               GraziePlugin.name,
-                                                                               "reference.settings.ide.settings.grammar"), WithEpDependencies {
+internal class GrazieConfigurable :
+  ConfigurableBase<GrazieSettingsPanel, GrazieConfig>(
+    "reference.settingsdialog.project.grazie", GraziePlugin.settingsPageName, "reference.settings.ide.settings.grammar"),
+  WithEpDependencies,
+  SearchableConfigurable
+{
   private val ui: GrazieSettingsPanel by lazy { GrazieSettingsPanel() }
 
   override fun getSettings() = service<GrazieConfig>()
@@ -27,7 +31,17 @@ internal class GrazieConfigurable : ConfigurableBase<GrazieSettingsPanel, Grazie
       return ui.rules.impl
     }
 
-    return super.getPreferredFocusedComponent()
+    return super<ConfigurableBase>.getPreferredFocusedComponent()
+  }
+
+  override fun enableSearch(option: String?): Runnable? {
+    if (option != null) {
+      return Runnable {
+        ui.component.selectedComponent = ui.rules.component
+        ui.rules.impl.filter(option)
+      }
+    }
+    return null
   }
 
   internal fun selectRule(globalId: String) {

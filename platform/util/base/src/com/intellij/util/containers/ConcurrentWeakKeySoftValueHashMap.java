@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap()} instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<KeyReference<K,V>, ValueReference<K,V>> myMap;
   final ReferenceQueue<K> myKeyQueue = new ReferenceQueue<>();

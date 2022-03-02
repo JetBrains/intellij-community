@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -14,7 +14,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
@@ -187,11 +189,13 @@ public final class ActionMenu extends JBMenu {
 
   private void updateIcon() {
     UISettings settings = UISettings.getInstanceOrNull();
-    if (settings != null && settings.getShowIconsInMenus()) {
-      Icon icon = myPresentation.getIcon();
-      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace) && icon != null) {
+    Icon icon = myPresentation.getIcon();
+    if (icon != null && settings != null && settings.getShowIconsInMenus()) {
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
+      } else if (shouldConvertIconToDarkVariant()) {
+        icon = IconLoader.getDarkIcon(icon, true);
       }
       if (isShowNoIcons()) {
         setIcon(null);
@@ -208,6 +212,10 @@ public final class ActionMenu extends JBMenu {
         if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }
     }
+  }
+
+  static boolean shouldConvertIconToDarkVariant() {
+    return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff));
   }
 
   static boolean isShowNoIcons() {

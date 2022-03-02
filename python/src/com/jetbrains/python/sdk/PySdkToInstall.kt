@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
@@ -39,8 +40,11 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.DownloadResult
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.InstallationResult
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.LookupResult
-import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkDownload
-import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkInstallation
+import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkDownloadOnWindows
+import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkInstallationOnMac
+import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkInstallationOnWindows
+import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkLookupOnMac
+import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkLookupOnWindows
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
 import org.jetbrains.annotations.CalledInAny
 import java.io.File
@@ -75,11 +79,11 @@ private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
   return PySdkToInstallOnWindows(
     name,
     version,
-    "https://www.python.org/ftp/python/3.9.7/python-3.9.7-amd64.exe",
-    28895456,
-    "cc3eabc1f9d6c703d1d2a4e7c041bc1d",
+    "https://www.python.org/ftp/python/3.9.10/python-3.9.10-amd64.exe",
+    28909456,
+    "747ac35ae667f4ec1ee3b001e9b7dbc6",
     hashFunction,
-    "python-3.9.7-amd64.exe"
+    "python-3.9.10-amd64.exe"
   )
 }
 
@@ -91,19 +95,22 @@ private fun getPy310ToInstallOnWindows(): PySdkToInstallOnWindows {
   return PySdkToInstallOnWindows(
     name,
     version,
-    "https://www.python.org/ftp/python/3.10.0/python-3.10.0-amd64.exe",
-    28315928,
-    "c3917c08a7fe85db7203da6dcaa99a70",
+    "https://www.python.org/ftp/python/3.10.2/python-3.10.2-amd64.exe",
+    28239176,
+    "2b4fd1ed6e736f0e65572da64c17e020",
     hashFunction,
-    "python-3.10.0-amd64.exe"
+    "python-3.10.2-amd64.exe"
   )
 }
 
 abstract class PySdkToInstall internal constructor(name: String, version: String)
   : ProjectJdkImpl(name, PythonSdkType.getInstance(), null, version) {
 
+  /**
+   * Customize [renderer], which is typically either [com.intellij.ui.ColoredListCellRenderer] or [com.intellij.ui.ColoredTreeCellRenderer].
+   */
   @CalledInAny
-  abstract fun renderInList(renderer: PySdkListCellRenderer)
+  abstract fun renderInList(renderer: SimpleColoredComponent)
 
   @CalledInAny
   @NlsContexts.DialogMessage
@@ -121,7 +128,7 @@ private class PySdkToInstallOnWindows(name: String,
                                       private val hashFunction: HashFunction,
                                       private val targetFileName: String) : PySdkToInstall(name, version) {
 
-  override fun renderInList(renderer: PySdkListCellRenderer) {
+  override fun renderInList(renderer: SimpleColoredComponent) {
     renderer.append(name)
     renderer.append(" $url", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)  // NON-NLS
     renderer.icon = AllIcons.Actions.Download
@@ -168,30 +175,30 @@ private class PySdkToInstallOnWindows(name: String,
       indicator.text = PyBundle.message("python.sdk.downloading", targetFileName)
 
       if (indicator.isCanceled) {
-        logSdkDownload(project, version, DownloadResult.CANCELLED)
+        logSdkDownloadOnWindows(project, version, DownloadResult.CANCELLED)
         return null
       }
       downloadInstaller(project, targetFile, indicator)
 
       if (indicator.isCanceled) {
-        logSdkDownload(project, version, DownloadResult.CANCELLED)
+        logSdkDownloadOnWindows(project, version, DownloadResult.CANCELLED)
         return null
       }
       checkInstallerConsistency(project, targetFile)
 
-      logSdkDownload(project, version, DownloadResult.OK)
+      logSdkDownloadOnWindows(project, version, DownloadResult.OK)
 
       indicator.text = PyBundle.message("python.sdk.running", targetFileName)
       indicator.text2 = PyBundle.message("python.sdk.installing.windows.warning")
       indicator.isIndeterminate = true
 
       if (indicator.isCanceled) {
-        logSdkInstallation(project, version, InstallationResult.CANCELLED)
+        logSdkInstallationOnWindows(project, version, InstallationResult.CANCELLED)
         return null
       }
       runInstaller(project, targetFile, indicator)
 
-      logSdkInstallation(project, version, InstallationResult.OK)
+      logSdkInstallationOnWindows(project, version, InstallationResult.OK)
 
       return findInstalledSdk(project, systemWideSdksDetector)
     }
@@ -207,11 +214,11 @@ private class PySdkToInstallOnWindows(name: String,
       HttpRequests.request(url).saveToFile(targetFile, indicator)
     }
     catch (e: IOException) {
-      logSdkDownload(project, version, DownloadResult.EXCEPTION)
+      logSdkDownloadOnWindows(project, version, DownloadResult.EXCEPTION)
       throw IOException("Failed to download $url to $targetFile.", e)
     }
     catch (e: ProcessCanceledException) {
-      logSdkDownload(project, version, DownloadResult.CANCELLED)
+      logSdkDownloadOnWindows(project, version, DownloadResult.CANCELLED)
       throw e
     }
   }
@@ -220,14 +227,14 @@ private class PySdkToInstallOnWindows(name: String,
     LOGGER.debug("Checking installer size")
     val sizeDiff = installer.length() - size
     if (sizeDiff != 0L) {
-      logSdkDownload(project, version, DownloadResult.SIZE)
+      logSdkDownloadOnWindows(project, version, DownloadResult.SIZE)
       throw IOException("Downloaded $installer has incorrect size, difference is ${sizeDiff.absoluteValue} bytes.")
     }
 
     LOGGER.debug("Checking installer checksum")
     val actualHashCode = Files.asByteSource(installer).hash(hashFunction).toString()
     if (!actualHashCode.equals(hash, ignoreCase = true)) {
-      logSdkDownload(project, version, DownloadResult.CHECKSUM)
+      logSdkDownloadOnWindows(project, version, DownloadResult.CHECKSUM)
       throw IOException("Checksums for $installer does not match. Actual value is $actualHashCode, expected $hash.")
     }
   }
@@ -254,9 +261,9 @@ private class PySdkToInstallOnWindows(name: String,
 
     val output = runInstaller(project, commandLine, indicator)
 
-    if (output.isCancelled) logSdkInstallation(project, version, InstallationResult.CANCELLED)
-    if (output.exitCode != 0) logSdkInstallation(project, version, InstallationResult.EXIT_CODE)
-    if (output.isTimeout) logSdkInstallation(project, version, InstallationResult.TIMEOUT)
+    if (output.isCancelled) logSdkInstallationOnWindows(project, version, InstallationResult.CANCELLED)
+    if (output.exitCode != 0) logSdkInstallationOnWindows(project, version, InstallationResult.EXIT_CODE)
+    if (output.isTimeout) logSdkInstallationOnWindows(project, version, InstallationResult.TIMEOUT)
 
     if (output.exitCode != 0 || output.isTimeout) throw PyInstallationException(commandLine, output)
   }
@@ -295,7 +302,7 @@ private class PySdkToInstallOnWindows(name: String,
       return CapturingProcessHandler(commandLine).runProcessWithProgressIndicator(indicator)
     }
     catch (e: ExecutionException) {
-      logSdkInstallation(project, version, InstallationResult.EXCEPTION)
+      logSdkInstallationOnWindows(project, version, InstallationResult.EXCEPTION)
       throw PyInstallationExecutionException(commandLine, e)
     }
   }
@@ -325,7 +332,7 @@ private class PySdkToInstallOnWindows(name: String,
         LOGGER.debug { sdks.joinToString(prefix = "Detected system-wide sdks: ") { it.homePath ?: it.name } }
       }
       .also {
-        PySdkToInstallCollector.logSdkLookup(
+        logSdkLookupOnWindows(
           project,
           version,
           if (it.isEmpty()) LookupResult.NOT_FOUND else LookupResult.FOUND
@@ -340,7 +347,7 @@ private class PySdkToInstallOnWindows(name: String,
 
 private class PySdkToInstallViaXCodeSelect : PySdkToInstall("Python", "") {
 
-  override fun renderInList(renderer: PySdkListCellRenderer) {
+  override fun renderInList(renderer: SimpleColoredComponent) {
     renderer.append(name)
     renderer.append(" ")
     renderer.append(PyBundle.message("python.cldt.installing.suggestion"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
@@ -370,11 +377,21 @@ private class PySdkToInstallViaXCodeSelect : PySdkToInstall("Python", "") {
           indicator.text = PyBundle.message("python.cldt.installing.indicator")
           indicator.text2 = PyBundle.message("python.cldt.installing.skip")
 
-          runXCodeSelectInstall()
+          runXCodeSelectInstall(project)
 
           while (!MacPythonSdkFlavor.areCommandLineDeveloperToolsAvailable() && isInstallCommandLineDeveloperToolsAppRunning()) {
+            if (indicator.isCanceled) {
+              logSdkInstallationOnMac(project, InstallationResult.CANCELLED)
+              return null
+            }
+
             Thread.sleep(TimeUnit.SECONDS.toMillis(5))
           }
+
+          logSdkInstallationOnMac(
+            project,
+            if (MacPythonSdkFlavor.areCommandLineDeveloperToolsAvailable()) InstallationResult.OK else InstallationResult.EXIT_CODE
+          )
 
           LOGGER.debug("Resetting system-wide sdks detectors")
           resetSystemWideSdksDetectors()
@@ -382,6 +399,12 @@ private class PySdkToInstallViaXCodeSelect : PySdkToInstall("Python", "") {
           return systemWideSdksDetector()
             .also { sdks ->
               LOGGER.debug { sdks.joinToString(prefix = "Detected system-wide sdks: ") { it.homePath ?: it.name } }
+            }
+            .also {
+              logSdkLookupOnMac(
+                project,
+                if (it.isEmpty()) LookupResult.NOT_FOUND else LookupResult.FOUND
+              )
             }
             .singleOrNull()
         }
@@ -393,7 +416,7 @@ private class PySdkToInstallViaXCodeSelect : PySdkToInstall("Python", "") {
     )
   }
 
-  private fun runXCodeSelectInstall() {
+  private fun runXCodeSelectInstall(project: Project?) {
     val commandLine = MacPythonSdkFlavor.getXCodeSelectInstallCommand()
     try {
       execAndGetOutput(commandLine)
@@ -404,6 +427,7 @@ private class PySdkToInstallViaXCodeSelect : PySdkToInstall("Python", "") {
         }
     }
     catch (e: ExecutionException) {
+      logSdkInstallationOnMac(project, InstallationResult.EXCEPTION)
       LOGGER.warn("Exception during '${commandLine.commandLineString}'", e)
     }
   }

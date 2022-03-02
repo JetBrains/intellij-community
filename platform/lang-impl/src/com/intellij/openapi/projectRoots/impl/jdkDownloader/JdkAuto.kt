@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.lang.JavaVersion
+import com.intellij.util.system.CpuArch
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.NotNull
@@ -184,6 +185,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         val jdkToDownload = lazyDownloadModel
                               .asSequence()
                               .filter { req.matches(it) }
+                              .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
                               .mapNotNull {
                                 val v = JavaVersion.tryParse(it.versionString)
                                 if (v != null) {

@@ -1175,7 +1175,7 @@ public class GitBranchPopupActions {
    *
    * @see com.intellij.ui.popup.ActionStepBuilder#appendAction
    */
-  private static void addTooltipText(Presentation presentation, @NlsContexts.Tooltip String tooltipText) {
+  public static void addTooltipText(Presentation presentation, @NlsContexts.Tooltip String tooltipText) {
     presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, tooltipText);
   }
 }

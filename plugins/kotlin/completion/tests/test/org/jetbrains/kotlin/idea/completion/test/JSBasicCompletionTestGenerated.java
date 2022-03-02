@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -795,6 +795,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("ExtensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("testData/basic/common/fromUnresolvedNames/ExtensionFunction.kt");
+            }
+
+            @TestMetadata("ExtensionProperty.kt")
+            public void testExtensionProperty() throws Exception {
+                runTest("testData/basic/common/fromUnresolvedNames/ExtensionProperty.kt");
+            }
+
             @TestMetadata("FunctionInCompanionObject.kt")
             public void testFunctionInCompanionObject() throws Exception {
                 runTest("testData/basic/common/fromUnresolvedNames/FunctionInCompanionObject.kt");
@@ -810,9 +820,19 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("testData/basic/common/fromUnresolvedNames/MemberFunction.kt");
             }
 
+            @TestMetadata("MemberFunction2.kt")
+            public void testMemberFunction2() throws Exception {
+                runTest("testData/basic/common/fromUnresolvedNames/MemberFunction2.kt");
+            }
+
             @TestMetadata("MemberProperty.kt")
             public void testMemberProperty() throws Exception {
                 runTest("testData/basic/common/fromUnresolvedNames/MemberProperty.kt");
+            }
+
+            @TestMetadata("MemberProperty2.kt")
+            public void testMemberProperty2() throws Exception {
+                runTest("testData/basic/common/fromUnresolvedNames/MemberProperty2.kt");
             }
 
             @TestMetadata("NotForExtensionFunction.kt")
@@ -928,6 +948,24 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/basic/common/inInitBlock")
+        public static class InInitBlock extends AbstractJSBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("localVariable.kt")
+            public void testLocalVariable() throws Exception {
+                runTest("testData/basic/common/inInitBlock/localVariable.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("testData/basic/common/inInitBlock/property.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/basic/common/inStringLiterals")
         public static class InStringLiterals extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -962,6 +1000,47 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("StringTemplateDotSomething.kt")
             public void testStringTemplateDotSomething() throws Exception {
                 runTest("testData/basic/common/inStringLiterals/StringTemplateDotSomething.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/basic/common/inSuperTypes")
+        public static class InSuperTypes extends AbstractJSBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("baseClass.kt")
+            public void testBaseClass() throws Exception {
+                runTest("testData/basic/common/inSuperTypes/baseClass.kt");
+            }
+
+            @TestMetadata("baseClassWithPrefix.kt")
+            public void testBaseClassWithPrefix() throws Exception {
+                runTest("testData/basic/common/inSuperTypes/baseClassWithPrefix.kt");
+            }
+
+            @TestMetadata("typeParameter.kt")
+            public void testTypeParameter() throws Exception {
+                runTest("testData/basic/common/inSuperTypes/typeParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/basic/common/inTypeAlias")
+        public static class InTypeAlias extends AbstractJSBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("member.kt")
+            public void testMember() throws Exception {
+                runTest("testData/basic/common/inTypeAlias/member.kt");
+            }
+
+            @TestMetadata("topLevel.kt")
+            public void testTopLevel() throws Exception {
+                runTest("testData/basic/common/inTypeAlias/topLevel.kt");
             }
         }
 
@@ -1442,6 +1521,29 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/basic/common/primaryConstructor")
+        public static class PrimaryConstructor extends AbstractJSBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("parameterDefaultValue.kt")
+            public void testParameterDefaultValue() throws Exception {
+                runTest("testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
+            }
+
+            @TestMetadata("previousParameter.kt")
+            public void testPreviousParameter() throws Exception {
+                runTest("testData/basic/common/primaryConstructor/previousParameter.kt");
+            }
+
+            @TestMetadata("propertyType.kt")
+            public void testPropertyType() throws Exception {
+                runTest("testData/basic/common/primaryConstructor/propertyType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/basic/common/primitiveCompletion")
         public static class PrimitiveCompletion extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -1476,6 +1578,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("classFieldsAndFunctionsFromInnerClassExplicitReceiver.kt")
             public void testClassFieldsAndFunctionsFromInnerClassExplicitReceiver() throws Exception {
                 runTest("testData/basic/common/primitiveCompletion/classFieldsAndFunctionsFromInnerClassExplicitReceiver.kt");
+            }
+
+            @TestMetadata("completionInLocalFunction.kt")
+            public void testCompletionInLocalFunction() throws Exception {
+                runTest("testData/basic/common/primitiveCompletion/completionInLocalFunction.kt");
+            }
+
+            @TestMetadata("completionInPropertyLambdaInitializer.kt")
+            public void testCompletionInPropertyLambdaInitializer() throws Exception {
+                runTest("testData/basic/common/primitiveCompletion/completionInPropertyLambdaInitializer.kt");
             }
 
             @TestMetadata("defaultKotlinImports.kt")
@@ -1521,6 +1633,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("insideFunctionWithParameters.kt")
             public void testInsideFunctionWithParameters() throws Exception {
                 runTest("testData/basic/common/primitiveCompletion/insideFunctionWithParameters.kt");
+            }
+
+            @TestMetadata("localClassConstructor.kt")
+            public void testLocalClassConstructor() throws Exception {
+                runTest("testData/basic/common/primitiveCompletion/localClassConstructor.kt");
+            }
+
+            @TestMetadata("localClassMember.kt")
+            public void testLocalClassMember() throws Exception {
+                runTest("testData/basic/common/primitiveCompletion/localClassMember.kt");
             }
 
             @TestMetadata("localVariablesAndFunctions.kt")
@@ -1917,6 +2039,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             public void testQualifierTypeGeneric() throws Exception {
                 runTest("testData/basic/common/super/QualifierTypeGeneric.kt");
             }
+
+            @TestMetadata("SuperMethod.kt")
+            public void testSuperMethod() throws Exception {
+                runTest("testData/basic/common/super/SuperMethod.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -1987,6 +2114,31 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("AfterIntSeparatedWithComments.kt")
             public void testAfterIntSeparatedWithComments() throws Exception {
                 runTest("testData/basic/common/AfterIntSeparatedWithComments.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethod.kt")
+            public void testAmbiguousSuperMethod() throws Exception {
+                runTest("testData/basic/common/ambiguousSuperMethod.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethodDiamond.kt")
+            public void testAmbiguousSuperMethodDiamond() throws Exception {
+                runTest("testData/basic/common/ambiguousSuperMethodDiamond.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethodDiamondAny.kt")
+            public void testAmbiguousSuperMethodDiamondAny() throws Exception {
+                runTest("testData/basic/common/ambiguousSuperMethodDiamondAny.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethodHigherUp.kt")
+            public void testAmbiguousSuperMethodHigherUp() throws Exception {
+                runTest("testData/basic/common/ambiguousSuperMethodHigherUp.kt");
+            }
+
+            @TestMetadata("ambiguousSuperMethodSingleImpl.kt")
+            public void testAmbiguousSuperMethodSingleImpl() throws Exception {
+                runTest("testData/basic/common/ambiguousSuperMethodSingleImpl.kt");
             }
 
             @TestMetadata("BasicAny.kt")
@@ -2594,6 +2746,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("testData/basic/common/OverloadFunctions.kt");
             }
 
+            @TestMetadata("parameterDefaultValueInFunction.kt")
+            public void testParameterDefaultValueInFunction() throws Exception {
+                runTest("testData/basic/common/parameterDefaultValueInFunction.kt");
+            }
+
             @TestMetadata("PreferLessParameters.kt")
             public void testPreferLessParameters() throws Exception {
                 runTest("testData/basic/common/PreferLessParameters.kt");
@@ -2622,6 +2779,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("RecieverMembersFromExtFun.kt")
             public void testRecieverMembersFromExtFun() throws Exception {
                 runTest("testData/basic/common/RecieverMembersFromExtFun.kt");
+            }
+
+            @TestMetadata("SecondTypeArg.kt")
+            public void testSecondTypeArg() throws Exception {
+                runTest("testData/basic/common/SecondTypeArg.kt");
             }
 
             @TestMetadata("SetPrefixForProperties.kt")
@@ -2788,6 +2950,26 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("VisibilityInSubclassForce.kt")
             public void testVisibilityInSubclassForce() throws Exception {
                 runTest("testData/basic/common/visibility/VisibilityInSubclassForce.kt");
+            }
+
+            @TestMetadata("VisibilityOfClassMembersFromLocalClassConstructor.kt")
+            public void testVisibilityOfClassMembersFromLocalClassConstructor() throws Exception {
+                runTest("testData/basic/common/visibility/VisibilityOfClassMembersFromLocalClassConstructor.kt");
+            }
+
+            @TestMetadata("VisibilityOfClassMembersFromLocalClassMember.kt")
+            public void testVisibilityOfClassMembersFromLocalClassMember() throws Exception {
+                runTest("testData/basic/common/visibility/VisibilityOfClassMembersFromLocalClassMember.kt");
+            }
+
+            @TestMetadata("VisibilityOfCompanionObjectMembersFromOutside.kt")
+            public void testVisibilityOfCompanionObjectMembersFromOutside() throws Exception {
+                runTest("testData/basic/common/visibility/VisibilityOfCompanionObjectMembersFromOutside.kt");
+            }
+
+            @TestMetadata("VisibilityOfCompanionObjectMembersFromSubclass.kt")
+            public void testVisibilityOfCompanionObjectMembersFromSubclass() throws Exception {
+                runTest("testData/basic/common/visibility/VisibilityOfCompanionObjectMembersFromSubclass.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThis.kt")

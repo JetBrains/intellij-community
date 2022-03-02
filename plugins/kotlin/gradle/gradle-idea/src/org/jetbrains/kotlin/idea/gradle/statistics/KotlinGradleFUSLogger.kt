@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.io.FileUtil
@@ -29,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
-class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
+class KotlinGradleFUSLogger : StartupActivity.DumbAware, Runnable {
 
     override fun runActivity(project: Project) {
         AppExecutorUtil.getAppScheduledExecutorService()
@@ -50,7 +49,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
                     // 2. the projectId should be stable and independent on IDE version
                     val presentableUrl = FileUtil.toSystemIndependentName(path)
                     val name =
-                        PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+                        PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
                     val locationHash = Integer.toHexString((presentableUrl).hashCode())
                     val projectHash =
                         "${name.trimMiddle(name.length.coerceAtMost(254 - locationHash.length), useEllipsisSymbol = false)}.$locationHash"
@@ -137,7 +136,12 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
                 GradleStatisticsEvents.JS,
                 BooleanMetrics.JS_GENERATE_EXTERNALS,
                 StringMetrics.JS_GENERATE_EXECUTABLE_DEFAULT,
-                StringMetrics.JS_TARGET_MODE
+                StringMetrics.JS_TARGET_MODE,
+                BooleanMetrics.JS_SOURCE_MAP,
+                StringMetrics.JS_PROPERTY_LAZY_INITIALIZATION,
+                StringMetrics.JS_OUTPUT_GRANULARITY,
+                BooleanMetrics.JS_KLIB_INCREMENTAL,
+                BooleanMetrics.JS_IR_INCREMENTAL,
             )
 
             container.log(

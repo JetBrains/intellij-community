@@ -124,7 +124,7 @@ internal class GitVcsPanel(private val project: Project) :
         .bind<List<String>>(
           { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
           { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
-          PropertyBinding(
+          MutableProperty(
             { sharedSettings.forcePushProhibitedPatterns },
             { sharedSettings.forcePushProhibitedPatterns = it })
         )
@@ -200,9 +200,9 @@ internal class GitVcsPanel(private val project: Project) :
 
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
-        checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get())
-        }
+        checkBox(cdSyncBranches(project))
+          .gap(RightGap.SMALL)
+        contextHelp(DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get()))
       }
     }
     branchUpdateInfoRow()

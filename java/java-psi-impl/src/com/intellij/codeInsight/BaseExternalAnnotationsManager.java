@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -217,11 +218,22 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       SAXParser saxParser = Holder.FACTORY.newSAXParser();
       saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(fileText))), handler);
     }
+    catch (SAXParseException e) {
+      if (externalAnnotationsManager != null) {
+        externalAnnotationsManager.reportXmlParseError(virtualFile, e);
+      } else {
+        LOG.error(virtualFile.getPath(), e);
+      }
+    }
     catch (IOException | ParserConfigurationException | SAXException e) {
       LOG.error(virtualFile.getPath(), e);
     }
 
     return handler.getResult();
+  }
+
+  protected void reportXmlParseError(@NotNull VirtualFile file, @NotNull SAXParseException exception) {
+    LOG.error(file.getPath(), exception);
   }
 
   private interface Holder {

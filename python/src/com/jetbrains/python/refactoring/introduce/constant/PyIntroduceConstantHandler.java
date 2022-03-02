@@ -17,7 +17,6 @@ package com.jetbrains.python.refactoring.introduce.constant;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,12 +25,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
@@ -48,7 +46,7 @@ import java.util.List;
  */
 public class PyIntroduceConstantHandler extends IntroduceHandler {
   public PyIntroduceConstantHandler() {
-    super(new ConstantValidator(), PyBundle.message("refactoring.introduce.constant.dialog.title"));
+    super(new ConstantValidator(), PyPsiBundle.message("refactoring.introduce.constant.dialog.title"));
   }
 
   @Override
@@ -120,7 +118,7 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
 
   @Override protected void showCanNotIntroduceErrorHint(@NotNull Project project, @NotNull Editor editor) {
     String message =
-      RefactoringBundle.getCannotRefactorMessage(PyBundle.message("refactoring.introduce.constant.cannot.extract.selected.expression"));
+      RefactoringBundle.getCannotRefactorMessage(PyPsiBundle.message("refactoring.introduce.constant.cannot.extract.selected.expression"));
     CommonRefactoringUtil.showErrorHint(project, editor, message, myDialogTitle, getHelpId());
   }
 

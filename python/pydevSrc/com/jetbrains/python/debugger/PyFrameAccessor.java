@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
@@ -25,6 +26,11 @@ public interface PyFrameAccessor {
   @Nullable
   default Project getProject() { return null; }
 
+  @Nullable
+  default XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
+    return null;
+  }
+
   PyDebugValue evaluate(final String expression, final boolean execute, boolean doTrunc) throws PyDebuggerException;
 
   /**
@@ -33,7 +39,17 @@ public interface PyFrameAccessor {
   @Nullable
   XValueChildrenList loadFrame(@Nullable XStackFrame frame) throws PyDebuggerException;
 
+  /*
+   * Load a variable's attributes taking into account various view settings (for example, Type Renderers)
+   * */
+  @Nullable
   XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException;
+
+  /*
+   * Load full list of a variable's attributes ignoring view settings
+   * */
+  @Nullable
+  default XValueChildrenList loadVariableDefaultView(PyDebugValue variable) throws PyDebuggerException { return new XValueChildrenList(); }
 
   void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException;
 
@@ -68,6 +84,8 @@ public interface PyFrameAccessor {
   }
 
   default void setCurrentRootNode(@NotNull XCompositeNode node) {}
+
+  default void setUserTypeRenderersSettings() {}
 
   default boolean isSimplifiedView() {
     return false;

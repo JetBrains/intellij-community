@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.ui.AppUIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 abstract class ToolWindowManagerEx : ToolWindowManager() {
   companion object {
@@ -24,22 +25,25 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
     }
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @get:Internal
+  abstract val toolWindows: List<ToolWindow>
+
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")
   abstract fun initToolWindow(bean: ToolWindowEP)
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   open fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   open fun addToolWindowManagerListener(listener: ToolWindowManagerListener, parentDisposable: Disposable) {
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   open fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
   }
 

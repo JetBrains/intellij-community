@@ -238,13 +238,11 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       if (entry instanceof LibraryOrderEntry) {
         LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
         if (!libraryOrderEntry.isModuleLevel()) continue;
-        if (isEmpty(libraryOrderEntry.getLibraryName())) {
-          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
-                                                               s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
-          LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
-          if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {
-            result.put(libraryOrderEntry, libraryDependencyData);
-          }
+        final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
+                                                             s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
+        LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
+        if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {
+          result.put(libraryOrderEntry, libraryDependencyData);
         }
       }
     }

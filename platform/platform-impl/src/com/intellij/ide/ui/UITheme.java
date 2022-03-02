@@ -17,10 +17,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -147,7 +144,7 @@ public final class UITheme {
                                                @NotNull Function<? super String, String> iconsMapper)
     throws IllegalStateException {
     if (provider != null) {
-      theme.providerClassLoader = provider;
+      theme.setProviderClassLoader(provider);
     }
 
     initializeNamedColors(theme);
@@ -199,7 +196,6 @@ public final class UITheme {
 
       Object palette = theme.icons.get("ColorPalette");
       if (palette instanceof Map) {
-
         @SuppressWarnings("rawtypes")
         Map colors = (Map)palette;
         PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
@@ -405,8 +401,18 @@ public final class UITheme {
     return selectionColorPatcher;
   }
 
+  @ApiStatus.Internal
   public @NotNull ClassLoader getProviderClassLoader() {
+    if (providerClassLoader == null) {
+      throw new RuntimeException("The theme classloader has already been detached");
+    }
+
     return providerClassLoader;
+  }
+
+  @ApiStatus.Internal
+  public void setProviderClassLoader(@Nullable ClassLoader providerClassLoader) {
+    this.providerClassLoader = providerClassLoader;
   }
 
   private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {
@@ -497,77 +503,82 @@ public final class UITheme {
   }
 
   public static Object parseValue(String key, @NotNull String value, @NotNull ClassLoader classLoader) {
-    switch (value) {
-      case "null":
-        return null;
-      case "true":
-        return Boolean.TRUE;
-      case "false":
-        return Boolean.FALSE;
-    }
+    try {
+      switch (value) {
+        case "null":
+          return null;
+        case "true":
+          return Boolean.TRUE;
+        case "false":
+          return Boolean.FALSE;
+      }
 
-    if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = ImageDataByPathLoader.findIconFromThemePath(value, classLoader);
-      if (icon != null) {
-        return icon;
+      if (value.endsWith(".png") || value.endsWith(".svg")) {
+        Icon icon = ImageDataByPathLoader.findIcon(value, classLoader, null);
+        if (icon != null) {
+          return icon;
+        }
       }
-    }
 
-    if (key.endsWith("Insets") || key.endsWith("padding")) {
-      return parseInsets(value);
-    }
-    else if (key.endsWith("Border") || key.endsWith("border")) {
-      try {
-        String[] ints = value.split(",");
-        if (ints.length == 4) {
-          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+      if (key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding")) {
+        return parseInsets(value);
+      }
+      else if (key.endsWith("Border") || key.endsWith("border")) {
+        try {
+          String[] ints = value.split(",");
+          if (ints.length == 4) {
+            return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+          }
+          else if (ints.length == 5) {
+            return JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(ints[4]),
+                                                             Integer.parseInt(ints[0]),
+                                                             Integer.parseInt(ints[1]),
+                                                             Integer.parseInt(ints[2]),
+                                                             Integer.parseInt(ints[3])));
+          }
+          Color color = ColorHexUtil.fromHexOrNull(value);
+          if (color == null) {
+            Class<?> aClass = classLoader.loadClass(value);
+            Constructor<?> constructor = aClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+          }
+          else {
+            return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
+          }
         }
-        else if (ints.length == 5) {
-          return JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(ints[4]),
-                                                           Integer.parseInt(ints[0]),
-                                                           Integer.parseInt(ints[1]),
-                                                           Integer.parseInt(ints[2]),
-                                                           Integer.parseInt(ints[3])));
-        }
-        Color color = ColorHexUtil.fromHexOrNull(value);
-        if (color == null) {
-          Class<?> aClass = classLoader.loadClass(value);
-          Constructor<?> constructor = aClass.getDeclaredConstructor();
-          constructor.setAccessible(true);
-          return constructor.newInstance();
-        }
-        else {
-          return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
+        catch (Exception e) {
+          LOG.warn(e);
         }
       }
-      catch (Exception e) {
-        LOG.warn(e);
+      else if (key.endsWith("Size")) {
+        return parseSize(value);
+      }
+      else if (key.endsWith("Width") || key.endsWith("Height")) {
+        return getIntegerOrFloat(value, key);
+      }
+      else if (key.endsWith("grayFilter")) {
+        return parseGrayFilter(value);
+      }
+      else if (value.startsWith("AllIcons.")) {
+        return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
+      }
+      else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
+        return getIntegerOrFloat(value, key);
+      }
+      else {
+        Color color = parseColor(value);
+        if (color != null) {
+          return new ColorUIResource(color);
+        }
+        Integer intVal = getInteger(value, null);
+        if (intVal != null) {
+          return intVal;
+        }
       }
     }
-    else if (key.endsWith("Size")) {
-      return parseSize(value);
-    }
-    else if (key.endsWith("Width") || key.endsWith("Height")) {
-      return getInteger(value, key);
-    }
-    else if (key.endsWith("grayFilter")) {
-      return parseGrayFilter(value);
-    }
-    else if (value.startsWith("AllIcons.")) {
-      return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
-    }
-    else if (!value.startsWith("#") && getInteger(value, key) != null) {
-      return getInteger(value, key);
-    }
-    else {
-      Color color = parseColor(value);
-      if (color != null) {
-        return new ColorUIResource(color);
-      }
-      Integer intVal = getInteger(value, null);
-      if (intVal != null) {
-        return intVal;
-      }
+    catch (Exception e) {
+      LOG.warn("Can't parse '" + value +"' for key '" + key + "'");
     }
 
     return value;
@@ -626,10 +637,24 @@ public final class UITheme {
     }
     catch (NumberFormatException e) {
       if (key != null) {
-        LOG.warn(key + " = " + value);
+        LOG.warn("Can't parse: " + key + " = " + value);
       }
       return null;
     }
+  }
+
+  private static Number getIntegerOrFloat(String value, @Nullable String key) {
+    if (value.contains(".")) {
+      try {
+        return Float.parseFloat(value);
+      } catch (NumberFormatException e) {
+        if (key != null) {
+          LOG.warn("Can't parse: " + key + " = " + value);
+        }
+        return null;
+      }
+    }
+    return getInteger(value, key);
   }
 
   private static Dimension parseSize(@NotNull String value) {
@@ -702,7 +727,7 @@ public final class UITheme {
     }
 
     @Nullable PaletteScope getScopeByPath(@Nullable String path) {
-      if (path != null && path.contains("/com/intellij/ide/ui/laf/icons/")) {
+      if (path != null && (path.contains("com/intellij/ide/ui/laf/icons/") || path.contains("/com/intellij/ide/ui/laf/icons/"))) {
         String file = path.substring(path.lastIndexOf('/') + 1);
         if (file.equals("treeCollapsed.svg") || file.equals("treeExpanded.svg")) return trees;
         if (file.startsWith("check")) return checkBoxes;

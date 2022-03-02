@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
+import org.junit.platform.commons.support.ReflectionSupport;
 import org.junit.platform.commons.util.AnnotationUtils;
+import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
@@ -25,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JUnit5TestRunnerUtil {
   private static final String[] DISABLED_ANNO = {"org.junit.jupiter.api.Disabled"};
@@ -59,64 +62,58 @@ public class JUnit5TestRunnerUtil {
 
     if (suiteClassNames.length == 1 && suiteClassNames[0].charAt(0) == '@') {
       // all tests in the package specified
-      try {
-        BufferedReader reader = new BufferedReader(new FileReader(suiteClassNames[0].substring(1)));
-        try {
-          final String packageName = reader.readLine();
-          if (packageName == null) return null;
+      try (BufferedReader reader = new BufferedReader(new FileReader(suiteClassNames[0].substring(1)))) {
+        final String packageName = reader.readLine();
+        if (packageName == null) return null;
 
-          String tags = reader.readLine();
-          String filters = reader.readLine();
-          String line;
+        String tags = reader.readLine();
+        String filters = reader.readLine();
+        String line;
 
-          List<DiscoverySelector> selectors = new ArrayList<>();
-          while ((line = reader.readLine()) != null) {
-            DiscoverySelector selector = createSelector(line, null);
-            if (selector != null) {
-              selectors.add(selector);
+        List<DiscoverySelector> selectors = new ArrayList<>();
+        while ((line = reader.readLine()) != null) {
+          DiscoverySelector selector = createSelector(line, null);
+          if (selector != null) {
+            selectors.add(selector);
+          }
+        }
+        if (hasBrokenSelector(selectors)) {
+          builder.filters(createMethodFilter(new ArrayList<>(selectors)));
+          for (int i = 0; i < selectors.size(); i++) {
+            DiscoverySelector selector = selectors.get(i);
+            if (selector instanceof MethodSelector) {
+              selectors.set(i, createClassSelector(((MethodSelector)selector).getClassName()));
             }
           }
-          if (hasBrokenSelector(selectors)) {
-            builder.filters(createMethodFilter(new ArrayList<>(selectors)));
-            for (int i = 0; i < selectors.size(); i++) {
-              DiscoverySelector selector = selectors.get(i);
-              if (selector instanceof MethodSelector) {
-                selectors.set(i, DiscoverySelectors.selectClass(((MethodSelector)selector).getClassName()));
+        }
+        packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
+        if (selectors.isEmpty()) {
+          builder.selectors(DiscoverySelectors.selectPackage(packageName));
+        }
+        else {
+          builder.selectors(selectors);
+          if (!packageName.isEmpty()) {
+            builder.filters(PackageNameFilter.includePackageNames(packageName));
+          }
+        }
+        if (filters != null && !filters.isEmpty()) {
+          String[] classNames = filters.split("\\|\\|");
+          for (String className : classNames) {
+            if (!className.contains("*")) {
+              try {
+                Class.forName(className, false, JUnit5TestRunnerUtil.class.getClassLoader());
+              }
+              catch (ClassNotFoundException e) {
+                System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), className));
               }
             }
           }
-          packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
-          if (selectors.isEmpty()) {
-            builder.selectors(DiscoverySelectors.selectPackage(packageName));
-          }
-          else {
-            builder.selectors(selectors);
-            if (!packageName.isEmpty()) {
-              builder.filters(PackageNameFilter.includePackageNames(packageName));
-            }
-          }
-          if (filters != null && !filters.isEmpty()) {
-            String[] classNames = filters.split("\\|\\|");
-            for (String className : classNames) {
-              if (!className.contains("*")) {
-                try {
-                  Class.forName(className, false, JUnit5TestRunnerUtil.class.getClassLoader());
-                }
-                catch (ClassNotFoundException e) {
-                  System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), className));
-                }
-              }
-            }
-            builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
-          }
-          if (tags != null && !tags.isEmpty()) {
-            builder.filters(TagFilter.includeTags(tags.split(" ")));
-          }
-          return builder.filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*", "com\\.intellij\\.junit3.*")).build();
+          builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
         }
-        finally {
-          reader.close();
+        if (tags != null && !tags.isEmpty()) {
+          builder.filters(TagFilter.includeTags(tags.split(" ")));
         }
+        return builder.filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*", "com\\.intellij\\.junit3.*")).build();
       }
       catch (IOException e) {
         e.printStackTrace();
@@ -130,14 +127,14 @@ public class JUnit5TestRunnerUtil {
       }
 
       DiscoverySelector selector = createSelector(suiteClassNames[0], packageNameRef);
-      if (selector instanceof MethodSelector) {
-        try {
-          ((MethodSelector)selector).getJavaMethod();
-        }
-        catch (Throwable e) {
-          builder.filters(createMethodFilter(Collections.singletonList(selector)));
-          selector = DiscoverySelectors.selectClass(((MethodSelector)selector).getClassName());
-        }
+      if (selector instanceof MethodSelector && !loadMethodByReflection((MethodSelector)selector)) {
+        DiscoverySelector classSelector = createClassSelector(((MethodSelector)selector).getClassName());
+        DiscoverySelector methodSelector = classSelector instanceof NestedClassSelector
+                                           ? DiscoverySelectors.selectMethod(((NestedClassSelector)classSelector).getNestedClassName(),
+                                                                             ((MethodSelector)selector).getMethodName())
+                                           : selector;
+        builder.filters(createMethodFilter(Collections.singletonList(methodSelector)));
+        selector = classSelector;
       }
       assert selector != null : "selector by class name is never null";
       return builder.selectors(selector).build();
@@ -146,15 +143,20 @@ public class JUnit5TestRunnerUtil {
     return null;
   }
 
+  private static boolean loadMethodByReflection(MethodSelector selector) {
+    try {
+      Class<?> aClass = Class.forName(selector.getClassName());
+      return ReflectionSupport.findMethod(aClass, selector.getMethodName(), selector.getMethodParameterTypes()).isPresent();
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
   private static boolean hasBrokenSelector(List<DiscoverySelector> selectors) {
     for (DiscoverySelector selector : selectors) {
-      if (selector instanceof MethodSelector) {
-        try {
-          ((MethodSelector)selector).getJavaMethod();
-        }
-        catch (Throwable e) {
-          return true;
-        }
+      if (selector instanceof MethodSelector && !loadMethodByReflection((MethodSelector)selector)) {
+        return true;
       }
     }
 
@@ -175,14 +177,15 @@ public class JUnit5TestRunnerUtil {
         if (source instanceof MethodSource) {
           for (DiscoverySelector selector : selectors) {
             if (selector instanceof MethodSelector &&
-                ((MethodSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) &&
-                ((MethodSelector)selector).getMethodName().equals(((MethodSource)source).getMethodName())) {
+                ((MethodSelector)selector).getMethodName().equals(((MethodSource)source).getMethodName()) &&
+                (((MethodSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) || 
+                 inNestedClass((MethodSource)source, createClassSelector(((MethodSelector)selector).getClassName())))) {
               return true;
             }
           }
           for (DiscoverySelector selector : selectors) {
-            if (selector instanceof ClassSelector && 
-                ((ClassSelector)selector).getClassName().equals(((MethodSource)source).getClassName())) {
+            if (selector instanceof ClassSelector && ((ClassSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) ||
+                inNestedClass((MethodSource)source, selector)) {
               return true;
             }
           }
@@ -190,6 +193,11 @@ public class JUnit5TestRunnerUtil {
         }
 
         return true;
+      }
+
+      private boolean inNestedClass(MethodSource source, DiscoverySelector selector) {
+        return selector instanceof NestedClassSelector &&
+               ((NestedClassSelector)selector).getNestedClassName().equals(source.getClassName());
       }
     };
   }
@@ -297,7 +305,49 @@ public class JUnit5TestRunnerUtil {
       if (packageNameRef != null) {
         packageNameRef[0] = line;
       }
-      return DiscoverySelectors.selectClass(line);
+      
+      return createClassSelector(line);
     }
+  }
+
+  private static DiscoverySelector createClassSelector(String line) {
+    int nestedClassIdx = line.lastIndexOf("$");
+    if (nestedClassIdx > 0) {
+      AtomicReference<DiscoverySelector> nestedClassSelector = new AtomicReference<>();
+      ReflectionUtils.tryToLoadClass(line).ifFailure(__ -> {
+        nestedClassSelector.set(getNestedSelector(line, nestedClassIdx));
+      });
+      if (nestedClassSelector.get() != null) return nestedClassSelector.get();
+    }
+    
+    return DiscoverySelectors.selectClass(line);
+  }
+
+  private static NestedClassSelector getNestedSelector(String line,
+                                                       int nestedClassIdx) {
+    String enclosingClass = line.substring(0, nestedClassIdx);
+    String nestedClassName = line.substring(nestedClassIdx + 1);
+    DiscoverySelector enclosingClassSelector = createClassSelector(enclosingClass);
+    Class<?> klass = enclosingClassSelector instanceof NestedClassSelector
+                     ? ((NestedClassSelector)enclosingClassSelector).getNestedClass()
+                     : ((ClassSelector)enclosingClassSelector).getJavaClass();
+    Class<?> superclass = klass.getSuperclass();
+    while (superclass != null) {
+      for (Class<?> nested : superclass.getDeclaredClasses()) {
+        if (nested.getSimpleName().equals(nestedClassName)) {
+          List<Class<?>> enclosingClasses;
+          if (enclosingClassSelector instanceof NestedClassSelector) {
+            enclosingClasses = new ArrayList<>(((NestedClassSelector)enclosingClassSelector).getEnclosingClasses());
+            enclosingClasses.add(klass);
+          }
+          else {
+            enclosingClasses = Collections.singletonList(klass);
+          }
+          return DiscoverySelectors.selectNestedClass(enclosingClasses, nested);
+        }
+      }
+      superclass = superclass.getSuperclass();
+    }
+    return null;
   }
 }

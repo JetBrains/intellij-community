@@ -3,10 +3,19 @@ package org.jetbrains.java.decompiler.modules.decompiler.typeann;
 
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.struct.StructMember;
 import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
+import org.jetbrains.java.decompiler.struct.gen.Type;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TypeAnnotation {
   public static final int CLASS_TYPE_PARAMETER = 0x00;
@@ -49,7 +58,7 @@ public class TypeAnnotation {
     this.annotation = annotation;
   }
 
-  @MagicConstant(flagsFromClass = TypeAnnotation.class)
+  @MagicConstant(valuesFromClass = TypeAnnotation.class)
   public int getTargetType() {
     return targetType;
   }
@@ -64,5 +73,45 @@ public class TypeAnnotation {
 
   public @NotNull List<StructTypePathEntry> getPaths() {
     return paths;
+  }
+
+  @Override
+  public String toString() {
+    return getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
+  }
+
+  public void writeTo(@NotNull StringBuilder sb) {
+    sb.append(this);
+    sb.append(' ');
+  }
+
+  public void writeTo(@NotNull TextBuffer sb) {
+    sb.append(toString());
+    sb.append(' ');
+  }
+
+  public static List<TypeAnnotation> listFrom(StructMember md) {
+    return Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
+      .flatMap(attrKey -> {
+        StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)md.getAttribute(attrKey);
+        if (attribute == null) {
+          return Stream.empty();
+        } else {
+          return attribute.getAnnotations().stream();
+        }
+      })
+      .collect(Collectors.toList());
+  }
+
+  public boolean isWrittenBeforeType(Type type) {
+    StructTypePathEntry pathEntry = getPaths().stream().findFirst().orElse(null);
+    if (pathEntry == null && type.getArrayDim() == 0) {
+      return type.isAnnotatable();
+    }
+    if (pathEntry != null
+        && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId()
+        && getPaths().size() == type.getArrayDim()
+    ) return true;
+    return false;
   }
 }

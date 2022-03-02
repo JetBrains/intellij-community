@@ -1,8 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.typeann;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Indicates the location of type annotations, retrieved from the type annotation attribute.
+ * @see <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html">The JVM class File Format Spec</a> Section 4.7.20.1
  */
 public interface TargetInfo {
   /**
@@ -27,7 +31,16 @@ public interface TargetInfo {
    * An item indicating that an annotation appears on either the type in a field declaration, the type in a record component declaration,
    * the return type of a method, the type of a newly constructed object, or the receiver type of a method or constructor.
    */
-  class EmptyTarget implements TargetInfo { }
+  class EmptyTarget implements TargetInfo {
+    /**
+     * @return All empty target type annotations from a {@link TypeAnnotation} list.
+     */
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> typeAnnotation.getTargetInfo() instanceof EmptyTarget)
+        .collect(Collectors.toList());
+    }
+  }
 
   /**
    * An item indicating that an annotation appears on the type in a formal parameter declaration of a method, constructor, or
@@ -45,6 +58,27 @@ public interface TargetInfo {
      */
     public int getFormalParameterIndex() {
       return formalParameterIndex;
+    }
+
+    /**
+     * @return All formal parameter type annotations from a {@link TypeAnnotation} list.
+     */
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> typeAnnotation.getTargetInfo() instanceof FormalParameterTarget)
+        .collect(Collectors.toList());
+    }
+
+    /**
+     * @return All formal parameter target annotations from a {@link TypeAnnotation} list at a specified index.
+     */
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int formalParameterIndex) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
+          return targetInfo instanceof FormalParameterTarget
+                 && ((FormalParameterTarget)targetInfo).getFormalParameterIndex() == formalParameterIndex;
+        }).collect(Collectors.toList());
     }
   }
 
@@ -131,6 +165,8 @@ public interface TargetInfo {
    * index starts at 0.
    */
   class SupertypeTarget implements TargetInfo {
+    private static final int EXTENDS_CLAUSE_INDEX = 0xFFFF;
+
     private final int supertypeIndex;
 
     public SupertypeTarget(int supertypeIndex) {
@@ -144,6 +180,32 @@ public interface TargetInfo {
      */
     public int getSupertypeIndex() {
       return supertypeIndex;
+    }
+
+    public boolean inExtendsClause() {
+      return supertypeIndex == EXTENDS_CLAUSE_INDEX;
+    }
+
+    /**
+     * @return All super types annotations from a {@link TypeAnnotation} list at a specified super type index.
+     */
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int superTypeIndex) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
+          return targetInfo instanceof SupertypeTarget && ((SupertypeTarget)targetInfo).getSupertypeIndex() == superTypeIndex;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * @return The extended type annotations from a {@link TypeAnnotation} list.
+     */
+    public static List<TypeAnnotation> extractExtends(List<TypeAnnotation> typeAnnotations) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
+          return targetInfo instanceof SupertypeTarget && ((SupertypeTarget)targetInfo).inExtendsClause();
+        }).collect(Collectors.toList());
     }
   }
 
@@ -163,6 +225,17 @@ public interface TargetInfo {
     public int getThrowsTypeIndex() {
       return throwsTypeIndex;
     }
+
+    /**
+     * @return All throws clause type annotations from a {@link TypeAnnotation} list at a specified throws type index.
+     */
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int throwsTypeIndex) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
+          return targetInfo instanceof ThrowsTarget && ((ThrowsTarget)targetInfo).getThrowsTypeIndex() == throwsTypeIndex;
+        }).collect(Collectors.toList());
+    }
   }
 
   /**
@@ -181,6 +254,18 @@ public interface TargetInfo {
      */
     public int getTypeParameterIndex() {
       return typeParameterIndex;
+    }
+
+    /**
+     * @return All type parameter type annotations from a {@link TypeAnnotation} list at a specified parameter index.
+     */
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int typeParameterIndex) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
+          return targetInfo instanceof TypeParameterTarget
+                 && ((TypeParameterTarget)targetInfo).getTypeParameterIndex() == typeParameterIndex;
+        }).collect(Collectors.toList());
     }
   }
 
@@ -210,6 +295,23 @@ public interface TargetInfo {
      */
     public int getBoundIndex() {
       return boundIndex;
+    }
+
+    /**
+     * @return All type parameter type annotations from a {@link TypeAnnotation} list at a specified parameter and bound index.
+     */
+    public static List<TypeAnnotation> extract(
+      List<TypeAnnotation> typeAnnotations,
+      int typeParameterIndex,
+      int boundIndex
+    ) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
+          return targetInfo instanceof TypeParameterBoundTarget
+                 && ((TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == typeParameterIndex
+                 && ((TypeParameterBoundTarget)targetInfo).getBoundIndex() == boundIndex;
+        }).collect(Collectors.toList());
     }
   }
 

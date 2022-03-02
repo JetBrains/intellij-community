@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class C {
     fun foo() {
         val v = D::<caret>

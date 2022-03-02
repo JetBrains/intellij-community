@@ -80,8 +80,7 @@ public final class CommonBundle extends DynamicBundle {
   /**
    * @deprecated Use more informative title instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public static @DialogTitle String getWarningTitle() {
     return message("title.warning");
   }
@@ -114,7 +113,7 @@ public final class CommonBundle extends DynamicBundle {
     return message("button.close");
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Button String getNoForAllButtonText() {
     return message("button.no.for.all");
   }

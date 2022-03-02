@@ -137,6 +137,7 @@
 
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
     <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
+    <extensionPoint name="ideEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$EventDispatcher" dynamic="true"/>
 
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider" dynamic="true"/>
     <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider" dynamic="true"/>
@@ -414,7 +415,8 @@
     <extensionPoint name="dynamicActionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer" dynamic="true"/>
 
     <extensionPoint name="config.inlaySettingsProvider" interface="com.intellij.codeInsight.hints.settings.InlaySettingsProvider" dynamic="true"/>
-
+    <extensionPoint name="config.inlayGroupSettingProvider" interface="com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider" dynamic="true"/>
+    <extensionPoint name="config.codeVisionGroupSettingProvider" interface="com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider" dynamic="true"/>
     <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider" dynamic="true"/>
     <extensionPoint name="unknownSdkResolver" interface="com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver" dynamic="true"/>
     <extensionPoint name="unknownSdkContributor" interface="com.intellij.openapi.projectRoots.impl.UnknownSdkContributor" dynamic="true"/>
@@ -475,5 +477,7 @@
     <extensionPoint name="semanticRootProvider" interface="com.intellij.openapi.vfs.newvfs.persistent.RootSemanticAddressProvider"/>
 
     <extensionPoint name="persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener"/>
+
+    <extensionPoint name="beforeRunStartupTasks" interface="com.intellij.execution.startup.BeforeRunStartupTasks" area="IDEA_PROJECT"/>
   </extensionPoints>
 </idea-plugin>

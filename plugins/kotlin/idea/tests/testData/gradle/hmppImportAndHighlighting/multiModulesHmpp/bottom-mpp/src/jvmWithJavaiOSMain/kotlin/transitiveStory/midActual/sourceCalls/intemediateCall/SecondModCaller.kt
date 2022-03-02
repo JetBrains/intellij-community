@@ -38,4 +38,4 @@ class SecondModCaller {
 
 // experiments with intermod inheritance
 class BottomActualCommonInheritor : BottomActualDeclarations()
-expect class <!LINE_MARKER("descr='Has actuals in Native, JVM'")!>BottomActualMPPInheritor<!> : BottomActualDeclarations
+expect class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.bottom-mpp.iosSimLibMain, bottom-mpp] module'")!>BottomActualMPPInheritor<!> : BottomActualDeclarations

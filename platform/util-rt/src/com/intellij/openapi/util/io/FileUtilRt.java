@@ -462,6 +462,7 @@ public class FileUtilRt {
    * @return the relative path from the {@code base} to the {@code file}, or {@code null}
    */
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
 
@@ -473,11 +474,13 @@ public class FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return getRelativePath(basePath, filePath, separator, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator, boolean caseSensitive) {
     basePath = ensureEnds(basePath, separator);
 
@@ -510,6 +513,7 @@ public class FileUtilRt {
   }
 
   @NotNull
+  @Contract(pure = true)
   private static String ensureEnds(@NotNull String s, char endsWith) {
     return StringUtilRt.endsWithChar(s, endsWith) ? s : s + endsWith;
   }
@@ -712,10 +716,15 @@ public class FileUtilRt {
 
   @NotNull
   public static File generateRandomTemporaryPath() throws IOException {
-    File file = new File(getTempDirectory(), UUID.randomUUID().toString());
+    return generateRandomTemporaryPath("", "");
+  }
+
+  @NotNull
+  public static File generateRandomTemporaryPath(@NotNull String prefix, @NotNull String suffix) throws IOException {
+    File file = new File(getTempDirectory(), prefix + UUID.randomUUID() + suffix);
     int i = 0;
     while (file.exists() && i < 5) {
-      file = new File(getTempDirectory(), UUID.randomUUID().toString());
+      file = new File(getTempDirectory(), prefix + UUID.randomUUID() + suffix);
       ++i;
     }
     if (file.exists()) {
@@ -1127,6 +1136,7 @@ public class FileUtilRt {
   }
 
   public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
+    //noinspection StringEquality
     if (path1 == path2) {
       return true;
     }

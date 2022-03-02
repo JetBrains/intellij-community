@@ -4,33 +4,26 @@ package org.jetbrains.kotlin.tools.projectWizard
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
-import com.intellij.openapi.util.Disposer
-import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.ui.UIBundle.*
+import com.intellij.ui.dsl.builder.*
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
-import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
-import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 
 internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = "IntelliJ"
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = object : AbstractNewProjectWizardStep(parent) {
-        val wizardBuilder: NewProjectWizardModuleBuilder = NewProjectWizardModuleBuilder()
-
-        private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+        private val sdkProperty = propertyGraph.property<Sdk?>(null)
+        private val addSampleCodeProperty = propertyGraph.property(false)
 
         private val sdk by sdkProperty
+        private val addSampleCode by addSampleCodeProperty
 
         override fun setupUI(builder: Panel) {
             with(builder) {
@@ -39,16 +32,21 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                     sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
                         .columns(COLUMNS_MEDIUM)
                 }
+                row {
+                    checkBox(message("label.project.wizard.new.project.add.sample.code"))
+                        .bindSelected(addSampleCodeProperty)
+                }.topGap(TopGap.SMALL)
             }
         }
 
         override fun setupProject(project: Project) =
             KotlinNewProjectWizard.generateProject(
                 project = project,
-                projectPath = parent.projectPath.systemIndependentPath,
+                projectPath = "${parent.path}/${parent.name}",
                 projectName = parent.name,
                 sdk = sdk,
-                buildSystemType = BuildSystemType.Jps
+                buildSystemType = BuildSystemType.Jps,
+                addSampleCode = addSampleCode
             )
     }
 }

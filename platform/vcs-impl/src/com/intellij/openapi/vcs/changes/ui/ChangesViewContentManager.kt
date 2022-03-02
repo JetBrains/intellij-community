@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
@@ -24,10 +24,7 @@ import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
 
-private val COMMIT_TOOL_WINDOW = "vcs.commit.tool.window"
-
-private val isCommitToolWindowEnabled
-  get() = AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW)
+private const val COMMIT_TOOL_WINDOW = "vcs.commit.tool.window"
 
 internal val Project.isCommitToolWindowShown: Boolean
   get() = ChangesViewContentManager.isCommitToolWindowShown(this)
@@ -57,13 +54,12 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return toolWindow?.contentManager
   }
 
-  private var isCommitToolWindowShown: Boolean
-    by observable(shouldUseCommitToolWindow()) { _, oldValue, newValue ->
-      if (oldValue == newValue) return@observable
+  private var isCommitToolWindowShown: Boolean by observable(shouldUseCommitToolWindow()) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
 
-      remapContents()
-      project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-    }
+    remapContents()
+    project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+  }
 
   init {
     ApplicationManager.getApplication().messageBus.connect(project)
@@ -84,8 +80,10 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     isCommitToolWindowShown = shouldUseCommitToolWindow()
   }
 
-  private fun shouldUseCommitToolWindow() = CommitModeManager.getInstance(project).getCurrentCommitMode().useCommitToolWindow() &&
-                                            isCommitToolWindowEnabled
+  private fun shouldUseCommitToolWindow(): Boolean {
+    return AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW) &&
+           CommitModeManager.getInstance(project).getCurrentCommitMode().useCommitToolWindow()
+  }
 
   private fun remapContents() {
     val remapped = findContents { it.resolveContentManager() != it.manager }
@@ -153,7 +151,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   override fun <T : Any> getActiveComponent(aClass: Class<T>): T? =
-    contentManagers.mapNotNull { tryCast(it.selectedContent?.component, aClass) }.firstOrNull()
+    contentManagers.firstNotNullOfOrNull { tryCast(it.selectedContent?.component, aClass) }
 
   fun isContentSelected(tabName: String): Boolean =
     contentManagers.any { it.selectedContent?.tabName == tabName }
@@ -253,15 +251,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       return TOOLWINDOW_ID
     }
 
-    @JvmStatic
     internal fun getToolWindowId(project: Project, contentEp: ChangesViewContentEP): String {
-      if (contentEp.isInCommitToolWindow && isCommitToolWindowShown(project)) return COMMIT_TOOLWINDOW_ID
-      return TOOLWINDOW_ID
+      return if (contentEp.isInCommitToolWindow && isCommitToolWindowShown(project)) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
     }
 
     @JvmStatic
-    fun getToolWindowFor(project: Project, tabName: String): ToolWindow? =
-      ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, tabName))
+    fun getToolWindowFor(project: Project, tabName: String): ToolWindow? {
+      return ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, tabName))
+    }
 
     /**
      * Specified tab order in toolwindow.
@@ -278,7 +275,6 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     const val BRANCHES: @NonNls String = "Branches"
   }
 }
-
 
 private fun getContentWeight(content: Content): Int {
   val userData = content.getUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY)

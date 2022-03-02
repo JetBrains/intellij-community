@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.OpenProjectTask;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 final class NewDummyProjectAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ProjectManagerEx.getInstanceEx().openProject(PathManager.getConfigDir().resolve("dummy.ipr"), OpenProjectTask.newProject());
+    ProjectManagerEx.getInstanceEx().openProject(PathManager.getConfigDir().resolve("dummy.ipr"), OpenProjectTask.build().asNewProject());
   }
 
   @Override

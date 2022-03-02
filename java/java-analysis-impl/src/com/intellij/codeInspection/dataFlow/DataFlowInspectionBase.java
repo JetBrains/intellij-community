@@ -347,14 +347,16 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
       holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"), unwrapFix);
     }
-    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labelReachability.keySet().iterator().next(), PsiSwitchBlock.class);
-    Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
+
     for (Map.Entry<PsiCaseLabelElement, ThreeState> entry : labelReachability.entrySet()) {
       if (entry.getValue() != ThreeState.NO) continue;
       PsiCaseLabelElement label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
+      PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
+      if (switchBlock == null || coveredSwitches.contains(switchBlock)) continue;
       // duplicate case label is a compilation error so no need to highlight by the inspection
-      if (!coveredSwitches.contains(labelStatement.getEnclosingSwitchBlock()) && !suspiciousElements.contains(label)) {
+      Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
+      if (!suspiciousElements.contains(label)) {
         holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"),
                                new DeleteSwitchLabelFix(label));
       }
@@ -660,7 +662,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       NullabilityProblemKind.storingToNotNullArray.ifMyProblem(problem, reportNullability);
       if (SUGGEST_NULLABLE_ANNOTATIONS) {
         NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.ifMyProblem(
-          problem, methodRef -> reporter.registerProblem(methodRef, problem.getMessage(expressions)));
+          problem, methodRef -> reportNullableArgumentPassedToNonAnnotatedMethodRef(reporter, expressions, problem, methodRef));
         NullabilityProblemKind.passingToNonAnnotatedParameter.ifMyProblem(
           problem, top -> reportNullableArgumentsPassedToNonAnnotated(reporter, problem.getMessage(expressions), expression, top));
         NullabilityProblemKind.assigningToNonAnnotatedField.ifMyProblem(
@@ -770,6 +772,20 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                  DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(anchor));
       }
     });
+  }
+
+  private static void reportNullableArgumentPassedToNonAnnotatedMethodRef(@NotNull ProblemReporter reporter,
+                                                                          @NotNull Map<PsiExpression, ConstantResult> expressions,
+                                                                          @NotNull NullabilityProblem<?> problem,
+                                                                          @NotNull PsiMethodReferenceExpression methodRef) {
+    PsiMethod target = tryCast(methodRef.resolve(), PsiMethod.class);
+    if (target == null) return;
+    PsiParameter[] parameters = target.getParameterList().getParameters();
+    if (parameters.length == 0) return;
+    PsiParameter parameter = parameters[0];
+    if (!BaseIntentionAction.canModify(parameter) || !AnnotationUtil.isAnnotatingApplicable(parameter)) return;
+    reporter.registerProblem(methodRef, problem.getMessage(expressions),
+                             parameters.length == 1 ? AddAnnotationPsiFix.createAddNullableFix(parameter) : null);
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(ProblemReporter reporter,

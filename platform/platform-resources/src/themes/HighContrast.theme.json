@@ -64,7 +64,9 @@
 
     "SegmentedButton": {
       "selectedStartBorderColor": "#1AEBFF",
-      "selectedEndBorderColor": "#1AEBFF"
+      "selectedEndBorderColor": "#1AEBFF",
+      "selectedButtonColor": "#000000",
+      "focusedSelectedButtonColor": "#0f6780"
     },
 
     "Borders": {
@@ -183,11 +185,12 @@
     },
 
     "IconBadge": {
-      "borderWidth": 2.0,
-      "dotRadius": 5.0,
-      "dotX": 5.0,
-      "dotY": 5.0,
+      "borderWidth": 1.5,
+      "dotRadius": 3.5,
+      "dotX": 16.5,
+      "dotY": 3.5,
       "errorBackground": "Actions.Red",
+      "warningBackground": "Actions.Yellow",
       "infoBackground": "Actions.Blue",
       "successBackground": "Actions.Green"
     },

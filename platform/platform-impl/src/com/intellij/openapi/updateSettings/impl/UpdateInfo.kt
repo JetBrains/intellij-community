@@ -92,7 +92,7 @@ private fun Element.getMandatoryAttributeValue(attribute: String, fallback: Stri
 
 //<editor-fold desc="Deprecated stuff.">
 @Deprecated("Please use `parseUpdateData` instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 class UpdatesInfo(node: Element) {
   val product: Product? = parseUpdateData(node)
 }

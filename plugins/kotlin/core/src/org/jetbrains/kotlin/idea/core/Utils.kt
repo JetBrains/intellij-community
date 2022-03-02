@@ -18,6 +18,9 @@ import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpression
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
@@ -27,15 +30,15 @@ import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.CallResolver
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext
 import org.jetbrains.kotlin.resolve.calls.context.CheckArgumentTypesMode
 import org.jetbrains.kotlin.resolve.calls.context.ContextDependency
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getDispatchReceiverWithSmartCast
 import org.jetbrains.kotlin.resolve.calls.results.ResolutionStatus
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.calls.util.getDispatchReceiverWithSmartCast
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
@@ -143,7 +146,12 @@ fun Call.resolveCandidates(
 
     if (filterOutByVisibility) {
         candidates = candidates.filter {
-            DescriptorVisibilities.isVisible(it.getDispatchReceiverWithSmartCast(), it.resultingDescriptor, inDescriptor)
+            DescriptorVisibilityUtils.isVisible(
+                it.getDispatchReceiverWithSmartCast(),
+                it.resultingDescriptor,
+                inDescriptor,
+                resolutionFacade.getLanguageVersionSettings()
+            )
         }
     }
 
@@ -170,6 +178,9 @@ fun FqName.quoteSegmentsIfNeeded(): String {
 }
 
 fun FqName.quoteIfNeeded() = FqName(quoteSegmentsIfNeeded())
+
+fun CallableId.asFqNameWithRootPrefixIfNeeded() =
+    asSingleFqName().withRootPrefixIfNeeded()
 
 fun FqName.withRootPrefixIfNeeded(targetElement: KtElement? = null) =
     if (canAddRootPrefix() && targetElement?.canAddRootPrefix() != false)
@@ -204,3 +215,13 @@ fun KtCallExpression.receiverValue(): ReceiverValue? {
 fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
 
 fun KtExpression.resolveType(): KotlinType? = this.analyze(BodyResolveMode.PARTIAL).getType(this)
+
+fun KtModifierKeywordToken.toVisibility(): DescriptorVisibility {
+    return when (this) {
+        KtTokens.PUBLIC_KEYWORD -> DescriptorVisibilities.PUBLIC
+        KtTokens.PRIVATE_KEYWORD -> DescriptorVisibilities.PRIVATE
+        KtTokens.PROTECTED_KEYWORD -> DescriptorVisibilities.PROTECTED
+        KtTokens.INTERNAL_KEYWORD -> DescriptorVisibilities.INTERNAL
+        else -> throw IllegalArgumentException("Unknown visibility modifier:$this")
+    }
+}

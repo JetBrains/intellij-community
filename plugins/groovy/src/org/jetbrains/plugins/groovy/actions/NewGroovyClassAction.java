@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.actions;
 
@@ -51,6 +51,10 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
     builder
       .addKind(GroovyBundle.message("new.class.list.item.enum"), JetgroovyIcons.Groovy.Enum, GroovyTemplates.GROOVY_ENUM)
       .addKind(GroovyBundle.message("new.class.list.item.annotation"), JetgroovyIcons.Groovy.AnnotationType, GroovyTemplates.GROOVY_ANNOTATION);
+
+    if (GroovyConfigUtils.isAtLeastGroovy40(directory)) {
+      builder.addKind(GroovyBundle.message("new.class.list.item.record"), JetgroovyIcons.Groovy.Record, GroovyTemplates.GROOVY_RECORD);
+    }
 
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());

@@ -48,7 +48,7 @@ public class FileUtil extends FileUtilRt {
    */
   @SuppressWarnings("unchecked")
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = 
     SystemInfoRt.isFileSystemCaseSensitive
     ? TObjectHashingStrategy.CANONICAL
@@ -58,7 +58,7 @@ public class FileUtil extends FileUtilRt {
    * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
     new TObjectHashingStrategy<File>() {
       @Override
@@ -74,6 +74,7 @@ public class FileUtil extends FileUtilRt {
 
   private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
+  @Contract(pure = true)
   public static @NotNull @NlsSafe String join(String @NotNull ... parts) {
     return String.join(File.separator, parts);
   }
@@ -88,16 +89,19 @@ public class FileUtil extends FileUtilRt {
    * @return the relative path from the {@code base} to the {@code file} or {@code null}
    */
   @Nullable
+  @Contract(pure = true)
   public static @NlsSafe String getRelativePath(File base, File file) {
     return FileUtilRt.getRelativePath(base, file);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static @NlsSafe String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static @NlsSafe String getRelativePath(@NotNull String basePath,
                                                 @NotNull String filePath,
                                                 char separator,
@@ -148,19 +152,23 @@ public class FileUtil extends FileUtilRt {
     return startsWith(filePath, ancestorPath, strict, SystemInfoRt.isFileSystemCaseSensitive, true);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
     return startsWith(path, prefix, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive) {
     return startsWith(path, prefix, isCaseSensitive, false);
   }
 
+  @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive, boolean strict) {
     return !ThreeState.NO.equals(startsWith(path, prefix, strict, isCaseSensitive, false));
   }
 
   @NotNull
+  @Contract(pure = true)
   private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean isCaseSensitive, boolean checkImmediateParent) {
     int pathLength = path.length();
     int prefixLength = prefix.length();
@@ -189,6 +197,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static File findAncestor(@NotNull File f1, @NotNull File f2) {
     File ancestor = f1;
     while (ancestor != null && !isAncestor(ancestor, f2, false)) {
@@ -198,6 +207,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
+  @Contract(pure = true)
   public static File getParentFile(@NotNull File file) {
     return FileUtilRt.getParentFile(file);
   }
@@ -803,7 +813,7 @@ public class FileUtil extends FileUtilRt {
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public static String getExtension(@NotNull String fileName) {
     return Strings.toLowerCase(FileUtilRt.getExtension(fileName));
@@ -1085,8 +1095,8 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), true);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text) throws IOException {
-    writeToFile(file, text, false);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content) throws IOException {
+    writeToFile(file, content, false);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
@@ -1099,19 +1109,19 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text, int off, int len) throws IOException {
-    writeToFile(file, text, off, len, false);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content, int off, int len) throws IOException {
+    writeToFile(file, content, off, len, false);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text, boolean append) throws IOException {
-    writeToFile(file, text, 0, text.length, append);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content, boolean append) throws IOException {
+    writeToFile(file, content, 0, content.length, append);
   }
 
-  private static void writeToFile(@NotNull File file, byte @NotNull [] text, int off, int len, boolean append) throws IOException {
+  private static void writeToFile(@NotNull File file, byte @NotNull [] content, int off, int len, boolean append) throws IOException {
     createParentDirs(file);
 
     try (OutputStream stream = new FileOutputStream(file, append)) {
-      stream.write(text, off, len);
+      stream.write(content, off, len);
     }
   }
 
@@ -1133,7 +1143,7 @@ public class FileUtil extends FileUtilRt {
    * @deprecated use  {@link #fileTraverser(File)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static boolean processFilesRecursively(@NotNull File root,
                                                 @NotNull Processor<? super File> processor,
                                                 @Nullable Processor<? super File> directoryFilter) {
@@ -1248,14 +1258,14 @@ public class FileUtil extends FileUtilRt {
 
   /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");
   }
 
   /** @deprecated does not support UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isWindowsAbsolutePath(@NotNull String path) {
     boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
     if (ok && path.length() > 2) {

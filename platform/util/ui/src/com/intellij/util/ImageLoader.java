@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -296,7 +296,7 @@ public final class ImageLoader {
 
     if (classLoader != null) {
       boolean isAbsolute = path.startsWith("/");
-      byte[] data = ResourceUtil.getResourceAsBytes(isAbsolute ? path.substring(1) : path, classLoader);
+      byte[] data = ResourceUtil.getResourceAsBytes(isAbsolute ? path.substring(1) : path, classLoader, true);
       if (data != null || isAbsolute) {
         return data;
       }

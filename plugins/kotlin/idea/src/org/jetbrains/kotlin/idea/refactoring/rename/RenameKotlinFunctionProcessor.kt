@@ -201,7 +201,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                     val overriderName = overrider.name
                     val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
                     if (newOverriderName != null) {
-                        RenameProcessor.assertNonCompileElement(overrider)
+                        RenameUtil.assertNonCompileElement(overrider)
                         allRenames[overrider] = newOverriderName
                     }
                     return@forEachOverridingMethod true

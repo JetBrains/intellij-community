@@ -154,6 +154,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * Creates a browser with the initial URL.
    *
    * @see #createBuilder
+   * @see JBCefBrowserBuilder#setUrl(String)
    */
   public JBCefBrowser(@NotNull String url) {
     this(createBuilder().setUrl(url));
@@ -163,7 +164,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
    *
    * @see #createBuilder
+   * @see JBCefBrowserBuilder#setClient(JBCefClient)
+   * @see JBCefBrowserBuilder#setUrl(String)
+   * @deprecated use {@link JBCefBrowserBuilder} instead
    */
+  @Deprecated
   public JBCefBrowser(@NotNull JBCefClient client, @Nullable String url) {
     this(createBuilder().setClient(client).setUrl(url));
   }
@@ -172,7 +177,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * Creates a browser wrapping the provided {@link CefBrowser} with the provided {@link JBCefClient}.
    *
    * @see #createBuilder
+   * @see JBCefBrowserBuilder#setCefBrowser(CefBrowser)
+   * @see JBCefBrowserBuilder#setClient(JBCefClient)
+   * @deprecated use {@link JBCefBrowserBuilder} instead
    */
+  @Deprecated
   public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
     this(createBuilder().setCefBrowser(cefBrowser).setClient(client));
   }

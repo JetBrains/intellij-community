@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -226,6 +226,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("HigherOrderSuspendFunctionWithArgs.kt")
         public void testHigherOrderSuspendFunctionWithArgs() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/highOrderFunctions/HigherOrderSuspendFunctionWithArgs.kt");
+        }
+
+        @TestMetadata("InsertFunctionLiteralForLocalFunction.kt")
+        public void testInsertFunctionLiteralForLocalFunction() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
         }
 
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")
@@ -505,6 +510,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("TabReplace3.kt")
         public void testTabReplace3() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/parameterNameAndType/TabReplace3.kt");
+        }
+
+        @TestMetadata("TypeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/parameterNameAndType/TypeAlias.kt");
         }
 
         @TestMetadata("TypeParameter.kt")
@@ -875,6 +885,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/tests/testData/handlers/basic/AddLabelToReturn.kt");
         }
 
+        @TestMetadata("AmbiguousSuperMethod.kt")
+        public void testAmbiguousSuperMethod() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/AmbiguousSuperMethod.kt");
+        }
+
+        @TestMetadata("AmbiguousSuperMethodWithArgument.kt")
+        public void testAmbiguousSuperMethodWithArgument() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");
+        }
+
         @TestMetadata("ClassKeywordBeforeName.kt")
         public void testClassKeywordBeforeName() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/ClassKeywordBeforeName.kt");
@@ -923,6 +943,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("ExtensionFunctionTypeVariable2.kt")
         public void testExtensionFunctionTypeVariable2() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/ExtensionFunctionTypeVariable2.kt");
+        }
+
+        @TestMetadata("ExtensionPropertyFromSameFile.kt")
+        public void testExtensionPropertyFromSameFile() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
         }
 
         @TestMetadata("ExtensionReceiverTypeArg.kt")
@@ -1020,9 +1045,24 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/tests/testData/handlers/basic/KT36306.kt");
         }
 
+        @TestMetadata("LocalClassNameWithPackageLevelConflict.kt")
+        public void testLocalClassNameWithPackageLevelConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/LocalClassNameWithPackageLevelConflict.kt");
+        }
+
+        @TestMetadata("LocalFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/LocalFunction.kt");
+        }
+
         @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
         public void testNestedClassNameWithFileLevelConflict() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/NestedClassNameWithFileLevelConflict.kt");
+        }
+
+        @TestMetadata("NestedClassNameWithPackageLevelConflict.kt")
+        public void testNestedClassNameWithPackageLevelConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/NestedClassNameWithPackageLevelConflict.kt");
         }
 
         @TestMetadata("NestedTypeArg.kt")
@@ -1095,6 +1135,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/tests/testData/handlers/basic/SuperMethod2.kt");
         }
 
+        @TestMetadata("SuperMethodWithDifferentParameterNames.kt")
+        public void testSuperMethodWithDifferentParameterNames() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/SuperMethodWithDifferentParameterNames.kt");
+        }
+
         @TestMetadata("SuperTypeArg.kt")
         public void testSuperTypeArg() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/SuperTypeArg.kt");
@@ -1138,6 +1183,26 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("TypeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/TypeParameter.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast.kt")
+        public void testUnstableSmartCast() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_notDenotable.kt")
+        public void testUnstableSmartCast_notDenotable() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_notDenotable.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_typeAlias.kt")
+        public void testUnstableSmartCast_typeAlias() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_typeAlias.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_typeParams.kt")
+        public void testUnstableSmartCast_typeParams() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_typeParams.kt");
         }
     }
 }

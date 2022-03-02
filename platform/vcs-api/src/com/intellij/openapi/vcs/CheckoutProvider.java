@@ -42,6 +42,6 @@ public interface CheckoutProvider {
 
   @NotNull
   default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
-    return new VcsCloneComponentStub(this, VcsBundle.message("clone.dialog.clone.button"));
+    return new VcsCloneComponentStub(project, this, VcsBundle.message("clone.dialog.clone.button"));
   }
 }

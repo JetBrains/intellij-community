@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -22,10 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.BitUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -33,14 +31,15 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -77,7 +76,7 @@ public final class FSRecords {
     return nextMask(59,  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
-                    nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
+                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
                     nextMask(bulkAttrReadSupport,
                     nextMask(inlineAttributes,
                     nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
@@ -173,6 +172,7 @@ public final class FSRecords {
 
   static void deleteRecordRecursively(int id) {
     writeAndHandleErrors(() -> {
+      InvertedNameIndex.incModCount();
       incModCount(id);
       markAsDeletedRecursively(id);
     });
@@ -269,6 +269,10 @@ public final class FSRecords {
       finally {
         r.unlock();
       }
+    }
+    catch (ProcessCanceledException e) {
+      // long reads like processXXX can be safely cancelled
+      throw e;
     }
     catch (Throwable e) {
       handleError(e);
@@ -555,23 +559,26 @@ public final class FSRecords {
     });
   }
 
-  public static @NotNull Collection<String> getAllNames() {
-    return readAndHandleErrors(() -> ourConnection.getNames().getAllDataObjects(null));
+  public static boolean processAllNames(@NotNull Processor<? super String> processor) {
+    return readAndHandleErrors(() -> ourConnection.getNames().processAllDataObjects(processor));
   }
 
-  public static boolean processFilesWithName(@NotNull String name, @NotNull IntPredicate processor) {
-    int nameId = getNameId(name);
-    return readAndHandleErrors(() -> {
-      PersistentFSRecordsStorage records = ourConnection.getRecords();
-      return records.processAll(r -> {
-        if (r.name == nameId &&
-            !(BitUtil.isSet(r.flags, PersistentFSRecordAccessor.FREE_RECORD_FLAG) ||
-              ourRecordAccessor.getNewFreeRecords().contains(r.id))) {
-          if (!processor.test(r.id)) return false;
-        }
-        return true;
-      });
-    });
+  public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
+    if (names.isEmpty()) return true;
+    if (Registry.is("indexing.filename.over.vfs.with.reverse.index")) {
+      return InvertedNameIndex.processFilesWithNames(names, processor, () -> ourConnection.getRecords());
+    }
+    long start = System.nanoTime();
+    IntOpenHashSet nameIds = new IntOpenHashSet();
+    for (String name : names) {
+      nameIds.add(getNameId(name));
+    }
+    boolean result = readAndHandleErrors(() -> ourConnection.getRecords().processAllNames(
+      (nameId, fileId) -> nameIds.contains(nameId) && !processor.test(fileId) ? 1 : 0));
+    if (LOG.isDebugEnabled()) {
+      LOG.info("FSRecords.processFilesWithNames in " + TimeoutUtil.getDurationMillis(start) + " ms");
+    }
+    return result;
   }
 
   public static int getNameId(@NotNull String name) {
@@ -607,6 +614,7 @@ public final class FSRecords {
    */
   static int setName(int fileId, @NotNull String name) {
     return writeAndHandleErrors(() -> {
+      InvertedNameIndex.incModCount();
       incModCount(fileId);
       int nameId = ourConnection.getNames().enumerate(name);
       ourConnection.getRecords().setNameId(fileId, nameId);

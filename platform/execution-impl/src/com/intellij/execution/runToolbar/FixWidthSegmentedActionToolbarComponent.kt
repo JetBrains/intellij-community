@@ -14,13 +14,25 @@ import javax.swing.JComponent
 
 open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionGroup) : SegmentedActionToolbarComponent(place, group) {
   companion object {
-    private val RUN_CONFIG_WIDTH_UNSCALED = 200
+    val RUN_CONFIG_WIDTH_UNSCALED_MIN = 200
+    private val RUN_CONFIG_WIDTH_UNSCALED_MAX = 1200
     private val ARROW_WIDTH_UNSCALED = 28
 
-    val RUN_CONFIG_WIDTH: Int
-      get() {
-        return JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED)
+    var RUN_CONFIG_WIDTH: Int = JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN)
+      set(value) {
+        if(field == value) return
+        val min = JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN)
+        val max = JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MAX)
+
+        field = if(value > max) {
+          max
+        } else if(value < min) {
+          min
+        } else value
+
+        listeners.forEach { it.updated() }
       }
+
     val ARROW_WIDTH: Int
       get() {
         return JBUI.scale(ARROW_WIDTH_UNSCALED)
@@ -28,11 +40,43 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
 
     val CONFIG_WITH_ARROW_WIDTH: Int
       get() {
-        return JBUI.scale(ARROW_WIDTH_UNSCALED + RUN_CONFIG_WIDTH_UNSCALED)
+        return JBUI.scale(ARROW_WIDTH_UNSCALED) + RUN_CONFIG_WIDTH
       }
 
     private var runConfigWidth: JBValue.Float? = null
     private var rightSideWidth: JBValue.Float? = null
+
+    private val listeners = mutableListOf<UpdateWidth>()
+    private fun addListener(listener: UpdateWidth) {
+      listeners.add(listener)
+    }
+
+    private fun removeListener(listener: UpdateWidth) {
+      listeners.remove(listener)
+    }
+  }
+
+
+  private val listener = object : UpdateWidth {
+    override fun updated() {
+      updateWidthHandler()
+    }
+  }
+
+  open protected fun updateWidthHandler() {
+    preferredSize
+    revalidate()
+    repaint()
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    addListener(listener)
+  }
+
+  override fun removeNotify() {
+    removeListener(listener)
+    super.removeNotify()
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
@@ -199,5 +243,9 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
       r.setBounds(insets.left + offset, insets.top, w, DEFAULT_MINIMUM_BUTTON_SIZE.height)
       offset += w
     }
+  }
+
+  private interface UpdateWidth {
+    fun updated()
   }
 }

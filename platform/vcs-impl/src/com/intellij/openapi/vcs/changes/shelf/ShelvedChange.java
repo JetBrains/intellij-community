@@ -82,7 +82,7 @@ public final class ShelvedChange {
   }
 
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Change getChange(@NotNull Project project) {
     return myChange;
   }

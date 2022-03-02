@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.awt.*;
 import java.io.File;

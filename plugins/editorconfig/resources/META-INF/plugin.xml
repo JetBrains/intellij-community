@@ -399,8 +399,13 @@ To create an EditorConfig file in a directory, right-click this directory and se
         nameBundle="messages.EditorConfigBundle"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
-    <notificationGroup id="editorconfig" displayType="BALLOON"/>
-    <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="editorconfig" displayType="BALLOON" bundle="messages.EditorConfigBundle" key="notification.group.error"/>
+    <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON" bundle="messages.EditorConfigBundle" key="notification.group.disabled"/>
+    <localInspection implementationClass="org.editorconfig.configmanagement.EditorConfigEncodingInspection"
+                     bundle="messages.EditorConfigBundle"
+                     key="inspection.file.encoding.mismatch.name"
+                     enabledByDefault="true"
+                     groupKey="editorconfig.inspection.group"/>
   </extensions>
 
 
@@ -482,10 +487,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
   <applicationListeners>
     <listener class="org.editorconfig.plugincomponents.EditorConfigModificationListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="org.editorconfig.configmanagement.EditorConfigEncodingCache$VfsListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
 
-  <projectListeners>
-    <listener class="org.editorconfig.configmanagement.EditorConfigEncodingCache$FileEditorListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
-  </projectListeners>
 </idea-plugin>

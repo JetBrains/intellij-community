@@ -286,11 +286,6 @@ final class UsageRepr {
     void kindToStream(final PrintStream stream) {
       stream.println("MetaMethodUsage:");
     }
-
-    @Override
-    public void toStream(DependencyContext context, PrintStream stream) {
-      super.toStream(context, stream);
-    }
   }
 
   public static class ImportStaticMemberUsage extends FMUsage {
@@ -311,11 +306,6 @@ final class UsageRepr {
     @Override
     void kindToStream(final PrintStream stream) {
       stream.println("ImportStaticMemberUsage:");
-    }
-
-    @Override
-    public void toStream(DependencyContext context, PrintStream stream) {
-      super.toStream(context, stream);
     }
   }
 

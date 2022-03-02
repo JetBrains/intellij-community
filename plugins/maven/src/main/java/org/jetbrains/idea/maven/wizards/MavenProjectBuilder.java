@@ -34,10 +34,10 @@ import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -152,13 +152,14 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     MavenUtil.setupProjectSdk(project);
 
 
-    if (Registry.is("maven.new.import")) {
+    if (MavenUtil.isLinearImportEnabled()) {
       Module dummyModule = createDummyModule(project);
       VirtualFile rootPath = LocalFileSystem.getInstance().findFileByNioFile(getRootPath());
       MavenImportingManager.getInstance(project).openProjectAndImport(
         new RootPath(rootPath),
         getImportingSettings(),
-        getGeneralSettings()
+        getGeneralSettings(),
+        MavenImportSpec.EXPLICIT_IMPORT
       );
       return Collections.singletonList(dummyModule);
     }
@@ -252,7 +253,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         modifiableModel.addContentEntry(contentRoot);
         modifiableModel.commit();
         renameModuleToProjectName(project, module, root);
-        if (MavenProjectImporter.isImportToWorkspaceModelEnabled()) {
+        if (MavenProjectImporter.isImportToWorkspaceModelEnabled() || MavenProjectImporter.isImportToTreeStructureEnabled()) {
           //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
           ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
         }
@@ -291,8 +292,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   /**
    * @deprecated Use {@link #setRootDirectory(Project, Path)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean setRootDirectory(@Nullable Project projectToUpdate, @NotNull String root) {
     return setRootDirectory(projectToUpdate, Paths.get(root));
   }
@@ -323,8 +323,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     });
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
     return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
@@ -434,8 +433,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   /**
    * @deprecated Use {@link #getRootPath()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getRootDirectory() {
     Path rootPath = getRootPath();
     return rootPath == null ? null : VfsUtil.findFile(rootPath, false);

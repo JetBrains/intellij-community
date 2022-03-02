@@ -4,15 +4,19 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.EffectiveVisibility.Permissiveness.LESS
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.*
+import org.jetbrains.kotlin.descriptors.EffectiveVisibility.Permissiveness.LESS
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory3
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.toDescriptor
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext
+import java.util.*
 
 object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
 
@@ -43,7 +47,7 @@ object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
             DescriptorToSourceUtils.getSourceFromDescriptor(exposedDescriptor) as? KtModifierListOwner ?: return emptyList()
         val exposedVisibility = exposedDiagnostic.c
         val userVisibility = exposedDiagnostic.a
-        val (targetUserVisibility, targetExposedVisibility) = when (exposedVisibility.relation(userVisibility)) {
+        val (targetUserVisibility, targetExposedVisibility) = when (exposedVisibility.relation(userVisibility, SimpleClassicTypeSystemContext)) {
             LESS -> Pair(exposedVisibility.toDescriptorVisibility(), userVisibility.toDescriptorVisibility())
             else -> Pair(PRIVATE, PUBLIC)
         }
@@ -52,7 +56,7 @@ object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
         val protectedAllowed = exposedDeclaration.parent == userDeclaration?.parent
         if (userDeclaration != null) {
             val userDescriptor = userDeclaration.toDescriptor() as? DeclarationDescriptorWithVisibility
-            if (userDescriptor != null && isVisibleIgnoringReceiver(exposedDescriptor, userDescriptor)) {
+            if (userDescriptor != null && DescriptorVisibilityUtils.isVisibleIgnoringReceiver(exposedDescriptor, userDescriptor, exposedDeclaration.getResolutionFacade().getLanguageVersionSettings())) {
                 addFixToTargetVisibility(
                     userDeclaration, userDescriptor,
                     targetUserVisibility, PRIVATE,

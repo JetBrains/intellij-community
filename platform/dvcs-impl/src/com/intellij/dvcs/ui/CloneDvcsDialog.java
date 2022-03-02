@@ -61,8 +61,7 @@ import static com.intellij.util.ui.UI.PanelFactory;
  * @deprecated Migrate to {@link com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension}
  * or {@link com.intellij.openapi.vcs.ui.VcsCloneComponent}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public abstract class CloneDvcsDialog extends DialogWrapper {
 
   private ComboBox<String> myRepositoryUrlCombobox;
@@ -392,8 +391,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   /**
    * @deprecated use {@link #getRepositoryHostingServices()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void prependToHistory(@NotNull final String item) {
     myRepositoryUrlComboboxModel.add(item);
   }

@@ -300,7 +300,7 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
   // PY-42285
   fun testAddPositionalOnlyParameterWithDefaultValueAtTheBeginning() {
-    _suggestedChangeSignatureNewParameterValuesForTests = null
+    _suggestedChangeSignatureNewParameterValuesForTests = { SuggestedRefactoringExecution.NewParameterValue.None }
 
     doChangeSignatureTest(
       """
@@ -346,7 +346,7 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
   // PY-42285
   fun testRemoveDefaultValueNothingSpecifiedInstead() {
-    _suggestedChangeSignatureNewParameterValuesForTests = null
+    _suggestedChangeSignatureNewParameterValuesForTests = { SuggestedRefactoringExecution.NewParameterValue.None }
 
     doChangeSignatureTest(
       """

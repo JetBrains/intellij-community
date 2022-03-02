@@ -16,7 +16,6 @@
 package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/frameworks_and_external_apis/external_builder_api.html">this guide</a>
  * for details. Implementations of this class aren't used by the IDE (except those which implement {@link Validator} or {@link SourceInstrumentingCompiler}).
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public interface FileProcessingCompiler extends Compiler, ValidityStateFactory {
   /**
    * Describes a processing unit for this compiler - a virtual file with associated state.

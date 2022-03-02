@@ -79,7 +79,7 @@ public class JpsOutputLoaderManager implements Disposable {
     myWorkspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     // Configure build manager
     BuildManager buildManager = BuildManager.getInstance();
-    if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
+    //if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
   }
 
   public void load(boolean isForceUpdate, boolean verbose) {
@@ -224,7 +224,7 @@ public class JpsOutputLoaderManager implements Disposable {
   }
 
   @Nullable
-  private static String getBuildOutDir(@NotNull Project project) {
+  public static String getBuildOutDir(@NotNull Project project) {
     VirtualFile projectFile = project.getProjectFile();
     String projectBasePath = project.getBasePath();
     if (projectFile == null || projectBasePath == null) {

@@ -15,14 +15,11 @@
  */
 package com.intellij.openapi.compiler;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * @deprecated this interface is part of the obsolete build system which runs as part of the IDE process. Since IDEA 15 implementations of
  * this class aren't used by the IDE, you should integrate into 'external build system' instead
  * (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/frameworks_and_external_apis/external_builder_api.html).
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+@Deprecated(forRemoval = true)
 public interface ClassPostProcessingCompiler extends FileProcessingCompiler {
 }

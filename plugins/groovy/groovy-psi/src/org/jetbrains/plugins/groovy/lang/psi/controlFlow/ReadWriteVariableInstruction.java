@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
@@ -15,16 +15,15 @@ public class ReadWriteVariableInstruction extends InstructionImpl {
   public static final int READ = 1;
 
   private final boolean myIsWrite;
-  private final VariableDescriptor myDescriptor;
+  private final int myDescriptor;
 
-  public ReadWriteVariableInstruction(@NotNull VariableDescriptor varName, PsiElement element, int accessType) {
+  public ReadWriteVariableInstruction(int varName, PsiElement element, int accessType) {
     super(element);
     myDescriptor = varName;
     myIsWrite = accessType == WRITE;
   }
 
-  @NotNull
-  public VariableDescriptor getDescriptor() {
+  public int getDescriptor() {
     return myDescriptor;
   }
 
@@ -35,6 +34,6 @@ public class ReadWriteVariableInstruction extends InstructionImpl {
   @NotNull
   @Override
   protected String getElementPresentation() {
-    return (isWrite() ? "WRITE " : "READ ") + myDescriptor.getName();
+    return (isWrite() ? "WRITE " : "READ ") + myDescriptor;
   }
 }

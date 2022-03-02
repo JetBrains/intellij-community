@@ -54,7 +54,7 @@ class KotlinSourceSetImpl(
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
     actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
-    isTestModule: Boolean = false
+    isTestComponent: Boolean = false
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
@@ -78,7 +78,7 @@ class KotlinSourceSetImpl(
     override var actualPlatforms: KotlinPlatformContainer = actualPlatforms
         internal set
 
-    override var isTestComponent: Boolean = isTestModule
+    override var isTestComponent: Boolean = isTestComponent
         internal set
 
     override fun toString() = name
@@ -280,6 +280,7 @@ data class KotlinMPPGradleModelImpl(
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
     override val partialCacheAware: CompilerArgumentsCacheAware,
+    override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf()
 ) : KotlinMPPGradleModel {
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
         sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
@@ -298,8 +299,8 @@ data class KotlinMPPGradleModelImpl(
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
-        partialCacheAware = CompilerArgumentsCacheAwareImpl(mppModel.partialCacheAware)
-
+        partialCacheAware = CompilerArgumentsCacheAwareImpl(mppModel.partialCacheAware),
+        kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) }
     )
 }
 

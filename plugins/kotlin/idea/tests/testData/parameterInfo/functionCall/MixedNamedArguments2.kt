@@ -1,3 +1,4 @@
+// IGNORE_FIR
 // COMPILER_ARGUMENTS: -XXLanguage:-MixedNamedArgumentsInTheirOwnPosition
 
 open class A(x: Int) {

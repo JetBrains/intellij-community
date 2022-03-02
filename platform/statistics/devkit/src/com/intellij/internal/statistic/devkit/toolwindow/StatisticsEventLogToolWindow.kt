@@ -74,6 +74,9 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     topToolbarActions.add(AddGroupToTestSchemeAction(recorderId))
     topToolbarActions.add(CleanupEventsTestSchemeAction(recorderId))
     topToolbarActions.add(EditEventsTestSchemeAction(recorderId))
+    if (recorderId == "FUS") {
+      topToolbarActions.add(GenerateEventsScheme())
+    }
     val toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true)
     toolbar.setShowSeparatorTitles(true)
     toolbar.targetComponent = this

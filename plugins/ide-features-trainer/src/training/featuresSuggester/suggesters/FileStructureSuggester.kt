@@ -21,6 +21,7 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("file.structure.message")
   override val suggestingActionId = "FileStructurePopup"
   override val suggestingTipFileName = "FileStructurePopup.html"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 

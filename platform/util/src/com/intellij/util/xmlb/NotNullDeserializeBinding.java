@@ -2,7 +2,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,6 +1,6 @@
 import sys
 from _typeshed import StrPath
-from typing import IO, Any, Container, Iterable, Sequence, Type, TypeVar, overload
+from typing import IO, Any, Container, Iterable, Sequence, TypeVar, overload
 from typing_extensions import Literal
 
 class NullTranslations:
@@ -14,11 +14,13 @@ class NullTranslations:
     if sys.version_info >= (3, 8):
         def pgettext(self, context: str, message: str) -> str: ...
         def npgettext(self, context: str, msgid1: str, msgid2: str, n: int) -> str: ...
+
     def info(self) -> Any: ...
     def charset(self) -> Any: ...
     if sys.version_info < (3, 11):
         def output_charset(self) -> Any: ...
         def set_output_charset(self, charset: str) -> None: ...
+
     def install(self, names: Container[str] | None = ...) -> None: ...
 
 class GNUTranslations(NullTranslations):
@@ -27,6 +29,15 @@ class GNUTranslations(NullTranslations):
     CONTEXT: str
     VERSIONS: Sequence[int]
 
+@overload  # ignores incompatible overloads
+def find(  # type: ignore[misc]
+    domain: str, localedir: StrPath | None = ..., languages: Iterable[str] | None = ..., all: Literal[False] = ...
+) -> str | None: ...
+@overload
+def find(
+    domain: str, localedir: StrPath | None = ..., languages: Iterable[str] | None = ..., all: Literal[True] = ...
+) -> list[str]: ...
+@overload
 def find(domain: str, localedir: StrPath | None = ..., languages: Iterable[str] | None = ..., all: bool = ...) -> Any: ...
 
 _T = TypeVar("_T")
@@ -45,7 +56,7 @@ if sys.version_info >= (3, 11):
         domain: str,
         localedir: StrPath | None = ...,
         languages: Iterable[str] | None = ...,
-        class_: Type[_T] = ...,
+        class_: type[_T] = ...,
         fallback: Literal[False] = ...,
     ) -> _T: ...
     @overload
@@ -53,7 +64,7 @@ if sys.version_info >= (3, 11):
         domain: str,
         localedir: StrPath | None = ...,
         languages: Iterable[str] | None = ...,
-        class_: Type[Any] = ...,
+        class_: type[Any] = ...,
         fallback: Literal[True] = ...,
     ) -> Any: ...
     def install(domain: str, localedir: StrPath | None = ..., names: Container[str] | None = ...) -> None: ...
@@ -73,7 +84,7 @@ else:
         domain: str,
         localedir: StrPath | None = ...,
         languages: Iterable[str] | None = ...,
-        class_: Type[_T] = ...,
+        class_: type[_T] = ...,
         fallback: Literal[False] = ...,
         codeset: str | None = ...,
     ) -> _T: ...
@@ -82,7 +93,7 @@ else:
         domain: str,
         localedir: StrPath | None = ...,
         languages: Iterable[str] | None = ...,
-        class_: Type[Any] = ...,
+        class_: type[Any] = ...,
         fallback: Literal[True] = ...,
         codeset: str | None = ...,
     ) -> Any: ...

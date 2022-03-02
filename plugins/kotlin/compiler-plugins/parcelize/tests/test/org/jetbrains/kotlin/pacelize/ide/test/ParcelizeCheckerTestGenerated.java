@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.pacelize.ide.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -71,6 +71,11 @@ public class ParcelizeCheckerTestGenerated extends AbstractParcelizeCheckerTest 
     @TestMetadata("notMagicParcel.kt")
     public void testNotMagicParcel() throws Exception {
         runTest("testData/checker/notMagicParcel.kt");
+    }
+
+    @TestMetadata("objectProperties.kt")
+    public void testObjectProperties() throws Exception {
+        runTest("testData/checker/objectProperties.kt");
     }
 
     @TestMetadata("properties.kt")

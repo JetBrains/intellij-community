@@ -13,15 +13,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 public final class PsiTypesUtil {
@@ -483,7 +481,7 @@ public final class PsiTypesUtil {
     TypeParameterSearcher searcher = new TypeParameterSearcher();
     targetType.accept(searcher);
     Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
-    return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, context));
+    return ContainerUtil.and(parameters, parameter -> isAccessibleAt(parameter, context));
   }
 
   @NotNull
@@ -640,6 +638,25 @@ public final class PsiTypesUtil {
     PsiClass psiClass = classType.resolve();
     if (psiClass == null) return false;
     return qualifiedClassName.equals(psiClass.getQualifiedName());
+  }
+
+  /**
+   * @return class types which are probably wrapped inside captured wildcard or inside intersection type
+   */
+  @NotNull
+  public static List<? extends PsiClassType> getClassTypeComponents(PsiType type) {
+    if (type instanceof PsiClassType) return Collections.singletonList((PsiClassType)type);
+    if (type instanceof PsiCapturedWildcardType) {
+      return getClassTypeComponents(((PsiCapturedWildcardType)type).getUpperBound());
+    }
+    if (type instanceof PsiIntersectionType) {
+      List<PsiClassType> classTypes = new ArrayList<>();
+      for (PsiType conjunct : ((PsiIntersectionType)type).getConjuncts()) {
+        classTypes.addAll(getClassTypeComponents(conjunct));
+      }
+      return classTypes;
+    }
+    return Collections.emptyList();
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

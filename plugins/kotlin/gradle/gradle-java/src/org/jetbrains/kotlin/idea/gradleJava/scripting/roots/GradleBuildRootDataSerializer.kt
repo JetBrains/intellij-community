@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.idea.core.util.readNullable
 import org.jetbrains.kotlin.idea.core.util.readString
 import org.jetbrains.kotlin.idea.core.util.writeNullable
 import org.jetbrains.kotlin.idea.core.util.writeString
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
+import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModel
 import java.io.DataInput
 import java.io.DataInputStream
@@ -20,7 +20,7 @@ internal object GradleBuildRootDataSerializer {
     private val attribute = FileAttribute("kotlin-dsl-script-models", 8, false)
 
     fun read(buildRoot: VirtualFile): GradleBuildRootData? {
-        return attribute.readAttribute(buildRoot)?.use {
+        return attribute.readFileAttribute(buildRoot)?.use {
             it.readNullable {
                 readKotlinDslScriptModels(it, buildRoot.path)
             }
@@ -28,7 +28,7 @@ internal object GradleBuildRootDataSerializer {
     }
 
     fun write(buildRoot: VirtualFile, data: GradleBuildRootData?) {
-        attribute.writeAttribute(buildRoot).use {
+        attribute.writeFileAttribute(buildRoot).use {
             it.writeNullable(data) {
                 writeKotlinDslScriptModels(this, it)
             }

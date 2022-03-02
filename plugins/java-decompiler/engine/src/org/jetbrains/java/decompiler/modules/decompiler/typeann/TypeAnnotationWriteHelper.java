@@ -2,12 +2,13 @@
 package org.jetbrains.java.decompiler.modules.decompiler.typeann;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Wrapper around {@link TypeAnnotation} to maintain the state of the {@link StructTypePathEntry} list while writing.
@@ -41,14 +42,20 @@ public class TypeAnnotationWriteHelper {
   }
 
   public void writeTo(@NotNull StringBuilder sb) {
-    String text = annotation.getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
-    sb.append(text);
-    sb.append(' ');
+    annotation.writeTo(sb);
   }
 
   public void writeTo(@NotNull TextBuffer sb) {
-    String text = annotation.getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
-    sb.append(text);
-    sb.append(' ');
+    annotation.writeTo(sb);
+  }
+
+  public int arrayPathCount() {
+    return (int) paths.stream().filter(entry -> entry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId()).count();
+  }
+
+  public static List<TypeAnnotationWriteHelper> create(List<TypeAnnotation> typeAnnotations) {
+    return typeAnnotations.stream()
+      .map(TypeAnnotationWriteHelper::new)
+      .collect(Collectors.toList());
   }
 }

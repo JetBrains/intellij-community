@@ -7,7 +7,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -18,8 +17,7 @@ import static java.util.Collections.emptySet;
 /**
  * @deprecated Use {@link DumbAwareAction} instead.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class AbstractVcsAction extends DumbAwareAction {
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
@@ -48,8 +46,7 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
    * @deprecated Only sync update is currently supported by {@link AbstractVcsAction}.
    */
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
     return true;
   }
@@ -58,8 +55,7 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
   /**
    * @deprecated Use {@link AbstractVcsAction#update(VcsContext, Presentation)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected void performUpdate(@NotNull Presentation presentation, @NotNull VcsContext vcsContext) {
     update(vcsContext, presentation);
   }

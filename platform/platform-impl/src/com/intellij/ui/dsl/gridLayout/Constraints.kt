@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.gridLayout
 
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.dsl.checkPositive
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
@@ -21,6 +22,7 @@ enum class VerticalAlign {
   FILL
 }
 
+@ApiStatus.Experimental
 data class Constraints(
 
   /**
@@ -84,6 +86,12 @@ data class Constraints(
   var visualPaddings: Gaps = Gaps.EMPTY,
 
   /**
+   * All components from the same width group will have the same width equals to maximum width from the group.
+   * Cannot be used together with [HorizontalAlign.FILL] or for sub-grids (see [GridLayout.addLayoutSubGrid])
+   */
+  val widthGroup: String? = null,
+
+  /**
    * Component helper for custom behaviour
    */
   @ApiStatus.Experimental
@@ -95,6 +103,10 @@ data class Constraints(
     checkNonNegative("y", y)
     checkPositive("width", width)
     checkPositive("height", height)
+
+    if (widthGroup != null && horizontalAlign == HorizontalAlign.FILL) {
+      throw UiDslException("Width group cannot be used with horizontal align FILL: $widthGroup")
+    }
   }
 }
 

@@ -55,8 +55,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     myMultiRootBranchConfig = multiRootBranchConfig;
     myInSpecificRepository = myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC;
     String title = buildTitle(currentRepository);
-    myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition,
-                                         ActionGroupUtil.forceRecursiveUpdateInBackground(createActions()), dimensionKey, dataContext);
+    myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition, createActions(), dimensionKey, dataContext);
     initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {

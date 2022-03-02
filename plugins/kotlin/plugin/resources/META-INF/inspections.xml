@@ -445,6 +445,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>org.jetbrains.kotlin.idea.intentions.AddJvmInlineIntention</className>
+      <category>Kotlin</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveArgumentNameIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
@@ -1109,15 +1114,6 @@
                      level="INFORMATION"
                      language="kotlin"
                      key="inspection.simplify.assert.not.null.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReformatInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="false"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     runForWholeFile="true"
-                     key="inspection.reformat.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceCollectionCountWithSizeInspection"
                      groupPath="Kotlin"
@@ -2420,6 +2416,14 @@
                      language="kotlin"
                      key="inspection.prohibit.repeated.use.site.target.annotations.migration.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NonExhaustiveWhenStatementMigrationInspection"
+                     groupPath="Kotlin"
+                     groupName="Migration"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.non.exhaustive.when.statement.migration.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.WarningOnMainUnusedParameterMigrationInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
@@ -2931,6 +2935,15 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.redundant.assequence.call" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnnecessaryOptInAnnotationInspection"
+                     groupPath="Kotlin"
+                     groupName="Redundant constructs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     runForWholeFile="true"
+                     key="inspection.unnecessary.opt_in.annotation.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 
 </idea-plugin>

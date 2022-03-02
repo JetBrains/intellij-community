@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -302,8 +302,8 @@ public final class AnnotationsHighlightUtil {
   static HighlightInfo checkMissingAttributes(@NotNull PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
-    PsiClass aClass = (PsiClass)nameRef.resolve();
-    if (aClass != null && aClass.isAnnotationType()) {
+    PsiElement aClass = nameRef.resolve();
+    if (aClass instanceof PsiClass && ((PsiClass)aClass).isAnnotationType()) {
       Set<String> names = new HashSet<>();
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
@@ -311,7 +311,7 @@ public final class AnnotationsHighlightUtil {
         names.add(Objects.requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
       }
 
-      PsiMethod[] annotationMethods = aClass.getMethods();
+      PsiMethod[] annotationMethods = ((PsiClass)aClass).getMethods();
       List<String> missed = new ArrayList<>();
       for (PsiMethod method : annotationMethods) {
         if (PsiUtil.isAnnotationMethod(method)) {
@@ -801,7 +801,8 @@ public final class AnnotationsHighlightUtil {
 
     PsiMethod method = (PsiMethod)owner;
     PsiClass enclosingClass = method.getContainingClass();
-    if (method.isConstructor() && enclosingClass != null) {
+    boolean isConstructor = method.isConstructor();
+    if (isConstructor && enclosingClass != null) {
       enclosingClass = enclosingClass.getContainingClass();
     }
 
@@ -818,7 +819,19 @@ public final class AnnotationsHighlightUtil {
       PsiThisExpression identifier = parameter.getIdentifier();
       if (!enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
         String text = JavaErrorBundle.message("receiver.name.mismatch");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+        String name;
+        if (isConstructor) {
+          String className = enclosingClass.getName();
+          name = className != null ? className + ".this" : null;
+        }
+        else {
+          name = "this";
+        }
+        if (name != null) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createReceiverParameterNameFix(parameter, name));
+        }
+        return info;
       }
     }
 

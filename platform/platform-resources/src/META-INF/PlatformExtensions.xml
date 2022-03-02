@@ -56,7 +56,8 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
-    <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter" serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter"
+                        serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.ManagingFS"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl" preload="true"/>
@@ -66,6 +67,9 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
     <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.application.options.RegistryManager"
                         serviceImplementation="com.intellij.openapi.util.registry.RegistryManagerImpl" preload="true"/>
@@ -110,10 +114,9 @@
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.codeWithMe.ClientIdService"
-                        serviceImplementation="com.intellij.codeWithMe.ClientIdServiceImpl" preload="notHeadless" />
+                        serviceImplementation="com.intellij.codeWithMe.ClientIdServiceImpl" />
 
     <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>
-    <projectService serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent" preload="notHeadless"/>
 
     <experimentalFeature id="wsl.p9.support" percentOfUsers="100">
       <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using 9P protocol (available since Windows 10 update 1903).</description>
@@ -204,6 +207,9 @@
     <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
                         serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
+
+    <applicationService serviceInterface="com.intellij.ide.ui.search.SearchEverywhereTabsCustomization"
+                        serviceImplementation="com.intellij.ide.ui.search.DefaultSearchEverywhereTabsCustomization"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
 
@@ -381,8 +387,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
-                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl" preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorPaletteFactory"
                         serviceImplementation="com.intellij.openapi.options.colors.EditorColorPaletteFactoryImpl"/>
 
@@ -480,9 +484,6 @@
     <applicationService serviceInterface="com.intellij.openapi.options.advanced.AdvancedSettings"
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
 
-    <!-- IdeFocusManager doesn't return project level in headless or unit-test mode, instead, global implementation is used -->
-    <projectService serviceInterface="com.intellij.openapi.wm.IdeFocusManager" serviceImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerImpl" preload="notHeadless"/>
-
     <projectService serviceImplementation="com.intellij.ide.actions.DirectoryPathMatcherService" />
 
     <registryKey key="lists.use.open.in.right.splitter" defaultValue="true" description="Add icon 'open In right splitter' to recent files menu"/>
@@ -497,10 +498,10 @@
     <welcomeScreenCustomization id="defaultCustomization"
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
 
-    <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
-    <themeProvider id="JetBrainsLightTheme" path="/themes/Light.theme.json"/>
+    <themeProvider id="JetBrainsLightTheme" path="/themes/Light.theme.json" order="first"/>
     <themeProvider id="ExperimentalLight" path="/themes/expUI/expUI_light.theme.json"/>
     <themeProvider id="ExperimentalDark" path="/themes/expUI/expUI_dark.theme.json"/>
+    <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
 
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
@@ -571,7 +572,7 @@
     <fileType name="Native" implementationClass="com.intellij.openapi.fileTypes.NativeFileType" fieldName="INSTANCE"
               extensions="doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
     <fileType name="UNKNOWN" implementationClass="com.intellij.openapi.fileTypes.UnknownFileType" fieldName="INSTANCE"/>
-    <fileType name="AUTO_DETECTED" implementationClass="com.intellij.openapi.fileTypes.ex.DetectedByContentFileType" fieldName="INSTANCE"/>
+    <fileType name="AUTO_DETECTED" implementationClass="com.intellij.openapi.fileTypes.impl.DetectedByContentFileType" fieldName="INSTANCE"/>
 
     <fileType name="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.WorkspaceFileType"  fieldName="INSTANCE" extensions="iws"/>
     <fileType name="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.ModuleFileType" fieldName="INSTANCE" extensions="iml"/>
@@ -605,7 +606,7 @@
                         serviceImplementation="com.intellij.ui.ColorChooserServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl" preload="notHeadless"/>
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager"
                         serviceImplementation="com.intellij.ui.tabs.layout.TabsLayoutSettingsManagerImpl"/>
@@ -762,7 +763,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.IndexingStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.task.impl.ProjectTaskManagerStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ProjectImportCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.service.fus.collectors.UIEventLogger"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.service.fus.collectors.UIEventLoggerC"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.DynamicPluginsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ui.EditorNotificationUsagesCollector"/>
@@ -831,7 +832,7 @@
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
 
     <startupActivity id="openFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
-    <startupActivity implementation="com.intellij.openapi.wm.impl.InitToolWindowSetActivity" order="after openFilesActivity"/>
+    <startupActivity implementation="com.intellij.toolWindow.InitToolWindowSetActivity" order="after openFilesActivity"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
@@ -964,7 +965,6 @@
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
 
     <registryKey key="java.detector.enabled" defaultValue="true" description="Toggles JDK detection features" />
-    <registryKey key="java.detector.include.embedded" defaultValue="false" description="Include embedded JetBrains Runtime" />
 
     <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader" />
     <unknownSdkResolver implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto"/>
@@ -1195,7 +1195,7 @@
 
     <intentionMenuContributor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringIntentionContributor"/>
     <gutterMarkPreprocessor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringGutterMarkPreprocessor"/>
-    <statistics.counterUsagesCollector groupId="suggested.refactorings" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringFeatureUsage"/>
 
     <applicationInitializedListener implementation="com.intellij.ide.customize.WelcomeWizardHelper"/>
     <applicationInitializedListener implementation="com.intellij.openapi.application.impl.JitSuppressor"/>
@@ -1230,32 +1230,35 @@
     <notificationGroup id="Dump Threads Group" displayType="BALLOON" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="Cached value profiling" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Plugins Suggestion" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.plugins.suggestion"
-                       notificationIds="advertiser.plugins;advertiser.no.plugins;kotlin.native.debug;kotlin.js"/>
+                       notificationIds="advertiser.plugins;advertiser.no.plugins;kotlin.native.debug;kotlin.js;tasks.youtrack"/>
     <notificationGroup id="File Watcher Messages" displayType="STICKY_BALLOON" bundle="messages.IdeCoreBundle" key="notification.group.file.watcher"/>
     <notificationGroup id="Low Memory" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.low.memory"/>
     <notificationGroup id="Plugin Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.plugin.error"/>
     <notificationGroup id="Failed to remove BOM" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.failed.to.remove.bom"/>
+    <notificationGroup id="too.many.carets" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.too.many.carets"/>
     <notificationGroup id="File type conflict" displayType="BALLOON" bundle="messages.FileTypesBundle" key="notification.group.file.type.conflict"/>
     <notificationGroup id="Pattern reassigned" displayType="BALLOON" bundle="messages.FileTypesBundle" key="notification.group.pattern.reassigned"/>
     <notificationGroup id="Project Settings" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.project.settings"/>
     <notificationGroup id="Settings Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.settings.error"/>
+    <notificationGroup id="Load Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.load.error"/>
     <notificationGroup id="Heap Dump Analysis" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.heap.dump.analysis"/>
-    <notificationGroup id="Dynamic plugin installation" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="KeymapMissing" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle" key="notification.group.keymap.missing"/>
     <notificationGroup id="KeymapInstalled" displayType="BALLOON" bundle="messages.KeyMapBundle" key="notification.group.keymap.installed"/>
     <notificationGroup id="IDE and Plugin Updates" displayType="STICKY_BALLOON"
                        bundle="messages.IdeBundle" key="notification.group.ide.and.plugin.updates"
-                       notificationIds="plugins.updated.suggest.restart;ide.update.installed;ide.update.channel.switched;
-                       ide.updated.by.snap;ide.patch.download.failed;ide.update.suggest.restart;ide.update.available;
-                       plugins.update.available;external.components.available;no.updates.available;plugins.updated.restart.required"/>
+                       notificationIds="ide.update.channel.switched;ide.update.available;
+                       plugins.update.available;external.components.available;no.updates.available;dart.sdk.update.available"/>
+    <notificationGroup id="IDE Update Results" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.update.results"
+                       notificationIds="ide.update.installed;ide.updated.by.snap;ide.patch.download.failed;ide.update.suggest.restart;ide.whats.new"/>
     <notificationGroup id="Plugin Update Results" displayType="BALLOON"
                        bundle="messages.IdeBundle" key="notification.group.plugin.updates"
-                       notificationIds="plugins.updated.without.restart;plugins.updated.after.restart;plugin.auto.switch"/>
-    <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Password Safe" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Tutorials" displayType="BALLOON"/>
-    <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false"/>
-    <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
+                       notificationIds="plugins.updated.without.restart;plugins.updated.after.restart;plugin.auto.switch;plugins.updated.restart.required;
+                       plugins.updated.suggest.restart"/>
+    <notificationGroup id="leftover.ide.directories" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.leftover.directories"/>
+    <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.built.in.server"/>
+    <notificationGroup id="Password Safe" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.password.safe"/>
+    <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
+    <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.performance.watcher"/>
 
@@ -1272,7 +1275,7 @@
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.LanguagePluginDetectionStartupActivity"/>
-    <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
+    <notificationGroup id="Language Plugins Notifications" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.language.plugin"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
@@ -1291,8 +1294,10 @@
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="ide.max.recent.files" default="50" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentFilesLimit"/>
     <advancedSetting id="ide.max.recent.locations" default="25" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentLocationsLimit"/>
-    <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.ide"/>
-    <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.run"/>
+    <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
+    <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
+    <advancedSetting id="se.enable.text.search" default="false" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
@@ -1331,7 +1336,11 @@
     <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.TaskSupport"
                         serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport"/>
-  </extensions>
+    <registryKey key="new.project.wizard.modal.plugin.install" description="Enables modal lanungage plugins installing"
+                 defaultValue="false"/>
+    <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
+    <startupActivity implementation="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchActivity"/>
+   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
@@ -1364,6 +1373,7 @@
     <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity" topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener" topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$CurrentActionListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.ide.impl.UntrustedProjectNotificationProvider$TrustedListener" topic="com.intellij.ide.impl.TrustStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
@@ -1371,7 +1381,6 @@
     <listener class="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings$ToolbarRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-    <listener class="com.intellij.ui.ExperimentalUI$NewUiLafManagerListener" topic="com.intellij.ide.ui.LafManagerListener"/>
 
     <listener class="com.intellij.ide.FrameStateManagerAppListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
   </applicationListeners>
@@ -1380,6 +1389,10 @@
               activeInHeadlessMode="false"
               activeInTestMode="false"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+    <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"
+              topic="com.intellij.notification.Notifications"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">

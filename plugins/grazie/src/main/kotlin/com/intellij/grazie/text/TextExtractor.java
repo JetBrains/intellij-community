@@ -1,6 +1,7 @@
 package com.intellij.grazie.text;
 
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy;
 import com.intellij.grazie.ide.language.LanguageGrammarChecking;
 import com.intellij.lang.Language;
@@ -8,6 +9,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +34,7 @@ import java.util.regex.Pattern;
  * An extension specifying how to extract natural language text from PSI for specific programming languages.
  */
 public abstract class TextExtractor {
+  private static final Logger LOG = Logger.getInstance(TextExtractor.class);
   @VisibleForTesting
   static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
   private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
@@ -236,7 +239,14 @@ public abstract class TextExtractor {
                                                       @NotNull Language language) {
     TextExtractor extractor = EP.forLanguage(language);
     if (extractor != null) {
-      return extractor.buildTextContents(anyRoot, allowedDomains);
+      List<TextContent> contents = extractor.buildTextContents(anyRoot, allowedDomains);
+      for (TextContent content : contents) {
+        if (!content.getCommonParent().getTextRange().contains(content.textRangeToFile(TextRange.from(0, content.length())))) {
+          PluginException.logPluginError(LOG, "Inconsistent text content", null, extractor.getClass());
+          return List.of();
+        }
+      }
+      return contents;
     }
 
     // legacy extraction

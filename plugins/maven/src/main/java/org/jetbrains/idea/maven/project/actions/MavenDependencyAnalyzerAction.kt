@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DAArtifact
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
@@ -15,6 +14,7 @@ import org.jetbrains.idea.maven.navigator.MavenProjectsStructure
 import org.jetbrains.idea.maven.project.MavenDependencyAnalyzerContributor
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 class MavenDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
   override fun getSystemId(e: AnActionEvent): ProjectSystemId = MavenUtil.SYSTEM_ID
@@ -51,7 +51,7 @@ class MavenDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
         return projectNode.mavenProject.path
       }
     }
-    return MavenProjectsManager.getInstance(project).projectsFiles.firstOrNull()?.path
+    return MavenProjectsManager.getInstance(project).rootProjects.firstOrNull()?.path
   }
 
   private fun getDependencyData(selectedNode: SimpleNode): Dependency.Data? {

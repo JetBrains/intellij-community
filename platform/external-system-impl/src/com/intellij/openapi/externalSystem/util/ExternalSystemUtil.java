@@ -90,11 +90,9 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.util.Consumer;
@@ -165,31 +163,6 @@ public final class ExternalSystemUtil {
       LOG.warn("unable to get canonical file path", e);
     }
     return FileUtil.filesEqual(file1, file2);
-  }
-
-  public static void ensureToolWindowInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
-    try {
-      ToolWindowManager manager = ToolWindowManager.getInstance(project);
-      if (!(manager instanceof ToolWindowManagerEx)) {
-        return;
-      }
-
-      ToolWindowManagerEx managerEx = (ToolWindowManagerEx)manager;
-      String id = externalSystemId.getReadableName();
-      ToolWindow window = manager.getToolWindow(id);
-      if (window != null) {
-        return;
-      }
-
-      for (ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
-        if (id.equals(bean.id)) {
-          managerEx.initToolWindow(bean);
-        }
-      }
-    }
-    catch (Exception e) {
-      LOG.error(String.format("Unable to initialize %s tool window", externalSystemId.getReadableName()), e);
-    }
   }
 
   public static @Nullable ToolWindow ensureToolWindowContentInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
@@ -331,9 +304,10 @@ public final class ExternalSystemUtil {
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
     if (!isPreviewMode && !TrustedProjects.isTrusted(project)) {
-      LOG.debug("Skip " + externalSystemId + " load, because project is not trusted");
+      LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
       return;
     }
+    LOG.debug("Stated " + externalSystemId + " load", new Throwable());
 
     AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
     AbstractExternalSystemLocalSettings.SyncType syncType =
@@ -523,7 +497,7 @@ public final class ExternalSystemUtil {
 
       private void handExecutionResult(@NotNull ExternalSystemTaskActivator externalSystemTaskActivator,
                                        @NotNull BuildEventDispatcher eventDispatcher,
-                                       @NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
+                                       @NotNull Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
         if (project.isDisposed()) return;
 
         try {
@@ -559,6 +533,15 @@ public final class ExternalSystemUtil {
           if (callback != null) {
             callback.onFailure(resolveProjectTask.getId(), message, extractDetails(error));
           }
+        } catch (Throwable t) {
+          ExternalSystemTaskId id = resolveProjectTask.getId();
+          String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
+                                                      externalSystemId.getReadableName(), projectName);
+          com.intellij.build.events.FailureResult failureResult =
+            createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
+          finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
+                                                                     BuildBundle.message("build.status.failed"), failureResult));
+
         }
         finally {
           if (!isPreviewMode) {
@@ -684,7 +667,7 @@ public final class ExternalSystemUtil {
 
   @ApiStatus.Internal
   public static @NotNull FailureResultImpl createFailureResult(@NotNull @Nls(capitalization = Sentence) String title,
-                                                               @NotNull Exception exception,
+                                                               @NotNull Throwable exception,
                                                                @NotNull ProjectSystemId externalSystemId,
                                                                @NotNull Project project,
                                                                @NotNull DataContext dataContext) {
@@ -697,7 +680,7 @@ public final class ExternalSystemUtil {
     return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
   }
 
-  private static @NotNull FailureResultImpl createFailureResult(@NotNull Exception exception,
+  private static @NotNull FailureResultImpl createFailureResult(@NotNull Throwable exception,
                                                                 @NotNull ProjectSystemId externalSystemId,
                                                                 @NotNull Project project,
                                                                 @NotNull ExternalSystemNotificationManager notificationManager,
@@ -715,8 +698,7 @@ public final class ExternalSystemUtil {
               ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
     }
     else {
-      final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-      group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+      group = notificationData.getBalloonGroup();
     }
     int line = notificationData.getLine() - 1;
     int column = notificationData.getColumn() - 1;
@@ -1048,7 +1030,6 @@ public final class ExternalSystemUtil {
 
     //noinspection unchecked
     systemSettings.linkProject(projectSettings);
-    ensureToolWindowInitialized(project, externalSystemId);
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
       @Override
       public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {

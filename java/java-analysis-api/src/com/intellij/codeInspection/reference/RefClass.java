@@ -24,7 +24,7 @@ public interface RefClass extends RefJavaElement, RefOverridable {
   @NotNull
   Set<RefElement> getInTypeReferences();
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   default Set<RefElement> getInstanceReferences() {
     throw new UnsupportedOperationException();
@@ -52,7 +52,7 @@ public interface RefClass extends RefJavaElement, RefOverridable {
   boolean isLocalClass();
 
   @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean isSelfInheritor(PsiClass psiClass) {
     throw new UnsupportedOperationException();
   }

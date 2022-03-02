@@ -222,7 +222,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private Content createVariablesContent(@NotNull XDebugSessionImpl session) {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
-      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
+      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables, false, false);
     } else {
       variablesView = new XVariablesView(session);
     }

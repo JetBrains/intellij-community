@@ -1,6 +1,6 @@
 import argparse
 import ast
-from typing import Any, ClassVar, Generator, Type
+from typing import Any, ClassVar, Generator
 
 class Plugin:
     name: ClassVar[str]
@@ -10,6 +10,6 @@ class Plugin:
     @classmethod
     def parse_options(cls, options: argparse.Namespace) -> None: ...
     def __init__(self, tree: ast.AST) -> None: ...
-    def run(self) -> Generator[tuple[int, int, str, Type[Any]], None, None]: ...
+    def run(self) -> Generator[tuple[int, int, str, type[Any]], None, None]: ...
 
 def __getattr__(name: str) -> Any: ...  # incomplete (other attributes are normally not accessed)

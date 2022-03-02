@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.findUsages;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -31,6 +31,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("inContainingClass.0.kt")
             public void testInContainingClass() throws Exception {
                 runTest("testData/findUsages/kotlin/companionObject/inContainingClass.0.kt");
+            }
+
+            @TestMetadata("inContainingClassNoErrors.0.kt")
+            public void testInContainingClassNoErrors() throws Exception {
+                runTest("testData/findUsages/kotlin/companionObject/inContainingClassNoErrors.0.kt");
             }
 
             @TestMetadata("javaUsage.0.kt")

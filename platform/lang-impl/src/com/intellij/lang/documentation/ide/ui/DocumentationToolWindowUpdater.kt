@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.ide.DataManager
@@ -92,6 +94,7 @@ internal class DocumentationToolWindowUpdater(
   }
 
   private suspend fun focusDataContext(): DataContext = suspendCancellableCoroutine {
+    // @formatter:off
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown({
       @Suppress("DEPRECATION")
       val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
@@ -99,5 +102,6 @@ internal class DocumentationToolWindowUpdater(
       val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
       it.resume(asyncDataContext)
     }, ModalityState.any())
+    // @formatter:on
   }
 }

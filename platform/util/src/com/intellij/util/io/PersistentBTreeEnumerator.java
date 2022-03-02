@@ -62,7 +62,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private static final int MAX_DATA_SEGMENT_LENGTH = 128;
 
-  protected static final int VERSION = 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
+  protected static int baseVersion() {
+    return 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
+  }
+
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
@@ -97,11 +100,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             lockContext,
             VALUE_PAGE_SIZE,
             true,
-            IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER
+            IOUtil.useNativeByteOrderForByteBuffers()
           ),
           dataDescriptor,
           initialSize,
-          new Version(VERSION + version),
+          new Version(baseVersion() + version),
           new RecordBufferHandler(),
           false
     );

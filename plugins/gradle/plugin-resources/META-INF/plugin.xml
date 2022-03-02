@@ -108,7 +108,6 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleImportHintService"
                     configurationSchemaKey="importHint.gradle" />
@@ -161,7 +160,8 @@
     <registryKey key="gradle.report.recently.saved.paths" defaultValue="true"
                  description="Send information on recently saved files to Gradle Daemon right before executing a task"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
-    <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
+    <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder"/>
   </extensions>
 
   <actions>

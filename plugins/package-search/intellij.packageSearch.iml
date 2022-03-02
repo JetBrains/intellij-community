@@ -12,7 +12,8 @@
           <option name="apiVersion" value="1.5" />
           <option name="pluginClasspaths">
             <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.6.10-release-952/kotlinx-serialization-compiler-plugin-for-ide-1.6.10-release-952.jar" />
+              <option value="kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
         </compilerArguments>
@@ -57,8 +58,6 @@
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
-    <orderEntry type="module" module-name="intellij.gradle" />
-    <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
@@ -86,5 +85,6 @@
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
 </module>

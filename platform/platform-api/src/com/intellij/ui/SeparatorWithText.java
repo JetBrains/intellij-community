@@ -60,24 +60,21 @@ public class SeparatorWithText extends JComponent implements Accessible {
   }
 
   protected Dimension getPreferredElementSize() {
-    Dimension size = getLabelSize();
+    Dimension size = getLabelSize(new Insets(0, getHgap(), 0, getHgap()));
     JBInsets.addTo(size, getInsets());
     return size;
   }
 
   @NotNull
-  protected Dimension getLabelSize() {
-    Dimension size = new Dimension(Math.max(myPrefWidth, 0), 1);
+  protected Dimension getLabelSize(Insets labelInsets) {
     String caption = getCaption();
-    if (caption != null) {
-      FontMetrics fm = getFontMetrics(getFont());
-      size.height = fm.getHeight();
-      if (myPrefWidth < 0) {
-        size.width = 2 * getHgap() + fm.stringWidth(caption);
-      }
+    if (caption == null) {
+      return new Dimension(Math.max(myPrefWidth, 0), 1);
     }
 
-    return size;
+    FontMetrics fm = getFontMetrics(getFont());
+    int width = myPrefWidth < 0 ? fm.stringWidth(caption) + labelInsets.left + labelInsets.right : myPrefWidth;
+    return new Dimension(width, fm.getHeight() + labelInsets.top + labelInsets.bottom);
   }
 
   @Override

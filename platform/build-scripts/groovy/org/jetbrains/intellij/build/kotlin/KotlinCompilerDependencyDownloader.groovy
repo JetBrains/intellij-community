@@ -9,34 +9,53 @@ import java.nio.file.Path
 
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.downloadFileToCacheLocation
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getDependenciesProperties
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getUriForMavenArtifact
 
 @CompileStatic
 class KotlinCompilerDependencyDownloader {
-  static Path downloadAndExtractKotlinPlugin(BuildDependenciesCommunityRoot communityRoot) {
-    String kotlinCompilerBuild = getDependenciesProperties(communityRoot).getProperty("kotlinCompilerBuild")
+  private static final String MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+  private static final String ARTIFACT_GROUP_ID = "org.jetbrains.kotlin"
 
-    String pluginsMavenRepository = "https://cache-redirector.jetbrains.com/plugins.jetbrains.com/maven"
+  static Path downloadAndExtractKotlinCompiler(BuildDependenciesCommunityRoot communityRoot) {
+    def kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
+    URI kotlinDistUrl = getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-dist-for-ide", kotlinJpsPluginVersion, "jar")
+    def kotlinDistJar = downloadFileToCacheLocation(communityRoot, kotlinDistUrl)
+    return extractFileToCacheLocation(communityRoot, kotlinDistJar)
+  }
 
-    def pluginChannelSeparator = kotlinCompilerBuild.indexOf(":")
-    def groupId = pluginChannelSeparator == -1 ? "com.jetbrains.plugins"
-                                               : "${kotlinCompilerBuild.substring(pluginChannelSeparator + 1)}.com.jetbrains.plugins"
-    def pluginArtifactVersion = pluginChannelSeparator == -1 ? kotlinCompilerBuild : kotlinCompilerBuild.substring(0, pluginChannelSeparator)
-    URI pluginZipUrl = getUriForMavenArtifact(
-      pluginsMavenRepository,
-      groupId.toString(),
-      "org.jetbrains.kotlin",
-      pluginArtifactVersion,
-      "zip"
-    )
+  static Path downloadKotlinJpsPlugin(BuildDependenciesCommunityRoot communityRoot) {
+    def kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
+    URI kotlinJpsPluginUrl = getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-jps-plugin-classpath", kotlinJpsPluginVersion, "jar")
+    return downloadFileToCacheLocation(communityRoot, kotlinJpsPluginUrl)
+  }
 
-    Path pluginZip = downloadFileToCacheLocation(communityRoot, pluginZipUrl)
-    return extractFileToCacheLocation(communityRoot, pluginZip)
+  private static String getKotlinJpsPluginVersion(BuildDependenciesCommunityRoot communityRoot) {
+    def kotlinCompilerSettingsFile = communityRoot.getCommunityRoot().resolve(".idea/kotlinc.xml")
+    def root = new XmlParser().parse(kotlinCompilerSettingsFile.toFile())
+    Node kotlinJpsPluginSettingsTag = findNode(root, "component", "KotlinJpsPluginSettings")
+    if (kotlinJpsPluginSettingsTag == null) {
+      throw new IllegalStateException("KotlinJpsPluginSettings was not found in $kotlinCompilerSettingsFile")
+    }
+    def kotlinJpsPluginVersion = findNode(kotlinJpsPluginSettingsTag, "option", "version")?.attribute("value")
+    if (kotlinJpsPluginVersion == null) {
+      throw new IllegalStateException("KotlinJpsPlugin version was not found in $kotlinCompilerSettingsFile")
+    }
+    return kotlinJpsPluginVersion
+  }
+
+  private static Node findNode(Node parent, String tag, String name) {
+    for (def child: parent.children()) {
+      if (child instanceof Node && child.name() == tag && child.attribute("name") == name) {
+        return child
+      }
+    }
+    return null
   }
 
   static void main(String[] args) {
-    Path path = downloadAndExtractKotlinPlugin(BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
+    Path path = downloadAndExtractKotlinCompiler(BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     println("Extracted Kotlin compiler is at " + path)
+    Path jpsPath = downloadKotlinJpsPlugin(BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
+    println("Download Kotlin Jps Plugin at " + jpsPath)
   }
 }

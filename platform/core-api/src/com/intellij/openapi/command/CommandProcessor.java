@@ -117,6 +117,6 @@ public abstract class CommandProcessor {
    * @deprecated use {@link CommandListener#TOPIC}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public abstract void removeCommandListener(@NotNull CommandListener listener);
 }

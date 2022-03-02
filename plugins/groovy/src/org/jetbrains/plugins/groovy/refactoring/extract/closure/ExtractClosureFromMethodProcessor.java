@@ -12,9 +12,9 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.introduceParameter.*;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
@@ -98,7 +98,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     }
 
     if (!conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
+      final ConflictsDialogBase conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
       if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;

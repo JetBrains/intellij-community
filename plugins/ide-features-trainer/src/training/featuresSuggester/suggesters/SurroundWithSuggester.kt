@@ -17,6 +17,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("surround.with.message")
   override val suggestingActionId = "SurroundWith"
   override val suggestingTipFileName = "SurroundWith.html"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin")
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.Consumer;
 import com.intellij.util.Functions;
@@ -51,7 +50,7 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
  *
  * @see WSLUtil
  */
-public class WSLDistribution {
+public class WSLDistribution implements AbstractWslDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
@@ -92,8 +91,7 @@ public class WSLDistribution {
    * @deprecated please don't use it, to be will be removed after we collect statistics and make sure versions before 1903 aren't used.
    * Check statistics and remove in the next version
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Path getExecutablePath() {
     return myExecutablePath;
   }
@@ -136,14 +134,6 @@ public class WSLDistribution {
   }
 
   /**
-   * @return creates and patches command line, e.g:
-   * {@code ruby -v} => {@code bash -c "ruby -v"}
-   */
-  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) throws ExecutionException {
-    return patchCommandLine(new GeneralCommandLine(command), null, new WSLCommandLineOptions());
-  }
-
-  /**
    * Creates a patched command line, executes it on wsl distribution and returns output
    *
    * @param command                linux command, eg {@code gem env}
@@ -160,7 +150,13 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
-    return processHandler.runProcess(timeout);
+    ProcessOutput output = processHandler.runProcess(timeout);
+    if (output.getExitCode() != 0 || output.isTimeout() || output.isCancelled()) {
+      LOG.info("command on wsl: " + commandLine.getCommandLineString() + " was failed:" +
+               "ec=" + output.getExitCode() + ",timeout=" + output.isTimeout() + ",cancelled=" + output.isCancelled()
+               + ",stderr=" + output.getStderr() + ",stdout=" + output.getStdout());
+    }
+    return output;
   }
 
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
@@ -214,8 +210,7 @@ public class WSLDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @Nullable String remoteWorkingDir,
@@ -231,20 +226,7 @@ public class WSLDistribution {
     }
   }
 
-  /**
-   * Patches passed command line to make it runnable in WSL context, e.g changes {@code date} to {@code ubuntu run "date"}.<p/>
-   * <p>
-   * Environment variables and working directory are mapped to the chain calls: working dir using {@code cd} and environment variables using {@code export},
-   * e.g {@code bash -c "export var1=val1 && export var2=val2 && cd /some/working/dir && date"}.<p/>
-   * <p>
-   * Method should properly handle quotation and escaping of the environment variables.<p/>
-   *
-   * @param commandLine command line to patch
-   * @param project     current project
-   * @param options     {@link WSLCommandLineOptions} instance
-   * @param <T>         GeneralCommandLine or descendant
-   * @return original {@code commandLine}, prepared to run in WSL context
-   */
+  @Override
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
@@ -459,7 +441,7 @@ public class WSLDistribution {
   /**
    * @return environment map of the default user in wsl
    */
-  public @NotNull Map<String, String> getEnvironment() {
+  public @Nullable Map<String, String> getEnvironment() {
     try {
       ProcessOutput processOutput =
         executeOnWsl(Collections.singletonList("env"),
@@ -469,23 +451,24 @@ public class WSLDistribution {
                        .setExecuteCommandInInteractiveShell(true),
                      5000,
                      null);
-      Map<String, String> result = new HashMap<>();
-      for (String string : processOutput.getStdoutLines()) {
-        int assignIndex = string.indexOf('=');
-        if (assignIndex == -1) {
-          result.put(string, "");
+      if (processOutput.getExitCode() == 0){
+        Map<String, String> result = new HashMap<>();
+        for (String string : processOutput.getStdoutLines()) {
+          int assignIndex = string.indexOf('=');
+          if (assignIndex == -1) {
+            result.put(string, "");
+          }
+          else {
+            result.put(string.substring(0, assignIndex), string.substring(assignIndex + 1));
+          }
         }
-        else {
-          result.put(string.substring(0, assignIndex), string.substring(assignIndex + 1));
-        }
+        return result;
       }
-      return result;
     }
     catch (ExecutionException e) {
       LOG.warn(e);
     }
-
-    return Collections.emptyMap();
+    return null;
   }
 
   /**
@@ -499,9 +482,7 @@ public class WSLDistribution {
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
-  /**
-   * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
-   */
+  @Override
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
     if (FileUtil.toSystemDependentName(windowsPath).startsWith(WslConstants.UNC_PREFIX)) {
       windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), WslConstants.UNC_PREFIX);
@@ -580,8 +561,7 @@ public class WSLDistribution {
   /**
    * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull File getUNCRoot() {
     return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }
@@ -594,13 +574,7 @@ public class WSLDistribution {
     return Paths.get(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }
 
-  /**
-   * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
-   * @implNote there is a hack in {@link LocalFileSystemBase#getAttributes(VirtualFile)} which causes all network
-   * virtual files to exists all the time. So we need to check explicitly that root exists. After implementing proper non-blocking check
-   * for the network resource availability, this method may be simplified to findFileByIoFile
-   * @see VfsUtil#findFileByIoFile(File, boolean)
-   */
+  @Override
   @ApiStatus.Experimental
   public @Nullable VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
     if (!Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {

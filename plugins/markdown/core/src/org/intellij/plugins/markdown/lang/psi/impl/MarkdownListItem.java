@@ -7,6 +7,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
@@ -45,6 +46,33 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
     else {
       return null;
     }
+  }
+
+  @Nullable
+  private PsiElement getFirstNonMarkerElement() {
+    final var marker = getMarkerElement();
+    if (marker == null) {
+      return null;
+    }
+    final var next = marker.getNextSibling();
+    if (next != null && PsiUtilCore.getElementType(next) == MarkdownTokenTypes.CHECK_BOX) {
+      return next.getNextSibling();
+    }
+    return next;
+  }
+
+  @Nullable
+  public String getItemText() {
+    var element = getFirstNonMarkerElement();
+    if (element == null) {
+      return null;
+    }
+    final var builder = new StringBuilder();
+    while (element != null) {
+      builder.append(element.getText());
+      element = element.getNextSibling();
+    }
+    return builder.toString();
   }
 
   @Override

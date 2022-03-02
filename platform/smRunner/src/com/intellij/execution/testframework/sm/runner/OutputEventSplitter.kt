@@ -35,14 +35,14 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
  */
 abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean = false,
                                    private val cutNewLineBeforeServiceMessage: Boolean = false) :
-  OutputEventSplitterBase(ServiceMessage.SERVICE_MESSAGE_START, bufferTextUntilNewLine, cutNewLineBeforeServiceMessage) {
+  OutputEventSplitterBase<ProcessOutputType>(ServiceMessage.SERVICE_MESSAGE_START, bufferTextUntilNewLine, cutNewLineBeforeServiceMessage) {
 
   companion object {
     private val USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer()
 
-    private val stdout = OutputType(ProcessOutputType.STDOUT.toString(), OutputStreamType.STDOUT)
-    private val stderr = OutputType(ProcessOutputType.STDERR.toString(), OutputStreamType.STDERR)
-    private val system = OutputType(ProcessOutputType.SYSTEM.toString(), OutputStreamType.SYSTEM)
+    private val stdout = OutputType(ProcessOutputType.STDOUT, OutputStreamType.STDOUT)
+    private val stderr = OutputType(ProcessOutputType.STDERR, OutputStreamType.STDERR)
+    private val system = OutputType(ProcessOutputType.SYSTEM, OutputStreamType.SYSTEM)
   }
 
   /**
@@ -70,8 +70,8 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
    * */
   abstract fun onTextAvailable(text: String, outputType: Key<*>)
 
-  final override fun onTextAvailable(text: String, outputType: OutputType) {
-    onTextAvailableInternal(text, outputType.toProcessOutputType())
+  final override fun onTextAvailable(text: String, outputType: OutputType<ProcessOutputType>) {
+    onTextAvailableInternal(text, outputType.data)
   }
 
   private fun onTextAvailableInternal(text: String, processOutputType: Key<*>) {
@@ -79,29 +79,20 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
     onTextAvailable(textToAdd, processOutputType)
   }
 
-  private fun OutputType.toProcessOutputType(): ProcessOutputType {
-    return when (this.name) {
-      ProcessOutputType.STDOUT.toString() -> ProcessOutputType.STDOUT
-      ProcessOutputType.STDERR.toString() -> ProcessOutputType.STDERR
-      ProcessOutputType.SYSTEM.toString() -> ProcessOutputType.SYSTEM
-      else -> {
-        val baseType = when (streamType) {
-          OutputStreamType.STDOUT -> ProcessOutputType.STDOUT
-          OutputStreamType.STDERR -> ProcessOutputType.STDERR
-          OutputStreamType.SYSTEM -> ProcessOutputType.SYSTEM
-          else -> ProcessOutputType.STDOUT
-        }
-        return ProcessOutputType(name, baseType)
-      }
-    }
-  }
-
-  private fun ProcessOutputType.toOutputType(): OutputType {
-    return when (baseOutputType) {
+  private fun ProcessOutputType.toOutputType(): OutputType<ProcessOutputType> {
+    return when (this) {
       ProcessOutputType.STDOUT -> stdout
       ProcessOutputType.STDERR -> stderr
       ProcessOutputType.SYSTEM -> system
-      else -> OutputType(toString(), OutputStreamType.STDOUT)
+      else -> {
+        val streamType = when (baseOutputType) {
+          ProcessOutputType.STDOUT -> OutputStreamType.STDOUT
+          ProcessOutputType.STDERR -> OutputStreamType.STDERR
+          ProcessOutputType.SYSTEM -> OutputStreamType.SYSTEM
+          else -> OutputStreamType.STDOUT
+        }
+        OutputType(this, streamType)
+      }
     }
   }
 }

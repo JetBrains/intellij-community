@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.ide.actions.SplitAction
@@ -113,7 +113,7 @@ class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabN
     state.pathToTabName.remove(path)
     state.pathToTabName[path] = tabName // to put recently changed paths at the end of the linked map
 
-    val limit = UISettings.instance.recentFilesLimit
+    val limit = UISettings.getInstance().recentFilesLimit
     while (state.pathToTabName.size > limit) {
       val (firstPath, _) = state.pathToTabName.asIterable().first()
       state.pathToTabName.remove(firstPath)

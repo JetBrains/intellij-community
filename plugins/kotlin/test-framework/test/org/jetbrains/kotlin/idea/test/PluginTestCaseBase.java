@@ -7,11 +7,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.lang.JavaVersion;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.util.IjPlatformUtil;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestJdkKind;
 
 import java.io.File;
@@ -55,11 +57,29 @@ public class PluginTestCaseBase {
         switch (kind) {
             case MOCK_JDK:
                 return IdeaTestUtil.getMockJdk18();
-            case FULL_JDK_9:
+            case FULL_JDK_11:
                 String jre9 = KotlinTestUtils.getAtLeastJdk9Home().getPath();
                 return getSdk(jre9, "Full JDK 9");
+            case FULL_JDK_17:
+                return IdeaTestUtil.getMockJdk(LanguageLevel.JDK_17.toJavaVersion());
             case FULL_JDK:
                 return fullJdk();
+            default:
+                throw new UnsupportedOperationException(kind.toString());
+        }
+    }
+
+    @NotNull
+    public static LanguageLevel getLanguageLevel(@NotNull TestJdkKind kind) {
+        switch (kind) {
+            case MOCK_JDK:
+                return LanguageLevel.JDK_1_8;
+            case FULL_JDK_11:
+                return LanguageLevel.JDK_11;
+            case FULL_JDK_17:
+                return LanguageLevel.JDK_17;
+            case FULL_JDK:
+                return LanguageLevel.JDK_1_8;
             default:
                 throw new UnsupportedOperationException(kind.toString());
         }

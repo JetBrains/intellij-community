@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.testing
 
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -28,7 +28,8 @@ class KotlinMultiplatformAllInDirectoryConfigurationProducer
     }
 
     override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? {
-        if (context.module.platform.isCommon())
+        val module = context.module ?: return null
+        if (module.platform.isCommon())
             return null
 
         return super.findExistingConfiguration(context)

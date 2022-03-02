@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.template.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelectorBase
@@ -54,7 +54,8 @@ object GroovyPostfixTemplateUtils {
       val file = PsiDocumentManager.getInstance(context.project).getPsiFile(document) ?: return emptyList()
       var currentElement: PsiElement? = PsiTreeUtil.findElementOfClassAtOffset(file, actualOffset, GrExpression::class.java, false)
       val expressions = mutableListOf<GrExpression>()
-      while (currentElement is GrExpression) {
+      val offsetFilter = getBorderOffsetFilter(offset)
+      while (currentElement is GrExpression && offsetFilter.value(currentElement)) {
         expressions.add(currentElement)
         currentElement = currentElement.parent
       }
@@ -68,7 +69,7 @@ object GroovyPostfixTemplateUtils {
 
   }
 
-  fun getExpressionSelector() = getGenericExpressionSelector(true, Conditions.alwaysTrue())
+  fun getExpressionSelector() = getGenericExpressionSelector(false, Conditions.alwaysTrue())
 
   fun getTopExpressionSelector() = getGenericExpressionSelector(true, Conditions.alwaysTrue())
 

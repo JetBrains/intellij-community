@@ -1,16 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
 import com.intellij.util.application
 import com.intellij.util.download.DownloadableFileService
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager
 import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager.Companion.obtainExternalFilesDirectoryPath
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import kotlin.io.path.absolutePathString
@@ -43,25 +41,20 @@ object MarkdownSettingsUtil {
         MarkdownExtensionsSettings.getInstance().extensionsEnabledState[extension.id] = true
         application.messageBus.syncPublisher(MarkdownExtensionsSettings.ChangeListener.TOPIC).extensionsSettingsChanged(fromSettingsDialog = false)
       }
-      Notifications.Bus.notify(
-        Notification(
-          "Markdown",
-          MarkdownBundle.message("markdown.settings.download.extension.notification.title"),
-          MarkdownBundle.message("markdown.settings.download.extension.notification.success.content"),
-          NotificationType.INFORMATION
-        )
+      MarkdownNotifications.showInfo(
+        project,
+        id = "markdown.extensions.download.success",
+        title = MarkdownBundle.message("markdown.settings.download.extension.notification.title"),
+        message = MarkdownBundle.message("markdown.settings.download.extension.notification.success.content")
       )
       return true
-    } else {
-      Notifications.Bus.notify(
-        Notification(
-          "Markdown",
-          MarkdownBundle.message("markdown.settings.download.extension.notification.title"),
-          MarkdownBundle.message("markdown.settings.download.extension.notification.failure.content"),
-          NotificationType.ERROR
-        )
-      )
-      return false
     }
+    MarkdownNotifications.showError(
+      project,
+      id = "markdown.extensions.download.failed",
+      title = MarkdownBundle.message("markdown.settings.download.extension.notification.title"),
+      message = MarkdownBundle.message("markdown.settings.download.extension.notification.failure.content"),
+    )
+    return false
   }
 }

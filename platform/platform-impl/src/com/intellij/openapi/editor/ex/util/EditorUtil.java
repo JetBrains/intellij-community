@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -878,7 +879,9 @@ public final class EditorUtil {
     if (hostEditor instanceof EditorImpl) {
       Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
     }
-    else LOG.warn("Cannot watch for disposal of " + editor);
+    else {
+      LOG.warn("Cannot watch for disposal of " + editor);
+    }
   }
 
   public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
@@ -1103,7 +1106,11 @@ public final class EditorUtil {
     long currentTimeStamp = System.currentTimeMillis();
     if (lastTimeStamp != null && (currentTimeStamp - lastTimeStamp) < EditorNotification.MAX_CARETS_NOTIFY_INTERVAL_MS) return;
     editor.putUserData(EditorNotification.LAST_MAX_CARETS_NOTIFY_TIMESTAMP, currentTimeStamp);
-    HintManager.getInstance().showErrorHint(editor, EditorBundle.message("editor.max.carets.hint", editor.getCaretModel().getMaxCaretCount()));
+    NotificationGroupManager.getInstance().getNotificationGroup("too.many.carets")
+            .createNotification(
+                    EditorBundle.message("editor.max.carets.hint", editor.getCaretModel().getMaxCaretCount()),
+                    NotificationType.INFORMATION)
+            .notify(editor.getProject());
   }
 
   /**

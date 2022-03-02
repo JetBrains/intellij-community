@@ -43,7 +43,7 @@ annotation class CellMarker
 data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
 @PublishedApi
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
   if (prop is CallableReference) {
@@ -78,6 +78,7 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
   return PropertyBinding(prop.getter, prop.setter)
 }
 
+@Deprecated("Use MutableProperty and Kotlin UI DSL 2")
 fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
   return PropertyBinding<T?>({ get() }, { set(it!!) })
 }
@@ -101,7 +102,7 @@ interface CellBuilder<out T : JComponent> {
   fun comment(@DetailedDescription text: String, maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
               forComponent: Boolean = false): CellBuilder<T>
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun commentComponent(component: JComponent, forComponent: Boolean = false): CellBuilder<T>
 
@@ -116,6 +117,7 @@ interface CellBuilder<out T : JComponent> {
    * All components of the same group share will get the same BoundSize (min/preferred/max),
    * which is that of the biggest component in the group
    */
+  @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   fun sizeGroup(name: String): CellBuilder<T>
   fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
@@ -171,7 +173,7 @@ interface CellBuilder<out T : JComponent> {
   fun withLeftGap(): CellBuilder<T>
 
   @Deprecated("Prefer not to use hardcoded values")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun withLeftGap(gapLeft: Int): CellBuilder<T>
 }
 
@@ -419,24 +421,37 @@ abstract class Cell : BaseBuilder {
   }
 
   @JvmOverloads
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(prop, columns, range, null)
+  }
+
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range, step)
   }
 
   @JvmOverloads
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(PropertyBinding(getter, setter), columns, range, step)
   }
 
+
+  @JvmOverloads
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(binding, columns, range, null)
+  }
+
   /**
    * @param step allows changing value by up/down keys on keyboard
    */
-  @JvmOverloads
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(binding: PropertyBinding<Int>,
                    columns: Int? = null,
@@ -579,7 +594,7 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): CellBuilder<ActionButton> {
     val actionButton = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
@@ -652,13 +667,13 @@ abstract class Cell : BaseBuilder {
     return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun commentNoWrap(@DetailedDescription text: String): CellBuilder<JLabel> {
     return component(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun placeholder(): CellBuilder<JComponent> {
     return component(JPanel().apply {
@@ -692,7 +707,7 @@ class InnerCell(val cell: Cell) : Cell() {
     return cell.component(component, viewComponent)
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     cell.withButtonGroup(title, buttonGroup, body)
@@ -709,12 +724,12 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
   }
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun <C : JTextComponent> C.bindIntProperty(property: ObservableClearableProperty<Int>): C =
   bind(property.transform({ it.toString() }, { it.toInt() }))
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
   val slider = JSlider()
@@ -729,14 +744,14 @@ fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder
   return slider()
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<T> {
   component.labelTable = Hashtable<Int, JComponent>().apply(table)
   return this
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
   return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)

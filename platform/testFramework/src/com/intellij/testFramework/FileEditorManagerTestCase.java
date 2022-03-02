@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -22,6 +23,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
@@ -70,6 +72,19 @@ public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
     String fullPath = getTestDataPath() + path;
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath);
     assertNotNull("Can't find " + fullPath, file);
+    return file;
+  }
+  @NotNull
+  protected VirtualFile createFile(@NotNull String path, byte @NotNull [] content) {
+    File io = new File(getTestDataPath() + path);
+    try {
+      FileUtil.writeToFile(io, content);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(io);
+    assertNotNull("Can't find " + io, file);
     return file;
   }
 

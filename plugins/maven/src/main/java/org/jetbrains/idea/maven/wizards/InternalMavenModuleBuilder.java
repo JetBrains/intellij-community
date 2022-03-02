@@ -29,7 +29,7 @@ public final class InternalMavenModuleBuilder extends AbstractMavenModuleBuilder
   @Override
   protected void setupModule(Module module) throws ConfigurationException {
     super.setupModule(module);
-    if (MavenProjectImporter.isImportToWorkspaceModelEnabled()) {
+    if (MavenProjectImporter.isImportToWorkspaceModelEnabled() || MavenProjectImporter.isImportToTreeStructureEnabled()) {
       //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
       ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
     }

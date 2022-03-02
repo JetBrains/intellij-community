@@ -1,0 +1,50 @@
+import org.jetbrains.compose.compose
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+    kotlin("multiplatform")
+    id("org.jetbrains.compose")
+}
+
+group = "${context.group}"
+version = "${context.version}"
+
+#if (${ConfigType} == 'SINGLE_PLATFORM')
+repositories {
+    google()
+    mavenCentral()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+}
+#end
+
+kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = "11"
+        }
+        withJava()
+    }
+    sourceSets {
+        val jvmMain by getting {
+            dependencies {
+#if (${ConfigType} == 'MULTI_PLATFORM')
+                implementation(project(":common"))
+#end
+                implementation(compose.desktop.currentOs)
+            }
+        }
+        val jvmTest by getting
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "MainKt"
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "${context.artifact}"
+            packageVersion = "1.0.0"
+        }
+    }
+}

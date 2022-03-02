@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabFilesManager {
 
-  fun isEditorDiffPreviewAvailable() = isEditorDiffPreview.asBoolean() && !ExternalDiffTool.isDefault()
+  fun isEditorDiffPreviewAvailable() = isEditorDiffPreview.asBoolean() && !ExternalDiffTool.isEnabled()
 
   fun subscribeToPreviewVisibilityChange(disposable: Disposable, onVisibilityChange: Runnable) {
     isEditorDiffPreview.addListener(object : RegistryValueListener {

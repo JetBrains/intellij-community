@@ -143,10 +143,12 @@ class ScriptClassRootsCache(
             null -> FullUpdate(project, this)
             this -> NotChanged(this)
             else -> IncrementalUpdates(
-                this,
-                this.hasNewRoots(old),
-                old.hasNewRoots(this),
-                getChangedScripts(old)
+                cache = this,
+                hasNewRoots = this.hasNewRoots(old),
+                hasOldRoots = old.hasNewRoots(this),
+                updatedScripts = getChangedScripts(old),
+                oldRoots = old.allDependenciesClassFiles + old.allDependenciesSources,
+                newRoots = allDependenciesClassFiles + allDependenciesSources
             )
         }
 
@@ -180,6 +182,8 @@ class ScriptClassRootsCache(
         val cache: ScriptClassRootsCache
         val changed: Boolean
         val hasNewRoots: Boolean
+        val oldRoots: Collection<VirtualFile>
+        val newRoots: Collection<VirtualFile>
         val hasUpdatedScripts: Boolean
         fun isScriptChanged(scriptPath: String): Boolean
     }
@@ -187,6 +191,8 @@ class ScriptClassRootsCache(
     class IncrementalUpdates(
         override val cache: ScriptClassRootsCache,
         override val hasNewRoots: Boolean,
+        override val oldRoots: Collection<VirtualFile>,
+        override val newRoots: Collection<VirtualFile>,
         private val hasOldRoots: Boolean,
         private val updatedScripts: Set<String>
     ) : Updates {
@@ -202,6 +208,13 @@ class ScriptClassRootsCache(
         override val hasUpdatedScripts: Boolean get() = true
         override fun isScriptChanged(scriptPath: String): Boolean = true
 
+        override val oldRoots: Collection<VirtualFile> = emptyList()
+
+        override val newRoots: Collection<VirtualFile>
+            get() {
+                return cache.allDependenciesClassFiles + cache.allDependenciesSources
+            }
+
         override val hasNewRoots: Boolean
             get() {
                 return cache.allDependenciesClassFiles.isNotEmpty() || cache.allDependenciesSources.isNotEmpty()
@@ -212,6 +225,8 @@ class ScriptClassRootsCache(
         override val changed: Boolean get() = false
         override val hasNewRoots: Boolean get() = false
         override val hasUpdatedScripts: Boolean get() = false
+        override val oldRoots: Collection<VirtualFile> = emptyList()
+        override val newRoots: Collection<VirtualFile> = emptyList()
         override fun isScriptChanged(scriptPath: String): Boolean = false
     }
 }

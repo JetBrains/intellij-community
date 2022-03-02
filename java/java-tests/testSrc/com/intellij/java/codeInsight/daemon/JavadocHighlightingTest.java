@@ -129,6 +129,10 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSnippet() { doTest(); }
   public void testSnippetMethod() { doTest(); }
   public void testSnippetInstructions() { doTest(); }
+  public void testEmptySnippet() { doTest(); }
+  public void testOnlyEmptyLinesInSnippet() { doTest(); }
+  public void testSnippetInstructionsWithUnhandledThrowable() { doTest(); }
+  public void testUnalignedLeadingAsterisks() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());

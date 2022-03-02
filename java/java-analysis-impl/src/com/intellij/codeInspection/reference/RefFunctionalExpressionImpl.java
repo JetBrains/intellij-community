@@ -127,7 +127,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
     assert element != null;
     UElement pDeclaration = UastUtils.getParentOfType(element, true, UMethod.class, UClass.class, ULambdaExpression.class, UField.class);
     if (pDeclaration != null) {
-      RefElement pDeclarationRef = getRefManager().getReference(pDeclaration.getSourcePsi());
+      RefElement pDeclarationRef = getRefManager().getReference(KotlinPropertiesDetector.getPropertyElement(pDeclaration));
       if (pDeclarationRef != null) {
         ((WritableRefEntity)pDeclarationRef).add(this);
       }

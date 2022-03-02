@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.lookup.LookupManager
@@ -10,7 +12,6 @@ import com.intellij.lang.documentation.ide.impl.DocumentationHistory
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
 import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
-import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.actionSystem.*
@@ -88,7 +89,7 @@ private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget
   }
   val targetElement = dc.getData(CommonDataKeys.PSI_ELEMENT)
   if (targetElement != null) {
-    return listOf(psiDocumentationTarget(targetElement) ?: PsiElementDocumentationTarget(project, targetElement))
+    return listOf(psiDocumentationTarget(targetElement, null))
   }
   return emptyList()
 }

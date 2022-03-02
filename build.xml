@@ -7,67 +7,20 @@
  Note that this script is intended for building IntelliJ IDEA Community Edition only. If you want to build your own product based on IntelliJ Platform,
  create a gant script for it, see javadoc for org.jetbrains.intellij.build package for details.
  -->
+<!-- Using ant is obsolete, please call installers.cmd or tests.cmd directly -->
+<!-- Refer to README.md for more instructions -->
 <project name="IntelliJ IDEA Community Edition" default="build">
-  <property name="project.home" value="${basedir}"/>
-
-  <target name="init">
-    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
-               else="${project.home}/build/dependencies/gradlew">
-      <os family="windows"/>
-    </condition>
-    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
-      <env key="JAVA_HOME" value="${java.home}"/>
-      <arg value="--no-daemon"/>
-      <arg line="setupJdks"/>
-    </exec>
-    <propertyset id="intellij.build.properties">
-      <propertyref name="build.number"/>
-      <propertyref name="compile.parallel"/>
-      <propertyref name="compile.parallel.max.threads"/>
-      <propertyref prefix="intellij.build."/>
-    </propertyset>
-    <propertyset id="intellij.test.properties">
-      <propertyref prefix="pass."/>
-    </propertyset>
-  </target>
-
-  <macrodef name="call_gant">
-    <attribute name="script" />
-    <attribute name="target" default="default"/>
-    <sequential>
-      <condition property="java.executable"
-                 value="${project.home}/build/jdk/11/Contents/Home/bin/java"
-                 else="${project.home}/build/jdk/11/bin/java">
-        <os family="mac"/>
-      </condition>
-      <java failonerror="true" jvm="${java.executable}" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
-        <jvmarg line="-Xmx2000m"/>
-        <sysproperty key="jna.nosys" value="true" />
-        <sysproperty key="java.awt.headless" value="true"/>
-        <sysproperty key="gant.script" value="@{script}"/>
-        <sysproperty key="gant.target" value="@{target}"/>
-        <sysproperty key="idea.home.path" value="${project.home}"/>
-        <syspropertyset refid="intellij.build.properties"/>
-        <syspropertyset refid="intellij.test.properties"/>
-        <!-- required for TeamCity  -->
-        <sysproperty key="agent.home.dir" value="${agent.home.dir}"/>
-        <arg value="-f"/>
-        <arg value="${project.home}/build/gant.xml"/>
-      </java>
-    </sequential>
-  </macrodef>
-
   <!-- build distribution archives for IntelliJ Community Edition in out/idea-ce/artifacts directory -->
-  <target name="build" depends="init">
-    <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
+  <target name="build">
+    <exec executable="${basedir}/installers.cmd" failonerror="true" />
   </target>
 
-  <target name="test" depends="init">
-    <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
+  <target name="test">
+    <exec executable="${basedir}/tests.cmd" failonerror="true" />
   </target>
 
   <!-- Creates an updater-full.jar in ${intellij.build.output.root}/artifacts, it includes 'intellij.platform.updater' module with all its dependencies -->
-  <target name="fullupdater" depends="init">
-    <call_gant script="${project.home}/build/scripts/idea_community.gant" target="updater-full"/>
+  <target name="fullupdater">
+    <exec executable="${basedir}/build/full_updater.cmd" failonerror="true" />
   </target>
 </project>

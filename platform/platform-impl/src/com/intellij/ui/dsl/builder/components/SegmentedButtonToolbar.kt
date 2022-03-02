@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
-import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
@@ -29,7 +29,7 @@ import javax.swing.border.Border
 import kotlin.math.max
 
 @Deprecated("Use Row.segmentedButton")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfiguration: SpacingConfiguration) :
   ActionToolbarImpl("ButtonSelector", actionGroup, true, true) {
 
@@ -138,7 +138,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
 
 @ApiStatus.Experimental
 internal class SegmentedButtonAction<T>(val option: T,
-                                        private val property: GraphProperty<T>,
+                                        private val property: ObservableMutableProperty<T>,
                                         @NlsActions.ActionText optionText: String,
                                         @NlsActions.ActionDescription optionDescription: String? = null)
   : ToggleAction(optionText, optionDescription, null), DumbAware {
@@ -264,7 +264,9 @@ internal object SegmentedButtonLook : IdeaActionButtonLook() {
 
     return when (state) {
       ActionButtonComponent.POPPED -> JBUI.CurrentTheme.ActionButton.hoverBackground()
-      ActionButtonComponent.PUSHED -> if (focused) JBUI.CurrentTheme.TabbedPane.FOCUS_COLOR else JBUI.CurrentTheme.Button.buttonColorStart()
+      ActionButtonComponent.PUSHED ->
+        if (focused) JBUI.CurrentTheme.SegmentedButton.FOCUSED_SELECTED_BUTTON_COLOR
+        else JBUI.CurrentTheme.SegmentedButton.SELECTED_BUTTON_COLOR
       else -> component.background
     }
   }

@@ -200,8 +200,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   /**
    * @deprecated Use {@link #createSearchingForTestsTask(TargetEnvironment)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @Nullable SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
   }

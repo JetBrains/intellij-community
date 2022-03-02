@@ -7,10 +7,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
@@ -18,6 +15,7 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
+import kotlin.reflect.KMutableProperty0
 
 /**
  * Internal component properties for UI DSL
@@ -61,7 +59,9 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   JComboBox::class,
   JSlider::class,
   JSpinner::class,
+  JTable::class,
   JTextComponent::class,
+  JTree::class,
   SegmentedButtonComponent::class,
   SegmentedButtonToolbar::class
 )

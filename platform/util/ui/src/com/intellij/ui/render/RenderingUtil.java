@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.render;
 
 import com.intellij.openapi.util.Key;
@@ -178,8 +178,6 @@ public final class RenderingUtil {
 
   @ApiStatus.Internal
   public static boolean isHoverPaintingDisabled(@NotNull JComponent component) {
-    // tables without scroll pane do not repaint rows correctly (BasicTableUI.paint:1868-1872)
-    if (component instanceof JTable && !(component.getParent() instanceof JViewport)) return true;
     return Boolean.FALSE.equals(component.getClientProperty(PAINT_HOVERED_BACKGROUND));
   }
 

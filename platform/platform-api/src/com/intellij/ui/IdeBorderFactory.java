@@ -6,7 +6,6 @@ import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
@@ -73,8 +72,7 @@ public final class IdeBorderFactory {
   /**
    * @deprecated use {@link JBUI.Borders#empty(int)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static Border createEmptyBorder(int thickness) {
     return JBUI.Borders.empty(thickness);
   }

@@ -5,7 +5,6 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,8 +16,7 @@ import java.util.Comparator;
 /**
  * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class SimpleTreeBuilder extends AbstractTreeBuilder {
   public SimpleTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, @Nullable Comparator comparator) {
     //noinspection unchecked

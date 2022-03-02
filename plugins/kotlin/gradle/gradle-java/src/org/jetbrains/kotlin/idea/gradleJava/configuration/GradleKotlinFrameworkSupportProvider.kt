@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
 import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
 import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
@@ -79,7 +80,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
         specifyPluginVersionIfNeeded: Boolean,
         explicitPluginVersion: String? = null
     ) {
-        var kotlinVersion = explicitPluginVersion ?: kotlinCompilerVersionShort()
+        var kotlinVersion = explicitPluginVersion ?: KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
         if (isSnapshot(kotlinVersion)) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
@@ -175,7 +176,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
     override fun getPluginId() = KotlinGradleModuleConfigurator.KOTLIN
     override fun getPluginExpression() = "id 'org.jetbrains.kotlin.jvm'"
 
-    override fun getDependencies(sdk: Sdk?) = listOf(getStdlibArtifactId(sdk, bundledRuntimeVersion()))
+    override fun getDependencies(sdk: Sdk?) = listOf(getStdlibArtifactId(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion))
 
     override fun addSupport(
         buildScriptData: BuildScriptDataBuilder,
@@ -185,7 +186,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
         explicitPluginVersion: String?
     ) {
         super.addSupport(buildScriptData, module, sdk, specifyPluginVersionIfNeeded, explicitPluginVersion)
-        val jvmTarget = getDefaultJvmTarget(sdk, bundledRuntimeVersion())
+        val jvmTarget = getDefaultJvmTarget(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion)
         if (jvmTarget != null) {
             val description = jvmTarget.description
             buildScriptData.addOther("compileKotlin {\n    kotlinOptions.jvmTarget = \"$description\"\n}\n\n")

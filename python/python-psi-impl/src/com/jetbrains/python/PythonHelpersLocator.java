@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 
 public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
@@ -39,23 +41,29 @@ public final class PythonHelpersLocator {
     if (property != null) {
       return new File(property);
     }
-    return getHelperRoot("intellij.python.helpers", "helpers");
+    return assertHelpersLayout(getHelperRoot("intellij.python.helpers", "/python/helpers"));
   }
 
   @NotNull
   public static File getHelpersProRoot() {
-    return getHelperRoot("intellij.python.helpers.pro", "helpers-pro");
+    return assertHelpersProLayout(getHelperRoot("intellij.python.helpers.pro", "/../python/helpers-pro"));
   }
 
   @NotNull
-  public static File getHelperRoot(@NotNull String moduleName, @NotNull String dirName) {
+  private static File getHelperRoot(@NotNull String moduleName, @NotNull String relativePath) {
     @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
-    final File pluginBaseDir = getPluginBaseDir(jarPath);
-    if (pluginBaseDir != null) {
-      return new File(pluginBaseDir, dirName);
+
+    if (PluginManagerCore.isRunningFromSources()) {
+      return new File(PathManager.getCommunityHomePath() + relativePath);
     }
     else {
-      return new File(new File(jarPath).getParentFile(), moduleName);
+      final File pluginBaseDir = getPluginBaseDir(jarPath);
+      if (pluginBaseDir != null) {
+        return new File(pluginBaseDir, PathUtil.getFileName(relativePath));
+      }
+      else {
+        return new File(new File(jarPath).getParentFile(), moduleName);
+      }
     }
   }
 
@@ -68,6 +76,26 @@ public final class PythonHelpersLocator {
       return jarFile.getParentFile().getParentFile();
     }
     return null;
+  }
+
+  private static @NotNull File assertHelpersLayout(@NotNull File root) {
+    final String path = root.getAbsolutePath();
+
+    LOG.assertTrue(root.exists(), "Helpers root does not exist " + path);
+    for (String child : List.of("generator3", "pycharm", "pycodestyle.py", "pydev", "syspath.py", "typeshed")) {
+      LOG.assertTrue(new File(root, child).exists(), "No '" + child + "' inside " + path);
+    }
+
+    return root;
+  }
+
+  private static @NotNull File assertHelpersProLayout(@NotNull File root) {
+    final String path = root.getAbsolutePath();
+
+    LOG.assertTrue(root.exists(), "Helpers pro root does not exist " + path);
+    LOG.assertTrue(new File(root, "jupyter_debug").exists(), "No 'jupyter_debug' inside " + path);
+
+    return root;
   }
 
   /**

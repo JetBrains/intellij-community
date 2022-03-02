@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -16,6 +16,7 @@ import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
@@ -83,7 +84,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     };
   }
 
-  private static class XInlineWatchValue extends XNamedValue {
+  private static class XInlineWatchValue extends XNamedValue implements XValueTextProvider {
     private final XExpression myExpression;
     private final XDebuggerTree myTree;
     private final XStackFrame myStackFrame;
@@ -132,6 +133,21 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
         }
       }
       return false;
+    }
+
+    @Override
+    public @Nullable String getValueText() {
+      if (shouldShowTextValue()) {
+        return ((XValueTextProvider)myValue).getValueText();
+      }
+      return null;
+    }
+
+    @Override
+    public boolean shouldShowTextValue() {
+      return myValue != null &&
+             myValue instanceof XValueTextProvider &&
+             ((XValueTextProvider)myValue).shouldShowTextValue();
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {
@@ -183,11 +199,5 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
       callback.computed(myPosition);
       return ThreeState.YES;
     }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return true;
-    }
-
   }
 }

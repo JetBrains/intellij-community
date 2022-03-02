@@ -50,6 +50,7 @@ import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,11 +130,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myProjectSdksModel = myInterpreterList.getModel();
   }
 
-  @NotNull
-  private static ListPopup createAddInterpreterPopup(@NotNull Project project,
-                                                     @Nullable Module module,
-                                                     @NotNull Component dataContextComponent,
-                                                     @NotNull Consumer<Sdk> onSdkCreated) {
+  @ApiStatus.Internal
+  public static @NotNull ListPopup createAddInterpreterPopup(@NotNull Project project,
+                                                             @Nullable Module module,
+                                                             @NotNull Component dataContextComponent,
+                                                             @NotNull Consumer<Sdk> onSdkCreated) {
     DataContext dataContext = DataManager.getInstance().getDataContext(dataContextComponent);
     List<AnAction> actions = AddInterpreterActions.collectAddInterpreterActions(project, module, onSdkCreated);
     return JBPopupFactory.getInstance().createActionGroupPopup(

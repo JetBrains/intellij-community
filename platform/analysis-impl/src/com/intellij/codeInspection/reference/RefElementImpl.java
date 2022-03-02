@@ -64,13 +64,22 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return ReadAction.compute(() -> {
       if (getRefManager().getProject().isDisposed()) return false;
 
-      final PsiFile file = myID.getContainingFile();
+      PsiElement elem = myID.getElement();
+      if (elem != null && RefManagerImpl.isKotlinLightFieldOrMethod(elem)
+          && elem.getNavigationElement().getClass().getSimpleName().equals("KtProperty")) {
+        elem = elem.getNavigationElement();
+      }
+      final PsiFile file = elem == null ? myID.getContainingFile() : elem.getContainingFile();
       //no need to check resolve in offline mode
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return file != null && file.isPhysical();
       }
 
-      final PsiElement element = getPsiElement();
+      PsiElement element = getPsiElement();
+      if (element != null && RefManagerImpl.isKotlinLightFieldOrMethod(element)
+          && element.getNavigationElement().getClass().getSimpleName().equals("KtProperty")) {
+        element = element.getNavigationElement();
+      }
       return element != null && element.isPhysical();
     });
   }

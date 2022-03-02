@@ -1,5 +1,5 @@
 import sys
-from _typeshed import StrPath
+from _typeshed import Self, StrPath
 from typing import Any, AsyncIterator, Awaitable, Callable, Iterable, Optional
 
 from . import events, protocols, transports
@@ -12,46 +12,75 @@ if sys.version_info < (3, 8):
         expected: int | None
         partial: bytes
         def __init__(self, partial: bytes, expected: int | None) -> None: ...
+
     class LimitOverrunError(Exception):
         consumed: int
         def __init__(self, message: str, consumed: int) -> None: ...
 
-async def open_connection(
-    host: str | None = ...,
-    port: int | str | None = ...,
-    *,
-    loop: events.AbstractEventLoop | None = ...,
-    limit: int = ...,
-    ssl_handshake_timeout: float | None = ...,
-    **kwds: Any,
-) -> tuple[StreamReader, StreamWriter]: ...
-async def start_server(
-    client_connected_cb: _ClientConnectedCallback,
-    host: str | None = ...,
-    port: int | str | None = ...,
-    *,
-    loop: events.AbstractEventLoop | None = ...,
-    limit: int = ...,
-    ssl_handshake_timeout: float | None = ...,
-    **kwds: Any,
-) -> Server: ...
+if sys.version_info >= (3, 10):
+    async def open_connection(
+        host: str | None = ...,
+        port: int | str | None = ...,
+        *,
+        limit: int = ...,
+        ssl_handshake_timeout: float | None = ...,
+        **kwds: Any,
+    ) -> tuple[StreamReader, StreamWriter]: ...
+    async def start_server(
+        client_connected_cb: _ClientConnectedCallback,
+        host: str | None = ...,
+        port: int | str | None = ...,
+        *,
+        limit: int = ...,
+        ssl_handshake_timeout: float | None = ...,
+        **kwds: Any,
+    ) -> Server: ...
+
+else:
+    async def open_connection(
+        host: str | None = ...,
+        port: int | str | None = ...,
+        *,
+        loop: events.AbstractEventLoop | None = ...,
+        limit: int = ...,
+        ssl_handshake_timeout: float | None = ...,
+        **kwds: Any,
+    ) -> tuple[StreamReader, StreamWriter]: ...
+    async def start_server(
+        client_connected_cb: _ClientConnectedCallback,
+        host: str | None = ...,
+        port: int | str | None = ...,
+        *,
+        loop: events.AbstractEventLoop | None = ...,
+        limit: int = ...,
+        ssl_handshake_timeout: float | None = ...,
+        **kwds: Any,
+    ) -> Server: ...
 
 if sys.platform != "win32":
     if sys.version_info >= (3, 7):
         _PathType = StrPath
     else:
         _PathType = str
-    async def open_unix_connection(
-        path: _PathType | None = ..., *, loop: events.AbstractEventLoop | None = ..., limit: int = ..., **kwds: Any
-    ) -> tuple[StreamReader, StreamWriter]: ...
-    async def start_unix_server(
-        client_connected_cb: _ClientConnectedCallback,
-        path: _PathType | None = ...,
-        *,
-        loop: events.AbstractEventLoop | None = ...,
-        limit: int = ...,
-        **kwds: Any,
-    ) -> Server: ...
+    if sys.version_info >= (3, 10):
+        async def open_unix_connection(
+            path: _PathType | None = ..., *, limit: int = ..., **kwds: Any
+        ) -> tuple[StreamReader, StreamWriter]: ...
+        async def start_unix_server(
+            client_connected_cb: _ClientConnectedCallback, path: _PathType | None = ..., *, limit: int = ..., **kwds: Any
+        ) -> Server: ...
+    else:
+        async def open_unix_connection(
+            path: _PathType | None = ..., *, loop: events.AbstractEventLoop | None = ..., limit: int = ..., **kwds: Any
+        ) -> tuple[StreamReader, StreamWriter]: ...
+        async def start_unix_server(
+            client_connected_cb: _ClientConnectedCallback,
+            path: _PathType | None = ...,
+            *,
+            loop: events.AbstractEventLoop | None = ...,
+            limit: int = ...,
+            **kwds: Any,
+        ) -> Server: ...
 
 class FlowControlMixin(protocols.Protocol):
     def __init__(self, loop: events.AbstractEventLoop | None = ...) -> None: ...
@@ -86,10 +115,11 @@ class StreamWriter:
     if sys.version_info >= (3, 7):
         def is_closing(self) -> bool: ...
         async def wait_closed(self) -> None: ...
+
     def get_extra_info(self, name: str, default: Any = ...) -> Any: ...
     async def drain(self) -> None: ...
 
-class StreamReader:
+class StreamReader(AsyncIterator[bytes]):
     def __init__(self, limit: int = ..., loop: events.AbstractEventLoop | None = ...) -> None: ...
     def exception(self) -> Exception: ...
     def set_exception(self, exc: Exception) -> None: ...
@@ -101,5 +131,5 @@ class StreamReader:
     async def readuntil(self, separator: bytes = ...) -> bytes: ...
     async def read(self, n: int = ...) -> bytes: ...
     async def readexactly(self, n: int) -> bytes: ...
-    def __aiter__(self) -> AsyncIterator[bytes]: ...
+    def __aiter__(self: Self) -> Self: ...
     async def __anext__(self) -> bytes: ...

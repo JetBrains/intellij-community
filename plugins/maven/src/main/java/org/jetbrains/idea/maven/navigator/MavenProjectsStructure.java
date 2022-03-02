@@ -9,7 +9,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.wizard.UIWizardUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -63,6 +62,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
@@ -813,7 +813,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateProject() {
-      setErrorLevel(myMavenProject.getProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      setErrorLevel(myMavenProject.getCacheProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
       myLifecycleNode.updateGoalsList();
       myPluginsNode.updatePlugins(myMavenProject);
 
@@ -888,7 +888,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         .append("</tr>")
         .append("<tr>")
         .append("<td nowrap>").append(message("detailed.description.location")).append("</td>")
-        .append("<td nowrap>").append(UIWizardUtil.getPresentablePath(myMavenProject.getPath())).append("</td>")
+        .append("<td nowrap>").append(getPresentablePath(myMavenProject.getPath())).append("</td>")
         .append("</tr>")
         .append("</table>").append("</td>")
         .append("</tr>");
@@ -902,7 +902,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void appendProblems(StringBuilder desc) {
-      List<MavenProjectProblem> problems = myMavenProject.getProblems();
+      List<MavenProjectProblem> problems = myMavenProject.getCacheProblems();
       if (problems.isEmpty()) return;
 
       desc.append("<tr>" +
@@ -1006,7 +1006,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
-      setUniformIcon(Task);
+      getTemplatePresentation().setIcon(Task);
     }
 
     public MavenProject getMavenProject() {
@@ -1264,13 +1264,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         if (newNodes == null) {
           if (validChildCount < myChildren.size()) {
             DependencyNode currentValidNode = myChildren.get(validChildCount);
-
             if (currentValidNode.myArtifact.equals(each.getArtifact())
-                && currentValidNode.myArtifactNode.getArtifact().isResolvedArtifact() == each.getArtifact().isResolvedArtifact()) {
+                && currentValidNode.isUnresolved() == each.getArtifact().isFileUnresolved()) {
               if (each.getState() == MavenArtifactState.ADDED) {
                 currentValidNode.updateChildren(each.getDependencies(), mavenProject);
               }
-              currentValidNode.updateDependency();
 
               validChildCount++;
               continue;
@@ -1306,12 +1304,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject, int from) {
       for (int i = from; i < myChildren.size(); i++) {
         DependencyNode node = myChildren.get(i);
-        if (node.myArtifact.equals(artifact.getArtifact())
-            && node.myArtifactNode.getArtifact().isResolvedArtifact() == artifact.getArtifact().isResolvedArtifact()) {
+        if (node.myArtifact.equals(artifact.getArtifact()) && node.isUnresolved() == artifact.getArtifact().isFileUnresolved()) {
           return node;
         }
       }
-      return new DependencyNode(this, artifact, mavenProject);
+      return new DependencyNode(this, artifact, mavenProject, artifact.getArtifact().isFileUnresolved());
     }
 
     @Override
@@ -1339,16 +1336,22 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class DependencyNode extends BaseDependenciesNode {
     private final MavenArtifact myArtifact;
     private final MavenArtifactNode myArtifactNode;
+    private final boolean myUnresolved;
 
-    public DependencyNode(MavenSimpleNode parent, MavenArtifactNode artifactNode, MavenProject mavenProject) {
+    public DependencyNode(MavenSimpleNode parent, MavenArtifactNode artifactNode, MavenProject mavenProject, boolean unresolved) {
       super(parent, mavenProject);
       myArtifactNode = artifactNode;
       myArtifact = artifactNode.getArtifact();
-      setUniformIcon(AllIcons.Nodes.PpLib);
+      myUnresolved = unresolved;
+      getTemplatePresentation().setIcon(AllIcons.Nodes.PpLib);
     }
 
     public MavenArtifact getArtifact() {
       return myArtifact;
+    }
+
+    public boolean isUnresolved() {
+      return myUnresolved;
     }
 
     @Override
@@ -1392,7 +1395,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateDependency() {
-      setErrorLevel(MavenArtifactUtilKt.resolved(myArtifact) ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      setErrorLevel(myUnresolved ? ErrorLevel.ERROR : ErrorLevel.NONE);
     }
 
     @Override
@@ -1453,8 +1456,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
           childChanged = true;
         }
       }
-
-      String directory = mavenProject.getDirectory();
 
       int oldSize = myChildren.size();
 

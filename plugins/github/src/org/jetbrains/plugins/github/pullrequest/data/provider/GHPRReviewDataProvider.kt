@@ -43,9 +43,6 @@ interface GHPRReviewDataProvider {
     : CompletableFuture<GHPullRequestPendingReview>
 
   @RequiresEdt
-  fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<String>
-
-  @RequiresEdt
   fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String>
 
   @RequiresEdt
@@ -53,9 +50,6 @@ interface GHPRReviewDataProvider {
 
   @RequiresEdt
   fun canComment(): Boolean
-
-  @RequiresEdt
-  fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
 
   @RequiresEdt
   fun addComment(progressIndicator: ProgressIndicator, reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int)

@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateParseException;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,9 +64,9 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       String fileName = FileTemplateUtil.mergeTemplate(myDefaultProperties, template.getFileName(), false);
       try {
         String[] strings = FileTemplateUtil.calculateAttributes(fileName, myDefaultProperties, false, project);
+        mustEnterName = false;
         if (strings.length == 0) {
           myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
-          mustEnterName = false;
         }
       }
       catch (ParseException e) {
@@ -76,7 +77,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     try {
       unsetAttributes = myTemplate.getUnsetAttributes(myDefaultProperties, project);
     }
-    catch (ParseException e) {
+    catch (FileTemplateParseException e) {
       showErrorDialog(e);
     }
 

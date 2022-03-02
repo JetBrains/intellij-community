@@ -32,6 +32,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XValueNode;
@@ -41,6 +42,8 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -575,30 +578,37 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       });
     }
 
-    return ReadAction.nonBlocking(() -> {
-      PsiElement res = null;
-      try {
-        res = getDescriptorEvaluation(context);
-      }
-      catch (NeedMarkException e) {
-        XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
-        if (markers != null) {
-          ValueMarkup existing = markers.getMarkup(value);
-          String name;
-          if (existing != null) {
-            name = existing.getText();
-          }
-          else {
-            name = e.getMarkName();
-            markers.markValue(value, new ValueMarkup(name, new JBColor(0, 0), null));
-          }
-          res = JavaPsiFacade.getElementFactory(myProject)
-            .createExpressionFromText(name + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
-                                      PositionUtil.getContextElement(context));
+    Promise<PsiElement> res;
+    try {
+      PsiElement result = ReadAction.nonBlocking(() -> getDescriptorEvaluation(context)).executeSynchronously();
+      res = Promises.resolvedPromise(result);
+    }
+    catch (Exception wrapper) {
+      if (!(wrapper.getCause() instanceof EvaluateException)) throw wrapper;
+      if (!(wrapper.getCause() instanceof NeedMarkException)) throw (EvaluateException) wrapper.getCause();
+      NeedMarkException e = (NeedMarkException) wrapper.getCause();
+
+      XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
+      if (markers != null) {
+        ValueMarkup existing = markers.getMarkup(value);
+        String markName;
+        Promise<Object> promise;
+        if (existing != null) {
+          markName = existing.getText();
+          promise = Promises.resolvedPromise();
         }
+        else {
+          markName = e.getMarkName();
+          promise = markers.markValueAsync(value, new ValueMarkup(markName, new JBColor(0, 0), null));
+        }
+        res = promise.then(__ -> ReadAction.nonBlocking(() -> JavaPsiFacade.getElementFactory(myProject)
+          .createExpressionFromText(markName + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
+                                    PositionUtil.getContextElement(context))).executeSynchronously());
+      } else {
+        res = Promises.resolvedPromise(null);
       }
-      return CompletableFuture.completedFuture(res);
-    }).executeSynchronously();
+    }
+    return Promises.asCompletableFuture(res);
   }
 
   protected static class NeedMarkException extends EvaluateException {

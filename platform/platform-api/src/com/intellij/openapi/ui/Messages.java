@@ -116,13 +116,11 @@ public class Messages {
   public static final String OK_BUTTON = "OK";
 
   /** @deprecated Use {@link #getYesButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
   public static final String YES_BUTTON = "&Yes";
 
   /** @deprecated Use {@link #getNoButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
   public static final String NO_BUTTON = "&No";
 
   /** @deprecated Use {@link #getCancelButton()} instead */
@@ -400,8 +398,7 @@ public class Messages {
   }
 
   /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static int showYesNoDialog(@Nullable Project project,
                                     @DialogMessage String message,
                                     @NotNull @DialogTitle String title,

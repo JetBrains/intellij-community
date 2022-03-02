@@ -115,16 +115,16 @@ public abstract class ThreesideDiffChangeBase {
 
   @NotNull
   public TextDiffType getDiffType() {
-    return myType.getDiffType();
+    return DiffUtil.getDiffType(myType);
   }
 
   @NotNull
-  public MergeConflictType getType() {
+  public MergeConflictType getConflictType() {
     return myType;
   }
 
   public boolean isConflict() {
-    return getDiffType() == TextDiffType.CONFLICT;
+    return myType.getType() == MergeConflictType.Type.CONFLICT;
   }
 
   public boolean isChange(@NotNull Side side) {

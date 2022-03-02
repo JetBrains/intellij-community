@@ -18,7 +18,9 @@ object CallFromPublicInlineFactory : KotlinIntentionActionsFactory() {
         val element = diagnostic.psiElement.safeAs<KtExpression>() ?: return fixes
         val (containingDeclaration, containingDeclarationName) = element.containingDeclaration() ?: return fixes
         when (diagnostic.factory) {
-            Errors.NON_PUBLIC_CALL_FROM_PUBLIC_INLINE, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR -> {
+            Errors.NON_PUBLIC_CALL_FROM_PUBLIC_INLINE,
+            Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE.warningFactory,
+            Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE.errorFactory -> {
                 val (declaration, declarationName, declarationVisibility) = element.referenceDeclaration() ?: return fixes
                 fixes.add(ChangeVisibilityFix(containingDeclaration, containingDeclarationName, declarationVisibility))
                 fixes.add(ChangeVisibilityFix(declaration, declarationName, KtTokens.PUBLIC_KEYWORD))
@@ -26,7 +28,7 @@ object CallFromPublicInlineFactory : KotlinIntentionActionsFactory() {
                     fixes.add(RemoveModifierFix(containingDeclaration, KtTokens.INLINE_KEYWORD, isRedundant = false))
                 }
             }
-            Errors.SUPER_CALL_FROM_PUBLIC_INLINE -> {
+            Errors.SUPER_CALL_FROM_PUBLIC_INLINE.warningFactory, Errors.SUPER_CALL_FROM_PUBLIC_INLINE.errorFactory -> {
                 fixes.add(ChangeVisibilityFix(containingDeclaration, containingDeclarationName, KtTokens.INTERNAL_KEYWORD))
                 fixes.add(ChangeVisibilityFix(containingDeclaration, containingDeclarationName, KtTokens.PRIVATE_KEYWORD))
                 if (!containingDeclaration.hasReifiedTypeParameter()) {

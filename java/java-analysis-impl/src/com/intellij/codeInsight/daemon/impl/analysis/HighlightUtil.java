@@ -483,7 +483,12 @@ public final class HighlightUtil {
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) {
         String message = JavaErrorBundle.message("lvti.no.initializer");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        if (info != null) {
+          HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
+        }
+        return info;
       }
       if (initializer instanceof PsiFunctionalExpression) {
         boolean lambda = initializer instanceof PsiLambdaExpression;
@@ -500,8 +505,13 @@ public final class HighlightUtil {
       if (PsiType.NULL.equals(lType) && SyntaxTraverser.psiTraverser(initializer)
                                           .filter(PsiLiteralExpression.class)
                                           .find(l -> PsiType.NULL.equals(l.getType())) != null) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
-          .range(typeElement).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
+            .range(typeElement).create();
+        if (info != null) {
+          HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
+        }
+        return info;
       }
       if (PsiType.VOID.equals(lType)) {
         String message = JavaErrorBundle.message("lvti.void");
@@ -557,7 +567,9 @@ public final class HighlightUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapExpressionFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapWithAdapterFix(lType, expression));
       HighlightFixUtil.registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
-      HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
+      if (!(expression.getParent() instanceof PsiConditionalExpression && PsiType.VOID.equals(lType))) {
+        HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
+      }
     }
     ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;
@@ -1601,7 +1613,7 @@ public final class HighlightUtil {
             .message("bad.type.in.switch.expression", expressionType.getCanonicalText(), switchExpressionType.getCanonicalText());
           HighlightInfo info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
-          registerTypeFixes(info, PsiUtil.skipParenthesizedExprUp(switchExpression.getParent()), expressionType);
+          registerChangeTypeFix(info, switchExpression, expressionType);
           infos.add(info);
         }
       }
@@ -1617,21 +1629,22 @@ public final class HighlightUtil {
     return infos;
   }
 
-  private static void registerTypeFixes(@Nullable HighlightInfo info,
-                                        @Nullable PsiElement element,
-                                        @NotNull PsiType expressionType) {
+  static void registerChangeTypeFix(@Nullable HighlightInfo info,
+                                    @NotNull PsiExpression expression,
+                                    @NotNull PsiType expectedType) {
     if (info == null) return;
-    if (element instanceof PsiReturnStatement) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false, PsiLambdaExpression.class);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiReturnStatement) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false, PsiLambdaExpression.class);
       if (method != null) {
-        registerReturnTypeFixes(info, method, expressionType);
+        registerReturnTypeFixes(info, method, expectedType);
       }
     }
-    else if (element instanceof PsiLocalVariable) {
-      HighlightFixUtil.registerChangeVariableTypeFixes((PsiLocalVariable)element, expressionType, null, info);
+    else if (parent instanceof PsiLocalVariable) {
+      HighlightFixUtil.registerChangeVariableTypeFixes((PsiLocalVariable)parent, expectedType, null, info);
     }
-    else if (element instanceof PsiAssignmentExpression) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(((PsiAssignmentExpression)element).getLExpression(), expressionType, null, info);
+    else if (parent instanceof PsiAssignmentExpression) {
+      HighlightFixUtil.registerChangeVariableTypeFixes(((PsiAssignmentExpression)parent).getLExpression(), expectedType, null, info);
     }
   }
 
@@ -3400,7 +3413,9 @@ public final class HighlightUtil {
                                                         @NotNull HighlightingFeature feature,
                                                         @NotNull QuickFixActionRegistrar registrar) {
     if (feature.isAvailable(element)) return;
-    registrar.register(getFixFactory().createIncreaseLanguageLevelFix(getApplicableLevel(element.getContainingFile(), feature)));
+    LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
+    registrar.register(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel));
+    registrar.register(getFixFactory().createUpgradeSdkFor(applicableLevel));
     registrar.register(getFixFactory().createShowModulePropertiesFix(element));
   }
 

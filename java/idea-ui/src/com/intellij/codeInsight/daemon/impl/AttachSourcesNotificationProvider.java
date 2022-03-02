@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +46,7 @@ import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,10 +86,10 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
     VirtualFile sourceFile = JavaEditorFileSwapper.findSourceFile(project, file);
     if (sourceFile == null) {
       List<LibraryOrderEntry> libraries = findLibraryEntriesForFile(file, project);
-      ArrayList<AttachSourcesProvider.AttachSourcesAction> actions = libraries != null ?
-                                                                     collectActions(libraries,
-                                                                                    PsiManager.getInstance(project).findFile(file)) :
-                                                                     null;
+      List<AttachSourcesProvider.AttachSourcesAction> actions = libraries != null ?
+                                                                collectActions(libraries,
+                                                                               PsiManager.getInstance(project).findFile(file)) :
+                                                                null;
 
       boolean sourceFileIsInSameJar = sourceFileIsInSameJar(file);
 
@@ -146,8 +148,8 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
       .text(getTextWithClassFileInfo(file));
   }
 
-  private static @NotNull ArrayList<AttachSourcesProvider.AttachSourcesAction> collectActions(@NotNull List<LibraryOrderEntry> libraries,
-                                                                                              @Nullable PsiFile classFile) {
+  private static @NotNull List<AttachSourcesProvider.AttachSourcesAction> collectActions(@NotNull List<LibraryOrderEntry> libraries,
+                                                                                         @Nullable PsiFile classFile) {
     ArrayList<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>();
 
     boolean hasNonLightAction = false;
@@ -173,7 +175,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
   }
 
   private static @NotNull @NlsContexts.Label String getTextWithClassFileInfo(@NotNull VirtualFile file) {
-    StringBuilder info = new StringBuilder(JavaUiBundle.message("class.file.decompiled.text"));
+    @Nls StringBuilder info = new StringBuilder(JavaUiBundle.message("class.file.decompiled.text"));
 
     try {
       byte[] data = file.contentsToByteArray(false);
@@ -183,29 +185,27 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
             int minor = stream.readUnsignedShort();
             int major = stream.readUnsignedShort();
             info.append(", ")
-              .append(JavaUiBundle.message("class.file.decompiled.bytecode.version.text"))
-              .append(": ")
-              .append(major)
-              .append('.')
-              .append(minor);
+              .append(JavaUiBundle.message("class.file.decompiled.bytecode.version.text", major, minor));
 
             JavaSdkVersion sdkVersion = ClsParsingUtil.getJdkVersionByBytecode(major);
             if (sdkVersion != null) {
-              info.append(" (Java ");
-              info.append(sdkVersion.getDescription());
-              if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) && ClsParsingUtil.isPreviewLevel(minor)) {
-                info.append("-preview");
-              }
-              info.append(')');
+              info.append(" ")
+                .append(JavaUiBundle.message("class.file.decompiled.sdk.version.text",
+                                             getSdkDescription(sdkVersion, ClsParsingUtil.isPreviewLevel(minor))));
             }
           }
         }
       }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
 
-    return info.toString(); //NON-NLS
+    return info.toString();
+  }
+
+  private static @NlsSafe @NotNull String getSdkDescription(@NotNull JavaSdkVersion sdkVersion,
+                                                            boolean isPreview) {
+    return sdkVersion.getDescription() +
+           (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) && isPreview ? "-preview" : "");
   }
 
   private static @Nullable List<LibraryOrderEntry> findLibraryEntriesForFile(@NotNull VirtualFile file,

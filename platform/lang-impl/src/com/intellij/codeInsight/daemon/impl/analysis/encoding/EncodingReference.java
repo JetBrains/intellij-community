@@ -40,7 +40,7 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
   private final String myCharsetName;
   private final TextRange myRangeInElement;
 
-  public EncodingReference(PsiElement element, final String charsetName, final TextRange rangeInElement) {
+  public EncodingReference(PsiElement element, String charsetName, TextRange rangeInElement) {
     myElement = element;
     myCharsetName = charsetName;
     myRangeInElement = rangeInElement;

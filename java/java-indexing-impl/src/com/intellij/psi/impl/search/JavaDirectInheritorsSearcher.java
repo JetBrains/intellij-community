@@ -176,7 +176,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
     if (size > 100) {
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(collection), ProgressIndicatorProvider.getGlobalProgressIndicator(), processor);
-    } else {
+    }
+    else {
       ContainerUtil.process(collection, processor);
     }
   }

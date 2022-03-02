@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.perf.suite.StatsScopeConfig
 import org.jetbrains.kotlin.idea.perf.suite.suite
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
@@ -126,6 +126,98 @@ open class PerformanceStressTest : UsefulTestCase() {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    fun testBaseClassAndLotsOfSubClasses() {
+        // there is a base class with several open functions
+        // and lots of subclasses of it
+        // KTIJ-21027
+
+        suiteWithConfig("Base class and lots of subclasses project", "ktij-21027 project") {
+            app {
+                warmUpProject()
+
+                project {
+                    descriptor {
+                        name("ktij-21027")
+
+                        val baseClassFunctionNames = (0..10).map { "foo$it" }
+
+                        module {
+                            kotlinStandardLibrary()
+
+                            src("src/main/java/")
+
+                            kotlinFile("BaseClass") {
+                                pkg("pkg")
+
+                                topClass("BaseClass") {
+                                    openClass()
+
+                                    for (fnName in baseClassFunctionNames) {
+                                        function(fnName) {
+                                            openFunction()
+                                            returnType("String")
+                                            body("TODO()")
+                                        }
+                                    }
+                                }
+                            }
+
+                            for (classIndex in 0..5) {
+                                val superClassName = "SomeClass$classIndex"
+                                kotlinFile(superClassName) {
+                                    pkg("pkg")
+
+                                    topClass(superClassName) {
+                                        openClass()
+                                        superClass("BaseClass")
+
+                                        for (fnName in baseClassFunctionNames) {
+                                            function(fnName) {
+                                                overrideFunction()
+                                                returnType("String")
+                                                body("TODO()")
+                                            }
+                                        }
+                                    }
+                                }
+
+                                for (subclassIndex in 0..10) {
+                                    val subClassName = "SubClass${classIndex}0${subclassIndex}"
+                                    kotlinFile(subClassName) {
+                                        pkg("pkg")
+
+                                        topClass(subClassName) {
+                                            superClass(superClassName)
+
+                                            for (fnName in baseClassFunctionNames) {
+                                                function(fnName) {
+                                                    overrideFunction()
+                                                    returnType("String")
+                                                    body("TODO()")
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    profile(DefaultProfile)
+
+                    fixture("src/main/java/pkg/BaseClass.kt").use { fixture ->
+                        with(config) {
+                            warmup = 8
+                            iterations = 15
+                        }
+
+                        measureHighlight(fixture)
                     }
                 }
             }

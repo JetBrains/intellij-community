@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBusConnection;
@@ -21,13 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-class CtxToolWindows {
+final class CtxToolWindows {
   private static final Logger LOG = Logger.getInstance(CtxToolWindows.class);
   private static MessageBusConnection ourConnection = null;
   private static final WeakList<MessageBusConnection> ourProjConnections = new WeakList<>();
 
   static void initialize() {
-    for (Project project : ProjectUtil.getOpenProjects()) {
+    for (Project project : ProjectUtilCore.getOpenProjects()) {
       subscribeToolWindowTopic(project);
     }
 
@@ -62,11 +63,9 @@ class CtxToolWindows {
   }
 
   private static void forEachToolWindow(@NotNull Project project, Consumer<ToolWindow> func) {
-    ToolWindowManager twm = ToolWindowManager.getInstance(project);
-    if (twm == null) return;
-    final String[] ids = twm.getToolWindowIds();
-    for (String id: ids) {
-      func.accept(twm.getToolWindow(id));
+    ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
+    for (ToolWindow window : toolWindowManager.getToolWindows()) {
+      func.accept(window);
     }
   }
 
@@ -106,7 +105,7 @@ class CtxToolWindows {
   }
 
   static void reloadAllActions() {
-    for (Project p : ProjectUtil.getOpenProjects()) {
+    for (Project p : ProjectUtilCore.getOpenProjects()) {
       if (p.isDisposed()) {
         continue;
       }

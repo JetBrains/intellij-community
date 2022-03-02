@@ -69,10 +69,10 @@ jobs:
     strategy:
       matrix:
         python-platform: ["Linux", "Windows", "Darwin"]
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     env:
-      PYRIGHT_VERSION: 1.1.192 # Must match pyright_test.py.
+      PYRIGHT_VERSION: 1.1.218 # Must match pyright_test.py.
     steps:
       - uses: actions/checkout@v2
       - uses: jakebailey/pyright-action@v1
@@ -94,11 +94,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # Temporarily disable "macos-latest", since Python 3.10.1 is not available.
-        # os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        os: ["ubuntu-latest", "windows-latest"]
-        # Temporarily hard-coded 3.10.1 due to stubtest incompatibilities.
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10.1"]
+        # macos-11 does not have tcl/tk installed, needed for stubtesting tkinter
+        os: ["ubuntu-latest", "windows-latest", "macos-10.15"]
+        # Python 3.9 and 3.10 temporarily pinned due to incompatibilities
+        # between micro versions.
+        python-version: ["3.6", "3.7", "3.8", "3.9.10", "3.10.2"]
       fail-fast: false
 
     steps:
@@ -132,6 +132,11 @@ jobs:
           STUBS=$(git diff --name-only origin/${{ github.base_ref }} HEAD | egrep ^stubs/ | cut -d "/" -f 2 | sort -u | (while read stub; do [ -d stubs/$stub ] && echo $stub || true; done))
           if test -n "$STUBS"; then
             echo "Testing $STUBS..."
+            APT_PACKAGES=$(python tests/get_apt_packages.py $STUBS)
+            if test -n "$APT_PACKAGES"; then
+              echo "Installing apt packages: $APT_PACKAGES"
+              sudo apt install -y $APT_PACKAGES
+            fi
             python tests/stubtest_third_party.py $STUBS
           else
             echo "Nothing to test"

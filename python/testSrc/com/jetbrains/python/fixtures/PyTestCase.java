@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -39,7 +40,9 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
@@ -234,6 +237,13 @@ public abstract class PyTestCase extends UsefulTestCase {
         modificator.commitChanges();
       });
     }
+  }
+
+  protected void dumpSdkRoots() {
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    final String[] roots = sdk.getRootProvider().getUrls(OrderRootType.CLASSES);
+    System.out.println(StringUtil.join(roots, "\n"));
   }
 
   protected String getTestDataPath() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.Pass;
@@ -40,7 +40,6 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.siyeh.ig.psiutils.ClassUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,8 +136,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   /**
    * @deprecated use {@link #HighlightVisitorImpl()} and {@link #getResolveHelper(Project)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected HighlightVisitorImpl(@NotNull PsiResolveHelper psiResolveHelper) {
   }
 
@@ -167,6 +165,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
+    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(file.getProject());
+    if (highlightingLevelManager.runEssentialHighlightingOnly(file)) {
+      return false;
+    }
+
     // both PsiJavaFile and PsiCodeFragment must match
     return file instanceof PsiImportHolder && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
   }
@@ -1192,7 +1195,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             place = ref;
           }
         }
-        if (place != null && PsiTreeUtil.isAncestor(aClass, place, false) && aClass.hasTypeParameters()) {
+        if (place != null && 
+            PsiTreeUtil.isAncestor(aClass, place, false) && 
+            aClass.hasTypeParameters() && 
+            !PsiUtil.isInsideJavadocComment(place)) {
           myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(ref, place, (PsiClass)resolved));
         }
       }
@@ -1780,20 +1786,39 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitConditionalExpression(PsiConditionalExpression expression) {
     super.visitConditionalExpression(expression);
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && PsiPolyExpressionUtil.isPolyExpression(expression)) {
-      PsiExpression thenExpression = expression.getThenExpression();
-      PsiExpression elseExpression = expression.getElseExpression();
-      if (thenExpression != null && elseExpression != null) {
-        PsiType conditionalType = expression.getType();
-        if (conditionalType != null) {
-          PsiExpression[] sides = {thenExpression, elseExpression};
-          for (PsiExpression side : sides) {
-            PsiType sideType = side.getType();
-            if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
-              myHolder.add(HighlightUtil.checkAssignability(conditionalType, sideType, side, side));
+    if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || !PsiPolyExpressionUtil.isPolyExpression(expression)) return;
+    PsiExpression thenExpression = expression.getThenExpression();
+    PsiExpression elseExpression = expression.getElseExpression();
+    if (thenExpression == null || elseExpression == null) return;
+    PsiType conditionalType = expression.getType();
+    if (conditionalType == null) return;
+    PsiExpression[] sides = {thenExpression, elseExpression};
+    PsiType expectedType = null;
+    boolean isExpectedTypeComputed = false;
+    for (int i = 0; i < sides.length; i++) {
+      PsiExpression side = sides[i];
+      PsiExpression otherSide = i == 0 ? sides[1] : sides[0];
+      PsiType sideType = side.getType();
+      if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
+        HighlightInfo info = HighlightUtil.checkAssignability(conditionalType, sideType, side, side);
+        if (info == null) continue;
+        if (!TypeConversionUtil.isVoidType(sideType)) {
+          if (TypeConversionUtil.isVoidType(otherSide.getType())) {
+            HighlightUtil.registerChangeTypeFix(info, expression, sideType);
+          }
+          else {
+            if (!isExpectedTypeComputed) {
+              PsiElementFactory factory = PsiElementFactory.getInstance(expression.getProject());
+              PsiExpression expressionCopy = factory.createExpressionFromText(expression.getText(), expression);
+              expectedType = expressionCopy.getType();
+              isExpectedTypeComputed = true;
+            }
+            if (expectedType != null) {
+              HighlightUtil.registerChangeTypeFix(info, expression, expectedType);
             }
           }
         }
+        myHolder.add(info);
       }
     }
   }

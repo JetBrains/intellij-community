@@ -38,4 +38,9 @@ class ExtraHTTPHeadersParserTest {
     multiKVMap.put("A", "B");
     assertEquals(multiKV,  ExtraHTTPHeadersParser.serialize(multiKVMap));
   }
+
+  @Test
+  void serializeEmpty() {
+    assertEquals("", ExtraHTTPHeadersParser.serialize(Collections.emptyMap()));
+  }
 }

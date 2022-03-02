@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.actions.impl.NextChangeAction
@@ -30,7 +30,7 @@ import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
 internal class CombinedToggleExpandByDefaultAction(val textSettings: TextDiffSettingsHolder.TextDiffSettings,
-                                                   val foldingModels: List<FoldingModelSupport>) :
+                                                   val foldingModels: () -> List<FoldingModelSupport>) :
   ToggleActionButton(message("collapse.unchanged.fragments"), null), DumbAware {
 
   override fun isVisible(): Boolean = textSettings.contextRange != -1
@@ -45,7 +45,7 @@ internal class CombinedToggleExpandByDefaultAction(val textSettings: TextDiffSet
   }
 
   private fun expandAll(expand: Boolean) {
-    foldingModels.forEach { it.expandAll(expand) }
+    foldingModels().forEach { it.expandAll(expand) }
   }
 }
 
@@ -56,8 +56,8 @@ internal class CombinedHighlightPolicySettingAction(settings: TextDiffSettingsHo
   TextDiffViewerUtil.HighlightPolicySettingAction(settings, *SmartTextDiffProvider.HIGHLIGHT_POLICIES)
 
 internal class CombinedEditorSettingsAction(private val settings: TextDiffSettingsHolder.TextDiffSettings,
-                                            private val foldingModels: List<FoldingModelSupport>,
-                                            editors: List<Editor>) : SetEditorSettingsAction(settings, editors) {
+                                            private val foldingModels: () -> List<FoldingModelSupport>,
+                                            editors: () -> List<Editor>) : SetEditorSettingsAction(settings, editors) {
   init {
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }
@@ -94,7 +94,7 @@ internal class CombinedEditorSettingsAction(private val settings: TextDiffSettin
   }
 }
 
-internal class CombinedPrevNextFileAction(private val block: CombinedDiffBlock,
+internal class CombinedPrevNextFileAction(private val blockId: CombinedPathBlockId,
                                           private val toolbar: Component?,
                                           private val next: Boolean) : ToolbarLabelAction(), RightAlignedToolbarAction {
   private val text = message(if (next) "action.Combined.Diff.NextChange.text" else "action.Combined.Diff.PrevChange.text")
@@ -113,16 +113,13 @@ internal class CombinedPrevNextFileAction(private val block: CombinedDiffBlock,
       return
     }
 
-    val blocks = combinedDiffViewer.diffBlocks
-
-    val newPosition = if (next) blocks.nextBlockPosition() else blocks.prevBlockPosition()
+    val newPosition = if (next) combinedDiffViewer.nextBlockPosition() else combinedDiffViewer.prevBlockPosition()
     e.presentation.isVisible = newPosition != -1
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val combinedDiffViewer = e.getData(COMBINED_DIFF_VIEWER) ?: return
-    val blocks = combinedDiffViewer.diffBlocks
-    val newPosition = if (next) blocks.nextBlockPosition() else blocks.prevBlockPosition()
+    val newPosition = if (next) combinedDiffViewer.nextBlockPosition() else combinedDiffViewer.prevBlockPosition()
     if (newPosition != -1) {
       combinedDiffViewer.selectDiffBlock(newPosition, ScrollPolicy.DIFF_BLOCK)
     }
@@ -138,19 +135,17 @@ internal class CombinedPrevNextFileAction(private val block: CombinedDiffBlock,
     }
   }
 
-  private fun List<CombinedDiffBlock>.prevBlockPosition(): Int {
+  private fun CombinedDiffViewer.prevBlockPosition(): Int {
     val curPosition = curBlockPosition()
     return if (curPosition != -1 && curPosition >= 1) curPosition - 1 else -1
   }
 
-  private fun List<CombinedDiffBlock>.nextBlockPosition(): Int {
+  private fun CombinedDiffViewer.nextBlockPosition(): Int {
     val curPosition = curBlockPosition()
-    return if (curPosition != -1 && curPosition < size - 1) curPosition + 1 else -1
+    return if (curPosition != -1 && curPosition < diffBlocks.size - 1) curPosition + 1 else -1
   }
 
-  private fun List<CombinedDiffBlock>.curBlockPosition(): Int {
-    return indexOfFirst { it.content.path == block.content.path && it.content.fileStatus == block.content.fileStatus }
-  }
+  private fun CombinedDiffViewer.curBlockPosition(): Int = diffBlocksPositions[blockId] ?: -1
 
   override fun isCopyable(): Boolean = true
 

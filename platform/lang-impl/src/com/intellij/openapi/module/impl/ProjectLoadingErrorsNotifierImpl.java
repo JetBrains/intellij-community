@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
@@ -75,16 +75,18 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
       ConfigurationErrorType type = entry.getKey();
       String invalidElements = type.getErrorText(descriptions.size(), descriptions.iterator().next().getElementName());
       String errorText = ProjectBundle.message("error.message.configuration.cannot.load", invalidElements);
-      new Notification(NotificationGroup.createIdWithTitle("Project Loading Error", ProjectBundle.message("notification.group.project.loading.error")),
+      NotificationGroupManager.getInstance().getNotificationGroup("Project Loading Error").createNotification(
                        ProjectBundle.message("notification.title.error.loading.project"),
                        errorText,
                        NotificationType.ERROR)
-        .setListener((notification, event) -> {
-          List<ConfigurationErrorDescription> validDescriptions = ContainerUtil.findAll(descriptions, ConfigurationErrorDescription::isValid);
-          if (RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), type, invalidElements, validDescriptions)) {
-            notification.expire();
-          }
-        })
+        .addAction(
+          NotificationAction.create(ProjectBundle.message("error.message.configuration.cannot.load.button"), (event, notification) -> {
+            List<ConfigurationErrorDescription> validDescriptions =
+              ContainerUtil.findAll(descriptions, ConfigurationErrorDescription::isValid);
+            if (RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), type, invalidElements, validDescriptions)) {
+              notification.expire();
+            }
+          }))
         .notify(myProject);
     }
   }

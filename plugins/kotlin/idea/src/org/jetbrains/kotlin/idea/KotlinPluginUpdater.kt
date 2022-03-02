@@ -239,6 +239,7 @@ class KotlinPluginUpdater : Disposable {
     private fun notifyPluginUpdateAvailable(update: PluginUpdateStatus.Update) {
         notificationGroup
             .createNotification(KotlinBundle.message("plugin.updater.notification.title"), KotlinBundle.message("plugin.updater.notification.message", update.pluginDescriptor.version), NotificationType.INFORMATION)
+            .setSuggestionType(true)
             .setListener(NotificationListener { notification, _ ->
                 notification.expire()
                 installPluginUpdate(update) {

@@ -1,13 +1,13 @@
 package de.plushnikov.intellij.plugin;
 
 import com.google.common.base.Objects;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -20,7 +20,7 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightCodeInsightTestCase {
 
-  private static final Logger LOG = Logger.getLogger(AbstractLombokParsingTestCase.class);
+  private static final Logger LOG = Logger.getInstance(AbstractLombokParsingTestCase.class);
 
   protected boolean shouldCompareAnnotations() {
     return !".*".equals(annotationToComparePattern());

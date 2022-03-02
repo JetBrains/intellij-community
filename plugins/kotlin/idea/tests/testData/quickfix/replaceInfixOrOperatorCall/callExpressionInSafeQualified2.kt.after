@@ -10,3 +10,4 @@ fun test(foo: Foo?) {
     foo // comment1
         ?. /* comment2 */ bar?.invoke()
 }
+/* IGNORE_FIR */

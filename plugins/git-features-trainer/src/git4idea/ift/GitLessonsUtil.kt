@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ift
 
 import com.intellij.dvcs.push.VcsPushAction
@@ -58,14 +58,14 @@ object GitLessonsUtil {
 
     // clear Git tool window to return it to default state (needed in case of restarting the lesson)
     task {
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: SearchTextField ->
+      triggerUI().component { ui: SearchTextField ->
         if (UIUtil.getParentOfType(MainFrame::class.java, ui) != null) {
           ui.reset()
           true
         }
         else false
       }
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: VcsLogGraphTable ->
+      triggerUI().component { ui: VcsLogGraphTable ->
         ui.jumpToRow(0, true)
         ui.selectionModel.clearSelection()
         true
@@ -77,7 +77,10 @@ object GitLessonsUtil {
                                                      sequenceLength: Int = 1,
                                                      highlightInside: Boolean = true,
                                                      usePulsation: Boolean = false) {
-    triggerByPartOfComponent(highlightInside = highlightInside, usePulsation = usePulsation) { ui: VcsLogGraphTable ->
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart { ui: VcsLogGraphTable ->
       ui.getRectForSubsequentCommits(startCommitRow, sequenceLength)
     }
   }
@@ -86,7 +89,10 @@ object GitLessonsUtil {
                                                      highlightInside: Boolean = true,
                                                      usePulsation: Boolean = false,
                                                      startCommitPredicate: (VcsCommitMetadata) -> Boolean) {
-    triggerByPartOfComponent(highlightInside = highlightInside, usePulsation = usePulsation) { ui: VcsLogGraphTable ->
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart { ui: VcsLogGraphTable ->
       val rowIndexes = (0 until ui.rowCount).toList().toIntArray()
       val startCommitRow = ui.model.getCommitMetadata(rowIndexes).indexOfFirst(startCommitPredicate)
       if (startCommitRow >= 0) {
@@ -286,9 +292,9 @@ object GitLessonsUtil {
                                                            @Nls suggestionWithIcon: String,
                                                            @Nls suggestionWithoutIcon: String,
                                                            actionClass: KClass<T>) {
-    if (UISettings.instance.run { showNavigationBar || showMainToolbar }) {
+    if (UISettings.getInstance().run { showNavigationBar || showMainToolbar }) {
       text("$introduction $suggestionWithIcon")
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
         actionClass.isInstance(ui.action)
       }
     }
@@ -296,6 +302,6 @@ object GitLessonsUtil {
   }
 
   fun loadIllustration(illustrationName: String): Icon {
-    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java)
+    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java.classLoader)
   }
 }

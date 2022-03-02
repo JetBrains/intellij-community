@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -307,7 +307,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
-     if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
+    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);

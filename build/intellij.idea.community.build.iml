@@ -11,10 +11,15 @@
       <excludeFolder url="file://$MODULE_DIR$/protobuf/cache" />
       <excludeFolder url="file://$MODULE_DIR$/protobuf/bin" />
       <excludeFolder url="file://$MODULE_DIR$/download" />
+      <excludeFolder url="file://$MODULE_DIR$/jps-bootstrap-work" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" exported="" />
     <orderEntry type="library" scope="RUNTIME" name="test-discovery-plugin-base" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
   </component>
 </module>

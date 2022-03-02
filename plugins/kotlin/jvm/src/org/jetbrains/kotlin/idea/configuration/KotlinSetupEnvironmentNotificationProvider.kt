@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -16,47 +15,48 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import com.intellij.ui.EditorNotifications
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.versions.SuppressNotificationState
 import org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider
 import org.jetbrains.kotlin.idea.versions.createComponentActionLabel
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
+import java.util.function.Function
+import javax.swing.JComponent
 
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
-class KotlinSetupEnvironmentNotificationProvider(private val myProject: Project) : EditorNotifications.Provider<EditorNotificationPanel>() {
-    override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-    override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
-        if (!FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)) {
-            return null
+class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+        if (!file.isKotlinFileType()) {
+            return CONST_NULL
         }
 
-        val psiFile = PsiManager.getInstance(myProject).findFile(file) as? KtFile ?: return null
+        val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return CONST_NULL
         if (psiFile.language !== KotlinLanguage.INSTANCE) {
-            return null
+            return CONST_NULL
         }
 
-        val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return null
+        val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return CONST_NULL
         if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file)) {
-            return null
+            return CONST_NULL
         }
 
         if (ModuleRootManager.getInstance(module).sdk == null &&
             TargetPlatformDetector.getPlatform(psiFile).isJvm()
         ) {
-            return createSetupSdkPanel(myProject, psiFile)
+            return createSetupSdkPanel(project, psiFile)
         }
 
         val configurationChecker = KotlinConfigurationCheckerService.getInstance(module.project)
@@ -66,49 +66,49 @@ class KotlinSetupEnvironmentNotificationProvider(private val myProject: Project)
             !hasAnyKotlinRuntimeInScope(module) &&
             UnsupportedAbiVersionNotificationPanelProvider.collectBadRoots(module).isEmpty()
         ) {
-            return createKotlinNotConfiguredPanel(module)
+            return createKotlinNotConfiguredPanel(module, getAbleToRunConfigurators(module).toList())
         }
 
-        return null
+        return CONST_NULL
     }
 
     companion object {
-        private val KEY = Key.create<EditorNotificationPanel>("Setup SDK")
+        private fun createSetupSdkPanel(project: Project, file: PsiFile): Function<in FileEditor, out JComponent?> =
+            Function { fileEditor: FileEditor ->
+                EditorNotificationPanel(fileEditor).apply {
+                    text = JavaUiBundle.message("project.sdk.not.defined")
+                    createActionLabel(ProjectBundle.message("project.sdk.setup")) {
+                        ProjectSettingsService.getInstance(project).chooseAndSetSdk() ?: return@createActionLabel
 
-        private fun createSetupSdkPanel(project: Project, file: PsiFile): EditorNotificationPanel {
-            return EditorNotificationPanel().apply {
-                text = JavaUiBundle.message("project.sdk.not.defined")
-                createActionLabel(ProjectBundle.message("project.sdk.setup")) {
-                    ProjectSettingsService.getInstance(project).chooseAndSetSdk() ?: return@createActionLabel
-
-                    runWriteAction {
-                        val module = ModuleUtilCore.findModuleForPsiElement(file)
-                        if (module != null) {
-                            ModuleRootModificationUtil.setSdkInherited(module)
+                        runWriteAction {
+                            val module = ModuleUtilCore.findModuleForPsiElement(file)
+                            if (module != null) {
+                                ModuleRootModificationUtil.setSdkInherited(module)
+                            }
                         }
                     }
                 }
             }
-        }
 
-        private fun createKotlinNotConfiguredPanel(module: Module): EditorNotificationPanel {
-            return EditorNotificationPanel().apply {
-                setText(KotlinJvmBundle.message("kotlin.not.configured"))
-                val configurators = getAbleToRunConfigurators(module).toList()
+        private fun createKotlinNotConfiguredPanel(module: Module, configurators: List<KotlinProjectConfigurator>): Function<in FileEditor, out JComponent?> =
+            Function { fileEditor: FileEditor ->
+                EditorNotificationPanel(fileEditor).apply {
+                text = KotlinJvmBundle.message("kotlin.not.configured")
                 if (configurators.isNotEmpty()) {
+                    val project = module.project
                     createComponentActionLabel(KotlinJvmBundle.message("action.text.configure")) { label ->
                         val singleConfigurator = configurators.singleOrNull()
                         if (singleConfigurator != null) {
-                            singleConfigurator.apply(module.project)
+                            singleConfigurator.apply(project)
                         } else {
-                            val configuratorsPopup = createConfiguratorsPopup(module.project, configurators)
+                            val configuratorsPopup = createConfiguratorsPopup(project, configurators)
                             configuratorsPopup.showUnderneathOf(label)
                         }
                     }
 
                     createComponentActionLabel(KotlinJvmBundle.message("action.text.ignore")) {
                         SuppressNotificationState.suppressKotlinNotConfigured(module)
-                        EditorNotifications.getInstance(module.project).updateAllNotifications()
+                        EditorNotifications.getInstance(project).updateAllNotifications()
                     }
                 }
             }

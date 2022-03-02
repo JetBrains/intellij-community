@@ -6,7 +6,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -56,8 +55,7 @@ public interface FilePath {
    * @deprecated to remove in IDEA 16.
    * Use {@link com.intellij.openapi.fileEditor.FileDocumentManager#getDocument(VirtualFile)} directly.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   Document getDocument();
 
@@ -80,16 +78,14 @@ public interface FilePath {
    * @deprecated to remove in IDEA 16.
    * Use {@link com.intellij.openapi.vfs.VfsUtil#findFileByIoFile} or {@link com.intellij.openapi.vfs.LocalFileSystem#findFileByPath} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void refresh();
 
   /**
    * @deprecated to remove in IDEA 16.
    * Use {@link com.intellij.openapi.vfs.LocalFileSystem#refreshAndFindFileByPath} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void hardRefresh();
 
   /**

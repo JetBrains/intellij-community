@@ -64,7 +64,6 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   }
 
-
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     if (!isActive) {
       return super.createCustomComponent(action, presentation)

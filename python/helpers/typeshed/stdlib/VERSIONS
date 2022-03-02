@@ -62,6 +62,14 @@ array: 2.7-
 ast: 2.7-
 asynchat: 2.7-
 asyncio: 3.4-
+asyncio.mixins: 3.10-
+asyncio.compat: 3.4-3.6
+asyncio.exceptions: 3.8-
+asyncio.format_helpers: 3.7-
+asyncio.runners: 3.7-
+asyncio.staggered: 3.8-
+asyncio.threads: 3.9-
+asyncio.trsock: 3.8-
 asyncore: 2.7-
 atexit: 2.7-
 audioop: 2.7-
@@ -262,6 +270,7 @@ typing_extensions: 2.7-
 unicodedata: 2.7-
 unittest: 2.7-
 unittest._log: 3.9-
+unittest.async_case: 3.8-
 urllib: 2.7-
 uu: 2.7-
 uuid: 2.7-

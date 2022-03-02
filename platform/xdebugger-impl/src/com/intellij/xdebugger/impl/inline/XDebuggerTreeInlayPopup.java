@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.actionSystem.*;
@@ -29,8 +29,8 @@ import java.util.Collections;
 
 public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
   private final @NotNull XSourcePosition myPresentationPosition;
-  private final @NotNull XValueNodeImpl myValueNode;
   private final @NotNull XDebugSession mySession;
+  private final @NotNull XValueNodeImpl myValueNode;
 
   private XDebuggerTreeInlayPopup(@NotNull DebuggerTreeCreator<D> creator,
                                   @NotNull Editor editor,
@@ -41,12 +41,12 @@ public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
                                   @NotNull XValueNodeImpl valueNode) {
     super(creator, editor, point, session.getProject(), hideRunnable);
     myPresentationPosition = presentationPosition;
-    myValueNode = valueNode;
     mySession = session;
+    myValueNode = valueNode;
   }
 
   @Override
-  protected DefaultActionGroup getToolbarActions() {
+  protected @NotNull DefaultActionGroup getToolbarActions() {
     DefaultActionGroup toolbarActions = super.getToolbarActions();
     if (Registry.is("debugger.watches.inline.enabled")) {
       AnAction watchAction = myValueNode instanceof InlineWatchNodeImpl

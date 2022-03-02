@@ -31,7 +31,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +41,7 @@ import org.jetbrains.idea.maven.server.MavenServerConnectorImpl;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.awt.*;
 import java.io.File;
@@ -103,12 +103,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     getMavenGeneralSettings().setAlwaysUpdateSnapshots(true);
 
+    MavenUtil.cleanAllRunnables();
+
     EdtTestUtil.runInEdtAndWait(() -> {
       restoreSettingsFile();
 
       try {
         WriteAction.run(this::setUpInWriteAction);
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         try {
           tearDown();
         }
@@ -135,6 +138,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
     Sdk wslSdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
     WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(wslSdk));
     assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
+  }
+
+  protected void waitForMavenUtilRunnablesComplete() {
+    PlatformTestUtil.waitWithEventsDispatching(() -> "Waiting for MavenUtils runnables completed" + MavenUtil.getUncompletedRunnables(),
+                                               () -> MavenUtil.noUncompletedRunnables(), 15);
   }
 
   @Override

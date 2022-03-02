@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
@@ -55,7 +55,7 @@ internal class SvgRenderer(val svgFileDir: Path) {
 
         for (name in arrayOf("checkBox", "radio", "gear.png", "gearPlain.png", "gearPlain.svg", "spinnerRight")) {
           val iconWrapper = when (name) {
-            "gear.png", "gearPlain.png", "gearPlain.svg" -> IconLoader.getIcon("/general/$name", SvgRenderer::class.java)
+            "gear.png", "gearPlain.png", "gearPlain.svg" -> IconLoader.getIcon("general/$name", SvgRenderer::class.java.classLoader)
             else -> LafIconLookup.findIcon(name)
           } ?: continue
 

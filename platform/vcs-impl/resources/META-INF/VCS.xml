@@ -47,7 +47,6 @@
     <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager"
                     overrides="true"/>
-    <projectService serviceImplementation="com.intellij.vcs.commit.CommitModeManager"/>
     <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
   </extensions>
 
