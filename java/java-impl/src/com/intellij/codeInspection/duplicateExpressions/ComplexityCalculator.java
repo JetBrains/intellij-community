@@ -120,6 +120,9 @@ class ComplexityCalculator {
       if (resolved instanceof PsiClass) {
         return QUALIFIER;
       }
+      if (resolved instanceof PsiPackage) {
+        return 0;
+      }
       int w = REFERENCE;
       if (PsiUtil.isJvmLocalVariable(resolved)) {
         w = IDENTIFIER;
