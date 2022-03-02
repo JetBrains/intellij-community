@@ -61,7 +61,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
       is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item
       is PsiElement -> element
       else -> return emptyMap()
-    }
+    }.takeIf { it.isValid } ?: return emptyMap()
 
     val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
 
