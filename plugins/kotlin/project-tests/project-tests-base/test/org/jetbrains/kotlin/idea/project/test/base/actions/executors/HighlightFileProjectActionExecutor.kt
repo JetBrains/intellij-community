@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
 import org.jetbrains.kotlin.idea.project.test.base.actions.reportMetricForAction
 import org.jetbrains.kotlin.idea.project.test.base.metrics.DefaultMetrics
 import org.jetbrains.kotlin.idea.project.test.base.metrics.MetricsCollector
-import org.jetbrains.kotlin.idea.testFramework.Fixture
-import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.openInEditor
 import org.jetbrains.kotlin.psi.KtFile
 
 object HighlightFileProjectActionExecutor : ProjectActionExecutor<List<HighlightInfo>, HighlightFileProjectActionExecutor.Context>() {
@@ -62,7 +62,7 @@ object HighlightFileProjectActionExecutor : ProjectActionExecutor<List<Highlight
     }
 
     private fun openFile(project: Project, action: ProjectAction): KtFile =
-        Fixture.openInEditor(project, action.filePath).psiFile as KtFile
+        openInEditor(project, action.filePath).psiFile as KtFile
 
     override fun tearDown(context: Context, data: ProjectActionExecutorData) {
         FileEditorManager.getInstance(data.project).closeFile(context.ktFile.virtualFile)

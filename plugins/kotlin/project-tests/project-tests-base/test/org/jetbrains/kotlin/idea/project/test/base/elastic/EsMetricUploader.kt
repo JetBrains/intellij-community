@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.project.test.base.elastic
 
 
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.perf.util.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.project.test.base.ProjectData
 import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
 import org.jetbrains.kotlin.idea.project.test.base.metrics.MetricsData

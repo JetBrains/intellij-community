@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.testFramework
 
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.nsToMs
 import org.jetbrains.kotlin.util.PerformanceCounter
 import java.io.BufferedReader
 import java.io.FileInputStream
@@ -242,13 +245,6 @@ class Stats(
                 buildTimestamp = simpleDateFormat.format(Date()),
                 metrics = emptyList()
             )
-        }
-
-        inline fun runAndMeasure(note: String, block: () -> Unit) {
-            val openProjectMillis = measureTimeMillis {
-                block()
-            }
-            logMessage { "$note took $openProjectMillis ms" }
         }
     }
 

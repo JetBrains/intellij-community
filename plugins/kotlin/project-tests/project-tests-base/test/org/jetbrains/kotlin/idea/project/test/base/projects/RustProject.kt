@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.project.test.base.ProjectData
 import org.jetbrains.kotlin.idea.project.test.base.actions.HighlightFileAction
 import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
 import org.jetbrains.kotlin.idea.project.test.base.perfTestProjectPath
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
 
 object RustProject {
     /*
@@ -15,9 +15,9 @@ object RustProject {
     */
     val project by lazy {
         ProjectData(
-            id = "intellijRustPlugin",
-            path = perfTestProjectPath("intellij-rust"),
-            openAction = ProjectOpenAction.GRADLE_PROJECT,
+          id = "intellijRustPlugin",
+          path = perfTestProjectPath("intellij-rust"),
+          openAction = ProjectOpenAction.GRADLE_PROJECT,
         )
     }
 

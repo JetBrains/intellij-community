@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.perf.suite
 
 import org.jetbrains.kotlin.idea.testFramework.Fixture
 import org.jetbrains.kotlin.idea.testFramework.Stats
-import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
 
 abstract class AbstractFixtureMeasurementScope<T>(
     protected val fixture: Fixture,

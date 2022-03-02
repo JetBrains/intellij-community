@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.OutputConfig
 import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
 
 class PerformanceProjectsStatNamesTest: PerformanceProjectsTest() {
 

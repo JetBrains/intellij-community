@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.idea.conversion.copy.ConvertJavaCopyPasteProcessor
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.testFramework.performanceTest
-import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
-import org.jetbrains.kotlin.idea.testFramework.dispatchAllInvocationEvents
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
+import org.jetbrains.kotlin.idea.performance.tests.utils.dispatchAllInvocationEvents
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File

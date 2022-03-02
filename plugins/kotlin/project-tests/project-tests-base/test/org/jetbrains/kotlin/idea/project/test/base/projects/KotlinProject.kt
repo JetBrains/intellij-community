@@ -5,13 +5,13 @@ import org.jetbrains.kotlin.idea.project.test.base.ProjectData
 import org.jetbrains.kotlin.idea.project.test.base.actions.HighlightFileAction
 import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
 import org.jetbrains.kotlin.idea.project.test.base.perfTestProjectPath
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
 
 object KotlinProject {
     val project = ProjectData(
-        id = "kotlin",
-        path = perfTestProjectPath("kotlin"),
-        openAction = ProjectOpenAction.GRADLE_PROJECT,
+      id = "kotlin",
+      path = perfTestProjectPath("kotlin"),
+      openAction = ProjectOpenAction.GRADLE_PROJECT,
     )
 
     val actions: List<ProjectAction> =
