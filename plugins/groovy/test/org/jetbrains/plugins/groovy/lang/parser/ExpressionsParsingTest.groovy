@@ -25,6 +25,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testarguments$cargs5() throws Throwable { doTest() }
 
+  void testarguments$cargs6() throws Throwable { doTest() }
+
   void testarithmetic$add1() throws Throwable { doTest() }
 
   void testarithmetic$add2() throws Throwable { doTest() }

@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.isApplicationExpression
+import org.jetbrains.plugins.groovy.lang.psi.util.isNewLine
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
@@ -196,7 +197,16 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     super.visitParenthesizedExpression(expression)
     val operand = expression.operand
     if (operand is GrCall && operand.isApplicationExpression()) {
-      holder.newAnnotation(HighlightSeverity.ERROR, "Omitting parentheses here is available since Groovy 3.0").create()
+      holder.newAnnotation(HighlightSeverity.ERROR, message("call.without.parentheses.are.supported.since.groovy.3")).range(operand).create()
+    }
+  }
+
+  override fun visitMethodCall(call: GrMethodCall) {
+    super.visitMethodCall(call)
+    val invoked = call.invokedExpression
+    val badNewline = invoked.firstChild?.nextSibling?.takeIf { it.isNewLine() }
+    if (badNewline != null) {
+      holder.newAnnotation(HighlightSeverity.ERROR, message("newlines.here.are.available.since.groovy.3")).range(badNewline).create()
     }
   }
 

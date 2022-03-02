@@ -1215,7 +1215,7 @@ tuple ::= '(' mb_nl unqualified_reference_expression (mb_nl ',' mb_nl unqualifie
 
 // region Applications
 expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
-private expression_or_application_inner ::= <<enableNlBeforeClosure expression>> application*
+private expression_or_application_inner ::= <<enableNlBeforeClosure expression>> (application mb_nl_inside_parentheses)*
 private application ::= <<parseApplication application_ref application_expression application_call application_index>>
 {
   extends = expression
