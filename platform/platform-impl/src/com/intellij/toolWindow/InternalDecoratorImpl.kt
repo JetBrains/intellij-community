@@ -398,7 +398,7 @@ class InternalDecoratorImpl internal constructor(
     }
     else if (divider != null) {
       // docked and floating windows don't have divider
-      divider!!.parent.remove(divider)
+      divider!!.parent?.remove(divider)
       divider = null
     }
 
