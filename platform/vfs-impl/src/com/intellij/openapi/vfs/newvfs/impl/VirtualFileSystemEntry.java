@@ -574,7 +574,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   @Override
-  public FileType getFileType() {
+  public final FileType getFileType() {
     CachedFileType cache = myFileType;
     FileType type = cache == null ? null : cache.getUpToDateOrNull();
     if (type == null) {
