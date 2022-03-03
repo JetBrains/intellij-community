@@ -4,10 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,8 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class DumpThreadsAction extends AnAction implements DumbAware {
-  private final NotificationGroup GROUP = new NotificationGroup("Dump Threads Group", NotificationDisplayType.BALLOON, false, null, null,
-                                                                null, PluginManagerCore.CORE_ID);
+  private final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Dump Threads Group");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

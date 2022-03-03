@@ -12,6 +12,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiMethodImpl;
@@ -34,9 +35,21 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Lattice:
+ *     UNKNOWN
+ *     |      \
+ * MUTABLE   MUST_NOT_MODIFY
+ *     |       |
+ *     |     UNMODIFIABLE_VIEW
+ *     |       |
+ *     |     UNMODIFIABLE
+ *     \      /
+ *     BOTTOM (null)
+ */
 public enum Mutability {
   /**
-   * Mutability is not known; probably value can be mutated
+   * Mutability is not known; probably value can be mutated; TOP
    */
   UNKNOWN("mutability.unknown", null),
   /**
@@ -64,6 +77,8 @@ public enum Mutability {
   public static final @NotNull String UNMODIFIABLE_VIEW_ANNOTATION = UNMODIFIABLE_VIEW.myAnnotation;
   private static final @NotNull CallMatcher STREAM_COLLECT = CallMatcher.instanceCall(
     CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
+  private static final @NotNull CallMatcher STREAM_TO_LIST = CallMatcher.instanceCall(
+    CommonClassNames.JAVA_UTIL_STREAM_STREAM, "toList").withLanguageLevelAtLeast(LanguageLevel.JDK_16);
   private static final @NotNull CallMatcher UNMODIFIABLE_COLLECTORS = CallMatcher.staticCall(
     CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toUnmodifiableList", "toUnmodifiableSet", "toUnmodifiableMap");
   private final @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String myResourceKey;
@@ -93,23 +108,28 @@ public enum Mutability {
   }
 
   @NotNull
-  public Mutability unite(Mutability other) {
+  public Mutability join(@NotNull Mutability other) {
     if (this == other) return this;
     if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
-    if (this == MUTABLE || other == MUTABLE) return MUTABLE;
+    if (this == MUTABLE || other == MUTABLE) return UNKNOWN;
     if (this == MUST_NOT_MODIFY || other == MUST_NOT_MODIFY) return MUST_NOT_MODIFY;
     if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
     return UNMODIFIABLE;
   }
 
-  @NotNull
-  public Mutability intersect(Mutability other) {
+  /**
+   * @param other mutability to meet
+   * @return resulting mutability; null if bottom
+   */
+  @Nullable
+  public Mutability meet(@NotNull Mutability other) {
     if (this == other) return this;
+    if (this == UNKNOWN) return other;
+    if (other == UNKNOWN) return this;
+    if (this == MUTABLE || other == MUTABLE) return null;
     if (this == UNMODIFIABLE || other == UNMODIFIABLE) return UNMODIFIABLE;
     if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
-    if (this == MUST_NOT_MODIFY || other == MUST_NOT_MODIFY) return MUST_NOT_MODIFY;
-    if (this == MUTABLE || other == MUTABLE) return MUTABLE;
-    return UNKNOWN;
+    return MUST_NOT_MODIFY;
   }
 
   @Nullable
@@ -187,12 +207,14 @@ public enum Mutability {
           if (STREAM_COLLECT.test(call)) {
             PsiExpression collector = call.getArgumentList().getExpressions()[0];
             newMutability = UNMODIFIABLE_COLLECTORS.matches(collector) ? UNMODIFIABLE : UNKNOWN;
+          } else if (STREAM_TO_LIST.test(call)) {
+            newMutability = UNMODIFIABLE;
           } else {
             PsiMethod method = call.resolveMethod();
             newMutability = method == null ? UNKNOWN : getMutability(method);
           }
         }
-        mutability = mutability.unite(newMutability);
+        mutability = mutability.join(newMutability);
         if (!mutability.isUnmodifiable()) break;
       }
       return mutability;

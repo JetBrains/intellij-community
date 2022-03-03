@@ -33,7 +33,7 @@ import java.util.*;
   name = "FileEditorProviderManager",
   storages = @Storage(value = "fileEditorProviderManager.xml", roamingType = RoamingType.DISABLED)
 )
-public final class FileEditorProviderManagerImpl extends FileEditorProviderManager
+public class FileEditorProviderManagerImpl extends FileEditorProviderManager
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
 
   private static final @NotNull Logger LOG = Logger.getInstance(FileEditorProviderManagerImpl.class);

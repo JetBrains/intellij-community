@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
@@ -31,7 +30,7 @@ class SearchConfigurableByNameHelper(name: String, val rootGroup: ConfigurableGr
 
   private fun processChildren(parent: Item): Configurable? {
     for (child in parent.configurable.configurables) {
-      if (SearchUtil.isAcceptable(child) && isMatched(child, parent)) {
+      if (isMatched(child, parent)) {
         return child
       }
 

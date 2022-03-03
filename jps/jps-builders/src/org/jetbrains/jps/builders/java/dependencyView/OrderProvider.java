@@ -1,16 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * @author: db
- * To change this template use File | Settings | File Templates.
- */
-class OrderProvider {
+final class OrderProvider {
   private final class Entry implements Comparable<Entry> {
     final String myString;
     final int myInt;

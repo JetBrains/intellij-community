@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
+import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
@@ -26,7 +27,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -146,23 +146,8 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       if (block instanceof PsiSwitchStatement) {
         ConvertSwitchToIfIntention.doProcessIntention((PsiSwitchStatement)block);
       } else if (block instanceof PsiSwitchExpression) {
-        unwrapExpression((PsiSwitchExpression)block);
+        UnwrapSwitchLabelFix.unwrapExpression((PsiSwitchExpression)block);
       }
-    }
-
-    /**
-     * Unwraps switch expression if it consists of single expression-branch; does nothing otherwise
-     * @param switchExpression expression to unwrap
-     */
-    public static void unwrapExpression(PsiSwitchExpression switchExpression) {
-      PsiCodeBlock body = switchExpression.getBody();
-      if (body == null) return;
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length != 1 || !(statements[0] instanceof PsiSwitchLabeledRuleStatement)) return;
-      PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)statements[0];
-      PsiStatement ruleBody = rule.getBody();
-      if (!(ruleBody instanceof PsiExpressionStatement)) return;
-      new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());
     }
   }
 }

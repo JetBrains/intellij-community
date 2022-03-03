@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
@@ -84,7 +84,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   private PerformanceWatcherImpl() {
     Application application = ApplicationManager.getApplication();
     if (application == null) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
 
     RegistryManager registryManager = application.getService(RegistryManager.class);
@@ -184,7 +184,12 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
               // look for extended crash logs
               File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
               if (extraLog != null) {
-                Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
+                String jbrErrContent = FileUtil.loadFile(extraLog);
+                // Detect crashes caused by OOME
+                if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
+                  LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true);
+                }
+                Attachment extraAttachment = new Attachment("jbr_err.txt", jbrErrContent);
                 extraAttachment.setIncluded(true);
                 attachments = ArrayUtil.append(attachments, extraAttachment);
               }

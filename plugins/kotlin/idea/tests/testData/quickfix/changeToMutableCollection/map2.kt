@@ -1,5 +1,5 @@
 // "Change type to MutableMap" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun main() {
     val map = foo()
     map[2<caret>] = "b"

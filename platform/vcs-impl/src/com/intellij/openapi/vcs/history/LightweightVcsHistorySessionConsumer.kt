@@ -23,6 +23,7 @@ internal class LightweightVcsHistorySessionConsumer(private val myRevisionConsum
 
   override fun finished() {}
 
+  @Throws(VcsException::class)
   fun throwIfError() {
     if (exception != null) throw VcsException(exception)
   }

@@ -33,8 +33,13 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
   protected final NotNullLazyValue<ProjectGeneratorPeer<T>> myGeneratorPeerLazyValue;
 
   public WebModuleBuilder(@NotNull WebProjectTemplate<T> template) {
+    this(template, template.createLazyPeer());
+  }
+
+  public WebModuleBuilder(@NotNull WebProjectTemplate<T> template,
+                          @NotNull NotNullLazyValue<ProjectGeneratorPeer<T>> lazyPeer) {
     myTemplate = template;
-    myGeneratorPeerLazyValue = myTemplate.createLazyPeer();
+    myGeneratorPeerLazyValue = lazyPeer;
   }
 
   public WebModuleBuilder() {

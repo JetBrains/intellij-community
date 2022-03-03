@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTestBase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.yaml.YAMLLanguage;
+
+import java.util.function.Predicate;
 
 public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
   @Override

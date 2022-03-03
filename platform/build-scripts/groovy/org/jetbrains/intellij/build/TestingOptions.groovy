@@ -66,9 +66,11 @@ class TestingOptions {
   String bootstrapSuite = System.getProperty("intellij.build.test.bootstrap.suite", BOOTSTRAP_SUITE_DEFAULT)
 
   /**
-   * Specifies path to JRE which will be used to run tests. By default tests run under the same JRE which is used to run the build scripts.
+   * Specifies path to runtime which will be used to run tests.
+   * By default {@code runtimeBuild} from gradle.properties will be used.
+   * If it is missing then tests will run under the same runtime which is used to run the build scripts.
    */
-  String customJrePath = System.getProperty("intellij.build.test.jre")
+  String customRuntimePath = System.getProperty(TEST_JRE_PROPERTY)
 
   /**
    * Specifies if ant or junit 5 direct runner should be used 
@@ -135,4 +137,6 @@ class TestingOptions {
 
   public static final String BOOTSTRAP_SUITE_DEFAULT = "com.intellij.tests.BootstrapTests"
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests"
+
+  public static final String TEST_JRE_PROPERTY = "intellij.build.test.jre"
 }

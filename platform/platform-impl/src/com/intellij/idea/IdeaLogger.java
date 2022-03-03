@@ -27,7 +27,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.DefaultThrowableRenderer;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.spi.ThrowableRenderer;
@@ -51,19 +50,11 @@ public final class IdeaLogger extends Log4jBasedLogger {
    * so that instead of polluting the log with hundreds of identical {@link com.intellij.openapi.diagnostic.Logger#error(Throwable) LOG.errors}
    * we print the error message and the stacktrace once in a while.
    *
-   * "-Didea.logger.report.every.nth.exception=10" means print the exception stacktrace to the log the first time it occurred,
-   *     and then, for each 10-th occurrence of this very same exception, print "this exception was reported n times already".
    *  "-Didea.logger.exception.expiration.minutes=5" means to forget about this particular exception if it didn't occur for five minutes.
    *
    *  To disable this "mute frequent exceptions" feature completely specify "-Didea.logger.exception.expiration.minutes=0"
    */
-  private static final String REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY = "idea.logger.report.every.nth.exception";
-  final int REPORT_EVERY_NTH_FREQUENT_EXCEPTION = Integer.getInteger(REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY, 10);
   private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 8*60);
-
-  static void setMutedExceptionFrequency(String frequency) {
-    System.setProperty(REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY, frequency);
-  }
 
   // must be as a separate class to avoid initialization as part of start-up (file logger configuration)
   private static final class MyCache {
@@ -83,7 +74,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
     MyCache.cache.cleanUp();
   }
 
-  private boolean isTooFrequentException(@Nullable Throwable t, @NotNull Level level) {
+  private static boolean isTooFrequentException(@Nullable Throwable t) {
     if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred()) {
       return false;
     }
@@ -91,20 +82,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
     int hash = ThrowableInterner.computeAccurateTraceHashCode(t);
     AtomicInteger counter = MyCache.getOrCreate(hash, t);
     int occurrences = counter.incrementAndGet();
-    if (occurrences == 1) {
-      return false;
-    }
-
-    if (occurrences > 1 && occurrences % REPORT_EVERY_NTH_FREQUENT_EXCEPTION == 0) {
-      myLogger.log(level, getExceptionWasAlreadyReportedNTimesMessage(t, occurrences));
-    }
-
-    return true;
-  }
-
-  @NotNull
-  static String getExceptionWasAlreadyReportedNTimesMessage(@NotNull Throwable t, int occurrences) {
-    return "Exception '" + t + "' was reported " + occurrences + " times";
+    return occurrences != 1;
   }
 
   private static void reportToFus(@NotNull Throwable t) {
@@ -170,7 +148,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    if (isTooFrequentException(t, Level.ERROR)) return;
+    if (isTooFrequentException(t)) return;
     myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
     if (t != null) {
       reportToFus(t);
@@ -179,13 +157,13 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    if (isTooFrequentException(t, Level.WARN)) return;
+    if (isTooFrequentException(t)) return;
     super.warn(message, ensureNotControlFlow(t));
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    if (isTooFrequentException(t, Level.ERROR)) return;
+    if (isTooFrequentException(t)) return;
     doLogError(message, t, details);
     logErrorHeader(t);
     if (t != null) {
@@ -195,13 +173,13 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void debug(@Nullable Throwable t) {
-    if (isTooFrequentException(t, Level.DEBUG)) return;
+    if (isTooFrequentException(t)) return;
     super.debug(t);
   }
 
   @Override
   public void debug(String message, @Nullable Throwable t) {
-    if (isTooFrequentException(t, Level.DEBUG)) return;
+    if (isTooFrequentException(t)) return;
     super.debug(message, t);
   }
 

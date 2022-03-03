@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.IdeBundle
@@ -14,74 +14,114 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.event.ActionListener
+import java.awt.event.InputEvent
+import java.util.concurrent.Executor
 import java.util.function.Function
 import javax.swing.*
+import kotlin.properties.Delegates
 
 private const val MAX_RECENT_COUNT = 100
 
-class ProjectWidget(project: Project?): ToolbarComboWidget(), Disposable {
-
-  private var currentFile: VirtualFile?
-  private var currentProject: Project? = project
-  private var editorConnection: MessageBusConnection? = null
-
-  private val updater: Updater = Updater()
-
-  private val projectListener = object: ProjectManagerListener {
-    override fun projectOpened(project: Project) {
-      currentProject = project
-      editorConnection?.disconnect()
-      editorConnection = project.messageBus.connect(this@ProjectWidget)
-      editorConnection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener)
-
-      updater.performUpdate()
-    }
+internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
+  override fun createWidget(project: Project): JComponent {
+    val widget = ProjectWidget(project)
+    ProjectWidgetUpdater(project, widget).subscribe()
+    return widget
   }
 
-  private val editorListener = object: FileEditorManagerListener {
-    override fun selectionChanged(event: FileEditorManagerEvent) {
-      currentFile = event.newFile
-      updater.performUpdate()
-    }
-  }
+  override fun getPosition(): Position = Position.Center
+}
+
+private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
+  private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
+  private var settings: UISettings by Delegates.observable(UISettings.instance) { _, _, _ -> updateText() }
+
+  private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
 
   init {
-    currentFile = project?.let { FileEditorManager.getInstance(it).selectedFiles.firstOrNull() }
+    file = FileEditorManager.getInstance(proj).selectedFiles.firstOrNull()
+  }
 
-    val connection = ApplicationManager.getApplication().messageBus.connect(this)
-    connection.subscribe(ProjectManager.TOPIC, projectListener)
-    connection.subscribe(UISettingsListener.TOPIC, updater)
+  private fun updateText() {
+    val currentFile = file
+    val showFileName = settings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null
+    val maxLength = if (showFileName) 12 else 24
 
-    addPressListener(ActionListener {
-      val myStep = MyStep(createActionsList())
-      val myRenderer = ProjectWidgetRenderer(myStep::getSeparatorAbove)
+    @NlsSafe val fullName = StringBuilder(proj.name)
+    @NlsSafe val cutName = StringBuilder(cutProject(proj.name, maxLength))
+    if (showFileName) {
+      fullName.append(" — ").append(currentFile!!.name)
+      cutName.append(" — ").append(cutFile(currentFile.name, maxLength))
+    }
 
-      val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
-        ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
-          if (value is ReopenProjectAction) myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-          else base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+    widget.text = cutName.toString()
+    widget.toolTipText = if (cutName.toString() == fullName.toString()) null else fullName.toString()
+  }
+
+  private fun cutFile(value: String, maxLength: Int): String {
+    if (value.length <= maxLength) return value
+
+    val extension = value.substringAfterLast(".", "")
+    val name = value.substringBeforeLast(".")
+    if (name.length + extension.length <= maxLength) return value
+
+    return name.substring(0, maxLength - extension.length) + "..." + extension
+  }
+
+  private fun cutProject(value: String, maxLength: Int): String =
+    if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
+
+  fun subscribe() {
+    ApplicationManager.getApplication().messageBus.connect(widget).subscribe(UISettingsListener.TOPIC, this)
+    proj.messageBus.connect(widget).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
+  }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    swingExecutor.execute { settings = uiSettings }
+  }
+
+  override fun selectionChanged(event: FileEditorManagerEvent) {
+    swingExecutor.execute { file = event.newFile }
+  }
+}
+
+private class ProjectWidget(private val project: Project): ToolbarComboWidget(), Disposable {
+  override fun doExpand(e: InputEvent) {
+    val step = MyStep(createActionsList())
+    val widgetRenderer = ProjectWidgetRenderer(step::getSeparatorAbove)
+
+    val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
+      ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
+        if (value is ReopenProjectAction) {
+          widgetRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
+        else {
+          base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
         }
       }
+    }
 
-      currentProject?.let {
-        JBPopupFactory.getInstance().createListPopup(it, myStep, renderer).showUnderneathOf(this)
-      }
-    })
+    JBPopupFactory.getInstance().createListPopup(project, step, renderer).showUnderneathOf(this)
+  }
+
+  override fun removeNotify() {
+    super.removeNotify()
+    Disposer.dispose(this)
   }
 
   override fun dispose() {}
@@ -99,7 +139,7 @@ class ProjectWidget(project: Project?): ToolbarComboWidget(), Disposable {
     return res
   }
 
-  private class MyStep(val actions: List<AnAction>): ListPopupStep<AnAction> {
+  private class MyStep(private val actions: List<AnAction>): ListPopupStep<AnAction> {
     override fun getTitle(): String? = null
 
     override fun onChosen(selectedValue: AnAction?, finalChoice: Boolean): PopupStep<*>? {
@@ -201,25 +241,6 @@ class ProjectWidget(project: Project?): ToolbarComboWidget(), Disposable {
       panel.add(res)
 
       return panel
-    }
-  }
-
-  private inner class Updater : UISettingsListener {
-
-    var uiSettings = UISettings.instance
-
-    override fun uiSettingsChanged(settings: UISettings) {
-      uiSettings = settings
-      performUpdate()
-    }
-
-    fun performUpdate() {
-      val sb = StringBuilder(currentProject?.name ?: IdeBundle.message("project.widget.empty"))
-      if (uiSettings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null) {
-        sb.append(" — ").append(currentFile!!.name)
-      }
-
-      text = sb.toString()
     }
   }
 }

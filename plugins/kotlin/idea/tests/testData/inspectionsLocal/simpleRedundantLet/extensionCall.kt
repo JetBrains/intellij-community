@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun String.foo() {}
 
 fun test(s: String?) {

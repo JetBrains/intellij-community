@@ -66,7 +66,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
@@ -504,6 +503,11 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     static final char TOGGLE = 'P';
     static final String TOGGLE_ACTION_NAME = "toggleProjectScope";
 
+    protected ScopeChooserAction() {
+      setPopup(true);
+      getTemplatePresentation().setPerformGroup(true);
+    }
+
     abstract void onScopeSelected(@NotNull ScopeDescriptor o);
 
     @NotNull
@@ -513,8 +517,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
     abstract boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor);
 
-    @Override public boolean canBePerformed(@NotNull DataContext context) { return true; }
-    @Override public boolean isPopup() { return true; }
     @Override public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) { return EMPTY_ARRAY; }
 
     @NotNull @Override

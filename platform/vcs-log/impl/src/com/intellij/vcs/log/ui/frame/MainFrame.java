@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +44,7 @@ import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
+import com.intellij.vcs.log.ui.table.IndexSpeedSearch;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -83,6 +86,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final EditorNotificationPanel myNotificationLabel;
 
+  private boolean myIsLoading;
+  @Nullable private FilePath myPathToSelect = null;
+
   @NotNull private final FrameDiffPreview<VcsLogChangeProcessor> myDiffPreview;
 
   public MainFrame(@NotNull VcsLogData logData,
@@ -98,6 +104,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
                                           () -> logUi.getRefresher().onRefresh(), logUi::requestMore, disposable);
+    String vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.getProject(), logData.getLogProviders().values());
+    myGraphTable.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.table.accessible.name", vcsDisplayName));
+
     PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.POPUP_ACTION_GROUP, ActionPlaces.VCS_LOG_TABLE_PLACE);
 
     myDetailsPanel = new CommitDetailsListPanel(logData.getProject(), this, () -> {
@@ -112,6 +121,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCommitData(index);
     }, withEditorDiffPreview, this);
+    myChangesBrowser.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.changes.accessible.name"));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                                            ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
@@ -226,6 +236,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
+    String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
+    textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
 
     DefaultActionGroup rightCornerGroup =
       new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
@@ -315,6 +327,20 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
+  public void selectFilePath(@NotNull FilePath filePath, boolean requestFocus) {
+    if (myIsLoading) {
+      myPathToSelect = filePath;
+    }
+    else {
+      myChangesBrowser.getViewer().selectFile(filePath);
+      myPathToSelect = null;
+    }
+
+    if (requestFocus) {
+      myChangesBrowser.getViewer().requestFocus();
+    }
+  }
+
   @Override
   public void dispose() {
     myDetailsSplitter.dispose();
@@ -358,6 +384,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
 
     @Override
+    protected void onLoadingScheduled() {
+      myIsLoading = true;
+      myPathToSelect = null;
+    }
+
+    @Override
     protected void onLoadingStarted() {
       myChangesLoadingPane.startLoading();
     }
@@ -365,6 +397,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @Override
     protected void onLoadingStopped() {
       myChangesLoadingPane.stopLoading();
+      myIsLoading = false;
+      if (myPathToSelect != null) {
+        myChangesBrowser.getViewer().selectFile(myPathToSelect);
+        myPathToSelect = null;
+      }
     }
 
     @Override
@@ -377,13 +414,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      List<Component> components = ContainerUtil.newArrayList(myGraphTable,
-                                                              myChangesBrowser.getPreferredFocusedComponent(),
-                                                              myFilterUi.getTextFilterComponent().getTextEditor());
-      if (myDiffPreview != null) {
-        components.add(2, myDiffPreview.getPreviewDiff().getPreferredFocusedComponent());
-      }
-      return components;
+      return ContainerUtil.newArrayList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(),
+                                        myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
+                                        myFilterUi.getTextFilterComponent().getTextEditor());
     }
   }
 
@@ -396,6 +429,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                        @NotNull Disposable disposable) {
       super(logId, logData, uiProperties, colorManager, requestMore, disposable);
       myRefresh = refresh;
+      new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
+        @Override
+        protected boolean isSpeedSearchEnabled() {
+          return Registry.is("vcs.log.speedsearch") && super.isSpeedSearchEnabled();
+        }
+      };
     }
 
     @Override

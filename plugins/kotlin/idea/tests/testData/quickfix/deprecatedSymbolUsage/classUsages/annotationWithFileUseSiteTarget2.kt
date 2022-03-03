@@ -1,3 +1,3 @@
 // "Replace with 'OptIn(*markerClass)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 @file:<caret>UseExperimental()

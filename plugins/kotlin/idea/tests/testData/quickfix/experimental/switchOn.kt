@@ -2,7 +2,7 @@
 // COMPILER_ARGUMENTS: -version
 // COMPILER_ARGUMENTS_AFTER: -version -Xopt-in=kotlin.RequiresOptIn
 // DISABLE-ERRORS
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @RequiresOptIn<caret>
 annotation class MyExperimentalAPI

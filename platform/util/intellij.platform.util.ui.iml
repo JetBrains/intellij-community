@@ -24,5 +24,6 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" />
   </component>
 </module>

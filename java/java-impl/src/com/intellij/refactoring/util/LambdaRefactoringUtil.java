@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
@@ -176,8 +176,7 @@ public final class LambdaRefactoringUtil {
         if (!(referenceNameElement instanceof PsiKeyword)) {
           if (qualifier instanceof PsiTypeElement) {
             final PsiJavaCodeReferenceElement referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
-            LOG.assertTrue(referenceElement != null);
-            if (!PsiTreeUtil.isAncestor(containingClass, referenceExpression, false)) {
+            if (referenceElement != null && !PsiTreeUtil.isAncestor(containingClass, referenceExpression, false)) {
               buf.append(referenceElement.getReferenceName()).append(".");
             }
           }
@@ -221,7 +220,7 @@ public final class LambdaRefactoringUtil {
         }
       }
 
-      if (!onArrayRef || isReceiver) {
+      if (!onArrayRef || !(referenceNameElement instanceof PsiKeyword) || isReceiver) {
         //param list
         buf.append("(");
         boolean first = true;

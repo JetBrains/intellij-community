@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomUtil
@@ -30,7 +31,6 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
 val mavenTopLevelElementsOrder = listOf(
   "modelVersion",
@@ -376,7 +376,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   }
 
   //for faster testing
-  internal fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
+  fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
     return ReadAction.compute<List<DeclaredDependency>?, Throwable> {
       val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@compute null
       model.dependencies.dependencies.map { mavenDomDependency ->

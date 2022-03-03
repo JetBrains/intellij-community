@@ -58,9 +58,9 @@ public final class LoggerFactory implements Logger.Factory {
 
   private static void configureFromXmlFile(Path xmlFile) throws Exception {
     String text = Files.readString(xmlFile);
-    text = text.replace(SYSTEM_MACRO, PathManager.getSystemPath().replace("\\", "\\\\"));
-    text = text.replace(APPLICATION_MACRO, PathManager.getHomePath().replace("\\", "\\\\"));
-    text = text.replace(LOG_DIR_MACRO, PathManager.getLogPath().replace("\\", "\\\\"));
+    text = text.replace(SYSTEM_MACRO, JDOMUtil.escapeText(PathManager.getSystemPath().replace("\\", "\\\\"), true, false, true));
+    text = text.replace(APPLICATION_MACRO, JDOMUtil.escapeText(PathManager.getHomePath().replace("\\", "\\\\"), true, false, true));
+    text = text.replace(LOG_DIR_MACRO, JDOMUtil.escapeText(PathManager.getLogPath().replace("\\", "\\\\"), true, false, true));
 
     // JDOM is used instead of XML DOM because of IDEA-173468 (`DOMConfigurator` really wants `Document`)
     //noinspection deprecation

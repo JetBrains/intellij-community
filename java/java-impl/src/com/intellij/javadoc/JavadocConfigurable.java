@@ -40,7 +40,7 @@ public final class JavadocConfigurable implements Configurable {
     configuration.HEAP_SIZE = convertString(myPanel.myHeapSizeField.getText());
     configuration.LOCALE = convertString(myPanel.myLocaleTextField.getText());
     configuration.OPEN_IN_BROWSER = myPanel.myOpenInBrowserCheckBox.isSelected();
-    configuration.OPTION_SCOPE = convertString(myPanel.getScope());
+    configuration.OPTION_SCOPE = myPanel.myScopeCombo.getItem();
     configuration.OPTION_HIERARCHY = myPanel.myHierarchy.isSelected();
     configuration.OPTION_NAVIGATOR = myPanel.myNavigator.isSelected();
     configuration.OPTION_INDEX = myPanel.myIndex.isSelected();
@@ -60,7 +60,7 @@ public final class JavadocConfigurable implements Configurable {
     myPanel.myHeapSizeField.setText(configuration.HEAP_SIZE);
     myPanel.myLocaleTextField.setText(configuration.LOCALE);
     myPanel.myOpenInBrowserCheckBox.setSelected(configuration.OPEN_IN_BROWSER);
-    myPanel.setScope(configuration.OPTION_SCOPE);
+    myPanel.myScopeCombo.setSelectedItem(configuration.OPTION_SCOPE);
     myPanel.myHierarchy.setSelected(configuration.OPTION_HIERARCHY);
     myPanel.myNavigator.setSelected(configuration.OPTION_NAVIGATOR);
     myPanel.myIndex.setSelected(configuration.OPTION_INDEX);
@@ -87,7 +87,7 @@ public final class JavadocConfigurable implements Configurable {
     isModified |= !compareStrings(myPanel.myOtherOptionsField.getText(), configuration.OTHER_OPTIONS);
     isModified |= !compareStrings(myPanel.myHeapSizeField.getText(), configuration.HEAP_SIZE);
     isModified |= myPanel.myOpenInBrowserCheckBox.isSelected() != configuration.OPEN_IN_BROWSER;
-    isModified |= !compareStrings(myPanel.getScope(), (configuration.OPTION_SCOPE == null ? PsiKeyword.PROTECTED : configuration.OPTION_SCOPE));
+    isModified |= !compareStrings(myPanel.myScopeCombo.getItem(), (configuration.OPTION_SCOPE == null ? PsiKeyword.PROTECTED : configuration.OPTION_SCOPE));
     isModified |= myPanel.myHierarchy.isSelected() != configuration.OPTION_HIERARCHY;
     isModified |= myPanel.myNavigator.isSelected() != configuration.OPTION_NAVIGATOR;
     isModified |= myPanel.myIndex.isSelected() != configuration.OPTION_INDEX;

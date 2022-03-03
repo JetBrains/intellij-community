@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.config.EventLogOptions;
@@ -20,8 +20,8 @@ import static com.intellij.internal.statistic.config.EventLogOptions.*;
 public final class EventLogConfigOptionsService {
   public static final Topic<EventLogConfigOptionsListener> TOPIC
     = new Topic<>(EventLogConfigOptionsListener.class, Topic.BroadcastDirection.NONE);
-  private static final Set<String> ourOptions = ContainerUtil.immutableSet(DATA_THRESHOLD, GROUP_THRESHOLD, GROUP_ALERT_THRESHOLD,
-                                                                           MACHINE_ID_SALT_REVISION, MACHINE_ID_SALT);
+  private static final Set<String> ourOptions = Set.of(DATA_THRESHOLD, GROUP_THRESHOLD, GROUP_ALERT_THRESHOLD,
+                                                       MACHINE_ID_SALT_REVISION, MACHINE_ID_SALT);
 
   public static EventLogConfigOptionsService getInstance() {
     return ApplicationManager.getApplication().getService(EventLogConfigOptionsService.class);

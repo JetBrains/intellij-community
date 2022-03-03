@@ -1,5 +1,7 @@
 // COMPILER_ARGUMENTS: +XXLanguage:+MixedNamedArgumentsInTheirOwnPosition
-// IS_APPLICABLE: false
+// AFTER-WARNING: Parameter 'name1' is never used
+// AFTER-WARNING: Parameter 'name2' is never used
+// AFTER-WARNING: Parameter 'name3' is never used
 fun foo(name1: Int, name2: Int, name3: Int) {}
 
 fun usage() {

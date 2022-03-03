@@ -1,23 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.testFramework.ApplicationExtension
 import com.intellij.util.concurrency.Semaphore
-import junit.framework.TestCase.*
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.job
-import kotlinx.coroutines.runBlocking
-import org.junit.ClassRule
-import org.junit.Test
+import kotlinx.coroutines.*
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class CancellationTest {
 
   companion object {
 
-    @ClassRule
+    @RegisterExtension
     @JvmField
-    val application: ApplicationRule = ApplicationRule()
+    val applicationExtension = ApplicationExtension()
   }
 
   @Test
@@ -31,45 +30,243 @@ class CancellationTest {
   }
 
   @Test
-  fun `current coroutine job`(): Unit = runBlocking {
+  fun `checkCanceled delegates to job`(): Unit = timeoutRunBlocking {
+    val pm = ProgressManager.getInstance()
+    val lock = Semaphore(1)
+    val cancelled = Semaphore(1)
+    val job = launch(Dispatchers.IO) {
+      assertNull(Cancellation.currentJob())
+      withJob { currentJob ->
+        assertSame(currentJob, Cancellation.currentJob())
+        assertDoesNotThrow {
+          ProgressManager.checkCanceled()
+        }
+        ProgressManager.checkCanceled()
+        lock.up()
+        cancelled.timeoutWaitUp()
+        assertThrows<JobCanceledException> {
+          ProgressManager.checkCanceled()
+        }
+        pm.executeNonCancelableSection {
+          assertDoesNotThrow {
+            ProgressManager.checkCanceled()
+          }
+        }
+        assertThrows<JobCanceledException> {
+          ProgressManager.checkCanceled()
+        }
+      }
+      assertNull(Cancellation.currentJob())
+    }
+    lock.timeoutWaitUp()
+    job.cancel()
+    cancelled.up()
+    job.join()
+  }
+
+  @Test
+  fun `cancellable job is a child of current`() {
+    val job = Job()
+    withJob(job) {
+      executeCancellable { cancellableJob ->
+        assertJobIsChildOf(cancellableJob, job)
+      }
+    }
+  }
+
+  @Test
+  fun `cancellable job becomes current`() {
     assertNull(Cancellation.currentJob())
-    val job = coroutineContext.job
-    withJob {
-      assertSame(job, Cancellation.currentJob())
+    executeCancellable { cancellableJob ->
+      assertSame(cancellableJob, Cancellation.currentJob())
     }
     assertNull(Cancellation.currentJob())
   }
 
   @Test
-  fun `job cancellation`() {
-    val pm = ProgressManager.getInstance()
-    val lock = Semaphore(1)
-    val job = Job()
-    val cancelled = Semaphore(1)
-    val future = AppExecutorUtil.getAppExecutorService().submit {
-      withJob(job) {
-        ProgressManager.checkCanceled()
-        lock.up()
-        cancelled.waitUp()
-        assertCheckCanceledThrows()
-        pm.executeNonCancelableSection {
-          ProgressManager.checkCanceled()
-        }
-        assertCheckCanceledThrows()
-      }
+  fun `indicator cancellable job becomes current`() {
+    withIndicator(EmptyProgressIndicator()) {
+      `cancellable job becomes current`()
     }
-    lock.waitUp()
-    job.cancel()
-    cancelled.up()
-    waitAssertCompletedNormally(future)
   }
 
-  private fun assertCheckCanceledThrows() {
-    try {
-      ProgressManager.checkCanceled()
-      fail()
+  @Test
+  fun `cancellable job rethrows exception`() {
+    testRethrow(object : Throwable() {})
+  }
+
+  @Test
+  fun `cancellable job rethrows manual PCE`() {
+    testRethrow(ProcessCanceledException())
+  }
+
+  @Test
+  fun `cancellable job rethrows manual CE`() {
+    testRethrow(CancellationException())
+  }
+
+  private inline fun <reified T : Throwable> testRethrow(t: T) {
+    doTestRethrow(t)
+    withJob(Job()) {
+      doTestRethrow(t)
     }
-    catch (e: JobCanceledException) {
+    withIndicator(EmptyProgressIndicator()) {
+      doTestRethrow(t)
     }
+  }
+
+  private inline fun <reified T : Throwable> doTestRethrow(t: T) {
+    val thrown = assertThrows<T> {
+      executeCancellable {
+        throw t
+      }
+    }
+    assertSame(t, thrown)
+  }
+
+  @Test
+  fun `current cancellable job completes normally`() {
+    withJob(Job()) {
+      `cancellable job completes normally`()
+    }
+  }
+
+  @Test
+  fun `cancellable job completes normally`(): Unit = timeoutRunBlocking {
+    lateinit var cancellableJob: Job
+    val result = executeCancellable {
+      cancellableJob = it
+      42
+    }
+    assertEquals(42, result)
+    cancellableJob.join()
+    assertFalse(cancellableJob.isCancelled)
+  }
+
+  @Test
+  fun `indicator cancellable job completes normally`() {
+    withIndicator(EmptyProgressIndicator()) {
+      `cancellable job completes normally`()
+    }
+  }
+
+  @Test
+  fun `current cancellable job fails on exception`() {
+    val job = Job()
+    withJob(job) {
+      `cancellable job fails on exception`()
+    }
+    assertFalse(job.isActive)
+    assertTrue(job.isCompleted)
+    assertTrue(job.isCancelled)
+  }
+
+  @Test
+  fun `cancellable job fails on exception`(): Unit = timeoutRunBlocking {
+    lateinit var cancellableJob: Job
+    assertThrows<NumberFormatException> {
+      executeCancellable {
+        cancellableJob = it
+        throw NumberFormatException()
+      }
+    }
+    cancellableJob.join()
+    assertTrue(cancellableJob.isCancelled)
+  }
+
+  @Test
+  fun `indicator cancellable job fails on exception`() {
+    val indicator = EmptyProgressIndicator()
+    withIndicator(indicator) {
+      `cancellable job fails on exception`()
+    }
+    assertFalse(indicator.isCanceled)
+  }
+
+  @Test
+  fun `current cancellable job is cancelled by child failure`() {
+    val job = Job()
+    withJob(job) {
+      `cancellable job is cancelled by child failure`()
+    }
+    assertFalse(job.isActive)
+    assertTrue(job.isCancelled)
+    assertTrue(job.isCompleted)
+  }
+
+  @Test
+  fun `cancellable job is cancelled by child failure`() {
+    val t = Throwable()
+    val ce = assertThrows<CancellationException> {
+      executeCancellable { cancellableJob ->
+        Job(parent = cancellableJob).completeExceptionally(t)
+        throw assertThrows<JobCanceledException> {
+          Cancellation.checkCancelled()
+        }
+      }
+    }
+    assertSame(t, ce.cause)
+  }
+
+  @Test
+  fun `indicator cancellable job is cancelled by child failure`() {
+    val indicator = EmptyProgressIndicator()
+    withIndicator(indicator) {
+      `cancellable job is cancelled by child failure`()
+    }
+    assertFalse(indicator.isCanceled)
+  }
+
+  @Test
+  fun `current cancellable job throws CE when cancelled`() {
+    withJob(Job()) {
+      `cancellable job throws CE when cancelled`()
+    }
+  }
+
+  @Test
+  fun `cancellable job throws CE when cancelled`() {
+    assertThrows<CancellationException> {
+      executeCancellable { cancellableJob ->
+        cancellableJob.cancel()
+        throw assertThrows<JobCanceledException> {
+          Cancellation.checkCancelled()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `indicator cancellable job throws CE when cancelled`() {
+    withIndicator(EmptyProgressIndicator()) {
+      `cancellable job throws CE when cancelled`()
+    }
+  }
+
+  @Test
+  fun `indicator cancellable job is cancelled by indicator`(): Unit = timeoutRunBlocking {
+    val lock = Semaphore(1)
+    val indicator = EmptyProgressIndicator()
+    val job = launch(Dispatchers.IO) {
+      withIndicator(indicator) {
+        val ce = assertThrows<CancellationException> {
+          executeCancellable {
+            assertDoesNotThrow {
+              Cancellation.checkCancelled()
+            }
+            lock.up()
+            throw assertThrows<JobCanceledException> {
+              while (this@launch.coroutineContext.isActive) {
+                Cancellation.checkCancelled()
+              }
+            }
+          }
+        }
+        assertInstanceOf(ProcessCanceledException::class.java, ce.cause)
+      }
+    }
+    lock.timeoutWaitUp()
+    indicator.cancel()
+    job.join()
   }
 }

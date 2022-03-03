@@ -36,7 +36,8 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   private static final CallMatcher SET_OF =
     CallMatcher.anyOf(
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of"),
-      CallMatcher.staticCall("java.util.EnumSet", "of"));
+      CallMatcher.staticCall("java.util.EnumSet", "of"),
+      CallMatcher.staticCall("com.google.common.collect.ImmutableSet", "of"));
   private static final CallMatcher MAP_OF =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of");
   private static final CallMatcher MAP_OF_ENTRIES =

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun testParameter(x : Int) {
     if (x > 5) {
         if (<warning descr="Condition 'x < 3' is always false">x < 3</warning>) {

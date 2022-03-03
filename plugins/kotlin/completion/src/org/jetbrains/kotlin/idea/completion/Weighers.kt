@@ -108,6 +108,12 @@ object KindWeigher : LookupElementWeigher("kotlin.kind") {
         callable,
         keyword,
         default,
+
+        /**
+         * This does not mean that the keyword cannot be used at all; it just means that
+         * it is highly unlikely that it will be used.
+         */
+        notProbableKeyword,
         packages
     }
 
@@ -126,7 +132,11 @@ object KindWeigher : LookupElementWeigher("kotlin.kind") {
                 }
             }
 
-            is KeywordLookupObject -> if (element.isProbableKeyword) Weight.probableKeyword else Weight.keyword
+            is KeywordLookupObject -> when (element.keywordProbability) {
+                KeywordProbability.HIGH -> Weight.probableKeyword
+                KeywordProbability.DEFAULT -> Weight.keyword
+                KeywordProbability.LOW -> Weight.notProbableKeyword
+            }
 
             else -> Weight.default
         }

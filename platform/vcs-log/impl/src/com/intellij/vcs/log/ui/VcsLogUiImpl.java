@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
@@ -205,6 +206,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   public void dispose() {
     myUiProperties.removeChangeListener(myPropertiesListener);
     super.dispose();
+  }
+
+  @Override
+  public void selectFilePath(@NotNull FilePath filePath, boolean requestFocus) {
+    getMainFrame().selectFilePath(filePath, requestFocus);
   }
 
   private void updateHighlighters() {

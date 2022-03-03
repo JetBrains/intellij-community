@@ -25,7 +25,7 @@ interface MavenDistribution {
   }
 }
 
-internal class LocalMavenDistribution(override val mavenHome: Path, override val name: String) : MavenDistribution {
+class LocalMavenDistribution(override val mavenHome: Path, override val name: String) : MavenDistribution {
   override val version: String? by lazy {
     MavenUtil.getMavenVersion(mavenHome.toFile())
   }

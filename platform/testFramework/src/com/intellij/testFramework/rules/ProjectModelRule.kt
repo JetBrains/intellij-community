@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
 import com.intellij.facet.Facet
@@ -31,22 +31,27 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
 
-class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
+open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
   val baseProjectDir = TempDirectory()
-  private val disposableRule = DisposableRule()
+  val disposableRule = DisposableRule()
 
   lateinit var project: Project
   lateinit var projectRootDir: Path
   lateinit var filePointerTracker: VirtualFilePointerTracker
 
-  private val projectResource = object : ExternalResource() {
-    override fun before() {
+  val projectResource = ProjectResource()
+
+  inner class ProjectResource : ExternalResource() {
+    public override fun before() {
       projectRootDir = baseProjectDir.root.toPath()
       if (forceEnableWorkspaceModel) {
         WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
@@ -59,7 +64,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
       filePointerTracker = VirtualFilePointerTracker()
     }
 
-    override fun after() {
+    public override fun after() {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       filePointerTracker.assertPointersAreDisposed()
     }
@@ -201,4 +206,17 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   val projectLibraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+}
+
+class ProjectModelExtension(forceEnableWorkspaceModel: Boolean = false) : ProjectModelRule(forceEnableWorkspaceModel), BeforeEachCallback, AfterEachCallback {
+  override fun beforeEach(context: ExtensionContext) {
+    baseProjectDir.before(context.displayName)
+    projectResource.before()
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    baseProjectDir.after()
+    projectResource.after()
+    disposableRule.after()
+  }
 }

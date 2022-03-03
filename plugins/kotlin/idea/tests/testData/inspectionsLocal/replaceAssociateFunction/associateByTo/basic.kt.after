@@ -1,6 +1,6 @@
 // PROBLEM: Replace 'associateTo' with 'associateByTo'
 // FIX: Replace with 'associateByTo'
-// WITH_RUNTIME
+// WITH_STDLIB
 fun getKey(i: Int): Long = 1L
 
 fun test() {

@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -57,7 +58,7 @@ public class FailedConversionsDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, "");
-    messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    messagePane.setEditorKit(HTMLEditorKitBuilder.simple());
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane);
     scrollPane.setPreferredSize(JBUI.size(500, 400));

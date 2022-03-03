@@ -1,32 +1,35 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.fileChooser.FileChooserPanel;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import org.jetbrains.annotations.NotNull;
 
-public class  TogglePathShowingAction extends AnAction implements DumbAware {
+public class TogglePathShowingAction extends FileChooserAction implements Toggleable {
   public TogglePathShowingAction() {
     setEnabledInModalContext(true);
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setText(IdeBundle.messagePointer("file.chooser.hide.path.tooltip.text"));
-    DialogWrapper dialog = DialogWrapper.findInstance(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-    e.getPresentation().setEnabled(dialog instanceof FileChooserDialogImpl);
+  protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    Toggleable.setSelected(e.getPresentation(), panel.showPathBar());
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    FileChooserDialogImpl dialog = (FileChooserDialogImpl)DialogWrapper.findInstance(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-    if (dialog != null) {
-      dialog.toggleShowTextField();
-    }
+  protected void actionPerformed(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    boolean state = !panel.showPathBar();
+    panel.showPathBar(state);
+    Toggleable.setSelected(e.getPresentation(), state);
   }
+
+  @Override
+  protected void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
+    // the old chooser uses `com.intellij.openapi.fileChooser.ex.TextFieldAction` instead
+    e.getPresentation().setEnabledAndVisible(false);
+  }
+
+  @Override
+  protected void actionPerformed(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) { }
 }

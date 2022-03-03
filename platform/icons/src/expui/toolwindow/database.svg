@@ -1,9 +1,9 @@
 <!-- Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<ellipse cx="10" cy="5" rx="7" ry="2.5" stroke="#737580" stroke-width="1.5"/>
-<path d="M17 15.5C17 16.8807 13.866 18 10 18C6.13401 18 3 16.8807 3 15.5" stroke="#737580" stroke-width="1.5"/>
-<path d="M17 12C17 13.3807 13.866 14.5 10 14.5C6.13401 14.5 3 13.3807 3 12" stroke="#737580" stroke-width="1.5"/>
-<path d="M17 8.5C17 9.88071 13.866 11 10 11C6.13401 11 3 9.88071 3 8.5" stroke="#737580" stroke-width="1.5"/>
-<path d="M17 5V15.5" stroke="#737580" stroke-width="1.5"/>
-<path d="M3 5V15.5" stroke="#737580" stroke-width="1.5"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<ellipse cx="8" cy="4" rx="5.5" ry="2" stroke="#767A8A"/>
+<path d="M13.5 12.4C13.5 13.5046 11.0376 14.4 8 14.4C4.96243 14.4 2.5 13.5046 2.5 12.4" stroke="#767A8A"/>
+<path d="M13.5 9.59998C13.5 10.7045 11.0376 11.6 8 11.6C4.96243 11.6 2.5 10.7045 2.5 9.59998" stroke="#767A8A"/>
+<path d="M13.5 6.79999C13.5 7.90456 11.0376 8.79999 8 8.79999C4.96243 8.79999 2.5 7.90456 2.5 6.79999" stroke="#767A8A"/>
+<path d="M13.5 4V12.4" stroke="#767A8A"/>
+<path d="M2.5 4V12.4" stroke="#767A8A"/>
 </svg>

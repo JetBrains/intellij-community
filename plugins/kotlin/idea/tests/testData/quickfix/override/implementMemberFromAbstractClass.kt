@@ -1,5 +1,5 @@
 // "Implement members" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 abstract class A {
     abstract fun foo()
 }

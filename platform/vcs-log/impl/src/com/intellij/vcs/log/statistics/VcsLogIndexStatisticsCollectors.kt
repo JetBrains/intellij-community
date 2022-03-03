@@ -105,7 +105,7 @@ class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState>
     }
   }
 
-  override fun getState(): VcsLogIndexCollectorState? {
+  override fun getState(): VcsLogIndexCollectorState {
     synchronized(lock) {
       return state.copy()
     }

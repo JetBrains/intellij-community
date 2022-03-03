@@ -4,17 +4,21 @@
 # GNU General Public License version 2 or any later version.
 
 '''largefile store working over Mercurial's wire protocol'''
+from __future__ import absolute_import
 
-import lfutil
-import remotestore
+from . import (
+    lfutil,
+    remotestore,
+)
+
 
 class wirestore(remotestore.remotestore):
     def __init__(self, ui, repo, remote):
-        cap = remote.capable('largefiles')
+        cap = remote.capable(b'largefiles')
         if not cap:
             raise lfutil.storeprotonotcapable([])
-        storetypes = cap.split(',')
-        if 'serve' not in storetypes:
+        storetypes = cap.split(b',')
+        if b'serve' not in storetypes:
             raise lfutil.storeprotonotcapable(storetypes)
         self.remote = remote
         super(wirestore, self).__init__(ui, repo, remote.url())
@@ -26,15 +30,23 @@ class wirestore(remotestore.remotestore):
         return self.remote.getlfile(hash)
 
     def _stat(self, hashes):
-        '''For each hash, return 0 if it is available, other values if not.
+        """For each hash, return 0 if it is available, other values if not.
         It is usually 2 if the largefile is missing, but might be 1 the server
-        has a corrupted copy.'''
-        batch = self.remote.batch()
-        futures = {}
-        for hash in hashes:
-            futures[hash] = batch.statlfile(hash)
-        batch.submit()
-        retval = {}
-        for hash in hashes:
-            retval[hash] = futures[hash].value
-        return retval
+        has a corrupted copy."""
+
+        with self.remote.commandexecutor() as e:
+            fs = []
+            for hash in hashes:
+                fs.append(
+                    (
+                        hash,
+                        e.callcommand(
+                            b'statlfile',
+                            {
+                                b'sha': hash,
+                            },
+                        ),
+                    )
+                )
+
+            return {hash: f.result() for hash, f in fs}

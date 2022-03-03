@@ -12,6 +12,7 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
 import java.text.MessageFormat
+import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -50,7 +51,7 @@ final class ApplicationInfoProperties {
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileStatic(TypeCheckingMode.SKIP)
-  private ApplicationInfoProperties(ProductProperties productProperties, String appInfoXml, BuildMessages messages) {
+  private ApplicationInfoProperties(ProductProperties productProperties, BuildOptions buildOptions, String appInfoXml, BuildMessages messages) {
     this.appInfoXml = appInfoXml
     def root = new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
 
@@ -83,7 +84,7 @@ final class ApplicationInfoProperties {
     if (!isEAP && (majorReleaseDate == null || majorReleaseDate.startsWith('__'))) {
       messages.error("majorReleaseDate may be omitted only for EAP")
     }
-    this.majorReleaseDate = formatMajorReleaseDate(majorReleaseDate)
+    this.majorReleaseDate = formatMajorReleaseDate(majorReleaseDate, buildOptions.buildDateInSeconds)
     productName = namesTag.@fullname ?: shortProductName
     edition = namesTag.@edition
     motto = namesTag.@motto
@@ -104,9 +105,10 @@ final class ApplicationInfoProperties {
   }
 
   @VisibleForTesting
-  static String formatMajorReleaseDate(String majorReleaseDateRaw) {
+  static String formatMajorReleaseDate(String majorReleaseDateRaw, long buildDateInSeconds = System.currentTimeSeconds()) {
     if (majorReleaseDateRaw == null || majorReleaseDateRaw.startsWith('__')) {
-      return ZonedDateTime.now(ZoneOffset.UTC).format(MAJOR_RELEASE_DATE_PATTERN)
+      def buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(buildDateInSeconds), ZoneOffset.UTC)
+      return buildDate.format(MAJOR_RELEASE_DATE_PATTERN)
     }
     else {
       try {
@@ -119,8 +121,8 @@ final class ApplicationInfoProperties {
     }
   }
 
-  ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
-    this(productProperties, findApplicationInfoInSources(project, productProperties, messages), messages)
+  ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildOptions buildOptions, BuildMessages messages) {
+    this(productProperties, buildOptions, findApplicationInfoInSources(project, productProperties, messages), messages)
   }
 
   String getUpperCaseProductName() { shortProductName.toUpperCase() }
@@ -148,13 +150,14 @@ final class ApplicationInfoProperties {
         buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
       }
     }
+    def buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(buildContext.options.buildDateInSeconds), ZoneOffset.UTC)
     def patchedAppInfoXml = BuildUtils.replaceAll(appInfoXml, Map.<String, String>of(
       "BUILD_NUMBER", productCode + "-" + buildContext.buildNumber,
-      "BUILD_DATE", ZonedDateTime.now(ZoneOffset.UTC).format(BUILD_DATE_PATTERN),
+      "BUILD_DATE", buildDate.format(BUILD_DATE_PATTERN),
       "BUILD", buildContext.buildNumber,
       "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
     ), "__")
-    return new ApplicationInfoProperties(buildContext.productProperties, patchedAppInfoXml, buildContext.messages)
+    return new ApplicationInfoProperties(buildContext.productProperties, buildContext.options, patchedAppInfoXml, buildContext.messages)
   }
 
   //copy of ApplicationInfoImpl.shortenCompanyName

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compiler
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -13,6 +14,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.JavaTypeEnhancementStateParser
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
@@ -28,32 +30,17 @@ import org.jetbrains.kotlin.platform.subplatformsOfType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.utils.JavaTypeEnhancementState
 
-object IDELanguageSettingsProvider : LanguageSettingsProvider {
-    override fun getLanguageVersionSettings(
-        moduleInfo: ModuleInfo,
-        project: Project
-    ): LanguageVersionSettings =
-        when (moduleInfo) {
-            is ModuleSourceInfo -> moduleInfo.module.languageVersionSettings
-            is LibraryInfo -> project.getLanguageVersionSettings(
+class IDELanguageSettingsProviderHelper(private val project: Project) {
+    internal val languageVersionSettings: LanguageVersionSettings
+        get() = project.cacheInvalidatingOnRootModifications {
+            project.getLanguageVersionSettings()
+        }
+
+    internal val languageVersionSettingsWithJavaTypeEnhancementState: LanguageVersionSettings
+        get() = project.cacheInvalidatingOnRootModifications {
+            project.getLanguageVersionSettings(
                 javaTypeEnhancementState = computeJavaTypeEnhancementState(project)
             )
-            is ScriptModuleInfo -> {
-                getLanguageSettingsForScripts(
-                    project,
-                    moduleInfo.scriptFile,
-                    moduleInfo.scriptDefinition
-                ).languageVersionSettings
-            }
-
-            is ScriptDependenciesInfo.ForFile ->
-                getLanguageSettingsForScripts(
-                    project,
-                    moduleInfo.scriptFile,
-                    moduleInfo.scriptDefinition
-                ).languageVersionSettings
-            is PlatformModuleInfo -> moduleInfo.platformModule.module.languageVersionSettings
-            else -> project.getLanguageVersionSettings()
         }
 
     private fun computeJavaTypeEnhancementState(project: Project): JavaTypeEnhancementState? {
@@ -71,6 +58,37 @@ object IDELanguageSettingsProvider : LanguageSettingsProvider {
         }
         return result
     }
+
+    companion object {
+        fun getInstance(project: Project): IDELanguageSettingsProviderHelper = project.service()
+    }
+}
+
+object IDELanguageSettingsProvider : LanguageSettingsProvider {
+    override fun getLanguageVersionSettings(
+        moduleInfo: ModuleInfo,
+        project: Project
+    ): LanguageVersionSettings =
+        when (moduleInfo) {
+            is ModuleSourceInfo -> moduleInfo.module.languageVersionSettings
+            is LibraryInfo -> IDELanguageSettingsProviderHelper.getInstance(project).languageVersionSettingsWithJavaTypeEnhancementState
+            is ScriptModuleInfo -> {
+                getLanguageSettingsForScripts(
+                    project,
+                    moduleInfo.scriptFile,
+                    moduleInfo.scriptDefinition
+                ).languageVersionSettings
+            }
+
+            is ScriptDependenciesInfo.ForFile ->
+                getLanguageSettingsForScripts(
+                    project,
+                    moduleInfo.scriptFile,
+                    moduleInfo.scriptDefinition
+                ).languageVersionSettings
+            is PlatformModuleInfo -> moduleInfo.platformModule.module.languageVersionSettings
+            else -> IDELanguageSettingsProviderHelper.getInstance(project).languageVersionSettings
+        }
 
     // TODO(dsavvinov): get rid of this method; instead store proper instance of TargetPlatformVersion in platform-instance
     override fun getTargetPlatform(moduleInfo: ModuleInfo, project: Project): TargetPlatformVersion =

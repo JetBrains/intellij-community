@@ -6,8 +6,10 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import kotlin.script.experimental.api.ScriptDiagnostic
 
 @set: org.jetbrains.annotations.TestOnly
 var Application.isScriptChangesNotifierDisabled by NotNullableUserDataProperty(
@@ -41,4 +43,15 @@ fun scriptingWarnLog(message: String, throwable: Throwable?) {
 
 fun scriptingErrorLog(message: String, throwable: Throwable?) {
     logger.error("[KOTLIN_SCRIPTING] $message", throwable)
+}
+
+fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigurationSnapshot) {
+    if (snapshot.configuration == null) {
+        scriptingWarnLog("Script configuration for file $file was not loaded")
+        for (report in snapshot.reports) {
+            if (report.severity >= ScriptDiagnostic.Severity.ERROR) {
+                scriptingWarnLog(report.message, report.exception)
+            }
+        }
+    }
 }

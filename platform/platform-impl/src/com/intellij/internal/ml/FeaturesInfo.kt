@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ml
 
 import com.google.gson.Gson
@@ -40,18 +40,18 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
                           reader.extractVersion())
     }
 
-    private fun binary(name: String, description: Map<String, Any>): BinaryFeature {
+    fun binary(name: String, description: Map<String, Any>): BinaryFeature {
       val (first, second) = extractBinaryValuesMappings(description)
       val default = extractDefaultValue(name, description)
       return BinaryFeature(name, first, second, default, allowUndefined(description))
     }
 
-    private fun float(name: String, description: Map<String, Any>): FloatFeature {
+    fun float(name: String, description: Map<String, Any>): FloatFeature {
       val default = extractDefaultValue(name, description)
       return FloatFeature(name, default, allowUndefined(description))
     }
 
-    private fun categorical(name: String, categories: List<String>): CategoricalFeature {
+    fun categorical(name: String, categories: List<String>): CategoricalFeature {
       return CategoricalFeature(name, categories.toSet())
     }
 
@@ -60,11 +60,7 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
       return gson.fromJson<T>(this, typeToken.type)
     }
 
-    private fun buildFeaturesIndex(
-      binary: List<BinaryFeature>,
-      float: List<FloatFeature>,
-      categorical: List<CategoricalFeature>)
-      : Map<String, Feature> {
+    fun buildFeaturesIndex(vararg featureGroups: List<Feature>): Map<String, Feature> {
       fun <T : Feature> MutableMap<String, Feature>.addFeatures(features: List<T>): MutableMap<String, Feature> {
         for (feature in features) {
           if (feature.name in keys) throw InconsistentMetadataException(
@@ -74,8 +70,11 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
 
         return this
       }
-
-      return mutableMapOf<String, Feature>().addFeatures(binary).addFeatures(float).addFeatures(categorical)
+      val index = mutableMapOf<String, Feature>()
+      for (features in featureGroups) {
+        index.addFeatures(features)
+      }
+      return index
     }
 
     private fun allowUndefined(description: Map<String, Any>): Boolean {
@@ -107,7 +106,7 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
       return Pair(result[0], result[1])
     }
 
-    private fun buildMappers(features: Map<String, Feature>,
+    fun buildMappers(features: Map<String, Feature>,
                              order: List<String>): Array<FeatureMapper> {
       val mappers = mutableListOf<FeatureMapper>()
       for (arrayFeatureName in order) {

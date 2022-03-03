@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     try {
         for(<error descr="Expecting a variable name">)</error>

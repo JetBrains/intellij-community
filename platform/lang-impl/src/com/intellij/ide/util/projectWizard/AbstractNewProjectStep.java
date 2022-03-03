@@ -188,6 +188,20 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
                                               @NotNull String locationString,
                                               @Nullable DirectoryProjectGenerator<T> generator,
                                               @NotNull T settings) {
+    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
+      .withBeforeOpenCallback((project) -> {
+        project.putUserData(CREATED_KEY, true);
+        return true;
+      });
+
+    return doGenerateProject(projectToClose, locationString, generator, settings, options);
+  }
+
+  public static <T> Project doGenerateProject(@Nullable Project projectToClose,
+                                              @NotNull String locationString,
+                                              @Nullable DirectoryProjectGenerator<T> generator,
+                                              @NotNull T settings,
+                                              @NotNull OpenProjectTask options) {
     Path location = Paths.get(locationString);
     try {
       Files.createDirectories(location);
@@ -224,11 +238,6 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       ((TemplateProjectDirectoryGenerator<?>)generator).generateProject(baseDir.getName(), locationString);
     }
 
-    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
-      .withBeforeOpenCallback((project) -> {
-        project.putUserData(CREATED_KEY, true);
-        return true;
-      });
     TrustedPaths.getInstance().setProjectPathTrusted(location, true);
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {

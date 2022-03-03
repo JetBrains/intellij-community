@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,7 +37,7 @@ object AstAccessControl {
         project: Project, disposable: Disposable, testBody: () -> Unit
     ) {
         val filter = wrapWithDirectiveAllow { file ->
-            file.fileType != KotlinFileType.INSTANCE || file in allowedFiles
+          !FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE) || file in allowedFiles
         }
 
         execute(shouldFail, project, disposable, filter, testBody)

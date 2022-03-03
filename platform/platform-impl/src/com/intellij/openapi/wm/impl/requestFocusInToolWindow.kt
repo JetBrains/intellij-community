@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.diagnostic.debug
@@ -9,7 +9,7 @@ import java.awt.Component
 import java.awt.KeyboardFocusManager
 import javax.swing.SwingUtilities
 
-private val LOG = logger<ToolWindowManagerImpl>()
+private val LOG = logger<FocusTask>()
 
 internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
   var startTime = System.currentTimeMillis()
@@ -56,14 +56,36 @@ internal fun getShowingComponentToRequestFocus(toolWindow: ToolWindowImpl): Comp
   val manager = toolWindow.contentManager
   val lastFocusedContent = toolWindow.getLastFocusedContent()
   if (lastFocusedContent != null) {
-    return lastFocusedContent.preferredFocusableComponent
+    val component = lastFocusedContent.preferredFocusableComponent
+    if (component == null || !component.isShowing) {
+      LOG.debug { "tool window ${toolWindow.id} last focused content's preferred focusable component is hidden: $component" }
+      return null
+    }
+    return component
   }
   if (manager is ContentManagerImpl) {
-    manager.contentsRecursively.forEach { content -> if (content.isSelected) return content?.preferredFocusableComponent }
+    manager.contentsRecursively.forEach { content ->
+      if (content.isSelected) {
+        val component = content.preferredFocusableComponent
+        if (component == null || !component.isShowing) {
+          LOG.debug { "tool window ${toolWindow.id} selected content's (name='${content.displayName}') preferred focusable component is hidden: $component" }
+          return null
+        }
+        return component
+      }
+    }
   }
   else {
-    manager.selectedContent?.preferredFocusableComponent?.let {
-      return it
+    val content = manager.selectedContent
+    if (content != null) {
+      val component = content.preferredFocusableComponent
+      if (component != null) {
+        if (!component.isShowing) {
+          LOG.debug { "tool window ${toolWindow.id} selected content's (name='${content.displayName}') preferred focusable component is hidden: $component" }
+          return null
+        }
+        return component
+      }
     }
   }
 

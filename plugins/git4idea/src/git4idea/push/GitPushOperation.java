@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -23,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
-import git4idea.DialogManager;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitRevisionNumber;
@@ -38,6 +36,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.push.GitPushParamsImpl.ForceWithLeaseReference;
+import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -153,8 +152,7 @@ public class GitPushOperation {
           // propose to update if rejected
           if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
             // the dialog will be shown => check for rebase-over-merge problem in advance to avoid showing several dialogs in a row
-            rebaseOverMergeProblemDetected = !findRootsWithMergeCommits(getRootsToUpdate(updateSettings,
-                                                                                         result.rejected.keySet())).isEmpty();
+            rebaseOverMergeProblemDetected = !findRootsWithMergeCommits(myRepositoryManager.getRepositories()).isEmpty();
 
             updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings,
                                                       rebaseOverMergeProblemDetected.booleanValue());
@@ -166,7 +164,7 @@ public class GitPushOperation {
             beforePushLabel = LocalHistory.getInstance().putSystemLabel(myProject,
                                                                         GitBundle.message("push.local.history.system.label.before"));
           }
-          Collection<GitRepository> rootsToUpdate = getRootsToUpdate(updateSettings, result.rejected.keySet());
+          Collection<GitRepository> rootsToUpdate = myRepositoryManager.getRepositories();
           LOG.debug("roots to update: " + rootsToUpdate);
           GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod(), rebaseOverMergeProblemDetected == null);
           for (GitRepository repository : rootsToUpdate) {
@@ -188,12 +186,6 @@ public class GitPushOperation {
       }
     }
     return prepareCombinedResult(results, updatedRoots, preUpdatePositions, beforePushLabel, afterPushLabel);
-  }
-
-  @NotNull
-  private Collection<GitRepository> getRootsToUpdate(@NotNull PushUpdateSettings updateSettings,
-                                                     @NotNull Set<GitRepository> rejectedRepositories) {
-    return updateSettings.shouldUpdateAllRoots() ? myRepositoryManager.getRepositories() : rejectedRepositories;
   }
 
   @NotNull
@@ -421,7 +413,6 @@ public class GitPushOperation {
 
   private void savePushUpdateSettings(@NotNull PushUpdateSettings settings, boolean rebaseOverMergeDetected) {
     UpdateMethod updateMethod = settings.getUpdateMethod();
-    mySettings.setUpdateAllRootsIfPushRejected(settings.shouldUpdateAllRoots());
     if (!rebaseOverMergeDetected // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
         && mySettings.getUpdateMethod() != updateMethod && mySettings.getUpdateMethod() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
       mySettings.setUpdateMethod(updateMethod);
@@ -430,13 +421,12 @@ public class GitPushOperation {
 
   @NotNull
   private PushUpdateSettings readPushUpdateSettings() {
-    boolean updateAllRoots = mySettings.shouldUpdateAllRootsIfPushRejected();
     UpdateMethod updateMethod = mySettings.getUpdateMethod();
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
       // deliberate limitation: we have only 2 buttons => choose method from the 1st repo if different
       updateMethod = GitUpdater.resolveUpdateMethod(myPushSpecs.keySet().iterator().next());
     }
-    return new PushUpdateSettings(updateAllRoots, updateMethod);
+    return new PushUpdateSettings(updateMethod);
   }
 
   @Nullable
@@ -445,23 +435,24 @@ public class GitPushOperation {
                                                       final boolean rebaseOverMergeProblemDetected) {
     Ref<PushUpdateSettings> updateSettings = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, repositories, initialSettings,
-                                                                           rebaseOverMergeProblemDetected);
-      DialogManager.show(dialog);
-      int exitCode = dialog.getExitCode();
-      if (exitCode != DialogWrapper.CANCEL_EXIT_CODE) {
-        mySettings.setAutoUpdateIfPushRejected(dialog.shouldAutoUpdateInFuture());
-        updateSettings.set(new PushUpdateSettings(dialog.shouldUpdateAll(), convertUpdateMethodFromDialogExitCode(exitCode)));
+      GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(
+        myProject, repositories, initialSettings, rebaseOverMergeProblemDetected
+      );
+
+      PushRejectedExitCode exitCode = dialog.showAndGet();
+      if (!exitCode.equals(PushRejectedExitCode.CANCEL)) {
+        mySettings.setAutoUpdateIfPushRejected(dialog.getShouldAutoUpdateInFuture());
+        updateSettings.set(new PushUpdateSettings(convertUpdateMethodFromDialogExitCode(exitCode)));
       }
     });
     return updateSettings.get();
   }
 
   @NotNull
-  private static UpdateMethod convertUpdateMethodFromDialogExitCode(int exitCode) {
+  private static UpdateMethod convertUpdateMethodFromDialogExitCode(PushRejectedExitCode exitCode) {
     switch (exitCode) {
-      case GitRejectedPushUpdateDialog.MERGE_EXIT_CODE:  return UpdateMethod.MERGE;
-      case GitRejectedPushUpdateDialog.REBASE_EXIT_CODE: return UpdateMethod.REBASE;
+      case MERGE: return UpdateMethod.MERGE;
+      case REBASE: return UpdateMethod.REBASE;
       default: throw new IllegalStateException("Unexpected exit code: " + exitCode);
     }
   }

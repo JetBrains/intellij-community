@@ -1,5 +1,5 @@
 // "Convert expression to 'Array' by inserting '.toList().toTypedArray()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: Iterable<String>) {
     bar(a<caret>)

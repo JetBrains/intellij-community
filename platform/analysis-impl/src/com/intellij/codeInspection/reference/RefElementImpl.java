@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -23,11 +23,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
   protected static final Logger LOG = Logger.getInstance(RefElement.class);
 
+  private static final int IS_DELETED_MASK = 0b10000;
   private static final int IS_INITIALIZED_MASK = 0b100000;
   private static final int IS_REACHABLE_MASK = 0b1000000;
   private static final int IS_ENTRY_MASK = 0b10000000;
@@ -39,10 +39,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private List<RefElement> myInReferences; // guarded by this
 
   private String[] mySuppressions;
-
-  private volatile boolean myIsDeleted;
-
-  private final CountDownLatch myInitSignal = new CountDownLatch(1);
 
   protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
@@ -59,12 +55,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   protected boolean isDeleted() {
-    return myIsDeleted;
+    return checkFlag(IS_DELETED_MASK);
   }
 
   @Override
   public boolean isValid() {
-    if (myIsDeleted) return false;
+    if (isDeleted()) return false;
     return ReadAction.compute(() -> {
       if (getRefManager().getProject().isDisposed()) return false;
 
@@ -224,7 +220,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   public void referenceRemoved() {
-    myIsDeleted = true;
+    setFlag(true, IS_DELETED_MASK);
     if (getOwner() != null) {
       getOwner().removeChild(this);
     }
@@ -256,20 +252,25 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return checkFlag(IS_INITIALIZED_MASK);
   }
 
-  public void setInitialized(final boolean initialized) {
+  public synchronized void setInitialized(final boolean initialized) {
     setFlag(initialized, IS_INITIALIZED_MASK);
     if (initialized) {
-      myInitSignal.countDown();
+      notifyAll();
     }
   }
 
   @Override
-  public final void waitForInitialized() {
+  public final synchronized void waitForInitialized() {
     if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
       return;
     }
     try {
-      myInitSignal.await();
+      while (!isInitialized()) {
+        wait(100);
+        if (!isValid()) {
+          break;
+        }
+      }
     }
     catch (InterruptedException ignore) {}
   }

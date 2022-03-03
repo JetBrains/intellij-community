@@ -16,6 +16,7 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -280,6 +281,31 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return performCancelable(() -> getOrCreateWrappee()
       .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, selectedProjects, alsoMake, alsoMakeDependents,
                ourToken));
+  }
+
+  @NotNull
+  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories)
+    throws MavenProcessCanceledException {
+    return perform(() -> getOrCreateWrappee().resolveRepositories(repositories, ourToken));
+  }
+
+  public Collection<MavenArchetype> getArchetypes() {
+    return perform(() -> getOrCreateWrappee().getArchetypes(ourToken));
+  }
+
+  public Collection<MavenArchetype> getInnerArchetypes(@NotNull Path catalogPath) {
+    return perform(() -> getOrCreateWrappee().getLocalArchetypes(ourToken, catalogPath.toString()));
+  }
+
+  public Collection<MavenArchetype> getRemoteArchetypes(@NotNull String url) {
+    return perform(() -> getOrCreateWrappee().getRemoteArchetypes(ourToken, url));
+  }
+
+  @Nullable
+  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                                              @NotNull List<MavenRemoteRepository> repositories,
+                                                              @Nullable String url) {
+    return perform(() -> getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken));
   }
 
   public void reset() {

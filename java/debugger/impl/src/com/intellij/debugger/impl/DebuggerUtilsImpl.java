@@ -35,6 +35,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Range;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
@@ -43,6 +44,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.jetbrains.jdi.LocalVariableImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -431,5 +433,12 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
         LOG.error(e);
       }
     }
+  }
+
+  @Nullable
+  public static Range<Location> getLocalVariableBorders(@NotNull LocalVariable variable) {
+    if (!(variable instanceof LocalVariableImpl)) return null;
+    LocalVariableImpl variableImpl = (LocalVariableImpl)variable;
+    return new Range<>(variableImpl.getScopeStart(), variableImpl.getScopeEnd());
   }
 }

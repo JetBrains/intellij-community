@@ -1,5 +1,5 @@
 // "Create extension function 'Int.invoke'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A<T>(val n: T)
 

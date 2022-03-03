@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -93,6 +94,10 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
       return new TrackingRunner.CastDfaProblemType();
     }
     PsiElement parent = expression.getParent();
+    if (parent instanceof PsiForeachStatement) {
+      return new TrackingRunner.ZeroSizeDfaProblemType(
+        expression.getType() instanceof PsiArrayType ? SpecialField.ARRAY_LENGTH : SpecialField.COLLECTION_SIZE);
+    }
     if (parent instanceof PsiReferenceExpression) {
       // Test possible NPE in qualifiers only
       return new TrackingRunner.NullableDfaProblemType();
@@ -191,4 +196,6 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
   public void testSubStringEqualsIgnoreCase() { doTest(); }
   public void testSubStringEqualsIgnoreCase2() { doTest(); }
   public void testArrayBlockingQueueContract() { doTest(); }
+  public void testEmptyCollectionSimple() { doTest(); }
+  public void testReboxing() { doTest(); }
 }

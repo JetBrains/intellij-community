@@ -11,6 +11,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -326,7 +327,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
 
     private fun reloadCachedPropertiesFiles() {
-      val virtualFiles = cache.asMap().values.filter { it.fileType == StdFileTypes.PROPERTIES }
+      val virtualFiles = cache.asMap().values.filter { FileTypeRegistry.getInstance().isFileOfType(it, StdFileTypes.PROPERTIES) }
       for (file in virtualFiles) {
         val document = FileDocumentManager.getInstance().getCachedDocument(file)
         if (document != null) FileDocumentManager.getInstance().saveDocument(document)

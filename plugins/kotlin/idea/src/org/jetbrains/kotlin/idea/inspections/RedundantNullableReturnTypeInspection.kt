@@ -8,7 +8,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
+import org.jetbrains.kotlin.resolve.jvm.annotations.TRANSIENT_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 
@@ -66,7 +69,10 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
 
                 else -> null
             } ?: return
-            val actualReturnTypes = body.actualReturnTypes(targetDeclaration)
+            val context = body.analyze()
+            val declarationDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, targetDeclaration] ?: return
+            if (declarationDescriptor.hasJvmTransientAnnotation()) return
+            val actualReturnTypes = body.actualReturnTypes(context, declarationDescriptor)
             if (actualReturnTypes.isEmpty() || actualReturnTypes.any { it.isNullable() }) return
 
             val declarationName = declaration.nameAsSafeName.asString()
@@ -84,10 +90,11 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
         }
     }
 
+    private fun DeclarationDescriptor.hasJvmTransientAnnotation() =
+        (this as? PropertyDescriptor)?.backingField?.annotations?.findAnnotation(TRANSIENT_ANNOTATION_FQ_NAME) != null
+
     @OptIn(FrontendInternals::class)
-    private fun KtExpression.actualReturnTypes(declaration: KtDeclaration): List<KotlinType> {
-        val context = analyze()
-        val declarationDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration] ?: return emptyList()
+    private fun KtExpression.actualReturnTypes(context: BindingContext, declarationDescriptor: DeclarationDescriptor): List<KotlinType> {
         val dataFlowValueFactory = getResolutionFacade().frontendService<DataFlowValueFactory>()
         val moduleDescriptor = findModuleDescriptor()
         val languageVersionSettings = languageVersionSettings

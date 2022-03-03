@@ -97,9 +97,13 @@ internal object OpenLessonActivities {
       LOG.debug("${projectWhereToStartLesson.name}: trying to find LearnProject in opened projects ${learnProject != null}")
       if (learnProject != null) LearningUiManager.learnProject = learnProject
 
+      val lessonType = params.lesson.lessonType
       when {
-        params.lesson.lessonType == LessonType.SCRATCH -> {
+        lessonType == LessonType.SCRATCH -> {
           LOG.debug("${projectWhereToStartLesson.name}: scratch based lesson")
+        }
+        lessonType == LessonType.USER_PROJECT -> {
+          LOG.debug("The lesson opened in user project ${projectWhereToStartLesson.name}")
         }
         learnProject == null || learnProject.isDisposed -> {
           if (!isLearningProject(projectWhereToStartLesson, langSupport)) {
@@ -133,13 +137,17 @@ internal object OpenLessonActivities {
         }
       }
 
-      if (params.lesson.lessonType.isProject) {
-        if (projectWhereToStartLesson != learnProject) {
-          LOG.error(Exception("Invalid learning project initialization: " +
-                              "projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
-          return
+      if (lessonType.isProject) {
+        if (lessonType == LessonType.USER_PROJECT) {
+          prepareAndOpenLesson(params, withCleanup = false)
+        } else {
+          if (projectWhereToStartLesson != learnProject) {
+            LOG.error(Exception("Invalid learning project initialization: " +
+                                "projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
+            return
+          }
+          prepareAndOpenLesson(params)
         }
-        prepareAndOpenLesson(params)
       }
       else {
         openLessonForPreparedProject(params)

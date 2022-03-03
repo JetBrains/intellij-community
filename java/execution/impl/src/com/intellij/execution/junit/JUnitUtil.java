@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -182,8 +182,9 @@ public final class JUnitUtil {
         return true;
       }
     }
-    else if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))
-    || hasTestableMetaAnnotation(psiClass)) {
+    else if (JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) != null && 
+             MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION)) || 
+             hasTestableMetaAnnotation(psiClass)) {
       //no jupiter engine in the classpath
       return true;
     }
@@ -294,15 +295,14 @@ public final class JUnitUtil {
 
     if (psiClass.isAnnotationType()) return false;
 
-    if (psiClass.getContainingClass() != null && MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
+    if (psiClass.getContainingClass() != null && 
+        !psiClass.hasModifierProperty(PsiModifier.PRIVATE) &&
+        !psiClass.hasModifierProperty(PsiModifier.STATIC) &&
+        MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
       return true;
     }
 
     if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
-      return true;
-    }
-
-    if (MetaAnnotationUtil.isMetaAnnotated(psiClass, TEST5_ANNOTATIONS)) {
       return true;
     }
 
@@ -312,7 +312,9 @@ public final class JUnitUtil {
       boolean hasAnnotation = false;
       for (final PsiMethod method : psiClass.getAllMethods()) {
         ProgressManager.checkCanceled();
-        if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
+        if (!method.hasModifierProperty(PsiModifier.PRIVATE) &&
+            !method.hasModifierProperty(PsiModifier.STATIC) &&
+            MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
           hasAnnotation = true;
           break;
         }
@@ -320,7 +322,9 @@ public final class JUnitUtil {
 
       if (!hasAnnotation) {
         for (PsiClass aClass : psiClass.getAllInnerClasses()) {
-          if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
+          if (!aClass.hasModifierProperty(PsiModifier.PRIVATE) &&
+              !aClass.hasModifierProperty(PsiModifier.STATIC) &&
+              MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
             hasAnnotation = true;
             break;
           }
@@ -335,13 +339,14 @@ public final class JUnitUtil {
   }
 
   public static boolean isJUnit5(GlobalSearchScope scope, Project project) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    Condition<String> foundCondition = aPackageName -> {
-      PsiPackage aPackage = facade.findPackage(aPackageName);
-      return aPackage != null && aPackage.getDirectories(scope).length > 0;
-    };
+    return hasPackageWithDirectories(JavaPsiFacade.getInstance(project), TEST5_PACKAGE_FQN, scope);
+  }
 
-    return ReadAction.compute(() -> foundCondition.value(TEST5_PACKAGE_FQN));
+  public static boolean hasPackageWithDirectories(JavaPsiFacade facade, String packageQName, GlobalSearchScope globalSearchScope) {
+    return ReadAction.compute(() -> {
+      PsiPackage aPackage = facade.findPackage(packageQName);
+      return aPackage != null && aPackage.getDirectories(globalSearchScope).length > 0;
+    });
   }
 
   public static boolean isTestAnnotated(final PsiMethod method) {

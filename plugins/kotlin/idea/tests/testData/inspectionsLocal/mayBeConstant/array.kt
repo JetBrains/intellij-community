@@ -1,4 +1,4 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val <caret>arr = arrayOf("alpha", "omega")

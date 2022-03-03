@@ -2,6 +2,11 @@
 <body>
 Reports character escapes that are replaceable with the unescaped character without a change in meaning.
 Note that inside the square brackets of a character class, many escapes are unnecessary that would be necessary outside of a character class.
+<p>
+This inspection doesn't warn on opening curly braces (<code>{</code>) outside of character classes (<code>[]</code>).
+Removing the escape before an opening curly brace can cause confusion,
+even though this is allowed in e.g. the Javascript and Python regex dialects.
+It would also make the regex pattern less portable, because many other dialects don't allow unescaped curly braces as characters.
 <p><b>Example:</b></p>
 <pre><code>
   \-\;[\.]
@@ -11,6 +16,10 @@ Note that inside the square brackets of a character class, many escapes are unne
   -;[.]
 </code></pre>
 <!-- tooltip end -->
+<p>
+Use the <b>Ignore escaped closing brackets '}' and ']'</b> option
+to specify if '\}' and '\]' should be reported when they are not inside a character class
+and they are allowed to be unescaped by the RegExp dialect.
 <p><small>New in 2017.3</small>
 </body>
 </html>

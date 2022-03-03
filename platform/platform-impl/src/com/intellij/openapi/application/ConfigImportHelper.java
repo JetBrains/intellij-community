@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.configurationStore.StoreUtilKt;
@@ -8,6 +8,7 @@ import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.Main;
@@ -25,7 +26,9 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
@@ -83,6 +86,8 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
+
+  private static final Set<String> SESSION_FILES = Set.of(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN, BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
 
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)*)");
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
@@ -296,7 +301,7 @@ public final class ConfigImportHelper {
       log.info("Backup plugins dir separately from " + pluginsDir + " to " + pluginsBackup);
       if (pluginsBackup.mkdir()) {
         FileUtil.copyDir(new File(pluginsDir.toString()), pluginsBackup);
-        FileUtil.delete(pluginsDir);
+        NioFiles.deleteRecursively(pluginsDir);
       }
       else {
         log.warn("Couldn't backup plugins directory to " + pluginsBackup);
@@ -309,7 +314,7 @@ public final class ConfigImportHelper {
   private static void deleteCurrentConfigDir(Path currentConfig, Logger log, boolean smartDelete) throws IOException {
     log.debug("Removing current config directory, smartDelete: " + smartDelete);
     if (!smartDelete) {
-      FileUtil.delete(currentConfig);
+      NioFiles.deleteRecursively(currentConfig);
       return;
     }
 
@@ -328,7 +333,7 @@ public final class ConfigImportHelper {
 
     if (!removedViaCustomizer) {
       log.debug("RestoreDefaultConfigCustomizer not found, removing config directory manually...");
-      FileUtil.delete(currentConfig);
+      NioFiles.deleteRecursively(currentConfig);
     }
   }
 
@@ -398,10 +403,15 @@ public final class ConfigImportHelper {
   }
 
   public static boolean isConfigDirectory(@NotNull Path candidate) {
-    return ContainerUtil.exists(OPTIONS, name -> Files.exists(candidate.resolve(name)));
+    for (String t : OPTIONS) {
+      if (Files.exists(candidate.resolve(t))) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  static class ConfigDirsSearchResult {
+  static final class ConfigDirsSearchResult {
     private final List<Pair<Path, FileTime>> directories;
     private final boolean fromSameProduct;
 
@@ -441,7 +451,7 @@ public final class ConfigImportHelper {
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
     homes.add(newConfigDir.getFileSystem().getPath(PathManager.getDefaultConfigPathFor("X")).getParent());  // ... in the default location
     Path historic = newConfigDir.getFileSystem().getPath(defaultConfigPath("X2019.3"));
-    Path historicHome = SystemInfo.isMac ? historic.getParent() : historic.getParent().getParent();
+    Path historicHome = SystemInfoRt.isMac ? historic.getParent() : historic.getParent().getParent();
     homes.add(historicHome);  // ... in the historic location
 
     String prefix = getPrefixFromSelector(PathManager.getPathsSelector());
@@ -457,7 +467,7 @@ public final class ConfigImportHelper {
     List<Path> otherCandidates = new ArrayList<>();
     for (Path home : homes) {
       if (home == null || !Files.isDirectory(home)) continue;
-      boolean dotted = !SystemInfo.isMac && home == historicHome;
+      boolean dotted = !SystemInfoRt.isMac && home == historicHome;
 
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(home)) {
         for (Path path : stream) {
@@ -520,7 +530,7 @@ public final class ConfigImportHelper {
     lastModified.sort((o1, o2) -> {
       int diff = o2.second.compareTo(o1.second);
       if (diff == 0) {
-        diff = StringUtil.naturalCompare(o2.first.toString(), o1.first.toString());
+        diff = NaturalComparator.INSTANCE.compare(o2.first.toString(), o1.first.toString());
       }
       return diff;
     });
@@ -529,12 +539,14 @@ public final class ConfigImportHelper {
   }
 
   private static boolean nameMatchesPrefix(String name, String prefix, boolean dotted) {
-    return StringUtil.startsWithIgnoreCase(name, dotted ? '.' + prefix : prefix);
+    return StringUtilRt.startsWithIgnoreCase(name, dotted ? '.' + prefix : prefix);
   }
 
   private static String getNameWithVersion(Path configDir) {
     String name = configDir.getFileName().toString();
-    if (CONFIG.equals(name)) name = StringUtil.trimStart(configDir.getParent().getFileName().toString(), ".");
+    if (CONFIG.equals(name)) {
+      name = Strings.trimStart(configDir.getParent().getFileName().toString(), ".");
+    }
     return name;
   }
 
@@ -561,7 +573,7 @@ public final class ConfigImportHelper {
       return pair(config, null);
     }
 
-    if (Files.isDirectory(selectedDir.resolve(SystemInfo.isMac ? CONTENTS : BIN))) {
+    if (Files.isDirectory(selectedDir.resolve(SystemInfoRt.isMac ? CONTENTS : BIN))) {
       Path configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, ConfigImportHelper::defaultConfigPath);
       if (configDir != null && isConfigDirectory(configDir)) {
         return pair(configDir, selectedDir);
@@ -573,7 +585,7 @@ public final class ConfigImportHelper {
 
   private static @Nullable Path getSettingsPath(Path ideHome, String propertyName, Function<? super String, String> pathBySelector) {
     List<Path> files = new ArrayList<>();
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       files.add(ideHome.resolve(CONTENTS + '/' + BIN + '/' + PathManager.PROPERTIES_FILE_NAME));
       files.add(ideHome.resolve(CONTENTS + '/' + PLIST));
     }
@@ -625,13 +637,13 @@ public final class ConfigImportHelper {
 
       if (fileName.endsWith(".plist")) {
         String propertyValue = findPListKey(propertyName, fileContent);
-        if (!StringUtil.isEmpty(propertyValue)) {
+        if (!Strings.isEmpty(propertyValue)) {
           return propertyValue;
         }
       }
 
       String propertyValue = findProperty(propertyName, fileContent);
-      if (!StringUtil.isEmpty(propertyValue)) {
+      if (!Strings.isEmpty(propertyValue)) {
         return propertyValue;
       }
     }
@@ -680,7 +692,7 @@ public final class ConfigImportHelper {
   }
 
   private static String fixDirName(String dir) {
-    return FileUtil.expandUserHome(StringUtil.unquoteString(dir, '"'));
+    return FileUtil.expandUserHome(StringUtilRt.unquoteString(dir, '"'));
   }
 
   private static void doImport(Path oldConfigDir, Path newConfigDir, @Nullable Path oldIdeHome, Logger log, ConfigImportOptions importOptions) {
@@ -721,7 +733,7 @@ public final class ConfigImportHelper {
     boolean importPlugins = true;
     @Nullable ConfigImportSettings importSettings;
     BuildNumber compatibleBuildNumber = null;
-    ThrowableNotNullBiFunction<? super String, ? super ProgressIndicator, ? extends File, ? extends IOException> downloadFunction = null;
+    MarketplacePluginDownloadService downloadService = null;
     Path bundledPluginPath = null;
     Map<PluginId, Set<String>> brokenPluginVersions = null;
 
@@ -778,7 +790,7 @@ public final class ConfigImportHelper {
       migratePlugins(oldPluginsDir, newPluginsDir, oldConfigDir, actionCommands, options);
     }
 
-    if (SystemInfo.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
+    if (SystemInfoRt.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
     }
 
@@ -935,12 +947,12 @@ public final class ConfigImportHelper {
       }
 
       try {
-        PluginDownloader downloader = PluginDownloader.createDownloader(plugin);
-        if (options.downloadFunction != null) {
-          downloader.setDownloadFunction(options.downloadFunction);
-        }
-        if (downloader.prepareToInstallAndLoadDescriptor(indicator, false) != null) {
-          PluginInstaller.unpackPlugin(downloader.getFile().toPath(), newPluginsDir);
+        PluginDownloader downloader = PluginDownloader.createDownloader(plugin)
+          .withErrorsConsumer(__ -> {})
+          .withDownloadService(options.downloadService);
+
+        if (downloader.prepareToInstall(indicator)) {
+          PluginInstaller.unpackPlugin(downloader.getFilePath(), newPluginsDir);
           log.info("Downloaded and unpacked compatible version of plugin " + plugin.getPluginId());
           iterator.remove();
         }
@@ -1021,7 +1033,7 @@ public final class ConfigImportHelper {
                    line.startsWith("-agentlib:yjpagent") ||
                    line.startsWith("-agentpath:") && line.contains("yjpagent") ||
                    "-Dsun.io.useCanonPrefixCache=false".equals(line) ||
-                   "-Dfile.encoding=UTF-8".equals(line) && SystemInfo.isMac ||
+                   "-Dfile.encoding=UTF-8".equals(line) && SystemInfoRt.isMac ||
                    isDuplicateOrLowerValue(line, platformLines)) {
             i.remove(); updated = true;
           }
@@ -1088,31 +1100,32 @@ public final class ConfigImportHelper {
   }
 
   private static boolean shouldSkipFileDuringImport(String fileName) {
-    List<String> filesToSkip = Arrays.asList(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN, BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
-    return filesToSkip.contains(fileName) || fileName.startsWith(CHROME_USER_DATA);
+    return SESSION_FILES.contains(fileName) ||
+           fileName.startsWith(CHROME_USER_DATA) ||
+           fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName()));
   }
 
   private static String defaultConfigPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultConfigPathFor(selector) :
-           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Preferences/" + selector
+           SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Preferences/" + selector
                             : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG;
   }
 
   private static String defaultPluginsPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultPluginPathFor(selector) :
-           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Application Support/" + selector
+           SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Application Support/" + selector
                             : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG + '/' + PLUGINS;
   }
 
   private static String defaultSystemPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultSystemPathFor(selector) :
-           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Caches/" + selector
+           SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Caches/" + selector
                             : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
   }
 
   private static String defaultLogsPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultLogPathFor(selector) :
-           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Logs/" + selector
+           SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Logs/" + selector
                             : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM + "/logs";
   }
 

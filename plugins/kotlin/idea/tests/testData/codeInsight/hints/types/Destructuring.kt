@@ -1,4 +1,5 @@
 // MODE: all
+// NO_HINTS
 
 fun main(args: Array<String>) {
     val (a: String, b: String, c: String) = x()

@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
@@ -36,7 +38,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                       tabId: String,
                       keysTyped: Int,
                       backspacesTyped: Int,
-                      queryLength: Int) {
+                      searchQuery: String) {
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
@@ -46,7 +48,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-        queryLength, providersCaches)
+        searchQuery, providersCaches)
     }
 
     if (prevState != null && isMLSupportedTab(prevState.tabId)) {
@@ -91,7 +93,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 
   fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
     val state = getCurrentSearchState()
-    if (state != null && isMLSupportedTab(state.tabId)) {
+    if (state != null && SearchEverywhereTabWithMl.findById(state.tabId) != null) {
       val id = itemIdProvider.getId(element)
       return state.getMLWeight(id, element, contributor, cachedContextInfo, matchingDegree)
     }
@@ -103,14 +105,10 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   }
 
   fun isMLSupportedTab(tabId: String): Boolean {
-    return isFilesTab(tabId) || isActionsTab(tabId)
+    return SearchEverywhereElementFeaturesProvider.isTabSupported(tabId)
   }
 
   fun getCurrentSearchState() = currentSearchState.get()
-
-  private fun isFilesTab(tabId: String) = FileSearchEverywhereContributor::class.java.simpleName == tabId
-
-  private fun isActionsTab(tabId: String) = ActionSearchEverywhereContributor::class.java.simpleName == tabId
 }
 
 internal class SearchEverywhereMLContextInfo(project: Project?) {

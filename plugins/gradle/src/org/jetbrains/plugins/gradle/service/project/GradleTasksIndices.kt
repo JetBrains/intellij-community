@@ -16,22 +16,14 @@ interface GradleTasksIndices {
   /**
    * Finds all tasks which are accessible from Gradle module with module path.
    *
+   * @param matcher is task matcher. eg. task, :task, :module:path:task.
    * @return
    *  all matched tasks if there are any matched task, otherwise
    *  all partially matched tasks if there are any partially matched task, otherwise
    *  empty list.
-   * @see isMatchedTask
+   *  @see isMatchedTask
    */
   fun findTasks(modulePath: String, matcher: String): List<GradleTaskData>
-
-  /**
-   * Batch finds all tasks which are accessible from Gradle module with module path.
-   * @see findTasks
-   * @see isMatchedTask
-   */
-  fun findTasks(modulePath: String, matchers: List<String>): List<GradleTaskData>
-
-  fun findGradleTestDataTasks(): Set<String>  // Android Studio: workaround for IDEA-289683
 
   /**
    * Checks that [task] can be determined by [matcher] in Gradle module that defined by [modulePath].
@@ -41,19 +33,18 @@ interface GradleTasksIndices {
    *  is partially matched by [matcher] `smoke` and `:smoke`, and
    *  isn't matched by [matcher] `test` and `:test`.
    *
-   * @param matcher is task matcher. eg. task, :task, :module:path:task.
    * @return
    *   [ThreeState.YES] if task is matched,
    *   [ThreeState.NO] if task isn't matched,
    *   [ThreeState.UNSURE] if task is partially matched.
    */
-  fun isMatchedTask(modulePath: String, task: GradleTaskData, matcher: String): ThreeState
+  fun isMatchedTask(task: GradleTaskData, modulePath: String, matcher: String): ThreeState
 
   /**
    * Evaluates all [task] names which can be used from Gradle module that defined by [modulePath].
    * @return empty list if task cannot be runned from defined Gradle module.
    */
-  fun getPossibleTaskNames(modulePath: String, task: GradleTaskData): Set<String>
+  fun getPossibleTaskNames(task: GradleTaskData, modulePath: String): Set<String>
 
   /**
    * Get ordered all tasks that can be executed from Gradle module that defined by [modulePath].

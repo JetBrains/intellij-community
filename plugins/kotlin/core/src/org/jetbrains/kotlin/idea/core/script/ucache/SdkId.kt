@@ -3,7 +3,8 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.util.io.FileUtil
-import java.io.File
+import com.intellij.util.io.exists
+import java.nio.file.Path
 
 /**
  * Safe key for locating sdk in intellij project jdk table
@@ -14,15 +15,15 @@ class SdkId private constructor(val homeDirectory: String?) {
     companion object {
         val default = SdkId(null as String?)
 
-        operator fun invoke(homeDirectory: File?): SdkId {
-            if (homeDirectory == null) return default
-            val canonicalPath = FileUtil.toSystemIndependentName(homeDirectory.canonicalPath)
+        operator fun invoke(homeDirectory: Path?): SdkId {
+            if (homeDirectory == null || !homeDirectory.exists()) return default
+            val canonicalPath = FileUtil.toSystemIndependentName(homeDirectory.toRealPath().toString())
             return SdkId(canonicalPath)
         }
 
         operator fun invoke(homeDirectory: String?): SdkId {
             if (homeDirectory == null) return default
-            return invoke(File(homeDirectory))
+            return invoke(Path.of(homeDirectory))
         }
     }
 

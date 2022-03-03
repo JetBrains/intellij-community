@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,7 +14,7 @@ import java.util.*;
 public class MostlySingularMultiMap<K, V> implements Serializable {
   private static final long serialVersionUID = 2784473565881807109L;
 
-  protected final Map<K, Object> myMap;
+  protected final Map<K, Object> myMap; // K -> V|ValueList<V>
 
   public MostlySingularMultiMap() {
     myMap = CollectionFactory.createSmallMemoryFootprintMap();

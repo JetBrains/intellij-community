@@ -25,9 +25,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Set;
@@ -52,6 +54,12 @@ public class NewProjectWizard extends AbstractProjectWizard {
   }
 
   protected void init(@NotNull ModulesProvider modulesProvider) {
+    if (isNewWizard()) {
+      JRootPane pane = getRootPane();
+      if (pane != null) {
+        pane.putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, Boolean.TRUE);
+      }
+    }
     myWizardContext.setModulesProvider(modulesProvider);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     Disposer.register(getDisposable(), projectTypeStep);
@@ -72,6 +80,11 @@ public class NewProjectWizard extends AbstractProjectWizard {
       projectTypeStep.loadRemoteTemplates(chooseTemplateStep);
     }
     super.init();
+  }
+
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return new Dimension(800, 600);
   }
 
   @Override

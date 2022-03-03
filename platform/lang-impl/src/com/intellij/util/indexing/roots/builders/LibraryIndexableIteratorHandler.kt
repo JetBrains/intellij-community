@@ -4,9 +4,10 @@ package com.intellij.util.indexing.roots.builders
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.util.indexing.roots.IndexableEntityProvider
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.LibraryBridgeIndexableFilesIteratorImpl
+import com.intellij.util.indexing.roots.LibraryIndexableFilesIterator
+import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
@@ -21,6 +22,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,
                            project: Project,
                            entityStorage: WorkspaceEntityStorage): List<IndexableFilesIterator> {
+    @Suppress("UNCHECKED_CAST")
     builders as Collection<LibraryIdIteratorBuilder>
     val idsToIndex = mutableSetOf<LibraryId>()
     builders.forEach { builder -> if (builder.dependencyChecked) idsToIndex.add(builder.libraryId) }
@@ -34,24 +36,29 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     }
 
     val result = mutableListOf<IndexableFilesIterator>()
+    val ids = mutableSetOf<LibraryOrigin>()
     idsToIndex.forEach { id ->
-      result.addAll(createLibraryIterator(id, entityStorage, project))
+      createLibraryIterator(id, entityStorage, project)?.also {
+        if (ids.add(it.origin)) {
+          result.add(it)
+        }
+      }
     }
     return result
   }
 
   private fun createLibraryIterator(libraryId: LibraryId,
                                     entityStorage: WorkspaceEntityStorage,
-                                    project: Project): Collection<IndexableFilesIterator> =
+                                    project: Project): LibraryIndexableFilesIterator? =
     if (libraryId.tableId is LibraryTableId.GlobalLibraryTableId) {
-      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryId.tableId.level, project)?.let {
-        it.getLibraryByName(libraryId.name)?.let { createIterators(it, libraryId) }
-      } ?: emptyList()
+      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryId.tableId.level, project)?.let { libraryTable ->
+        libraryTable.getLibraryByName(libraryId.name)?.let { LibraryIndexableFilesIteratorImpl(it) }
+      }
     }
     else {
       entityStorage.resolve(libraryId)?.let { entityStorage.libraryMap.getDataByEntity(it) }?.let {
-        listOf(LibraryBridgeIndexableFilesIteratorImpl(it))
-      } ?: emptyList()
+        LibraryIndexableFilesIteratorImpl(it)
+      }
     }
 
   private class DependencyChecker(val entityStorage: WorkspaceEntityStorage,

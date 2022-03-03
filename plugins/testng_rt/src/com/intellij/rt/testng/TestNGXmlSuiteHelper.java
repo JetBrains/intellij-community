@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.testng;
 
 import org.testng.xml.*;
@@ -27,9 +27,17 @@ public final class TestNGXmlSuiteHelper {
                                 String rootPath,
                                 Logger logger,
                                 boolean requireHttp) {
-    File xmlFile;
-    final XmlSuite xmlSuite = new XmlSuite();
+    XmlSuite xmlSuite = new XmlSuite();
     xmlSuite.setParameters(testParams);
+    return writeSuite(map, name, rootPath, logger, requireHttp, xmlSuite);
+  }
+
+  public static File writeSuite(Map<String, Map<String, List<String>>> map,
+                                String name,
+                                String rootPath,
+                                Logger logger,
+                                boolean requireHttp,
+                                XmlSuite xmlSuite) {
     XmlTest xmlTest = new XmlTest(xmlSuite);
     xmlTest.setName(name);
     List<XmlClass> xmlClasses = new ArrayList<XmlClass>();
@@ -57,7 +65,7 @@ public final class TestNGXmlSuiteHelper {
       xmlClasses.add(xmlClass);
     }
     xmlTest.setXmlClasses(xmlClasses);
-    xmlFile = new File(rootPath, "temp-testng-customsuite.xml");
+    File xmlFile = new File(rootPath, "temp-testng-customsuite.xml");
     String toXml = xmlSuite.toXml();
     if (requireHttp) {
       String target = "https://testng.org/" + Parser.TESTNG_DTD;

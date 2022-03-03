@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
-import java.io.Closeable
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.channels.FileChannel
+import java.nio.channels.FileChannel.MapMode
+import java.nio.channels.WritableByteChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -12,68 +12,83 @@ import java.util.*
 import java.util.zip.CRC32
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
+import kotlin.math.min
 
-// not thread-safe, intended only for single thread for one time use
-private class ByteBufferAllocator {
-  private var directByteBuffer: ByteBuffer? = null
+// 1 MB
+private const val largeFileThreshold = 1_048_576
+private const val compressThreshold = 8 * 1024
+// 8 MB (as JDK)
+private const val mappedTransferSize = 8L * 1024L * 1024L
 
-  fun allocate(size: Int): ByteBuffer {
-    var result = directByteBuffer
-    if (result != null && result.capacity() < size) {
-      // clear references to object to make sure that it can be collected by GC
-      directByteBuffer = null
-      result = null
-    }
-
-    if (result == null) {
-      result = ByteBuffer.allocateDirect(roundUpInt(size, 65_536))!!
-      result.order(ByteOrder.LITTLE_ENDIAN)
-      directByteBuffer = result
-    }
-    result.rewind()
-    result.limit(size)
-    return result
+internal inline fun writeNewZip(file: Path, compress: Boolean = false, task: (ZipFileWriter) -> Unit) {
+  Files.createDirectories(file.parent)
+  ZipFileWriter(channel = FileChannel.open(file, W_CREATE_NEW),
+                deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use {
+    task(it)
   }
 }
 
-internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflater?) : Closeable {
-  private val resultStream = ZipArchiveOutputStream(channel)
+// you must pass SeekableByteChannel if files will be written (`file` method)
+internal class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater? = null) : AutoCloseable {
+  constructor(channel: WritableByteChannel, compress: Boolean)
+    : this(channel = channel, deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null)
+
+  // size is written as part of optimized metadata - so, if compression is enabled, optimized metadata will be incorrect
+  val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = deflater == null)
   private val crc32 = CRC32()
 
   private val bufferAllocator = ByteBufferAllocator()
-  private val inflateBufferAllocator = if (deflater == null) null else ByteBufferAllocator()
+  private val deflateBufferAllocator = if (deflater == null) null else ByteBufferAllocator()
 
-  fun writeEntry(nameString: String, method: Int, file: Path) {
+  @Suppress("DuplicatedCode")
+  fun file(nameString: String, file: Path) {
+    var isCompressed = deflater != null && !nameString.endsWith(".png")
+
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size
-    var isCompressed = method == ZipEntry.DEFLATED
+
+    crc32.reset()
 
     val input: ByteBuffer
     val size: Int
-    Files.newByteChannel(file, EnumSet.of(StandardOpenOption.READ)).use { channel ->
+    FileChannel.open(file, EnumSet.of(StandardOpenOption.READ)).use { channel ->
       size = channel.size().toInt()
-      if (size < 512) {
+      if (size == 0) {
+        writeEmptyFile(name, headerSize)
+        return
+      }
+      if (size < compressThreshold) {
         isCompressed = false
       }
 
-      when {
-        size == 0 -> {
-          writeEmptyFile(name, headerSize)
-          return
+      if (size > largeFileThreshold || isCompressed) {
+        val headerPosition = resultStream.getChannelPositionAndAdd(headerSize)
+        var compressedSize = writeLargeFile(size.toLong(), channel, if (isCompressed) deflater else null).toInt()
+        val crc = crc32.value
+        val method: Int
+        if (compressedSize == -1) {
+          method = ZipEntry.STORED
+          compressedSize = size
         }
-        isCompressed -> {
-          try {
-            input = bufferAllocator.allocate(size)
-          }
-          catch (e: OutOfMemoryError) {
-            throw RuntimeException("Cannot allocate write buffer for $nameString (size=$size)", e)
-          }
+        else {
+          method = ZipEntry.DEFLATED
         }
-        else -> {
-          input = bufferAllocator.allocate(headerSize + size)
-          input.position(headerSize)
-        }
+        val buffer = bufferAllocator.allocate(headerSize)
+        writeLocalFileHeader(name = name, size = size, compressedSize = compressedSize, crc32 = crc, method = method, buffer = buffer)
+        buffer.position(0)
+        assert(buffer.remaining() == headerSize)
+        resultStream.writeEntryHeaderAt(name = name,
+                                        header = buffer,
+                                        position = headerPosition,
+                                        size = size,
+                                        compressedSize = compressedSize,
+                                        crc = crc,
+                                        method = method)
+        return
       }
+
+      input = bufferAllocator.allocate(headerSize + size)
+      input.position(headerSize)
 
       // set position to compute CRC
       input.mark()
@@ -82,37 +97,121 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
       }
       while (input.hasRemaining())
       input.reset()
+      crc32.update(input)
     }
 
-    crc32.reset()
-    crc32.update(input)
     val crc = crc32.value
     input.position(0)
 
-    if (isCompressed) {
-      val output = inflateBufferAllocator!!.allocate(headerSize + size + 4096)
-      output.position(headerSize)
-
-      deflater!!.setInput(input)
-      deflater.finish()
-      do {
-        val n = deflater.deflate(output, Deflater.NO_FLUSH)
-        assert(n != 0)
-      }
-      while (input.hasRemaining())
-      deflater.reset()
-
-      writeCompressedData(name, size, crc, headerSize, output)
-    }
-    else {
-      writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, input)
-      input.position(0)
-      assert(input.remaining() == (size + headerSize))
-      resultStream.writeRawEntry(input, name, size, size, ZipEntry.STORED, crc, headerSize)
-    }
+    writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, input)
+    input.position(0)
+    assert(input.remaining() == (size + headerSize))
+    resultStream.writeRawEntry(input, name, size, size, ZipEntry.STORED, crc, headerSize)
   }
 
-  fun writeUncompressedEntry(nameString: String, data: ByteBuffer) {
+  private fun writeLargeFile(fileSize: Long, channel: FileChannel, deflater: Deflater?): Long {
+    // channel.transferTo will use a slow path for untrusted (custom) WritableByteChannel implementations, so, duplicate what JDK does
+    // see FileChannelImpl.transferFromFileChannel
+    var remaining = fileSize
+    var position = 0L
+    var compressedSize = 0L
+
+    var effectiveDeflater = deflater
+
+    while (remaining > 0L) {
+      val size = min(remaining, mappedTransferSize)
+      val buffer = channel.map(MapMode.READ_ONLY, position, size)
+
+      remaining -= size
+      position += size
+
+      try {
+        buffer.mark()
+        crc32.update(buffer)
+        buffer.reset()
+        buffer.mark()
+
+        if (effectiveDeflater == null) {
+          resultStream.writeBuffer(buffer)
+          compressedSize = -1
+        }
+        else {
+          val output = deflateBufferAllocator!!.allocate(size.toInt() + 4096)
+          effectiveDeflater.setInput(buffer)
+
+          if (remaining <= 0) {
+            effectiveDeflater.finish()
+          }
+
+          do {
+            val n = effectiveDeflater.deflate(output, Deflater.SYNC_FLUSH)
+            assert(n != 0)
+          }
+          while (buffer.hasRemaining())
+
+          output.flip()
+          compressedSize += output.remaining()
+
+          if (position == 0L && compressedSize > size) {
+            // incompressible
+            effectiveDeflater = null
+            buffer.reset()
+            resultStream.writeBuffer(buffer)
+            compressedSize = -1
+          }
+          else {
+            resultStream.writeBuffer(output)
+          }
+        }
+      }
+      finally {
+        unmapBuffer(buffer)
+      }
+    }
+
+    effectiveDeflater?.reset()
+    return compressedSize
+  }
+
+  @Suppress("DuplicatedCode")
+  fun compressedData(nameString: String, data: ByteArray) {
+    val name = nameString.toByteArray()
+    val headerSize = 30 + name.size
+
+    val input = ByteBuffer.wrap(data)
+    val size = data.size
+
+    crc32.reset()
+    crc32.update(data)
+    val crc = crc32.value
+    input.position(0)
+
+    val output = deflateBufferAllocator!!.allocate(headerSize + size + 4096)
+    output.position(headerSize)
+
+    deflater!!.setInput(input)
+    deflater.finish()
+    do {
+      val n = deflater.deflate(output, Deflater.SYNC_FLUSH)
+      assert(n != 0)
+    }
+    while (input.hasRemaining())
+    deflater.reset()
+
+    output.limit(output.position())
+    output.position(0)
+    val compressedSize = output.remaining() - headerSize
+    writeLocalFileHeader(name, size, compressedSize, crc, ZipEntry.DEFLATED, output)
+    output.position(0)
+    assert(output.remaining() == (compressedSize + headerSize))
+    resultStream.writeRawEntry(output, name, size, compressedSize, ZipEntry.DEFLATED, crc, headerSize)
+  }
+
+  fun uncompressedData(nameString: String, data: String) {
+    uncompressedData(nameString, ByteBuffer.wrap(data.toByteArray()))
+  }
+
+  fun uncompressedData(nameString: String, data: ByteBuffer) {
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size
 
@@ -134,7 +233,7 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
     resultStream.writeRawEntry(header, data, name, size, size, ZipEntry.STORED, crc)
   }
 
-  fun writeUncompressedEntry(nameString: String, maxSize: Int, dataWriter: (ByteBuffer) -> Unit) {
+  fun uncompressedData(nameString: String, maxSize: Int, dataWriter: (ByteBuffer) -> Unit) {
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size
 
@@ -148,22 +247,12 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
     crc32.reset()
     crc32.update(output)
     val crc = crc32.value
-
     output.position(0)
+
     writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, output)
     output.position(0)
     assert(output.remaining() == (size + headerSize))
     resultStream.writeRawEntry(output, name, size, size, ZipEntry.STORED, crc, headerSize)
-  }
-
-  private fun writeCompressedData(name: ByteArray, size: Int, crc: Long, headerSize: Int, output: ByteBuffer) {
-    output.limit(output.position())
-    output.position(0)
-    val compressedSize = output.remaining() - headerSize
-    writeLocalFileHeader(name, size, compressedSize, crc, ZipEntry.DEFLATED, output)
-    output.position(0)
-    assert(output.remaining() == (compressedSize + headerSize))
-    resultStream.writeRawEntry(output, name, size, compressedSize, ZipEntry.DEFLATED, crc, headerSize)
   }
 
   private fun writeEmptyFile(name: ByteArray, headerSize: Int) {
@@ -174,47 +263,19 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
     resultStream.writeRawEntry(input, name, 0, 0, ZipEntry.STORED, 0, headerSize)
   }
 
-  fun addDirEntry(name: String) {
-    assert(name.endsWith('/'))
-    resultStream.addDirEntry(name.toByteArray())
-  }
-
-  fun finish() {
-    resultStream.finish()
+  fun dir(name: String) {
+    resultStream.addDirEntry(name)
   }
 
   override fun close() {
-    resultStream.close()
+    @Suppress("ConvertTryFinallyToUseCall")
+    try {
+      bufferAllocator.close()
+      deflateBufferAllocator?.close()
+      deflater?.end()
+    }
+    finally {
+      resultStream.close()
+    }
   }
-}
-
-private fun writeLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc32: Long, method: Int, buffer: ByteBuffer): Int {
-  buffer.putInt(0x04034b50)
-  // Version needed to extract (minimum)
-  buffer.putShort(0)
-  // General purpose bit flag
-  buffer.putShort(0)
-  // Compression method
-  buffer.putShort(method.toShort())
-  // File last modification time
-  buffer.putShort(0)
-  // File last modification date
-  buffer.putShort(0)
-  // CRC-32 of uncompressed data
-  buffer.putInt((crc32 and 0xffffffffL).toInt())
-  val compressedSizeOffset = buffer.position()
-  // Compressed size
-  buffer.putInt(compressedSize)
-  // Uncompressed size
-  buffer.putInt(size)
-  // File name length
-  buffer.putShort((name.size and 0xffff).toShort())
-  // Extra field length
-  buffer.putShort(0)
-  buffer.put(name)
-  return compressedSizeOffset
-}
-
-private fun roundUpInt(x: Int, @Suppress("SameParameterValue") blockSizePowerOf2: Int): Int {
-  return x + blockSizePowerOf2 - 1 and -blockSizePowerOf2
 }

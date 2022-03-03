@@ -1,5 +1,5 @@
 // "Replace with 'addA(d(createDummy, dummyParam1, initDummy = initDummy), dummyParam)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 typealias NewDummyRef<V> = (Any) -> V
 

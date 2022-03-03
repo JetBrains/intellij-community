@@ -1,5 +1,5 @@
 // "Add '@loop' to break" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // LANGUAGE_VERSION: 1.3
 
 fun foo(chars: CharArray) {

@@ -58,7 +58,9 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     if (oldChanges == null && changes == null) return
     if (oldChanges != null && changes != null && ContainerUtil.equalsIdentity(oldChanges, changes)) return
     rawChanges = changes?.toList()
-    restartLoading()
+    if (activeFilter != null) {
+      restartLoading()
+    }
   }
 
   @RequiresEdt

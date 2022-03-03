@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Introduce anonymous parameter
 
 fun test(list: List<String>) {

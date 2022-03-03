@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
+import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.Panel
@@ -10,8 +11,8 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.io.systemIndependentPath
 import javax.swing.JLabel
 
-class WebTemplateProjectWizardStep(val parent: NewProjectWizardBaseStep,
-                                   val template: WebProjectTemplate<*>) : AbstractNewProjectWizardStep(parent) {
+class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
+                                   val template: WebProjectTemplate<T>) : AbstractNewProjectWizardStep(parent) {
   val peer = template.createLazyPeer()
 
   override fun setupUI(builder: Panel) {
@@ -34,7 +35,7 @@ class WebTemplateProjectWizardStep(val parent: NewProjectWizardBaseStep,
   }
 
   override fun setupProject(project: Project) {
-    val builder = template.createModuleBuilder()
+    val builder = WebModuleBuilder(template, peer)
     builder.moduleFilePath = parent.projectPath.systemIndependentPath
     builder.contentEntryPath = parent.projectPath.systemIndependentPath
     builder.name = parent.name

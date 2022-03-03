@@ -14,8 +14,9 @@ which may compromise the security because members appearing to be private will i
   This also saves a little bit of memory, which may improve performance in resource constrained environments.
 </p>
 <p>
-  This inspection does not report if the language level is set to Java 11 or higher
-  because thanks to nest-based access control (JEP 181), accessor methods are not generated anymore.
+  This inspection only reports if the language level of the project or module is 10 or lower.
+  Under Java 11 and higher accessor methods are not generated anymore,
+  because of nest-based access control (<a href="https://openjdk.java.net/jeps/181">JEP 181</a>).
 </p>
 <p><b>Example:</b></p>
 <pre><code>

@@ -18,8 +18,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -122,7 +122,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     JEditorPane messagePane = new JEditorPane();
-    messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    messagePane.setEditorKit(HTMLEditorKitBuilder.simple());
     messagePane.setText(buf.toString());
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,

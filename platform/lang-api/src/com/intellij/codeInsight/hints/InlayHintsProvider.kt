@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
@@ -63,6 +64,7 @@ object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EX
  * @see com.intellij.openapi.editor.InlayModel.addBlockElement
  *
  * To test it you may use InlayHintsProviderTestCase.
+ * Mark as [com.intellij.openapi.project.DumbAware] to enable it in dumb mode.
  */
 interface InlayHintsProvider<T : Any> {
   /**
@@ -70,6 +72,14 @@ interface InlayHintsProvider<T : Any> {
    * Warning! Your collector should not use any settings besides [settings]
    */
   fun getCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector?
+
+  /**
+   * Returns quick collector of placeholders.
+   * Placeholders are shown on editor opening and stay until [getCollectorFor] collector hints are calculated.
+   */
+  @ApiStatus.Experimental
+  @JvmDefault
+  fun getPlaceholdersCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector? = null
 
   /**
    * Settings must be plain java object, fields of these settings will be copied via serialization.

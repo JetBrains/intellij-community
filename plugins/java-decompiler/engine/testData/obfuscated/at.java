@@ -8,7 +8,7 @@ class at extends ap {
    }
 
    public double d() {
-      return (double)an.a(this.d).getHeapMemoryUsage().getUsed() / 1024.0D / 1024.0D;
+      return (double)an.a(this.d).getHeapMemoryUsage().getUsed() / 1024.0 / 1024.0;
    }
 
    public String c() {
@@ -16,7 +16,7 @@ class at extends ap {
    }
 
    public Double e() {
-      return (double)an.a(this.d).getHeapMemoryUsage().getMax() / 1024.0D / 1024.0D;
+      return (double)an.a(this.d).getHeapMemoryUsage().getMax() / 1024.0 / 1024.0;
    }
 
    static {
@@ -45,21 +45,21 @@ class at extends ap {
       while(true) {
          char var10004 = var4[var10003];
          byte var10005;
-         switch(var1 % 5) {
-         case 0:
-            var10005 = 105;
-            break;
-         case 1:
-            var10005 = 32;
-            break;
-         case 2:
-            var10005 = 18;
-            break;
-         case 3:
-            var10005 = 31;
-            break;
-         default:
-            var10005 = 120;
+         switch (var1 % 5) {
+            case 0:
+               var10005 = 105;
+               break;
+            case 1:
+               var10005 = 32;
+               break;
+            case 2:
+               var10005 = 18;
+               break;
+            case 3:
+               var10005 = 31;
+               break;
+            default:
+               var10005 = 120;
          }
 
          var4[var10003] = (char)(var10004 ^ var10005);

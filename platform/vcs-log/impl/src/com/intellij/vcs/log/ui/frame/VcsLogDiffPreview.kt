@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.EditorTabPreview.Companion.registerEscapeHandler
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.JBUI
@@ -111,10 +112,11 @@ abstract class EditorDiffPreview(protected val project: Project,
   }
 
   fun openPreviewInEditor(focusEditor: Boolean) {
+    val currentFocusOwner = IdeFocusManager.getInstance(project).focusOwner
     val escapeHandler = Runnable {
       closePreview()
       val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-      toolWindow?.activate(null, false)
+      toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(currentFocusOwner, true) }, false)
     }
 
     registerEscapeHandler(previewFile, escapeHandler)

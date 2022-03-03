@@ -19,5 +19,5 @@ fun foo(list: ArrayList<String>, p: RootPackageClass, e: ConExc) {
 
 class RootPackageClass
 
-// WITH_RUNTIME
+// WITH_STDLIB
 // FULL_JDK

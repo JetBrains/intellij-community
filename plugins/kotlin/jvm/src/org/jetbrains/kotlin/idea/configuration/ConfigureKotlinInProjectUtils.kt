@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -207,9 +207,22 @@ fun allConfigurators(): Array<KotlinProjectConfigurator> {
 }
 
 fun getCanBeConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): List<Module> {
-    return ModuleSourceRootMap(project).groupByBaseModules(project.allModules())
-        .filter { configurator.canConfigure(it) }
-        .map { it.baseModule }
+    val allModules = project.allModules()
+    val result = mutableListOf<Module>()
+    val progressIndicator = ProgressManager.getGlobalProgressIndicator()
+    ModuleSourceRootMap(project).groupByBaseModules(allModules).withIndex().forEach { (index, module) ->
+        if (!isUnitTestMode()) {
+            progressIndicator?.let {
+                it.checkCanceled()
+                it.fraction = index * 1.0 / allModules.size
+                it.text2 = KotlinJvmBundle.message("lookup.module.0.configuration.progress.text", module.baseModule.name)
+            }
+        }
+        if (configurator.canConfigure(module)) {
+            result.add(module.baseModule)
+        }
+    }
+    return result
 }
 
 private fun KotlinProjectConfigurator.canConfigure(moduleSourceRootGroup: ModuleSourceRootGroup) =
@@ -310,18 +323,27 @@ class LibraryKindSearchScope(
     }
 }
 
-fun addStdlibToJavaModuleInfo(module: Module, collector: NotificationMessageCollector): Boolean {
+fun addStdlibToJavaModuleInfo(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>? = null): Boolean {
     if (module.sdk?.version?.isAtLeast(JavaSdkVersion.JDK_1_9) != true) return false
 
     val project = module.project
     val javaModule: PsiJavaModule = findFirstPsiJavaModule(module) ?: return false
 
-    val success = WriteCommandAction.runWriteCommandAction(project, Computable<Boolean> {
-        KotlinAddRequiredModuleFix.addModuleRequirement(javaModule, KOTLIN_STDLIB_MODULE_NAME)
-    })
+    val writeAction: () -> Boolean = {
+        val success = WriteCommandAction.runWriteCommandAction(project, Computable<Boolean> {
+            KotlinAddRequiredModuleFix.addModuleRequirement(javaModule, KOTLIN_STDLIB_MODULE_NAME)
+        })
 
-    if (!success) return false
+        if (success) {
+            collector.addMessage(KotlinJvmBundle.message("added.0.requirement.to.module.info.in.1", KOTLIN_STDLIB_MODULE_NAME, module.name))
+        }
+        success
+    }
 
-    collector.addMessage(KotlinJvmBundle.message("added.0.requirement.to.module.info.in.1", KOTLIN_STDLIB_MODULE_NAME, module.name))
-    return true
+    return if (writeActions != null) {
+        writeActions.add { writeAction() }
+        true
+    } else {
+        writeAction()
+    }
 }

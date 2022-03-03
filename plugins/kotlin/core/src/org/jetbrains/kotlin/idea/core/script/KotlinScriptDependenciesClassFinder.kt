@@ -78,7 +78,7 @@ class KotlinScriptDependenciesClassFinder(private val project: Project) : NonCla
 
         val classes = StubIndex.getElements(
             JavaFullClassNameIndex.getInstance().key,
-            qualifiedName.hashCode(),
+            qualifiedName,
             project,
             scope.takeUnless { it is EverythingGlobalScope },
             PsiClass::class.java

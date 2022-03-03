@@ -25,8 +25,8 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
-import git4idea.branch.GitBranchUtil
 import git4idea.history.GitHistoryUtils
+import git4idea.repo.GitRepository
 import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -45,6 +45,8 @@ open class GHOpenInBrowserActionGroup
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
     e.presentation.isEnabledAndVisible = data != null && data.isNotEmpty()
+    e.presentation.isPerformGroup = data?.size == 1
+    e.presentation.isPopupGroup = true
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -55,14 +57,8 @@ open class GHOpenInBrowserActionGroup
     return data.map { GithubOpenInBrowserAction(it) }.toTypedArray()
   }
 
-  override fun isPopup(): Boolean = true
-
   override fun actionPerformed(e: AnActionEvent) {
     getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first()) }?.actionPerformed(e)
-  }
-
-  override fun canBePerformed(context: DataContext): Boolean {
-    return getData(context)?.size == 1
   }
 
   override fun disableIfNoVisibleChildren(): Boolean = false
@@ -223,18 +219,16 @@ open class GHOpenInBrowserActionGroup
 }
 
 object GHPathUtil {
-  fun getFileURL(project: Project,
-                 repositoryRoot: VirtualFile,
+  fun getFileURL(repository: GitRepository,
                  path: GHRepositoryCoordinates,
                  virtualFile: VirtualFile,
                  editor: Editor?): String? {
-    val relativePath = VfsUtilCore.getRelativePath(virtualFile, repositoryRoot)
+    val relativePath = VfsUtilCore.getRelativePath(virtualFile, repository.root)
     if (relativePath == null) {
       return null
     }
 
-    val repository = GitBranchUtil.getCurrentRepository(project)
-    val hash = repository?.currentRevision
+    val hash = repository.currentRevision
     if (hash == null) {
       return null
     }

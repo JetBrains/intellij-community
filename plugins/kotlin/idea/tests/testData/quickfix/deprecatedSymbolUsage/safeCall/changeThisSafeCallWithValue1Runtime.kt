@@ -1,5 +1,5 @@
 // "Replace with 'c.newFun(this)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class X {
     @Deprecated("", ReplaceWith("c.newFun(this)"))

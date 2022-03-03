@@ -127,7 +127,7 @@ public final class InheritanceUtil {
 
   public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                     PsiElement scope,
-                                                    Condition<? super PsiClass> isSuperClassAccepted,
+                                                    @NotNull Condition<? super PsiClass> isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
     return findEnclosingInstanceInScope(aClass, scope, isSuperClassAccepted, isTypeParamsAccepted) != null;
   }
@@ -135,7 +135,7 @@ public final class InheritanceUtil {
   @Nullable
   public static PsiClass findEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                       PsiElement scope,
-                                                      Condition<? super PsiClass> isSuperClassAccepted,
+                                                      @NotNull Condition<? super PsiClass> isSuperClassAccepted,
                                                       boolean isTypeParamsAccepted) {
     PsiManager manager = aClass.getManager();
     PsiElement place = scope;

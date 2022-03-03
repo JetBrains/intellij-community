@@ -27,19 +27,4 @@ public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements
   public String getDisplayName() {
     return "project " + projectName;
   }
-
-  @Override
-  public boolean match(AbstractDependencyNode dependencyNode) {
-    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
-    ProjectDependencyNodeImpl node = (ProjectDependencyNodeImpl)dependencyNode;
-    if (!projectName.equals(node.projectName)) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + projectName.hashCode();
-    return result;
-  }
 }

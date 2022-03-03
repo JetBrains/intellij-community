@@ -91,9 +91,10 @@ public class TextMateBundlesListPanel implements Disposable {
             .noText(CommonBundle.getCancelButtonText())
             .icon(null)
             .ask(myBundlesList)) {
-            ListUtil.removeSelectedItems(myBundlesList);
-            fireStateChanged();
+            return;
           }
+          ListUtil.removeSelectedItems(myBundlesList);
+          fireStateChanged();
         }
       })
       .setAddAction(new AnActionButtonRunnable() {

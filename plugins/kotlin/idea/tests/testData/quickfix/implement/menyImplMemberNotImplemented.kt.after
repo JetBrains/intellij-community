@@ -1,5 +1,5 @@
 // "Implement members" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // DISABLE-ERRORS
 interface A {
     fun foo() {}

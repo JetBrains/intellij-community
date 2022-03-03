@@ -1,6 +1,6 @@
 // PROBLEM: Replace 'associateTo' with 'associateWithTo'
 // FIX: Replace with 'associateWithTo'
-// WITH_RUNTIME
+// WITH_STDLIB
 fun getValue(i: Int): String = ""
 
 fun associateWithTo() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -13,7 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -43,14 +42,14 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-public class ToolwindowSwitcher extends DumbAwareAction {
+public final class ToolwindowSwitcher extends DumbAwareAction {
   private static JBPopup popup;
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
-    final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+    ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
     invokePopup(project, new ToolWindowsComparator(toolWindowManager.getRecentToolWindows()), null, null);
   }
 
@@ -167,10 +166,10 @@ public class ToolwindowSwitcher extends DumbAwareAction {
     }
   }
 
-  private static class ToolWindowsComparator implements Comparator<ToolWindow> {
-    private final ArrayList<String> myRecent;
+  private static final class ToolWindowsComparator implements Comparator<ToolWindow> {
+    private final List<String> myRecent;
 
-    private ToolWindowsComparator(ArrayList<String> recent) {
+    private ToolWindowsComparator(List<String> recent) {
       myRecent = recent;
     }
 
@@ -185,7 +184,7 @@ public class ToolwindowSwitcher extends DumbAwareAction {
       if (index1 >= 0) return -1;
       if (index2 >= 0) return  1;
 
-      return StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle());
+      return NaturalComparator.INSTANCE.compare(o1.getStripeTitle(), o2.getStripeTitle());
     }
   }
 }

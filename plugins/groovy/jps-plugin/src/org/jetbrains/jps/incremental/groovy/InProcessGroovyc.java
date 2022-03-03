@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -185,21 +185,20 @@ final class InProcessGroovyc implements GroovycFlavor {
     }
   }
 
-  @Nullable
-  private JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws Exception {
+  private @Nullable JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws Exception {
     ClassLoader parent = obtainParentLoader(compilationClassPath);
 
     ClassLoader groovyClassLoader;
     try {
-      ClassLoader auxiliary = parent != null ? parent : buildCompilationClassLoader(compilationClassPath, null).get();
+      ClassLoader auxiliary = parent == null ? buildCompilationClassLoader(compilationClassPath, null).get() : parent;
       Class<?> gcl = auxiliary.loadClass("groovy.lang.GroovyClassLoader");
       groovyClassLoader = (ClassLoader)gcl.getConstructor(ClassLoader.class)
         .newInstance(parent != null ? parent : getPlatformLoaderParentIfOnJdk9());
     }
     catch (ClassNotFoundException e) {
+      LOG.warn(e);
       return null;
     }
-
     return new JointCompilationClassLoader(buildCompilationClassLoader(compilationClassPath, groovyClassLoader));
   }
 

@@ -758,7 +758,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     }
     // JavaParserDefinition.create() throws this.
     // DO not over-generalize this exception type to avoid swallowing meaningful exceptions
-    catch (IllegalStateException e) {
+    catch (IllegalArgumentException e) {
       return null;
     }
   }

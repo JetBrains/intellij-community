@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.openapi.Disposable;
@@ -24,8 +24,12 @@ import java.util.concurrent.TimeUnit;
  * See <a href="https://plugins.jetbrains.com/docs/intellij/notifications.html#top-level-notifications">Notifications</a>.
  */
 public interface Notifications {
-  Topic<Notifications> TOPIC = Topic.create("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
+  Topic<Notifications> TOPIC = new Topic<>("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
 
+  /**
+   * @deprecated Please use dedicated notification groups for your notifications
+   */
+  @Deprecated
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 
   default void notify(@NotNull Notification notification) { }

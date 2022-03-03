@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 
 import java.io.File;
 import java.io.IOException;

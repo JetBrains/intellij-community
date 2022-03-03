@@ -11,7 +11,7 @@ class ComboBoxTest {
 
   @Test
   fun testBindingInitialization() {
-    val items = (1..9).map { it.toString() }.toTypedArray()
+    val items = (1..9).map { it.toString() }
     property = items.random()
     panel {
       row {

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.createEditor
+import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -52,7 +53,13 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     for (group in groups) {
       val groupNode = CheckedTreeNode(group.key)
       root.add(groupNode)
-      for (lang in group.value.groupBy { it.language }) {
+      val primaryLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
+      val sortedMap = group.value.groupBy { it.language }.toSortedMap(
+        Comparator { o1, o2 -> val primary = compareValues(primaryLanguages.contains(o2), primaryLanguages.contains(o1))
+          if (primary != 0) primary
+          else compareValues(o1.displayName, o2.displayName)
+        })
+      for (lang in sortedMap) {
         val firstModel = lang.value.first()
         val langNode: CheckedTreeNode
         val startFrom: Int

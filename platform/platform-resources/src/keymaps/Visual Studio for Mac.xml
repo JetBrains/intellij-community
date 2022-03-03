@@ -33,6 +33,7 @@
     <keyboard-shortcut first-keystroke="BACK_SPACE" />
   </action>
   <action id="EditorDelete">
+    <keyboard-shortcut first-keystroke="DELETE"/>
     <keyboard-shortcut first-keystroke="meta BACK_SPACE" />
   </action>
   <action id="ReformatCode">
@@ -197,4 +198,44 @@
   <action id="RebuildProject">
     <keyboard-shortcut first-keystroke="control meta B" />
   </action>
+  <action id="EditorDeleteLine"/>
+  <action id="EditorScrollToCenter"/>
+  <action id="CompareTwoFiles"/>
+  <action id="GotoNextError">
+    <keyboard-shortcut first-keystroke="alt PAGE_DOWN"/>
+  </action>
+  <action id="GotoPreviousError">
+    <keyboard-shortcut first-keystroke="alt PAGE_UP"/>
+  </action>
+  <action id="ToggleBreakpointEnabled">
+    <keyboard-shortcut first-keystroke="alt meta SLASH"/>
+    <keyboard-shortcut first-keystroke="meta F9"/>
+  </action>
+  <action id="CommentByBlockComment"/>
+  <action id="CancelBuildAction"/>
+  <action id="JumpToStatement">
+    <keyboard-shortcut first-keystroke="shift meta F10"/>
+  </action>
+  <action id="Console.Open"/>
+  <action id="UpdateRunningApplication"/>
+  <action id="GotoClass">
+    <keyboard-shortcut first-keystroke="shift meta T"/>
+  </action>
+  <action id="GotoTest"/>
+  <action id="MoveLineDown">
+    <keyboard-shortcut first-keystroke="alt DOWN"/>
+  </action>
+  <action id="MoveLineUp">
+    <keyboard-shortcut first-keystroke="alt UP"/>
+  </action>
+  <action id="EditorSelectWord">
+    <keyboard-shortcut first-keystroke="alt shift UP"/>
+  </action>
+  <action id="EditorUnSelectWord">
+    <keyboard-shortcut first-keystroke="alt shift DOWN"/>
+  </action>
+  <action id="ParameterInfo">
+    <keyboard-shortcut first-keystroke="control shift SPACE"/>
+  </action>
+  <action id="SmartTypeCompletion"/>
 </keymap>

@@ -1,16 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.tasks
 
+import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.io.debug
 import org.jetbrains.intellij.build.io.download
-import org.jetbrains.intellij.build.io.info
-import org.jetbrains.intellij.build.io.warn
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
-import java.lang.System.Logger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -20,13 +17,16 @@ private const val MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.co
 /**
  * Generate brokenPlugins.txt file using JetBrains Marketplace.
  */
-fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelopmentMode: Boolean, logger: Logger) {
+fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelopmentMode: Boolean) {
+  val span = Span.current()
+
   val allBrokenPlugins = try {
-    downloadFileFromMarketplace(logger)
+    downloadFileFromMarketplace(span)
   }
   catch (e: Exception) {
     if (isInDevelopmentMode) {
-      logger.warn("Not able to get broken plugins info from JetBrains Marketplace: $e\nAssuming empty broken plugins list")
+      span.recordException(RuntimeException("Not able to get broken plugins info from JetBrains Marketplace. " +
+                                            "Assuming empty broken plugins list", e))
       return
     }
     else {
@@ -34,7 +34,6 @@ fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelop
     }
   }
 
-  logger.debug { "Generate list of broken plugins for build:\n $currentBuildString" }
   val currentBuild = BuildNumber.fromString(currentBuildString, currentBuildString)!!
   val result = TreeMap<String, MutableSet<String>>()
   for (plugin in allBrokenPlugins) {
@@ -47,12 +46,11 @@ fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelop
     }
   }
   storeBrokenPlugin(result, currentBuildString, targetFile)
-  logger.debug { "Broken plugin list was generated (count=${result.size}, file=$targetFile)" }
+  span.setAttribute("pluginCount", result.size.toLong())
 }
 
-private fun downloadFileFromMarketplace(logger: Logger): List<MarketplaceBrokenPlugin> {
+private fun downloadFileFromMarketplace(span: Span): List<MarketplaceBrokenPlugin> {
   val jsonFormat = Json { ignoreUnknownKeys = true }
-  logger.info("Load broken plugin list from $MARKETPLACE_BROKEN_PLUGINS_URL")
   val content = download(MARKETPLACE_BROKEN_PLUGINS_URL).toString(Charsets.UTF_8)
   return jsonFormat.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
 }

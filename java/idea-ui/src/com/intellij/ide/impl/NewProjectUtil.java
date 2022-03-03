@@ -5,13 +5,17 @@ import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService;
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoState;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.projectWizard.NewProjectWizardCollector;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StorageScheme;
@@ -61,8 +65,23 @@ public final class NewProjectUtil {
     String title = JavaUiBundle.message("project.new.wizard.progress.title");
     Runnable warmUp = () -> ProjectManager.getInstance().getDefaultProject();  // warm-up components
     boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null);
+
+    StructuredIdeActivity activity = null;
+    if (isNewWizard()) {
+      WizardContext context = wizard.getWizardContext();
+      activity = NewProjectWizardCollector.logStarted(context.getProject());
+      NewProjectWizardCollector.logOpen(context);
+    }
     if (proceed && wizard.showAndGet()) {
       createFromWizard(wizard);
+      if (isNewWizard() && activity != null) {
+        NewProjectWizardCollector.logFinished(activity, true);
+      }
+      return;
+    }
+
+    if (isNewWizard() && activity != null) {
+      NewProjectWizardCollector.logFinished(activity, false);
     }
   }
 
@@ -75,6 +94,9 @@ public final class NewProjectUtil {
       Project newProject = doCreate(wizard, projectToClose);
       recordProjectCreatedFromWizard(wizard);
       FUCounterUsageLogger.getInstance().logEvent(newProject, "new.project.wizard", "project.created");
+      if (isNewWizard()) {
+        NewProjectWizardCollector.logProjectCreated(newProject, wizard.getWizardContext());
+      }
       return newProject;
     }
     catch (IOException e) {
@@ -85,7 +107,7 @@ public final class NewProjectUtil {
   }
 
   private static void recordProjectCreatedFromWizard(@NotNull AbstractProjectWizard wizard) {
-    if (Registry.is("platform.feedback", false)) {
+    if (Registry.is("platform.feedback", true)) {
       final ProjectBuilder projectBuilder = wizard.getWizardContext().getProjectBuilder();
       if (projectBuilder instanceof AbstractModuleBuilder) {
         final PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(projectBuilder.getClass());
@@ -148,11 +170,6 @@ public final class NewProjectUtil {
         return projectToClose;
       }
 
-      Sdk jdk = wizard.getNewProjectJdk();
-      if (jdk != null) {
-        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> JavaSdkUtil.applyJdkToProject(newProject, jdk)), null, null);
-      }
-
       String compileOutput = wizard.getNewCompileOutput();
       setCompilerOutputPath(newProject, compileOutput);
 
@@ -167,6 +184,11 @@ public final class NewProjectUtil {
         }
 
         projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
+      }
+
+      Sdk jdk = wizard.getNewProjectJdk();
+      if (jdk != null) {
+        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> JavaSdkUtil.applyJdkToProject(newProject, jdk)), null, null);
       }
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -228,5 +250,9 @@ public final class NewProjectUtil {
   @Deprecated()
   public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {
     JavaSdkUtil.applyJdkToProject(project, jdk);
+  }
+
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 }

@@ -86,7 +86,7 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
     PsiFile file = expression.getContainingFile();
     Project project = expression.getProject();
 
-    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(editor.getProject()).createSmartPsiElementPointer(javaClass);
+    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaClass);
     replaceExpressionTextByNewExpressionInDocument(project, expression, document);
 
     if (!javaClass.isValid()) {

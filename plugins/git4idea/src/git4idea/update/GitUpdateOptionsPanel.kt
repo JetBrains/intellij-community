@@ -16,7 +16,7 @@
 package git4idea.update
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.buttonGroup
+import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import git4idea.config.GitVcsSettings
@@ -26,13 +26,13 @@ internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
   val panel = createPanel()
 
   private fun createPanel(): DialogPanel = panel {
-    buttonGroup({ settings.updateMethod }, { settings.updateMethod = it }) {
+    buttonsGroup {
       getUpdateMethods().forEach { method ->
         row {
           radioButton(method.presentation, method)
         }
       }
-    }
+    }.bind({ settings.updateMethod }, { settings.updateMethod = it })
   }.withBorder(JBUI.Borders.empty(8, 8, 2, 8))
 
   fun isModified(): Boolean = panel.isModified()

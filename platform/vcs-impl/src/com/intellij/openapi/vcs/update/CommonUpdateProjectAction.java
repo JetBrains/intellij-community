@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.vcs.actions.VcsContext;
+
 public class CommonUpdateProjectAction extends AbstractCommonUpdateAction {
   public CommonUpdateProjectAction() {
     super(ActionInfo.UPDATE, ScopeInfo.PROJECT, true);
@@ -25,4 +27,7 @@ public class CommonUpdateProjectAction extends AbstractCommonUpdateAction {
     return false;
   }
 
+  public void performUpdate(VcsContext context) {
+    actionPerformed(context);
+  }
 }

@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.codeInsight;
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
@@ -50,7 +51,13 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
     myFixture.configureFromTempProjectFile(MAIN_MODULE_NAME + "/META-INF/plugin.xml");
     myFixture.completeBasic();
     List<String> lookupElements = myFixture.getLookupElementStrings();
-    assertSameElements(lookupElements, "anotherModule", "anotherModule/secondary-descriptor");
+    assertSameElements(lookupElements, "mainModule/sub-descriptor", "anotherModule", "anotherModule/secondary-descriptor");
+
+    LookupElementPresentation mainModuleSubDescriptor = getLookupElementPresentation("mainModule/sub-descriptor");
+    assertTrue(mainModuleSubDescriptor.isItemTextBold());
+    //noinspection SpellCheckingInspection
+    assertEquals("mypackage", mainModuleSubDescriptor.getTypeText());
+    assertPrioritizedLookupElement("mainModule/sub-descriptor", 200.0);
 
     final LookupElementPresentation anotherModule = getLookupElementPresentation("anotherModule");
     assertEquals(AllIcons.Nodes.Module, anotherModule.getIcon());
@@ -94,15 +101,13 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
   }
 
   private void setupModules(String... dependencyModuleNames) {
-
-    final Module mainModule = addModule(MAIN_MODULE_NAME);
+    addModule(MAIN_MODULE_NAME);
     for (String moduleName : dependencyModuleNames) {
-      final Module dependencyModule = addModule(moduleName);
-      ModuleRootModificationUtil.addDependency(mainModule, dependencyModule);
+      addModule(moduleName);
     }
   }
 
-  private Module addModule(String moduleName) {
+  private void addModule(String moduleName) {
     String testName = getTestName(true);
 
     final VirtualFile dependencyModuleRoot =
@@ -110,14 +115,25 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
 
     Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, moduleName, dependencyModuleRoot);
     PsiTestUtil.addLibrary(dependencyModule, "editor-ui-api", PathUtil.getJarPathForClass(AnAction.class));
-
-    return dependencyModule;
   }
 
   private LookupElementPresentation getLookupElementPresentation(String lookupString) {
+    final LookupElement lookupElement = findLookupElement(lookupString);
+    return LookupElementPresentation.renderElement(lookupElement);
+  }
+
+  @NotNull
+  private LookupElement findLookupElement(String lookupString) {
     final LookupElement lookupElement = ContainerUtil.find(myFixture.getLookupElements(),
                                                            element -> element.getLookupString().equals(lookupString));
     assertNotNull(lookupString, lookupElement);
-    return LookupElementPresentation.renderElement(lookupElement);
+    return lookupElement;
+  }
+
+  private void assertPrioritizedLookupElement(String lookupString, double expectedPriority) {
+    LookupElement lookupElement = findLookupElement(lookupString);
+    final PrioritizedLookupElement<?> prioritizedLookupElement = lookupElement.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
+    assertNotNull(prioritizedLookupElement);
+    assertEquals(expectedPriority, prioritizedLookupElement.getPriority());
   }
 }

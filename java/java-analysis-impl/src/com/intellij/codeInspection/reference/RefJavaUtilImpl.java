@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -118,6 +118,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              PsiElement resolve = reference.resolve();
                              if (resolve instanceof PsiMember) {
                                final RefElement refResolved = refFrom.getRefManager().getReference(resolve);
+                               if (refResolved != null) refResolved.waitForInitialized();
                                refFrom.addReference(refResolved, resolve, decl, false, true, null);
                                if (refResolved instanceof RefMethodImpl) {
                                  updateRefMethod(resolve, (RefMethodImpl)refResolved, node, decl, refFrom);
@@ -219,6 +220,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          if (psiResolved instanceof LightRecordCanonicalConstructor) {
                            refResolved = refFrom.getRefManager().getReference(psiResolved.getNavigationElement());
                            if (refResolved instanceof RefClass) {
+                             refResolved.waitForInitialized();
                              List<RefMethod> constructors = ((RefClass)refResolved).getConstructors();
                              if (!constructors.isEmpty()) {
                                refResolved = constructors.get(0);
@@ -440,11 +442,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     refMethod.waitForInitialized();
     if (refExpression instanceof UCallableReferenceExpression) {
       PsiType returnType = uMethod.getReturnType();
-      if (!uMethod.isConstructor() &&
-          !PsiType.VOID
-            .equals(LambdaUtil.getFunctionalInterfaceReturnType(getFunctionalInterfaceType((UCallableReferenceExpression)refExpression)))) {
-        refMethod.setReturnValueUsed(true);
-        addTypeReference(uFrom, returnType, refFrom.getRefManager());
+      if (!uMethod.isConstructor()) {
+        final PsiType type = getFunctionalInterfaceType((UCallableReferenceExpression)refExpression);
+        if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(type))) {
+          refMethod.setReturnValueUsed(true);
+          addTypeReference(uFrom, returnType, refFrom.getRefManager());
+        }
       }
       refMethod.setParametersAreUnknown();
       return;

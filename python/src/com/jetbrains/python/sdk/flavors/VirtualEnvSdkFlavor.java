@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.sdk.BasePySdkExtKt;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -24,6 +25,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User : catherine
@@ -31,7 +33,7 @@ import java.util.List;
 public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private VirtualEnvSdkFlavor() {
   }
-  private final static String[] NAMES = new String[]{"jython", "pypy", "python.exe", "jython.bat", "pypy.exe"};
+  private final static Set<String> NAMES = Set.of("jython", "pypy", "python", "jython.bat", "pypy.exe", "python.exe");
 
   public static VirtualEnvSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(VirtualEnvSdkFlavor.class);
@@ -70,12 +72,12 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
         candidates.addAll(findInBaseDirectory(pyEnvLocation));
       }
 
-      return candidates;
+      return ContainerUtil.filter(candidates, PythonSdkUtil::isVirtualEnv);
     });
   }
 
   @Nullable
-  public static VirtualFile getPyEnvDefaultLocations() {
+  private static VirtualFile getPyEnvDefaultLocations() {
     final String path = System.getenv().get("PYENV_ROOT");
     if (!StringUtil.isEmpty(path)) {
       final VirtualFile pyEnvRoot = LocalFileSystem.getInstance().findFileByPath(FileUtil.expandUserHome(path).replace('\\', '/'));
@@ -103,7 +105,7 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     return null;
   }
 
-  public static Collection<String> findInBaseDirectory(@Nullable VirtualFile baseDir) {
+  private static Collection<String> findInBaseDirectory(@Nullable VirtualFile baseDir) {
     List<String> candidates = new ArrayList<>();
     if (baseDir != null) {
       baseDir.refresh(true, false);
@@ -121,11 +123,11 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     if (rootDir != null && rootDir.isDirectory()) {
       final VirtualFile bin = rootDir.findChild("bin");
       final VirtualFile scripts = rootDir.findChild("Scripts");
-      if (bin != null) {
+      if (bin != null && bin.isDirectory()) {
         final String interpreter = findInterpreter(bin);
         if (interpreter != null) candidates.add(interpreter);
       }
-      if (scripts != null) {
+      if (scripts != null && scripts.isDirectory()) {
         final String interpreter = findInterpreter(scripts);
         if (interpreter != null) candidates.add(interpreter);
       }
@@ -142,19 +144,9 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     for (VirtualFile child : dir.getChildren()) {
       if (!child.isDirectory()) {
         final String childName = StringUtil.toLowerCase(child.getName());
-        for (String name : NAMES) {
-          if (SystemInfo.isWindows) {
-            if (childName.equals(name)) {
-              return FileUtil.toSystemDependentName(child.getPath());
-            }
-          }
-          else {
-            if (childName.startsWith(name) || PYTHON_RE.matcher(childName).matches()) {
-              if (!childName.endsWith("-config")) {
-                return child.getPath();
-              }
-            }
-          }
+        if (NAMES.contains(childName)) {
+          final String childPath = child.getPath();
+          return SystemInfo.isWindows ? FileUtil.toSystemDependentName(childPath) : childPath;
         }
       }
     }

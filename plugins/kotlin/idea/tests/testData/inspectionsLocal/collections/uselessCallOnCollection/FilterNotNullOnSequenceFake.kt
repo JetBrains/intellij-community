@@ -1,4 +1,4 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val x = sequenceOf("1", null).<caret>filterNotNull()

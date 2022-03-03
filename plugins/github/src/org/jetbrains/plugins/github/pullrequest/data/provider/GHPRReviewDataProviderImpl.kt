@@ -74,7 +74,7 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
   override fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String> =
     reviewService.updateReviewBody(progressIndicator, reviewId, newText).successOnEdt {
       messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewUpdated(reviewId, newText)
-      it.bodyHTML
+      it.body
     }
 
   override fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?> {
@@ -159,7 +159,7 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
                                   GHNodes(it.comments.map { comment ->
                                     if (comment.id == commentId)
                                       GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,
-                                                                 newComment.bodyHTML, comment.createdAt,
+                                                                 newComment.body, comment.createdAt,
                                                                  comment.state, comment.path, comment.commit, comment.position,
                                                                  comment.originalCommit, comment.originalPosition, comment.replyTo,
                                                                  comment.diffHunk,

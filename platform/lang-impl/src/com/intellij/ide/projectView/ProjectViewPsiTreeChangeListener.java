@@ -18,6 +18,7 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,7 +94,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       if (parent == null) break;
       if (parent instanceof PsiFile) {
         VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
-        if (virtualFile != null && virtualFile.getFileType() != FileTypes.PLAIN_TEXT) {
+        if (virtualFile != null && !FileTypeRegistry.getInstance().isFileOfType(virtualFile, FileTypes.PLAIN_TEXT)) {
           // adding a class within a file causes a new node to appear in project view => entire dir should be updated
           parent = ((PsiFile)parent).getContainingDirectory();
           if (parent == null) break;

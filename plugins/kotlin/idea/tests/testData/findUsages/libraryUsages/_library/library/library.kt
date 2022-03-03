@@ -75,3 +75,9 @@ enum class E {
     ONE,
     TWO
 }
+
+private class PrivateLibraryClass
+
+private fun usageOfPrivateClass() {
+    PrivateLibraryClass()
+}

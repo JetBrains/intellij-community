@@ -7,17 +7,19 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.InspectionTestUtil
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import java.io.File
 
-abstract class UastInspectionTestBase : JavaCodeInsightFixtureTestCase() {
+abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   abstract val inspection: InspectionProfileEntry
 
-  protected open val languageLevel = LanguageLevel.JDK_1_8
+  open val languageLevel = LanguageLevel.JDK_11
+
+  open val sdkLevel = LanguageLevel.JDK_11
 
   override fun setUp() {
     super.setUp()
@@ -25,18 +27,19 @@ abstract class UastInspectionTestBase : JavaCodeInsightFixtureTestCase() {
     LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
   }
 
-  override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
-    super.tuneFixture(moduleBuilder)
-    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().path)
-  }
+  override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptor(sdkLevel)
 
   enum class ULanguage(val ext: String) { JAVA(".java"), KOTLIN(".kt") }
+
+  protected fun JavaCodeInsightTestFixture.setLanguageLevel(languageLevel: LanguageLevel) {
+    LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, languageLevel, testRootDisposable)
+  }
 
   protected fun JavaCodeInsightTestFixture.testHighlighting(lang: ULanguage, text: String) {
     configureByText("UnderTest${lang.ext}", text)
     checkHighlighting()
   }
-
 
   protected fun JavaCodeInsightTestFixture.testQuickFix(
     lang: ULanguage,

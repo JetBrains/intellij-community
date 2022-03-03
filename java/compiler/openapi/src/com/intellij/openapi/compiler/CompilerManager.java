@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -26,7 +27,7 @@ public abstract class CompilerManager {
   public static final Key<RunConfiguration> RUN_CONFIGURATION_KEY = Key.create("RUN_CONFIGURATION");
   public static final Key<String> RUN_CONFIGURATION_TYPE_ID_KEY = Key.create("RUN_CONFIGURATION_TYPE_ID");
 
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Compiler");
 
   /**
    * Returns the compiler manager instance for the specified project.
@@ -243,12 +244,23 @@ public abstract class CompilerManager {
    */
   @NotNull
   public abstract CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
+
   @NotNull
-  public abstract CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules);
+  public CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
+    return createModulesCompileScope(new Module[] {module}, includeDependentModules);
+  }
+
   @NotNull
-  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules);
+  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
+    return createModulesCompileScope(modules, includeDependentModules, false);
+  }
+
   @NotNull
-  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies);
+  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
+    return createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies, true);
+  }
+
+  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests);
   @NotNull
   public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
   @NotNull

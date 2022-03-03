@@ -6,21 +6,22 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 
-internal sealed class PackageSearchOperation<T> {
+internal sealed class PackageSearchOperation<T>(
+    open val model: T,
+    open val projectModule: ProjectModule
+) {
 
-    abstract val model: T
-    abstract val projectModule: ProjectModule
-
-    sealed class Package : PackageSearchOperation<UnifiedDependency>() {
-
-        override abstract val model: UnifiedDependency
+    sealed class Package(
+        override val model: UnifiedDependency,
+        override val projectModule: ProjectModule
+    ) : PackageSearchOperation<UnifiedDependency>(model, projectModule) {
 
         data class Install(
             override val model: UnifiedDependency,
             override val projectModule: ProjectModule,
             val newVersion: PackageVersion,
             val newScope: PackageScope
-        ) : Package() {
+        ) : Package(model, projectModule) {
 
             override fun toString() =
                 "Package.Install(model='${model.displayName}', projectModule='${projectModule.getFullName()}', " +
@@ -32,7 +33,7 @@ internal sealed class PackageSearchOperation<T> {
             override val projectModule: ProjectModule,
             val currentVersion: PackageVersion,
             val currentScope: PackageScope
-        ) : Package() {
+        ) : Package(model, projectModule) {
 
             override fun toString() =
                 "Package.Remove(model='${model.displayName}', projectModule='${projectModule.getFullName()}', " +
@@ -46,7 +47,7 @@ internal sealed class PackageSearchOperation<T> {
             val currentScope: PackageScope,
             val newVersion: PackageVersion,
             val newScope: PackageScope
-        ) : Package() {
+        ) : Package(model, projectModule) {
 
             override fun toString() =
                 "Package.ChangeInstalled(model='${model.displayName}', projectModule='${projectModule.getFullName()}', " +
@@ -55,14 +56,15 @@ internal sealed class PackageSearchOperation<T> {
         }
     }
 
-    sealed class Repository : PackageSearchOperation<UnifiedDependencyRepository>() {
-
-        override abstract val model: UnifiedDependencyRepository
+    sealed class Repository(
+        override val model: UnifiedDependencyRepository,
+        override val projectModule: ProjectModule
+    ) : PackageSearchOperation<UnifiedDependencyRepository>(model, projectModule) {
 
         data class Install(
             override val model: UnifiedDependencyRepository,
             override val projectModule: ProjectModule
-        ) : Repository() {
+        ) : Repository(model, projectModule) {
 
             override fun toString() = "Repository.Install(model='${model.displayName}', projectModule='${projectModule.getFullName()}')"
         }
@@ -70,7 +72,7 @@ internal sealed class PackageSearchOperation<T> {
         data class Remove(
             override val model: UnifiedDependencyRepository,
             override val projectModule: ProjectModule
-        ) : Repository() {
+        ) : Repository(model, projectModule) {
 
             override fun toString() = "Repository.Remove(model='${model.displayName}', projectModule='${projectModule.getFullName()}')"
         }

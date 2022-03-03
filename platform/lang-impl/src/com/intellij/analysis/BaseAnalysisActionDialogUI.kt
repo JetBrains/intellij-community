@@ -5,8 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JRadioButton
 
@@ -17,7 +19,9 @@ internal class BaseAnalysisActionDialogUI {
             inspectTestSource: JCheckBox,
             analyzeInjectedCode: JCheckBox,
             buttons: ArrayList<JRadioButton>,
-            disposable: Disposable): JPanel {
+            disposable: Disposable,
+            additionalPanel: JComponent?,
+  ): JPanel {
 
     return panel {
       group(scopeTitle) {
@@ -32,6 +36,7 @@ internal class BaseAnalysisActionDialogUI {
                 Disposer.register(disposable, component)
               }
               cell(component)
+                .horizontalAlign(HorizontalAlign.FILL)
             }
           }
         }
@@ -39,6 +44,15 @@ internal class BaseAnalysisActionDialogUI {
         row {
           cell(inspectTestSource)
           cell(analyzeInjectedCode)
+        }
+      }
+
+      if (additionalPanel != null) {
+        panel {
+          row {
+            cell(additionalPanel)
+              .horizontalAlign(HorizontalAlign.FILL)
+          }
         }
       }
     }

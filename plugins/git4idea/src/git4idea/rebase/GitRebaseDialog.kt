@@ -479,12 +479,12 @@ internal class GitRebaseDialog(private val project: Project,
     mnemonic = KeyEvent.VK_M
   }
 
-  private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
-                                                            GitBundle.message("rebase.options.modify.dialog.title"),
-                                                            { GitRebaseOption.values().toMutableList() },
-                                                            OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
-                                                            ::optionChosen,
-                                                            ::isOptionEnabled)
+  private fun createPopupBuilder() = GitOptionsPopupBuilder(
+    project,
+    GitBundle.message("rebase.options.modify.dialog.title"),
+    { GitRebaseOption.values().toList() },
+    ::getOptionInfo, ::isOptionSelected, ::isOptionEnabled, ::optionChosen, ::hasSeparatorAbove
+  )
 
   private fun isOptionSelected(option: GitRebaseOption) = option in selectedOptions
 
@@ -495,6 +495,8 @@ internal class GitRebaseDialog(private val project: Project,
     return !(option == GitRebaseOption.REBASE_MERGES && selectedOptions.contains(GitRebaseOption.INTERACTIVE)
              || option == GitRebaseOption.INTERACTIVE && selectedOptions.contains(GitRebaseOption.REBASE_MERGES))
   }
+
+  private fun hasSeparatorAbove(option: GitRebaseOption): Boolean = option == GitRebaseOption.INTERACTIVE
 
   private fun getOptionInfo(option: GitRebaseOption) = optionInfos.computeIfAbsent(option) {
     OptionInfo(option, option.getOption(gitVersion), option.description)

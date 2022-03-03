@@ -58,7 +58,7 @@ class MutableOneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable)
     }
-    return thisRef.diff.extractOneToManyChildren(connectionId!!, thisRef.id)
+    return thisRef.diff.extractOneToManyChildren(connectionId!!, thisRef)
   }
 
   override fun setValue(thisRef: ModifParent, property: KProperty<*>, value: Sequence<Child>) {
@@ -68,7 +68,7 @@ class MutableOneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable)
     }
-    thisRef.diff.updateOneToManyChildrenOfParent(connectionId!!, thisRef.id, value)
+    thisRef.diff.updateOneToManyChildrenOfParent(connectionId!!, thisRef, value)
   }
 }
 
@@ -83,7 +83,7 @@ class MutableManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, false)
       }
-      return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef.id)!!
+      return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef)!!
     }
 
     override fun setValue(thisRef: ModifChild, property: KProperty<*>, value: Parent) {
@@ -93,7 +93,7 @@ class MutableManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, false)
       }
-      return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef.id, value)
+      return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef, value)
     }
   }
 
@@ -107,7 +107,7 @@ class MutableManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, true)
       }
-      return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef.id)
+      return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef)
     }
 
     override fun setValue(thisRef: ModifChild, property: KProperty<*>, value: Parent?) {
@@ -117,7 +117,7 @@ class MutableManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, true)
       }
-      return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef.id, value)
+      return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef, value)
     }
   }
 }

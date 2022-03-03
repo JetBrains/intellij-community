@@ -91,6 +91,9 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   @ApiStatus.Internal
   void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor, @NotNull Disposable parentDisposable);
 
+  @ApiStatus.Experimental
+  void setCentralWidget(@NotNull StatusBarCentralWidget widget);
+
   /**
    * @deprecated Use {@link StatusBarWidgetFactory}
    */

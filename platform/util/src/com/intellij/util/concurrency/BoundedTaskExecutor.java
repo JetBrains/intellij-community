@@ -1,13 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.JobFutureTask;
-import com.intellij.openapi.progress.JobRunnable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -22,6 +18,9 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.util.concurrency.AppScheduledExecutorService.handleCommand;
+import static com.intellij.util.concurrency.AppScheduledExecutorService.handleTask;
 
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
@@ -134,22 +133,12 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-    if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
-      return JobFutureTask.jobRunnableFuture(callable);
-    }
-    else {
-      return super.newTaskFor(callable);
-    }
+    return handleTask(callable);
   }
 
   @Override
   public void execute(@NotNull Runnable command) {
-    if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
-      executeRaw(JobRunnable.jobRunnable(command));
-    }
-    else {
-      executeRaw(command);
-    }
+    executeRaw(handleCommand(command));
   }
 
   private void executeRaw(@NotNull Runnable task) {
@@ -203,7 +192,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   private void wrapAndExecute(@NotNull Runnable firstTask, long status) {
     try {
       AtomicReference<Runnable> currentTask = new AtomicReference<>(firstTask);
-      myBackendExecutor.execute(new Runnable() {
+      Runnable command = new Runnable() {
         @Override
         public void run() {
           if (myChangeThreadName) {
@@ -232,7 +221,13 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
         public String toString() {
           return String.valueOf(info(currentTask.get()));
         }
-      });
+      };
+      if (myBackendExecutor instanceof ContextPropagatingExecutor) {
+        ((ContextPropagatingExecutor)myBackendExecutor).executeRaw(command);
+      }
+      else {
+        myBackendExecutor.execute(command);
+      }
     }
     catch (Error | RuntimeException e) {
       myStatus.decrementAndGet();

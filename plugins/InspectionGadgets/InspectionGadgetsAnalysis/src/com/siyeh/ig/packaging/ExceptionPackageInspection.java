@@ -33,7 +33,7 @@ public class ExceptionPackageInspection extends PackageGlobalInspection {
       final String packageName = refPackage.getQualifiedName();
       final Project project = globalInspectionContext.getProject();
       final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-      if (aPackage == null) {
+      if (aPackage == null || aPackage.getSubPackages().length > 0) {
         return false;
       }
       final PsiClass[] classes = aPackage.getClasses(GlobalSearchScope.projectScope(project));
@@ -41,10 +41,8 @@ public class ExceptionPackageInspection extends PackageGlobalInspection {
         return false;
       }
       for (PsiClass aClass : classes) {
-        if (TestFrameworks.getInstance().isTestClass(aClass)) {
-          continue;
-        }
-        if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
+        if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE) &&
+            !TestFrameworks.getInstance().isTestClass(aClass)) {
           return false;
         }
       }

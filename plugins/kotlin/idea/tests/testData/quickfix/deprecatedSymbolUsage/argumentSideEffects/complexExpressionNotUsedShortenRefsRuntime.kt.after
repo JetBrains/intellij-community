@@ -1,5 +1,5 @@
 // "Replace with 'newFun()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 package ppp
 
 fun bar(): Int = 0

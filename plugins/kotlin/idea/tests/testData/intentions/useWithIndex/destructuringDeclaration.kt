@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 // AFTER-WARNING: Variable 's1' is never used
 // AFTER-WARNING: Variable 's2' is never used

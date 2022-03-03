@@ -1,0 +1,4 @@
+// "Remove @ from annotation argument" "true"
+// DISABLE-ERRORS
+@Suppress({ <caret>x
+y() }) fun test() {}

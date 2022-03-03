@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.fix;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -78,6 +79,11 @@ public final class FindDfaProblemCauseFix implements OnTheFlyLocalFix, LowPriori
     if (item != null && file != null) {
       displayProblemCause(file, item);
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return new IntentionPreviewInfo.Html(JavaBundle.message("quickfix.find.cause.description"));
   }
 
   private static void displayProblemCause(PsiFile file, TrackingRunner.CauseItem root) {

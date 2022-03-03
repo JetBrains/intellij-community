@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -93,6 +94,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     final JBTable table = myFilterTable.getTable();
     table.setTableHeader(new JTableHeader());
     table.setStriped(false);
+    table.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     myFilterPanel = ToolbarDecorator.createDecorator(table)
       .disableUpDownActions()
       .setToolbarPosition(ActionToolbarPosition.RIGHT)
@@ -303,6 +305,10 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   @Override
   public Runnable getConstraintChangedCallback() {
     return myConstraintChangedCallback;
+  }
+
+  public JBTable getTable() {
+    return myFilterTable.getTable();
   }
 
   private class Header implements Filter {

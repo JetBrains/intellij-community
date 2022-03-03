@@ -47,7 +47,7 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
                 }
                     .inSmartMode(project)
                     .wrapProgress(indicator)
-                    .expireWhen { !file.isValid || Disposer.isDisposed(project) }
+                    .expireWhen { !file.isValid || project.isDisposed() }
                     .executeSynchronously()
             }
         }

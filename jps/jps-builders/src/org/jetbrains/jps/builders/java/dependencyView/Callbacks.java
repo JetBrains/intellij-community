@@ -100,7 +100,7 @@ public final class Callbacks {
    * To be removed in later releases
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public interface ConstantAffectionResolver {
     Future<ConstantAffection> request(
       final String ownerClassName, final String fieldName, int accessFlags, boolean fieldRemoved, boolean accessChanged

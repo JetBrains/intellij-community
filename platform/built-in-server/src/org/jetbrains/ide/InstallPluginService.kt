@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
@@ -68,15 +68,16 @@ internal class InstallPluginService : RestService() {
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   private fun checkCompatibility(
     request: FullHttpRequest,
     context: ChannelHandlerContext,
     pluginIds: List<String>,
   ): Nothing? {
+    val marketplaceRequests = MarketplaceRequests.getInstance()
     val compatibleUpdatesInfo = pluginIds
       .mapNotNull { PluginId.findId(it) }
-      .map { id -> id.idString to (MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(id) != null) }
+      .map { id -> id.idString to (marketplaceRequests.getLastCompatiblePluginUpdate(id) != null) }
       .let { info ->
         if (info.size != 1) info
         else listOf("compatible" to info[0].second)
@@ -106,7 +107,7 @@ internal class InstallPluginService : RestService() {
       val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       ApplicationManager.getApplication().invokeLater(Runnable {
         AppIcon.getInstance().requestAttention(effectiveProject, true)
-        installAndEnable(effectiveProject, plugins.toSet(), true) { }
+        installAndEnable(effectiveProject, plugins.toSet()) { }
         isAvailable = true
       }, effectiveProject.disposed)
     }

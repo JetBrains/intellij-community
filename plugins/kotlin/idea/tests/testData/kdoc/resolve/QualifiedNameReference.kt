@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 /**
  * Contains [kotlin.collections.Collecti<caret>on]

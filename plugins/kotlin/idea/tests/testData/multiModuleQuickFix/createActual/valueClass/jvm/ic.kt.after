@@ -1,1 +1,1 @@
-actual value class IC actual constructor(actual val i: Int)
+actual value class <caret>IC actual constructor(actual val i: Int)

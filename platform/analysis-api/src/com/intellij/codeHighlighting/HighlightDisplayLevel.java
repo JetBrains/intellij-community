@@ -88,7 +88,7 @@ public class HighlightDisplayLevel {
     return null;
   }
 
-  public static HighlightDisplayLevel find(HighlightSeverity severity) {
+  public static HighlightDisplayLevel find(@NotNull HighlightSeverity severity) {
     return ourMap.get(severity);
   }
 
@@ -116,10 +116,12 @@ public class HighlightDisplayLevel {
     return mySeverity.getName();
   }
 
+  @NotNull
   public Icon getIcon() {
     return myIconPair.first;
   }
 
+  @NotNull
   public Icon getOutlineIcon() {
     return myIconPair.second;
   }

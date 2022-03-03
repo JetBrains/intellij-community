@@ -7,7 +7,6 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.replaceService
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -17,12 +16,9 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptC
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.areSimilar
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinGradleDslErrorReporter.Companion.build_script_errors_group
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -34,7 +30,7 @@ import kotlin.test.assertFailsWith
 
 @RunWith(value = Parameterized::class)
 @Suppress("ACCIDENTAL_OVERRIDE")
-class GradleKtsImportTest : KotlinGradleImportingTestCase() {
+abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
     companion object {
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
@@ -42,69 +38,72 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
         fun data(): Collection<Array<Any?>> = listOf(arrayOf("6.0.1"))
     }
 
-    val projectDir: File
-        get() = File(GradleSettings.getInstance(myProject).linkedProjectsSettings.first().externalProjectPath)
+    val projectDir: File get() = File(GradleSettings.getInstance(myProject).linkedProjectsSettings.first().externalProjectPath)
 
     private val scriptConfigurationManager: CompositeScriptConfigurationManager
         get() = ScriptConfigurationManager.getInstance(myProject) as CompositeScriptConfigurationManager
 
-    override fun testDataDirName(): String {
-        return "gradleKtsImportTest"
-    }
+    override fun testDataDirName(): String = "gradleKtsImportTest"
 
-    @Test
-    @TargetVersions("6.0.1+")
-    fun testEmpty() {
-        configureByFiles()
-        importProject()
+    class Empty : GradleKtsImportTest() {
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testEmpty() {
+            configureByFiles()
+            importProject()
 
-        checkConfiguration("build.gradle.kts")
-    }
-
-    @Test
-    @TargetVersions("6.0.1+")
-    fun testError() {
-        val events = mutableListOf<BuildEvent>()
-        val syncViewManager = object : SyncViewManager(myProject) {
-            override fun onEvent(buildId: Any, event: BuildEvent) {
-                events.add(event)
-            }
+            checkConfiguration("build.gradle.kts")
         }
-        myProject.replaceService(SyncViewManager::class.java, syncViewManager, testRootDisposable)
-
-        configureByFiles()
-
-        assertFailsWith<AssertionFailedError> { importProject() }
-
-        val expectedErrorMessage = "Unresolved reference: unresolved"
-        val errors = events.filterIsInstance<MessageEventImpl>().filter { it.kind == MessageEvent.Kind.ERROR }
-        val buildScriptErrors = errors.filter { it.message == expectedErrorMessage }
-        assertTrue(
-            "$expectedErrorMessage error has not been reported among other errors: $errors",
-            buildScriptErrors.isNotEmpty()
-        )
     }
 
-    @Test
-    @TargetVersions("6.0.1+")
-    fun testCompositeBuild() {
-        configureByFiles()
-        importProject()
+    class Error : GradleKtsImportTest() {
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testError() {
+            val events = mutableListOf<BuildEvent>()
+            val syncViewManager = object : SyncViewManager(myProject) {
+                override fun onEvent(buildId: Any, event: BuildEvent) {
+                    events.add(event)
+                }
+            }
+            myProject.replaceService(SyncViewManager::class.java, syncViewManager, testRootDisposable)
 
-        checkConfiguration(
-            "settings.gradle.kts",
-            "build.gradle.kts",
-            "subProject/build.gradle.kts",
-            "subBuild/settings.gradle.kts",
-            "subBuild/build.gradle.kts",
-            "subBuild/subProject/build.gradle.kts",
-            "buildSrc/settings.gradle.kts",
-            "buildSrc/build.gradle.kts",
-            "buildSrc/subProject/build.gradle.kts"
-        )
+            configureByFiles()
+
+            assertFailsWith<AssertionFailedError> { importProject() }
+
+            val expectedErrorMessage = "Unresolved reference: unresolved"
+            val errors = events.filterIsInstance<MessageEventImpl>().filter { it.kind == MessageEvent.Kind.ERROR }
+            val buildScriptErrors = errors.filter { it.message == expectedErrorMessage }
+            assertTrue(
+                "$expectedErrorMessage error has not been reported among other errors: $errors",
+                buildScriptErrors.isNotEmpty()
+            )
+        }
     }
 
-    private fun checkConfiguration(vararg files: String) {
+    class CompositeBuild2 : GradleKtsImportTest() {
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testCompositeBuild() {
+            configureByFiles()
+            importProject()
+
+            checkConfiguration(
+                "settings.gradle.kts",
+                "build.gradle.kts",
+                "subProject/build.gradle.kts",
+                "subBuild/settings.gradle.kts",
+                "subBuild/build.gradle.kts",
+                "subBuild/subProject/build.gradle.kts",
+                "buildSrc/settings.gradle.kts",
+                "buildSrc/build.gradle.kts",
+                "buildSrc/subProject/build.gradle.kts"
+            )
+        }
+    }
+
+    protected fun checkConfiguration(vararg files: String) {
         val scripts = files.map {
             KtsFixture(it).also { kts ->
                 assertTrue("Configuration for ${kts.file.path} is missing", scriptConfigurationManager.hasConfiguration(kts.psiFile))

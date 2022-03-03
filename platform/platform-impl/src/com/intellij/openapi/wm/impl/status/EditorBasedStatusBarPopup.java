@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -37,6 +36,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.IndexingBundle;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -68,12 +68,11 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         update();
-        UIEventLogger.StatusBarPopupShown.log(project, EditorBasedStatusBarPopup.this.getClass());
         showPopup(e);
         return true;
       }
     }.installOn(myComponent, true);
-    myComponent.setBorder(WidgetBorder.WIDE);
+    myComponent.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
   }
 
   protected JPanel createComponent() {

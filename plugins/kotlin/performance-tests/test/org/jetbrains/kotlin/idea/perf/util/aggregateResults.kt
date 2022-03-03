@@ -2,14 +2,22 @@
 
 package org.jetbrains.kotlin.idea.perf.util
 
+import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
 
 fun main(args: Array<String>) {
     uploadAggregateResults(File(args[0]))
 }
 
-internal fun uploadAggregateResults(folder: File) {
-    val groupBy = folder.listFiles()
+internal fun uploadAggregateResults() {
+    val parent = System.getProperty("idea.home.path")?.let(::File) ?: KotlinRoot.REPO
+    uploadAggregateResults(File(parent, "out"))
+}
+
+private fun uploadAggregateResults(folder: File) {
+    val listFiles = folder.listFiles() ?: emptyArray()
+    logMessage { "uploadAggregateResults from $folder ${listFiles.joinToString { it.absolutePath }}" }
+    val groupBy = listFiles
         .filter { it.length() > 0 && it.name.startsWith("stats-") && it.extension == "json" }
         .groupBy { it.name.replace("stats-", "").split("_")[0] }
 
@@ -17,7 +25,7 @@ internal fun uploadAggregateResults(folder: File) {
         files.map(File::loadBenchmark).writeCSV(n)
     }
 
-    groupBy.forEach { (k, v) ->
+    groupBy.forEach { (_, v) ->
         if (v.isEmpty()) return@forEach
 
         val benchmarks = v.map(File::loadBenchmark)

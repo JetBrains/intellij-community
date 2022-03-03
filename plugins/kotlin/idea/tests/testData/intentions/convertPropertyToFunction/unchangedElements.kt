@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 't' is never used
 
 annotation class X(val s: String)

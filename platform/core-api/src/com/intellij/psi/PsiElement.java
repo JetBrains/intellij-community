@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -283,6 +283,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Creates a copy of the file containing the PSI element and returns the corresponding
    * element in the created copy. Resolve operations performed on elements in the copy
    * of the file will resolve to elements in the copy, not in the original file.
+   * <p>
+   * For light elements, may return {@code null}.
    *
    * @return the element in the file copy corresponding to this element.
    */

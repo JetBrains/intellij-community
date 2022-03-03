@@ -118,7 +118,7 @@ private fun DeclarationDescriptor.collectAllTypes(): Sequence<FqName?> {
         is CallableDescriptor -> {
             val returnType = returnType ?: return sequenceOf(null)
             returnType.collectAllTypes() +
-                    explicitParameters.asSequence().flatMap(DeclarationDescriptor::collectAllTypes) +
+                    explicitParameters.flatMap(DeclarationDescriptor::collectAllTypes) +
                     typeParameters.asSequence().flatMap(DeclarationDescriptor::collectAllTypes)
         }
 

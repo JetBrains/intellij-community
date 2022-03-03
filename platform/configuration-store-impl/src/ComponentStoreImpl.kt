@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -20,10 +20,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.util.ArrayUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
-import com.intellij.util.ThreeState
+import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.toArray
 import com.intellij.util.messages.MessageBus
@@ -92,12 +89,11 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
-    var componentName = ""
+    var componentName: String? = null
     try {
       @Suppress("DEPRECATION")
       if (component is PersistentStateComponent<*>) {
         val stateSpec = getStateSpec(component.javaClass)
-
         if (stateSpec == null) {
           if (loadPolicy != StateLoadPolicy.LOAD) {
             component.noStateLoaded()
@@ -112,7 +108,8 @@ abstract class ComponentStoreImpl : IComponentStore {
           componentName = stateSpec.name
           val componentInfo = createComponentInfo(component = component, stateSpec = stateSpec, serviceDescriptor = serviceDescriptor)
           // still must be added to component list to support explicit save later
-          if (!stateSpec.allowLoadInTests && !(loadPolicy == StateLoadPolicy.LOAD || (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec.defaultStateAsResource))) {
+          if (!stateSpec.allowLoadInTests && !(loadPolicy == StateLoadPolicy.LOAD ||
+                                               (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec.defaultStateAsResource))) {
             component.noStateLoaded()
             component.initializeComponent()
             registerComponent(name = componentName, info = componentInfo)
@@ -121,10 +118,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
           if (initComponent(componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
             // if not service, so, component manager will check it later for all components
-            project?.let {
+            val project = project
+            if (project != null) {
               val app = ApplicationManager.getApplication()
-              if (!app.isHeadlessEnvironment && !app.isUnitTestMode && it.isInitialized) {
-                notifyUnknownMacros(this, it, componentName)
+              if (!app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
+                notifyUnknownMacros(this, project, componentName)
               }
             }
           }
@@ -144,7 +142,9 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
     catch (e: Exception) {
-      if (e is ControlFlowException) throw e
+      if (e is ControlFlowException) {
+        throw e
+      }
       LOG.error(PluginException("Cannot init component state " +
                                 "(componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
     }
@@ -206,7 +206,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     for (name in names) {
       val start = System.currentTimeMillis()
       try {
-        val info = components.get(name)!!
+        val info = components.get(name) ?: continue
         var currentModificationCount = -1L
 
         if (info.lastSaved != -1) {
@@ -225,7 +225,9 @@ abstract class ComponentStoreImpl : IComponentStore {
         if (info.isModificationTrackingSupported) {
           currentModificationCount = info.currentModificationCount
           if (currentModificationCount == info.lastModificationCount) {
-            SAVE_MOD_LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved" }
+            if (isSaveModLogEnabled) {
+              SAVE_MOD_LOG.debug("${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
+            }
             if (isUseModificationCount) {
               continue
             }
@@ -332,7 +334,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           state = (info.component as PersistentStateComponent<*>).state
         }
 
-        if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec)) {
+        if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec, storageSpec)) {
           LOG.runAndLogException {
             FeatureUsageSettingsEvents.logConfigurationChanged(effectiveComponentName, state, project)
           }
@@ -426,7 +428,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             state = deserializeState(Element("state"), stateClass, null)!!
           }
           else {
-            if (isReportStatisticAllowed(stateSpec) && !storageSpec.deprecated) {
+            if (isReportStatisticAllowed(stateSpec, storageSpec)) {
               FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateClass, project)
             }
             continue
@@ -438,7 +440,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
         component.loadState(state)
         val stateAfterLoad = stateGetter.archiveState()
-        if (isReportStatisticAllowed(stateSpec)) {
+        if (isReportStatisticAllowed(stateSpec, storageSpec)) {
           LOG.runAndLogException {
             FeatureUsageSettingsEvents.logConfigurationState(name, stateAfterLoad ?: state, project)
           }
@@ -451,7 +453,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    // we load default state even if isLoadComponentState false - required for app components (for example, at least one color scheme must exists)
+    // we load default state even if isLoadComponentState false - required for app components (for example, at least one color scheme must exist)
     if (defaultState == null) {
       component.noStateLoaded()
     }
@@ -467,7 +469,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     return true
   }
 
-  protected open fun isReportStatisticAllowed(stateSpec: State) = stateSpec.reportStatistic
+  protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean {
+    return !storageSpec.deprecated &&
+           stateSpec.reportStatistic &&
+           storageSpec.value != StoragePathMacros.CACHE_FILE &&
+           storageSpec.value != StoragePathMacros.WORKSPACE_FILE &&
+           storageSpec.value != StoragePathMacros.NON_ROAMABLE_FILE
+  }
 
   private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
     return changedStorages.contains(storage) || storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage)
@@ -493,9 +501,9 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
     val classLoader = component.javaClass.classLoader
-    val stream = classLoader.getResourceAsStream("$componentName.xml") ?: return null
+    val data = ResourceUtil.getResourceAsBytes("$componentName.xml", classLoader) ?: return null
     try {
-      val element = JDOMUtil.load(stream)
+      val element = JDOMUtil.load(data)
       getPathMacroManagerForDefaults()?.expandPaths(element)
       return deserializeState(element, stateClass, null)
     }
@@ -611,7 +619,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   /**
    * You must call it in batch mode (use runBatchUpdate)
    */
-  fun reinitComponents(componentNames: Set<String>,
+  open fun reinitComponents(componentNames: Set<String>,
                        changedStorages: Set<StateStorage> = emptySet(),
                        notReloadableComponents: Collection<String> = emptySet()) {
     for (componentName in componentNames) {

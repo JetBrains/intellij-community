@@ -59,7 +59,7 @@ class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvi
   }
 }
 
-private fun useNewSettings() = Registry.`is`("new.inlay.settings", false)
+private fun useNewSettings() = Registry.`is`("new.inlay.settings", true)
 
 fun showNewSettings(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?): Boolean {
   if (!useNewSettings()) return false

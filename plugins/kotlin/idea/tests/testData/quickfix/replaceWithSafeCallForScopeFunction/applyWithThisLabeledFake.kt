@@ -1,5 +1,5 @@
 // "Replace scope function with safe (?.) call" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Introduce local variable
 // ACTION: Add non-null asserted (!!) call
 // ACTION: Replace with safe (?.) call

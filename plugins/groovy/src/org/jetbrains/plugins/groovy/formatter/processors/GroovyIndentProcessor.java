@@ -218,7 +218,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
-    if (TokenSets.BLOCK_SET.contains(myChildType)) {
+    if (myChild == ifStatement.getCondition()) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+    else if (TokenSets.BLOCK_SET.contains(myChildType)) {
       if (myChild == ifStatement.getCondition()) {
         myResult = getContinuationWithoutFirstIndent();
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.jdom.Element;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class ProductivityFeaturesTest extends LightPlatformTestCase {
   private ProductivityFeaturesRegistry myRegistry;
@@ -73,7 +75,7 @@ public class ProductivityFeaturesTest extends LightPlatformTestCase {
   public void testTipShown(){
     FeatureDescriptor featureDescriptor = myRegistry.getFeatureDescriptor(TestProductivityFeatureProvider.tipId);
     TipAndTrickBean tip = TipAndTrickBean.findByFileName(featureDescriptor.getTipFileName());
-    assertNotNull(tip);
+    assertThat(tip).isNotNull();
 
     TipUIUtil.Browser browser = TipUIUtil.createBrowser();
     TipUIUtil.openTipInBrowser(TipUIUtil.getTip(featureDescriptor), browser);

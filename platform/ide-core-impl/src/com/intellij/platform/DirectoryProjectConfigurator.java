@@ -5,9 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
 
 /**
  * Configures various subsystems (facets etc) when user opens folder with code but without of ".idea" folder.
@@ -16,13 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * This class scans code and detects framework heuristically. It then configures facet without user action.
  */
 public interface DirectoryProjectConfigurator {
-  /**
-   * @deprecated Use {@link #configureProject(Project, VirtualFile, Ref, boolean)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  default void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef) {
-  }
+
   /**
    * @return if code must be called or EDT or not.
    * If {@link #configureProject(Project, VirtualFile, Ref, boolean)} is slow (heavy computations, network access etc) return "false" here.
@@ -34,11 +26,8 @@ public interface DirectoryProjectConfigurator {
   /**
    * @param isProjectCreatedWithWizard if true then new project created with wizard, existing folder opened otherwise
    */
-  default void configureProject(@NotNull Project project,
-                                @NotNull VirtualFile baseDir,
-                                @NotNull Ref<Module> moduleRef,
-                                boolean isProjectCreatedWithWizard) {
-    // todo: remove default impl in 2020.2
-    configureProject(project, baseDir, moduleRef);
-  }
+  void configureProject(@NotNull Project project,
+                        @NotNull VirtualFile baseDir,
+                        @NotNull Ref<Module> moduleRef,
+                        boolean isProjectCreatedWithWizard);
 }

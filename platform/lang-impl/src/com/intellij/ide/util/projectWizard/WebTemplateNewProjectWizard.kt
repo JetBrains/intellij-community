@@ -11,8 +11,7 @@ abstract class WebTemplateNewProjectWizardBase : GeneratorNewProjectWizard {
   override val groupName: String = WebModuleBuilder.GROUP_NAME
 
   override fun createStep(context: WizardContext): NewProjectWizardStep =
-    NewProjectWizardBaseStep(context)
-      .chain { createTemplateStep(it) }
+    RootNewProjectWizardStep(context).chain(::NewProjectWizardBaseStep, ::createTemplateStep)
 
   abstract fun createTemplateStep(parent: NewProjectWizardBaseStep): NewProjectWizardStep
 }
@@ -33,8 +32,8 @@ abstract class MultiWebTemplateNewProjectWizard(protected val templates: List<We
     return object : AbstractNewProjectWizardMultiStepBase(parent) {
       override val label: String
         get() = UIBundle.message("label.project.wizard.new.project.project.type")
-      override val steps: Map<String, NewProjectWizardStep>
-        get() = templates.associateBy({ it.name }, { WebTemplateProjectWizardStep(parent, it) })
+
+      override fun initSteps() = templates.associateBy({ it.name }, { WebTemplateProjectWizardStep(parent, it) })
     }
   }
 }

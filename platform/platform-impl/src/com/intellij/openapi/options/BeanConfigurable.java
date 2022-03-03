@@ -26,7 +26,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * See {@link ConfigurableBuilder} for {@link UiDslConfigurable} alternative.
+ * See {@link ConfigurableBuilder} for {@link UiDslUnnamedConfigurable} alternative.
  */
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private final T myInstance;

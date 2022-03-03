@@ -1,5 +1,5 @@
 // "Replace with 'c1.newFun(this, c2)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class X(val c: Char) {
     @Deprecated("", ReplaceWith("c1.newFun(this, c2)"))

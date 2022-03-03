@@ -6,7 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 @CompileStatic
 class IdeaCommunityProperties extends BaseIdeaProperties {
@@ -20,8 +20,8 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productImplementationModules = ["intellij.platform.main", "intellij.notebooks.visualization"]
-    productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
+    productLayout.productImplementationModules = ["intellij.platform.main"]
+    productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
@@ -31,20 +31,21 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       CommunityRepositoryModules.groovyPlugin([])
     ]
 
-    def commonCustomizer = productLayout.platformLayoutCustomizer
-    productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
-      commonCustomizer.accept(layout)
-      layout.customize {
-        withModule("intellij.platform.duplicates.analysis")
-        withModule("intellij.platform.structuralSearch")
+    productLayout.appendPlatformCustomizer(new BiConsumer<PlatformLayout, BuildContext>() {
+      @Override
+      void accept(PlatformLayout layout, BuildContext context) {
+        layout.withModule("intellij.platform.duplicates.analysis")
+        layout.withModule("intellij.platform.structuralSearch")
       }
-    } as Consumer<PlatformLayout>
+    })
 
     mavenArtifacts.forIdeModules = true
     mavenArtifacts.additionalModules = [
       "intellij.tools.jps.buildScriptDependencies",
       "intellij.platform.debugger.testFramework",
-      "intellij.platform.vcs.testFramework"
+      "intellij.platform.vcs.testFramework",
+      "intellij.platform.externalSystem.testFramework",
+      "intellij.maven.testFramework",
     ]
 
     versionCheckerConfig = CE_CLASS_VERSIONS

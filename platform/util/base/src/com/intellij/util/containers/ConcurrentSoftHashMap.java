@@ -8,7 +8,7 @@ import java.lang.ref.SoftReference;
 
 /**
  * Concurrent soft key:K -> strong value:V map
- * Null keys are allowed
+ * Null keys are NOT allowed
  * Null values are NOT allowed
  * Use {@link ContainerUtil#createConcurrentSoftMap()} to create this
  */

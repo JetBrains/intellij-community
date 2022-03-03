@@ -1,0 +1,90 @@
+/* Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. */
+
+body {
+  background-color: #F3F5F7;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+}
+
+.central-div-panel {
+  display: flex;
+  flex-direction: column;
+
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 100px;
+
+  padding: 16px 16px 15px;
+
+  width: 320px;
+  height: 438px;
+
+  background: #ffffff;
+  border-radius: 4px;
+}
+
+.central-div-header {
+  display: flex;
+  align-items: center;
+}
+
+.central-div-header-icon {
+  width: 24px;
+  height: 24px;
+
+  opacity: 0.4;
+}
+
+.central-div-header-text {
+  font-family: Inter, sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 20px;
+
+  margin-left: 8px;
+
+  text-align: center;
+  letter-spacing: -0.006px;
+
+  color: #0C0C0D;
+}
+
+.central-div-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.central-div-app-icon {
+  padding-top: 50px;
+  width: 100px;
+  height: 100px;
+}
+
+.central-div-content-icon {
+  padding-top: 60px;
+  width: 52px;
+  height: 52px;
+}
+
+.central-div-content-text {
+  padding-top: 15px;
+
+  width: 224px;
+
+  font-family: Inter, sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 22px;
+  line-height: 30px;
+
+  text-align: center;
+  letter-spacing: -0.018px;
+
+  color: #000000;
+}

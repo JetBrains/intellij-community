@@ -1,5 +1,5 @@
 // DISABLE-ERRORS
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 
 class FooException : Exception()

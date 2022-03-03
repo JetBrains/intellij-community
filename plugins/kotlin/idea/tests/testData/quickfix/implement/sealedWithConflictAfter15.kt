@@ -1,5 +1,5 @@
 // "Implement sealed class" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 // COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces
 

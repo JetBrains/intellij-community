@@ -1,10 +1,12 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.util.Time.*
 
-internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
+internal abstract class SearchEverywhereBaseActionFeaturesProvider
+  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java) {
   companion object {
     internal const val IS_ENABLED = "isEnabled"
 
@@ -25,7 +27,7 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEvery
 
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  queryLength: Int,
+                                  searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any> {
     if (element !is GotoActionModel.MatchedValue) {
@@ -35,7 +37,7 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEvery
 
     val priority = element.matchingDegree
     val data: MutableMap<String, Any> = hashMapOf(
-      SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
+      SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY to searchQuery.length,
       ITEM_TYPE to element.type,
       TYPE_WEIGHT to element.valueTypeWeight,
       PRIORITY to priority

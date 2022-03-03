@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -49,6 +49,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NonNls;
@@ -978,6 +979,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           addedBracesVector.add(body);
           continue;
         }
+        else if (lambdaExpr instanceof PsiSwitchLabeledRuleStatement && parentStatement instanceof PsiExpressionStatement) {
+          CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(ref);
+          if (surrounder != null) {
+            CodeBlockSurrounder.SurroundResult surround = surrounder.surround();
+            PsiExpression expression = surround.getExpression();
+            addMarkedElements(refsVector, expression);
+            ContainerUtil.addIfNotNull(addedBracesVector, PsiTreeUtil.getParentOfType(surround.getAnchor(), PsiCodeBlock.class));
+            continue;
+          }
+        }
       }
       else {
         final PsiField field = PsiTreeUtil.getParentOfType(ref, PsiField.class);
@@ -1092,7 +1103,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
         }
         else if (codeBlockParent instanceof PsiBlockStatement) {
-          if (!(ifStatementWithAppendableElseBranch(statement) &&
+          if (statement instanceof PsiYieldStatement) {
+            PsiExpression expression = ((PsiYieldStatement)statement).getExpression();
+            if (expression != null) {
+              PsiExpressionStatement statementFromText = (PsiExpressionStatement)myFactory.createStatementFromText("a;", expression);
+              statementFromText.getExpression().replace(expression);
+              codeBlockParent.replace(statementFromText);
+            }
+          } else if (!(ifStatementWithAppendableElseBranch(statement) &&
                 codeBlockParent.getParent() instanceof PsiIfStatement &&
                 ((PsiIfStatement)codeBlockParent.getParent()).getElseBranch() != null)) {
             codeBlockParent.replace(statement);

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun oops(a: String, b: String) : Boolean {
     var i = 0
     var j = 0

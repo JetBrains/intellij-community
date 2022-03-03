@@ -12,4 +12,5 @@ fun f(a: Int): Int {
     }
 }
 
+//HIGHLIGHTED: fun
 //HIGHLIGHTED: return

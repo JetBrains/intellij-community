@@ -54,12 +54,17 @@ class RemoveEmptyClassBodyIntention : SelfTargetingOffsetIndependentIntention<Kt
             else -> return
         }
 
-        element.addSemicolon()
-        editor?.caretModel?.moveToOffset(element.endOffset + 1)
+        val semicolon = element.addSemicolon()
+        editor?.caretModel?.moveToOffset(semicolon.endOffset)
     }
 
-    private fun PsiElement.addSemicolon() {
-        parent.addAfter(KtPsiFactory(this).createSemicolon(), this)
+    private fun PsiElement.addSemicolon(): PsiElement {
+        val semicolon = KtPsiFactory(this).createSemicolon()
+        return if (this is KtEnumEntry) {
+            add(semicolon)
+        } else {
+            parent.addAfter(semicolon, this)
+        }
     }
 
     override fun isApplicableTo(element: KtClassBody): Boolean {

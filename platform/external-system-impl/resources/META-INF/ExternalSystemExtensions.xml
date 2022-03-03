@@ -33,6 +33,9 @@
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings"
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings"/>
+    <projectService
+      serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware"
+      serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware"/>
     <editorFloatingToolbarProvider
       id="ExternalSystem.ProjectRefreshFloatingProvider"
@@ -43,13 +46,12 @@
     <!--Auto-link-->
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity"/>
-    <notificationGroup id="External System Auto-Link Notification Group" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="External System Auto-Link Notification Group" displayType="STICKY_BALLOON"
+                       bundle="messages.ExternalSystemBundle" key="notification.group.external.system.autolink"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectSettings"
                     serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectSettings"/>
 
     <!--Dependency Analyzer-->
-    <externalSystemDependencyAnalyzer
-      implementation="com.intellij.openapi.externalSystem.dependency.analyzer.ExternalSystemDependencyAnalyzerExtension"/>
     <registryKey key="external.system.dependency.analyzer" defaultValue="false"
                  description="Gradle/Maven dependency analyzer"/>
 
@@ -135,9 +137,12 @@
     <notificationGroup id="Gradle Import" displayType="BALLOON"/>
   </extensions>
   <applicationListeners>
+    <listener class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider$Listener"
+              topic="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Listener"
+              activeInHeadlessMode="true" activeInTestMode="true"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.ExternalSystemTrustedListener"
               topic="com.intellij.ide.impl.TrustStateListener"
-              activeInHeadlessMode="false" activeInTestMode="false" />
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 </idea-plugin>
 

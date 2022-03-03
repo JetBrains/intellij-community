@@ -1,5 +1,5 @@
 // "Add '@JvmName' annotation" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 interface Bar<T, U>
 
 fun <caret>Bar<Int, Double>.bar() = this

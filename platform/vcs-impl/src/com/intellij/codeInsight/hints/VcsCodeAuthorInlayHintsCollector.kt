@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsBundle.messagePointer
+import com.intellij.openapi.vcs.actions.ShortNameType
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.psi.PsiComment
@@ -40,16 +41,10 @@ internal class VcsCodeAuthorInlayHintsCollector(
 
     val range = getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
     val info = getCodeAuthorInfo(element.project, range, editor)
-    val presentation = buildPresentation(element, info, editor).addContextMenu(element.project).shiftTo(range.startOffset, editor)
+    val presentation = buildPresentation(element, info, editor).addContextMenu(element.project)
 
-    sink.addBlockElement(range.startOffset, false, true, BlockInlayPriority.CODE_VISION, presentation)
+    sink.addCodeVisionElement(editor, range.startOffset, BlockInlayPriority.CODE_AUTHOR, presentation)
     return true
-  }
-
-  private fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
-    val start = psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
-
-    return TextRange.create(start.startOffset, element.endOffset)
   }
 
   private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor): VcsCodeAuthorInfo {
@@ -96,11 +91,12 @@ internal class VcsCodeAuthorInlayHintsCollector(
       getDefaultInlayHintsProviderPopupActions(VcsCodeAuthorInlayHintsProvider.KEY, messagePointer("title.code.author.inlay.hints"))
     }
 
-  private fun InlayPresentation.shiftTo(offset: Int, editor: Editor): InlayPresentation {
-    val document = editor.document
-    val column = offset - document.getLineStartOffset(document.getLineNumber(offset))
+  companion object {
+    internal fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
+      val start = psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
 
-    return factory.seq(factory.textSpacePlaceholder(column, true), this)
+      return TextRange.create(start.startOffset, element.endOffset)
+    }
   }
 }
 
@@ -112,11 +108,14 @@ private class VcsCodeAuthorInfo(val mainAuthor: String?, val otherAuthorsCount: 
 
 private val VcsCodeAuthorInfo.isMultiAuthor: Boolean get() = otherAuthorsCount > 0
 
-private fun VcsCodeAuthorInfo.getText(): String =
-  when {
-    mainAuthor == null -> message("label.new.code")
-    isMultiAuthor && isModified -> message("label.multi.author.modified.code", mainAuthor, otherAuthorsCount)
-    isMultiAuthor && !isModified -> message("label.multi.author.not.modified.code", mainAuthor, otherAuthorsCount)
-    !isMultiAuthor && isModified -> message("label.single.author.modified.code", mainAuthor)
-    else -> mainAuthor
+private fun VcsCodeAuthorInfo.getText(): String {
+  val mainAuthorText = ShortNameType.shorten(mainAuthor, ShortNameType.NONE)
+
+  return when {
+    mainAuthorText == null -> message("label.new.code")
+    isMultiAuthor && isModified -> message("label.multi.author.modified.code", mainAuthorText, otherAuthorsCount)
+    isMultiAuthor && !isModified -> message("label.multi.author.not.modified.code", mainAuthorText, otherAuthorsCount)
+    !isMultiAuthor && isModified -> message("label.single.author.modified.code", mainAuthorText)
+    else -> mainAuthorText
   }
+}

@@ -1,4 +1,5 @@
-from typing import Any, ContextManager, NamedTuple
+from contextlib import AbstractContextManager
+from typing import Any, NamedTuple
 
 from ._common import (
     AccessDenied as AccessDenied,
@@ -71,7 +72,7 @@ pid_exists: Any
 
 def is_zombie(pid): ...
 def wrap_exceptions(fun): ...
-def catch_zombie(proc) -> ContextManager[None]: ...
+def catch_zombie(proc) -> AbstractContextManager[None]: ...
 
 class Process:
     pid: Any

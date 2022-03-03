@@ -9,4 +9,5 @@ fun f(a: Int): Int {
 
 inline public fun <T> run1(noinline f: () -> T): T { }
 
+//HIGHLIGHTED: fun
 //HIGHLIGHTED: return 1

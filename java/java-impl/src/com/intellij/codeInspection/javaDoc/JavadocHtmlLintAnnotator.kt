@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.codeInspection.javaDoc
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.intention.EmptyIntentionAction
-import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.util.ExecUtil
@@ -35,7 +34,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.PsiTreeUtil
-import com.sun.tools.doclint.DocLint
 import java.io.File
 
 class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
@@ -99,7 +97,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   //<editor-fold desc="Helpers">
   private val key = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
 
-  private val lintOptions = "${DocLint.XMSGS_CUSTOM_PREFIX}html/private,accessibility/private"
+  private val lintOptions = "-Xmsgs:html/private,accessibility/private"
   private val lintPattern = "^.+:(\\d+):\\s+(error|warning):\\s+(.+)$".toPattern()
 
   private fun isJava8SourceFile(file: PsiFile) =
@@ -128,7 +126,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
 
     parameters.charset = file.charset
     parameters.vmParametersList.addProperty("user.language", "en")
-    parameters.mainClass = DocLint::class.java.name
+    parameters.mainClass = if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_16)) "jdk.javadoc.internal.doclint.DocLint" else "com.sun.tools.doclint.DocLint"
     parameters.programParametersList.add(lintOptions)
     parameters.programParametersList.add(copy.path)
 

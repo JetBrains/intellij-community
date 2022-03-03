@@ -19,10 +19,13 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.debugger.breakpoints.isInlineOnly
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.isFromJava
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParentCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -78,7 +81,7 @@ class SmartStepTargetVisitor(
             append(MethodSmartStepTarget(declaration, null, expression, true, lines))
         } else if (declaration is KtNamedFunction) {
             val label = KotlinMethodSmartStepTarget.calcLabel(descriptor)
-            append(KotlinMethodReferenceSmartStepTarget(descriptor, declaration, label, expression, lines))
+            append(KotlinMethodReferenceSmartStepTarget(expression, lines, label, descriptor.getMethodName(), declaration))
         }
     }
 
@@ -113,9 +116,17 @@ class SmartStepTargetVisitor(
     ) =
         when (expression) {
             is KtCallableReferenceExpression ->
-                append(KotlinMethodReferenceSmartStepTarget(descriptor, declaration, label, expression, lines))
+                append(KotlinMethodReferenceSmartStepTarget(expression, lines, label, descriptor.getMethodName(), declaration))
             else ->
-                append(KotlinMethodSmartStepTarget(descriptor, declaration, label, expression, lines))
+                append(
+                    KotlinMethodSmartStepTarget(
+                        lines,
+                        expression,
+                        label,
+                        declaration,
+                        CallableMemberInfo(descriptor)
+                    )
+                )
         }
 
     private fun recordFunction(function: KtFunction): Boolean {
@@ -133,19 +144,39 @@ class SmartStepTargetVisitor(
         functionParameterInfo: FunctionParameterInfo
     ): KotlinLambdaSmartStepTarget? {
         val (param, resultingDescriptor) = functionParameterInfo
+        val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, resultingDescriptor) as? KtDeclaration ?: return null
+        val callerMethodOrdinal = countExistingMethodCalls(declaration)
         if (param.isSamLambdaParameterDescriptor()) {
             val methodDescriptor = param.type.getFirstAbstractMethodDescriptor() ?: return null
             return KotlinLambdaSmartStepTarget(
-                resultingDescriptor,
-                param,
                 function,
+                declaration,
                 lines,
-                false,
-                false,
-                methodDescriptor.name.asString()
+                KotlinLambdaInfo(
+                    resultingDescriptor,
+                    param,
+                    callerMethodOrdinal,
+                    true,
+                    methodDescriptor.getMethodName()
+                )
             )
         }
-        return KotlinLambdaSmartStepTarget(resultingDescriptor, param, function, lines)
+        return KotlinLambdaSmartStepTarget(
+            function,
+            declaration,
+            lines,
+            KotlinLambdaInfo(
+                resultingDescriptor,
+                param,
+                callerMethodOrdinal
+            )
+        )
+    }
+
+    private fun countExistingMethodCalls(declaration: KtDeclaration): Int {
+        return consumer
+            .filterIsInstance<KotlinMethodSmartStepTarget>()
+            .count { it.declaration != null && it.declaration === declaration }
     }
 
     override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression) {
@@ -243,7 +274,15 @@ class SmartStepTargetVisitor(
                 else -> callLabel
             }
 
-            append(KotlinMethodSmartStepTarget(descriptor, declaration, label, expression, lines))
+            append(
+                KotlinMethodSmartStepTarget(
+                    lines,
+                    expression,
+                    label,
+                    declaration,
+                    CallableMemberInfo(descriptor)
+                )
+            )
         }
     }
 
@@ -252,7 +291,25 @@ class SmartStepTargetVisitor(
     }
 }
 
-private data class FunctionParameterInfo(val parameter: ValueParameterDescriptor, val resultingDescriptor: CallableDescriptor)
+private val JVM_NAME_FQ_NAME = FqName("kotlin.jvm.JvmName")
+
+private fun PropertyAccessorDescriptor.getJvmMethodName(): String {
+    val jvmNameAnnotation = annotations.findAnnotation(JVM_NAME_FQ_NAME)
+    val jvmName = jvmNameAnnotation?.argumentValue(JvmName::name.name)?.value as? String
+    if (jvmName != null) {
+        return jvmName
+    }
+    return JvmAbi.getterName(correspondingProperty.name.asString())
+}
+
+internal fun DeclarationDescriptor.getMethodName() =
+    when (this) {
+        is ClassDescriptor, is ConstructorDescriptor -> "<init>"
+        is PropertyAccessorDescriptor -> getJvmMethodName()
+        else -> name.asString()
+    }
+
+private data class FunctionParameterInfo(val parameter: ValueParameterDescriptor, val resultingDescriptor: CallableMemberDescriptor)
 
 fun KtFunction.isSamLambda(): Boolean {
     val functionParameterInfo = getFunctionParameterInfo() ?: return false
@@ -267,11 +324,12 @@ private fun ValueParameterDescriptor.isSamLambdaParameterDescriptor(): Boolean {
 private fun KtFunction.getFunctionParameterInfo(): FunctionParameterInfo? {
     val context = analyze()
     val resolvedCall = getParentCall(context).getResolvedCall(context) ?: return null
+    val descriptor = resolvedCall.resultingDescriptor as? CallableMemberDescriptor ?: return null
     val arguments = resolvedCall.valueArguments
 
     for ((param, argument) in arguments) {
         if (argument.arguments.any { getArgumentExpression(it) == this }) {
-            return FunctionParameterInfo(param, resolvedCall.resultingDescriptor)
+            return FunctionParameterInfo(param, descriptor)
         }
     }
     return null

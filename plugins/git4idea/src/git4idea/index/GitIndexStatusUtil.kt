@@ -59,9 +59,9 @@ const val NUL = "\u0000"
 fun getStatus(project: Project,
               root: VirtualFile,
               files: List<FilePath> = emptyList(),
-              withRenames: Boolean = true,
-              withUntracked: Boolean = true,
-              withIgnored: Boolean = false): List<GitFileStatus> {
+              withRenames: Boolean,
+              withUntracked: Boolean,
+              withIgnored: Boolean): List<GitFileStatus> {
   return getFileStatus(project, root, files, withRenames, withUntracked, withIgnored)
     .map { GitFileStatus(root, it) }
 }
@@ -145,7 +145,7 @@ private fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRec
   while (it.hasNext()) {
     val line = it.next()
     if (StringUtil.isEmptyOrSpaces(line)) continue // skip empty lines if any (e.g. the whole output may be empty on a clean working tree).
-    if (line.startsWith("starting fsmonitor-daemon in ")) continue; // skip debug output from experimental daemon in git-for-windows-2.33
+    if (line.startsWith("starting fsmonitor-daemon in ")) continue // skip debug output from experimental daemon in git-for-windows-2.33
     // format: XY_filename where _ stands for space.
     if (line.length < 4 || line[2] != ' ') { // X, Y, space and at least one symbol for the file
       throwGFE(GitBundle.message("status.exception.message.line.is.too.short"), output, line, '0', '0')

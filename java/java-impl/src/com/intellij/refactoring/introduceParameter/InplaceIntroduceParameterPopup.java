@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.hint.EditorCodePreview;
@@ -33,7 +33,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import kotlin.ranges.IntRange;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +45,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
+public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
   private final PsiMethod myMethod;
   private final PsiMethod myMethodToSearchFor;
   private final boolean myMustBeFinal;
@@ -88,8 +88,8 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       }
 
       @Override
-      protected TIntArrayList getParametersToRemove() {
-        TIntArrayList parameters = new TIntArrayList();
+      protected IntList getParametersToRemove() {
+        IntList parameters = new IntArrayList();
         if (myCbReplaceAllOccurences == null || myCbReplaceAllOccurences.isSelected()) {
           for (int i = 0; i < myParametersToRemove.length; i++) {
             if (myParametersToRemove[i] != null) {
@@ -258,7 +258,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       isDeleteLocalVariable = myPanel.isDeleteLocalVariable();
     }
 
-    final TIntArrayList parametersToRemove = myPanel.getParametersToRemove();
+    final IntList parametersToRemove = myPanel.getParametersToRemove();
 
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(myProject, myMethod,
@@ -313,12 +313,11 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     return "IntroduceParameter";
   }
 
-  private void normalizeParameterIdxAccordingToRemovedParams(TIntArrayList parametersToRemove) {
+  private void normalizeParameterIdxAccordingToRemovedParams(IntList parametersToRemove) {
     parametersToRemove.forEach(value -> {
       if (myParameterIndex >= value) {
         myParameterIndex--;
       }
-      return true;
     });
   }
 

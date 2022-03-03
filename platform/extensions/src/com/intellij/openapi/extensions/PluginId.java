@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
-  private static final ConcurrentHashMap<String, PluginId> registeredIds = new ConcurrentHashMap<>();
+  private static final Map<String, PluginId> registeredIds = new ConcurrentHashMap<>();
 
   public static @NotNull PluginId getId(@NotNull String idString) {
     return registeredIds.computeIfAbsent(idString, PluginId::new);

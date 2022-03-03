@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val functions: Map<String, () -> Any> = TODO()
 

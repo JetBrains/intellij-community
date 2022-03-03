@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -11,7 +11,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.Irreducible
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
@@ -48,7 +47,7 @@ public final class DomHelper {
     for (BasicBlock block : blocks) {
       Statement stat = stats.getWithKey(block.id);
 
-      for (BasicBlock succ : block.getSuccs()) {
+      for (BasicBlock succ : block.getSuccessors()) {
         Statement stsucc = stats.getWithKey(succ.id);
 
         int type;
@@ -72,7 +71,7 @@ public final class DomHelper {
       }
 
       // exceptions edges
-      for (BasicBlock succex : block.getSuccExceptions()) {
+      for (BasicBlock succex : block.getSuccessorExceptions()) {
         Statement stsuccex = stats.getWithKey(succex.id);
 
         ExceptionRangeCFG range = graph.getExceptionRange(succex, block);
@@ -91,10 +90,9 @@ public final class DomHelper {
 
     HashMap<Statement, FastFixedSet<Statement>> lists = new HashMap<>();
 
-    StrongConnectivityHelper schelper = new StrongConnectivityHelper(container);
-    List<List<Statement>> components = schelper.getComponents();
+    StrongConnectivityHelper connectivityHelper = new StrongConnectivityHelper(container);
 
-    List<Statement> lstStats = container.getPostReversePostOrderList(StrongConnectivityHelper.getExitReps(components));
+    List<Statement> lstStats = container.getPostReversePostOrderList(connectivityHelper.getExitReps());
 
     FastFixedSetFactory<Statement> factory = new FastFixedSetFactory<>(lstStats);
 
@@ -104,7 +102,7 @@ public final class DomHelper {
     FastFixedSet<Statement> initSet = factory.spawnEmptySet();
     initSet.setAllElements();
 
-    for (List<Statement> lst : components) {
+    for (List<Statement> lst : connectivityHelper.getComponents()) {
       FastFixedSet<Statement> tmpSet;
 
       if (StrongConnectivityHelper.isExitComponent(lst)) {
@@ -149,7 +147,7 @@ public final class DomHelper {
           domsSuccs.add(stat);
         }
 
-        if (!InterpreterUtil.equalObjects(domsSuccs, doms)) {
+        if (!Objects.equals(domsSuccs, doms)) {
 
           lists.put(stat, domsSuccs);
 
@@ -220,7 +218,7 @@ public final class DomHelper {
       removeSynchronizedHandler(st);
     }
 
-    if (stat.type == Statement.TYPE_SYNCRONIZED) {
+    if (stat.type == Statement.TYPE_SYNCHRONIZED) {
       ((SynchronizedStatement)stat).removeExc();
     }
   }
@@ -251,7 +249,7 @@ public final class DomHelper {
               next = next.getFirst();
             }
 
-            if (next.type == Statement.TYPE_CATCHALL) {
+            if (next.type == Statement.TYPE_CATCH_ALL) {
 
               CatchAllStatement ca = (CatchAllStatement)next;
 

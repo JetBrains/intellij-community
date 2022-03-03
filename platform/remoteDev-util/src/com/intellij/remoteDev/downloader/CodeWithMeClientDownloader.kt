@@ -140,6 +140,7 @@ object CodeWithMeClientDownloader {
       override val compatibleJreUrl = jreDownloadUrl
       override val hostFeaturesToEnable: Set<String>? = null
       override val stunTurnServers: List<StunTurnServerInfo>? = null
+      override val turnAllocationServerInfo: StunTurnServerInfo? = null
       override val downloadPgpPublicKeyUrl: String? = null
     }
 
@@ -183,7 +184,6 @@ object CodeWithMeClientDownloader {
    *
    * Update this method (any jdk-related stuff) together with:
    *  `setupJdk.gradle`
-   *  `setupJbre.gradle`
    *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
    */
   fun downloadClientAndJdk(clientBuildVersion: String,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -25,8 +25,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
@@ -122,7 +120,7 @@ internal open class UpdateIdeFromSourcesAction
       state.pluginDirectoriesForDisabledPlugins = list
       bundledPluginDirsToSkip = list
       nonBundledPluginDirsToInclude = PluginManagerCore.getPlugins().filter {
-        !it.isBundled && it.isEnabled && it.version != null && it.version.contains("SNAPSHOT")
+        !it.isBundled && it.isEnabled
       }.map { it.path }.filter { it.isDirectory }.map { it.name }
     }
     else {
@@ -356,7 +354,7 @@ internal open class UpdateIdeFromSourcesAction
       return
     }
     val plugins = try {
-      pluginsXml.inputStream().reader().use {
+      pluginsXml.inputStream().use {
         MarketplaceRequests.parsePluginList(it)
       }
     }
@@ -448,14 +446,7 @@ internal open class UpdateIdeFromSourcesAction
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null && isIdeaProject(project)
-  }
-
-  private fun isIdeaProject(project: Project) = try {
-    DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, RuntimeException> { PsiUtil.isIdeaProject(project) }
-  }
-  catch (e: IndexNotReadyException) {
-    false
+    e.presentation.isEnabledAndVisible = project != null && PsiUtil.isIdeaProject(project)
   }
 }
 

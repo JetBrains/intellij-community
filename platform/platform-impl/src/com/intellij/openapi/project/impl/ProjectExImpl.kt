@@ -38,8 +38,6 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
-private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
-
 @ApiStatus.Internal
 open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(ApplicationManager.getApplication() as ComponentManagerImpl), ProjectStoreOwner {
   companion object {
@@ -55,7 +53,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   private val isLight: Boolean
 
-  private var cachedName: String? = null
+  private var cachedName: String?
 
   private var componentStoreValue = SynchronizedClearableLazy {
     ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
@@ -69,8 +67,6 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
 
     cachedName = projectName
-    // light project may be changed later during test, so we need to remember its initial state
-    //noinspection TestOnlyProblems
     // light project may be changed later during test, so we need to remember its initial state
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
   }
@@ -230,6 +226,8 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     return earlyDisposable.get() ?: throw createEarlyDisposableError("earlyDisposable is null for")
   }
 
+  private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
+
   fun disposeEarlyDisposable() {
     if (LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) {
       LOG.debug("dispose early disposable: ${toString()}")
@@ -276,6 +274,13 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     projectManager.updateTheOnlyProjectField()
     TimedReference.disposeTimed()
     LaterInvocator.purgeExpiredItems()
+  }
+
+  @TestOnly
+  fun setLightProjectName(name: String) {
+    assert(isLight)
+    setProjectName(name)
+    storeCreationTrace()
   }
 
   final override fun toString(): String {

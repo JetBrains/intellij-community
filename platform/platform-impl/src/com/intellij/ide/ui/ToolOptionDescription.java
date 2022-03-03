@@ -33,7 +33,7 @@ public final class ToolOptionDescription extends BooleanOptionDescription {
 
   @Override
   public void setOptionState(boolean enabled) {
-    InspectionProfileImpl.setToolEnabled(enabled, getCurrentProfile(), myShortName, myProject);
+    InspectionProfileImpl.setToolEnabled(enabled, getCurrentProfile(), myShortName, true, myProject);
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 }

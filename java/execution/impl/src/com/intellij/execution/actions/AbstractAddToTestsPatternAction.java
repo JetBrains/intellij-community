@@ -57,7 +57,10 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
     if (patternConfigurations.size() == 1) {
       final T configuration = patternConfigurations.get(0);
       for (PsiElement aClass : classes) {
-        getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
+        String qName = getPatternBasedProducer().getQName(aClass);
+        if (qName != null) {
+          getPatterns(configuration).add(qName);
+        }
       }
     } else {
       JBPopupFactory.getInstance().createListPopup(
@@ -65,7 +68,10 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
           @Override
           public PopupStep onChosen(T configuration, boolean finalChoice) {
             for (PsiElement aClass : classes) {
-              getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
+              String qName = getPatternBasedProducer().getQName(aClass);
+              if (qName != null) {
+                getPatterns(configuration).add(qName);
+              }
             }
             return FINAL_CHOICE;
           }

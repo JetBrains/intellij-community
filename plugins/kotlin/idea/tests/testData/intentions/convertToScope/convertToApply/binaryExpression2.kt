@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'a' is never used
 // AFTER-WARNING: Variable 'a' is never used
 class A {

@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.util.ui.JBUI
 
-@ApiStatus.Experimental
 interface SpacingConfiguration {
 
   companion object {
@@ -19,6 +19,25 @@ interface SpacingConfiguration {
       override val buttonGroupHeaderBottomGap = 0
       override val segmentedButtonVerticalGap = 0
       override val segmentedButtonHorizontalGap = 0
+      override val dialogGap = Gaps.EMPTY
+    }
+
+    fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
+      return object : SpacingConfiguration {
+
+        override val horizontalSmallGap = JBUI.scale(6)
+        override val horizontalDefaultGap = JBUI.scale(16)
+        override val horizontalColumnsGap = JBUI.scale(60)
+        override val horizontalIndent = JBUI.scale(20)
+        override val horizontalToggleButtonIndent = JBUI.scale(20)
+        override val verticalComponentGap = JBUI.scale(6)
+        override val verticalSmallGap = JBUI.scale(8)
+        override val verticalMediumGap = JBUI.scale(20)
+        override val buttonGroupHeaderBottomGap = JBUI.scale(2)
+        override val segmentedButtonVerticalGap = JBUI.scale(3)
+        override val segmentedButtonHorizontalGap= JBUI.scale(12)
+        override val dialogGap = Gaps(10, 12, 10, 12)
+      }
     }
   }
 
@@ -77,4 +96,8 @@ interface SpacingConfiguration {
    */
   val segmentedButtonHorizontalGap: Int
 
+  /**
+   * Gaps between dialog content and its content
+   */
+  val dialogGap: Gaps
 }

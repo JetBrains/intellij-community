@@ -2,11 +2,11 @@
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -15,19 +15,19 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 @Demo(title = "Components",
   description = "There are many different components supported by UI DSL. Here are some of them.",
   scrollbar = true)
-fun demoComponents(): DialogPanel {
-  return panel {
+fun demoComponents(parentDisposable: Disposable): DialogPanel {
+  val panel = panel {
     row {
       checkBox("checkBox")
     }
 
     var radioButtonValue = 2
-    buttonGroup({ radioButtonValue }, { radioButtonValue = it }) {
+    buttonsGroup {
       row("radioButton") {
         radioButton("Value 1", 1)
         radioButton("Value 2", 2)
       }
-    }
+    }.bind({ radioButtonValue }, { radioButtonValue = it })
 
     row {
       button("button") {}
@@ -53,8 +53,7 @@ fun demoComponents(): DialogPanel {
     }
 
     row("segmentedButton:") {
-      val property = PropertyGraph().graphProperty { "" }
-      segmentedButton(listOf("Button 1", "Button 2", "Button Last"), property) { s -> s }
+      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { it }
     }
 
     row("label:") {
@@ -93,6 +92,10 @@ fun demoComponents(): DialogPanel {
       textFieldWithBrowseButton()
     }
 
+    row("expandableTextField:") {
+      expandableTextField()
+    }
+
     row("intTextField(0..100):") {
       intTextField(0..100)
     }
@@ -115,7 +118,13 @@ fun demoComponents(): DialogPanel {
     }.layout(RowLayout.PARENT_GRID)
 
     row("comboBox:") {
-      comboBox(arrayOf("Item 1", "Item 2"))
+      comboBox(listOf("Item 1", "Item 2"))
     }
   }
+
+  val disposable = Disposer.newDisposable()
+  panel.registerValidators(disposable)
+  Disposer.register(parentDisposable, disposable)
+
+  return panel
 }

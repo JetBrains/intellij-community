@@ -1,4 +1,5 @@
 // "Replace array of boxed with array of primitive" "false"
+// WITH_STDLIB
 // ERROR: Invalid type of annotation member
 // ACTION: Add full qualifier
 // ACTION: Introduce import alias

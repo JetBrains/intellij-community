@@ -27,19 +27,23 @@ import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.util.messages.Topic
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
+import kotlin.properties.Delegates.observable
+import kotlin.reflect.KProperty
 
 @Service
 class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   private val updateQueue = MergingUpdateQueue("GitHub repositories update", 50, true, null, this, null, true)
     .usePassThroughInUnitTestMode()
-  private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   private val accountManager: GHAccountManager
     get() = service()
 
-  var knownRepositories by observableField(emptySet<GHGitRepositoryMapping>(), eventDispatcher)
+  var knownRepositories by observable(emptySet<GHGitRepositoryMapping>()) { _, _, newValue ->
+    project.messageBus.syncPublisher(LIST_CHANGES_TOPIC).onRepositoryListChanges(newValue)
+  }
     private set
 
   private val serversFromDiscovery = HashSet<GithubServerPath>()
@@ -145,17 +149,27 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
   }
 
   fun addRepositoryListChangedListener(disposable: Disposable, listener: () -> Unit) =
-    SimpleEventListener.addDisposableListener(eventDispatcher, disposable, listener)
+    project.messageBus.connect(disposable).subscribe(LIST_CHANGES_TOPIC, object : ListChangesListener {
+      override fun onRepositoryListChanges(newList: Set<GHGitRepositoryMapping>) = listener()
+    })
 
   class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
     override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
     override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
   }
 
+  interface ListChangesListener {
+    fun onRepositoryListChanges(newList: Set<GHGitRepositoryMapping>)
+  }
+
   companion object {
     private val LOG = logger<GHProjectRepositoriesManager>()
 
     private val UPDATE_IDENTITY = Any()
+
+    @JvmField
+    //project level topic
+    val LIST_CHANGES_TOPIC = Topic.create("Repository List Changes", ListChangesListener::class.java)
 
     private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
       val application = ApplicationManager.getApplication()

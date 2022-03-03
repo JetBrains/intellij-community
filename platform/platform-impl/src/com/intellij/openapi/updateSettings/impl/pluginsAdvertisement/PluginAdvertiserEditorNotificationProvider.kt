@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
@@ -18,31 +18,33 @@ import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
+import java.util.function.Function
+import javax.swing.JComponent
 import javax.swing.JLabel
 
-class PluginAdvertiserEditorNotificationProvider : EditorNotifications.PanelProvider(),
+class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
                                                    DumbAware {
 
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
-
   override fun collectNotificationData(
-    file: VirtualFile,
     project: Project,
-  ): AdvertiserSuggestion? {
-    val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
+    file: VirtualFile,
+  ): Function<in FileEditor, out JComponent?> {
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
 
     if (suggestionData == null) {
       ProcessIOExecutorService.INSTANCE.execute {
-        MarketplaceRequests.Instance.loadJetBrainsPluginsIds()
-        MarketplaceRequests.Instance.loadExtensionsForIdes()
+        val marketplaceRequests = MarketplaceRequests.getInstance()
+        marketplaceRequests.loadJetBrainsPluginsIds()
+        marketplaceRequests.loadExtensionsForIdes()
+
+        val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
         var shouldUpdateNotifications = extensionsStateService.updateCache(file.name)
         val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(file.name)
         if (fullExtension != null) {
@@ -56,17 +58,20 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.PanelProv
         }
         LOG.debug("Tried to update extensions cache for file '${file.name}'. shouldUpdateNotifications=$shouldUpdateNotifications")
       }
+
+      return EditorNotificationProvider.CONST_NULL
     }
 
     return suggestionData
   }
 
   class AdvertiserSuggestion(
+    private val project: Project,
     private val extensionOrFileName: String,
     dataSet: Set<PluginData>,
     jbPluginsIds: Set<String>,
     val suggestedIdes: List<SuggestedIde>,
-  ) : PanelData {
+  ) : Function<FileEditor, EditorNotificationPanel?> {
 
     private var disabledPlugin: IdeaPluginDescriptor? = null
     private val jbProduced = mutableSetOf<PluginId>()
@@ -91,10 +96,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.PanelProv
       }
     }
 
-    override fun applyTo(
-      fileEditor: FileEditor,
-      project: Project,
-    ): EditorNotificationPanel? {
+    override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
       lateinit var label: JLabel
       val panel = object : EditorNotificationPanel(fileEditor) {
         init {
@@ -181,19 +183,31 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.PanelProv
 
   companion object {
 
-    private val KEY = Key.create<EditorNotificationPanel>("file.type.associations.detected")
-    private val LOG: Logger = Logger.getInstance(PluginAdvertiserEditorNotificationProvider::class.java)
+    private val LOG = logger<PluginAdvertiserEditorNotificationProvider>()
 
-    fun getSuggestionData(project: Project, activeProductCode: String, fileName: String, fileType: FileType): AdvertiserSuggestion? {
-      val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
-      val pluginAdvertiserExtensionsState = extensionsStateService.createExtensionDataProvider(project)
-      val extensionsData = pluginAdvertiserExtensionsState.requestExtensionData(fileName, fileType)
-      val jbPluginsIds = MarketplaceRequests.Instance.jetBrainsPluginsIds
-      val ideExtensions = MarketplaceRequests.Instance.extensionsForIdes
+    @VisibleForTesting
+    fun getSuggestionData(
+      project: Project,
+      activeProductCode: String,
+      fileName: String,
+      fileType: FileType,
+    ): AdvertiserSuggestion? {
+      return PluginAdvertiserExtensionsStateService.instance
+        .createExtensionDataProvider(project)
+        .requestExtensionData(fileName, fileType)?.let {
+          getSuggestionData(project, it, activeProductCode, fileType)
+        }
+    }
 
-      if (extensionsData == null || jbPluginsIds == null || ideExtensions == null) {
-        return null
-      }
+    private fun getSuggestionData(
+      project: Project,
+      extensionsData: PluginAdvertiserExtensionsData,
+      activeProductCode: String,
+      fileType: FileType,
+    ): AdvertiserSuggestion? {
+      val marketplaceRequests = MarketplaceRequests.getInstance()
+      val jbPluginsIds = marketplaceRequests.jetBrainsPluginsIds ?: return null
+      val ideExtensions = marketplaceRequests.extensionsForIdes ?: return null
 
       val extensionOrFileName = extensionsData.extensionOrFileName
       val dataSet = extensionsData.plugins
@@ -207,7 +221,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.PanelProv
       else
         emptyList()
 
-      return AdvertiserSuggestion(extensionOrFileName, dataSet, jbPluginsIds, suggestedIdes)
+      return AdvertiserSuggestion(project, extensionOrFileName, dataSet, jbPluginsIds, suggestedIdes)
     }
 
     private fun getSuggestedIdes(activeProductCode: String, extensionOrFileName: String, ideExtensions: Map<String, List<String>>): List<SuggestedIde> {

@@ -6,28 +6,22 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PlatformTestUtil
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenImportingTestCase
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
-import org.jetbrains.idea.maven.MavenTestCase
-import org.jetbrains.idea.maven.importing.xml.MavenBuildFileBuilder
+import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 import org.junit.Test
 
 class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTestCase() {
   override fun getSystemId(): ProjectSystemId = SYSTEM_ID
-
-  override fun assertModules(project: Project, vararg projectInfo: ExternalSystemSetupProjectTestCase.ProjectInfo) {
-    waitForImportCompletion(project)
-    super<ExternalSystemSetupProjectTest>.assertModules(project, *projectInfo)
-  }
 
   @Test
   fun `test settings are not reset`() {
@@ -42,7 +36,7 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
         attachProject(it, linkedProjectInfo.projectFile)
       }
       assertModules(it, projectInfo, linkedProjectInfo)
-      TestCase.assertTrue(MavenWorkspaceSettingsComponent.getInstance (it).settings.getGeneralSettings().isWorkOffline)
+      TestCase.assertTrue(MavenWorkspaceSettingsComponent.getInstance(it).settings.getGeneralSettings().isWorkOffline)
     }
   }
 
@@ -59,25 +53,38 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
     return ExternalSystemSetupProjectTestCase.ProjectInfo(projectFile, "$name-project", "$name-module", "$name-external-module")
   }
 
-  override fun attachProject(project: Project, projectFile: VirtualFile) {
+  override fun attachProject(project: Project, projectFile: VirtualFile): Project {
     AddManagedFilesAction().perform(project, selectedFile = projectFile)
     waitForImportCompletion(project)
+    return project
   }
 
-  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
+  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
     AddFileAsMavenProjectAction().perform(project, selectedFile = projectFile)
     waitForImportCompletion(project)
+    return project
   }
 
-  override fun <R> waitForImport(action: () -> R): R = action()
+  override fun waitForImport(action: () -> Project): Project {
+    val p = action()
+    waitForImportCompletion(p)
+    return p
+  }
 
   private fun waitForImportCompletion(project: Project) {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     val projectManager = MavenProjectsManager.getInstance(project)
     projectManager.initForTests()
-    ApplicationManager.getApplication().invokeAndWait {
-      projectManager.waitForResolvingCompletion()
-      projectManager.performScheduledImportInTests()
+    if (isNewImportingProcess) {
+      val promise = MavenImportingManager.getInstance(project).getImportFinishPromise()
+      PlatformTestUtil.waitForPromise(promise)
     }
+    else {
+      ApplicationManager.getApplication().invokeAndWait {
+        projectManager.waitForResolvingCompletion()
+        projectManager.performScheduledImportInTests()
+      }
+    }
+
   }
 }

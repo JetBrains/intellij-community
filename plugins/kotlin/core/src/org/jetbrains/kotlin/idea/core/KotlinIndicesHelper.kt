@@ -9,6 +9,7 @@ import com.intellij.psi.impl.CompositeShortNamesCache
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.stubs.StringStubIndexExtension
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -99,25 +100,22 @@ class KotlinIndicesHelper(
     }
 
     fun processTopLevelCallables(nameFilter: (String) -> Boolean, processor: (CallableDescriptor) -> Unit) {
-        fun processIndex(index: StringStubIndexExtension<out KtCallableDeclaration>) {
-            for (key in index.getAllKeys(project)) {
-                ProgressManager.checkCanceled()
-                if (!nameFilter(key.substringAfterLast('.', key))) continue
-
-                for (declaration in index.get(key, project, scope)) {
-                    if (declaration.receiverTypeReference != null) continue
-                    if (filterOutPrivate && declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) continue
-
-                    for (descriptor in declaration.resolveToDescriptors<CallableDescriptor>()) {
-                        if (descriptorFilter(descriptor)) {
-                            processor(descriptor)
-                        }
-                    }
+        val callableDeclarationProcessor = Processor<KtCallableDeclaration> { declaration ->
+            if (declaration.receiverTypeReference != null) return@Processor true
+            if (filterOutPrivate && declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) return@Processor true
+            ProgressManager.checkCanceled()
+            declaration.resolveToDescriptors<CallableDescriptor>().forEach { descriptor ->
+                if (descriptorFilter(descriptor)) {
+                    processor(descriptor)
                 }
             }
+            true
         }
-        processIndex(KotlinTopLevelFunctionFqnNameIndex.getInstance())
-        processIndex(KotlinTopLevelPropertyFqnNameIndex.getInstance())
+
+        val filter: (String) -> Boolean = { key -> nameFilter(key.substringAfterLast('.', key)) }
+        KotlinTopLevelFunctionFqnNameIndex.getInstance().processAllElements(project, scope, filter, callableDeclarationProcessor)
+
+        KotlinTopLevelPropertyFqnNameIndex.getInstance().processAllElements(project, scope, filter, callableDeclarationProcessor)
     }
 
     fun getCallableTopLevelExtensions(
@@ -149,42 +147,44 @@ class KotlinIndicesHelper(
     ): Collection<CallableDescriptor> {
         if (receiverTypes.isEmpty()) return emptyList()
 
-        val topLevelExtensionsIndex = KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE
-        val suitableTopLevelExtensions = topLevelExtensionsIndex.getSuitableExtensions(
+        val suitableTopLevelExtensions = mutableListOf<CallableDescriptor>()
+        KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.processSuitableExtensions(
             receiverTypes,
             nameFilter,
             declarationFilter,
-            callTypeAndReceiver
+            callTypeAndReceiver,
+            processor = suitableTopLevelExtensions::add
         )
 
-        val additionalDescriptors = ArrayList<CallableDescriptor>(0)
+        val additionalDescriptors = ArrayList<CallableDescriptor>()
 
         val lookupLocation = this.file?.let { KotlinLookupLocation(it) } ?: NoLookupLocation.FROM_IDE
         for (extension in @Suppress("DEPRECATION") KotlinIndicesHelperExtension.getInstances(project)) {
             extension.appendExtensionCallables(additionalDescriptors, moduleDescriptor, receiverTypes, nameFilter, lookupLocation)
         }
 
-        return if (additionalDescriptors.isNotEmpty())
+        return if (additionalDescriptors.isNotEmpty()) {
             suitableTopLevelExtensions + additionalDescriptors
-        else
+        } else {
             suitableTopLevelExtensions
+        }
     }
 
-    fun getCallableExtensionsDeclaredInObjects(
+    fun processCallableExtensionsDeclaredInObjects(
         callTypeAndReceiver: CallTypeAndReceiver<*, *>,
         receiverTypes: Collection<KotlinType>,
         nameFilter: (String) -> Boolean,
-        declarationFilter: (KtDeclaration) -> Boolean = { true }
-    ): Collection<CallableDescriptor> {
-        if (receiverTypes.isEmpty()) return emptyList()
+        declarationFilter: (KtDeclaration) -> Boolean = { true },
+        processor: (CallableDescriptor) -> Unit
+    ) {
+        if (receiverTypes.isEmpty()) return
 
-        val extensionsInObjectsIndex = KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE
-
-        return extensionsInObjectsIndex.getSuitableExtensions(
+        KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE.processSuitableExtensions(
             receiverTypes,
             nameFilter,
             declarationFilter,
-            callTypeAndReceiver
+            callTypeAndReceiver,
+            processor
         )
     }
 
@@ -209,21 +209,38 @@ class KotlinIndicesHelper(
         return out.values.toSet()
     }
 
-    private fun KotlinExtensionsByReceiverTypeIndex.getSuitableExtensions(
+    private fun KotlinExtensionsByReceiverTypeIndex.processSuitableExtensions(
         receiverTypes: Collection<KotlinType>,
         nameFilter: (String) -> Boolean,
         declarationFilter: (KtDeclaration) -> Boolean,
-        callTypeAndReceiver: CallTypeAndReceiver<*, *>
-    ): Collection<CallableDescriptor> {
+        callTypeAndReceiver: CallTypeAndReceiver<*, *>,
+        processor: (CallableDescriptor) -> Unit
+    ) {
         val receiverTypeNames = collectAllNamesOfTypes(receiverTypes)
 
-        val declarations = getAllKeys(project).asSequence()
-            .onEach { ProgressManager.checkCanceled() }
-            .filter { receiverTypeNameFromKey(it) in receiverTypeNames && nameFilter(callableNameFromKey(it)) }
-            .flatMap { get(it, project, scope) }
-            .filter(declarationFilter)
+        val callType = callTypeAndReceiver.callType
+        val processed = HashSet<CallableDescriptor>()
 
-        return findSuitableExtensions(declarations, receiverTypes, callTypeAndReceiver.callType)
+        val declarationProcessor = Processor<KtCallableDeclaration> { callableDeclaration ->
+            // Check that function or property with the given qualified name can be resolved in given scope and called on given receiver
+            ProgressManager.checkCanceled()
+            if (declarationFilter(callableDeclaration)) {
+                callableDeclaration.resolveToDescriptors<CallableDescriptor>().forEach { descriptor ->
+                    if (descriptor.extensionReceiverParameter != null && descriptorFilter(descriptor)) {
+                        for (callableDescriptor in descriptor.substituteExtensionIfCallable(receiverTypes, callType)){
+                            if (processed.add(callableDescriptor)) processor(callableDescriptor)
+                        }
+                    }
+                }
+            }
+            true
+        }
+        processAllElements(
+            project,
+            scope,
+            { receiverTypeNameFromKey(it) in receiverTypeNames && nameFilter(callableNameFromKey(it)) },
+            declarationProcessor
+        )
     }
 
     private fun possibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
@@ -234,8 +251,8 @@ class KotlinIndicesHelper(
             ProgressManager.checkCanceled()
             index[typeName, project, scope].asSequence()
                 .filter { it in scope }
-                .mapNotNull { it.name }
-                .filter { out.add(it) }
+                .mapNotNull(KtTypeAlias::getName)
+                .filter(out::add)
                 .forEach(::searchRecursively)
         }
 
@@ -256,27 +273,6 @@ class KotlinIndicesHelper(
         val receiverTypeNames = HashSet<String>()
         types.forEach { receiverTypeNames.addTypeNames(it) }
         return receiverTypeNames
-    }
-
-    /**
-     * Check that function or property with the given qualified name can be resolved in given scope and called on given receiver
-     */
-    private fun findSuitableExtensions(
-        declarations: Sequence<KtCallableDeclaration>,
-        receiverTypes: Collection<KotlinType>,
-        callType: CallType<*>
-    ): Collection<CallableDescriptor> {
-        val result = LinkedHashSet<CallableDescriptor>()
-
-        fun processDescriptor(descriptor: CallableDescriptor) {
-            if (descriptor.extensionReceiverParameter != null && descriptorFilter(descriptor)) {
-                result.addAll(descriptor.substituteExtensionIfCallable(receiverTypes, callType))
-            }
-        }
-
-        declarations.forEach { it.resolveToDescriptors<CallableDescriptor>().forEach(::processDescriptor) }
-
-        return result
     }
 
     fun getJvmClassesByName(name: String): Collection<ClassDescriptor> {
@@ -357,13 +353,13 @@ class KotlinIndicesHelper(
 
     private fun getJavaCallables(name: String, shortNamesCache: PsiShortNamesCache): Sequence<Any> {
         filteredShortNamesCaches?.let { caches -> return getCallablesByName(name, scopeWithoutKotlin, caches) }
-        return shortNamesCache.getFieldsByNameUnfiltered(name, scopeWithoutKotlin).asSequence() +
-                shortNamesCache.getMethodsByNameUnfiltered(name, scopeWithoutKotlin).asSequence()
+        return shortNamesCache.getFieldsByNameUnfiltered(name, scopeWithoutKotlin) +
+                shortNamesCache.getMethodsByNameUnfiltered(name, scopeWithoutKotlin)
     }
 
     private fun getCallablesByName(name: String, scope: GlobalSearchScope, caches: List<PsiShortNamesCache>): Sequence<Any> {
         return caches.asSequence().flatMap { cache ->
-            cache.getMethodsByNameUnfiltered(name, scope) + cache.getFieldsByNameUnfiltered(name, scope).asSequence()
+            cache.getMethodsByNameUnfiltered(name, scope) + cache.getFieldsByNameUnfiltered(name, scope)
         }
     }
 
@@ -392,31 +388,31 @@ class KotlinIndicesHelper(
      * Unit tests are part of the autoimport quickfix:
      * [org.jetbrains.kotlin.idea.quickfix.QuickFixTestGenerated.AutoImports.CallablesDeclaredInClasses]
      */
-
-    fun getAllCallablesFromSubclassObjects(
+    fun processAllCallablesFromSubclassObjects(
         callTypeAndReceiver: CallTypeAndReceiver<*, *>,
         receiverTypes: Collection<KotlinType>,
-        nameFilter: (String) -> Boolean
-    ): Collection<CallableMemberDescriptor> {
+        nameFilter: (String) -> Boolean,
+        processor: (CallableDescriptor) -> Unit
+    ) {
         val descriptorKindFilter = DescriptorKindFilter.CALLABLES
 
-        val objectsIndex = KotlinSubclassObjectNameIndex.getInstance()
+        val objectDeclarationProcessor = Processor<KtObjectDeclaration> { objectDeclaration ->
+            objectDeclaration.resolveToDescriptors<ClassDescriptor>().asSequence()
+                .map { it.unsubstitutedMemberScope }
+                .flatMap { it.getDescriptorsFiltered(descriptorKindFilter) { name -> !name.isSpecial && nameFilter(name.identifier) } }
+                .filterIsInstance<CallableMemberDescriptor>()
+                .forEach { descriptor ->
+                    ProgressManager.checkCanceled()
+                    if (descriptor.isExtension) {
+                        descriptor.substituteExtensionIfCallable(receiverTypes, callTypeAndReceiver.callType).forEach(processor)
+                    } else {
+                        processor(descriptor)
+                    }
+                }
+            true
+        }
 
-        val objectDeclarations = objectsIndex.getAllKeys(project).asSequence()
-            .onEach { ProgressManager.checkCanceled() }
-            .flatMap { objectsIndex[it, project, scope] }
-            .flatMap { it.resolveToDescriptors<ClassDescriptor>() }
-
-        return objectDeclarations
-            .map { it.unsubstitutedMemberScope }
-            .flatMap { it.getDescriptorsFiltered(descriptorKindFilter) { name -> !name.isSpecial && nameFilter(name.identifier) } }
-            .filterIsInstance<CallableMemberDescriptor>()
-            .flatMap {
-                if (it.isExtension)
-                    it.substituteExtensionIfCallable(receiverTypes, callTypeAndReceiver.callType)
-                else
-                    listOf(it)
-            }.toList()
+        KotlinSubclassObjectNameIndex.getInstance().processAllElements(project, scope, processor = objectDeclarationProcessor)
     }
 
     /**
@@ -441,12 +437,12 @@ class KotlinIndicesHelper(
             stableSmartCastsOnly = false
         ) ?: return
 
-        val callables = getAllCallablesFromSubclassObjects(
+        processAllCallablesFromSubclassObjects(
             callTypeAndReceiver,
             receiverTypes,
-            nameFilter = { it == name })
-
-        callables.forEach(processor)
+            nameFilter = { it == name },
+            processor
+        )
     }
 
     fun processKotlinCallablesByName(
@@ -469,40 +465,38 @@ class KotlinIndicesHelper(
         }
     }
 
-    fun getKotlinClasses(
+    fun processKotlinClasses(
         nameFilter: (String) -> Boolean,
         psiFilter: (KtDeclaration) -> Boolean = { true },
-        kindFilter: (ClassKind) -> Boolean = { true }
-    ): Collection<ClassDescriptor> {
-        val index = KotlinFullClassNameIndex.getInstance()
-        return index.getAllKeys(project).asSequence()
-            .filter { fqName ->
+        kindFilter: (ClassKind) -> Boolean = { true },
+        processor: (ClassDescriptor) -> Unit
+    ) {
+        val classOrObjectProcessor = Processor<KtClassOrObject> { classOrObject ->
+            classOrObject.resolveToDescriptorsWithHack(psiFilter).forEach {
+                val descriptor = it as? ClassDescriptor ?: return@forEach
                 ProgressManager.checkCanceled()
-                nameFilter(fqName.substringAfterLast('.'))
-            }
-            .toList()
-            .flatMap { fqName ->
-                index[fqName, project, scope].flatMap { classOrObject ->
-                    classOrObject.resolveToDescriptorsWithHack(psiFilter).filterIsInstance<ClassDescriptor>()
+                if (kindFilter(descriptor.kind) && descriptorFilter(descriptor)) {
+                    processor(descriptor)
                 }
             }
-            .filter { kindFilter(it.kind) && descriptorFilter(it) }
+            true
+        }
+        KotlinFullClassNameIndex.getInstance()
+            .processAllElements(project, scope, { nameFilter(it.substringAfterLast('.')) }, classOrObjectProcessor)
     }
 
-    fun getTopLevelTypeAliases(nameFilter: (String) -> Boolean): Collection<TypeAliasDescriptor> {
-        val index = KotlinTopLevelTypeAliasFqNameIndex.getInstance()
-        return index.getAllKeys(project).asSequence()
-            .filter {
+    fun processTopLevelTypeAliases(nameFilter: (String) -> Boolean, processor: (TypeAliasDescriptor) -> Unit) {
+        val typeAliasProcessor = Processor<KtTypeAlias> { typeAlias ->
+            typeAlias.resolveToDescriptors<TypeAliasDescriptor>().forEach {
                 ProgressManager.checkCanceled()
-                nameFilter(it.substringAfterLast('.'))
+                if (descriptorFilter(it)) {
+                    processor(it)
+                }
             }
-            .toList()
-            .flatMap { fqName ->
-                index[fqName, project, scope]
-                    .flatMap { it.resolveToDescriptors<TypeAliasDescriptor>() }
-
-            }
-            .filter(descriptorFilter)
+            true
+        }
+        KotlinTopLevelTypeAliasFqNameIndex.getInstance()
+            .processAllElements(project, scope, { nameFilter(it.substringAfterLast('.')) }, typeAliasProcessor)
     }
 
     fun processObjectMembers(
@@ -511,30 +505,25 @@ class KotlinIndicesHelper(
         filter: (KtNamedDeclaration, KtObjectDeclaration) -> Boolean,
         processor: (DeclarationDescriptor) -> Unit
     ) {
-        fun processIndex(index: StringStubIndexExtension<out KtNamedDeclaration>) {
-            for (name in index.getAllKeys(project)) {
-                ProgressManager.checkCanceled()
-                if (!nameFilter(name)) continue
-
-                for (declaration in index.get(name, project, scope)) {
-                    val objectDeclaration = declaration.parent.parent as? KtObjectDeclaration ?: continue
-                    if (objectDeclaration.isObjectLiteral()) continue
-                    if (filterOutPrivate && declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) continue
-                    if (!filter(declaration, objectDeclaration)) continue
-                    for (descriptor in declaration.resolveToDescriptors<CallableDescriptor>()) {
-                        if (descriptorKindFilter.accepts(descriptor) && descriptorFilter(descriptor)) {
-                            processor(descriptor)
-                        }
-                    }
+        val namedDeclarationProcessor = Processor<KtNamedDeclaration> { declaration ->
+            val objectDeclaration = declaration.parent.parent as? KtObjectDeclaration ?: return@Processor true
+            if (objectDeclaration.isObjectLiteral()) return@Processor true
+            if (filterOutPrivate && declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) return@Processor true
+            if (!filter(declaration, objectDeclaration)) return@Processor true
+            ProgressManager.checkCanceled()
+            declaration.resolveToDescriptors<CallableDescriptor>().forEach { descriptor ->
+                if (descriptorKindFilter.accepts(descriptor) && descriptorFilter(descriptor)) {
+                    processor(descriptor)
                 }
             }
+            true
         }
 
         if (descriptorKindFilter.kindMask.and(DescriptorKindFilter.FUNCTIONS_MASK) != 0) {
-            processIndex(KotlinFunctionShortNameIndex.getInstance())
+            KotlinFunctionShortNameIndex.getInstance().processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
         }
         if (descriptorKindFilter.kindMask.and(DescriptorKindFilter.VARIABLES_MASK) != 0) {
-            processIndex(KotlinPropertyShortNameIndex.getInstance())
+            KotlinPropertyShortNameIndex.getInstance().processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
         }
     }
 

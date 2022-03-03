@@ -3,7 +3,7 @@
 // ACTION: Change type to mutable
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with ordinary assignment
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(otherList: List<Int>) {
     var list = listOf(1, 2, 3)
     foo()

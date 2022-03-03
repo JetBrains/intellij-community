@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +21,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public abstract class BaseAnalysisAction extends AnAction implements UpdateInBackground {
-  private static final String DIMENSION_KEY_PREFIX = "ANALYSIS_DLG_";
-
   private final Supplier<@DialogTitle String> myTitle;
   private final Supplier<String> myAnalysisNoun;
 
@@ -57,22 +56,7 @@ public abstract class BaseAnalysisAction extends AnAction implements UpdateInBac
     AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, scope, module, element);
-    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
-      @Override
-      protected String getDimensionServiceKey() {
-        return DIMENSION_KEY_PREFIX + getClass().getName();
-      }
-
-      @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
-        return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
-      }
-
-      @Override
-      protected String getHelpId() {
-        return getHelpTopic();
-      }
-    };
+    BaseAnalysisActionDialog dlg = getAnalysisDialog(project, title, scopeTitle, rememberScope, uiOptions, items);
     if (!dlg.showAndGet()) {
       canceled();
       return;
@@ -87,6 +71,26 @@ public abstract class BaseAnalysisAction extends AnAction implements UpdateInBac
 
     FileDocumentManager.getInstance().saveAllDocuments();
     analyze(project, scope);
+  }
+
+  @NotNull
+  public BaseAnalysisActionDialog getAnalysisDialog(Project project,
+                                                    @DialogTitle String title,
+                                                    @NlsSafe String scopeTitle,
+                                                    boolean rememberScope,
+                                                    AnalysisUIOptions uiOptions,
+                                                    List<ModelScopeItem> items) {
+    return new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
+      @Override
+      protected JComponent getAdditionalActionSettings(Project project) {
+        return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
+      }
+
+      @Override
+      protected String getHelpId() {
+        return getHelpTopic();
+      }
+    };
   }
 
   protected @NotNull @DialogTitle String getDialogTitle() {

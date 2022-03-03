@@ -1619,7 +1619,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testImplementViaOverrideCompletion() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods…', 'public void run'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...', 'public void run'
     lookup.currentItem = lookup.items[2]
     myFixture.type('\n')
     checkResult()
@@ -1628,7 +1628,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods…'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
     lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
@@ -1637,7 +1637,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods…'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
     lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
@@ -1646,7 +1646,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsInMulticaretMode() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods…'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
     lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
@@ -1661,9 +1661,36 @@ class XInternalError {}
   }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
-  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() {
+    configure()
+    assert myFixture.lookupElementStrings.size() == 2
+    lookup.setSelectedIndex(1)
+    type('\n')
+    checkResult()
+  }
+
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
-  void testInvokeGenerateToStringOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateToStringOnOverrideCompletion() {
+    configure()
+    assert myFixture.lookupElementStrings.size() == 2
+    lookup.setSelectedIndex(1)
+    type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
+  void testDontGenerateEqualsHashCodeOnOverrideCompletion() {
+    configure()
+    type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
+  void testDontGenerateToStringOnOverrideCompletion() {
+    configure()
+    type('\n')
+    checkResult()
+  }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters and setters)")
   void testAccessorViaCompletion() {
@@ -2614,5 +2641,22 @@ class Abc {
     myFixture.performEditorAction("EditorLookupSelectionUp") // 'boolean' selected
     myFixture.type('\n')
     myFixture.checkResult("class Test {boolean}")
+  }
+
+  void testPinyinMatcher() {
+    myFixture.configureByText("Test.java", "class Test {int get\u4F60\u597D() {return 0;} void test() {int \u4F60\u597D = 1;nh<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == ['\u4F60\u597D', 'get\u4F60\u597D']
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {int get\u4F60\u597D() {return 0;} void test() {int \u4F60\u597D = 1;\u4F60\u597D}}")
+  }
+
+  void testPinyinMatcher2() {
+    myFixture.configureByText("Test.java", "class Test {static void test() {int \u89D2\u8272 = 3;gj<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == []
+    myFixture.type('\b')
+    myFixture.completeBasic()
+    myFixture.checkResult("class Test {static void test() {int \u89D2\u8272 = 3;\u89D2\u8272}}")
   }
 }

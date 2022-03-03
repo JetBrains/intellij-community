@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util
 
 import com.intellij.featureStatistics.FeatureDescriptor
@@ -8,6 +8,7 @@ import com.intellij.ide.TipsOfTheDayUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.ResourceUtil
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
@@ -106,7 +107,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
       private fun readTipsUtility() : Map<String, Double> {
         assert(!EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode)
         val classLoader = TipsUtilityHolder::class.java.classLoader
-        val lines = classLoader.getResourceAsStream(TIPS_UTILITY_FILE)?.use { it.bufferedReader().readLines() }
+        val lines = ResourceUtil.getResourceAsBytes(TIPS_UTILITY_FILE, classLoader)?.decodeToString()?.reader()?.readLines()
         if (lines == null) {
           LOG.error("Can't read resource file with tips utilities: $TIPS_UTILITY_FILE")
           return emptyMap()

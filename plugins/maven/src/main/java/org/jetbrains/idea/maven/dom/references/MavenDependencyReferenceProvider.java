@@ -8,8 +8,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.plugins.api.MavenSoftAwareReferenceProvider;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 /**
  * Adds references to string like "groupId:artifactId:version"
@@ -90,7 +90,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
 
     @Override
     public Object @NotNull [] getVariants() {
-      return MavenProjectIndicesManager.getInstance(getElement().getProject()).getGroupIds().toArray();
+      return DependencySearchService.getInstance(getElement().getProject()).getGroupIds("").toArray();
     }
   }
 
@@ -113,8 +113,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
     public Object @NotNull [] getVariants() {
       if (StringUtil.isEmptyOrSpaces(myGroupId)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
-      MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getElement().getProject());
-      return manager.getArtifactIds(myGroupId).toArray();
+      return DependencySearchService.getInstance(getElement().getProject()).getArtifactIds(myGroupId).toArray();
     }
   }
 
@@ -140,9 +139,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       if (StringUtil.isEmptyOrSpaces(myGroupId) || StringUtil.isEmptyOrSpaces(myArtifactId)) {
         return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
-
-      MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getElement().getProject());
-      return manager.getVersions(myGroupId, myArtifactId).toArray();
+      return DependencySearchService.getInstance(getElement().getProject()).getVersions(myGroupId, myArtifactId).toArray();
     }
   }
 }

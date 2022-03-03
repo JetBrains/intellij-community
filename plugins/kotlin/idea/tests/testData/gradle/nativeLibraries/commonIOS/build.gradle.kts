@@ -1,9 +1,9 @@
 plugins {
-    kotlin("multiplatform") version "{{kotlin_plugin_version}}"
+    kotlin("multiplatform") version "1.3.60"
 }
 
 repositories {
-    {{kts_kotlin_plugin_repositories}}
+    jcenter()
 }
 
 kotlin {

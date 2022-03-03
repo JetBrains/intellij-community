@@ -325,37 +325,25 @@ class KotlinCompletionContributor : CompletionContributor() {
         }
     }
 
-    private fun wrapLookupElementForStringTemplateAfterDotCompletion(lookupElement: LookupElement): LookupElement {
-        return object : LookupElementDecorator<LookupElement>(lookupElement) {
-            override fun handleInsert(context: InsertionContext) {
-                val document = context.document
-                val startOffset = context.startOffset
+    private fun wrapLookupElementForStringTemplateAfterDotCompletion(lookupElement: LookupElement): LookupElement =
+        LookupElementDecorator.withDelegateInsertHandler(lookupElement) { context, element ->
+            val document = context.document
+            val startOffset = context.startOffset
 
-                val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-                psiDocumentManager.commitAllDocuments()
+            val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+            psiDocumentManager.commitDocument(document)
 
-                val token = getToken(context.file, document.charsSequence, startOffset)
-                val nameRef = token.parent as KtNameReferenceExpression
+            val token = getToken(context.file, document.charsSequence, startOffset)
+            val nameRef = token.parent as KtNameReferenceExpression
 
-                document.insertString(nameRef.startOffset, "{")
+            document.insertString(nameRef.startOffset, "{")
 
-                val tailOffset = context.tailOffset
-                document.insertString(tailOffset, "}")
-                context.tailOffset = tailOffset
+            val tailOffset = context.tailOffset
+            document.insertString(tailOffset, "}")
+            context.tailOffset = tailOffset
 
-                super.handleInsert(context)
-            }
-
-            private fun getToken(file: PsiFile, charsSequence: CharSequence, startOffset: Int): PsiElement {
-                assert(startOffset > 1 && charsSequence[startOffset - 1] == '.')
-                val token = file.findElementAt(startOffset - 2)!!
-                return if (token.node.elementType == KtTokens.IDENTIFIER || token.node.elementType == KtTokens.THIS_KEYWORD)
-                    token
-                else
-                    getToken(file, charsSequence, token.startOffset + 1)
-            }
+            element.handleInsert(context)
         }
-    }
 
     private fun shouldSuppressCompletion(parameters: CompletionParameters, prefixMatcher: PrefixMatcher): Boolean {
         val position = parameters.position
@@ -483,4 +471,13 @@ abstract class KotlinCompletionExtension {
     companion object {
         val EP_NAME: ExtensionPointName<KotlinCompletionExtension> = ExtensionPointName.create("org.jetbrains.kotlin.completionExtension")
     }
+}
+
+private fun getToken(file: PsiFile, charsSequence: CharSequence, startOffset: Int): PsiElement {
+    assert(startOffset > 1 && charsSequence[startOffset - 1] == '.')
+    val token = file.findElementAt(startOffset - 2)!!
+    return if (token.node.elementType == KtTokens.IDENTIFIER || token.node.elementType == KtTokens.THIS_KEYWORD)
+        token
+    else
+        getToken(file, charsSequence, token.startOffset + 1)
 }

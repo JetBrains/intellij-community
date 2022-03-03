@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_DESCRIPTOR: private final fun NamedEx.foo(): kotlin.String defined in Test
 // PARAM_TYPES: NamedEx
 // SIBLING:

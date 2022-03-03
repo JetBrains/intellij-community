@@ -1,0 +1,31 @@
+[templates]
+ldate = '{label("log.date",
+                "{date|isodate}")}'
+
+ldesc = '{label('ui.note log.description',
+                      '{desc|strip}')}'
+ldescfirst = '{label('ui.note log.description',
+                     '{desc|firstline|strip}')}'
+
+changeset = '{lrev}{tags}{bookmarks}{parents}   {lnode}   {ldate}   {luser}\n  {ldescfirst}\n\n'
+changeset_quiet = '{lrev}:{lnode}\n'
+changeset_verbose = '{lrev}{tags}{parents}   {lnode}   {ldate}   {lauthor}\n  {ldesc}\n\n'
+lrev = '{label("log.changeset changeset.{phase}",
+              "{rev}")}'
+lnode = '{label("log.node",
+                "{node|short}")}'
+lauthor = '{label("log.user",
+                  "{author}")}'
+luser = '{label("log.user",
+                "{author|user}")}'
+start_tags = '['
+tag = '{label("log.tag",
+              "{tag},")}'
+last_tag = '{tag}]'
+start_parents = ':'
+parent = '{lrev},'
+last_parent = '{lrev}'
+start_bookmarks = '['
+bookmark = '{label("log.bookmark",
+                   "{bookmark},")}'
+last_bookmark = '{bookmark}]'

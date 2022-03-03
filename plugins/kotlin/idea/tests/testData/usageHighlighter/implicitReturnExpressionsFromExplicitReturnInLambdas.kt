@@ -1,5 +1,5 @@
 fun some(a: Int, b: Int) {
-    run {
+    <info descr="null">run</info> {
         val i = 12
         val j = 13
         if (a > 50) {

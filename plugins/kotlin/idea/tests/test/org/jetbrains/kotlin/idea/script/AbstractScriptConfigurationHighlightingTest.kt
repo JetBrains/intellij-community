@@ -24,13 +24,9 @@ abstract class AbstractScriptConfigurationHighlightingTest : AbstractScriptConfi
 
     fun doComplexTest(unused: String) {
         configureScriptFile(testDataFile())
-        assertException(object : AbstractExceptionCase<ComparisonFailure>() {
-            override fun getExpectedExceptionClass(): Class<ComparisonFailure> = ComparisonFailure::class.java
-
-            override fun tryClosure() {
-                checkHighlighting(editor, false, false)
-            }
-        })
+        assertThrows(ComparisonFailure::class.java) {
+            checkHighlighting(editor, false, false)
+        }
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFile)
         checkHighlighting(editor, false, false)

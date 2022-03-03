@@ -1,0 +1,10 @@
+// "Make 'foo' public" "true"
+class C {
+    fun foo() = true
+
+    inline fun bar(baz: () -> Unit) {
+        if (<caret>foo()) {
+            baz()
+        }
+    }
+}

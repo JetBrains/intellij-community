@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'a' is never used
 // AFTER-WARNING: Parameter 'args' is never used
 // AFTER-WARNING: Parameter 'v' is never used

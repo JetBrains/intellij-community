@@ -1,4 +1,4 @@
-from typing import Any, Tuple, overload
+from typing import Any, Callable, Tuple, TypeVar, overload
 
 import psycopg2
 import psycopg2.extensions
@@ -269,6 +269,7 @@ class Xid:
     def __len__(self): ...
 
 _cursor = cursor
+_T_cur = TypeVar("_T_cur", bound=_cursor)
 
 class connection:
     DataError: Any
@@ -285,7 +286,7 @@ class connection:
     autocommit: Any
     binary_types: Any
     closed: Any
-    cursor_factory: Any
+    cursor_factory: Callable[..., _cursor]
     deferrable: Any
     dsn: Any
     encoding: Any
@@ -304,9 +305,9 @@ class connection:
     def close(self, *args, **kwargs): ...
     def commit(self, *args, **kwargs): ...
     @overload
-    def cursor(self) -> _cursor: ...
+    def cursor(self, name=..., *, scrollable=..., withhold=...) -> _cursor: ...
     @overload
-    def cursor(self, name=..., cursor_factory: Any = ..., withhold=...) -> Any: ...
+    def cursor(self, name=..., cursor_factory: Callable[..., _T_cur] = ..., scrollable=..., withhold=...) -> _T_cur: ...
     def fileno(self, *args, **kwargs): ...
     def get_backend_pid(self, *args, **kwargs): ...
     def get_dsn_parameters(self, *args, **kwargs): ...

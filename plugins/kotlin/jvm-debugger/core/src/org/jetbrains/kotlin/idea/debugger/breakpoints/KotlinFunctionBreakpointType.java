@@ -155,9 +155,7 @@ public class KotlinFunctionBreakpointType
             if (element instanceof KtFunction) {
                 KtFunction function = (KtFunction) element;
                 return ApplicabilityResult.maybe(
-                        function.hasBody()
-                        && !KtPsiUtil.isLocal(function)
-                        && !BreakpointTypeUtilsKt.isInlineOnly(function)
+                        !KtPsiUtil.isLocal(function) && !BreakpointTypeUtilsKt.isInlineOnly(function)
                 );
             }
 

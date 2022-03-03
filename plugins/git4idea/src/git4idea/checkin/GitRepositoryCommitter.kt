@@ -4,6 +4,8 @@ package git4idea.checkin
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationAction
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.VcsException
@@ -110,6 +112,6 @@ private class GitGpgProblemDetector : GitLineHandlerListener {
 private class GitGpgCommitException(cause: VcsException) : VcsException(cause), CommitExceptionWithActions {
   override val actions: List<NotificationAction>
     get() = listOf(NotificationAction.createSimple(GitBundle.message("gpg.error.see.documentation.link.text")) {
-      BrowserUtil.browse(GitBundle.message("gpg.jb.manual.link"))
+      HelpManager.getInstance().invokeHelp(GitBundle.message("gpg.jb.manual.link"))
     })
 }

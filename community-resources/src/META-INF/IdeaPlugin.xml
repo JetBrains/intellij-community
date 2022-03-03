@@ -21,4 +21,10 @@
   <module value="com.intellij.modules.idea.community"/>
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.python-core-capable"/>
+
+  <content>
+    <module name="intellij.notebooks.visualization"/>
+    <module name="intellij.platform.feedback"/>
+    <module name="intellij.platform.images.copyright"/>
+  </content>
 </idea-plugin>

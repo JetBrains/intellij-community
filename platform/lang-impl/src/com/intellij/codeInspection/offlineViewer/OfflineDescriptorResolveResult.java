@@ -29,6 +29,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +97,6 @@ public final class OfflineDescriptorResolveResult {
       return createRerunGlobalToolDescriptor((GlobalInspectionToolWrapper)toolWrapper, element, offlineDescriptor);
     }
     Project project = presentation.getContext().getProject();
-    final InspectionManager inspectionManager = InspectionManager.getInstance(project);
     if (toolWrapper instanceof LocalInspectionToolWrapper && !(toolWrapper.getTool() instanceof UnfairLocalInspectionTool)) {
       if (element instanceof RefElement) {
         final PsiElement psiElement = ((RefElement)element).getPsiElement();
@@ -105,7 +105,6 @@ public final class OfflineDescriptorResolveResult {
             () -> runLocalTool(psiElement,
                                offlineDescriptor,
                                (LocalInspectionToolWrapper)toolWrapper,
-                               inspectionManager,
                                presentation.getContext()), new DaemonProgressIndicator());
           if (descriptor != null) return descriptor;
         }
@@ -169,7 +168,6 @@ public final class OfflineDescriptorResolveResult {
   private static ProblemDescriptor runLocalTool(@NotNull PsiElement psiElement,
                                                 @NotNull OfflineProblemDescriptor offlineProblemDescriptor,
                                                 @NotNull LocalInspectionToolWrapper toolWrapper,
-                                                @NotNull InspectionManager inspectionManager,
                                                 @NotNull GlobalInspectionContextImpl context) {
     PsiFile containingFile = psiElement.getContainingFile();
     final LocalInspectionTool localTool = toolWrapper.getTool();
@@ -191,14 +189,15 @@ public final class OfflineDescriptorResolveResult {
         }
       }
     }
-    Map<String, List<ProblemDescriptor>> map =
-      InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), containingFile, textRange, inspectionManager, true,
-                                 new DaemonProgressIndicator());
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+      InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), containingFile, textRange, containingFile.getTextRange(), true,
+                                 false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue());
     List<ProblemDescriptor> list = ContainerUtil.flatten(map.values());
     for (PsiFile injectedFile : injectedFiles) {
-      Map<String, List<ProblemDescriptor>> injectedMap =
-        InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), injectedFile, inspectionManager, true,
-                                   new DaemonProgressIndicator());
+      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> injectedMap =
+        InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), injectedFile, injectedFile.getTextRange(),
+                                   injectedFile.getTextRange(), true,
+                                   false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue());
       list.addAll(ContainerUtil.flatten(injectedMap.values()));
     }
 

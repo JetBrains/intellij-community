@@ -77,10 +77,9 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
 
         private fun KtClass.isSubclassOfStatelessSealed(): Boolean {
             fun KtSuperTypeListEntry.asKtClass(): KtClass? = typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass
-            return superTypeListEntries
-                .mapNotNull { it.asKtClass() }
-                .filter { it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals() }
-                .any()
+            return superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any {
+                it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals()
+            }
         }
 
         private fun KtClass.withEmptyConstructors(): Boolean =

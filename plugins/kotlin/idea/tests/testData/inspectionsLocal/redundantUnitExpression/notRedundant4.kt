@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun nonUnit(p: Int): Int = p
 
 fun <T> doIt(p: () -> T): T = TODO()

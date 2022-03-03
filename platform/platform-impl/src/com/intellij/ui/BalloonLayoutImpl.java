@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.notification.ActionCenter;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationCollector;
@@ -212,7 +213,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
       layoutData.mergeData = null;
     }
     if (hide) {
-      balloon.hide(Registry.is("ide.notification.action.center", false));
+      balloon.hide(ActionCenter.isEnabled());
       fireRelayout();
     }
   }

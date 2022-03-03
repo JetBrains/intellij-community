@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -15,18 +15,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBarCentralWidget;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar;
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -56,8 +60,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private final JBBox myNorthPanel = JBBox.createVerticalBox();
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
+  private IdeRootPaneNorthExtension myStatusBarCentralWidget;
 
-  private ToolWindowsPane myToolWindowsPane;
+  private ToolWindowsPane toolWindowPane;
   private JBPanel<?> myContentPane;
 
   private final boolean myGlassPaneInitialized;
@@ -67,14 +72,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private AbstractMenuFrameHeader myCustomFrameTitlePane;
   private CustomDecorationPath mySelectedEditorFilePath;
   private final boolean myDecoratedMenu;
-  private ToolwindowToolbar myLeftToolwindowToolbar;
-  private ToolwindowToolbar myRightToolwindowToolbar;
-
-  private final Disposable myParentDisposable;
+  private ToolWindowButtonManager toolWindowButtonManager;
 
   protected IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
-    myParentDisposable = parentDisposable;
-    if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+    if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       try {
         setWindowDecorationStyle(FRAME);
       }
@@ -119,29 +120,28 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(this, true);
     setGlassPane(glassPane);
     myGlassPaneInitialized = true;
+    if (frame instanceof IdeFrameImpl) {
+      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, Boolean.TRUE);
+    }
     UIUtil.decorateWindowHeader(this);
     glassPane.setVisible(false);
     setBorder(UIManager.getBorder("Window.border"));
 
-    UIUtil.setCustomTitleBar(frame, this, runnable -> {
+    ToolbarUtil.setCustomTitleBar(frame, this, runnable -> {
       Disposer.register(parentDisposable, runnable::run);
     });
 
     updateMainMenuVisibility();
 
     if (ExperimentalUI.isNewToolWindowsStripes()) {
-      myLeftToolwindowToolbar = new ToolwindowLeftToolbar();
-      myRightToolwindowToolbar = new ToolwindowRightToolbar();
-      myContentPane.add(myLeftToolwindowToolbar, BorderLayout.WEST);
-      myContentPane.add(myRightToolwindowToolbar, BorderLayout.EAST);
+      toolWindowButtonManager = new ToolWindowPaneNewButtonManager();
+      toolWindowButtonManager.add(myContentPane);
+    }
+    else {
+      toolWindowButtonManager = new ToolWindowPaneOldButtonManager();
     }
 
-    myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
-
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
-      myLeftToolwindowToolbar.toolwindowPane = myToolWindowsPane;
-      myRightToolwindowToolbar.toolwindowPane = myToolWindowsPane;
-    }
+    myContentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
   }
 
   /**
@@ -151,13 +151,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return null;
   }
 
-  protected @NotNull Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-    myToolWindowsPane = new ToolWindowsPane(frame, parentDisposable, myLeftToolwindowToolbar, myRightToolwindowToolbar);
-    return myToolWindowsPane;
+  protected @NotNull Component createCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
+    toolWindowPane = new ToolWindowsPane(frame, parentDisposable, toolWindowButtonManager);
+    return toolWindowPane;
   }
 
   public @NotNull ToolWindowsPane getToolWindowPane() {
-    return myToolWindowsPane;
+    return toolWindowPane;
   }
 
   private void updateScreenState(@NotNull IdeFrame helper) {
@@ -214,7 +214,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   @Override
-  protected JLayeredPane createLayeredPane() {
+  protected final JLayeredPane createLayeredPane() {
     JLayeredPane p = new JBLayeredPane();
     p.setName(getName() + ".layeredPane");
     return p;
@@ -227,15 +227,52 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return myContentPane;
   }
 
-  void updateToolbar() {
+  public final void prepareToolbar() {
+    if (getToolbarHolderDelegate() == null && ExperimentalUI.isNewToolbar()) {
+      MainToolbar toolbar = new MainToolbar();
+      toolbar.setBorder(JBUI.Borders.empty(0, 10));
+
+      myToolbar = toolbar;
+      myNorthPanel.add(myToolbar, 0);
+      updateToolbarVisibility();
+      myContentPane.revalidate();
+    }
+  }
+
+  final void initOrCreateToolbar(@NotNull Project project) {
+    if (getToolbarHolderDelegate() == null && ExperimentalUI.isNewToolbar()) {
+      ((MainToolbar)myToolbar).init(project);
+    }
+    else {
+      updateToolbar();
+    }
+  }
+
+  final void updateToolbar() {
+    ToolbarHolder delegate = getToolbarHolderDelegate();
+    if (delegate == null) {
+      doUpdateToolbarWithoutDelegate();
+    }
+    else {
+      delegate.updateToolbar();
+    }
+  }
+
+  private void doUpdateToolbarWithoutDelegate() {
     removeToolbar();
-    myToolbar = ExperimentalUI.isNewToolbar() ? createExperimentalToolbar(myParentDisposable) : createToolbar();
+    myToolbar = createToolbar();
     myNorthPanel.add(myToolbar, 0);
     updateToolbarVisibility();
     myContentPane.revalidate();
   }
 
-  public void removeToolbar() {
+  final void removeToolbar() {
+    ToolbarHolder delegate = getToolbarHolderDelegate();
+    if (delegate != null) {
+      delegate.removeToolbar();
+      return;
+    }
+
     if (myToolbar != null) {
       disposeIfNeeded(myToolbar);
       myNorthPanel.remove(myToolbar);
@@ -243,11 +280,22 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
+  private @Nullable ToolbarHolder getToolbarHolderDelegate() {
+    if (MainToolbarKt.isToolbarInHeader(null) && ExperimentalUI.isNewToolbar()) {
+      return (ToolbarHolder)myCustomFrameTitlePane;
+    }
+    return null;
+  }
+
   private static void disposeIfNeeded(JComponent comp) {
-    if (!(comp instanceof Disposable)) return;
+    if (!(comp instanceof Disposable)) {
+      return;
+    }
 
     Disposable d = (Disposable)comp;
-    if (!Disposer.isDisposed(d)) Disposer.dispose(d);
+    if (!Disposer.isDisposed(d)) {
+      Disposer.dispose(d);
+    }
   }
 
   protected void updateNorthComponents() {
@@ -267,16 +315,15 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  private @NotNull JComponent createExperimentalToolbar(Disposable parent) {
-    Window window = SwingUtilities.getWindowAncestor(this);
-    Project pr = (window instanceof IdeFrame) ? ((IdeFrame)window).getProject() : null;
+  private @NotNull JComponent createToolbar() {
+    if (ExperimentalUI.isNewToolbar()) {
+      IdeFrame frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
+      MainToolbar toolbar = new MainToolbar();
+      toolbar.init(frame == null ? null : frame.getProject());
+      toolbar.setBorder(JBUI.Borders.empty(0, 10));
+      return toolbar;
+    }
 
-    MainToolbar toolbar = new MainToolbar(pr);
-    Disposer.register(parent, toolbar);
-    return toolbar;
-  }
-
-  private static @NotNull JComponent createToolbar() {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbar toolBar = ActionManagerEx.getInstanceEx()
       .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
@@ -315,9 +362,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void updateToolbarVisibility() {
-    UISettings uiSettings = UISettings.getShadowInstance();
     if (myToolbar != null) {
-      myToolbar.setVisible(uiSettings.getShowMainToolbar() && !uiSettings.getPresentationMode());
+      UISettings uiSettings = UISettings.getShadowInstance();
+      boolean isNewToolbar = ExperimentalUI.isNewToolbar();
+      boolean visible = ((isNewToolbar && !MainToolbarKt.isToolbarInHeader(uiSettings))
+                         || (!isNewToolbar && uiSettings.getShowMainToolbar()))
+                        && !uiSettings.getPresentationMode();
+      myToolbar.setVisible(visible);
     }
   }
 
@@ -332,7 +383,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       return;
     }
 
-    boolean globalMenuVisible = SystemInfo.isLinux && GlobalMenuLinux.isPresented();
+    boolean globalMenuVisible = SystemInfoRt.isLinux && GlobalMenuLinux.isPresented();
     // don't show swing-menu when global (system) menu presented
     boolean visible = SystemInfo.isMacSystemMenu || (!globalMenuVisible && uiSettings.getShowMainMenu());
     if (visible != menuBar.isVisible()) {
@@ -347,17 +398,23 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected void installNorthComponents(@NotNull Project project) {
-    if (ExperimentalUI.isNewToolbar()) return;
-
-    myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensionList(project));
-    if (myNorthComponents.isEmpty()) {
-      return;
-    }
-
     UISettings uiSettings = UISettings.getShadowInstance();
-    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      myNorthPanel.add(northComponent.getComponent());
-      northComponent.uiSettingsChanged(uiSettings);
+    if (ExperimentalUI.isNewToolbar()) {
+      myStatusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project, it -> it instanceof StatusBarCentralWidget);
+      if (myStatusBarCentralWidget != null) {
+        myStatusBarCentralWidget.uiSettingsChanged(uiSettings);
+      }
+    }
+    else {
+      myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
+      if (myNorthComponents.isEmpty()) {
+        return;
+      }
+
+      for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
+        myNorthPanel.add(northComponent.getComponent());
+        northComponent.uiSettingsChanged(uiSettings);
+      }
     }
   }
 
@@ -378,12 +435,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   public @Nullable IdeRootPaneNorthExtension findByName(@NotNull String name) {
-    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      if (northComponent.getKey().equals(name)) {
-        return northComponent;
-      }
-    }
-    return null;
+    return ExperimentalUI.isNewToolbar() && IdeStatusBarImpl.NAVBAR_WIDGET_KEY.equals(name)
+           ? myStatusBarCentralWidget
+           : ContainerUtil.find(myNorthComponents, c -> c.getKey().equals(name));
   }
 
   @Override
@@ -392,8 +446,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateToolbarVisibility();
     updateStatusBarVisibility();
     updateMainMenuVisibility();
-    for (IdeRootPaneNorthExtension component : myNorthComponents) {
-      component.uiSettingsChanged(uiSettings);
+    if (myStatusBarCentralWidget != null && ExperimentalUI.isNewToolbar()) {
+      myStatusBarCentralWidget.uiSettingsChanged(uiSettings);
+    }
+    else {
+      for (IdeRootPaneNorthExtension component : myNorthComponents) {
+        component.uiSettingsChanged(uiSettings);
+      }
     }
 
     IdeFrameImpl frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
@@ -409,7 +468,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  private class MyRootLayout extends RootLayout {
+  private final class MyRootLayout extends RootLayout {
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       Dimension rd;

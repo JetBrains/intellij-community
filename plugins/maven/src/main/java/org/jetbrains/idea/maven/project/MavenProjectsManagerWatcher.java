@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
@@ -20,7 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.importing.FilesList;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.ArrayList;
@@ -102,9 +106,21 @@ public class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
+    if(Registry.is("maven.new.import")) {
+      return Promises.resolvedPromise();
+    }
+
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-    scheduleReadingTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
+    // display all import activities using the same build progress
+    MavenSyncConsole.startTransaction(myProject);
+    try {
+      Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
+      scheduleReadingTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
+    }
+    finally {
+      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+    }
     return promise;
   }
 
@@ -112,16 +128,27 @@ public class MavenProjectsManagerWatcher {
                                       List<VirtualFile> filesToDelete,
                                       boolean force,
                                       final boolean forceImportAndResolve) {
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-    Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-    if (LOG.isDebugEnabled()) {
-      String withForceOptionMessage = force ? " with force option" : "";
-      LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
-                ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
-    }
 
-    scheduleReadingTask(new MavenProjectsProcessorReadingTask(
-      filesToUpdate, filesToDelete, force, myProjectsTree, myGeneralSettings, onCompletion));
+    if (Registry.is("maven.new.import")) {
+      return Promises.resolvedPromise();
+    }
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+    // display all import activities using the same build progress
+    MavenSyncConsole.startTransaction(myProject);
+    try {
+      Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
+      if (LOG.isDebugEnabled()) {
+        String withForceOptionMessage = force ? " with force option" : "";
+        LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
+                  ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
+      }
+
+      scheduleReadingTask(new MavenProjectsProcessorReadingTask(
+        filesToUpdate, filesToDelete, force, myProjectsTree, myGeneralSettings, onCompletion));
+    }
+    finally {
+      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+    }
     return promise;
   }
 
@@ -142,7 +169,9 @@ public class MavenProjectsManagerWatcher {
 
       if (forceImportAndResolve) {
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        projectsManager.scheduleImportAndResolve().onSuccess(modules -> promise.setResult(null));
+        projectsManager.scheduleImportAndResolve()
+          .onSuccess(modules -> promise.setResult(null))
+          .onError(t -> promise.setError(t));
       }
       else {
         promise.setResult(null);
@@ -177,7 +206,7 @@ public class MavenProjectsManagerWatcher {
   private class MavenIgnoredModulesWatcher implements ModuleListener {
     @Override
     public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
-      if(Registry.is("maven.modules.do.not.ignore.on.delete")) return;
+      if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       MavenProject mavenProject = projectsManager.findProject(module);
@@ -201,7 +230,7 @@ public class MavenProjectsManagerWatcher {
 
     @Override
     public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
-      if(Registry.is("maven.modules.do.not.ignore.on.delete")) return;
+      if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
       // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);

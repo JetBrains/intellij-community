@@ -5,22 +5,31 @@ set JPS_BOOTSTRAP_DIR=%~dp0
 for %%F in ("%JPS_BOOTSTRAP_DIR%\.") do set JPS_BOOTSTRAP_COMMUNITY_PLATFORM_DIR=%%~dpF
 for %%F in ("%JPS_BOOTSTRAP_COMMUNITY_PLATFORM_DIR%\.") do set JPS_BOOTSTRAP_COMMUNITY_HOME=%%~dpF
 
-if "%JPS_BOOTSTRAP_WORK_DIR%"=="" set JPS_BOOTSTRAP_WORK_DIR=%JPS_BOOTSTRAP_COMMUNITY_HOME%out\jps-bootstrap\
+set JPS_BOOTSTRAP_WORK_DIR=%JPS_BOOTSTRAP_COMMUNITY_HOME%out\jps-bootstrap\
 
 setlocal
 
+set ZULU_PREFIX=zulu11.50.19-ca-jdk11.0.12
+set ZULU_ARCH=win_x64
 set SCRIPT_VERSION=jps-bootstrap-cmd-v1
 set COMPANY_NAME=JetBrains
 set TARGET_DIR=%LOCALAPPDATA%\Temp\%COMPANY_NAME%\
-set JVM_TARGET_DIR=%TARGET_DIR%amazon-corretto-11.0.9.12.1-windows-x64-jdk-%SCRIPT_VERSION%\
+set JVM_TARGET_DIR=%TARGET_DIR%%ZULU_PREFIX%-%ZULU_ARCH%-%SCRIPT_VERSION%\
 set JVM_TEMP_FILE=jvm-windows-x64.zip
-set JVM_URL=https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-windows-x64-jdk.zip
+set JVM_URL=https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/%ZULU_PREFIX%-%ZULU_ARCH%.zip
 
 set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
 
 if not exist "%JVM_TARGET_DIR%" MD "%JVM_TARGET_DIR%"
 
 if not exist "%JVM_TARGET_DIR%.flag" goto downloadAndExtractJvm
+
+set JAVA_HOME=
+for /d %%d in ("%JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
+if not exist "%JAVA_HOME%\bin\java.exe" (
+  echo WARN Unable to find java.exe under %JVM_TARGET_DIR%
+  goto downloadAndExtractJvm
+)
 
 set /p CURRENT_FLAG=<"%JVM_TARGET_DIR%.flag"
 if "%CURRENT_FLAG%" == "%JVM_URL%" goto continueWithJvm
@@ -56,23 +65,35 @@ if errorlevel 1 goto fail
 
 :continueWithJvm
 
+endlocal & set _JVM_TARGET_DIR=%JVM_TARGET_DIR%
+
 set JAVA_HOME=
-for /d %%d in ("%JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
+for /d %%d in ("%_JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
 if not exist "%JAVA_HOME%\bin\java.exe" (
-  echo Unable to find java.exe under %JVM_TARGET_DIR%
+  echo Unable to find java.exe under %_JVM_TARGET_DIR%
   goto fail
 )
 
-:continueWithJavaHome
+echo Using JVM at %JAVA_HOME%
 
-endlocal
-
-"%JAVA_HOME%\bin\java.exe" -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
+REM Download and compile jps-bootstrap itself
+"%JAVA_HOME%\bin\java.exe" -ea -Daether.connector.resumeDownloads=false -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
 if errorlevel 1 goto fail
 
-"%JAVA_HOME%\bin\java.exe" -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain %*
-exit /B %ERRORLEVEL%
+REM %RANDOM% may not be so random, but let's assume this script does not run several times per second
+set _JPS_BOOTSTRAP_JAVA_ARGS_FILE=%JPS_BOOTSTRAP_WORK_DIR%\java.args.%RANDOM%.txt
+
+REM Run jps-bootstrap and produce java args file to run actual user class
+"%JAVA_HOME%\bin\java.exe" -ea -Xmx4g -Djava.awt.headless=true -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%" %*
+if errorlevel 1 goto fail
+
+REM Run user class via wrapper from platform to correctly capture and report exception to TeamCity build log
+"%JAVA_HOME%\bin\java.exe" "@%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%"
+set _exit_code=%ERRORLEVEL%
+del /F /Q "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%"
+exit /B %_exit_code%
 
 :fail
+if exist "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%" DEL /F /Q "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%"
 echo ERROR occurred, see the output above
 exit /B 1

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -13,9 +13,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class CatchStatement extends Statement {
   private final List<List<String>> exctstrings = new ArrayList<>();
@@ -26,7 +24,7 @@ public final class CatchStatement extends Statement {
   // *****************************************************************************
 
   private CatchStatement() {
-    type = TYPE_TRYCATCH;
+    super(TYPE_TRY_CATCH);
   }
 
   private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
@@ -152,7 +150,7 @@ public final class CatchStatement extends Statement {
       // map first instruction storing the exception to the catch statement
       BasicBlock block = stat.getBasichead().getBlock();
       if (!block.getSeq().isEmpty() && block.getInstruction(0).opcode == CodeConstants.opc_astore) {
-        Integer offset = block.getOldOffset(0);
+        Integer offset = block.getOriginalOffset(0);
         if (offset > -1) tracer.addMapping(offset);
       }
 
@@ -162,7 +160,7 @@ public final class CatchStatement extends Statement {
       if (exception_types.size() > 1) { // multi-catch, Java 7 style
         for (int exc_index = 1; exc_index < exception_types.size(); ++exc_index) {
           VarType exc_type = new VarType(CodeConstants.TYPE_OBJECT, 0, exception_types.get(exc_index));
-          String exc_type_name = ExprProcessor.getCastTypeName(exc_type);
+          String exc_type_name = ExprProcessor.getCastTypeName(exc_type, Collections.emptyList());
 
           buf.append(exc_type_name).append(" | ");
         }

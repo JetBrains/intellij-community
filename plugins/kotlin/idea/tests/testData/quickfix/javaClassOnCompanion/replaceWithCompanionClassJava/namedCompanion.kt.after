@@ -1,5 +1,5 @@
 // "Replace with 'Bar::class.java'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo {
     companion object Bar
 }

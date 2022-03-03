@@ -1,0 +1,51 @@
+package patterns;
+
+public class TestInvertedInstanceof {
+   void typePattern(Object str) {
+      if (!(str instanceof String s)) {// 5
+         System.out.println("no");// 6
+      } else {
+         if (s.length() > 3) {// 10
+            System.out.println(s);// 11
+         } else if (s.startsWith("a")) {// 12
+            System.out.println("" + s);// 13
+         }
+
+      }
+   }// 7 15
+}
+
+class 'patterns/TestInvertedInstanceof' {
+   method 'typePattern (Ljava/lang/Object;)V' {
+      1      4
+      4      4
+      7      5
+      a      5
+      c      5
+      f      14
+      16      7
+      19      7
+      1a      7
+      1d      8
+      21      8
+      28      9
+      2a      9
+      2d      9
+      30      10
+      34      10
+      39      10
+      3c      14
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 6
+7 <-> 15
+10 <-> 8
+11 <-> 9
+12 <-> 10
+13 <-> 11
+15 <-> 15
+Not mapped:
+9

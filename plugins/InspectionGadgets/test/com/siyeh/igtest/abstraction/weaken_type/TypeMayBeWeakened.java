@@ -59,6 +59,26 @@ public class TypeMayBeWeakened {
         return s + 1;
     }
 
+    String foo1(String <warning descr="Type of parameter 's' may be weakened to 'java.lang.Object'">s</warning>) {
+      return s + "1";
+    }
+
+    String foo2(String <warning descr="Type of parameter 's' may be weakened to 'java.lang.Object'">s</warning>) {
+      return 1 + "2" + 3 + s;
+    }
+
+    String foo3(String s) {
+      return 1 + s;
+    }
+
+    boolean equals(String <warning descr="Type of parameter 's' may be weakened to 'java.lang.Object'">s</warning>, String <warning descr="Type of parameter 't' may be weakened to 'java.lang.Object'">t</warning>) {
+        return s == t;
+    }
+
+    String f(String s) {
+        return 1 + 2 + s;
+    }
+
     private static void method() throws IllegalArgumentException {
         try {
             FileInputStream fis=new FileInputStream("/etc/modules");
@@ -228,5 +248,21 @@ class ParensUsage {
     SortedMap<String, String> s = new TreeMap<>();
     System.out.println(s.keySet());
     System.out.println((s).firstKey());
+  }
+}
+@interface ParamDoc {
+  String value();
+}
+class Primitives {
+  private static final String DEFAULT = "default";
+  @ParamDoc(DEFAULT) final int defaultValue = 1;
+}
+enum Status {
+  INTERNAL,
+  DEPRECATED,
+  STABLE;
+
+  Object x() {
+    return STABLE;
   }
 }

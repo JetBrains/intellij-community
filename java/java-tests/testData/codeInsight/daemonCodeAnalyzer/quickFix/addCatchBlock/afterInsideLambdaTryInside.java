@@ -15,7 +15,7 @@ class C {
         } catch (IOException e) {
           throw new RuntimeException();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
       };
     } catch( Exception e) {

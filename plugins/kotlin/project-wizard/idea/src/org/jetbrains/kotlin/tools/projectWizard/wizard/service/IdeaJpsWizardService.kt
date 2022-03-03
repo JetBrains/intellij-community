@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleTypeId
@@ -124,9 +125,6 @@ private class ProjectImporter(
     private val path: Path,
     val modulesIrs: List<ModuleIR>
 ) {
-    private val librariesPath: Path
-        get() = path / "libs"
-
     fun import() = modulesIrs.mapSequence { moduleIR ->
         convertModule(moduleIR).map { moduleIR to it }
     }.map { irsToIdeaModule ->
@@ -204,11 +202,16 @@ private class ProjectImporter(
             if (classesRoots.size > 1) artifact.artifactId else null,
             classesRoots,
             sourcesRoots,
+            emptyList(),
             when (libraryDependency.dependencyType) {
                 DependencyType.MAIN -> DependencyScope.COMPILE
                 DependencyType.TEST -> DependencyScope.TEST
-            }
-        )
+            },
+            false
+        ) {
+            it.kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
+            it.properties = RepositoryLibraryProperties(artifact.groupId, artifact.artifactId, libraryDependency.version.text)
+        }
     }
 
     private fun downloadLibraryAndGetItsClasses(
@@ -225,7 +228,7 @@ private class ProjectImporter(
             libraryProperties,
             true,
             true,
-            librariesPath.toString(),
+            null,
             listOf(artifact.repository.asJPSRepository())
         )
 

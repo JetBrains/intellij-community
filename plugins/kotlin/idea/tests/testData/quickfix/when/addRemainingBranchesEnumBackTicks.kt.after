@@ -1,5 +1,5 @@
 // "Add remaining branches" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 enum class FooEnum {
     A, B, `C`, `true`, `false`, `null`

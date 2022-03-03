@@ -111,7 +111,9 @@ class RenameUnresolvedReferenceFix(element: KtNameReferenceExpression) : KotlinQ
         }
 
         editor.caretModel.moveToOffset(container.startOffset)
-        TemplateManager.getInstance(project).startTemplate(editor, builder.buildInlineTemplate())
+        if (file.isPhysical) {
+            TemplateManager.getInstance(project).startTemplate(editor, builder.buildInlineTemplate())
+        }
     }
 }
 

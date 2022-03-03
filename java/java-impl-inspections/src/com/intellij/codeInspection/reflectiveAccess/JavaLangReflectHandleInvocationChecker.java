@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,13 @@ final class JavaLangReflectHandleInvocationChecker {
   private static final String INVOKE_EXACT = "invokeExact";
   private static final String INVOKE_WITH_ARGUMENTS = "invokeWithArguments";
   private static final String JAVA_LANG_INVOKE_METHOD_HANDLE = "java.lang.invoke.MethodHandle";
+
+  private static final CallMapper<List<Supplier<ReflectiveType>>> LAZY_SIGNATURE_MAPPER = new CallMapper<List<Supplier<ReflectiveType>>>()
+    .register(METHOD_TYPE_WITH_CLASSES_MATCHER, call -> getLazyMethodSignatureForTypes(call))
+    .register(METHOD_TYPE_WITH_LIST_MATCHER, call -> getLazyMethodSignatureForReturnTypeAndList(call))
+    .register(METHOD_TYPE_WITH_ARRAY_MATCHER, call -> getLazyMethodSignatureForReturnTypeAndArray(call))
+    .register(METHOD_TYPE_WITH_METHOD_TYPE_MATCHER, call -> getLazyMethodSignatureForReturnTypeAndMethodType(call))
+    .register(GENERIC_METHOD_TYPE_MATCHER, call -> getLazyMethodSignatureForGenericMethodType(call));
 
   private static final Set<String> METHOD_HANDLE_INVOKE_NAMES = ContainerUtil.set(INVOKE, INVOKE_EXACT, INVOKE_WITH_ARGUMENTS);
 
@@ -168,12 +176,22 @@ final class JavaLangReflectHandleInvocationChecker {
     if (actualArguments == null) return true;
 
     final int requiredArgumentCount = lazyMethodSignature.size() - 1; // -1 excludes the return type
-    if (!checkArgumentCount(actualArguments.expressions, requiredArgumentCount, argumentOffset, argumentList, holder)) return false;
+    final boolean maybeVararg;
+    if (!isExact && requiredArgumentCount > 0) {
+      ReflectiveType type = lazyMethodSignature.get(requiredArgumentCount).get();
+      maybeVararg = type.getType() instanceof PsiArrayType;
+    } else {
+      maybeVararg = false;
+    }
+    PsiExpression[] expressions = actualArguments.expressions;
+    if (!maybeVararg || expressions.length < requiredArgumentCount - 1) {
+      if (!checkArgumentCount(expressions, requiredArgumentCount, argumentOffset, argumentList, holder)) return false;
+    }
 
-    LOG.assertTrue(actualArguments.expressions.length == requiredArgumentCount);
-    for (int i = 0; i < requiredArgumentCount; i++) {
-      final ReflectiveType requiredType = lazyMethodSignature.get(i + 1).get();
-      checkArgumentType(actualArguments.expressions[i], requiredType, argumentList, isExact, holder);
+    for (int i = 0; i < expressions.length; i++) {
+      int parameterIndex = maybeVararg && i >= requiredArgumentCount - 1 ? requiredArgumentCount : i + 1;
+      final ReflectiveType requiredType = lazyMethodSignature.get(parameterIndex).get();
+      checkArgumentType(expressions[i], requiredType, argumentList, isExact, maybeVararg && i >= requiredArgumentCount - 1, holder);
     }
     return true;
   }
@@ -183,28 +201,34 @@ final class JavaLangReflectHandleInvocationChecker {
                                 @Nullable ReflectiveType requiredType,
                                 @NotNull PsiExpressionList argumentList,
                                 boolean isExact,
+                                boolean maybeVararg,
                                 @NotNull ProblemsHolder holder) {
-    if (requiredType != null) {
-      final PsiType actualType = argument.getType();
-      if (actualType != null) {
-        if (!isCompatible(requiredType, actualType, isExact)) {
-          if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
-            holder.registerProblem(argument,
-                                   JavaBundle.message(isExact
-                                                             ? "inspection.reflect.handle.invocation.argument.not.exact"
-                                                             : "inspection.reflection.invocation.argument.not.assignable",
-                                                             requiredType.getQualifiedName()));
-          }
+    if (requiredType == null) return;
+    final PsiType actualType = argument.getType();
+    if (actualType == null) return;
+    if (!isCompatible(requiredType, actualType, isExact)) {
+      if (maybeVararg) {
+        ReflectiveType componentType = requiredType.getArrayComponentType();
+        if (componentType != null) {
+          requiredType = componentType;
+          if (isCompatible(requiredType, actualType, isExact)) return;
         }
-        else if (requiredType.isPrimitive()) {
-          final PsiExpression definition = findDefinition(argument);
-          if (definition != null && PsiType.NULL.equals(definition.getType())) {
-            if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
-              holder.registerProblem(argument,
-                                     JavaBundle.message("inspection.reflect.handle.invocation.primitive.argument.null",
-                                                               requiredType.getQualifiedName()));
-            }
-          }
+      }
+      if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
+        holder.registerProblem(argument,
+                               JavaBundle.message(isExact
+                                                         ? "inspection.reflect.handle.invocation.argument.not.exact"
+                                                         : "inspection.reflection.invocation.argument.not.assignable",
+                                                         requiredType.getQualifiedName()));
+      }
+    }
+    else if (requiredType.isPrimitive()) {
+      final PsiExpression definition = findDefinition(argument);
+      if (definition != null && PsiType.NULL.equals(definition.getType())) {
+        if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
+          holder.registerProblem(argument,
+                                 JavaBundle.message("inspection.reflect.handle.invocation.primitive.argument.null",
+                                                           requiredType.getQualifiedName()));
         }
       }
     }
@@ -247,37 +271,96 @@ final class JavaLangReflectHandleInvocationChecker {
   private static List<Supplier<ReflectiveType>> getLazyMethodSignature(@Nullable PsiExpression methodTypeExpression) {
     final PsiExpression typeDefinition = findDefinition(methodTypeExpression);
     if (typeDefinition instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression typeDefinitionCall = (PsiMethodCallExpression)typeDefinition;
+      return LAZY_SIGNATURE_MAPPER.mapFirst(((PsiMethodCallExpression)typeDefinition));
+    }
+    return null;
+  }
 
-      if (isCallToMethod(typeDefinitionCall, JAVA_LANG_INVOKE_METHOD_TYPE, METHOD_TYPE)) {
-        final PsiExpression[] arguments = typeDefinitionCall.getArgumentList().getExpressions();
-        if (arguments.length != 0) {
-          return ContainerUtil.map(arguments, argument -> (() -> getReflectiveType(argument)));
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForGenericMethodType(
+    @NotNull PsiMethodCallExpression methodTypeExpression
+  ) {
+    final PsiExpression[] arguments = methodTypeExpression.getArgumentList().getExpressions();
+    final Pair.NonNull<Integer, Boolean> signature = getGenericSignature(arguments);
+    if (signature != null) {
+      final int objectArgCount = signature.getFirst();
+      final boolean finalArray = signature.getSecond();
+      if (objectArgCount == 0 && !finalArray) {
+        return Collections.emptyList();
+      }
+      final PsiClassType javaLangObject =
+        PsiType.getJavaLangObject(methodTypeExpression.getManager(), methodTypeExpression.getResolveScope());
+      final ReflectiveType objectType = ReflectiveType.create(javaLangObject, false);
+      final List<ReflectiveType> argumentTypes = new ArrayList<>();
+      argumentTypes.add(objectType); // return type
+      for (int i = 0; i < objectArgCount; i++) {
+        argumentTypes.add(objectType);
+      }
+      if (finalArray) {
+        argumentTypes.add(ReflectiveType.arrayOf(objectType));
+      }
+      return ContainerUtil.map(argumentTypes, type -> (() -> type));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndMethodType(
+    @NotNull PsiMethodCallExpression callExpression
+  ) {
+    final PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
+    if (arguments.length == 2) {
+      final PsiExpression methodType = findInnermostMethodType(arguments[1]);
+      if (methodType != null) {
+        final List<Supplier<ReflectiveType>> nestedSignature = getLazyMethodSignature(methodType);
+        if (nestedSignature != null) {
+          final List<Supplier<ReflectiveType>> signature = new ArrayList<>(nestedSignature);
+          if (!signature.isEmpty()) {
+            final PsiExpression returnType = arguments[0];
+            signature.set(0, () -> getReflectiveType(returnType));
+          }
+          return signature;
         }
       }
-      else if (isCallToMethod(typeDefinitionCall, JAVA_LANG_INVOKE_METHOD_TYPE, GENERIC_METHOD_TYPE)) {
-        final PsiExpression[] arguments = typeDefinitionCall.getArgumentList().getExpressions();
-        final Pair.NonNull<Integer, Boolean> signature = getGenericSignature(arguments);
-        if (signature != null) {
-          final int objectArgCount = signature.getFirst();
-          final boolean finalArray = signature.getSecond();
-          if (objectArgCount == 0 && !finalArray) {
-            return Collections.emptyList();
-          }
-          final PsiClassType javaLangObject =
-            PsiType.getJavaLangObject(methodTypeExpression.getManager(), methodTypeExpression.getResolveScope());
-          final ReflectiveType objectType = ReflectiveType.create(javaLangObject, false);
-          final List<ReflectiveType> argumentTypes = new ArrayList<>();
-          argumentTypes.add(objectType); // return type
-          for (int i = 0; i < objectArgCount; i++) {
-            argumentTypes.add(objectType);
-          }
-          if (finalArray) {
-            argumentTypes.add(ReflectiveType.arrayOf(objectType));
-          }
-          return ContainerUtil.map(argumentTypes, type -> (() -> type));
-        }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndArray(@NotNull PsiMethodCallExpression call) {
+    final PsiExpression[] arguments = call.getArgumentList().getExpressions();
+    if (arguments.length == 2) {
+      final PsiExpression returnType = findDefinition(arguments[0]);
+      final PsiExpression secondArgument = arguments[1];
+      final List<PsiExpression> components = getVarargs(secondArgument);
+      if (components != null) {
+        final List<PsiExpression> signature = ContainerUtil.prepend(components, returnType);
+        return ContainerUtil.map(signature, parameter -> (() -> getReflectiveType(parameter)));
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndList(@NotNull PsiMethodCallExpression call) {
+    final PsiExpression[] arguments = call.getArgumentList().getExpressions();
+    if (arguments.length == 2) {
+      final PsiExpression list = arguments[1];
+      final List<PsiExpression> components = getListComponents(list);
+      if (components != null) {
+        final PsiExpression returnType = findDefinition(arguments[0]);
+        final List<PsiExpression> signature = ContainerUtil.prepend(components, returnType);
+        return ContainerUtil.map(signature, argument -> (() -> getReflectiveType(argument)));
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForTypes(@NotNull PsiMethodCallExpression call) {
+    final PsiExpression[] expressions = call.getArgumentList().getExpressions();
+    if (expressions.length != 0) {
+      return ContainerUtil.map(expressions, argument -> (() -> getReflectiveType(argument)));
     }
     return null;
   }
@@ -306,7 +389,7 @@ final class JavaLangReflectHandleInvocationChecker {
 
     LOG.assertTrue(arguments.length == argumentOffset + 1);
     final ReflectiveType requiredType = getReflectiveType(typeExpression);
-    checkArgumentType(arguments[argumentOffset], requiredType, argumentList, isExact, holder);
+    checkArgumentType(arguments[argumentOffset], requiredType, argumentList, isExact, false, holder);
 
     final PsiElement invokeParent = invokeCall.getParent();
     if (!(invokeParent instanceof PsiStatement)) {

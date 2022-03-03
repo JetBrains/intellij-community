@@ -22,8 +22,8 @@ public final class CubicBezierEasing implements Easing {
 
   public void update(double c1x, double c1y, double c2x, double c2y) {
     for (int i = 0; i < xs.length; i++) {
-      xs[i] = bezier(i * 1. / xs.length, c1x, c2x);
-      ys[i] = bezier(i * 1. / xs.length, c1y, c2y);
+      xs[i] = bezier(i * 1. / (xs.length - 1), c1x, c2x);
+      ys[i] = bezier(i * 1. / (ys.length - 1), c1y, c2y);
     }
   }
 

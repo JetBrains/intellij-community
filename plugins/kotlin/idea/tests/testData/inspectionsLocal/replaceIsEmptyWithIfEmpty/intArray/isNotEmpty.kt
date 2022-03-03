@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(intArr: IntArray): IntArray {
     return if (intArr.isNotEmpty<caret>()) {
         intArr

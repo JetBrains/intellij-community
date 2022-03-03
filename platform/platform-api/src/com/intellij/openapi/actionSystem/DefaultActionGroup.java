@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -11,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -73,8 +75,18 @@ public class DefaultActionGroup extends ActionGroup {
     this(() -> shortName, popup);
   }
 
-  protected DefaultActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
+  public DefaultActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
     super(shortName, popup);
+  }
+
+  public DefaultActionGroup(@Nullable @ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
+  public DefaultActionGroup(@NotNull Supplier<@ActionText String> dynamicText,
+                            @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                            @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   public static DefaultActionGroup createPopupGroup(@NotNull Supplier<@ActionText String> shortName) {

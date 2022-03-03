@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'map{}.minOrNull()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().map{}.minOrNull()'"
 // AFTER-WARNING: Parameter 'i' is never used

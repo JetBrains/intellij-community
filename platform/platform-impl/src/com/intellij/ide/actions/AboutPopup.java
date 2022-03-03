@@ -675,6 +675,10 @@ public final class AboutPopup {
 
     extraInfo += "Cores: " + Runtime.getRuntime().availableProcessors() + "\n";
 
+    if (SystemInfo.isMetalRendering) {
+      extraInfo += "Metal Rendering is ON\n";
+    }
+
     Collector<CharSequence, ?, String> joiner = Collectors.joining("\n");
 
     String registryKeys = Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)

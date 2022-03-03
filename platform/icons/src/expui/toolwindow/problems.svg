@@ -1,6 +1,6 @@
 <!-- Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="10" cy="10" r="8.25" stroke="#737580" stroke-width="1.5"/>
-<path d="M10 6L10 10" stroke="#737580" stroke-width="2" stroke-linecap="round"/>
-<circle cx="9.99999" cy="14" r="1.2" fill="#737580"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="8" cy="8" r="6.5" stroke="#767A8A"/>
+<path d="M8 4.59998L8 8.39998" stroke="#767A8A" stroke-width="1.2" stroke-linecap="round"/>
+<circle cx="8.00005" cy="10.7" r="0.5" fill="#767A8A" stroke="#767A8A" stroke-width="0.4"/>
 </svg>

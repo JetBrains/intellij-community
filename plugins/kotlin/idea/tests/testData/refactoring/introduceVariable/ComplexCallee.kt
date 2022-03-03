@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun fn(index : Int, list: List<()->Unit>) {
     when  {

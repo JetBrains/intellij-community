@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // MIN_JAVA_VERSION: 6
 
 import java.sql.DriverPropertyInfo

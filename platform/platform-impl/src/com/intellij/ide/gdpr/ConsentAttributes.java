@@ -6,11 +6,11 @@ package com.intellij.ide.gdpr;
  * Date: 06-Dec-17
  */
 final class ConsentAttributes {
-  String consentId;
-  String version;
-  String text;
-  String printableName;
-  boolean accepted;
-  boolean deleted;
-  long acceptanceTime;
+  public String consentId;
+  public String version;
+  public String text;
+  public String printableName;
+  public boolean accepted;
+  public boolean deleted;
+  public long acceptanceTime;
 }

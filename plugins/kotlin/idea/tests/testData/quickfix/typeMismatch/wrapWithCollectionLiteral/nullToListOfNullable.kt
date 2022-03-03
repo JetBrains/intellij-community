@@ -1,5 +1,5 @@
 // "Wrap element with 'listOf()' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     bar(null<caret>)

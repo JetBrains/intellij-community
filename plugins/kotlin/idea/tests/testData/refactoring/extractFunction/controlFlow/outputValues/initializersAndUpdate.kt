@@ -1,5 +1,5 @@
 // SUGGESTED_NAMES: triple, intIntIntTriple, intIntTriple, intTriple
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_TYPES: kotlin.Int
 // PARAM_DESCRIPTOR: var k: kotlin.Int defined in foo
 // SIBLING:

@@ -1,13 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.actions.VcsFacade;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.editor.markup.InspectionsLevel;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -27,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @State(name = "HighlightingSettingsPerFile", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element> {
@@ -36,16 +44,16 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   private final MessageBus myBus;
   private final Set<String> vcsIgnoreFileNames;
 
+  private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
+
   public HighlightingSettingsPerFile(@NotNull Project project, @NotNull MessageBus bus) {
     myBus = bus;
     vcsIgnoreFileNames = VcsFacade.getInstance().getVcsIgnoreFileNames(project);
   }
 
-  public static HighlightingSettingsPerFile getInstance(Project project) {
+  public static HighlightingSettingsPerFile getInstance(@NotNull Project project) {
     return (HighlightingSettingsPerFile)project.getService(HighlightingLevelManager.class);
   }
-
-  private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
 
   private static int getRootIndex(@NotNull PsiFile file) {
     FileViewProvider provider = file.getViewProvider();
@@ -66,13 +74,13 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   public FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root) {
     PsiFile containingFile = root.getContainingFile();
     VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (virtualFile == null) return FileHighlightingSetting.FORCE_HIGHLIGHTING;
     FileHighlightingSetting[] fileHighlightingSettings = myHighlightSettings.get(virtualFile);
     int index = getRootIndex(containingFile);
-
-    if (fileHighlightingSettings != null && fileHighlightingSettings.length > index) {
+    if (fileHighlightingSettings != null && index < fileHighlightingSettings.length) {
       return fileHighlightingSettings[index];
     }
-    return virtualFile == null ? FileHighlightingSetting.FORCE_HIGHLIGHTING : getDefaultHighlightingSetting(root.getProject(), virtualFile);
+    return getDefaultHighlightingSetting(root.getProject(), virtualFile);
   }
 
   @NotNull
@@ -101,8 +109,12 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     if (virtualFile == null) return;
     FileHighlightingSetting[] defaults = myHighlightSettings.get(virtualFile);
     int rootIndex = getRootIndex(containingFile);
-    if (defaults != null && rootIndex >= defaults.length) defaults = null;
-    if (defaults == null) defaults = getDefaults(containingFile);
+    if (defaults != null && rootIndex >= defaults.length) {
+      defaults = null;
+    }
+    if (defaults == null) {
+      defaults = getDefaults(containingFile);
+    }
     defaults[rootIndex] = setting;
     boolean toRemove = true;
     for (FileHighlightingSetting aDefault : defaults) {
@@ -119,6 +131,9 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     }
 
     myBus.syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE).settingChanged(root, setting);
+
+    InspectionWidgetUsageCollector.HIGHLIGHT_LEVEL_CHANGED.log(
+      root.getProject(), root.getLanguage(), FileHighlightingSetting.toInspectionsLevel(setting));
   }
 
   @Override
@@ -143,7 +158,9 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   @Override
   public Element getState() {
     Element element = new Element("state");
-    for (Map.Entry<VirtualFile, FileHighlightingSetting[]> entry : myHighlightSettings.entrySet()) {
+    List<Map.Entry<VirtualFile, FileHighlightingSetting[]>> entries = new ArrayList<>(myHighlightSettings.entrySet());
+    entries.sort(Comparator.comparing(entry -> entry.getKey().getPath()));
+    for (Map.Entry<VirtualFile, FileHighlightingSetting[]> entry : entries) {
       Element child = new Element(SETTING_TAG);
 
       VirtualFile vFile = entry.getKey();
@@ -185,13 +202,28 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     return !SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile);
   }
 
+  @Override
+  public boolean runEssentialHighlightingOnly(@NotNull PsiElement psiRoot) {
+    return getHighlightingSettingForRoot(psiRoot) == FileHighlightingSetting.ESSENTIAL
+           && !((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(psiRoot.getProject())).isRestartToCompleteEssentialHighlightingRequested();
+  }
+
   public int countRoots(@NotNull FileHighlightingSetting setting) {
-    int count = 0;
-    for (FileHighlightingSetting[] settingsForRoots : myHighlightSettings.values()) {
-      for (FileHighlightingSetting settingForRoot : settingsForRoots) {
-        if (settingForRoot == setting) count++;
-      }
+    return myHighlightSettings.values()
+      .stream()
+      .flatMap(array -> Stream.of(array))
+      .mapToInt(s -> s == setting ? 1 : 0)
+      .sum();
+  }
+
+  private static final class InspectionWidgetUsageCollector extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("inspection.widget",3);
+    private static final EventId2<Language, InspectionsLevel> HIGHLIGHT_LEVEL_CHANGED =
+      GROUP.registerEvent("highlight.level.changed", EventFields.Language, EventFields.Enum("level", InspectionsLevel.class));
+
+    @Override
+    public EventLogGroup getGroup() {
+      return GROUP;
     }
-    return count;
   }
 }

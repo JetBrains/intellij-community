@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,17 +9,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.SmartList;
 import com.intellij.util.lang.ClassPath;
+import com.intellij.util.lang.ClasspathCache;
 import com.intellij.util.lang.Resource;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +34,10 @@ import java.util.function.Function;
 public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
-  private static final boolean isParallelCapable = registerAsParallelCapable();
+  static {
+    boolean parallelCapable = registerAsParallelCapable();
+    assert parallelCapable;
+  }
 
   private static final @Nullable Writer logStream;
   private static final AtomicInteger instanceIdProducer = new AtomicInteger();
@@ -141,31 +141,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     String isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
   }
 
-  public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
-                           @NotNull IdeaPluginDescriptorImpl @NotNull [] dependencies,
-                           @NotNull PluginDescriptor pluginDescriptor,
-                           @Nullable Path pluginRoot,
-                           @NotNull ClassLoader coreLoader) {
-    super(builder, null, isParallelCapable, false);
-
-    instanceId = instanceIdProducer.incrementAndGet();
-
-    this.resolveScopeManager = (p1, p2, p3) -> null;
-    this.pluginDescriptor = pluginDescriptor;
-    pluginId = pluginDescriptor.getPluginId();
-    this.packagePrefix = null;
-    this.coreLoader = coreLoader;
-    this.parents = dependencies;
-
-    libDirectories = new SmartList<>();
-    if (pluginRoot != null) {
-      Path libDir = pluginRoot.resolve("lib");
-      if (Files.exists(libDir)) {
-        libDirectories.add(libDir.toAbsolutePath().toString());
-      }
-    }
-  }
-
   public PluginClassLoader(@NotNull List<Path> files,
                            @NotNull ClassPath classPath,
                            @NotNull IdeaPluginDescriptorImpl @NotNull [] dependencies,
@@ -247,13 +222,17 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       return coreLoader.loadClass(name);
     }
 
+    String fileNameWithoutExtension = name.replace('.', '/');
+    String fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION;
+    long packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'));
+
     long startTime = StartUpMeasurer.measuringPluginStartupCosts ? StartUpMeasurer.getCurrentTime() : -1;
     Class<?> c;
     PluginException error = null;
     try {
       String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader);
       if (consistencyError == null) {
-        c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+        c = loadClassInsideSelf(name, fileName, packageNameHash, forceLoadFromSubPluginClassloader);
       }
       else {
         if (!consistencyError.isEmpty()) {
@@ -281,7 +260,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
               }
               continue;
             }
-            c = pluginClassLoader.loadClassInsideSelf(name, false);
+            c = pluginClassLoader.loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);
@@ -292,7 +271,19 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         }
         else if (classloader instanceof UrlClassLoader) {
           try {
-            c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, false);
+            UrlClassLoader urlClassLoader = (UrlClassLoader)classloader;
+            BiFunction<String, Boolean, String> resolveScopeManager = urlClassLoader.resolveScopeManager;
+            String consistencyError = resolveScopeManager == null
+                                      ? null
+                                      : resolveScopeManager.apply(name, forceLoadFromSubPluginClassloader);
+            if (consistencyError != null) {
+              if (!consistencyError.isEmpty() && error == null) {
+                // yes, we blame requestor plugin
+                error = new PluginException(consistencyError, pluginId);
+              }
+              continue;
+            }
+            c = urlClassLoader.loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);
@@ -387,7 +378,16 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
-  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
+  public boolean hasLoadedClass(String name) {
+    String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, false);
+    return consistencyError == null && super.hasLoadedClass(name);
+  }
+
+  @Override
+  public @Nullable Class<?> loadClassInsideSelf(String name,
+                                                String fileName,
+                                                long packageNameHash,
+                                                boolean forceLoadFromSubPluginClassloader) throws IOException {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null && c.getClassLoader() == this) {
@@ -396,7 +396,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
       Writer logStream = PluginClassLoader.logStream;
       try {
-        c = classPath.findClass(name, classDataConsumer);
+        c = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
       }
       catch (LinkageError e) {
         if (logStream != null) {
@@ -435,6 +435,45 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   @Override
   public @Nullable URL findResource(@NotNull String name) {
     return doFindResource(name, Resource::getURL, ClassLoader::getResource);
+  }
+
+  @Override
+  public byte @Nullable [] getResourceAsBytes(@NotNull String name, boolean checkParents) throws IOException {
+    byte[] result = super.getResourceAsBytes(name, checkParents);
+    if (result != null) {
+      return result;
+    }
+
+    if (!checkParents) {
+      return null;
+    }
+
+    for (ClassLoader classloader : getAllParents()) {
+      if (classloader instanceof UrlClassLoader) {
+        Resource resource = ((UrlClassLoader)classloader).getClassPath().findResource(name);
+        if (resource != null) {
+          return resource.getBytes();
+        }
+      }
+      else {
+        InputStream input = classloader.getResourceAsStream(name);
+        if (input != null) {
+          try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int read;
+            byte[] data = new byte[16384];
+            while ((read = input.read(data, 0, data.length)) != -1) {
+              buffer.write(data, 0, read);
+            }
+            return buffer.toByteArray();
+          }
+          finally {
+            input.close();
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Override

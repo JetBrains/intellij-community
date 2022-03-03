@@ -156,8 +156,8 @@ final class TouchBarsManager {
           LOG.debug("FOCUS GAINED: show actions of parent: %s, child (source): %s", p, src);
         }
 
-        final TouchBar toShow = candidateActions.getTouchbar(0/*ourLastModifiersEx*/, true);
-        if (toShow instanceof ActionGroupTouchBar && ((ActionGroupTouchBar)toShow).updateAutoCloseAndCheck()) {
+        final TBPanel toShow = candidateActions.getTouchbar(0/*ourLastModifiersEx*/, true);
+        if (toShow instanceof TBPanelActionGroup && ((TBPanelActionGroup)toShow).updateAutoCloseAndCheck()) {
           // touchbar of component p is autoclosed, skip this candidate
           continue;
         }
@@ -225,7 +225,7 @@ final class TouchBarsManager {
     showActionsOfComponent(component);
   }
 
-  synchronized static void registerAndShow(@NotNull Component component, @NotNull TouchBar tb) {
+  synchronized static void registerAndShow(@NotNull Component component, @NotNull TBPanel tb) {
     LOG.debug("registerAndShow non-action touchbar '%s' for component %s", tb, component);
     unregister(component); // cleanup for insurance
     ourComp2Actions.put(component, new ComponentActions(component, tb));
@@ -307,7 +307,7 @@ final class TouchBarsManager {
     return stack;
   }
 
-  synchronized static void hideTouchbar(@NotNull TouchBar tb) {
+  synchronized static void hideTouchbar(@NotNull TBPanel tb) {
     for (Stack stack: ourStacks.values()) {
       stack.removeTouchbar(tb);
     }
@@ -333,16 +333,16 @@ final class TouchBarsManager {
   //
 
   private static class ComponentActions {
-    private static final Map<ActionGroup, TouchBar> ourActions2Touchbar = new WeakHashMap<>(); // Cached touchbars (per ActionGroup)
+    private static final Map<ActionGroup, TBPanel> ourActions2Touchbar = new WeakHashMap<>(); // Cached touchbars (per ActionGroup)
 
     final @NotNull WeakReference<Component> component;
     final @Nullable ActionGroup actions;
     final @Nullable Map<Long, ActionGroup> altActions;
     final @Nullable Customizer customizer;
 
-    final @Nullable TouchBar customTouchbar; // for non-action touchbars (like popup scrubbers)
+    final @Nullable TBPanel customTouchbar; // for non-action touchbars (like popup scrubbers)
 
-    private @Nullable TouchBar current;
+    private @Nullable TBPanel current;
 
     ComponentActions(@NotNull Component component,
                      @NotNull ActionGroup actions,
@@ -356,7 +356,7 @@ final class TouchBarsManager {
     }
 
     ComponentActions(@NotNull Component component,
-                     @NotNull TouchBar customTouchbar) {
+                     @NotNull TBPanel customTouchbar) {
       this.component = new WeakReference<>(component);
       this.actions = null;
       this.altActions = null;
@@ -369,14 +369,14 @@ final class TouchBarsManager {
     boolean isHidden() { return customizer != null && customizer.getCrossEscInfo() != null && customizer.getCrossEscInfo().persistent; }
 
     void setCurrent(long altKeyMask) {
-      @Nullable TouchBar alt = getTouchbar(altKeyMask, false);
-      if (alt != null && alt != TouchBar.EMPTY) // don't change touchbar when alt-layout wasn't defined (keep previous)
+      @Nullable TBPanel alt = getTouchbar(altKeyMask, false);
+      if (alt != null && alt != TBPanel.EMPTY) // don't change touchbar when alt-layout wasn't defined (keep previous)
         current = alt;
     }
 
-    @Nullable TouchBar getCurrent() { return current; }
+    @Nullable TBPanel getCurrent() { return current; }
 
-    @Nullable TouchBar getTouchbar(long altKeyMask, boolean cachedOnly) {
+    @Nullable TBPanel getTouchbar(long altKeyMask, boolean cachedOnly) {
       if (customTouchbar != null) {
         return customTouchbar;
       }
@@ -387,13 +387,13 @@ final class TouchBarsManager {
       }
 
       // find cached (or create)
-      TouchBar tb = ourActions2Touchbar.get(actions);
+      TBPanel tb = ourActions2Touchbar.get(actions);
       if (tb == null && !cachedOnly) {
         final Component cmp = component.get();
-        tb = new ActionGroupTouchBar(actions
-                                     + " | "
-                                     + (cmp == null ? "disposed_component" : cmp.getClass().getSimpleName()),
-                                     actions, customizer);
+        tb = new TBPanelActionGroup(actions
+                                    + " | "
+                                    + (cmp == null ? "disposed_component" : cmp.getClass().getSimpleName()),
+                                    actions, customizer);
         ourActions2Touchbar.put(actions, tb);
       }
       return tb;
@@ -415,13 +415,13 @@ final class TouchBarsManager {
         current = null;
       }
       if (actions != null) {
-        final TouchBar tb = ourActions2Touchbar.remove(actions);
+        final TBPanel tb = ourActions2Touchbar.remove(actions);
         if (tb != null) tb.release();
       }
 
       if (altActions != null) {
         for (ActionGroup ag: altActions.values()) {
-          final TouchBar tb = ourActions2Touchbar.remove(ag);
+          final TBPanel tb = ourActions2Touchbar.remove(ag);
           if (tb != null) tb.release();
         }
       }
@@ -449,7 +449,7 @@ final class TouchBarsManager {
     private final @Nullable WeakReference<Window> myWindow;
     private final ArrayDeque<ComponentActions> myStack = new ArrayDeque<>();
 
-    private TouchBar myLastShownTouchbar = null;
+    private TBPanel myLastShownTouchbar = null;
     private SimpleTimerTask myNativeUpdateTask = null;
 
     private Stack(@Nullable Window window) {
@@ -460,15 +460,15 @@ final class TouchBarsManager {
           @Override
           public void windowActivated(WindowEvent e) {
             final @Nullable ComponentActions ca = getTopActions();
-            if (ca != null && ca.getCurrent() instanceof ActionGroupTouchBar) {
-              ((ActionGroupTouchBar)ca.getCurrent()).startUpdateTimer();
+            if (ca != null && ca.getCurrent() instanceof TBPanelActionGroup) {
+              ((TBPanelActionGroup)ca.getCurrent()).startUpdateTimer();
             }
           }
           @Override
           public void windowDeactivated(WindowEvent e) {
             final @Nullable ComponentActions ca = getTopActions();
-            if (ca != null && ca.getCurrent() instanceof ActionGroupTouchBar) {
-              ((ActionGroupTouchBar)ca.getCurrent()).stopUpdateTimer();
+            if (ca != null && ca.getCurrent() instanceof TBPanelActionGroup) {
+              ((TBPanelActionGroup)ca.getCurrent()).stopUpdateTimer();
             }
           }
         });
@@ -483,8 +483,8 @@ final class TouchBarsManager {
       myStack.removeIf((other) -> ca == other); // don't store copies (just for insurance)
       myStack.push(ca);
 
-      if (FORCE_UPDATE_ON_SHOW && ca.getCurrent() instanceof ActionGroupTouchBar) { // just experimental possibility
-        ((ActionGroupTouchBar)ca.getCurrent()).updateActionItems();
+      if (FORCE_UPDATE_ON_SHOW && ca.getCurrent() instanceof TBPanelActionGroup) { // just experimental possibility
+        ((TBPanelActionGroup)ca.getCurrent()).updateActionItems();
       }
 
       _scheduleUpdateNative();
@@ -499,13 +499,13 @@ final class TouchBarsManager {
       _scheduleUpdateNative();
     }
 
-    synchronized void removeTouchbar(@NotNull TouchBar tb) {
+    synchronized void removeTouchbar(@NotNull TBPanel tb) {
       if (myStack.isEmpty()) {
         return;
       }
 
       final @Nullable ComponentActions topCA = myStack.peek();
-      final @Nullable TouchBar top = topCA != null ? topCA.getCurrent() : null;
+      final @Nullable TBPanel top = topCA != null ? topCA.getCurrent() : null;
       myStack.removeIf((ca) -> ca.getCurrent() == tb);
 
       if (top == tb)
@@ -546,19 +546,19 @@ final class TouchBarsManager {
       // schedule new task
       myNativeUpdateTask = SimpleTimer.getInstance().setUp(() -> {
         final @Nullable ComponentActions topCA = myStack.peek();
-        final @Nullable TouchBar tb = topCA != null ? topCA.getCurrent() : null;
+        final @Nullable TBPanel tb = topCA != null ? topCA.getCurrent() : null;
         if (tb == myLastShownTouchbar) {
           return;
         }
 
-        if (myLastShownTouchbar instanceof ActionGroupTouchBar) {
-          ((ActionGroupTouchBar)myLastShownTouchbar).stopUpdateTimer();
+        if (myLastShownTouchbar instanceof TBPanelActionGroup) {
+          ((TBPanelActionGroup)myLastShownTouchbar).stopUpdateTimer();
         }
 
         myLastShownTouchbar = tb;
 
-        if (myLastShownTouchbar instanceof ActionGroupTouchBar) {
-          final ActionGroupTouchBar atb = (ActionGroupTouchBar)myLastShownTouchbar;
+        if (myLastShownTouchbar instanceof TBPanelActionGroup) {
+          final TBPanelActionGroup atb = (TBPanelActionGroup)myLastShownTouchbar;
           atb.startUpdateTimer();
 
           // timer can "sleep" sometimes (when user doesn't send input for expamle)

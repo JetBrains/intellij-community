@@ -55,6 +55,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
 
   Key<List<DiffEditorTitleCustomizer>> EDITORS_TITLE_CUSTOMIZER = Key.create("Diff.EditorsTitleCustomizer");
+  Key<Boolean> EDITORS_HIDE_TITLE = Key.create("Diff.EditorsHideTitle");
 
   Key<DiffNavigationContext> NAVIGATION_CONTEXT = Key.create("Diff.NavigationContext");
 
@@ -109,6 +110,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
    * Marker flag for viewers embedded into FileEditor tab, that should not be disposed on tab close.
    */
   Key<Boolean> DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE = Key.create("Diff.DiffInEditor.ExplicitDisposable");
+
+  Key<Boolean> DIFF_NEW_TOOLBAR = Key.create("Diff.NewToolbar");
 
   //
   // MergeContext / MergeRequest

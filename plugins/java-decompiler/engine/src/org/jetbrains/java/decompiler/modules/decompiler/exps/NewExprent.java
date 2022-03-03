@@ -19,9 +19,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class NewExprent extends Exprent {
   private InvocationExprent constructor;
@@ -109,7 +107,7 @@ public class NewExprent extends Exprent {
       if (constructor != null) { // should be true only for a lambda expression with a virtual content method
         lst.add(constructor);
       }
-      lst.addAll(this.constructor.getLstParameters());
+      lst.addAll(this.constructor.getParameters());
     }
 
     return lst;
@@ -150,7 +148,7 @@ public class NewExprent extends Exprent {
         String enclosing = null;
 
         if (!lambda && constructor != null) {
-          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getParameters(), indent, tracer);
           if (enclosing != null) {
             buf.append(enclosing).append('.');
           }
@@ -161,7 +159,7 @@ public class NewExprent extends Exprent {
         if (selfReference) {
           buf.append("<anonymous constructor>");
         } else {
-          String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
+          String typename = ExprProcessor.getCastTypeName(child.anonymousClassType, Collections.emptyList());
           if (enclosing != null) {
             ClassNode anonymousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
             if (anonymousNode != null) {
@@ -175,14 +173,14 @@ public class NewExprent extends Exprent {
           GenericClassDescriptor descriptor = ClassWriter.getGenericClassDescriptor(child.classStruct);
           if (descriptor != null) {
             if (descriptor.superinterfaces.isEmpty()) {
-              buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass));
+              buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass, Collections.emptyList()));
             }
             else {
               if (descriptor.superinterfaces.size() > 1 && !lambda) {
                 DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class signature: " + child.classStruct.qualifiedName,
                                                            IFernflowerLogger.Severity.WARN);
               }
-              buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0)));
+              buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0), Collections.emptyList()));
             }
           }
           else {
@@ -194,11 +192,11 @@ public class NewExprent extends Exprent {
       buf.append('(');
 
       if (!lambda && constructor != null) {
-        List<Exprent> parameters = constructor.getLstParameters();
+        List<Exprent> parameters = constructor.getParameters();
         List<VarVersionPair> mask = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).synthParameters;
         if (mask == null) {
           InvocationExprent superCall = child.superInvocation;
-          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassname(), superCall.getStringDescriptor(), parameters.size());
+          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassName(), superCall.getStringDescriptor(), parameters.size());
         }
 
         int start = enumConst ? 2 : 0;
@@ -255,7 +253,7 @@ public class NewExprent extends Exprent {
         String enclosing = null;
 
         if (constructor != null) {
-          enclosing = getQualifiedNewInstance(newType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(newType.value, constructor.getParameters(), indent, tracer);
           if (enclosing != null) {
             buf.append(enclosing).append('.');
           }
@@ -263,7 +261,7 @@ public class NewExprent extends Exprent {
 
         buf.append("new ");
 
-        String typename = ExprProcessor.getTypeName(newType);
+        String typename = ExprProcessor.getTypeName(newType, Collections.emptyList());
         if (enclosing != null) {
           ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
           if (newNode != null) {
@@ -277,8 +275,8 @@ public class NewExprent extends Exprent {
       }
 
       if (constructor != null) {
-        List<Exprent> parameters = constructor.getLstParameters();
-        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassname(), constructor.getStringDescriptor(), parameters.size());
+        List<Exprent> parameters = constructor.getParameters();
+        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassName(), constructor.getStringDescriptor(), parameters.size());
 
         int start = enumConst ? 2 : 0;
         if (!enumConst || start < parameters.size()) {
@@ -333,7 +331,7 @@ public class NewExprent extends Exprent {
       }
     }
     else {
-      buf.append("new ").append(ExprProcessor.getTypeName(newType));
+      buf.append("new ").append(ExprProcessor.getTypeName(newType, Collections.emptyList()));
 
       if (lstArrayElements.isEmpty()) {
         for (int i = 0; i < newType.arrayDim; i++) {
@@ -431,9 +429,9 @@ public class NewExprent extends Exprent {
     if (!(o instanceof NewExprent)) return false;
 
     NewExprent ne = (NewExprent)o;
-    return InterpreterUtil.equalObjects(newType, ne.getNewType()) &&
+    return Objects.equals(newType, ne.getNewType()) &&
            InterpreterUtil.equalLists(lstDims, ne.getLstDims()) &&
-           InterpreterUtil.equalObjects(constructor, ne.getConstructor()) &&
+           Objects.equals(constructor, ne.getConstructor()) &&
            directArrayInit == ne.directArrayInit &&
            InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
   }

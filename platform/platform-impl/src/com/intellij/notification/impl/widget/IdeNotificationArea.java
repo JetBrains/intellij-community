@@ -3,20 +3,18 @@ package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.LogModel;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationsToolWindowFactory;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +31,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   private @Nullable StatusBar myStatusBar;
 
   public IdeNotificationArea() {
-    setBorder(WidgetBorder.ICON);
+    setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
   }
 
   @Override
@@ -77,7 +75,13 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     if (project == null || project.isDisposed()) {
       return;
     }
-    List<Notification> notifications = EventLog.getLogModel(project).getNotifications();
+    List<Notification> notifications;
+    if (ActionCenter.isEnabled()) {
+      notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
+    }
+    else {
+      notifications = EventLog.getLogModel(project).getNotifications();
+    }
     updateIconOnStatusBar(notifications);
 
     int count = notifications.size();
@@ -86,7 +90,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   }
 
   private void updateIconOnStatusBar(List<? extends Notification> notifications) {
-    if (Registry.is("ide.notification.action.center", false)) {
+    if (ActionCenter.isEnabled()) {
       setIcon(getActionCenterNotificationIcon(notifications));
     }
     else {

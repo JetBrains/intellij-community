@@ -93,4 +93,13 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
     Object o = item.getPsiElement();
     return o instanceof PsiMethod ? (PsiMethod)o : null;
   }
+
+  /**
+   * Mark item to forcefully disallow merge with another item that refers to the same PsiMethod.
+   *
+   * @param item to mark
+   */
+  public static void disallowMerge(LookupElement item) {
+    item.putUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR, true);
+  }
 }

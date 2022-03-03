@@ -1,7 +1,7 @@
 import kotlin.reflect.KFunction0
 
 // "Change type of 'myFunction' to '(Int) -> KFunction0<Boolean>'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     var myFunction: (Int) -> KFunction0<Boolean> = ::verifyData

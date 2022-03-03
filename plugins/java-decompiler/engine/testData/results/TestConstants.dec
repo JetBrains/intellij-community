@@ -1,7 +1,5 @@
 package pkg;
 
-import java.util.Date;
-
 public class TestConstants {
    static final boolean T = true;
    static final boolean F = false;
@@ -10,118 +8,25 @@ public class TestConstants {
    static final char C2 = 'Ȁ';
    static final byte BMin = -128;
    static final byte BMax = 127;
-   static final short SMin = -32768;
-   static final short SMax = 32767;
-   static final int IMin = -2147483648;
-   static final int IMax = 2147483647;
-   static final long LMin = -9223372036854775808L;
-   static final long LMax = 9223372036854775807L;
-   static final float FNan = 0.0F / 0.0;
-   static final float FNeg = -1.0F / 0.0;
-   static final float FPos = 1.0F / 0.0;
-   static final float FMin = 1.4E-45F;
-   static final float FMax = 3.4028235E38F;
-   static final double DNan = 0.0D / 0.0;
-   static final double DNeg = -1.0D / 0.0;
-   static final double DPos = 1.0D / 0.0;
-   static final double DMin = 4.9E-324D;
-   static final double DMax = 1.7976931348623157E308D;
-
-   @TestConstants.A(byte.class)
-   void m1() {
-   }// 54
-
-   @TestConstants.A(char.class)
-   void m2() {
-   }// 55
-
-   @TestConstants.A(double.class)
-   void m3() {
-   }// 56
-
-   @TestConstants.A(float.class)
-   void m4() {
-   }// 57
-
-   @TestConstants.A(int.class)
-   void m5() {
-   }// 58
-
-   @TestConstants.A(long.class)
-   void m6() {
-   }// 59
-
-   @TestConstants.A(short.class)
-   void m7() {
-   }// 60
-
-   @TestConstants.A(boolean.class)
-   void m8() {
-   }// 61
-
-   @TestConstants.A(void.class)
-   void m9() {
-   }// 62
-
-   @TestConstants.A(Date.class)
-   void m10() {
-   }// 63
-
-   @interface A {
-      Class<?> value();
-   }
+   static final short SMin = Short.MIN_VALUE;
+   static final short SMax = Short.MAX_VALUE;
+   static final int IMin = Integer.MIN_VALUE;
+   static final int IMax = Integer.MAX_VALUE;
+   static final long LMin = Long.MIN_VALUE;
+   static final long LMax = Long.MAX_VALUE;
+   static final float FNan = Float.NaN;
+   static final float FNeg = Float.NEGATIVE_INFINITY;
+   static final float FPos = Float.POSITIVE_INFINITY;
+   static final float FMin = Float.MIN_VALUE;
+   static final float FMax = Float.MAX_VALUE;
+   static final float FMinNormal = Float.MIN_NORMAL;
+   static final double DNan = Double.NaN;
+   static final double DNeg = Double.NEGATIVE_INFINITY;
+   static final double DPos = Double.POSITIVE_INFINITY;
+   static final double DMin = Double.MIN_VALUE;
+   static final double DMax = Double.MAX_VALUE;
+   static final double FDoubleNormal = Double.MIN_NORMAL;
+   static final double PI = Math.PI;
+   static final double E = Math.E;
 }
 
-class 'pkg/TestConstants' {
-   method 'm1 ()V' {
-      0      31
-   }
-
-   method 'm2 ()V' {
-      0      35
-   }
-
-   method 'm3 ()V' {
-      0      39
-   }
-
-   method 'm4 ()V' {
-      0      43
-   }
-
-   method 'm5 ()V' {
-      0      47
-   }
-
-   method 'm6 ()V' {
-      0      51
-   }
-
-   method 'm7 ()V' {
-      0      55
-   }
-
-   method 'm8 ()V' {
-      0      59
-   }
-
-   method 'm9 ()V' {
-      0      63
-   }
-
-   method 'm10 ()V' {
-      0      67
-   }
-}
-
-Lines mapping:
-54 <-> 32
-55 <-> 36
-56 <-> 40
-57 <-> 44
-58 <-> 48
-59 <-> 52
-60 <-> 56
-61 <-> 60
-62 <-> 64
-63 <-> 68

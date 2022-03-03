@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -14,10 +14,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
@@ -31,7 +29,9 @@ import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -44,7 +44,9 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
@@ -57,7 +59,6 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   @ApiStatus.Internal
   static final Key<Boolean> HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create("HideCommonToolWindowButtons");
   static final Key<Boolean> INACTIVE_LOOK = Key.create("InactiveLook");
-
   public enum Mode {
     SINGLE, VERTICAL_SPLIT, HORIZONTAL_SPLIT, CELL;
 
@@ -103,7 +104,8 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     header = new ToolWindowHeader(toolWindow, contentUi, () -> toolWindow.createPopupGroup(true)) {
       @Override
       protected boolean isActive() {
-        return toolWindow.isActive() && Boolean.TRUE != UIUtil.getClientProperty(InternalDecoratorImpl.this, INACTIVE_LOOK);
+        return toolWindow.isActive() && Boolean.TRUE != UIUtil.getClientProperty(InternalDecoratorImpl.this, INACTIVE_LOOK)
+          && !ExperimentalUI.isNewToolWindowsStripes();
       }
 
       @Override
@@ -121,6 +123,10 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
+    }
+
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      setBackground(JBUI.CurrentTheme.ToolWindow.background());
     }
 
     getContentManager().addContentManagerListener(new ContentManagerListener() {
@@ -477,7 +483,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
           window.isDisposed() ||
           windowInfo.getType() == ToolWindowType.FLOATING ||
           windowInfo.getType() == ToolWindowType.WINDOWED) {
-        return JBUI.emptyInsets();
+        return JBInsets.emptyInsets();
       }
 
       ToolWindowAnchor anchor = windowInfo.getAnchor();
@@ -540,8 +546,9 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   void updateActiveAndHoverState() {
     ActionToolbar toolbar = getHeaderToolbar();
-    if (toolbar != null) {
-      toolbar.getComponent().setVisible(!isNewUI() || isWindowHovered || toolWindow.isActive());
+    if (toolbar instanceof AlphaAnimated) {
+      AlphaAnimated alpha = (AlphaAnimated)toolbar;
+      alpha.getAlphaAnimator().setVisible(!isNewUI() || isWindowHovered || header.isPopupShowing() || toolWindow.isActive());
     }
   }
 
@@ -801,4 +808,8 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       }
     }
   };
+
+  public ToolWindowHeader getHeader() {
+    return header;
+  }
 }

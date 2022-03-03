@@ -131,7 +131,7 @@ public abstract class MetaAnnotationUtil {
 
   private static GlobalSearchScope getAllAnnotationFilesScope(Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      GlobalSearchScope javaScope = GlobalSearchScope.filesScope(project, getJavaAnnotationInheritorIds(project));
+      GlobalSearchScope javaScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(getJavaAnnotationInheritorIds(project)));
       GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(project);
       return Result.createSingleDependency(
         javaScope.uniteWith(otherScope),
@@ -162,7 +162,7 @@ public abstract class MetaAnnotationUtil {
     return GlobalSearchScope.filesWithLibrariesScope(project, allAnnotationFiles);
   }
 
-  private static @NotNull Set<VirtualFile> getJavaAnnotationInheritorIds(Project project) {
+  private static @NotNull Iterator<VirtualFile> getJavaAnnotationInheritorIds(Project project) {
     return StubIndex.getInstance().getContainingFiles(JavaStubIndexKeys.SUPER_CLASSES,
                                                       "Annotation",
                                                       project,

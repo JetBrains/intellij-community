@@ -1,5 +1,5 @@
 // "Replace with 's.filter { it != c }'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class X {
     @Deprecated("", ReplaceWith("s.filter { it != c }"))

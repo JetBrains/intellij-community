@@ -59,14 +59,15 @@ class MavenArtifactsBuilder {
       pomXmlFiles[module] = filePath
       generatePomXmlFile(filePath, artifactData)
     }
-    new LayoutBuilder(buildContext, true).layout("$buildContext.paths.artifacts/$outputDir") {
+    new LayoutBuilder(buildContext).layout("$buildContext.paths.artifacts/$outputDir") {
       modulesToPublish.each { aModule, artifactData ->
         dir(artifactData.coordinates.directoryPath) {
           ant.fileset(file: pomXmlFiles[aModule])
           def javaSourceRoots = aModule.getSourceRoots(JavaSourceRootType.SOURCE).toList()
           def javaResourceRoots = aModule.getSourceRoots(JavaResourceRootType.RESOURCE).toList()
           def hasSources = !(javaSourceRoots.isEmpty() && javaResourceRoots.isEmpty())
-          ant.jar(name: artifactData.coordinates.getFileName("", "jar"), duplicate: "fail", whenmanifestonly: "create") {
+          ant.jar(name: artifactData.coordinates.getFileName("", "jar"), duplicate: "fail",
+                  filesetmanifest: "merge", whenmanifestonly: "create") {
             if (hasSources) {
               module(aModule.name)
             }

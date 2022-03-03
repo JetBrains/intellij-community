@@ -14,7 +14,6 @@ import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
@@ -1023,17 +1022,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       return MavenModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
-    catch (ArtifactResolutionException e) {
-      Maven3ServerGlobals.getLogger().info(e);
-    }
-    catch (ArtifactNotFoundException e) {
-      Maven3ServerGlobals.getLogger().info(e);
-    }
     catch (Exception e) {
+      Maven3ServerGlobals.getLogger().info(e);
       throw rethrowException(e);
     }
-
-    return Collections.emptyList();
   }
 
   @Override
@@ -1124,16 +1116,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   @NotNull
   protected List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
-    List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
-    for (MavenRemoteRepository each : repositories) {
-      try {
-        ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
-        result.add(ProjectUtils.buildArtifactRepository(MavenModelConverter.toNativeRepository(each), factory, myContainer));
-      }
-      catch (InvalidRepositoryException e) {
-        Maven3ServerGlobals.getLogger().warn(e);
-      }
-    }
+    List<ArtifactRepository> result = map2ArtifactRepositories(repositories);
     if (getComponent(LegacySupport.class).getRepositorySession() == null) {
       myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
       myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());

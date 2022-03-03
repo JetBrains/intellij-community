@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -31,6 +30,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBus;
@@ -48,22 +48,23 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
+import static java.util.Objects.requireNonNull;
 
 @Service(Service.Level.PROJECT)
 public final class VcsProjectLog implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsProjectLog.class);
-  public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED =
-    Topic.create("Project Vcs Log Created or Disposed", ProjectLogListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED = new Topic<>(ProjectLogListener.class,
+                                                                                      Topic.BroadcastDirection.NONE,
+                                                                                      true);
   private static final int RECREATE_LOG_TRIES = 5;
   @NotNull private final Project myProject;
   @NotNull private final MessageBus myMessageBus;
@@ -154,16 +155,16 @@ public final class VcsProjectLog implements Disposable {
   @RequiresEdt
   @Nullable
   public MainVcsLogUi openLogTab(@NotNull VcsLogFilterCollection filters) {
-    return openLogTab(filters, VcsLogManager.LogWindowKind.TOOL_WINDOW);
+    return openLogTab(filters, VcsLogTabLocation.TOOL_WINDOW);
   }
 
   @RequiresEdt
   @Nullable
   public MainVcsLogUi openLogTab(@NotNull VcsLogFilterCollection filters,
-                                 @NotNull VcsLogManager.LogWindowKind kind) {
+                                 @NotNull VcsLogTabLocation location) {
     VcsLogManager logManager = getLogManager();
     if (logManager == null) return null;
-    return myTabsManager.openAnotherLogTab(logManager, filters, kind);
+    return myTabsManager.openAnotherLogTab(logManager, filters, location);
   }
 
   @CalledInAny
@@ -212,8 +213,8 @@ public final class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  Future<VcsLogManager> createLogInBackground(boolean forceInit) {
-    return myExecutor.submit(() -> createLog(forceInit));
+  CompletableFuture<Boolean> createLogInBackground(boolean forceInit) {
+    return CompletableFuture.supplyAsync(() -> createLog(forceInit), myExecutor).thenApply(Objects::nonNull);
   }
 
   @Nullable
@@ -237,7 +238,7 @@ public final class VcsProjectLog implements Disposable {
     }
 
     if (PostponableLogRefresher.keepUpToDate()) {
-      VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+      VcsLogCachesInvalidator invalidator = requireNonNull(CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class));
       if (invalidator.isValid()) {
         HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
         return;
@@ -264,9 +265,9 @@ public final class VcsProjectLog implements Disposable {
   public void dispose() {
   }
 
-  private static <T> T invokeAndWait(@NotNull Computable<T> computable) {
+  private static <T> T invokeAndWait(@NotNull Supplier<T> computable) {
     Ref<T> result = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), getModality());
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.get()), getModality());
     return result.get();
   }
 
@@ -292,12 +293,12 @@ public final class VcsProjectLog implements Disposable {
       action.consume(manager);
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
-      Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
+      Future<Boolean> futureResult = log.createLogInBackground(true);
       new Task.Backgroundable(project, VcsLogBundle.message("vcs.log.creating.process")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            futureLogManager.get(5, TimeUnit.SECONDS);
+            futureResult.get(5, TimeUnit.SECONDS);
           }
           catch (InterruptedException ignored) {
           }
@@ -320,15 +321,22 @@ public final class VcsProjectLog implements Disposable {
     }
   }
 
+  static @NotNull Future<Boolean> waitWhenLogIsReady(@NotNull Project project) {
+    VcsProjectLog log = getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager != null) {
+      return new FutureResult<>(true);
+    }
+    return log.createLogInBackground(true);
+  }
+
   @ApiStatus.Internal
   @RequiresBackgroundThread
   public static boolean ensureLogCreated(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
-    if (getInstance(project).getLogManager() != null) return true;
-
     try {
-      return getInstance(project).createLogInBackground(true).get() != null;
+      return waitWhenLogIsReady(project).get() == Boolean.TRUE;
     }
     catch (InterruptedException ignored) {
     }
@@ -354,7 +362,7 @@ public final class VcsProjectLog implements Disposable {
           myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
         }, getModality());
       }
-      return myValue;
+      return requireNonNull(myValue);
     }
 
     @Nullable
@@ -365,7 +373,7 @@ public final class VcsProjectLog implements Disposable {
         VcsLogManager oldValue = myValue;
         myValue = null;
 
-        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(oldValue.getDataManager().getLogProviders()));
+        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(requireNonNull(oldValue).getDataManager().getLogProviders()));
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
 
         return oldValue;
@@ -383,7 +391,7 @@ public final class VcsProjectLog implements Disposable {
     InitLogStartupActivity() {
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-        throw ExtensionNotApplicableException.INSTANCE;
+        throw ExtensionNotApplicableException.create();
       }
     }
 

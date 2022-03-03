@@ -47,7 +47,7 @@ class C {
 
   void endlessLoopInBranchWithValueBreak(String arg) {
     int result = switch (arg) {
-      case "one" -> { while(true); <error descr="Unreachable statement">yield 1;</error>}
+      case "one" -> { while(true); <error descr="Unreachable statement">yield</error> 1;}
       default -> 0;
     };
     System.out.println(result);

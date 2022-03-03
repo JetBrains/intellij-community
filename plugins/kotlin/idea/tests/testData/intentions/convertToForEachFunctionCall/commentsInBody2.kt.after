@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 'v' is never used
 fun foo() {
     val list = 1..4

@@ -1,0 +1,27 @@
+{header}
+<title>{repo|escape}: tags</title>
+<link rel="alternate" type="application/atom+xml"
+   href="{url|urlescape}atom-tags" title="Atom feed for {repo|escape}: tags">
+<link rel="alternate" type="application/rss+xml"
+   href="{url|urlescape}rss-tags" title="RSS feed for {repo|escape}: tags">
+</head>
+<body>
+
+<div class="buttons">
+<a href="{url|urlescape}log{sessionvars%urlparameter}">changelog</a>
+<a href="{url|urlescape}shortlog{sessionvars%urlparameter}">shortlog</a>
+<a href="{url|urlescape}graph{sessionvars%urlparameter}">graph</a>
+<a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a>
+<a href="{url|urlescape}file{sessionvars%urlparameter}">files</a>
+<a href="{url|urlescape}help{sessionvars%urlparameter}">help</a>
+<a type="application/rss+xml" href="{url|urlescape}rss-tags">rss</a>
+<a type="application/atom+xml" href="{url|urlescape}atom-tags">atom</a>
+</div>
+
+<h2><a href="/">Mercurial</a> {pathdef%breadcrumb} / tags</h2>
+
+<ul id="tagEntries">
+{entries%tagentry}
+</ul>
+
+{footer}

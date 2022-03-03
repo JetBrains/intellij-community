@@ -7,6 +7,7 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
@@ -277,6 +278,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
     PsiExpression initializer = getDetachedInitializer();
     if (initializer == null) return null;
+    if (!PsiAugmentProvider.canTrustFieldInitializer(this)) return null;
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, type, visitedVars);
   }
 

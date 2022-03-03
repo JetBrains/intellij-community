@@ -12,10 +12,10 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
 import com.intellij.vcs.log.visible.VisiblePack
@@ -53,7 +53,7 @@ private class VcsLogDirectoryHistoryProvider(private val project: Project) : Vcs
 
     val pathsFilter = createPathsFilter(project, logManager.dataManager, paths)!!
     val hashFilter = createHashFilter(hash, root)
-    var ui = VcsLogContentUtil.findAndSelect(project, MainVcsLogUi::class.java) { logUi ->
+    var ui = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, MainVcsLogUi::class.java, true) { logUi ->
       matches(logUi.filterUi.filters, pathsFilter, hashFilter)
     }
     val firstTime = ui == null
@@ -136,7 +136,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
 
-    var fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi::class.java) { ui -> ui.matches(path, hash) }
+    var fileHistoryUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, FileHistoryUi::class.java, true) { ui -> ui.matches(path, hash) }
     val firstTime = fileHistoryUi == null
     if (firstTime) {
       val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
@@ -160,14 +160,14 @@ private fun selectRowWhenOpen(logManager: VcsLogManager, hash: Hash?, root: Virt
 
 private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, root: VirtualFile, silently: Boolean) {
   jumpTo(hash, { visiblePack: VisiblePack, h: Hash? ->
-    if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo GraphTableModel.COMMIT_NOT_FOUND
+    if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND
 
     val commitIndex: Int = storage.getCommitIndex(h, root)
     var rowIndex = visiblePack.visibleGraph.getVisibleRowIndex(commitIndex)
     if (rowIndex == null) {
       rowIndex = findVisibleAncestorRow(commitIndex, visiblePack)
     }
-    rowIndex ?: GraphTableModel.COMMIT_DOES_NOT_MATCH
+    rowIndex ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
   }, SettableFuture.create(), silently, true)
 }
 

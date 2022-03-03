@@ -1,30 +1,30 @@
 <component name="libraryTable">
   <library name="opentelemetry-exporter-jaeger" type="repository">
-    <properties maven-id="io.opentelemetry:opentelemetry-exporter-jaeger:1.7.0">
+    <properties maven-id="io.opentelemetry:opentelemetry-exporter-jaeger:1.9.1">
       <exclude>
         <dependency maven-id="io.opentelemetry:opentelemetry-sdk" />
         <dependency maven-id="com.google.code.findbugs:jsr305" />
         <dependency maven-id="com.google.guava:guava" />
         <dependency maven-id="com.google.errorprone:error_prone_annotations" />
         <dependency maven-id="io.opentelemetry:opentelemetry-api" />
-        <dependency maven-id="io.opentelemetry:opentelemetry-sdk-metrics" />
+        <dependency maven-id="io.opentelemetry:opentelemetry-api-metrics" />
+        <dependency maven-id="com.squareup.okhttp3:okhttp" />
         <dependency maven-id="io.opentelemetry:opentelemetry-semconv" />
-        <dependency maven-id="io.grpc:grpc-stub" />
         <dependency maven-id="com.fasterxml.jackson.jr:jackson-jr-objects" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-jaeger/1.7.0/opentelemetry-exporter-jaeger-1.7.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-jaeger/1.9.1/opentelemetry-exporter-jaeger-1.9.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.41.0/grpc-api-1.41.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.41.0/grpc-context-1.41.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.7.0/opentelemetry-exporter-otlp-common-1.7.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.9.1/opentelemetry-exporter-otlp-common-1.9.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-jaeger/1.7.0/opentelemetry-exporter-jaeger-1.7.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-jaeger/1.9.1/opentelemetry-exporter-jaeger-1.9.1-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.41.0/grpc-api-1.41.0-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.41.0/grpc-context-1.41.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.7.0/opentelemetry-exporter-otlp-common-1.7.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.9.1/opentelemetry-exporter-otlp-common-1.9.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

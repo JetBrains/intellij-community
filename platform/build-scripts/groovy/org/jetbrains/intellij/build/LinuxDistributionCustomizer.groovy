@@ -24,9 +24,9 @@ abstract class LinuxDistributionCustomizer {
   List<String> extraExecutables = []
 
   /**
-   * If {@code true} a separate *-no-jdk.tar.gz artifact without JRE will be produced.
+   * If {@code true} a separate *-no-jdk.tar.gz artifact without runtime will be produced.
    */
-  boolean buildTarGzWithoutBundledJre = true
+  boolean buildTarGzWithoutBundledRuntime = true
 
   /**
    * If {@code true}, the only *-no-jbr.tar.gz will be produced, no other binaries for Linux will be built.

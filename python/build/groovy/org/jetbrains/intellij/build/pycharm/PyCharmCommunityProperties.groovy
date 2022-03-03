@@ -21,7 +21,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     productLayout.mainModules = ["intellij.pycharm.community.main"]
     productLayout.productApiModules = ["intellij.xml.dom"]
     productLayout.productImplementationModules = [
-      "intellij.notebooks.visualization",
       "intellij.xml.dom.impl",
       "intellij.platform.main",
       "intellij.pycharm.community"
@@ -120,7 +119,7 @@ class PyCharmCommunityMacDistributionCustomizer extends PyCharmMacDistributionCu
   PyCharmCommunityMacDistributionCustomizer(projectHome) {
     icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
     icnsPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.icns"
-    bundleIdentifier = "com.jetbrains.pycharm.ce"
+    bundleIdentifier = "com.jetbrains.pycharm"
     dmgImagePath = "$projectHome/python/build/dmg_background.tiff"
   }
 

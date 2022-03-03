@@ -1,0 +1,11 @@
+<idea-plugin package="org.jetbrains.kotlin.training">
+  <dependencies>
+    <plugin id="training"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="training">
+    <ift.language.extension language="kotlin" implementationClass="org.jetbrains.kotlin.training.ift.KotlinLangSupport"/>
+    <ift.learning.course language="kotlin" implementationClass="org.jetbrains.kotlin.training.ift.KotlinLearningCourse"/>
+    <ifs.suggesterSupport language="kotlin" implementationClass="org.jetbrains.kotlin.training.ifs.KotlinSuggesterSupport"/>
+  </extensions>
+</idea-plugin>

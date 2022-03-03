@@ -7,11 +7,12 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 
 object PackagingElementInitializer : ElementInitializer {
   override fun initialize(entity: PackagingElementEntity, project: Project, storage: WorkspaceEntityStorage): PackagingElement<*> =
-    entity.toElement(project, storage)
+    entity.toElement(project, VersionedEntityStorageOnStorage(storage))
 
   override fun initialize(entity: CompositePackagingElementEntity, project: Project, storage: WorkspaceEntityStorage): PackagingElement<*> =
-    entity.toCompositeElement(project, storage)
+    entity.toCompositeElement(project, VersionedEntityStorageOnStorage(storage))
 }

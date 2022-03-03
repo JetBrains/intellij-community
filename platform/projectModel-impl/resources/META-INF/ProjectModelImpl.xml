@@ -15,8 +15,6 @@
                     serviceImplementation="com.intellij.openapi.components.impl.ProjectPathMacroManager"/>
     <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge"/>
-    <projectService serviceInterface="com.intellij.ide.util.PropertiesComponent"
-                    serviceImplementation="com.intellij.ide.util.ProjectPropertiesComponentImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
                         serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"

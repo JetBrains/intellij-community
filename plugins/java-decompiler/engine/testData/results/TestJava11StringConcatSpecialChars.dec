@@ -1,0 +1,27 @@
+package java11;
+
+public class TestJava11StringConcatSpecialChars {
+   public String testOrdinaryInfix(String first, String second, String last) {
+      return "BEGIN " + first + " (first infix) " + second + " (second infix) " + last + " END";// 6
+   }
+
+   public String testSpecialCharsInfix(String first, String second, String last) {
+      return "BEGIN " + first + " (first\u0001infix) " + second + " (second\u0002infix) " + last + " END";// 10
+   }
+}
+
+class 'java11/TestJava11StringConcatSpecialChars' {
+   method 'testOrdinaryInfix (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;' {
+      3      4
+      8      4
+   }
+
+   method 'testSpecialCharsInfix (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;' {
+      3      8
+      8      8
+   }
+}
+
+Lines mapping:
+6 <-> 5
+10 <-> 9

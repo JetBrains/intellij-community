@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     "ABC".equa<caret>ls(Foo().bar(), ignoreCase = true)
 }

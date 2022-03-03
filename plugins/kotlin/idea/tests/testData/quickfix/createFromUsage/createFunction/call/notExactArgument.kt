@@ -3,7 +3,7 @@
 // ACTION: Convert expression to 'Int'
 // ACTION: Round using roundToInt()
 // ERROR: Type mismatch: inferred type is Float but Int was expected
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test() {
     var value = 0

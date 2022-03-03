@@ -72,6 +72,21 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
     return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
   }
 
+  override fun getPlaceholdersCollectorFor(
+    file: PsiFile,
+    editor: Editor,
+    settings: NoSettings,
+    sink: InlayHintsSink
+  ): InlayHintsCollector? {
+    if (!isCodeAuthorEnabledForApplication()) return null
+    if (!AnnotationsPreloader.isEnabled()) return null
+
+    val virtualFile = file.virtualFile ?: return null
+    if (!AnnotationsPreloader.canPreload(file.project, virtualFile)) return null
+
+    return VcsCodeAuthorPlaceholdersCollector(editor, this::isAccepted)
+  }
+
   protected abstract fun isAccepted(element: PsiElement): Boolean
 
   protected open fun getClickHandler(element: PsiElement): () -> Unit = {}

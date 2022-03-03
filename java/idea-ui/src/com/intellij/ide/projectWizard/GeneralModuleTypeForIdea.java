@@ -13,10 +13,14 @@ import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.GeneralModuleType;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -32,8 +36,6 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
-
-import static com.intellij.ide.wizard.AbstractWizard.isNewWizard;
 
 public class GeneralModuleTypeForIdea extends GeneralModuleType {
   @Override
@@ -67,24 +69,28 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
       }
 
       @Override
-      public @Nullable Project createProject(String name, String path) {
-        Project project = super.createProject(name, path);
-        if (project != null) {
-          StartupManager.getInstance(project).runAfterOpened(() -> {
-            if (ProjectView.getInstance(project).getCurrentProjectViewPane() != null) {
+      public @Nullable List<Module> commit(@NotNull Project project,
+                                           ModifiableModuleModel model,
+                                           ModulesProvider modulesProvider) {
+        List<Module> modules = super.commit(project, model, modulesProvider);
+        scheduleTooltip(project);
+        return modules;
+      }
+
+      private void scheduleTooltip(@NotNull Project project) {
+        StartupManager.getInstance(project).runAfterOpened(() -> {
+          if (ProjectView.getInstance(project).getCurrentProjectViewPane() != null) {
+            showTooltip(project);
+            return;
+          }
+          project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+            @Override
+            public void toolWindowShown(@NotNull ToolWindow toolWindow) {
+              if (!"Project".equals(toolWindow.getId())) return;
               showTooltip(project);
-              return;
             }
-            project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-              @Override
-              public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-                if (!"Project".equals(toolWindow.getId())) return;
-                showTooltip(project);
-              }
-            });
           });
-        }
-        return project;
+        });
       }
 
       private void showTooltip(Project project) {
@@ -93,7 +99,7 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
           String shortcutText = KeymapUtil.getShortcutText(IdeActions.ACTION_NEW_ELEMENT);
           GotItTooltip tooltip =
             new GotItTooltip("empty.project.create.file", IdeBundle.message("to.create.new.file.tooltip", shortcutText), project)
-              .withPosition(Balloon.Position.atRight);
+              .withPosition(Balloon.Position.atRight).withContrastColors(true);
           ApplicationManager.getApplication().getMessageBus().connect(tooltip).subscribe(AnActionListener.TOPIC, new AnActionListener() {
                                                                                               @Override
                                                                                               public void afterActionPerformed(@NotNull AnAction action,
@@ -114,6 +120,10 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
         return bounds == null ? new Point(x, 10) : new Point(x, (int)bounds.getCenterY());
       }
     };
+  }
+
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

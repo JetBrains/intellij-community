@@ -9,7 +9,7 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.util.CommonProcessors
+import com.intellij.util.Processors
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
@@ -27,14 +27,11 @@ class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) 
         val module = module
 
         module.cacheByClassInvalidatingOnRootModifications(KeyForCachedDependencies::class.java) {
-            HashSet<Module>().also { resultModuleSet ->
-                ModuleRootManager.getInstance(module).orderEntries().recursively().forEachModule(
-                    CommonProcessors.CollectProcessor(resultModuleSet)
-                )
-                resultModuleSet.addAll(
-                    ModuleDependencyProviderExtension.getInstance(module.project).getAdditionalDependencyModules(module)
-                )
-            }
+            val modules = HashSet<Module>()
+            val processor = Processors.cancelableCollectProcessor(modules)
+            ModuleRootManager.getInstance(module).orderEntries().recursively().forEachModule(processor)
+            ModuleDependencyProviderExtension.getInstance(module.project).processAdditionalDependencyModules(module, processor)
+            modules
         }
     }
 

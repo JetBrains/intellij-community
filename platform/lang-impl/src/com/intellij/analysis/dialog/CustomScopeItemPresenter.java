@@ -39,7 +39,7 @@ public class CustomScopeItemPresenter implements ModelScopeItemPresenter {
     CustomScopeItem model = (CustomScopeItem) m;
     ScopeChooserCombo scopeCombo = new ScopeChooserCombo();
     Disposer.register(dialogDisposable, scopeCombo);
-    scopeCombo.init(model.getProject(), model.getSearchInLibFlag(), true, model.getPreselectedCustomScope());
+    scopeCombo.init(model.getProject(), model.getSearchInLibFlag(), true, model.getPreselectedCustomScope(), null);
     scopeCombo.setCurrentSelection(false);
     scopeCombo.setEnabled(button.isSelected());
     model.setSearchScopeSupplier(() -> scopeCombo.getSelectedScope());

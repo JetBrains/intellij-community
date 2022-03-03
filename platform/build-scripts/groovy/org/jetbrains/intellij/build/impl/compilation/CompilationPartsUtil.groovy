@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import java.util.function.Predicate
+import java.util.zip.GZIPOutputStream
 
 @CompileStatic
 class CompilationPartsUtil {
@@ -112,18 +113,20 @@ class CompilationPartsUtil {
   static void packAndUploadToServer(CompilationContextImpl context, String zipsLocation) {
     BuildMessages messages = context.messages
 
+    messages.progress("Packing classes and uploading them to the server")
+
     String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
     if (StringUtil.isEmptyOrSpaces(serverUrl)) {
-      messages.warning("Compile Parts archive server url is not defined. \n" +
-                       "Will not upload to remote server. Please set 'intellij.compile.archive.url' system property.")
+      messages.error("Compile Parts archive server url is not defined. \n" +
+                     "Please set 'intellij.compile.archive.url' system property.")
       return
     }
     String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
     String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
     if (StringUtil.isEmptyOrSpaces(branch)) {
-      messages.warning("Unable to determine current git branch, assuming 'master'. \n" +
-                       "Please set '$intellijCompileArtifactsBranchProperty' system property")
-      branch = 'master'
+      messages.error("Unable to determine current git branch, assuming 'master'. \n" +
+                     "Please set '$intellijCompileArtifactsBranchProperty' system property")
+      return
     }
 
     //region Prepare executor
@@ -155,6 +158,12 @@ class CompilationPartsUtil {
           // Skip empty directories
           continue
         }
+
+        if (context.findModule(module.name) == null) {
+          messages.warning("Skipping module output from missing in project module: ${module.name}")
+          continue
+        }
+
         String name = "${subroot.name}/${module.name}".toString()
         PackAndUploadContext ctx = new PackAndUploadContext(module, name, "$zipsLocation/${name}.jar".toString())
         contexts.add(ctx)
@@ -273,12 +282,18 @@ class CompilationPartsUtil {
 
     executor.reportErrors(messages)
 
-
     // Save and publish metadata file
     def metadataFile = new File("$zipsLocation/metadata.json")
     FileUtil.writeToFile(metadataFile, metadataJson)
-
     messages.artifactBuilt(metadataFile.absolutePath)
+
+    def gzippedMetadataFile = new File(zipsLocation, "metadata.json.gz")
+    new GZIPOutputStream(gzippedMetadataFile.newOutputStream()).withCloseable { OutputStream outputStream ->
+      metadataFile.newInputStream().withCloseable { InputStream inputStream ->
+        FileUtil.copy(inputStream, outputStream)
+      }
+    }
+    messages.artifactBuilt(gzippedMetadataFile.absolutePath)
   }
 
   static void fetchAndUnpackCompiledClasses(BuildMessages messages, File classesOutput, BuildOptions options) {

@@ -1540,6 +1540,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
+    UIUtil.markAsFocused(editor.getContentComponent(), true); // to make UIUtil.hasFocus return true to make ShowAutoImportPass.showImports work
     EditorTestUtil.waitForLoading(editor);
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     return editor;
@@ -1832,10 +1833,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     else {
       try {
-        FileUtil.writeToFile(new File(destinationFileName), cleanContent);
-        VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(destinationFileName);
-        assertNotNull(file);
-        configureFromExistingVirtualFile(file);
+        @SuppressWarnings("ConstantConditions") String tempDirPrefix = myTempDirFixture.getFile("").getUrl();
+
+        // if destination (as a URL) points to a file inside the temp dir, then create it there
+        if (destinationFileName.startsWith(tempDirPrefix)) {
+          VirtualFile file = myTempDirFixture.createFile(destinationFileName.substring(tempDirPrefix.length()), cleanContent);
+          assertNotNull(file);
+          configureFromExistingVirtualFile(file);
+        }
+        else {
+          FileUtil.writeToFile(new File(destinationFileName), cleanContent);
+          VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(destinationFileName);
+          assertNotNull(file);
+          configureFromExistingVirtualFile(file);
+        }
       }
       catch (IOException e) {
         throw new RuntimeException(e);

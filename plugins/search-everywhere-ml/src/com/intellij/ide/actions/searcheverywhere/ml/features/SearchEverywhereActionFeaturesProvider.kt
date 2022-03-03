@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.internal.statistic.local.ActionGlobalUsageInfo
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -32,10 +33,6 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
     private const val GLOBAL_USAGE_TO_MAX_KEY = "globalUsageToMax"
     private const val USERS_RATIO_DATA_KEY = "usersRatio"
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
-  }
-
-  override fun isElementSupported(element: Any): Boolean {
-    return element is GotoActionModel.MatchedValue && element.value is GotoActionModel.ActionWrapper
   }
 
   override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any> {
@@ -71,15 +68,15 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
 
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
     val globalSummary = service<ActionsGlobalSummaryManager>()
+
+    val actionStats = globalSummary.getActionStatistics(actionId)
     val maxUsageCount = globalSummary.totalSummary.maxUsageCount
-    globalSummary.getActionStatistics(actionId)?.let {
-      data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
-      if (maxUsageCount != 0L) {
-        data[GLOBAL_USAGE_TO_MAX_KEY] = roundDouble(it.usagesCount.toDouble() / maxUsageCount)
-      }
-      data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)
-      data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
-    }
+    data.putAll(getGlobalUsageStatistics(actionStats, maxUsageCount))
+
+    val updatedActionStats = globalSummary.getUpdatedActionStatistics(actionId)
+    val updatedMaxUsageCount = globalSummary.updatedTotalSummary.maxUsageCount
+    val suffix = "V" + globalSummary.updatedStatisticsVersion
+    data.putAll(getGlobalUsageStatistics(updatedActionStats, updatedMaxUsageCount, suffix))
 
     val pluginInfo = getPluginInfo(action.javaClass)
     if (pluginInfo.isSafeToReport()) {
@@ -87,6 +84,19 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
       pluginInfo.id?.let { data[PLUGIN_ID] = it }
     }
     return data
+  }
+
+  private fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long, suffix: String = "") : Map<String, Any> {
+    val result = hashMapOf<String, Any>()
+    actionGlobalStatistics?.let {
+      result[GLOBAL_USAGE_COUNT_KEY + suffix] = it.usagesCount
+      if (maxUsageCount != 0L) {
+        result[GLOBAL_USAGE_TO_MAX_KEY + suffix] = roundDouble(it.usagesCount.toDouble() / maxUsageCount)
+      }
+      result[USERS_RATIO_DATA_KEY + suffix] = roundDouble(it.usersRatio)
+      result[USAGES_PER_USER_RATIO_DATA_KEY + suffix] = roundDouble(it.usagesPerUserRatio)
+    }
+    return result
   }
 
   private fun getLocalUsageStatistics(action: AnAction,

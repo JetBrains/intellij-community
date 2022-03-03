@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
 
 class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
@@ -36,7 +37,7 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
 
   private val ACTION_EXTRACT_METHOD = "ExtractMethod"
 
-  val panel: DialogPanel by lazy { createPanel() }
+  val panel: JPanel by lazy { createPanel() }
 
   val makeStaticLabel = if (staticPassFields) {
     JavaRefactoringBundle.message("extract.method.checkbox.make.static.and.pass.fields")

@@ -188,7 +188,7 @@ public class LocalSearchScope extends SearchScope {
 
   @Override
   public String toString() {
-    return Arrays.stream(myScope).map(String::valueOf).collect(Collectors.joining(",", "LocalSearchScope:", ""));
+    return Arrays.stream(myScope).map(String::valueOf).collect(Collectors.joining(", ", "LocalSearchScope: [", "]"));
   }
 
   @Override

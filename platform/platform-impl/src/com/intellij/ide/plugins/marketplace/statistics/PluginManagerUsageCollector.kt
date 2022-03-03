@@ -25,7 +25,7 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 
   companion object {
-    private val EVENT_GROUP = EventLogGroup("plugin.manager", 2)
+    private val EVENT_GROUP = EventLogGroup("plugin.manager", 3)
     private val PLUGINS_GROUP_TYPE = EventFields.Enum<PluginsGroupType>("group")
     private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnableDisableAction>("states") { it.name }
     private val ACCEPTANCE_RESULT = EventFields.Enum<DialogAcceptanceResultEnum>("acceptance_result")

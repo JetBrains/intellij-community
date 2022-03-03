@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.testFramework.TestApplicationManager;
@@ -730,6 +730,23 @@ public final class TreeUtilVisitTest {
   public void testCollectExpandedPaths() {
     testCollectExpandedPaths(set("Root", "1", "2", "22", "3", "33", "333"), test
       -> TreeUtil.collectExpandedPaths(test.getTree()));
+  }
+
+  @Test
+  public void testCollectExpandedPathsUnderCollapsed11() {
+    testCollectExpandedPaths(set(), test -> {
+      TreePath root = test.getTree().getPathForRow(2); // 11
+      return TreeUtil.collectExpandedPaths(test.getTree(), root);
+    });
+  }
+
+  @Test
+  public void testCollectExpandedPathsWithInvisibleRootUnderInvisibleRoot() {
+    testCollectExpandedPaths(set("1", "2", "22", "3", "33", "333"), test -> {
+      TreePath root = test.getTree().getPathForRow(0); // Root
+      test.getTree().setRootVisible(false);
+      return TreeUtil.collectExpandedPaths(test.getTree(), root);
+    });
   }
 
   @Test

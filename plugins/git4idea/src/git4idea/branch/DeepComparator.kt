@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
@@ -221,6 +221,7 @@ class DeepComparator(private val project: Project,
       nonPickedCommits = collectedNonPickedCommits
     }
 
+    @Throws(VcsException::class)
     private fun getCommitsByPatch(root: VirtualFile,
                                   targetBranch: String,
                                   sourceBranch: String): IntSet {
@@ -229,6 +230,7 @@ class DeepComparator(private val project: Project,
       }
     }
 
+    @Throws(VcsException::class)
     private fun getCommitsByIndexReliable(root: VirtualFile, sourceBranch: String, targetBranch: String): IntSet {
       val resultFromGit = getCommitsByPatch(root, targetBranch, sourceBranch)
       if (dataPack == null || !dataPack.isFull) return resultFromGit
@@ -279,7 +281,7 @@ class DeepComparator(private val project: Project,
           }
         }
       }
-      Git.getInstance().runCommandWithoutCollectingOutput(handler)
+      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
       return pickedCommits
     }
 
@@ -314,8 +316,8 @@ class DeepComparator(private val project: Project,
 
   class Factory : VcsLogHighlighterFactory {
 
-    override fun createHighlighter(logDataManager: VcsLogData, logUi: VcsLogUi): VcsLogHighlighter {
-      return getInstance(logDataManager.project, logDataManager, logUi)
+    override fun createHighlighter(logData: VcsLogData, logUi: VcsLogUi): VcsLogHighlighter {
+      return getInstance(logData.project, logData, logUi)
     }
 
     override fun getId(): String {

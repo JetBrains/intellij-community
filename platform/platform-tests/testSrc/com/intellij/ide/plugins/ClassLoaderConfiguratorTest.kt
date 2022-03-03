@@ -9,8 +9,8 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.Murmur3_32Hash
 import com.intellij.util.io.directoryStreamIfExists
+import org.jetbrains.xxh3.Xxh3
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -111,7 +111,8 @@ internal class ClassLoaderConfiguratorTest {
     val rootDir = inMemoryFs.fs.getPath("/")
 
     // toUnsignedLong - avoid `-` symbol
-    val pluginIdSuffix = Integer.toUnsignedLong(Murmur3_32Hash.MURMUR3_32.hashString(javaClass.name + name.methodName)).toString(36)
+    val pluginIdSuffix = Integer.toUnsignedLong(
+      Xxh3.hash32(javaClass.name + name.methodName)).toString(36)
     val dependencyId = "p_dependency_$pluginIdSuffix"
     plugin(rootDir, """
       <idea-plugin package="com.bar">

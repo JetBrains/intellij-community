@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -30,7 +32,7 @@ public abstract class AbstractExternalSystemSettings<
   L extends ExternalSystemSettingsListener<PS>>
   implements Disposable {
 
-  @NotNull private final AtomicNullableLazyValue<ExternalSystemManager<?, ?, ?, ?, ?>> myManager;
+  @NotNull private final NullableLazyValue<ExternalSystemManager<?, ?, ?, ?, ?>> myManager;
   @NotNull private final Topic<L> myChangesTopic;
   @NotNull private final Project myProject;
 
@@ -42,7 +44,7 @@ public abstract class AbstractExternalSystemSettings<
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
     myProject = project;
-    myManager = AtomicNullableLazyValue.createValue(this::deduceManager);
+    myManager = atomicLazyNullable(this::deduceManager);
   }
 
   @Override

@@ -1,5 +1,5 @@
 // "Remove redundant 'if' statement" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo() {
     listOf(1,2,3).find {
         <caret>if (it > 0) {

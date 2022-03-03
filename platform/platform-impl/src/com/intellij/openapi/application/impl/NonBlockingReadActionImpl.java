@@ -399,21 +399,27 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (builder.myCoalesceEquality != null) {
         acquire();
       }
-      backendExecutor.execute(ClientId.decorateRunnable(() -> {
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("Running in background " + this);
-        }
-        try {
-          if (!attemptComputation()) {
-            rescheduleLater();
+      try {
+        backendExecutor.execute(ClientId.decorateRunnable(() -> {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Running in background " + this);
           }
-        }
-        finally {
-          if (builder.myCoalesceEquality != null) {
-            release();
+          try {
+            if (!attemptComputation()) {
+              rescheduleLater();
+            }
           }
-        }
-      }));
+          finally {
+            if (builder.myCoalesceEquality != null) {
+              release();
+            }
+          }
+        }));
+      }
+      catch (RejectedExecutionException e) {
+        LOG.warn("Rejected: " + this);
+        throw e;
+      }
     }
 
     T executeSynchronously() {

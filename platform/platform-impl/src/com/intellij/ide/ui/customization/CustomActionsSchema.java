@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -308,6 +308,11 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return null;
   }
 
+  @Nullable
+  public String getDisplayName(@NotNull String id) {
+    return myIdToName.get(id);
+  }
+
   public void invalidateCustomizedActionGroup(String groupId) {
     ActionGroup group = myIdToActionGroup.get(groupId);
     if (group instanceof CustomisedActionGroup) {
@@ -438,7 +443,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
   }
 
-  private static class ActionUrlComparator implements Comparator<ActionUrl> {
+  private static final class ActionUrlComparator implements Comparator<ActionUrl> {
     static final ActionUrlComparator INSTANCE = new ActionUrlComparator();
     static int DELETED = 1;
 

@@ -1,5 +1,5 @@
 // "Add '@JvmName' annotation" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo {
     @JvmName("bar3")
     fun bar(foo: List<String>): String {

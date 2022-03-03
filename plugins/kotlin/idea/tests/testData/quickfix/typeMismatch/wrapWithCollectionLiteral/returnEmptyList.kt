@@ -1,5 +1,5 @@
 // "Replace with 'emptyList()' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: String?): List<String> {
     val w = a ?: return null<caret>

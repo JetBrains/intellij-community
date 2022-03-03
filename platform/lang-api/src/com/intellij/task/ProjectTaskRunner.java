@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task;
 
 import com.intellij.execution.Executor;
@@ -13,6 +13,7 @@ import org.jetbrains.concurrency.Promise;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * {@link ProjectTaskRunner} provides an extension point to run any IDE tasks using {@link ProjectTaskManager} api.
@@ -70,6 +71,16 @@ public abstract class ProjectTaskRunner {
   public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                          @NotNull ExecuteRunConfigurationTask task,
                                                          @Nullable Executor executor) {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
+    if (tasks.length == 0) return null;
+    if (tasks.length == 1 && tasks[0] instanceof ExecuteRunConfigurationTask) {
+      return createExecutionEnvironment(project, (ExecuteRunConfigurationTask)tasks[0], null);
+    }
     return null;
   }
 

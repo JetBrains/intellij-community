@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code.interpreter;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.DataPoint;
+import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.ListStack;
@@ -402,6 +403,14 @@ public final class InstructionImpact {
             break;
           case CodeConstants.CONSTANT_MethodHandle:
             stack.push(new VarType(((LinkConstant)constant).descriptor));
+            break;
+          case CodeConstants.CONSTANT_Dynamic:
+            ck = pool.getLinkConstant(instr.operand(0));
+            FieldDescriptor constDescriptor = FieldDescriptor.parseDescriptor(ck.descriptor);
+            stack.push(constDescriptor.type);
+            if (constDescriptor.type.stackSize == 2) {
+              stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
+            }
             break;
         }
         break;

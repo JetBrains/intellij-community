@@ -33,9 +33,11 @@ class ConvertFormNotificationProvider : EditorNotifications.Provider<EditorNotif
 
     return EditorNotificationPanel(LightColors.RED).apply {
       setText(DevKitBundle.message("convert.form.editor.notification.label"))
+      /* todo IDEA-282478
       createActionLabel(DevKitBundle.message("convert.form.editor.notification.link.convert")) {
         convertFormToUiDsl(psiClass, formPsiFile)
       }
+      */
     }
   }
 }

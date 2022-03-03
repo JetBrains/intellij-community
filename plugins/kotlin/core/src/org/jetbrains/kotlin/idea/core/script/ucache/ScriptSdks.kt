@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 
 class ScriptSdks(
-    private val sdks: Map<SdkId, Sdk?>,
+    val sdks: Map<SdkId, Sdk?>,
     val nonIndexedClassRoots: Set<VirtualFile>,
     val nonIndexedSourceRoots: Set<VirtualFile>
 ) {

@@ -11,13 +11,12 @@ import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.config.CompilerSettings
-import org.jetbrains.kotlin.config.createArguments
-import org.jetbrains.kotlin.config.isHmpp
-import org.jetbrains.kotlin.config.splitArgumentString
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.core.util.onTextChange
+import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -117,9 +116,9 @@ class KotlinFacetEditorGeneralTab(
             } else {
                 editableCommonArguments = configuration!!.settings.compilerArguments!!
                 editableJvmArguments = editableCommonArguments as? K2JVMCompilerArguments
-                    ?: Kotlin2JvmCompilerArgumentsHolder.getInstance(project).settings.unfrozen() as K2JVMCompilerArguments
+                    ?: Kotlin2JvmCompilerArgumentsHolder.getInstance(project).settings.unfrozen()
                 editableJsArguments = editableCommonArguments as? K2JSCompilerArguments
-                    ?: Kotlin2JsCompilerArgumentsHolder.getInstance(project).settings.unfrozen() as K2JSCompilerArguments
+                    ?: Kotlin2JsCompilerArgumentsHolder.getInstance(project).settings.unfrozen()
                 editableCompilerSettings = configuration.settings.compilerSettings!!
             }
 
@@ -199,13 +198,10 @@ class KotlinFacetEditorGeneralTab(
             compilerConfigurable.setTargetPlatform(getChosenPlatform()?.idePlatformKind)
             compilerConfigurable.setEnabled(!useProjectSettings)
             if (useProjectSettings) {
-                compilerConfigurable.commonCompilerArguments =
-                    KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.unfrozen() as CommonCompilerArguments?
-                compilerConfigurable.k2jvmCompilerArguments =
-                    Kotlin2JvmCompilerArgumentsHolder.getInstance(project).settings.unfrozen() as K2JVMCompilerArguments?
-                compilerConfigurable.k2jsCompilerArguments =
-                    Kotlin2JsCompilerArgumentsHolder.getInstance(project).settings.unfrozen() as K2JSCompilerArguments?
-                compilerConfigurable.compilerSettings = KotlinCompilerSettings.getInstance(project).settings.unfrozen() as CompilerSettings?
+                compilerConfigurable.commonCompilerArguments = KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.unfrozen()
+                compilerConfigurable.k2jvmCompilerArguments = Kotlin2JvmCompilerArgumentsHolder.getInstance(project).settings.unfrozen()
+                compilerConfigurable.k2jsCompilerArguments = Kotlin2JsCompilerArgumentsHolder.getInstance(project).settings.unfrozen()
+                compilerConfigurable.compilerSettings = KotlinCompilerSettings.getInstance(project).settings.unfrozen()
             } else {
                 compilerConfigurable.commonCompilerArguments = editableCommonArguments
                 compilerConfigurable.k2jvmCompilerArguments = editableJvmArguments
@@ -432,6 +428,9 @@ class KotlinFacetEditorGeneralTab(
                 }
                 configuration.settings.targetPlatform = editor.getChosenPlatform()
                 updateMergedArguments()
+
+                // Force code analysis with modified settings
+                runWriteAction { editorContext.project.invalidateProjectRoots() }
             }
         }
     }

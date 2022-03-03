@@ -2,8 +2,8 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.StaticAnalysisAnnotationManager
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
-import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.DEFAULT_UNSTABLE_API_ANNOTATIONS
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
@@ -28,7 +28,8 @@ import javax.swing.JPanel
 class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
 
   @JvmField
-  val unstableApiAnnotations: MutableList<String> = ExternalizableStringSet(*DEFAULT_UNSTABLE_API_ANNOTATIONS.toTypedArray())
+  val unstableApiAnnotations: MutableList<String> =
+    ExternalizableStringSet(*StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations.toTypedArray())
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (unstableApiAnnotations.none { AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(it, holder.file) }) {

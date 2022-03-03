@@ -1,3 +1,8 @@
+_winapi.[A-Z_]+_PRIORITY_CLASS
+_winapi.CREATE_[A-Z_]+
+_winapi.DETACHED_PROCESS
+_winapi.FILE_TYPE_[A-Z]+
+
  # The following methods were changed in point releases from Python 3.6 to 3.9
  # as part of a security fix. These excludes can be removed when the GitHub
  # action workflow uses Python versions that include the fix (adding a
@@ -9,3 +14,6 @@ urllib.parse.parse_qs
 urllib.parse.parse_qsl
 
 os.startfile
+
+# Exists at runtime, but missing from stubs
+socket.MsgFlag.MSG_ERRQUEUE

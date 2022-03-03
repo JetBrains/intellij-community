@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.openapi.application.WriteAction
@@ -13,6 +13,9 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.throwIfNotEmpty
 import org.jetbrains.annotations.ApiStatus
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -28,7 +31,7 @@ import kotlin.properties.Delegates
  * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
  * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
  */
-class TemporaryDirectory : ExternalResource() {
+open class TemporaryDirectory : ExternalResource() {
   private val paths = SmartList<Path>()
   private var sanitizedName: String by Delegates.notNull()
 
@@ -67,11 +70,16 @@ class TemporaryDirectory : ExternalResource() {
   }
 
   override fun apply(base: Statement, description: Description): Statement {
-    sanitizedName = testNameToFileName(description.methodName)
-    root = Paths.get(FileUtilRt.getTempDirectory())
+    before(description.methodName)
     return super.apply(base, description)
   }
 
+  
+  protected fun before(testName: String) {
+    sanitizedName = testNameToFileName(testName)
+    root = Paths.get(FileUtilRt.getTempDirectory())
+  }
+  
   @ApiStatus.Internal
   fun init(commonPrefix: String, root: Path) {
     if (this.root != null) {
@@ -196,4 +204,15 @@ private fun generateName(fileName: String): String {
     nameBuilder.append(fileName, extIndex, fileName.length)
   }
   return nameBuilder.toString()
+}
+
+class TemporaryDirectoryExtension : TemporaryDirectory(), BeforeEachCallback, AfterEachCallback {
+  override fun afterEach(context: ExtensionContext?) {
+    after()
+  }
+  
+  override fun beforeEach(context: ExtensionContext) {
+    before(context.testMethod.map { it.name }.orElse(context.displayName))
+  }
+
 }

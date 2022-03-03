@@ -40,6 +40,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -406,15 +407,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     if (getTabCount() > 1) {
       Component focusOwner = FocusManager.getCurrentManager().getFocusOwner();
       if (focusOwner instanceof EditorComponentImpl) {
-        int currIndex = getIndexOf(getSelectedInfo());
-        if (currIndex >= 0) {
-          if (navigationAction instanceof PreviousTabAction) {
-            return currIndex > 0;
-          }
-          else if (navigationAction instanceof NextTabAction) {
-            return currIndex < getTabCount() - 1;
-          }
-        }
+        return getIndexOf(getSelectedInfo()) >= 0 &&
+               (navigationAction instanceof PreviousTabAction || navigationAction instanceof NextTabAction);
       }
     }
     return false;
@@ -423,19 +417,16 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   void navigateToTab(@NotNull AnAction navigationAction) {
     int currIndex = getIndexOf(getSelectedInfo());
     if (currIndex >= 0) {
+      int newIndex = currIndex;
       if (navigationAction instanceof PreviousTabAction) {
-        if (currIndex > 0) {
-          currIndex --;
-          TabInfo newInfo = getTabAt(currIndex);
-          select(newInfo, true);
-        }
+        newIndex = (currIndex > 0 ? currIndex : getTabCount()) - 1;
       }
       else if (navigationAction instanceof NextTabAction) {
-        if (currIndex < getTabCount() - 1) {
-          currIndex ++;
-          TabInfo newInfo = getTabAt(currIndex);
-          select(newInfo, true);
-        }
+        newIndex = currIndex < getTabCount() - 1 ? currIndex + 1 : 0;
+      }
+      if (newIndex != currIndex) {
+        TabInfo newInfo = getTabAt(newIndex);
+        select(newInfo, true);
       }
     }
   }

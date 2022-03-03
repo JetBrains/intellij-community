@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.klib
 
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.compiled.ClsStubBuilder
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder
@@ -25,7 +26,7 @@ open class KlibMetadataStubBuilder(
 
     override fun buildFileStub(content: FileContent): PsiFileStub<*>? {
         val virtualFile = content.file
-        assert(virtualFile.fileType == fileType) { "Unexpected file type ${virtualFile.fileType}" }
+        assert(FileTypeRegistry.getInstance().isFileOfType(virtualFile, fileType)) { "Unexpected file type ${virtualFile.fileType}" }
 
         val file = readFile(virtualFile) ?: return null
 

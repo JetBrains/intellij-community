@@ -212,7 +212,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
     myImage = image;
     myVolatileImage = volatileImage;
-    myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect));
+    SwingUtilities.invokeLater(() -> myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect)));
   }
 
   @Override

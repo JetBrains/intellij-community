@@ -413,6 +413,7 @@ object LocalTrackerDiffUtil {
     }
 
     override fun getPreferredSize(): Dimension {
+      if (!checkbox.isVisible) return Dimension()
       val size = checkbox.preferredSize
       val gutter = editor.gutterComponentEx
       val gutterWidth = gutter.lineMarkerFreePaintersAreaOffset

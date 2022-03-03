@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import org.junit.Assert
 
 internal fun artifact(project: Project, name: String): Artifact {
@@ -29,7 +30,7 @@ internal fun artifactEntity(project: Project, name: String): ArtifactEntity {
 }
 
 internal fun assertTreesEquals(project: Project, left: PackagingElement<*>, right: PackagingElementEntity) {
-  val rightElement = right.toElement(project, WorkspaceEntityStorageBuilder.create())
+  val rightElement = right.toElement(project, VersionedEntityStorageOnBuilder(WorkspaceEntityStorageBuilder.create()))
 
   assertElementsEquals(left, rightElement)
 }

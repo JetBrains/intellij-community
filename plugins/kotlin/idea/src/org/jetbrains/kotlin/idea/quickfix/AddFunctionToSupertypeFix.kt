@@ -54,6 +54,8 @@ class AddFunctionToSupertypeFix private constructor(
 
     override fun getFamilyName() = KotlinBundle.message("fix.add.function.supertype.family")
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         CommandProcessor.getInstance().runUndoTransparentAction {
             if (functions.size == 1 || editor == null || !editor.component.isShowing) {

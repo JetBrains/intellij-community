@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="cloud-config-client">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/cloud-config-client.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/cloud-config-client-src.zip!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/cloud-config-client-src.zip!/CloudConfig-master/client/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/cloud-config-client-src.zip!/CloudConfig-master/client/src/test/java" />
+    </SOURCES>
+  </library>
+</component>

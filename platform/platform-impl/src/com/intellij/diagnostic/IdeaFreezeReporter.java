@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -51,7 +51,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
     if (!DEBUG && PluginManagerCore.isRunningFromSources() || (!app.isEAP() && !app.isInternal())) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {

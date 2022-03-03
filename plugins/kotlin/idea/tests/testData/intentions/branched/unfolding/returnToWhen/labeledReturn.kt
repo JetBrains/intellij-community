@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun main() {
     run label@{
         <caret>return@label when {

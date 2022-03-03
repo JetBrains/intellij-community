@@ -123,19 +123,19 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
     long usedMem = allocatedMem - unusedMem;
 
     int usedBarLength = (int)(barWidth * usedMem / maxMem);
-    int unusedBarLength = (int)(barWidth * unusedMem / maxMem);
+    int allocatedBarLength = (int)(barWidth * allocatedMem / maxMem);
 
     // background
     g.setColor(UIUtil.getPanelBackground());
     g.fillRect(0, 0, barWidth, size.height - 1);
 
+    // gauge (allocated)
+    g.setColor(UNUSED_COLOR);
+    g.fillRect(0, 0, allocatedBarLength, size.height - 1);
+
     // gauge (used)
     g.setColor(USED_COLOR);
     g.fillRect(0, 0, usedBarLength, size.height - 1);
-
-    // gauge (unused)
-    g.setColor(UNUSED_COLOR);
-    g.fillRect(usedBarLength, 0, unusedBarLength, size.height - 1);
 
     //text
     super.paintComponent(g);

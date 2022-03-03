@@ -213,6 +213,14 @@ public class CodeInsightUtils {
             }
         }
 
+        if (!parent.equals(element1) && parent.getTextRange().getStartOffset() == startOffset) {
+            for (var aClass : classes) {
+                if (aClass.isInstance(parent)) {
+                    result.add(parent);
+                }
+            }
+        }
+
         return result;
     }
 

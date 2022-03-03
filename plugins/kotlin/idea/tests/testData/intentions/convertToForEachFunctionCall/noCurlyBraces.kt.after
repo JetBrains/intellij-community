@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Name shadowed: i
 // AFTER-WARNING: The expression is unused
 // AFTER-WARNING: The expression is unused

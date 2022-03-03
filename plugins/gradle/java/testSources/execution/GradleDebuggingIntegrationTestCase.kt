@@ -98,15 +98,16 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
         .doesNotExist()
       return
     }
+    val contentAssertion = fileAssertion.content()
     if (shouldBeDebugged) {
-      fileAssertion
+      contentAssertion
         .describedAs("Task '$printArgsTaskName' should be debugged")
-        .matches { debugString in it.readText() }
+        .contains(debugString)
     }
     else {
-      fileAssertion
+      contentAssertion
         .describedAs("Task '$printArgsTaskName' should not be debugged")
-        .matches { debugString !in it.readText() }
+        .doesNotContain(debugString)
     }
   }
 

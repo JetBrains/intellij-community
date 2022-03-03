@@ -5,15 +5,14 @@ import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 @CompileStatic
 class ProductModulesLayout {
-  public static List<String> DEFAULT_BUNDLED_PLUGINS = ["intellij.platform.images"]
+  public static final List<String> DEFAULT_BUNDLED_PLUGINS = List.of("intellij.platform.images")
 
   /**
    * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
@@ -83,7 +82,22 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
    */
-  Consumer<PlatformLayout> platformLayoutCustomizer = {} as Consumer<PlatformLayout>
+  BiConsumer<PlatformLayout, BuildContext> platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+    @Override
+    void accept(PlatformLayout layout, BuildContext context) {
+    }
+  }
+
+  void appendPlatformCustomizer(BiConsumer<PlatformLayout, BuildContext> customizer) {
+    BiConsumer<PlatformLayout, BuildContext> prev = platformLayoutCustomizer
+    platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+      @Override
+      void accept(PlatformLayout layout, BuildContext context) {
+        prev.accept(layout, context)
+        customizer.accept(layout, context)
+      }
+    }
+  }
 
   /**
    * Names of the modules which classpath will be used to build searchable options index <br>
@@ -112,7 +126,7 @@ class ProductModulesLayout {
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
-  List<String> compatiblePluginsToIgnore = []
+  List<String> compatiblePluginsToIgnore = new ArrayList<>()
 
   /**
    * Module names which should be excluded from this product.
@@ -132,13 +146,6 @@ class ProductModulesLayout {
                     .findAll { enabledPluginModules.contains(it.mainModule) }
                     .collectMany { it.includedModuleNames })
     return result
-  }
-
-  /**
-   * @deprecated this method isn't supposed to be used in product build scripts
-   */
-  List<String> getIncludedPlatformModules() {
-    DistributionJARsBuilder.getIncludedPlatformModules(this)
   }
 
   /**

@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
@@ -67,5 +68,12 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
   @Override
   public Icon getIcon(@IconFlags int flags) {
     return AllIcons.Actions.RealIntentionBulb;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(AnalysisBundle.message("empty.inspection.action.description", myName));
   }
 }

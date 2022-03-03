@@ -5,7 +5,7 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.kotlin.KotlinConverter
 import org.junit.Test
 
-class SimpleKotlinRenderLogTest : AbstractKotlinUastTest(), AbstractKotlinRenderLogTest {
+class SimpleKotlinRenderLogTest12 : AbstractKotlinUastTest(), AbstractKotlinRenderLogTest {
 
     override fun check(testName: String, file: UFile) = super.check(testName, file)
 

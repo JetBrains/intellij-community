@@ -1,6 +1,6 @@
 // "Add '@OptIn(B::class)' annotation to containing file 'existingFileAnnotationWithPackage.kt'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_RUNTIME
+// WITH_STDLIB
 @file:OptIn(A::class, B::class)
 
 package p

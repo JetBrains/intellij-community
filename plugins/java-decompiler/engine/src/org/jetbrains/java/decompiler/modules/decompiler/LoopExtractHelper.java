@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -59,12 +60,12 @@ public final class LoopExtractHelper {
   }
 
   private static boolean extractLoop(DoStatement stat) {
-    if (stat.getLooptype() != DoStatement.LOOP_DO) {
+    if (stat.getLoopType() != LoopType.DO) {
       return false;
     }
 
     for (StatEdge edge : stat.getLabelEdges()) {
-      if (edge.getType() != StatEdge.TYPE_CONTINUE && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
+      if (edge.getType() != StatEdge.TYPE_CONTINUE && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
         return false;
       }
     }

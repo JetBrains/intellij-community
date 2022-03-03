@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -21,7 +22,7 @@ import java.util.List;
 public final class NullabilityUtil {
 
   public static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field) {
-    if (DfaPsiUtil.isFinalField(field)) {
+    if (DfaPsiUtil.isFinalField(field) && PsiAugmentProvider.canTrustFieldInitializer(field)) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null) {
         return Pair.create(initializer, getExpressionNullability(initializer));

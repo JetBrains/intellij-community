@@ -453,9 +453,14 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
 // region WRAPPING
 
+  /**
+   * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
+   * overwrite this one. Call {@link #getRightMargin(Language)} method instead.</b>
+   */
   @ApiStatus.Internal
   @Property(externalName = "max_line_length")
   public int RIGHT_MARGIN = 120;
+
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
    * overwrite this one. Call {@link #isWrapOnTyping(Language)} method instead.</b>
@@ -1000,16 +1005,28 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     setDefaultRightMargin(rightMargin);
   }
 
+  /**
+   * @return The globally set right margin (hard wrap boundary) as configured at the top of Settings|Editor|Code Style. To get the
+   * actual right margin in effect call {@link #getRightMargin(Language)}
+   */
   public int getDefaultRightMargin() {
     return RIGHT_MARGIN;
   }
 
+  /**
+   * Set the global right margin (hard wrap boundary) which will be used for any language which doesn't define its own margin in
+   * {@link CommonCodeStyleSettings#RIGHT_MARGIN}
+   *
+   * @param rightMargin The new right margin to set.
+   *
+   * @see #setRightMargin(Language, int)
+   */
   public void setDefaultRightMargin(int rightMargin) {
     RIGHT_MARGIN = rightMargin;
   }
 
   /**
-   * Defines whether or not wrapping should occur when typing reaches right margin.
+   * Defines whether wrapping should occur when typing reaches right margin.
    * @param language  The language to check the option for or null for a global option.
    * @return True if wrapping on right margin is enabled.
    */

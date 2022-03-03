@@ -214,17 +214,11 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
         for (child in testrun.getChildren("suite")) {
           child.removeAttribute("duration")
           for (testChild in child.getChildren("test")) {
-            testChild.removeAttribute("duration")
-
-            // Stacktrace for LocalJavaTargetTest differs here due to usage of AppMainV2 in ProcessProxyFactoryImpl;
-            // let's mask that; AppMainV2 won't be used in production, only when running from sources
-            testChild.getChildren("output").forEach {
-              val content = it.getContent(0)
-              assertEquals(writer.toString(), Content.CType.Text, content.cType)
-              val contentText = content.value
-              it.setContent(Text(contentText.substring(0, contentText.length.coerceAtMost(600))))
-            }
+            purifyTestNode(testChild, writer)
           }
+        }
+        for (testChild in testrun.getChildren("test")) {
+          purifyTestNode(testChild, writer)
         }
 
         val expectedText = when (executionMode) {
@@ -234,17 +228,33 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
           else -> {
             val element = JDOMUtil.load(expectedTestsResultExported)
             element.getChildren("suite").forEach { suite ->
-              suite.getChildren("test").forEach { testElement ->
-                removeContentsPartially(testElement) {
-                  it?.text?.contains("Debugger:") ?: false
-                }
-              }
+              suite.getChildren("test").forEach(::removeDebuggerOutput)
             }
+            element.getChildren("test").forEach(::removeDebuggerOutput)
             JDOMUtil.write(element)
           }
         }
         assertEquals(output, expectedText, JDOMUtil.write(testrun))
       }
+    }
+  }
+
+  private fun purifyTestNode(testNode: Element, writer: StringWriter) {
+    testNode.removeAttribute("duration")
+
+    // Stacktrace for LocalJavaTargetTest differs here due to usage of AppMainV2 in ProcessProxyFactoryImpl;
+    // let's mask that; AppMainV2 won't be used in production, only when running from sources
+    testNode.getChildren("output").forEach {
+      val content = it.getContent(0)
+      assertEquals(writer.toString(), Content.CType.Text, content.cType)
+      val contentText = content.value
+      it.setContent(Text(contentText.substring(0, contentText.length.coerceAtMost(600))))
+    }
+  }
+
+  private fun removeDebuggerOutput(testElement: Element) {
+    removeContentsPartially(testElement) {
+      it?.text?.contains("Debugger:") ?: false
     }
   }
 

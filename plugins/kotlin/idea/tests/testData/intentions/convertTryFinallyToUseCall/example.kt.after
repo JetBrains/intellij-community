@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // TODO: seems a bug
 // AFTER-WARNING: Name shadowed: reader
 // AFTER-WARNING: Parameter 'args' is never used

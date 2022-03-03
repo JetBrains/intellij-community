@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
@@ -27,7 +27,7 @@ import java.awt.event.KeyListener
 import java.io.File
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
-  AbstractNewProjectWizardStep(parent)
+  AbstractNewProjectWizardStep(parent), IntelliJNewProjectWizardData
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
@@ -50,11 +50,13 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   private val moduleNameProperty = propertyGraph.graphProperty { parent.name }
   private val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
   private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
+  private val addSampleCodeProperty = propertyGraph.graphProperty { false }
 
-  protected val sdk by sdkProperty
-  protected var moduleName by moduleNameProperty
-  protected var contentRoot by contentRootProperty
-  protected var moduleFileLocation by moduleFileLocationProperty
+  final override var sdk by sdkProperty
+  final override var moduleName by moduleNameProperty
+  final override var contentRoot by contentRootProperty
+  final override var moduleFileLocation by moduleFileLocationProperty
+  final override var addSampleCode by addSampleCodeProperty
 
   private var userDefinedContentRoot: Boolean = false
   private var userDefinedModuleFileLocation: Boolean = false
@@ -82,7 +84,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
           .columns(COLUMNS_MEDIUM)
       }
       customOptions()
-      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings"), topGroupGap = true) {
+      row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+      }.topGap(TopGap.SMALL)
+      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
         if (context.isCreatingNewProject) {
           row(UIBundle.message("label.project.wizard.new.project.module.name")) {
             textField()
@@ -126,11 +132,15 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
               })
             }
         }.bottomGap(BottomGap.SMALL)
-      }
+
+        customAdditionalOptions()
+      }.topGap(TopGap.MEDIUM)
     }
   }
 
   open fun Panel.customOptions() {}
+
+  open fun Panel.customAdditionalOptions() {}
 
   private fun ValidationInfoBuilder.validateModuleName(): ValidationInfo? {
     if (moduleName.isEmpty()) return error(JavaUiBundle.message("module.name.location.dialog.message.enter.module.name"))

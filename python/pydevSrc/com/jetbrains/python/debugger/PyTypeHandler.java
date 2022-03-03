@@ -24,18 +24,26 @@ public final class PyTypeHandler {
   private static final Formatter STR_FORMATTER = new Formatter() {
     @Override
     public String format(final String value) {
-      return "'" +
-             StringUtil.replace(value, "\\", "\\\\").replace("'", "\\'") +
-             '\'';
+      String escapedString = StringUtil.replace(value, "\\", "\\\\");
+      if (value.contains("'")) {
+        return "\"" + escapedString + "\"";
+      }
+      else {
+        return "'" + escapedString + '\'';
+      }
     }
   };
 
   private static final Formatter UNI_FORMATTER = new Formatter() {
     @Override
     public String format(final String value) {
-      return "u'" +
-             StringUtil.replace(value, "\\", "\\\\").replace("'", "\\'") +
-             '\'';
+      String escapedString = StringUtil.replace(value, "\\", "\\\\");
+      if (value.contains("'")) {
+        return "u\"" + escapedString + "\"";
+      }
+      else {
+        return "u'" + escapedString + '\'';
+      }
     }
   };
 

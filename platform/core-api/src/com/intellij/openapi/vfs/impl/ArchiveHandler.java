@@ -51,7 +51,7 @@ public abstract class ArchiveHandler {
     }
   }
 
-  private final File myPath;
+  private volatile File myPath;
   private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<>(null);
   private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
@@ -63,6 +63,13 @@ public abstract class ArchiveHandler {
 
   public @NotNull File getFile() {
     return myPath;
+  }
+
+  protected void setFile(@NotNull File path) {
+    synchronized (myLock) {
+      assert myEntries.get() == null && myChildrenEntries.get() == null && !myCorrupted : "Archive already opened";
+      myPath = path;
+    }
   }
 
   public @Nullable FileAttributes getAttributes(@NotNull String relativePath) {
@@ -270,29 +277,6 @@ public abstract class ArchiveHandler {
     String parentPath = p > 0 ? normalizedName.substring(0, p) : "";
     String shortName = p > 0 ? normalizedName.substring(p + 1) : normalizedName;
     return new Pair<>(parentPath, shortName);
-  }
-
-  /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  protected @NotNull EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
-    EntryInfo entry = map.get(entryName);
-    if (entry == null) {
-      int slashP = entryName.lastIndexOf('/');
-      int p = Math.max(slashP, entryName.lastIndexOf('\\'));
-      String parentName = p > 0 ? entryName.substring(0, p) : "";
-      String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-      String fixedParent = parentName.replace('\\', '/');
-      //noinspection StringEquality
-      if (fixedParent != parentName || slashP == -1 && p != -1) {
-        parentName = fixedParent;
-        entryName = parentName + '/' + shortName;
-      }
-      EntryInfo parent = getOrCreate(map, parentName);
-      entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
-      map.put(entryName, entry);
-    }
-    return entry;
   }
 
   /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */

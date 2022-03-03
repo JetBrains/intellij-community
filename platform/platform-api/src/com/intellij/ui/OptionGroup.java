@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.border.IdeaTitledBorder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +82,7 @@ public class OptionGroup implements PanelWithAnchor {
 
     JPanel p = new JPanel();
     p.setPreferredSize(new Dimension(0, 0));
-    panel.add(p, new GridBagConstraints(0, myOptions.size(), REMAINDER, 1, 0, 1, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(p, new GridBagConstraints(0, myOptions.size(), REMAINDER, 1, 0, 1, NORTH, NONE, JBInsets.emptyInsets(), 0, 0));
 
     if (myTitle != null) {
       IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, true);

@@ -3,11 +3,14 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
-abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement(
-  givenParent), UClass, JavaUElementWithComments, UAnchorOwner, UDeclarationEx {
+@ApiStatus.Internal
+abstract class AbstractJavaUClass(
+  givenParent: UElement?
+) : JavaAbstractUElement(givenParent), UClass, JavaUElementWithComments, UAnchorOwner, UDeclarationEx {
 
   abstract override val javaPsi: PsiClass
 
@@ -43,8 +46,11 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
   override fun hashCode(): Int = javaPsi.hashCode()
 }
 
-class JavaUClass private constructor(override val sourcePsi: PsiClass, val givenParent: UElement?) :
-  AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by sourcePsi {
+@ApiStatus.Internal
+class JavaUClass(
+  override val sourcePsi: PsiClass,
+  val givenParent: UElement?
+) : AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by sourcePsi {
 
   override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(sourcePsi)
 
@@ -66,6 +72,7 @@ class JavaUClass private constructor(override val sourcePsi: PsiClass, val given
   override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
+@ApiStatus.Internal
 class JavaUAnonymousClass(
   override val sourcePsi: PsiAnonymousClass,
   uastParent: UElement?

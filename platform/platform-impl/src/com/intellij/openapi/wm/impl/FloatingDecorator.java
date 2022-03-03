@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ToolbarUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
@@ -112,7 +113,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   @Override
   public void show(){
     UIUtil.decorateWindowHeader(rootPane);
-    UIUtil.setCustomTitleBar(this, rootPane, runnable -> Disposer.register(myDisposable, () -> runnable.run()));
+    ToolbarUtil.setTransparentTitleBar(this, rootPane, runnable -> Disposer.register(myDisposable, () -> runnable.run()));
     boolean isActive = myInfo.isActiveOnStart();
     setFocusableWindowState(isActive);
 

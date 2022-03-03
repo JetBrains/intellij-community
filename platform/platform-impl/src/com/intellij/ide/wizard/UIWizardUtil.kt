@@ -3,11 +3,15 @@
 
 package com.intellij.ide.wizard
 
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.dsl.builder.Panel
 import java.io.File
 
+
+val WizardContext.projectOrDefault get() = project ?: ProjectManager.getInstance().defaultProject
 
 fun getPresentablePath(path: String): String {
   return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
@@ -39,6 +43,16 @@ fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): N
   val s2 = f2(s1)
   val s3 = f3(s2)
   return stepSequence(this, s1, s2, s3)
+}
+
+fun <T1, T2, T3, T4, T5> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4, f4: (T4) -> T5): NewProjectWizardStep
+  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep, T4 : NewProjectWizardStep, T5 : NewProjectWizardStep  {
+
+  val s1 = f1(this)
+  val s2 = f2(s1)
+  val s3 = f3(s2)
+  val s4 = f4(s3)
+  return stepSequence(this, s1, s2, s3, s4)
 }
 
 fun stepSequence(first: NewProjectWizardStep, vararg rest: NewProjectWizardStep): NewProjectWizardStep {

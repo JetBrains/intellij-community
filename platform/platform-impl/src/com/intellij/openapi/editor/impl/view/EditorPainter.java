@@ -987,8 +987,7 @@ public final class EditorPainter implements TextDrawingCallback {
       else {
         FloatList leadingRanges = adjustedLogicalRangeToVisualRanges(
           startOffset, myView.visualPositionToOffset(new VisualPosition(startVisualLine, Integer.MAX_VALUE, true)));
-        FloatList trailingRanges = adjustedLogicalRangeToVisualRanges(
-          myView.visualPositionToOffset(new VisualPosition(endVisualLine, 0)), endOffset);
+        FloatList trailingRanges = adjustedLogicalRangeToVisualRanges(myView.visualLineToOffset(endVisualLine), endOffset);
         if (!leadingRanges.isEmpty() && !trailingRanges.isEmpty()) {
           int minX = Math.min(myCorrector.minX(startVisualLine, endVisualLine), (int)leadingRanges.getFloat(0));
           int maxX = Math.max(myCorrector.maxX(startVisualLine, endVisualLine), (int)trailingRanges.getFloat(trailingRanges.size() - 1));

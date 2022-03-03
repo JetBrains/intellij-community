@@ -14,7 +14,7 @@ public abstract class TestBase extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder().getFixture();
+    final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder(getTestName(false)).getFixture();
     myFixture = factory.createCodeInsightFixture(fixture);
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();

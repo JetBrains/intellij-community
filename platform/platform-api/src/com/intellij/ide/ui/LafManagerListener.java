@@ -15,7 +15,7 @@ import java.util.EventListener;
  */
 public interface LafManagerListener extends EventListener {
   @Topic.AppLevel
-  Topic<LafManagerListener> TOPIC = new Topic<>(LafManagerListener.class, Topic.BroadcastDirection.NONE);
+  Topic<LafManagerListener> TOPIC = new Topic<>(LafManagerListener.class, Topic.BroadcastDirection.NONE, true);
 
   void lookAndFeelChanged(@NotNull LafManager source);
 }

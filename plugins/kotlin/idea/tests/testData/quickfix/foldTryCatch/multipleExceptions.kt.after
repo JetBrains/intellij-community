@@ -1,5 +1,5 @@
 // "Lift assignment out of 'try' expression" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     val x: Int

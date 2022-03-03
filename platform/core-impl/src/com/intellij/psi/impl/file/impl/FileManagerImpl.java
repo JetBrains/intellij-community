@@ -177,7 +177,7 @@ public final class FileManagerImpl implements FileManager {
 
   @Override
   @NotNull
-  public FileViewProvider findViewProvider(@NotNull final VirtualFile file) {
+  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     assert !file.isDirectory();
     FileViewProvider viewProvider = findCachedViewProvider(file);
     if (viewProvider != null) return viewProvider;
@@ -192,13 +192,13 @@ public final class FileManagerImpl implements FileManager {
 
     viewProvider = createFileViewProvider(file, ModelBranch.getFileBranch(file) == null);
     if (file instanceof LightVirtualFile) {
-      checkHasNoOtherPsi(file);
+      checkLightFileHasNoOtherPsi((LightVirtualFile)file);
       return file.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
     }
     return ConcurrencyUtil.cacheOrGet(getVFileToViewProviderMap(), file, viewProvider);
   }
 
-  private void checkHasNoOtherPsi(@NotNull VirtualFile file) {
+  private void checkLightFileHasNoOtherPsi(@NotNull LightVirtualFile file) {
     FileViewProvider vp = FileDocumentManager.getInstance().findCachedPsiInAnyProject(file);
     if (vp != null) {
       Project project = vp.getManager().getProject();
@@ -212,7 +212,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @Override
-  public FileViewProvider findCachedViewProvider(@NotNull final VirtualFile file) {
+  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile file) {
     FileViewProvider viewProvider = getRawCachedViewProvider(file);
 
     if (viewProvider instanceof AbstractFileViewProvider && viewProvider.getUserData(IN_COMA) != null) {
@@ -237,7 +237,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @Override
-  public void setViewProvider(@NotNull final VirtualFile virtualFile, @Nullable final FileViewProvider fileViewProvider) {
+  public void setViewProvider(@NotNull VirtualFile virtualFile, @Nullable FileViewProvider fileViewProvider) {
     FileViewProvider prev = getRawCachedViewProvider(virtualFile);
     if (prev == fileViewProvider) return;
     if (prev != null) {
@@ -246,9 +246,10 @@ public final class FileManagerImpl implements FileManager {
 
     if (fileViewProvider == null) {
       getVFileToViewProviderMap().remove(virtualFile);
+      virtualFile.putUserData(myPsiHardRefKey, null);
     }
     else if (virtualFile instanceof LightVirtualFile) {
-      checkHasNoOtherPsi(virtualFile);
+      checkLightFileHasNoOtherPsi((LightVirtualFile)virtualFile);
       virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
     }
     else {
@@ -258,7 +259,7 @@ public final class FileManagerImpl implements FileManager {
 
   @Override
   @NotNull
-  public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean eventSystemEnabled) {
+  public FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled) {
     FileType fileType = file.getFileType();
     Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), file, fileType);
     FileViewProviderFactory factory = language == null
@@ -320,7 +321,7 @@ public final class FileManagerImpl implements FileManager {
     Map<VirtualFile, FileViewProvider> fileToViewProvider = new HashMap<>(getVFileToViewProviderMap());
     myVFileToViewProviderMap.set(null);
     for (Map.Entry<VirtualFile, FileViewProvider> entry : fileToViewProvider.entrySet()) {
-      final FileViewProvider fileViewProvider = entry.getValue();
+      FileViewProvider fileViewProvider = entry.getValue();
       VirtualFile vFile = entry.getKey();
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
@@ -358,7 +359,7 @@ public final class FileManagerImpl implements FileManager {
     }
 
     dispatchPendingEvents();
-    final FileViewProvider viewProvider = findViewProvider(vFile);
+    FileViewProvider viewProvider = findViewProvider(vFile);
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 

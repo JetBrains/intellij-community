@@ -16,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus
  * but depending on the idempotence of the [producingFunction] this contract could be violated,
  * so to be careful, and it is better to obtain the new [Plow] instance each time.
  */
-@ApiStatus.Experimental
 class Plow<T> private constructor(private val producingFunction: (Processor<T>) -> Boolean) {
 
   @Suppress("UNCHECKED_CAST")
@@ -78,7 +77,11 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
 
     @JvmStatic
     @JvmName("ofIterable")
-    fun <T> Iterable<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }
+    fun <T> Iterable<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }  
+    
+    @JvmStatic
+    @JvmName("ofSequence")
+    fun <T> Sequence<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }
 
     @JvmStatic
     fun <T> concat(vararg plows: Plow<T>): Plow<T> = of { pr -> plows.all { it.processWith(pr) } }

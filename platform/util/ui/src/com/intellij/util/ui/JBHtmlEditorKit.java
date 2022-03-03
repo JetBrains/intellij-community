@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -18,132 +16,78 @@ import javax.swing.text.*;
 import javax.swing.text.html.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
 
+@ApiStatus.NonExtendable
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
 
-  static {
-    ourCommonStyle = StartupUiUtil.createStyleSheet(
-      "code { font-size: 100%; }" +  // small by Swing's default
-      "small { font-size: small; }" +  // x-small by Swing's default
-      "a { text-decoration: none;}" +
-      // override too large default margin "ul {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
-      "ul { margin-left-ltr: 12; margin-right-rtl: 12; }" +
-      // override too large default margin "ol {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
-      // Select ol margin to have the same indentation as "ul li" and "ol li" elements (seems value 22 suites well)
-      "ol { margin-left-ltr: 22; margin-right-rtl: 22; }"
-    );
-    ourNoGapsBetweenParagraphsStyle = StartupUiUtil.createStyleSheet(
-      "p { margin-top: 0; }"
-    );
-    StartupUiUtil.configureHtmlKitStylesheet();
-  }
+  private final @NotNull ViewFactory myViewFactory;
+  private final @NotNull StyleSheet myStyle;
 
-  private static final ViewFactory ourViewFactory = new JBHtmlFactory();
-  private static final StyleSheet ourCommonStyle;
-  private static final StyleSheet ourNoGapsBetweenParagraphsStyle;
-
-  @Override
-  public Cursor getDefaultCursor() {
-    return null;
-  }
-
-  private final StyleSheet style;
-  private final HyperlinkListener myHyperlinkListener;
+  private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
 
-  private FontResolver myFontResolver;
+  private @Nullable CSSFontResolver myFontResolver;
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder}
+   */
+  @Deprecated
   public JBHtmlEditorKit() {
     this(true);
   }
 
+  /**
+   * Used by yann and gitee
+   * @deprecated use {@link HTMLEditorKitBuilder}
+   */
+  @Deprecated
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
-    this(noGapsBetweenParagraphs, false);
+    this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.getDefaultStyleSheet(), false);
+    if (noGapsBetweenParagraphs) {
+      getStyleSheet().addStyleSheet(StyleSheetUtil.INSTANCE.getNO_GAPS_BETWEEN_PARAGRAPHS_STYLE());
+    }
   }
 
   /**
-   * @param disableLinkedCss Disables loading of linked CSS (from URL referenced in {@code <link>} HTML tags). JEditorPane does this loading
+   * @param viewFactory      view factory for this kit, generally should be static
+   * @param defaultStyle     css stylesheet to be used in all documents created by {@link #createDefaultDocument()}
+   * @param disableLinkedCss disables loading of linked CSS (from URL referenced in &lt;link&gt; HTML tags). JEditorPane does this loading
    *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
    */
-  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
+  JBHtmlEditorKit(@NotNull ViewFactory viewFactory,
+                  @NotNull StyleSheet defaultStyle,
+                  boolean disableLinkedCss) {
+    myViewFactory = viewFactory;
     myDisableLinkedCss = disableLinkedCss;
-    style = createStyleSheet();
-    if (noGapsBetweenParagraphs) style.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
-    myHyperlinkListener = new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        Element element = e.getSourceElement();
-        if (element == null) return;
-        if (element.getName().equals("img")) return;
-
-        if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-          setUnderlined(true, element);
-        }
-        else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-          setUnderlined(false, element);
-        }
-      }
-
-      private void setUnderlined(boolean underlined, @NotNull Element element) {
-        AttributeSet attributes = element.getAttributes();
-        Object attribute = attributes.getAttribute(HTML.Tag.A);
-        if (attribute instanceof MutableAttributeSet) {
-          MutableAttributeSet a = (MutableAttributeSet)attribute;
-
-          Object href = a.getAttribute(HTML.Attribute.HREF);
-          Pair<Integer, Integer> aRange = findRangeOfParentTagWithGivenAttribute(element, href, HTML.Tag.A, HTML.Attribute.HREF);
-
-          a.addAttribute(CSS.Attribute.TEXT_DECORATION, underlined ? "underline" : "none");
-          ((StyledDocument)element.getDocument()).setCharacterAttributes(aRange.first, aRange.second - aRange.first, a, false);
-        }
-      }
-
-      /**
-       * There was a bug that if the anchor tag contained some span block, e.g.
-       * {@code <a><span>Objects.</span><span>equals()</span></a>} then only one block
-       * was underlined on mouse hover.
-       *
-       * <p>That was due to the receiver of the {@code HyperlinkEvent} was only one of child blocks
-       * and we need to properly find the range occupied by the whole parent.</p>
-       */
-      private @NotNull Pair<Integer, Integer> findRangeOfParentTagWithGivenAttribute(
-        @NotNull Element element,
-        Object elementAttributeValue,
-        @NotNull HTML.Tag tag,
-        @NotNull HTML.Attribute attribute
-      ) {
-        HtmlIteratorWrapper anchorTagIterator = new HtmlIteratorWrapper(((HTMLDocument)element.getDocument()).getIterator(tag));
-        return StreamSupport.stream(anchorTagIterator.spliterator(), false)
-          .filter(it -> Objects.equals(it.getAttributes().getAttribute(attribute), elementAttributeValue))
-          .filter(it -> it.getStartOffset() <= element.getStartOffset() && element.getStartOffset() <= it.getEndOffset())
-          .map(it -> new Pair<>(it.getStartOffset(), it.getEndOffset()))
-          .findFirst()
-          .orElse(new Pair<>(element.getStartOffset(), element.getEndOffset()));
-      }
-    };
+    myStyle = defaultStyle;
   }
 
   /**
    * This allows to impact resolution of fonts from CSS attributes of text
    */
-  public void setFontResolver(@Nullable FontResolver fontResolver) {
+  public void setFontResolver(@Nullable CSSFontResolver fontResolver) {
     myFontResolver = fontResolver;
   }
 
   @Override
   public StyleSheet getStyleSheet() {
-    return style;
+    return myStyle;
+  }
+
+  /**
+   * Will not work as one might expect it to.
+   * To override default style you should use the provided constructor.
+   */
+  @Override
+  public void setStyleSheet(StyleSheet style) {
+    //prevent setting the global style
   }
 
   @Override
@@ -159,12 +103,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     return doc;
   }
 
-  public static StyleSheet createStyleSheet() {
-    StyleSheet style = new StyleSheet();
-    style.addStyleSheet(ObjectUtils.notNull((StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle"),
-                                            StartupUiUtil.getDefaultHtmlKitCss()));
-    style.addStyleSheet(ourCommonStyle);
-    return style;
+  @Override
+  public Cursor getDefaultCursor() {
+    return null;
   }
 
   @Override
@@ -206,7 +147,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   @Override
   public ViewFactory getViewFactory() {
-    return ourViewFactory;
+    return myViewFactory;
   }
 
   @NotNull
@@ -239,232 +180,18 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
+  /**
+   * @see HTMLEditorKitBuilder
+   * @deprecated in favor of {@link ExtendableHTMLViewFactory}
+   */
+  @Deprecated
   public static class JBHtmlFactory extends HTMLFactory {
+
+    private final ViewFactory myDelegate = ExtendableHTMLViewFactory.DEFAULT;
 
     @Override
     public View create(Element elem) {
-      AttributeSet attrs = elem.getAttributes();
-      if ("img".equals(elem.getName())) {
-        String src = (String)attrs.getAttribute(HTML.Attribute.SRC);
-        // example: "data:image/png;base64,ENCODED_IMAGE_HERE"
-        if (src != null && src.startsWith("data:image") && src.contains("base64")) {
-          String[] split = src.split(",");
-          if (split.length == 2) {
-            try (ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(split[1]))) {
-              BufferedImage image = ImageIO.read(bis);
-              if (image != null) {
-                return new MyBufferedImageView(elem, image);
-              }
-            }
-            catch (IllegalArgumentException | IOException e) {
-              LOG.debug(e);
-            }
-          }
-        }
-      }
-      else if ("icon".equals(elem.getName())) {
-        Object src = attrs.getAttribute(HTML.Attribute.SRC);
-        if (src instanceof String) {
-          Icon icon = getIcon((String)src);
-          if (icon != null) {
-            return new MyIconView(elem, icon);
-          }
-        }
-      }
-      return super.create(elem);
-    }
-
-    @Internal
-    protected @Nullable Icon getIcon(@NotNull String src) {
-      return IconLoader.findIcon(src, JBHtmlEditorKit.class, true, false);
-    }
-
-    private static final class MyBufferedImageView extends View {
-      private static final int DEFAULT_BORDER = 0;
-      private final BufferedImage myBufferedImage;
-      private final int width;
-      private final int height;
-      private final int border;
-      private final float vAlign;
-
-      private MyBufferedImageView(Element elem, BufferedImage myBufferedImage) {
-        super(elem);
-        this.myBufferedImage = myBufferedImage;
-        int width = getIntAttr(HTML.Attribute.WIDTH, -1);
-        int height = getIntAttr(HTML.Attribute.HEIGHT, -1);
-        if (width < 0 && height < 0) {
-          this.width = myBufferedImage.getWidth();
-          this.height = myBufferedImage.getHeight();
-        }
-        else if (width < 0) {
-          this.width = height * getAspectRatio();
-          this.height = height;
-        }
-        else if (height < 0) {
-          this.width = width;
-          this.height = width / getAspectRatio();
-        }
-        else {
-          this.width = width;
-          this.height = height;
-        }
-        this.border = getIntAttr(HTML.Attribute.BORDER, DEFAULT_BORDER);
-        Object alignment = elem.getAttributes().getAttribute(HTML.Attribute.ALIGN);
-        float vAlign = 1.0f;
-        if (alignment != null) {
-          alignment = alignment.toString();
-          if ("top".equals(alignment)) {
-            vAlign = 0f;
-          }
-          else if ("middle".equals(alignment)) {
-            vAlign = .5f;
-          }
-        }
-        this.vAlign = vAlign;
-      }
-
-      private int getAspectRatio() {
-        return myBufferedImage.getWidth() / myBufferedImage.getHeight();
-      }
-
-      private int getIntAttr(HTML.Attribute name, int defaultValue) {
-        AttributeSet attr = getElement().getAttributes();
-        if (attr.isDefined(name)) {
-          String val = (String)attr.getAttribute(name);
-          if (val == null) {
-            return defaultValue;
-          }
-          else {
-            try {
-              return Math.max(0, Integer.parseInt(val));
-            }
-            catch (NumberFormatException x) {
-              return defaultValue;
-            }
-          }
-        }
-        else {
-          return defaultValue;
-        }
-      }
-
-      @Override
-      public float getPreferredSpan(int axis) {
-        switch (axis) {
-          case View.X_AXIS:
-            return width + 2 * border;
-          case View.Y_AXIS:
-            return height + 2 * border;
-          default:
-            throw new IllegalArgumentException("Invalid axis: " + axis);
-        }
-      }
-
-      @Override
-      public String getToolTipText(float x, float y, Shape allocation) {
-        return (String)super.getElement().getAttributes().getAttribute(HTML.Attribute.ALT);
-      }
-
-      @Override
-      public void paint(Graphics g, Shape a) {
-        Rectangle bounds = a.getBounds();
-        g.drawImage(myBufferedImage, bounds.x + border, bounds.y + border, width, height, null);
-      }
-
-      @Override
-      public Shape modelToView(int pos, Shape a, Position.Bias b) {
-        int p0 = getStartOffset();
-        int p1 = getEndOffset();
-        if ((pos >= p0) && (pos <= p1)) {
-          Rectangle r = a.getBounds();
-          if (pos == p1) {
-            r.x += r.width;
-          }
-          r.width = 0;
-          return r;
-        }
-        return null;
-      }
-
-      @Override
-      public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
-        Rectangle alloc = (Rectangle)a;
-        if (x < alloc.x + alloc.width) {
-          bias[0] = Position.Bias.Forward;
-          return getStartOffset();
-        }
-        bias[0] = Position.Bias.Backward;
-        return getEndOffset();
-      }
-
-      @Override
-      public float getAlignment(int axis) {
-        if (axis == View.Y_AXIS) {
-          return vAlign;
-        }
-        return super.getAlignment(axis);
-      }
-    }
-
-    private static final class MyIconView extends View {
-      private final Icon myViewIcon;
-
-      private MyIconView(Element elem, Icon viewIcon) {
-        super(elem);
-        myViewIcon = viewIcon;
-      }
-
-      @Override
-      public float getPreferredSpan(int axis) {
-        switch (axis) {
-          case View.X_AXIS:
-            return myViewIcon.getIconWidth();
-          case View.Y_AXIS:
-            return myViewIcon.getIconHeight();
-          default:
-            throw new IllegalArgumentException("Invalid axis: " + axis);
-        }
-      }
-
-      @Override
-      public String getToolTipText(float x, float y, Shape allocation) {
-        return (String)super.getElement().getAttributes().getAttribute(HTML.Attribute.ALT);
-      }
-
-      @Override
-      public void paint(Graphics g, Shape allocation) {
-        Graphics2D g2d = (Graphics2D)g;
-        Composite savedComposite = g2d.getComposite();
-        g2d.setComposite(AlphaComposite.SrcOver); // support transparency
-        myViewIcon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
-        g2d.setComposite(savedComposite);
-      }
-
-      @Override
-      public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
-        int p0 = getStartOffset();
-        int p1 = getEndOffset();
-        if ((pos >= p0) && (pos <= p1)) {
-          Rectangle r = a.getBounds();
-          if (pos == p1) {
-            r.x += r.width;
-          }
-          r.width = 0;
-          return r;
-        }
-        throw new BadLocationException(pos + " not in range " + p0 + "," + p1, pos);
-      }
-
-      @Override
-      public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
-        Rectangle alloc = (Rectangle)a;
-        if (x < alloc.x + (alloc.width / 2f)) {
-          bias[0] = Position.Bias.Forward;
-          return getStartOffset();
-        }
-        bias[0] = Position.Bias.Backward;
-        return getEndOffset();
-      }
+      return myDelegate.create(elem);
     }
   }
 
@@ -547,78 +274,121 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  /**
-   * @see #setFontResolver(FontResolver)
-   */
-  public interface FontResolver {
-    /**
-     * Resolves a font for a piece of text, given its CSS attributes. {@code defaultFont} is the result of default resolution algorithm.
-     */
-    @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet);
-  }
+  private static class LinkUnderlineListener implements HyperlinkListener {
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      Element element = e.getSourceElement();
+      if (element == null) return;
+      if (element.getName().equals("img")) return;
 
-
-  /**
-   * Implements {@code java.lang.Iterable} for {@code HTMLDocument.Iterator}
-   */
-  public static final class HtmlIteratorWrapper implements Iterable<HTMLDocument.Iterator> {
-
-    private final @NotNull HTMLDocument.Iterator myDelegate;
-
-    public HtmlIteratorWrapper(@NotNull HTMLDocument.Iterator delegate) {
-      myDelegate = delegate;
+      if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+        setUnderlined(true, element);
+      }
+      else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+        setUnderlined(false, element);
+      }
     }
 
-    @NotNull
-    @Override
-    public Iterator<HTMLDocument.Iterator> iterator() {
-      return new Iterator<>() {
-        @Override
-        public boolean hasNext() {
-          return myDelegate.isValid();
-        }
+    private static void setUnderlined(boolean underlined, @NotNull Element element) {
+      AttributeSet attributes = element.getAttributes();
+      Object attribute = attributes.getAttribute(HTML.Tag.A);
+      if (attribute instanceof MutableAttributeSet) {
+        MutableAttributeSet a = (MutableAttributeSet)attribute;
 
-        @Override
-        public HTMLDocument.Iterator next() {
-          final AttributeSet attributeSet = myDelegate.getAttributes();
-          final int startOffset = myDelegate.getStartOffset();
-          final int endOffset = myDelegate.getEndOffset();
-          final HTML.Tag tag = myDelegate.getTag();
-          HTMLDocument.Iterator current = new HTMLDocument.Iterator() {
-            @Override
-            public AttributeSet getAttributes() {
-              return attributeSet;
-            }
+        Object href = a.getAttribute(HTML.Attribute.HREF);
+        Pair<Integer, Integer> aRange = findRangeOfParentTagWithGivenAttribute(element, href, HTML.Tag.A, HTML.Attribute.HREF);
 
-            @Override
-            public int getStartOffset() {
-              return startOffset;
-            }
+        a.addAttribute(CSS.Attribute.TEXT_DECORATION, underlined ? "underline" : "none");
+        ((StyledDocument)element.getDocument()).setCharacterAttributes(aRange.first, aRange.second - aRange.first, a, false);
+      }
+    }
 
-            @Override
-            public int getEndOffset() {
-              return endOffset;
-            }
+    /**
+     * There was a bug that if the anchor tag contained some span block, e.g.
+     * {@code <a><span>Objects.</span><span>equals()</span></a>} then only one block
+     * was underlined on mouse hover.
+     *
+     * <p>That was due to the receiver of the {@code HyperlinkEvent} was only one of child blocks
+     * and we need to properly find the range occupied by the whole parent.</p>
+     */
+    @SuppressWarnings("SameParameterValue")
+    private static @NotNull Pair<Integer, Integer> findRangeOfParentTagWithGivenAttribute(
+      @NotNull Element element,
+      Object elementAttributeValue,
+      @NotNull HTML.Tag tag,
+      @NotNull HTML.Attribute attribute
+    ) {
+      HtmlIteratorWrapper anchorTagIterator = new HtmlIteratorWrapper(((HTMLDocument)element.getDocument()).getIterator(tag));
+      return StreamSupport.stream(anchorTagIterator.spliterator(), false)
+        .filter(it -> Objects.equals(it.getAttributes().getAttribute(attribute), elementAttributeValue))
+        .filter(it -> it.getStartOffset() <= element.getStartOffset() && element.getStartOffset() <= it.getEndOffset())
+        .map(it -> new Pair<>(it.getStartOffset(), it.getEndOffset()))
+        .findFirst()
+        .orElse(new Pair<>(element.getStartOffset(), element.getEndOffset()));
+    }
 
-            @Override
-            public HTML.Tag getTag() {
-              return tag;
-            }
+    /**
+     * Implements {@code java.lang.Iterable} for {@code HTMLDocument.Iterator}
+     */
+    private static final class HtmlIteratorWrapper implements Iterable<HTMLDocument.Iterator> {
 
-            @Override
-            public void next() {
-              throw new IllegalStateException("Must not be called");
-            }
+      private final @NotNull HTMLDocument.Iterator myDelegate;
 
-            @Override
-            public boolean isValid() {
-              throw new IllegalStateException("Must not be called");
-            }
-          };
-          myDelegate.next();
-          return current;
-        }
-      };
+      private HtmlIteratorWrapper(@NotNull HTMLDocument.Iterator delegate) {
+        myDelegate = delegate;
+      }
+
+      @NotNull
+      @Override
+      public Iterator<HTMLDocument.Iterator> iterator() {
+        return new Iterator<>() {
+          @Override
+          public boolean hasNext() {
+            return myDelegate.isValid();
+          }
+
+          @Override
+          public HTMLDocument.Iterator next() {
+            final AttributeSet attributeSet = myDelegate.getAttributes();
+            final int startOffset = myDelegate.getStartOffset();
+            final int endOffset = myDelegate.getEndOffset();
+            final HTML.Tag tag = myDelegate.getTag();
+            HTMLDocument.Iterator current = new HTMLDocument.Iterator() {
+              @Override
+              public AttributeSet getAttributes() {
+                return attributeSet;
+              }
+
+              @Override
+              public int getStartOffset() {
+                return startOffset;
+              }
+
+              @Override
+              public int getEndOffset() {
+                return endOffset;
+              }
+
+              @Override
+              public HTML.Tag getTag() {
+                return tag;
+              }
+
+              @Override
+              public void next() {
+                throw new IllegalStateException("Must not be called");
+              }
+
+              @Override
+              public boolean isValid() {
+                throw new IllegalStateException("Must not be called");
+              }
+            };
+            myDelegate.next();
+            return current;
+          }
+        };
+      }
     }
   }
 }

@@ -3,15 +3,14 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -86,19 +85,14 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     final String realWhitespace = whitespaceRange.substring(pyFile.getText());
     final String desiredWhitespace = addLineFeed ? "\n" : "";
 
-    // Do not add extra blank line in empty file
-    if (!realWhitespace.equals(desiredWhitespace) && (desiredWhitespace.isEmpty() || whitespaceRange.getStartOffset() != 0)) {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(pyFile.getProject());
-      final Document document = documentManager.getDocument(pyFile);
-      if (document != null) {
-        documentManager.doPostponedOperationsAndUnblockDocument(document);
-        try {
-          document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), desiredWhitespace);
-          return TextRange.from(whitespaceRange.getStartOffset(), desiredWhitespace.length());
-        }
-        finally {
-          documentManager.commitDocument(document);
-        }
+    // Do not add extra blank line in an empty file
+    if (!realWhitespace.equals(desiredWhitespace) && (whitespaceRange.getStartOffset() != 0 || desiredWhitespace.isEmpty())) {
+      TextRange updatedRange = PyUtil.updateDocumentUnblockedAndCommitted(pyFile, document -> {
+        document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), desiredWhitespace);
+        return TextRange.from(whitespaceRange.getStartOffset(), desiredWhitespace.length());
+      });
+      if (updatedRange != null) {
+        return updatedRange;
       }
     }
     return whitespaceRange;

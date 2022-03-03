@@ -7,28 +7,43 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.ExternalEntityMapping
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 object IndexableEntityProviderMethods {
   private val LOG = thisLogger()
 
-  fun findModuleForEntity(entity: ModuleEntity, project: Project): Module? {
+  fun findModuleForEntity(entity: ModuleEntity, storage: WorkspaceEntityStorage, project: Project): Module? =
+    findModuleForEntity(entity, storage.moduleMap, project)
+
+  fun findModuleForEntity(entity: ModuleEntity, map: ExternalEntityMapping<ModuleBridge>, project: Project): Module? {
     val moduleName = entity.name
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName)
-    if (module == null) {
-      LOG.warn("Failed to find module $moduleName")
+    if (module == null && !isModuleUnloaded(entity, map)) {
+      LOG.error("Failed to find module $moduleName")
     }
     return module
   }
 
-  fun createIterators(entity: ModuleEntity, roots: List<VirtualFile>, project: Project): Collection<IndexableFilesIterator> {
+  fun isModuleUnloaded(entity: ModuleEntity, mapping: ExternalEntityMapping<ModuleBridge>): Boolean =
+    mapping.getDataByEntity(entity) == null
+
+  fun createIterators(entity: ModuleEntity,
+                      roots: List<VirtualFile>,
+                      mapping: ExternalEntityMapping<ModuleBridge>,
+                      project: Project): Collection<IndexableFilesIterator> {
     if (roots.isEmpty()) return emptyList()
-    val module = findModuleForEntity(entity, project) ?: return emptyList()
+    val module = findModuleForEntity(entity, mapping, project) ?: return emptyList()
     return createIterators(module, roots)
   }
 
@@ -36,24 +51,11 @@ object IndexableEntityProviderMethods {
     return setOf(ModuleIndexableFilesIteratorImpl(module, roots, true))
   }
 
-  fun createIterators(entity: ModuleEntity,
-                      newRootsToIndex: List<VirtualFile>,
-                      oldRootsToIndex: List<VirtualFile>,
-                      project: Project): Collection<IndexableFilesIterator> {
-    val roots: MutableList<VirtualFile> = ArrayList(newRootsToIndex)
-    roots.removeAll(oldRootsToIndex)
-    return createIterators(entity, roots, project)
-  }
-
-  fun createIterators(entity: ModuleEntity, root: VirtualFile?, project: Project): Collection<IndexableFilesIterator> {
-    return root?.let { createIterators(entity, listOf(root), project) } ?: emptyList()
-  }
-
-  fun createIterators(entity: ModuleEntity, project: Project): Collection<IndexableFilesIterator> {
+  fun createIterators(entity: ModuleEntity, entityStorage: WorkspaceEntityStorage, project: Project): Collection<IndexableFilesIterator> {
     @Suppress("DEPRECATION")
     if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
+      if (isModuleUnloaded(entity, entityStorage.moduleMap)) return emptyList()
       val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
-      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
         if (provider is IndexableEntityProvider.Existing) {
           builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))
@@ -62,7 +64,7 @@ object IndexableEntityProviderMethods {
       return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     }
     else {
-      val module = findModuleForEntity(entity, project)
+      val module = findModuleForEntity(entity, entityStorage, project)
       if (module == null) {
         return emptyList()
       }
@@ -70,13 +72,27 @@ object IndexableEntityProviderMethods {
     }
   }
 
-  fun createIterators(library: LibraryBridge): Collection<IndexableFilesIterator> = createIterators(library, library.libraryId)
-
-  fun createIterators(library: Library, libraryId: LibraryId): Collection<IndexableFilesIterator> {
-    return listOf(LibraryBridgeIndexableFilesIteratorImpl(library, libraryId))
-  }
+  fun createIterators(library: Library): Collection<IndexableFilesIterator> = createIteratorList(library)
 
   fun createIterators(sdk: Sdk): Collection<IndexableFilesIterator> {
     return listOf(SdkIndexableFilesIteratorImpl(sdk))
+  }
+
+  private fun createIteratorList(library: Library): List<IndexableFilesIterator> = listOf(LibraryIndexableFilesIteratorImpl(library))
+
+  private fun getLibIteratorsByName(libraryTable: LibraryTable, name: String): List<IndexableFilesIterator>? =
+    libraryTable.getLibraryByName(name)?.run { createIteratorList(this) }
+
+  fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> {
+    val registrar = LibraryTablesRegistrar.getInstance()
+    getLibIteratorsByName(registrar.libraryTable, name)?.also { return it }
+    for (customLibraryTable in registrar.customLibraryTables) {
+      getLibIteratorsByName(customLibraryTable, name)?.also { return it }
+    }
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let { storage.libraryMap.getDataByEntity(it) }?.also {
+      return createIteratorList(it)
+    }
+    return emptyList()
   }
 }

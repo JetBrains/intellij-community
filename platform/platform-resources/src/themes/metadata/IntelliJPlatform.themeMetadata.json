@@ -126,6 +126,11 @@
       "deprecated": true
     },
     {
+      "key": "ContextHelp.fontSizeOffset",
+      "description": "Font size offset for comments (usually gray description text under components)",
+      "since": "2022.1"
+    },
+    {
       "key": "Counter.background",
       "description": "An oval with a number on the right of a tree item. For example, the number of updates in Plugins or problems in the Project Structure view."
     },
@@ -481,6 +486,41 @@
       "deprecated": true
     },
     {
+      "key": "IconBadge.borderWidth",
+      "since": "2022.1",
+      "description": "Badge border width, assuming that it is for a 20x20 icon"
+    },
+    {
+      "key": "IconBadge.dotRadius",
+      "since": "2022.1",
+      "description": "Badge radius, assuming that it is for a 20x20 icon"
+    },
+    {
+      "key": "IconBadge.dotX",
+      "since": "2022.1",
+      "description": "Badge X-position, assuming that it is for a 20x20 icon"
+    },
+    {
+      "key": "IconBadge.dotY",
+      "since": "2022.1",
+      "description": "Badge Y-position, assuming that it is for a 20x20 icon"
+    },
+    {
+      "key": "IconBadge.errorBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the error status"
+    },
+    {
+      "key": "IconBadge.infoBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the info status"
+    },
+    {
+      "key": "IconBadge.successBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the success status"
+    },
+    {
       "key": "InformationHint.borderColor"
     },
     {
@@ -539,6 +579,31 @@
     {
       "key": "Notification.foreground",
       "description": "Color of the text in notification balloon"
+    },
+    {
+      "key": "Notification.linkForeground",
+      "description": "Color of link actions in the notification."
+    },
+    {
+      "key": "Notification.arc",
+      "description": "Notification border corners radius"
+    },
+    {
+      "key": "Notification.borderInsets",
+      "description": "Top/Left/Bottom/Right insets of the notification"
+    },
+    {
+      "key": "Notification.iconOffsetSize",
+      "description": "Width/HorizontalOffset: Width for icon component, HorizontalOffset horizontal X for start icon"
+    },
+    {
+      "key": "Notification.titleContentInset"
+    },
+    {
+      "key": "Notification.contentActionsInset"
+    },
+    {
+      "key": "Notification.titleActionsInset"
     },
     {
       "key": "Notification.MoreButton.background",
@@ -786,6 +851,11 @@
       "since": "2019.1"
     },
     {
+      "key": "SearchField.errorForeground",
+      "description": "Search field foreground of not found entries",
+      "since": "2022.1"
+    },
+    {
       "key": "SearchMatch.endBackground",
       "description": "The yellow rectangle under the search match text"
     },
@@ -937,6 +1007,26 @@
       "key": "ToggleButton.onForeground"
     },
     {
+      "key": "SegmentedButton.selectedStartBorderColor",
+      "description": "Gradient top color of a selected button border in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "SegmentedButton.selectedEndBorderColor",
+      "description": "Gradient bottom color of a selected button border in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "ToolBar.horizontalToolbarInsets",
+      "description": "Default insets for horizontal action toolbars",
+      "since": "2022.1"
+    },
+    {
+      "key": "ToolBar.verticalToolbarInsets",
+      "description": "Default insets for vertical action toolbars",
+      "since": "2022.1"
+    },
+    {
       "key": "ToolTip.infoForeground",
       "description": "\"Inspection Info\" text in inspection error tooltips",
       "since": "2019.2"
@@ -1035,7 +1125,7 @@
       "since": "2021.3"
     },
     {
-      "key": "ToolWindow.Background",
+      "key": "ToolWindow.background",
       "since": "2021.3"
     },
     {
@@ -1278,32 +1368,32 @@
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.background",
+      "key": "Tooltip.Learning.background",
       "description": "Background for tooltips used in lessons",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.borderColor",
+      "key": "Tooltip.Learning.borderColor",
       "description": "Border color for tooltips used in lessons",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.spanBackground",
+      "key": "Tooltip.Learning.spanBackground",
       "description": "Background for buttons and shortcuts used in lesson tooltips",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.spanForeground",
+      "key": "Tooltip.Learning.spanForeground",
       "description": "Foreground for buttons and shortcuts used in lesson tooltips",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.foreground",
+      "key": "Tooltip.Learning.foreground",
       "description": "Foreground for tooltips text used in lessons",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.stepNumberForeground",
+      "key": "Tooltip.Learning.stepNumberForeground",
       "description": "Foreground for task numbers in lesson tooltips",
       "since": "2021.2"
     },

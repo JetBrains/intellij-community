@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -64,6 +64,15 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
 data class IntEventField(override val name: String) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, value)
+  }
+}
+
+data class RegexpIntEventField(override val name: String, @NonNls val regexp: String) : PrimitiveEventField<Int>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp:$regexp}")
 
   override fun addData(fuData: FeatureUsageData, value: Int) {
     fuData.addData(name, value)
@@ -141,7 +150,7 @@ data class EnumEventField<T : Enum<*>>(override val name: String,
   }
 
   override val validationRule: List<String>
-    get() = listOf("{enum:${enumClass.enumConstants.map(transform).joinToString("|")}}")
+    get() = listOf("{enum:${enumClass.enumConstants.joinToString("|", transform = transform)}}")
 }
 
 data class LongListEventField(override val name: String): ListEventField<Long>() {
@@ -154,7 +163,6 @@ data class LongListEventField(override val name: String): ListEventField<Long>()
 }
 
 abstract class StringListEventField(override val name: String) : ListEventField<String>() {
-
   override fun addData(fuData: FeatureUsageData, value: List<String>) {
     fuData.addData(name, value)
   }
@@ -187,12 +195,11 @@ abstract class StringListEventField(override val name: String) : ListEventField<
   }
 }
 
-data class ClassEventField(override val name: String): PrimitiveEventField<Class<*>?>() {
-  override fun addData(fuData: FeatureUsageData, value: Class<*>?) {
-    if (value != null) {
-      val pluginInfo = getPluginInfo(value)
-      fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
-    }
+data class ClassEventField(override val name: String) : PrimitiveEventField<Class<*>>() {
+
+  override fun addData(fuData: FeatureUsageData, value: Class<*>) {
+    val pluginInfo = getPluginInfo(value)
+    fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
   }
 
   override val validationRule: List<String>

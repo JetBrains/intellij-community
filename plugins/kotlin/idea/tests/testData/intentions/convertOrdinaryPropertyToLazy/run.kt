@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 val x = run {
     foo()
     3

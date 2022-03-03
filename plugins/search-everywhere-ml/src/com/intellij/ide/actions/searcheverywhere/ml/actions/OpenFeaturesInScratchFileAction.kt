@@ -65,7 +65,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
       ElementFeatures(
         info.element.toString(),
         mlWeight,
-        searchSession.getCurrentSearchState()!!.getElementFeatures(id, info.element, info.contributor, info.priority).features
+        searchSession.getCurrentSearchState()!!.getElementFeatures(id, info.element, info.contributor, info.priority).features.toSortedMap()
       )
     }
 

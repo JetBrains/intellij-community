@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
+
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 
-import java.nio.file.Paths
+import java.nio.file.Path
+import java.util.function.Predicate
 
 @CompileStatic
 abstract class MacDistributionCustomizer {
@@ -85,15 +87,16 @@ abstract class MacDistributionCustomizer {
   List<String> extraExecutables = []
 
   /**
+   * Filter for files that is going to be put to `<distribution>/bin` directory.
+   */
+  Predicate<Path> binFilesFilter = { true } as Predicate<Path>
+
+  /**
    * Relative paths to files in macOS distribution which should be signed
    */
   List<String> getBinariesToSign(BuildContext context, JvmArchitecture arch) {
-    List<String> binaries = []
-    def binary = RepairUtilityBuilder.binaryFor(context, OsFamily.MACOS, arch)
-    if (binary != null) {
-      binaries += binary.relativeTargetPath
-    }
-    return binaries
+    RepairUtilityBuilder.Binary binary = RepairUtilityBuilder.binaryFor(context, OsFamily.MACOS, arch)
+    return binary == null ? Collections.<String>emptyList() : List.of(binary.relativeTargetPath)
   }
 
   /**
@@ -102,9 +105,12 @@ abstract class MacDistributionCustomizer {
   String dmgImagePathForEAP = null
 
   /**
-   * If {@code true} will publish sit archive as artifact
+   * If {@code true} will publish sit archive as artifact.
+   *
+   * `true` by default because archive is required for patches.
    */
-  boolean publishArchive = false
+  boolean publishArchive = true
+
   /**
    * Application bundle name: &lt;name&gt;.app. Current convention is to have ProductName.app for release and ProductName Version EAP.app.
    * @param applicationInfo application info that can be used to check for EAP and building version
@@ -121,7 +127,9 @@ abstract class MacDistributionCustomizer {
    * @param applicationInfo application info that can be used to check for EAP and building version
    * @return map propertyName-&gt;propertyValue
    */
-  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
+  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) {
+    return Collections.emptyMap()
+  }
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries
@@ -142,7 +150,7 @@ abstract class MacDistributionCustomizer {
    * @param targetDirectory application bundle directory
    * @param arch distribution target architecture, not null
    */
-  void copyAdditionalFiles(BuildContext context, String targetDirectory, JvmArchitecture arch) {
-    RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, Paths.get(targetDirectory))
+  void copyAdditionalFiles(BuildContext context, Path targetDirectory, JvmArchitecture arch) {
+    RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, targetDirectory)
   }
 }

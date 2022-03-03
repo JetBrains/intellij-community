@@ -73,12 +73,12 @@ public abstract class Language extends UserDataHolderBase {
     myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
-    Language prev = ourRegisteredLanguages.put(langClass, this);
+    Language prev = ourRegisteredLanguages.putIfAbsent(langClass, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this);
     }
 
-    prev = ourRegisteredIDs.put(ID, this);
+    prev = ourRegisteredIDs.putIfAbsent(ID, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(), null, prev, this);
     }

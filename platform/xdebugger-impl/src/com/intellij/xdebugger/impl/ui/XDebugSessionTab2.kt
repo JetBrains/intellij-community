@@ -206,7 +206,9 @@ class XDebugSessionTab2(
 
     myUi.addContent(content, 0, PlaceInGrid.left, false)
 
-    ui.defaults.initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
+    ui.defaults
+      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
+      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION, LayoutAttractionPolicy.FocusOnce())
 
     toolWindow?.let {
       val contentManager = it.contentManager

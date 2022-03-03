@@ -1,9 +1,0 @@
-mypy==0.910
-pytype==2021.10.11
-typed-ast==1.4.3
-black==21.9b0
-flake8==4.0.1
-flake8-bugbear==21.9.2
-flake8-pyi==20.10.0
-isort==5.9.3
-tomli==1.1.0

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 import java.util.*
 
 class MyMap: HashMap<String, String>()

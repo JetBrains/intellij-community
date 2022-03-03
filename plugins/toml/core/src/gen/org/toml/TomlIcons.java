@@ -10,8 +10,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class TomlIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, TomlIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon TomlFile = load("icons/toml-file.svg", 6306347737913995858L, 2);
+  /** 16x16 */ public static final @NotNull Icon TomlFile = load("icons/toml-file.svg", -1954697393, 2);
 }

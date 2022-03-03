@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.editor.ClientEditorManager;
@@ -9,7 +9,7 @@ import com.intellij.util.ui.UIUtil;
 
 import java.util.Optional;
 
-public class ClientCurrentEditorProvider implements CurrentEditorProvider {
+final class ClientCurrentEditorProvider implements CurrentEditorProvider {
   @Override
   public FileEditor getCurrentEditor() {
     Optional<Editor> focusedEditor = ClientEditorManager.getCurrentInstance().editors()

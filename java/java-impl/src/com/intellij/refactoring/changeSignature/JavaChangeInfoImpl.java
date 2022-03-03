@@ -378,6 +378,11 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
+  public @Nullable String getOldReturnType() {
+    return oldType;
+  }
+
+  @Override
   public ThrownExceptionInfo[] getNewExceptions() {
     return newExceptions;
   }

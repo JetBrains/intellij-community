@@ -18,10 +18,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetProgressIndicator;
-import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.*;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
@@ -61,8 +59,8 @@ import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.remote.PyRemotePathMapper;
-import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
+import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -300,8 +298,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     Sdk sdk = getSdk();
     if (sdk != null) {
-      PythonRunConfigurationTargetEnvironmentAdjuster adjuster =
-        PythonRunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
+      RunConfigurationTargetEnvironmentAdjuster adjuster =
+        RunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
       if (adjuster != null) {
         adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
       }
@@ -323,7 +321,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, myConfig.getSdk(), interpreterParameters);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
-    ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
+    ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator, isDebug());
 
     // Attach extensions
     PythonRunConfigurationExtensionsManager.Companion.getInstance()
@@ -339,6 +337,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     pythonExecution.setWorkingDir(getPythonExecutionWorkingDir(targetEnvironmentRequest));
     initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), targetEnvironmentRequest);
     customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
+    PythonScripts.ensureProjectDirIsOnTarget(targetEnvironmentRequest, myConfig.getProject());
     return pythonExecution;
   }
 
@@ -384,9 +383,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   private static ProcessHandler doStartProcess(@NotNull TargetEnvironment targetEnvironment,
                                                @NotNull TargetedCommandLine commandLine,
-                                               @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+                                               @NotNull ProgressIndicator progressIndicator,
+                                               boolean isDebug) throws ExecutionException {
     final ProcessHandler processHandler;
-    processHandler = doCreateProcess(targetEnvironment, commandLine, progressIndicator);
+    processHandler = doCreateProcess(targetEnvironment, commandLine, progressIndicator, isDebug);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
@@ -450,10 +450,19 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   private static ProcessHandler doCreateProcess(@NotNull TargetEnvironment targetEnvironment,
                                                 @NotNull TargetedCommandLine commandLine,
-                                                @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+                                                @NotNull ProgressIndicator progressIndicator,
+                                                boolean isDebug) throws ExecutionException {
     Process process = targetEnvironment.createProcess(commandLine, progressIndicator);
     // TODO [Targets API] [major] The command line should be prefixed with the interpreter identifier (f.e. Docker container id)
     String commandLineString = StringUtil.join(commandLine.getCommandPresentation(targetEnvironment), " ");
+    if (targetEnvironment instanceof LocalTargetEnvironment) {
+      // TODO This special treatment of local target must be replaced with a generalized approach
+      //  (f.e. with an ability of a target environment to match arbitrary local path to a target one)
+      if (isDebug) {
+        return new PyDebugProcessHandler(process, commandLineString, commandLine.getCharset());
+      }
+      return new PythonProcessHandler(process, commandLineString, commandLine.getCharset());
+    }
     return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(), targetEnvironment);
   }
 

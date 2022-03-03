@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.Disposable
@@ -7,7 +7,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -83,24 +83,26 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
   }
 
   override fun assertDefaultProjectState(project: Project) {
-    val notificationAware = ProjectNotificationAware.getInstance(myProject)
+    val notificationAware = AutoImportProjectNotificationAware.getInstance(myProject)
     invokeAndWaitIfNeeded {
       assertEmpty(notificationAware.getProjectsWithNotification())
     }
     assertEquals(expectedImportActionsCounter.get(), actualImportActionsCounter.get())
   }
 
-  override fun <R> waitForImport(action: () -> R): R {
+  override fun waitForImport(action: () -> Project): Project {
     expectedImportActionsCounter.incrementAndGet()
     return waitForProjectReload(action)
   }
 
-  override fun attachProject(project: Project, projectFile: VirtualFile) {
+  override fun attachProject(project: Project, projectFile: VirtualFile): Project {
     AttachExternalProjectAction().perform(project, selectedFile = projectFile)
+    return project
   }
 
-  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
+  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
     ImportProjectFromScriptAction().perform(project, selectedFile = projectFile)
+    return project
   }
 
   override fun cleanupProjectTestResources(project: Project) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -57,6 +57,8 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     }
   }
 
+  private fun isDirectlyTestOnly(member: UDeclaration) = member.findAnnotation(AnnotationUtil.TEST_ONLY) != null
+
   inner class TestOnlyApiUsageProcessor(private val holder: ProblemsHolder) : ApiUsageProcessor {
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
       if (target is PsiMember && sourceNode.uastParent !is UComment) validate(sourceNode, target, holder)
@@ -77,9 +79,9 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
       if (uMember !is UDeclaration) return
       val vft = AnnotationUtil.findAnnotation(member, visibleForTestingAnnotations)
       if (vft == null && !isAnnotatedAsTestOnly(uMember)) return
-      if (isInsideTestOnlyMethod(place)) return
-      if (isInsideTestOnlyField(place)) return
-      if (isInsideTestOnlyClass(place)) return
+      if (isAnnotatedAsTestOnly(place.getContainingUMethod())) return
+      if (isAnnotatedAsTestOnly(place.getContainingUVariable())) return
+      if (isAnnotatedAsTestOnly(place.getContainingUClass())) return
       if (isInsideTestClass(place)) return
       if (isUnderTestSources(sourcePsi)) return
       if (vft != null && member is PsiMember) {
@@ -117,20 +119,12 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
       return null
     }
 
-    private fun isInsideTestOnlyMethod(elem: UElement) = isAnnotatedAsTestOnly(elem.getTopLevelParentOfType(UMethod::class.java))
-
-    private fun isInsideTestOnlyField(elem: UElement) = isAnnotatedAsTestOnly(elem.getTopLevelParentOfType(UField::class.java))
-
-    private fun isInsideTestOnlyClass(elem: UElement) = isAnnotatedAsTestOnly(elem.getTopLevelParentOfType(UClass::class.java))
-
-    private fun isAnnotatedAsTestOnly(member: UDeclaration?): Boolean {
-      return member != null && (isDirectlyTestOnly(member) || isAnnotatedAsTestOnly(member.getContainingUClass()))
-    }
+    private fun isAnnotatedAsTestOnly(member: UDeclaration?): Boolean = member != null && isDirectlyTestOnly(member)
 
     private fun isInsideTestClass(elem: UElement): Boolean {
-      val parent = elem.getTopLevelParentOfType(UClass::class.java)
-      val javaPsi = parent?.javaPsi ?: return false
-      return TestFrameworks.getInstance().isTestClass(javaPsi)
+      val topLevelClass = elem.getTopLevelParentOfType(UClass::class.java)
+      val javaTopLevelClass = topLevelClass?.javaPsi ?: return false
+      return TestFrameworks.getInstance().isTestClass(javaTopLevelClass)
     }
 
     private fun <T : UElement> UElement.getTopLevelParentOfType(c: Class<out T>): T? {
@@ -158,8 +152,6 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
       holder.registerProblem(elem, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
     }
   }
-
-  private fun isDirectlyTestOnly(member: UDeclaration) = member.findAnnotation(AnnotationUtil.TEST_ONLY) != null
 
   companion object {
     private val visibleForTestingAnnotations = listOf(

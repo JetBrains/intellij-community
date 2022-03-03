@@ -1,0 +1,15 @@
+%include map-cmdline.default
+
+[templates]
+changeset = '{cset}{lbisect}{branches}{bookmarks}{tags}{parents}{luser}{ldate}{summary}\n'
+changeset_quiet = '{lshortbisect} {rev}:{node|short}\n'
+changeset_verbose = '{cset}{lbisect}{branches}{bookmarks}{tags}{parents}{luser}{ldate}{lfiles}{lfile_copies_switch}{description}\n'
+changeset_debug = '{fullcset}{lbisect}{branches}{bookmarks}{tags}{lphase}{parents}{manifest}{luser}{ldate}{lfile_mods}{lfile_adds}{lfile_dels}{lfile_copies_switch}{extras}{description}\n'
+
+# We take the zeroth word in order to omit "(implicit)" in the label
+bisectlabel = ' bisect.{word('0', bisect)}'
+
+lbisect ='{label("log.bisect{if(bisect, bisectlabel)}",
+                                "bisect:      {bisect}\n")}'
+lshortbisect ='{label("log.bisect{if(bisect, bisectlabel)}",
+                                    "{bisect|shortbisect}")}'

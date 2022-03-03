@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,21 @@ public final class ExpectedTypeUtils {
 
     public PsiType getExpectedType() {
       return expectedType;
+    }
+
+    @Override
+    public void visitNameValuePair(PsiNameValuePair pair) {
+      if (!wrappedExpression.equals(pair.getValue())) {
+        return;
+      }
+      final PsiReference reference = pair.getReference();
+      if (reference == null) {
+        return;
+      }
+      final PsiElement target = reference.resolve();
+      if (target instanceof PsiAnnotationMethod) {
+        expectedType = ((PsiMethod)target).getReturnType();
+      }
     }
 
     @Override

@@ -859,7 +859,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       }
 
       if (tryn % 10000 == 0) {
-        System.out.println(tryn);
+        LOG.debug("iteration "+tryn);
       }
       document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', N));
 
@@ -1162,7 +1162,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     document = FileDocumentManager.getInstance().getDocument(virtualFile);
     replaceString(document, 0, 0, "\n\t\n");
     assertEquals("\n\t\n", document.getText());
-    assertFalse(marker.isValid());
+    assertTrue(marker.toString(), marker.isValid());
+    assertEquals(0, marker.getStartOffset());
   }
 
   public void testLazyRangeMarkersWithInvalidOffsetWhenCachedDocumentAlreadyExistsMustRejectInvalidOffsetsRightAway() {
@@ -1174,12 +1175,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals("", psiFile.getText());
 
-    try {
-      factory.createRangeMarker(virtualFile, 1 /* invalid offset */);
-      fail("Must fail fast");
-    }
-    catch (IllegalArgumentException ignored) {
-    }
+    RangeMarker marker = factory.createRangeMarker(virtualFile, 1 /* invalid offset */);
+    assertEquals(0, marker.getStartOffset());
+    assertTrue(marker.isValid());
   }
 
   public void testNonGreedyMarkersGrowOnAppendingReplace() {
@@ -1472,7 +1470,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah\nblah2\nblah3");
     //RangeMarker marker = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(vf, 1, 2, true);
-    RangeMarker marker = DocumentImpl.createRangeMarkerForVirtualFile(vf, 0, 0, 1, 2, 1, 2, true);
+    RangeMarker marker = DocumentImpl.createRangeMarkerForVirtualFile(vf, 0, 1, 2, 1, 2, true);
     assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
 
     document = FileDocumentManager.getInstance().getDocument(vf);

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -36,7 +37,7 @@ class JvmStartupActivity : StartupActivity {
         connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
             override fun after(events: MutableList<out VFileEvent>) {
                 for (event in events) {
-                    if (event is VFileMoveEvent && event.file.fileType == JavaFileType.INSTANCE) {
+                    if (event is VFileMoveEvent && FileTypeRegistry.getInstance().isFileOfType(event.file, JavaFileType.INSTANCE)) {
                         EditorNotifications.getInstance(project).updateNotifications(event.file)
                     }
                 }

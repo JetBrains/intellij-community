@@ -183,6 +183,18 @@ class Main {
       case ((((<error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>)) && Math.random() > 0.5)):
         break;
     }
+
+    switch (list1.get(0)) {
+      case null: {}
+      default: {}
+    }
+
+    switch (new int[0]) {
+      case null: {}
+      default: {}
+    }
+    
+
     switch (list2) {
       case List<? extends Number> l:
         break;

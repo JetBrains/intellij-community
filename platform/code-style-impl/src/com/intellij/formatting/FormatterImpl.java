@@ -586,6 +586,11 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
+  public Indent getSmartIndent(@NotNull Indent.Type type, boolean relativeToDirectParent) {
+    return new ExpandableIndent(type, relativeToDirectParent);
+  }
+
+  @Override
   public Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
     return new IndentImpl(type, false, spaces, relativeToDirectParent, enforceIndentToChildren);
   }
@@ -733,5 +738,17 @@ public class FormatterImpl extends FormatterEx
   @NotNull
   public FormattingModel createDummyFormattingModel(@NotNull PsiElement element) {
     return new DummyFormattingModel(element);
+  }
+
+  @Override
+  public boolean isEligibleForVirtualFormatting(@NotNull PsiElement context) {
+    return VirtualFormattingImplKt.isEligibleForVirtualFormatting(context);
+  }
+
+  @Override
+  @Nullable
+  public FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context,
+                                                         @Nullable FormattingModelBuilder originalModel) {
+    return VirtualFormattingImplKt.wrapForVirtualFormatting(context, originalModel);
   }
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -133,6 +134,38 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
     installEditListeners();
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      fixEditorNotReleasedFalsePositiveException(session);
+    }
+  }
+
+  // Workaround for IDEA-273987, IDEA-278153.
+  // Should be removed after IDEA-285001 is fixed
+  private void fixEditorNotReleasedFalsePositiveException(@NotNull XDebugSessionImpl session) {
+    Optional.ofNullable(myEvaluateComboBox)
+      .map(XDebuggerExpressionComboBox::getEditorComponent)
+      .map(component -> ObjectUtils.tryCast(component, EditorTextField.class))
+      .ifPresent(field -> {
+        var disposable = Disposer.newDisposable("XWatchesView Disposable");
+        Disposer.register(this, () -> {
+          // In case the project is closing this block is called
+          // from the BaseContentCloseListener#disposeContent
+          // and then removes editor with EditorComboBox#releaseLater.
+          // The latter causes a false-positive exception (IDEA-273987) that editor is not released
+          // when validation is running (see  IDEA-285001).
+          // Until IDEA-285001 is fixed this one is scheduled for next EDT call
+          // to let Disposer.register(session.getProject(), disposable) dispose an editor
+          // with correct way when project is closed.
+          // If this one is triggered because XWatchesViewImpl is closed
+          // then it's ok to release it later.
+          ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(disposable));
+        });
+        // Dispose editor when project is closed with a custom disposable.
+        Disposer.register(session.getProject(), disposable);
+        // Blocks default behaviour on add/remove component disposal/
+        field.setDisposedWith(disposable);
+      });
   }
 
   @Override

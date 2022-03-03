@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -42,7 +42,8 @@ class IndexDiagnosticDumper : Disposable {
 
     private const val fileNamePrefix = "diagnostic-"
 
-    private val projectIndexingHistoryListenerEpName = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
+    @JvmStatic
+    val projectIndexingHistoryListenerEpName = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
 
     @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
@@ -58,6 +59,11 @@ class IndexDiagnosticDumper : Disposable {
     val shouldDumpPathsOfIndexedFiles: Boolean
       get() =
         SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+
+    @JvmStatic
+    val shouldDumpProviderRootPaths: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.provider.root.paths", false)
 
     @JvmStatic
     @TestOnly
@@ -106,6 +112,7 @@ class IndexDiagnosticDumper : Disposable {
       if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
+      projectIndexingHistory.indexingFinished()
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
     }
     finally {

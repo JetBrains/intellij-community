@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Replace '==' with 'contentEquals'
 fun foo() {
     val a = charArrayOf('a', 'b', 'c')

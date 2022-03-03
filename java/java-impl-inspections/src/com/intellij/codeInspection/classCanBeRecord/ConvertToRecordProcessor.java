@@ -9,7 +9,12 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -20,13 +25,11 @@ import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,9 +221,12 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       }
       nextElement = nextElement.getNextSibling();
     }
-
+    List<PsiMethod> redundantObjectMethods = findRedundantObjectMethods();
     PsiClass result = (PsiClass)psiClass.replace(recordBuilder.build());
     tryToCompactCanonicalCtor(result);
+    removeRedundantObjectMethods(result, redundantObjectMethods);
+    generateJavaDocForDocumentedFields(result);
+    CodeStyleManager.getInstance(myProject).reformat(result);
   }
 
   private void renameMembers(UsageInfo @NotNull [] usages) {
@@ -231,6 +237,118 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       String newName = entry.getValue();
       UsageInfo[] elementRenameUsages = renameUsagesByElement.get(entry.getKey()).toArray(UsageInfo.EMPTY_ARRAY);
       RenamePsiElementProcessor.forElement(element).renameElement(element, newName, elementRenameUsages, null);
+    }
+  }
+
+  @NotNull
+  private List<PsiMethod> findRedundantObjectMethods() {
+    PsiMethod equalsMethod = myRecordCandidate.getEqualsMethod();
+    PsiMethod hashCodeMethod = myRecordCandidate.getHashCodeMethod();
+    if (equalsMethod == null && hashCodeMethod == null) return Collections.emptyList();
+    List<PsiMethod> result = new SmartList<>();
+    Set<PsiField> fields = myRecordCandidate.getFieldAccessors().keySet();
+    // todo for equals method
+    if (hashCodeMethod != null) {
+      var hashCodeVisitor = new HashCodeVisitor(fields);
+      hashCodeMethod.accept(hashCodeVisitor);
+      if (hashCodeVisitor.myNonVisitedFields.isEmpty()) {
+        result.add(hashCodeMethod);
+      }
+    }
+    return result;
+  }
+
+  private static class HashCodeVisitor extends JavaRecursiveElementWalkingVisitor {
+    private final CallMatcher OBJECTS_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "hash", "hashCode");
+    private final CallMatcher FLOAT_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "floatToIntBits");
+    private final CallMatcher DOUBLE_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "doubleToLongBits");
+
+    private final CallMatcher INSTANCE_CALL = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode");
+
+    private final Set<PsiField> myNonVisitedFields;
+
+    private HashCodeVisitor(@NotNull Set<PsiField> fields) {
+      myNonVisitedFields = new SmartHashSet<>(fields);
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      PsiField field = ObjectUtils.tryCast(expression.resolve(), PsiField.class);
+      if (field == null) return;
+      PsiType fieldType = field.getType();
+      if (PsiType.CHAR.equals(fieldType) || PsiType.SHORT.equals(fieldType)) {
+        PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
+        if (parent instanceof PsiTypeCastExpression) {
+          PsiTypeElement castType = ((PsiTypeCastExpression)parent).getCastType();
+          if (castType != null && PsiType.INT.equals(castType.getType())) {
+            myNonVisitedFields.remove(field);
+          }
+        }
+      }
+      else {
+        myNonVisitedFields.remove(field);
+      }
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      if (OBJECTS_CALL.test(expression)) {
+        for (PsiExpression argument : expression.getArgumentList().getExpressions()) {
+          PsiReferenceExpression fieldRef = ObjectUtils.tryCast(argument, PsiReferenceExpression.class);
+          if (fieldRef == null || !myNonVisitedFields.remove(fieldRef.resolve())) {
+            stopWalking();
+            return;
+          }
+        }
+        return;
+      }
+
+      PsiType expectedType = null;
+      if (FLOAT_CALL.test(expression)) {
+        expectedType = PsiType.FLOAT;
+      }
+      else if (DOUBLE_CALL.test(expression)) {
+        expectedType = PsiType.DOUBLE;
+      }
+      if (expectedType != null) {
+        PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+        if (expressions.length == 1) {
+          PsiReferenceExpression refExpr = ObjectUtils.tryCast(expressions[0], PsiReferenceExpression.class);
+          if (refExpr != null) {
+            PsiField field = ObjectUtils.tryCast(refExpr.resolve(), PsiField.class);
+            if (field != null && expectedType.equals(field.getType())) {
+              myNonVisitedFields.remove(field);
+              return;
+            }
+          }
+        }
+        stopWalking();
+        return;
+      }
+
+      if (INSTANCE_CALL.test(expression)) {
+        PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+        PsiReferenceExpression fieldRef = ObjectUtils.tryCast(qualifier, PsiReferenceExpression.class);
+        if (fieldRef != null) {
+          PsiField field = ObjectUtils.tryCast(fieldRef.resolve(), PsiField.class);
+          if (field != null) {
+            myNonVisitedFields.remove(field);
+            return;
+          }
+        }
+      }
+      stopWalking();
+    }
+
+    @Override
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
+      IElementType operationType = expression.getOperationTokenType();
+      if (!JavaTokenType.PLUS.equals(operationType) && !JavaTokenType.MINUS.equals(operationType) &&
+          !JavaTokenType.ASTERISK.equals(operationType) && !JavaTokenType.GTGTGT.equals(operationType) &&
+          !JavaTokenType.EQEQ.equals(operationType) && !JavaTokenType.NE.equals(operationType)) {
+        stopWalking();
+      }
     }
   }
 
@@ -248,6 +366,46 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       if (ctorSimplifier != null) {
         ctorSimplifier.simplify(canonicalCtor);
       }
+    }
+  }
+
+  private static void removeRedundantObjectMethods(@NotNull PsiClass record, @NotNull List<PsiMethod> redundantObjectMethods) {
+    redundantObjectMethods.stream().map(method -> record.findMethodBySignature(method, false))
+      .filter(Objects::nonNull)
+      .forEach(PsiMethod::delete);
+  }
+
+  private void generateJavaDocForDocumentedFields(@NotNull PsiClass record) {
+    Map<String, String> comments = new LinkedHashMap<>();
+    for (PsiField field : myRecordCandidate.getFieldAccessors().keySet()) {
+      StringBuilder fieldComment = new StringBuilder();
+      for (PsiComment comment : ObjectUtils.notNull(PsiTreeUtil.getChildrenOfType(field, PsiComment.class), new PsiComment[0])) {
+        if (comment instanceof PsiDocComment) {
+          Arrays.stream(((PsiDocComment)comment).getDescriptionElements()).map(PsiElement::getText).forEach(fieldComment::append);
+          continue;
+        }
+        String commentText = comment.getText();
+        String unwrappedText = comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT
+                               ? StringUtil.trimStart(commentText, "//")
+                               : StringUtil.trimEnd(commentText.substring(2), "*/");
+        fieldComment.append(unwrappedText);
+      }
+      if (fieldComment.length() > 0) {
+        comments.put(field.getName(), fieldComment.toString());
+      }
+    }
+    if (comments.isEmpty()) return;
+    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myProject).getParserFacade();
+    PsiDocComment recordDoc = record.getDocComment();
+    if (recordDoc == null) {
+      PsiDocComment emptyDoc = parserFacade.createDocCommentFromText("/** */");
+      recordDoc = (PsiDocComment)record.addBefore(emptyDoc, record.getFirstChild());
+    }
+    for (var entry : comments.entrySet()) {
+      String paramName = entry.getKey();
+      String paramComment = entry.getValue();
+      PsiDocTag docTag = parserFacade.createDocTagFromText("@param " + paramName + " " + paramComment);
+      recordDoc.add(docTag);
     }
   }
 

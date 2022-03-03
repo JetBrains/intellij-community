@@ -348,7 +348,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
         if (LOG.isDebugEnabled()) {
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
-        IdeEventQueue.getInstance().flushDelayedKeyEvents();
         JBTerminalPanel.this.dispatchEvent(e);
         return true;
       }

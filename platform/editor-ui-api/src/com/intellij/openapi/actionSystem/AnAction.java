@@ -303,6 +303,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     Presentation presentation = myTemplatePresentation;
     if (presentation == null) {
       presentation = createTemplatePresentation();
+      LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
       myTemplatePresentation = presentation;
     }
     return presentation;
@@ -310,7 +311,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   @NotNull
   Presentation createTemplatePresentation() {
-    return new Presentation();
+    return Presentation.newTemplatePresentation();
   }
 
   /**

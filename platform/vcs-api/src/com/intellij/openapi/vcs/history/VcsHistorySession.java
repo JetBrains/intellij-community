@@ -24,10 +24,12 @@ public interface VcsHistorySession {
   VcsRevisionNumber getCurrentRevisionNumber();
   boolean isCurrentRevision(VcsRevisionNumber rev);
   boolean shouldBeRefreshed();
-
   boolean isContentAvailable(VcsFileRevision revision);
-  @Nullable
-  HistoryAsTreeProvider getHistoryAsTreeProvider();
   // i.e. is history for local file (opposite - history for some URL)
   boolean hasLocalSource();
+
+  @Nullable
+  default HistoryAsTreeProvider getHistoryAsTreeProvider() {
+    return null;
+  }
 }

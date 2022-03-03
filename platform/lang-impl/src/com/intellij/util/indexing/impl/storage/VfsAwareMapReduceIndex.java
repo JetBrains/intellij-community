@@ -325,11 +325,18 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   @Override
   protected void requestRebuild(@NotNull Throwable ex) {
     Runnable action = () -> FileBasedIndex.getInstance().requestRebuild((ID<?, ?>)myIndexId, ex);
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
-      ApplicationManager.getApplication().invokeLater(action);
-    } else {
+      app.invokeLater(action);
+    }
+    else if (app.isReadAccessAllowed()) {
+      IndexDataInitializer.submitGenesisTask(() -> {
+        action.run();
+        return null;
+      });
+    }
+    else {
       action.run();
     }
   }

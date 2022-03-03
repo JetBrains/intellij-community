@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.wm.ToolWindow;
@@ -18,13 +18,11 @@ public interface ToolWindowManagerListener extends EventListener {
    * @deprecated Use {@link #toolWindowsRegistered}
    */
   @Deprecated
-  default void toolWindowRegistered(@NotNull String id) {
+  default void toolWindowRegistered(@SuppressWarnings("unused") @NotNull String id) {
   }
 
   default void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
-    for (String id : ids) {
-      toolWindowRegistered(id);
-    }
+    ids.forEach(this::toolWindowRegistered);
   }
 
   /**
@@ -52,6 +50,7 @@ public interface ToolWindowManagerListener extends EventListener {
   /**
    * @deprecated use {@link #toolWindowShown(ToolWindow)} instead
    */
+  @SuppressWarnings("unused")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {

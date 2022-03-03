@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -15,6 +15,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -256,6 +258,28 @@ public final class PsiClassImplUtil {
   public static SearchScope getClassUseScope(@NotNull PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) {
       return new LocalSearchScope(aClass);
+    }
+    if (aClass instanceof StubBasedPsiElement) {
+      final StubElement stubElement = ((StubBasedPsiElement<?>)aClass).getStub();
+      if (stubElement instanceof PsiClassStub) {
+        PsiClassStub<?> stub = (PsiClassStub<?>)stubElement;
+        if (stub instanceof PsiClassStubImpl &&
+            ((PsiClassStubImpl<?>)stub).isLocalClassInner()) {
+          // at least it's smaller than the containing package
+          return new LocalSearchScope(aClass.getContainingFile());
+        }
+      }
+    }
+    else {
+      PsiElement parent = aClass.getParent();
+      if (parent instanceof PsiDeclarationStatement) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiCodeBlock) {
+          return new LocalSearchScope(grandParent);
+          // Actually: The scope of a local class or interface declaration immediately enclosed by a block is the rest
+          // of the immediately enclosing block, including the local class or interface declaration itself (jls-6.3).
+        }
+      }
     }
     GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(aClass);
     PsiFile file = aClass.getContainingFile();

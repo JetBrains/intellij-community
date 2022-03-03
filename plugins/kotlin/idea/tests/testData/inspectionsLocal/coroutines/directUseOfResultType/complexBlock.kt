@@ -1,5 +1,5 @@
 // FIX: Add '.getOrThrow()' to function result (breaks use-sites!)
-// WITH_RUNTIME
+// WITH_STDLIB
 
 package kotlin
 

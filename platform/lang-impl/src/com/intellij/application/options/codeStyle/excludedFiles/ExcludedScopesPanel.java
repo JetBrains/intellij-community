@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +38,7 @@ public class ExcludedScopesPanel extends ExcludedFilesPanelBase {
     c.insets = JBUI.insetsBottom(5);
     add(new JLabel(CodeStyleBundle.message("excluded.files.do.not.format.scope")), c);
     c.gridy ++;
-    c.insets = JBUI.emptyInsets();
+    c.insets = JBInsets.emptyInsets();
     add(toolbarPanel, c);
     c.gridy ++;
     add(myExcludedFilesList, c);

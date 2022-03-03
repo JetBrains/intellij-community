@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,13 +17,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+@ApiStatus.Internal
 public final class PluginUtilImpl implements PluginUtil {
   private static final Logger LOG = Logger.getInstance(PluginUtilImpl.class);
 
   @Override
   public @Nullable PluginId getCallerPlugin(int stackFrameCount) {
     Class<?> aClass = ReflectionUtil.getCallerClass(stackFrameCount + 1);
-    if (aClass == null) return null;
+    if (aClass == null) {
+      return null;
+    }
     ClassLoader classLoader = aClass.getClassLoader();
     return classLoader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)classLoader).getPluginId() : null;
   }
@@ -73,7 +77,7 @@ public final class PluginUtilImpl implements PluginUtil {
           }
         }
 
-        PluginId pluginId = PluginManagerCore.getPluginByClassName(className.toString());
+        PluginId pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(className.toString());
         if (pluginId != null) {
           return pluginId;
         }
@@ -82,7 +86,7 @@ public final class PluginUtilImpl implements PluginUtil {
     else if (t instanceof ClassNotFoundException) {
       // check is class from plugin classes
       if (t.getMessage() != null) {
-        PluginId id = PluginManagerCore.getPluginByClassName(t.getMessage());
+        PluginId id = PluginManager.getPluginByClassNameAsNoAccessToClass(t.getMessage());
         if (id != null) {
           return id;
         }
@@ -95,9 +99,9 @@ public final class PluginUtilImpl implements PluginUtil {
         className = className.replace('/', '.');
       }
 
-      PluginId id = PluginManagerCore.getPluginByClassName(className);
+      PluginId id = PluginManager.getPluginByClassNameAsNoAccessToClass(className);
       if (id != null) {
-        return PluginManagerCore.getPluginByClassName(className);
+        return PluginManager.getPluginByClassNameAsNoAccessToClass(className);
       }
     }
     else if (t instanceof AbstractMethodError && t.getMessage() != null) {
@@ -108,7 +112,7 @@ public final class PluginUtilImpl implements PluginUtil {
         pos = s.lastIndexOf('.');
         if (pos >= 0) {
           s = s.substring(0, pos);
-          PluginId id = PluginManagerCore.getPluginByClassName(s);
+          PluginId id = PluginManager.getPluginByClassNameAsNoAccessToClass(s);
           if (id != null) {
             return id;
           }

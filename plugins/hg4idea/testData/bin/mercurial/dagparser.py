@@ -5,9 +5,18 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import re, string
-import util
-from i18n import _
+from __future__ import absolute_import
+
+import re
+import string
+
+from .i18n import _
+from . import (
+    error,
+    pycompat,
+)
+from .utils import stringutil
+
 
 def parsedag(desc):
     '''parses a DAG from a concise textual description; generates events
@@ -50,7 +59,7 @@ def parsedag(desc):
 
     Example of a complex graph (output not shown for brevity):
 
-        >>> len(list(parsedag("""
+        >>> len(list(parsedag(b"""
         ...
         ... +3         # 3 nodes in linear run
         ... :forkhere  # a label for the last of the 3 nodes from above
@@ -70,96 +79,98 @@ def parsedag(desc):
 
     Empty list:
 
-        >>> list(parsedag(""))
+        >>> list(parsedag(b""))
         []
 
     A simple linear run:
 
-        >>> list(parsedag("+3"))
+        >>> list(parsedag(b"+3"))
         [('n', (0, [-1])), ('n', (1, [0])), ('n', (2, [1]))]
 
     Some non-standard ways to define such runs:
 
-        >>> list(parsedag("+1+2"))
+        >>> list(parsedag(b"+1+2"))
         [('n', (0, [-1])), ('n', (1, [0])), ('n', (2, [1]))]
 
-        >>> list(parsedag("+1*1*"))
+        >>> list(parsedag(b"+1*1*"))
         [('n', (0, [-1])), ('n', (1, [0])), ('n', (2, [1]))]
 
-        >>> list(parsedag("*"))
+        >>> list(parsedag(b"*"))
         [('n', (0, [-1]))]
 
-        >>> list(parsedag("..."))
+        >>> list(parsedag(b"..."))
         [('n', (0, [-1])), ('n', (1, [0])), ('n', (2, [1]))]
 
     A fork and a join, using numeric back references:
 
-        >>> list(parsedag("+2*2*/2"))
+        >>> list(parsedag(b"+2*2*/2"))
         [('n', (0, [-1])), ('n', (1, [0])), ('n', (2, [0])), ('n', (3, [2, 1]))]
 
-        >>> list(parsedag("+2<2+1/2"))
+        >>> list(parsedag(b"+2<2+1/2"))
         [('n', (0, [-1])), ('n', (1, [0])), ('n', (2, [0])), ('n', (3, [2, 1]))]
 
     Placing a label:
 
-        >>> list(parsedag("+1 :mylabel +1"))
+        >>> list(parsedag(b"+1 :mylabel +1"))
         [('n', (0, [-1])), ('l', (0, 'mylabel')), ('n', (1, [0]))]
 
     An empty label (silly, really):
 
-        >>> list(parsedag("+1:+1"))
+        >>> list(parsedag(b"+1:+1"))
         [('n', (0, [-1])), ('l', (0, '')), ('n', (1, [0]))]
 
     Fork and join, but with labels instead of numeric back references:
 
-        >>> list(parsedag("+1:f +1:p2 *f */p2"))
+        >>> list(parsedag(b"+1:f +1:p2 *f */p2"))
         [('n', (0, [-1])), ('l', (0, 'f')), ('n', (1, [0])), ('l', (1, 'p2')),
          ('n', (2, [0])), ('n', (3, [2, 1]))]
 
-        >>> list(parsedag("+1:f +1:p2 <f +1 /p2"))
+        >>> list(parsedag(b"+1:f +1:p2 <f +1 /p2"))
         [('n', (0, [-1])), ('l', (0, 'f')), ('n', (1, [0])), ('l', (1, 'p2')),
          ('n', (2, [0])), ('n', (3, [2, 1]))]
 
     Restarting from the root:
 
-        >>> list(parsedag("+1 $ +1"))
+        >>> list(parsedag(b"+1 $ +1"))
         [('n', (0, [-1])), ('n', (1, [-1]))]
 
     Annotations, which are meant to introduce sticky state for subsequent nodes:
 
-        >>> list(parsedag("+1 @ann +1"))
+        >>> list(parsedag(b"+1 @ann +1"))
         [('n', (0, [-1])), ('a', 'ann'), ('n', (1, [0]))]
 
-        >>> list(parsedag('+1 @"my annotation" +1'))
+        >>> list(parsedag(b'+1 @"my annotation" +1'))
         [('n', (0, [-1])), ('a', 'my annotation'), ('n', (1, [0]))]
 
     Commands, which are meant to operate on the most recently created node:
 
-        >>> list(parsedag("+1 !cmd +1"))
+        >>> list(parsedag(b"+1 !cmd +1"))
         [('n', (0, [-1])), ('c', 'cmd'), ('n', (1, [0]))]
 
-        >>> list(parsedag('+1 !"my command" +1'))
+        >>> list(parsedag(b'+1 !"my command" +1'))
         [('n', (0, [-1])), ('c', 'my command'), ('n', (1, [0]))]
 
-        >>> list(parsedag('+1 !!my command line\\n +1'))
+        >>> list(parsedag(b'+1 !!my command line\\n +1'))
         [('n', (0, [-1])), ('C', 'my command line'), ('n', (1, [0]))]
 
     Comments, which extend to the end of the line:
 
-        >>> list(parsedag('+1 # comment\\n+1'))
+        >>> list(parsedag(b'+1 # comment\\n+1'))
         [('n', (0, [-1])), ('n', (1, [0]))]
 
     Error:
 
-        >>> try: list(parsedag('+1 bad'))
-        ... except Exception, e: print e
+        >>> try: list(parsedag(b'+1 bad'))
+        ... except Exception as e: print(pycompat.sysstr(bytes(e)))
         invalid character in dag description: bad...
 
     '''
     if not desc:
         return
 
-    wordchars = string.ascii_letters + string.digits
+    # pytype: disable=wrong-arg-types
+    wordchars = pycompat.bytestr(string.ascii_letters + string.digits)
+    # pytype: enable=wrong-arg-types
 
     labels = {}
     p1 = -1
@@ -168,28 +179,27 @@ def parsedag(desc):
     def resolve(ref):
         if not ref:
             return p1
-        elif ref[0] in string.digits:
+        # pytype: disable=wrong-arg-types
+        elif ref[0] in pycompat.bytestr(string.digits):
+            # pytype: enable=wrong-arg-types
             return r - int(ref)
         else:
             return labels[ref]
 
-    chiter = (c for c in desc)
+    chiter = pycompat.iterbytestr(desc)
 
     def nextch():
-        try:
-            return chiter.next()
-        except StopIteration:
-            return '\0'
+        return next(chiter, b'\0')
 
     def nextrun(c, allow):
-        s = ''
+        s = b''
         while c in allow:
             s += c
             c = nextch()
         return c, s
 
     def nextdelimited(c, limit, escape):
-        s = ''
+        s = b''
         while c != limit:
             if c == escape:
                 c = nextch()
@@ -198,93 +208,101 @@ def parsedag(desc):
         return nextch(), s
 
     def nextstring(c):
-        if c == '"':
-            return nextdelimited(nextch(), '"', '\\')
+        if c == b'"':
+            return nextdelimited(nextch(), b'"', b'\\')
         else:
             return nextrun(c, wordchars)
 
     c = nextch()
-    while c != '\0':
-        while c in string.whitespace:
+    while c != b'\0':
+        # pytype: disable=wrong-arg-types
+        while c in pycompat.bytestr(string.whitespace):
+            # pytype: enable=wrong-arg-types
             c = nextch()
-        if c == '.':
-            yield 'n', (r, [p1])
+        if c == b'.':
+            yield b'n', (r, [p1])
             p1 = r
             r += 1
             c = nextch()
-        elif c == '+':
-            c, digs = nextrun(nextch(), string.digits)
+        elif c == b'+':
+            # pytype: disable=wrong-arg-types
+            c, digs = nextrun(nextch(), pycompat.bytestr(string.digits))
+            # pytype: enable=wrong-arg-types
             n = int(digs)
-            for i in xrange(0, n):
-                yield 'n', (r, [p1])
+            for i in pycompat.xrange(0, n):
+                yield b'n', (r, [p1])
                 p1 = r
                 r += 1
-        elif c in '*/':
-            if c == '*':
+        elif c in b'*/':
+            if c == b'*':
                 c = nextch()
             c, pref = nextstring(c)
             prefs = [pref]
-            while c == '/':
+            while c == b'/':
                 c, pref = nextstring(nextch())
                 prefs.append(pref)
             ps = [resolve(ref) for ref in prefs]
-            yield 'n', (r, ps)
+            yield b'n', (r, ps)
             p1 = r
             r += 1
-        elif c == '<':
+        elif c == b'<':
             c, ref = nextstring(nextch())
             p1 = resolve(ref)
-        elif c == ':':
+        elif c == b':':
             c, name = nextstring(nextch())
             labels[name] = p1
-            yield 'l', (p1, name)
-        elif c == '@':
+            yield b'l', (p1, name)
+        elif c == b'@':
             c, text = nextstring(nextch())
-            yield 'a', text
-        elif c == '!':
+            yield b'a', text
+        elif c == b'!':
             c = nextch()
-            if c == '!':
-                cmd = ''
+            if c == b'!':
+                cmd = b''
                 c = nextch()
-                while c not in '\n\r\0':
+                while c not in b'\n\r\0':
                     cmd += c
                     c = nextch()
-                yield 'C', cmd
+                yield b'C', cmd
             else:
                 c, cmd = nextstring(c)
-                yield 'c', cmd
-        elif c == '#':
-            while c not in '\n\r\0':
+                yield b'c', cmd
+        elif c == b'#':
+            while c not in b'\n\r\0':
                 c = nextch()
-        elif c == '$':
+        elif c == b'$':
             p1 = -1
             c = nextch()
-        elif c == '\0':
-            return # in case it was preceded by whitespace
+        elif c == b'\0':
+            return  # in case it was preceded by whitespace
         else:
-            s = ''
+            s = b''
             i = 0
-            while c != '\0' and i < 10:
+            while c != b'\0' and i < 10:
                 s += c
                 i += 1
                 c = nextch()
-            raise util.Abort(_('invalid character in dag description: '
-                               '%s...') % s)
+            raise error.Abort(
+                _(b'invalid character in dag description: %s...') % s
+            )
 
-def dagtextlines(events,
-                 addspaces=True,
-                 wraplabels=False,
-                 wrapannotations=False,
-                 wrapcommands=False,
-                 wrapnonlinear=False,
-                 usedots=False,
-                 maxlinewidth=70):
+
+def dagtextlines(
+    events,
+    addspaces=True,
+    wraplabels=False,
+    wrapannotations=False,
+    wrapcommands=False,
+    wrapnonlinear=False,
+    usedots=False,
+    maxlinewidth=70,
+):
     '''generates single lines for dagtext()'''
 
     def wrapstring(text):
-        if re.match("^[0-9a-z]*$", text):
+        if re.match(b"^[0-9a-z]*$", text):
             return text
-        return '"' + text.replace('\\', '\\\\').replace('"', '\"') + '"'
+        return b'"' + text.replace(b'\\', b'\\\\').replace(b'"', b'\"') + b'"'
 
     def gen():
         labels = {}
@@ -292,19 +310,24 @@ def dagtextlines(events,
         wantr = 0
         needroot = False
         for kind, data in events:
-            if kind == 'n':
+            if kind == b'n':
                 r, ps = data
 
                 # sanity check
                 if r != wantr:
-                    raise util.Abort(_("expected id %i, got %i") % (wantr, r))
+                    raise error.Abort(_(b"expected id %i, got %i") % (wantr, r))
                 if not ps:
                     ps = [-1]
                 else:
                     for p in ps:
                         if p >= r:
-                            raise util.Abort(_("parent id %i is larger than "
-                                               "current id %i") % (p, r))
+                            raise error.Abort(
+                                _(
+                                    b"parent id %i is larger than "
+                                    b"current id %i"
+                                )
+                                % (p, r)
+                            )
                 wantr += 1
 
                 # new root?
@@ -312,89 +335,97 @@ def dagtextlines(events,
                 if len(ps) == 1 and ps[0] == -1:
                     if needroot:
                         if run:
-                            yield '+' + str(run)
+                            yield b'+%d' % run
                             run = 0
                         if wrapnonlinear:
-                            yield '\n'
-                        yield '$'
+                            yield b'\n'
+                        yield b'$'
                         p1 = -1
                     else:
                         needroot = True
                 if len(ps) == 1 and ps[0] == p1:
                     if usedots:
-                        yield "."
+                        yield b"."
                     else:
                         run += 1
                 else:
                     if run:
-                        yield '+' + str(run)
+                        yield b'+%d' % run
                         run = 0
                     if wrapnonlinear:
-                        yield '\n'
+                        yield b'\n'
                     prefs = []
                     for p in ps:
                         if p == p1:
-                            prefs.append('')
+                            prefs.append(b'')
                         elif p in labels:
                             prefs.append(labels[p])
                         else:
-                            prefs.append(str(r - p))
-                    yield '*' + '/'.join(prefs)
+                            prefs.append(b'%d' % (r - p))
+                    yield b'*' + b'/'.join(prefs)
             else:
                 if run:
-                    yield '+' + str(run)
+                    yield b'+%d' % run
                     run = 0
-                if kind == 'l':
+                if kind == b'l':
                     rid, name = data
                     labels[rid] = name
-                    yield ':' + name
+                    yield b':' + name
                     if wraplabels:
-                        yield '\n'
-                elif kind == 'c':
-                    yield '!' + wrapstring(data)
+                        yield b'\n'
+                elif kind == b'c':
+                    yield b'!' + wrapstring(data)
                     if wrapcommands:
-                        yield '\n'
-                elif kind == 'C':
-                    yield '!!' + data
-                    yield '\n'
-                elif kind == 'a':
+                        yield b'\n'
+                elif kind == b'C':
+                    yield b'!!' + data
+                    yield b'\n'
+                elif kind == b'a':
                     if wrapannotations:
-                        yield '\n'
-                    yield '@' + wrapstring(data)
-                elif kind == '#':
-                    yield '#' + data
-                    yield '\n'
+                        yield b'\n'
+                    yield b'@' + wrapstring(data)
+                elif kind == b'#':
+                    yield b'#' + data
+                    yield b'\n'
                 else:
-                    raise util.Abort(_("invalid event type in dag: %s")
-                                     % str((type, data)))
+                    raise error.Abort(
+                        _(b"invalid event type in dag: ('%s', '%s')")
+                        % (
+                            stringutil.escapestr(kind),
+                            stringutil.escapestr(data),
+                        )
+                    )
         if run:
-            yield '+' + str(run)
+            yield b'+%d' % run
 
-    line = ''
+    line = b''
     for part in gen():
-        if part == '\n':
+        if part == b'\n':
             if line:
                 yield line
-                line = ''
+                line = b''
         else:
             if len(line) + len(part) >= maxlinewidth:
                 yield line
-                line = ''
-            elif addspaces and line and part != '.':
-                line += ' '
+                line = b''
+            elif addspaces and line and part != b'.':
+                line += b' '
             line += part
     if line:
         yield line
 
-def dagtext(dag,
-            addspaces=True,
-            wraplabels=False,
-            wrapannotations=False,
-            wrapcommands=False,
-            wrapnonlinear=False,
-            usedots=False,
-            maxlinewidth=70):
-    '''generates lines of a textual representation for a dag event stream
+
+def dagtext(
+    dag,
+    addspaces=True,
+    wraplabels=False,
+    wrapannotations=False,
+    wrapcommands=False,
+    wrapnonlinear=False,
+    usedots=False,
+    maxlinewidth=70,
+):
+    """generates lines of a textual representation for a dag event stream
 
     events should generate what parsedag() does, so:
 
@@ -412,52 +443,54 @@ def dagtext(dag,
 
     Linear run:
 
-        >>> dagtext([('n', (0, [-1])), ('n', (1, [0]))])
+        >>> dagtext([(b'n', (0, [-1])), (b'n', (1, [0]))])
         '+2'
 
     Two roots:
 
-        >>> dagtext([('n', (0, [-1])), ('n', (1, [-1]))])
+        >>> dagtext([(b'n', (0, [-1])), (b'n', (1, [-1]))])
         '+1 $ +1'
 
     Fork and join:
 
-        >>> dagtext([('n', (0, [-1])), ('n', (1, [0])), ('n', (2, [0])),
-        ...          ('n', (3, [2, 1]))])
+        >>> dagtext([(b'n', (0, [-1])), (b'n', (1, [0])), (b'n', (2, [0])),
+        ...          (b'n', (3, [2, 1]))])
         '+2 *2 */2'
 
     Fork and join with labels:
 
-        >>> dagtext([('n', (0, [-1])), ('l', (0, 'f')), ('n', (1, [0])),
-        ...          ('l', (1, 'p2')), ('n', (2, [0])), ('n', (3, [2, 1]))])
+        >>> dagtext([(b'n', (0, [-1])), (b'l', (0, b'f')), (b'n', (1, [0])),
+        ...          (b'l', (1, b'p2')), (b'n', (2, [0])), (b'n', (3, [2, 1]))])
         '+1 :f +1 :p2 *f */p2'
 
     Annotations:
 
-        >>> dagtext([('n', (0, [-1])), ('a', 'ann'), ('n', (1, [0]))])
+        >>> dagtext([(b'n', (0, [-1])), (b'a', b'ann'), (b'n', (1, [0]))])
         '+1 @ann +1'
 
-        >>> dagtext([('n', (0, [-1])),
-        ...          ('a', 'my annotation'),
-        ...          ('n', (1, [0]))])
+        >>> dagtext([(b'n', (0, [-1])),
+        ...          (b'a', b'my annotation'),
+        ...          (b'n', (1, [0]))])
         '+1 @"my annotation" +1'
 
     Commands:
 
-        >>> dagtext([('n', (0, [-1])), ('c', 'cmd'), ('n', (1, [0]))])
+        >>> dagtext([(b'n', (0, [-1])), (b'c', b'cmd'), (b'n', (1, [0]))])
         '+1 !cmd +1'
 
-        >>> dagtext([('n', (0, [-1])), ('c', 'my command'), ('n', (1, [0]))])
+        >>> dagtext([(b'n', (0, [-1])),
+        ...          (b'c', b'my command'),
+        ...          (b'n', (1, [0]))])
         '+1 !"my command" +1'
 
-        >>> dagtext([('n', (0, [-1])),
-        ...          ('C', 'my command line'),
-        ...          ('n', (1, [0]))])
+        >>> dagtext([(b'n', (0, [-1])),
+        ...          (b'C', b'my command line'),
+        ...          (b'n', (1, [0]))])
         '+1 !!my command line\\n+1'
 
     Comments:
 
-        >>> dagtext([('n', (0, [-1])), ('#', ' comment'), ('n', (1, [0]))])
+        >>> dagtext([(b'n', (0, [-1])), (b'#', b' comment'), (b'n', (1, [0]))])
         '+1 # comment\\n+1'
 
         >>> dagtext([])
@@ -465,15 +498,19 @@ def dagtext(dag,
 
     Combining parsedag and dagtext:
 
-        >>> dagtext(parsedag('+1 :f +1 :p2 *f */p2'))
+        >>> dagtext(parsedag(b'+1 :f +1 :p2 *f */p2'))
         '+1 :f +1 :p2 *f */p2'
 
-    '''
-    return "\n".join(dagtextlines(dag,
-                                  addspaces,
-                                  wraplabels,
-                                  wrapannotations,
-                                  wrapcommands,
-                                  wrapnonlinear,
-                                  usedots,
-                                  maxlinewidth))
+    """
+    return b"\n".join(
+        dagtextlines(
+            dag,
+            addspaces,
+            wraplabels,
+            wrapannotations,
+            wrapcommands,
+            wrapnonlinear,
+            usedots,
+            maxlinewidth,
+        )
+    )

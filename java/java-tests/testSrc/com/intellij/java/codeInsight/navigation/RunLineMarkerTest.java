@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.application.options.editor.GutterIconsConfigurable;
@@ -63,6 +63,18 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
                                                "      someCode();\n" +
                                                "    }\n" +
                                                "}");
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    assertEquals(0, myFixture.findGuttersAtCaret().size());
+    List<GutterMark> gutters = myFixture.findAllGutters();
+    assertEquals(2, gutters.size());
+    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+  }
+  
+  public void testRunLineMarkerOnInterface() {
+    myFixture.configureByText("Main.java", "public class Ma<caret>in implements I {}\n" +
+                                           "interface I {" +
+                                           "    public static void main(String[] args) {}\n" +
+                                           "}\n");
     assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
     assertEquals(0, myFixture.findGuttersAtCaret().size());
     List<GutterMark> gutters = myFixture.findAllGutters();
@@ -198,6 +210,22 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
     Set<String> strings = ContainerUtil.map2Set(descriptors, GutterIconDescriptor::getId);
     assertEquals(descriptors.size(), strings.size());
+  }
+
+  public void testGeneratedNames() {
+    RunManager manager = RunManager.getInstance(getProject());
+    ApplicationConfiguration first = new ApplicationConfiguration("Unknown", getProject());
+    first.setMainClass(myFixture.addClass("package a; public class Main {public static void main(String[] args) {}}"));
+    first.setGeneratedName();
+    assertEquals("Main", first.getName());
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager, first);
+    manager.addConfiguration(settings);
+    myTempSettings.add(settings);
+    
+    ApplicationConfiguration second = new ApplicationConfiguration("Unknown", getProject());
+    second.setMainClass(myFixture.addClass("package b; public class Main {public static void main(String[] args) {}}"));
+    second.setGeneratedName();
+    assertEquals("b.Main", second.getName());
   }
 
   public void testTooltip() {

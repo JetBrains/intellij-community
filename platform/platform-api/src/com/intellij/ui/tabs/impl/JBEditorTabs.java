@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBEditorTabsBase;
-import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
@@ -93,14 +92,5 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   public void setEmptySpaceColorCallback(@NotNull Supplier<? extends Color> callback) {
-  }
-
-  /**
-   * @deprecated You should move the painting logic to an implementation of {@link JBTabPainter} interface
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected Color getEmptySpaceColor() {
-    return myTabPainter.getBackgroundColor();
   }
 }

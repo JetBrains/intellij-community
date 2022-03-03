@@ -147,7 +147,7 @@ class Test(unittest.TestCase):
                 self.requested_input = True
                 return 'input_request'
 
-            def notifyFinished(self, needs_more_input):
+            def notifyFinished(self, needs_more_input, exception_occurred):
                 self.notified_finished += 1
 
             def notifyAboutMagic(self, commands, is_auto_magic):

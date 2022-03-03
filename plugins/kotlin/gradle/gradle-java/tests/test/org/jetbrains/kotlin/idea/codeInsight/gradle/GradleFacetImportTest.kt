@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -53,14 +55,7 @@ val KotlinGradleImportingTestCase.facetSettings: KotlinFacetSettings
 val KotlinGradleImportingTestCase.testFacetSettings: KotlinFacetSettings
     get() = facetSettings("project.test")
 
-class GradleFacetImportTest : KotlinGradleImportingTestCase() {
-    private fun assertSameKotlinSdks(vararg moduleNames: String) {
-        val sdks = moduleNames.map { getModule(it).sdk!! }
-        val refSdk = sdks.firstOrNull() ?: return
-        assertTrue(refSdk.sdkType is KotlinSdkType)
-        assertTrue(sdks.all { it === refSdk })
-    }
-
+class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     @Test
     fun testJvmImport() {
         configureByFiles()
@@ -169,6 +164,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
         )
     }
 
+    @Test
     fun testJsImport() {
         configureByFiles()
         importProject()
@@ -396,6 +392,8 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
         )
     }
 
+    @Ignore
+    @Test
     @TargetVersions("4.9")
     fun testCommonImportByPlatformPlugin() {
         configureByFiles()
@@ -565,6 +563,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @Ignore // android.sdk needed
     fun testKotlinAndroidPluginDetection() {
         configureByFiles()
         createLocalPropertiesSubFileForAndroid()
@@ -847,13 +846,15 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    override fun createImportSpec(): ImportSpec {
-        return ImportSpecBuilder(super.createImportSpec())
-            .createDirectoriesForEmptyContentRoots()
-            .build()
+    private fun assertSameKotlinSdks(vararg moduleNames: String) {
+        val sdks = moduleNames.map { getModule(it).sdk!! }
+        val refSdk = sdks.firstOrNull() ?: return
+        assertTrue(refSdk.sdkType is KotlinSdkType)
+        assertTrue(sdks.all { it === refSdk })
     }
 
-    override fun testDataDirName(): String {
-        return "gradleFacetImportTest"
-    }
+    override fun createImportSpec(): ImportSpec =
+        ImportSpecBuilder(super.createImportSpec()).createDirectoriesForEmptyContentRoots().build()
+
+    override fun testDataDirName(): String = "gradleFacetImportTest"
 }

@@ -9,7 +9,9 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
@@ -35,23 +37,29 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
 
     return panel {
       row {
-        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, GithubIcons.DefaultAvatar).also {
-          DataManager.registerDataProvider(it.component) { key ->
-            if (GHAccountsHost.KEY.`is`(key)) accountsModel
-            else null
+        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, true,
+                      GithubIcons.DefaultAvatar)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+          .also {
+            DataManager.registerDataProvider(it.component) { key ->
+              if (GHAccountsHost.KEY.`is`(key)) accountsModel
+              else null
+            }
           }
-        }
-      }
+      }.resizableRow()
+
       row {
-        checkBox(GithubBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
+        checkBox(GithubBundle.message("settings.clone.ssh"))
+          .bindSelected(settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
       }
-      row {
-        cell {
-          label(GithubBundle.message("settings.timeout"))
-          intTextField({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 }, columns = 2, range = 0..60)
-          @Suppress("DialogTitleCapitalization")
-          label(GithubBundle.message("settings.timeout.seconds"))
-        }
+      row(GithubBundle.message("settings.timeout")) {
+        intTextField(range = 0..60)
+          .columns(2)
+          .bindIntText({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 })
+          .gap(RightGap.SMALL)
+        @Suppress("DialogTitleCapitalization")
+        label(GithubBundle.message("settings.timeout.seconds"))
       }
     }
   }

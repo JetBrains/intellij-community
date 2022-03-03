@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: none
 fun test(args: Array<Int>) {
     val x = arrayOf<String>()

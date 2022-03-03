@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
+import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
+import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -46,18 +48,30 @@ object PackageIndexUtil {
                 subpackagesIndex.hasSubpackages(packageFqName, searchScope)
     }
 
+    /**
+     * Fast check if a [partialFqName] available for specified [searchScope].
+     * As [partialFqName] is only some part of entire fqName and therefore could be a false-positive results.
+     *
+     * But never provides a false-negative results
+     * therefore it could be used to define that [partialFqName] is NOT in a [searchScope].
+     */
+    @JvmStatic
+    fun containsFilesWithPartialPackage(
+        partialFqName: FqName,
+        searchScope: GlobalSearchScope
+    ): Boolean = KotlinPartialPackageNamesIndex.hasSomethingInPackage(partialFqName, searchScope)
+
     @JvmStatic
     fun containsFilesWithExactPackage(
         packageFqName: FqName,
         searchScope: GlobalSearchScope,
         project: Project
     ): Boolean {
-        val files = StubIndex.getInstance().getContainingFiles(
+        return StubIndex.getInstance().getContainingFiles(
             KotlinExactPackagesIndex.getInstance().key,
             packageFqName.asString(),
             project,
             searchScope
-        )
-        return files.any { it in searchScope }
+        ).hasNext()
     }
 }

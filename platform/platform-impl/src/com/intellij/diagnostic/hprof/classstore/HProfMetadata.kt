@@ -26,6 +26,8 @@ import java.util.function.LongUnaryOperator
 class HProfMetadata(var classStore: ClassStore, // TODO: private-set, public-get
                     val threads: Long2ObjectMap<ThreadInfo>,
                     var roots: Long2ObjectMap<RootReason>) {
+  class RemapException : Exception()
+
   fun remapIds(remappingFunction: LongUnaryOperator) {
     // Remap ids in class store
     classStore = classStore.createStoreWithRemappedIDs(remappingFunction)
@@ -33,9 +35,13 @@ class HProfMetadata(var classStore: ClassStore, // TODO: private-set, public-get
     // Remap root objects' ids
     val newRoots = Long2ObjectOpenHashMap<RootReason>()
     for (entry in Long2ObjectMaps.fastIterable(roots)) {
-      val newKey = remappingFunction.applyAsLong(entry.longKey)
-      assert(!newRoots.containsKey(newKey))
-      newRoots.put(newKey, entry.value)
+      try {
+        val newKey = remappingFunction.applyAsLong(entry.longKey)
+        assert(!newRoots.containsKey(newKey))
+        newRoots.put(newKey, entry.value)
+      } catch (e: RemapException) {
+        // Ignore root entry if there is no associated object
+      }
     }
     roots = newRoots
   }

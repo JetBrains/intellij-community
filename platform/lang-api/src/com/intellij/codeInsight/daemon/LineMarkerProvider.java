@@ -9,6 +9,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * This extension point specifies line markers (icons in the vertical gutter at the left of the screen) for the particular {@link PsiElement}.
+ * For example, {@link com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider} draws "arrow down" icon left to the Java method to navigate to all its overriding methods.
+ *
  * @see LineMarkerProviders#EP_NAME
  * @see LineMarkerProviderDescriptor
  * @see RelatedItemLineMarkerProvider
@@ -68,6 +71,9 @@ public interface LineMarkerProvider {
    */
   LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element);
 
+  /**
+   * Collects line markers for several PsiElements in batch, after all (relatively faster) {@link #getLineMarkerInfo(PsiElement)} calls are finished.
+   */
   default void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
   }
 }

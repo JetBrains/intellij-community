@@ -16,7 +16,7 @@ internal fun Project.resolveClass(fqNameString: String, scope: GlobalSearchScope
         ?: resolveFqNameOfJavaClassByIndex(fqNameString, scope)
 
 private fun Project.resolveFqNameOfJavaClassByIndex(fqNameString: String, scope: GlobalSearchScope): PsiClass? {
-    return JavaFullClassNameIndex.getInstance()[fqNameString.hashCode(), this, scope]
+    return JavaFullClassNameIndex.getInstance()[fqNameString, this, scope]
         .firstOrNull {
             it.qualifiedName == fqNameString
         }

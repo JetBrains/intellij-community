@@ -47,7 +47,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     DumbService dumbService = new DumbServiceImpl(project)
 
     AtomicInteger disposes = new AtomicInteger(0)
-    def task1 = new DumbModeTask("a") {
+    def task1 = new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         while (!indicator.isCanceled()) {
@@ -61,7 +61,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       }
     }
 
-    def task2 = new DumbModeTask("b") {
+    def task2 = new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
       }
@@ -83,7 +83,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
 
   void "test queueTask is async"() {
     def semaphore = new Semaphore(1)
-    dumbService.queueTask(new DumbModeTask("mock") {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         def e = new Exception()
@@ -113,7 +113,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     int invocations = 0
 
     Semaphore semaphore = new Semaphore(1)
-    dumbService.queueTask(new DumbModeTask(new Object()) {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         assert !ApplicationManager.application.dispatchThread
@@ -160,7 +160,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     def started = new AtomicBoolean()
     def finished = new AtomicBoolean()
 
-    dumbService.queueTask(new DumbModeTask(new Object()) {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         started.set(true)
@@ -184,11 +184,11 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     assert finished.get()
   }
 
-  public void testDelayBetweenBecomingSmartAndWaitForSmartReturnMustBeSmall() {
+  void testDelayBetweenBecomingSmartAndWaitForSmartReturnMustBeSmall() {
     int N = 100
     int[] delays = new int[N]
     DumbServiceImpl dumbService = getDumbService()
-    Future<?> future = null;
+    Future<?> future = null
     for (int i=0; i< N; i++) {
       dumbService.runInDumbMode {
         CountDownLatch waiting = new CountDownLatch(1)
@@ -199,7 +199,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
         waiting.await()
       }
       long start = System.currentTimeMillis()
-      future.get();
+      future.get()
       long elapsed = System.currentTimeMillis() - start
       delays[i] = elapsed
     }

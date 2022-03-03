@@ -22,12 +22,10 @@ import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class VarExprent extends Exprent {
   public static final int STACK_BASE = 10000;
@@ -147,7 +145,7 @@ public class VarExprent extends Exprent {
               if (signature != null) {
                 GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                 if (descriptor != null) {
-                  buffer.append(GenericMain.getGenericCastTypeName(descriptor.type));
+                  buffer.append(GenericMain.getGenericCastTypeName(descriptor.type, java.util.Collections.emptyList()));
                   return;
                 }
               }
@@ -159,7 +157,7 @@ public class VarExprent extends Exprent {
           if (attr != null) {
             String descriptor = attr.getDescriptor(originalIndex, visibleOffset);
             if (descriptor != null) {
-              buffer.append(ExprProcessor.getCastTypeName(new VarType(descriptor)));
+              buffer.append(ExprProcessor.getCastTypeName(new VarType(descriptor), Collections.emptyList()));
               return;
             }
           }
@@ -167,7 +165,7 @@ public class VarExprent extends Exprent {
       }
     }
 
-    buffer.append(ExprProcessor.getCastTypeName(getVarType()));
+    buffer.append(ExprProcessor.getCastTypeName(getVarType(), Collections.emptyList()));
   }
 
   @Override
@@ -178,7 +176,7 @@ public class VarExprent extends Exprent {
     VarExprent ve = (VarExprent)o;
     return index == ve.getIndex() &&
            version == ve.getVersion() &&
-           InterpreterUtil.equalObjects(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
+           Objects.equals(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
   }
 
   public int getIndex() {

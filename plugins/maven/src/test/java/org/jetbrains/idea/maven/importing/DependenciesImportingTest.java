@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
@@ -1135,7 +1135,6 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModules("project", "m");
     assertModuleLibDeps("m");
 
-    if (ignore()) return;
 
     MavenProject root = myProjectsTree.getRootProjects().get(0);
     List<MavenProject> modules = myProjectsTree.getModules(root);
@@ -1178,7 +1177,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   @Test
   public void testUsingMirrors() throws Exception {
     setRepositoryPath(myDir.getPath() + "/repo");
-    String mirrorPath = FileUtil.toSystemIndependentName(myDir.getPath() + "/mirror");
+    String mirrorPath = myPathTransformer.toRemotePath(FileUtil.toSystemIndependentName(myDir.getPath() + "/mirror"));
 
     updateSettingsXmlFully("<settings>" +
                            "  <mirrors>" +
@@ -1251,7 +1250,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
-    myProjectsManager.importProjects();
+    importProject();
 
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
@@ -1881,8 +1880,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "</modules>");
 
     configConfirmationForYesAnswer();
-    readProjects(Arrays.asList(myProjectPom));
-    resolveDependenciesAndImport();
+    importProject();
     assertProjectLibraries("Maven: group:lib1:1");
   }
 
@@ -2172,8 +2170,12 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     configConfirmationForYesAnswer();
 
-    myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(m2.getPath()));
-    myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
+
+    setIgnoredFilesPathForNextImport(Collections.singletonList(m2.getPath()));
+
+    if(!isNewImportingProcess) {
+      myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
+    }
     importProject();
 
     assertModules("project", "m1");

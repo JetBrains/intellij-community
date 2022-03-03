@@ -46,7 +46,6 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
       moduleInfo("$name-project", "$name-project")
       moduleInfo("$name-project.module", "$name-project/module")
       moduleInfo("$name-project.$name-module", "$name-module")
-      moduleInfo("$name-project.module", "$name-project/module", "module-id")
     }
     withProject(projectInfo) {
       assertSettingsFileContent(projectInfo)
@@ -60,7 +59,6 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
       moduleInfo("$name-project", "$name-project")
       moduleInfo("$name-project.module", "$name-project/module")
       moduleInfo("$name-project.$name-module", "$name-module")
-      moduleInfo("$name-project.module", "$name-project/module", "module-id")
     }
     withProject(projectInfo) {
       assertSettingsFileContent(projectInfo)

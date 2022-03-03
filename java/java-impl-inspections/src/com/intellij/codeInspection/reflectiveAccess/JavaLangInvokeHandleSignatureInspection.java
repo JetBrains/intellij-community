@@ -91,6 +91,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         final ReflectiveClass ownerClass = getReflectiveClass(arguments[0]);
         if (ownerClass != null) {
           final PsiExpression typeExpression = PsiUtil.skipParenthesizedExprDown(arguments[1]);
+          if (typeExpression == null) return;
           checkConstructor(ownerClass, typeExpression, holder);
         }
       }
@@ -103,6 +104,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         final String memberName = computeConstantExpression(nameDefinition, String.class);
         if (!StringUtil.isEmpty(memberName)) {
           final PsiExpression typeExpression = PsiUtil.skipParenthesizedExprDown(arguments[2]);
+          if (typeExpression == null) return;
 
           switch (factoryMethodName) {
             case FIND_GETTER:
@@ -250,7 +252,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       return;
     }
     if (!isAbstractAllowed) {
-      final boolean allAbstract = matchingMethods.stream().allMatch(method -> method.hasModifierProperty(PsiModifier.ABSTRACT));
+      final boolean allAbstract = ContainerUtil.and(matchingMethods, method -> method.hasModifierProperty(PsiModifier.ABSTRACT));
       if (allAbstract) {
         final String className = ownerClass.getPsiClass().getQualifiedName();
         if (className != null) {
@@ -394,12 +396,12 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
 
   private static class ReplaceSignatureQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     private final String myName;
-    private final List<? extends ReflectiveSignature> mySignatures;
+    private final List<ReflectiveSignature> mySignatures;
     private final boolean myIsConstructor;
 
     ReplaceSignatureQuickFix(@Nullable PsiElement element,
                                     @NotNull String name,
-                                    @NotNull List<? extends ReflectiveSignature> signatures,
+                                    @NotNull List<ReflectiveSignature> signatures,
                                     boolean isConstructor) {
       super(element);
       myName = name;
@@ -508,7 +510,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @Nullable
     private static LocalQuickFix createFix(@Nullable PsiElement element,
                                            @NotNull String methodName,
-                                           @NotNull List<? extends ReflectiveSignature> methodSignatures,
+                                           @NotNull List<ReflectiveSignature> methodSignatures,
                                            boolean isConstructor, boolean isOnTheFly) {
       if (isOnTheFly && !methodSignatures.isEmpty() || methodSignatures.size() == 1) {
         return new ReplaceSignatureQuickFix(element, methodName, methodSignatures, isConstructor);

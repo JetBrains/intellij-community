@@ -4,20 +4,18 @@ package com.intellij.ide.wizard
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.systemIndependentPath
 
 class HTMLNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = "HTML"
+  override val ordinal = 400
 
   override fun isEnabled(context: WizardContext) = PlatformUtils.isCommunityEdition()
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
   class Step(private val parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardStep(parent) {
-    override fun setupUI(builder: Panel) {}
-
     override fun setupProject(project: Project) {
       WebModuleBuilder<Any>().also {
         it.name = parent.name

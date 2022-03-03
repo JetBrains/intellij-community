@@ -78,6 +78,39 @@ internal class WorkspaceEntityStorageBuilderImpl(
   @Volatile
   private var threadName: String? = null
 
+  override fun <T : WorkspaceEntity> addEntity(entity: T, source: EntitySource): T {
+    try {
+      lockWrite()
+
+      entity as ModifiableWorkspaceEntityBase<*>
+
+      entity.applyToBuilder(this, source)
+
+      // Entity adding happens inside of applyToBuilder
+      //entitiesByType.add(newEntityData, entity.getEntityClass().java.toClassId())
+
+      return entity
+    }
+    finally {
+      unlockWrite()
+    }
+  }
+
+  // This should be removed or not extracted into the interface
+  fun <T : WorkspaceEntity, D: WorkspaceEntityData<T>> putEntity(entity: D) {
+    try {
+      lockWrite()
+
+      entity as ModifiableWorkspaceEntityBase<*>
+
+      val newEntityData = entity.getEntityData()
+      entitiesByType.add(newEntityData, entity.getEntityClass().java.toClassId())
+    }
+    finally {
+      unlockWrite()
+    }
+  }
+
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
                                                                                  source: EntitySource,
                                                                                  initializer: M.() -> Unit): T {

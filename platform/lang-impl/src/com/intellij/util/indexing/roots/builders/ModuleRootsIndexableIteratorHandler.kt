@@ -7,6 +7,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
@@ -31,13 +32,14 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     val result = mutableListOf<IndexableFilesIterator>()
     fullIndexedModules.forEach { moduleId ->
       entityStorage.resolve(moduleId)?.also { entity ->
-        result.addAll(IndexableEntityProviderMethods.createIterators(entity, project))
+        result.addAll(IndexableEntityProviderMethods.createIterators(entity, entityStorage, project))
       }
     }
 
+    val moduleMap = entityStorage.moduleMap
     partialIteratorsMap.forEach { pair ->
       entityStorage.resolve(pair.key)?.also { entity ->
-        result.addAll(IndexableEntityProviderMethods.createIterators(entity, resolveRoots(pair.value), project))
+        result.addAll(IndexableEntityProviderMethods.createIterators(entity, resolveRoots(pair.value), moduleMap, project))
       }
     }
     return result

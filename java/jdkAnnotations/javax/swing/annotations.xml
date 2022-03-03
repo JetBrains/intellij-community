@@ -339,6 +339,9 @@
       <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
     </annotation>
   </item>
+  <item name="javax.swing.JPasswordField void setText(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls"/>
+  </item>
   <item name="javax.swing.JScrollBar JScrollBar(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.awt.Adjustable.HORIZONTAL, java.awt.Adjustable.VERTICAL}" />

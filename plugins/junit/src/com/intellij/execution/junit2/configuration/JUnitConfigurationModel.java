@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestObject;
@@ -115,7 +116,15 @@ public class JUnitConfigurationModel {
         testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
       try {
         data.METHOD_NAME = getJUnitTextValue(METHOD);
-        final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
+        final PsiClass testClass;
+        if (!myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className)) {
+          JavaRunConfigurationModule configurationModule = new JavaRunConfigurationModule(myProject, true);
+          configurationModule.setModule(module);
+          testClass = configurationModule.findClass(className);
+        }
+        else {
+          testClass = null;
+        }
         if (testClass != null && testClass.isValid()) {
           data.setMainClass(testClass);
         }

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun compareStrings(s1: String, s2: String, s3: String) {
     if (<warning descr="Condition 's1 > s1' is always false">s1 > s1</warning>) {}
     if (s1 > s2) {

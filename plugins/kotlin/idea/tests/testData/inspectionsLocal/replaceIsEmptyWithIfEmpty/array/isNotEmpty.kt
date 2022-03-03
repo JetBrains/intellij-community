@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(arr: Array<String>): Array<String> {
     return if (arr.isNotEmpty<caret>()) {
         arr

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -10,6 +10,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     c.gridx = 0;
     c.gridy = 1;
     c.anchor = GridBagConstraints.NORTH;
-    c.insets = JBUI.emptyInsets();
+    c.insets = JBInsets.emptyInsets();
     c.fill = GridBagConstraints.BOTH;
     c.weightx = 1;
     c.weighty = 1;
@@ -104,7 +105,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     c.gridx = 0;
     c.gridy = 2;
     c.anchor = GridBagConstraints.NORTH;
-    c.insets = JBUI.emptyInsets();
+    c.insets = JBInsets.emptyInsets();
     c.fill = GridBagConstraints.BOTH;
     c.weightx = 1;
     c.weighty = 1;

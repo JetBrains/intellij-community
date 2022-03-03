@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -151,7 +151,7 @@ public final class FunctionalInterfaceSuggester {
       @Override
       public boolean processInReadAction(PsiMember member) {
         if (member instanceof PsiClass &&
-            Java15APIUsageInspection.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
+            LanguageLevelUtil.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
           if (!JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, element, null)) {
             return true;
           }

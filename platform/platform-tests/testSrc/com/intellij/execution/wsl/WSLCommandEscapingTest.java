@@ -1,56 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWslPresence;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
 
-public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory tempDir = new TempDirectory();
-
-  private static NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
-    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
-    if (distributions.isEmpty()) return null;
-    WSLDistribution distribution = distributions.get(0);
-    if (distribution instanceof WSLDistributionLegacy || !IoTestUtil.reanimateWslDistribution(distribution.getId())) return null;
-    return distribution;
-  });
-
-  private WSLDistribution wsl;
-
-  @BeforeClass
-  public static void checkEnvironment() {
-    assumeWindows();
-    assumeWslPresence();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    WSL = null;
-  }
-
-  @Before
-  public void setUp() {
-    assumeTrue("No WSL distributions available", (wsl = WSL.getValue()) != null);
-  }
+public final class WSLCommandEscapingTest extends WslTestBase {
+  @Rule
+  public final TempDirectory myTempDirectory = new TempDirectory();
 
   @Test
   public void testEmptyParams() throws Exception {
@@ -233,7 +204,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertPwdOutputInDirectory(String directoryName) throws ExecutionException {
-    String path = wsl.getWslPath(tempDir.newDirectory(directoryName).getPath());
+    String path = getWsl().getWslPath(myTempDirectory.newDirectory(directoryName).getPath());
     assertWslCommandOutput(path + "\n", path, Collections.emptyMap(), List.of("pwd"));
   }
 
@@ -268,17 +239,18 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testReadShellPath() {
-    Assert.assertNotEquals("/bin/sh", wsl.getShellPath());
+    Assert.assertNotEquals("/bin/sh", getWsl().getShellPath());
   }
 
   private String createEchoScriptAndGetLinuxPath(String executableName) {
-    File file = tempDir.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
-    String wslPath = wsl.getWslPath(file.getPath());
+    File file = myTempDirectory.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
+    String wslPath = getWsl().getWslPath(file.getPath());
     assertNotNull("local path: " + file, wslPath);
     return wslPath;
   }
 
   private void assertWslCommandOutput(String expectedOut, String remoteWorkingDirectory, Map<String, String> envs, List<String> command) throws ExecutionException {
+    var wsl = getWsl();
     assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setLaunchWithWslExe(false)
       .setRemoteWorkingDirectory(remoteWorkingDirectory));
     assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setRemoteWorkingDirectory(remoteWorkingDirectory));
@@ -301,10 +273,11 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertWslCommandOutput(String expectedOut, Map<String, String> envs, List<String> command, WSLCommandLineOptions options) throws ExecutionException {
+    var wsl = getWsl();
     GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(envs);
     ProcessOutput output;
     if (options.isExecuteCommandInShell()) {
-      output = wsl.executeInShellAndGetCommandOnlyStdout(commandLine, options, 10_000);
+      output = WslExecution.executeInShellAndGetCommandOnlyStdout(wsl, commandLine, options, 10_000);
     }
     else {
       wsl.patchCommandLine(commandLine, null, options);

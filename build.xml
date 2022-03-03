@@ -18,7 +18,7 @@
     <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
       <env key="JAVA_HOME" value="${java.home}"/>
       <arg value="--no-daemon"/>
-      <arg line="setupJdks setupKotlinCompiler"/>
+      <arg line="setupJdks"/>
     </exec>
     <propertyset id="intellij.build.properties">
       <propertyref name="build.number"/>

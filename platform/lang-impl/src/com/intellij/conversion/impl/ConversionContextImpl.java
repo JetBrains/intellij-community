@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -22,10 +22,9 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jdom.Element;
@@ -46,6 +45,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class ConversionContextImpl implements ConversionContext {
   private static final Logger LOG = Logger.getInstance(ConversionContextImpl.class);
@@ -174,8 +175,7 @@ public final class ConversionContextImpl implements ConversionContext {
     return totalResult;
   }
 
-  @NotNull
-  private static CompletableFuture<List<Object2LongMap<String>>> computeModuleFilesTimestamp(@NotNull List<? extends Path> moduleFiles, @NotNull Executor executor) {
+  private static @NotNull CompletableFuture<List<Object2LongMap<String>>> computeModuleFilesTimestamp(@NotNull List<? extends Path> moduleFiles, @NotNull Executor executor) {
     return CompletableFuture.supplyAsync(() -> {
       Object2LongMap<String> result = new Object2LongOpenHashMap<>(moduleFiles.size());
       result.defaultReturnValue(-1);
@@ -269,8 +269,7 @@ public final class ConversionContextImpl implements ConversionContext {
     return files;
   }
 
-  @NotNull
-  public String expandPath(@NotNull String path, @NotNull ComponentManagerSettings moduleSettings) {
+  public @NotNull String expandPath(@NotNull String path, @NotNull ComponentManagerSettings moduleSettings) {
     return createExpandMacroMap(moduleSettings).substitute(path, true);
   }
 
@@ -284,8 +283,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @Override
-  @NotNull
-  public String expandPath(@NotNull String path) {
+  public @NotNull String expandPath(@NotNull String path) {
     ExpandMacroToPathMap map = createExpandMacroMap(null);
     return map.substitute(path, SystemInfoRt.isFileSystemCaseSensitive);
   }
@@ -318,27 +316,39 @@ public final class ConversionContextImpl implements ConversionContext {
       else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(level)) {
         libraryElement = findGlobalLibraryElement(name);
       }
-      return libraryElement == null ? Collections.emptyList() : ContainerUtil.map(getClassRoots(libraryElement, null), File::toPath);
+      return libraryElement == null ? Collections.emptyList() : getClassRootPaths(libraryElement, null);
     }
     catch (CannotConvertException e) {
       return Collections.emptyList();
     }
   }
 
-  @NotNull
-  public List<File> getClassRoots(Element libraryElement, @SuppressWarnings("TypeMayBeWeakened") @Nullable ModuleSettingsImpl moduleSettings) {
-    List<File> files = new ArrayList<>();
+  public @NotNull List<File> getClassRoots(Element libraryElement, @Nullable ModuleSettings moduleSettings) {
+    return getClassRootUrls(libraryElement, moduleSettings)
+      .map(url -> new File(Strings.trimEnd(URLUtil.extractPath(url), URLUtil.JAR_SEPARATOR)))
+      .collect(Collectors.toList());
+  }
+
+  public @NotNull List<Path> getClassRootPaths(Element libraryElement, @Nullable ModuleSettings moduleSettings) {
+    return getClassRootUrls(libraryElement, moduleSettings)
+      .map(url -> Path.of(Strings.trimEnd(URLUtil.extractPath(url), URLUtil.JAR_SEPARATOR)))
+      .collect(Collectors.toList());
+  }
+
+  public @NotNull Stream<String> getClassRootUrls(Element libraryElement, @Nullable ModuleSettings moduleSettings) {
     //todo[nik] support jar directories
-    final Element classesChild = libraryElement.getChild("CLASSES");
-    if (classesChild != null) {
-      final ExpandMacroToPathMap pathMap = createExpandMacroMap(moduleSettings);
-      for (Element root : classesChild.getChildren("root")) {
-        final String url = root.getAttributeValue("url");
-        final String path = VfsUtilCore.urlToPath(url);
-        files.add(new File(PathUtil.getLocalPath(pathMap.substitute(path, true))));
-      }
+    Element classesChild = libraryElement.getChild("CLASSES");
+    if (classesChild == null) {
+      return Stream.empty();
     }
-    return files;
+
+    ExpandMacroToPathMap pathMap = createExpandMacroMap(moduleSettings);
+    return classesChild.getChildren("root").stream()
+      .map(root -> {
+        String url = root.getAttributeValue("url");
+        return url == null ? null : pathMap.substitute(url, true);
+      })
+      .filter(Objects::nonNull);
   }
 
   @Override
@@ -382,8 +392,7 @@ public final class ConversionContextImpl implements ConversionContext {
     }
   }
 
-  @Nullable
-  private static Element findGlobalLibraryElement(String name) throws CannotConvertException {
+  private static @Nullable Element findGlobalLibraryElement(String name) throws CannotConvertException {
     final File file = PathManager.getOptionsFile("applicationLibraries");
     if (file.exists()) {
       final Element root = JDomConvertingUtil.load(file.toPath());
@@ -395,16 +404,14 @@ public final class ConversionContextImpl implements ConversionContext {
     return null;
   }
 
-  @Nullable
-  private Element findProjectLibraryElement(String name) throws CannotConvertException {
+  private @Nullable Element findProjectLibraryElement(String name) throws CannotConvertException {
     final Collection<? extends Element> libraries = getProjectLibrariesSettings().getProjectLibraries();
     final Condition<Element> filter = JDomConvertingUtil.createElementWithAttributeFilter(JpsLibraryTableSerializer.LIBRARY_TAG,
                                                                                           JpsLibraryTableSerializer.NAME_ATTRIBUTE, name);
     return ContainerUtil.find(libraries, filter);
   }
 
-  @Nullable
-  private static Element findLibraryInTable(Element tableElement, String name) {
+  private static @Nullable Element findLibraryInTable(Element tableElement, String name) {
     final Condition<Element> filter = JDomConvertingUtil.createElementWithAttributeFilter(JpsLibraryTableSerializer.LIBRARY_TAG,
                                                                                           JpsLibraryTableSerializer.NAME_ATTRIBUTE, name);
     return JDomConvertingUtil.findChild(tableElement, filter);
@@ -480,9 +487,8 @@ public final class ConversionContextImpl implements ConversionContext {
     return myNonExistingModuleFiles;
   }
 
-  @NotNull
   @Override
-  public StorageScheme getStorageScheme() {
+  public @NotNull StorageScheme getStorageScheme() {
     return myStorageScheme;
   }
 

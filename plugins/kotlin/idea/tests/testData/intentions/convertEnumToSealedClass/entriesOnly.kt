@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 'n' is never used
 
 enum class <caret>MyEnum(val s: String = "") {

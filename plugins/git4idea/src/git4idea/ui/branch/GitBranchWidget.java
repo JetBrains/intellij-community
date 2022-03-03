@@ -1,14 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -18,7 +16,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitBranchesUsageCollector;
 import git4idea.GitUtil;
@@ -29,7 +27,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import icons.DvcsImplIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +50,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  public @NotNull
-  String ID() {
+  public @NotNull String ID() {
     return ID;
   }
 
@@ -101,9 +97,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  protected @NlsContexts.Tooltip
-  @Nullable
-  String getToolTip(@Nullable GitRepository repository) {
+  protected @NlsContexts.Tooltip @Nullable String getToolTip(@Nullable GitRepository repository) {
     if (repository != null && repository.getState() == Repository.State.DETACHED) {
       return GitBundle.message("git.status.bar.widget.tooltip.detached");
     }
@@ -125,33 +119,29 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
   public static class Factory implements StatusBarWidgetFactory {
     @Override
-    public @NotNull
-    String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
     @Override
-    public @Nls
-    @NotNull
-    String getDisplayName() {
+    public @Nls @NotNull String getDisplayName() {
       return GitBundle.message("git.status.bar.widget.name");
     }
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-      return !ToolbarSettings.getInstance().isVisible() &&
-             !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
+      return (isEnabledByDefault() || ExperimentalUI.isNewUI()) && !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
     }
 
     @Override
-    public @NotNull
-    StatusBarWidget createWidget(@NotNull Project project) {
+    public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
       return new GitBranchWidget(project);
     }
 
     @Override
     public boolean isEnabledByDefault() {
-      return !ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isEnabled();
+      return !ExperimentalUI.isNewUI() && // Disabled by default in ExperimentalUI per designers request.
+             (!ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isEnabled());
     }
 
     @Override
@@ -162,6 +152,19 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     @Override
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return true;
+    }
+  }
+
+  public static class MyExperimentalToolbarStateListener implements ExperimentalToolbarStateListener {
+    private final Project myProject;
+
+    public MyExperimentalToolbarStateListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void refreshVisibility() {
+      myProject.getService(StatusBarWidgetsManager.class).updateWidget(Factory.class);
     }
   }
 }

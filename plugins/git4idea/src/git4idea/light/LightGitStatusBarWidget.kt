@@ -36,13 +36,13 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
     this.statusBar = statusBar
   }
 
-  override fun getPresentation(): StatusBarWidget.WidgetPresentation? = this
+  override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
 
   override fun getText(): String {
     return lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.text", it) } ?: ""
   }
 
-  override fun getTooltipText(): String? {
+  override fun getTooltipText(): String {
     val locationText = lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.tooltip", it) } ?: ""
     if (locationText.isBlank()) return locationText
 

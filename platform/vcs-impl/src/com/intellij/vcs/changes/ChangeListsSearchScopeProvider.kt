@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.changes
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -9,10 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.displayUrlRelativeToProject
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.search.DefaultSearchScopeProviders
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.SearchScopeProvider
+import com.intellij.psi.util.PsiUtilCore
 
 class ChangeListsSearchScopeProvider : SearchScopeProvider {
   override fun getDisplayName(): String? {
@@ -39,11 +39,13 @@ class ChangeListsSearchScopeProvider : SearchScopeProvider {
                     ?.let { PsiDocumentManager.getInstance(project).getPsiFile(it.document) }
 
     if (psiFile != null) {
-      val virtualFile = psiFile.virtualFile
-      val localUrl = displayUrlRelativeToProject(virtualFile, virtualFile.presentableUrl, project, isIncludeFilePath = true,
-                                                 moduleOnTheLeft = false)
-      result.add(
-        VcsChangesLocalSearchScope(project, VcsBundle.message("change.list.scope.provider.only.changes.in.file", localUrl), arrayOf(virtualFile), false))
+      val virtualFile = PsiUtilCore.getVirtualFile(psiFile)
+      if (virtualFile != null) {
+        val localUrl = displayUrlRelativeToProject(virtualFile, virtualFile.presentableUrl, project, isIncludeFilePath = true,
+                                                     moduleOnTheLeft = false)
+        result.add(
+          VcsChangesLocalSearchScope(project, VcsBundle.message("change.list.scope.provider.only.changes.in.file", localUrl), arrayOf(virtualFile), false))
+      }
     }
     return result
   }

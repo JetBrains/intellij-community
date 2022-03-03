@@ -46,6 +46,7 @@ import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.roots.*;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
@@ -209,27 +210,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
     actions.forEach(myTasks::offer);
-    DumbModeTask task = new DumbModeTask(this) {
-      @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-        ChangedFilesPushingStatistics statistics;
-        if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.getShouldDumpInUnitTestMode()) {
-          statistics = new ChangedFilesPushingStatistics(reason);
-        }
-        else {
-          statistics = null;
-        }
-        ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
-        try {
-          performDelayedPushTasks(statistics);
-        }
-        finally {
-          ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
-        }
-      }
-    };
+    DumbModeTask task = new MyDumbModeTask(reason, this);
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
@@ -354,15 +335,17 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       tasksStream = moduleEntities.stream()
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
-            Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, project);
+            WorkspaceEntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+            Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, storage, project);
             if (module == null) {
               return Stream.empty();
             }
             ProgressManager.checkCanceled();
-            return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, project), it -> new Object() {
-                final IndexableFilesIterator files = it;
-                final ContentIteratorEx iterator = iteratorProducer.apply(module);
-              })
+            return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project),
+                                     it -> new Object() {
+                                       final IndexableFilesIterator files = it;
+                                       final ContentIteratorEx iterator = iteratorProducer.apply(module);
+                                     })
               .stream()
               .map(pair -> (Runnable)() -> {
                 pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
@@ -476,5 +459,41 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   private static List<FilePropertyPusher<?>> getFilePushers() {
     return ContainerUtil.findAll(FilePropertyPusher.EP_NAME.getExtensionList(), pusher -> !pusher.pushDirectoriesOnly());
+  }
+
+  private static class MyDumbModeTask extends DumbModeTask {
+    private final @NotNull @NonNls String myReason;
+    private final PushedFilePropertiesUpdaterImpl myUpdater;
+
+    private MyDumbModeTask(@NotNull @NonNls String reason, @NotNull PushedFilePropertiesUpdaterImpl updater) {
+      myUpdater = updater;
+      myReason = reason;
+    }
+
+    @Override
+    public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
+      indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
+      ChangedFilesPushingStatistics statistics;
+      if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.getShouldDumpInUnitTestMode()) {
+        statistics = new ChangedFilesPushingStatistics(myReason);
+      }
+      else {
+        statistics = null;
+      }
+      ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
+      try {
+        myUpdater.performDelayedPushTasks(statistics);
+      }
+      finally {
+        ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
+      }
+    }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue instanceof MyDumbModeTask && ((MyDumbModeTask)taskFromQueue).myUpdater == myUpdater) return this;
+      return null;
+    }
   }
 }

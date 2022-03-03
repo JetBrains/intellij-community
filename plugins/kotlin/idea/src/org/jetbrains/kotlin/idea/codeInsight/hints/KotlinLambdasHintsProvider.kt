@@ -20,7 +20,7 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
 
     override val key: SettingsKey<Settings> = SettingsKey("kotlin.lambdas.hints")
     override val name: String = KotlinBundle.message("hints.settings.lambdas")
-    override val hintsArePlacedAtTheEndOfLine = true
+    override val hintsArePlacedAtTheEndOfLine = false
 
     override val group: InlayGroup
         get() = InlayGroup.LAMBDAS_GROUP

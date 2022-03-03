@@ -12,17 +12,17 @@ import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.IncorrectOperationException
 import com.siyeh.ig.callMatcher.CallMatcher
+import java.util.*
 
 
-object JavaInlayHintsProvider {
-
+internal object JavaInlayHintsProvider {
   fun hints(callExpression: PsiCall): Set<InlayInfo> {
     if (JavaMethodCallElement.isCompletionMode(callExpression)) {
-      val argumentList = callExpression.argumentList?:return emptySet()
+      val argumentList = callExpression.argumentList ?: return emptySet()
       val text = argumentList.text
       if (text == null || !text.startsWith('(') || !text.endsWith(')')) return emptySet()
 
-      val method = CompletionMemory.getChosenMethod(callExpression)?:return emptySet()
+      val method = CompletionMemory.getChosenMethod(callExpression) ?: return emptySet()
 
       val params = method.parameterList.parameters
       val arguments = argumentList.expressions
@@ -230,7 +230,7 @@ object JavaInlayHintsProvider {
 }
 
 private fun List<Int>.areSequential(): Boolean {
-  if (size == 0) throw IncorrectOperationException("List is empty")
+  if (isEmpty()) throw IncorrectOperationException("List is empty")
   val ordered = (first() until first() + size).toList()
   if (ordered.size == size) {
     return zip(ordered).all { it.first == it.second }
@@ -282,6 +282,8 @@ private fun shouldShowHintsForExpression(callArgument: PsiElement): Boolean {
 }
 
 
+private const val MIN_REASONABLE_PARAM_NAME_SIZE = 3
+
 private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiParameter?, val varArgExpressions: List<PsiExpression>) {
   
   
@@ -290,7 +292,7 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     
     for (callInfo in regularArgs) {
       val inlay = when {
-        isErroneousArg(callInfo) || isArgWithComment(callInfo) -> null
+        shouldHideArgument(callInfo) -> null
         shouldShowHintsForExpression(callInfo.argument) -> inlayInfo(callInfo)
         !callInfo.isAssignable(substitutor) -> inlayInfo(callInfo, showOnlyIfExistedBefore = true)
         else -> null
@@ -312,10 +314,13 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     }
 
     return regularArgs
-      .filterNot { isErroneousArg(it) || isArgWithComment(it) }
+      .filterNot { shouldHideArgument(it) }
       .filter { duplicated.contains(it.parameter.typeText()) && it.argument.text != it.parameter.name }
       .map { inlayInfo(it) }
   }
+
+  private fun shouldHideArgument(callInfo: CallArgumentInfo) =
+    isErroneousArg(callInfo) || isArgWithComment(callInfo) || argIfNamedHasSameNameAsParameter(callInfo)
 
   private fun isErroneousArg(arg : CallArgumentInfo): Boolean {
     return arg.argument is PsiEmptyExpressionImpl || arg.argument.prevSibling is PsiEmptyExpressionImpl
@@ -323,6 +328,19 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
 
   private fun isArgWithComment(arg : CallArgumentInfo): Boolean {
     return hasComment(arg.argument, PsiElement::getNextSibling) || hasComment(arg.argument, PsiElement::getPrevSibling)
+  }
+
+  private fun argIfNamedHasSameNameAsParameter(arg : CallArgumentInfo): Boolean {
+    val argName = when (val argExpr = arg.argument) {
+                    is PsiReferenceExpression -> argExpr.referenceName
+                    is PsiMethodCallExpression -> argExpr.methodExpression.referenceName
+                    else -> null
+                  }?.lowercase(Locale.getDefault()) ?: return false
+    val paramName = arg.parameter.name.lowercase(Locale.getDefault())
+    if (paramName.length < MIN_REASONABLE_PARAM_NAME_SIZE || argName.length < MIN_REASONABLE_PARAM_NAME_SIZE) {
+      return false
+    }
+    return argName.contains(paramName) || paramName.contains(argName)
   }
 
   private fun hasComment(e: PsiElement, next: (PsiElement) -> PsiElement?) : Boolean {

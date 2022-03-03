@@ -2,11 +2,9 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiSwitchBlock;
-import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +20,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   private final List<String> myAllNames;
 
   public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, Set<String> names, @NotNull List<String> allNames) {
-    super(block, names, true);
+    super(block, names);
     myAllNames = allNames;
   }
 
@@ -40,12 +38,16 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
-  protected @NotNull List<String> getAllNames(PsiClass ignored) {
+  protected @NotNull List<String> getAllNames(@NotNull PsiClass ignored) {
     return myAllNames;
   }
 
   @Override
   protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor() {
-    return label -> Collections.emptyList();
+    return label -> {
+      PsiCaseLabelElementList list = label.getCaseLabelElementList();
+      if (list == null) return Collections.emptyList();
+      return ContainerUtil.map(list.getElements(), PsiCaseLabelElement::getText);
+    };
   }
 }

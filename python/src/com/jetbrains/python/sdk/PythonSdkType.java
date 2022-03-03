@@ -34,6 +34,7 @@ import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -357,6 +358,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
+    if (PlatformUtils.isFleetBackend()) return;
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     AtomicReference<Project> projectRef = new AtomicReference<>();
@@ -533,13 +535,8 @@ public final class PythonSdkType extends SdkType {
     return homeDir != null && homeDir.isValid();
   }
 
-  public static boolean isIncompleteRemote(Sdk sdk) {
-    if (PySdkExtKt.isTargetBased(sdk)) {
-      // TODO [targets] We might want to check if the target configuration data is incomplete
-      return false;
-    }
-    else if (PythonSdkUtil.isRemote(sdk)) {
-      //noinspection ConstantConditions
+  public static boolean isIncompleteRemote(@NotNull Sdk sdk) {
+    if (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
       if (!((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).isValid()) {
         return true;
       }
@@ -552,14 +549,9 @@ public final class PythonSdkType extends SdkType {
     return data instanceof PyRemoteSdkAdditionalDataBase && ((PyRemoteSdkAdditionalDataBase)data).isRunAsRootViaSudo();
   }
 
-  public static boolean hasInvalidRemoteCredentials(Sdk sdk) {
-    if (PySdkExtKt.isTargetBased(sdk)) {
-      // TODO [targets] We might want to check if the target configuration data is invalid
-      return false;
-    }
-    else if (PythonSdkUtil.isRemote(sdk)) {
+  public static boolean hasInvalidRemoteCredentials(@NotNull Sdk sdk) {
+    if (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
       final Ref<Boolean> result = Ref.create(false);
-      //noinspection ConstantConditions
       ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(
         new LanguageCaseCollector<PyCredentialsContribution>() {
 

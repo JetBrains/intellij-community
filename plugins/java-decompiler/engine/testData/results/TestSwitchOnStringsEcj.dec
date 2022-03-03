@@ -1,0 +1,294 @@
+package pkg;
+
+public class TestSwitchOnStringsEcj {
+   String s;
+   static final String S = "";
+
+   void noCase() {
+      this.getStr().hashCode();// 8
+   }// 10
+
+   void oneCase(String s) {
+      System.out.println(1);// 13
+      switch (s) {// 14
+         case "xxx":
+            System.out.println(2);// 16
+         default:
+            System.out.println(3);// 19
+      }
+   }// 20
+
+   void oneCaseWithDefault() {
+      System.out.println(1);// 23
+      switch (this.s) {// 24
+         case "xxx":
+            System.out.println(2);// 26
+            break;// 27
+         default:
+            System.out.println(3);// 29
+      }
+
+      System.out.println(4);// 32
+   }// 33
+
+   void multipleCases1() {
+      System.out.println(1);// 36
+      switch ("") {// 37
+         case "xxx":
+            System.out.println(2);// 39
+            break;
+         case "yyy":
+            System.out.println(3);// 42
+      }
+
+      System.out.println(4);// 45
+   }// 46
+
+   void multipleCasesWithDefault1() {
+      label19: {
+         System.out.println(1);// 49
+         switch (this.getStr()) {// 50
+            case "xxx":
+               System.out.println(2);// 52
+               break label19;// 53
+            case "yyy":
+               System.out.println(3);// 55
+               break label19;// 56
+         }
+
+         System.out.println(4);// 58
+      }
+
+      System.out.println(5);// 61
+   }// 62
+
+   void multipleCases2() {
+      System.out.println(1);// 65
+      switch ("") {// 66
+         case "xxx":
+            System.out.println(2);// 68
+            break;
+         case "yyy":
+            System.out.println(3);// 71
+            break;
+         case "zzz":
+            System.out.println(4);// 74
+      }
+
+      System.out.println(5);// 77
+   }// 78
+
+   void multipleCasesWithDefault2() {
+      label23: {
+         System.out.println(1);// 81
+         switch (this.getStr()) {// 82
+            case "xxx":
+               System.out.println(2);// 84
+               break label23;// 85
+            case "yyy":
+               System.out.println(3);// 87
+               break label23;// 88
+            case "zzz":
+               System.out.println(4);// 90
+               break label23;// 91
+         }
+
+         System.out.println(5);// 93
+      }
+
+      System.out.println(6);// 96
+   }// 97
+
+   String getStr() {
+      return "";// 149
+   }
+}
+
+class 'pkg/TestSwitchOnStringsEcj' {
+   method 'noCase ()V' {
+      1      7
+      6      7
+      a      8
+   }
+
+   method 'oneCase (Ljava/lang/String;)V' {
+      0      11
+      3      11
+      4      11
+      d      12
+      2c      14
+      2f      14
+      30      14
+      33      16
+      36      16
+      37      16
+      3a      18
+   }
+
+   method 'oneCaseWithDefault ()V' {
+      0      21
+      3      21
+      4      21
+      8      22
+      10      22
+      30      24
+      33      24
+      34      24
+      37      25
+      3a      27
+      3d      27
+      3e      27
+      41      30
+      44      30
+      45      30
+      48      31
+   }
+
+   method 'multipleCases1 ()V' {
+      0      34
+      3      34
+      4      34
+      7      35
+      e      35
+      40      37
+      43      37
+      44      37
+      4a      40
+      4d      40
+      4e      40
+      51      43
+      54      43
+      55      43
+      58      44
+   }
+
+   method 'multipleCasesWithDefault1 ()V' {
+      0      48
+      3      48
+      4      48
+      8      49
+      10      49
+      44      51
+      47      51
+      48      51
+      4b      52
+      4e      54
+      51      54
+      52      54
+      55      55
+      58      58
+      5b      58
+      5c      58
+      5f      61
+      62      61
+      63      61
+      66      62
+   }
+
+   method 'multipleCases2 ()V' {
+      0      65
+      3      65
+      4      65
+      7      66
+      e      66
+      54      68
+      57      68
+      58      68
+      5e      71
+      61      71
+      62      71
+      68      74
+      6b      74
+      6c      74
+      6f      77
+      72      77
+      73      77
+      76      78
+   }
+
+   method 'multipleCasesWithDefault2 ()V' {
+      0      82
+      3      82
+      4      82
+      8      83
+      10      83
+      58      85
+      5b      85
+      5c      85
+      5f      86
+      62      88
+      65      88
+      66      88
+      69      89
+      6c      91
+      6f      91
+      70      91
+      73      92
+      76      95
+      79      95
+      7a      95
+      7d      98
+      80      98
+      82      98
+      85      99
+   }
+
+   method 'getStr ()Ljava/lang/String;' {
+      0      102
+      2      102
+   }
+}
+
+Lines mapping:
+8 <-> 8
+10 <-> 9
+13 <-> 12
+14 <-> 13
+16 <-> 15
+19 <-> 17
+20 <-> 19
+23 <-> 22
+24 <-> 23
+26 <-> 25
+27 <-> 26
+29 <-> 28
+32 <-> 31
+33 <-> 32
+36 <-> 35
+37 <-> 36
+39 <-> 38
+42 <-> 41
+45 <-> 44
+46 <-> 45
+49 <-> 49
+50 <-> 50
+52 <-> 52
+53 <-> 53
+55 <-> 55
+56 <-> 56
+58 <-> 59
+61 <-> 62
+62 <-> 63
+65 <-> 66
+66 <-> 67
+68 <-> 69
+71 <-> 72
+74 <-> 75
+77 <-> 78
+78 <-> 79
+81 <-> 83
+82 <-> 84
+84 <-> 86
+85 <-> 87
+87 <-> 89
+88 <-> 90
+90 <-> 92
+91 <-> 93
+93 <-> 96
+96 <-> 99
+97 <-> 100
+149 <-> 103
+Not mapped:
+40
+69
+72

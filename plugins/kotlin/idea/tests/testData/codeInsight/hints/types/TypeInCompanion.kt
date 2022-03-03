@@ -5,4 +5,4 @@ class A {
         fun provideInA() = InA()
     }
 }
-val inA<# [:  A.InA]# > = A.provideInA()
+val inA<# [:  [temp:///src/KotlinReferencesTypeHintsProvider.kt:59]A.InA] #> = A.provideInA()

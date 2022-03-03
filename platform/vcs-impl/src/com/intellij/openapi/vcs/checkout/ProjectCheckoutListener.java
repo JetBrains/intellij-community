@@ -23,7 +23,4 @@ public class ProjectCheckoutListener implements CheckoutListener {
     }
     return false;
   }
-
-  @Override
-  public void processOpenedProject(Project lastOpenedProject) { }
 }

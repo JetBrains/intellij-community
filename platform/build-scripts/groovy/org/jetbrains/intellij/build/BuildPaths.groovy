@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.io.FileUtilRt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 
 import java.nio.file.Path
 /**
@@ -16,14 +17,15 @@ abstract class BuildPaths {
 
     this.buildOutputRoot = FileUtilRt.toSystemIndependentName(buildOutputDir.toString())
     communityHome = FileUtilRt.toSystemIndependentName(communityHomeDir.toString())
+    this.buildDependenciesCommunityRoot = new BuildDependenciesCommunityRoot(communityHomeDir)
 
     tempDir = buildOutputDir.resolve("temp")
     temp = FileUtilRt.toSystemIndependentName(tempDir.toString())
 
     distAllDir = buildOutputDir.resolve("dist.all")
-    distAll = FileUtilRt.toSystemIndependentName(distAllDir.toString())
 
     this.logDir = logDir
+    this.buildOutputDir = buildOutputDir
   }
 
   /**
@@ -31,6 +33,7 @@ abstract class BuildPaths {
    */
   final String communityHome
   final Path communityHomeDir
+  final BuildDependenciesCommunityRoot buildDependenciesCommunityRoot
 
   /**
    * Path to a base directory of the project which will be compiled
@@ -42,6 +45,7 @@ abstract class BuildPaths {
    * Path to a directory where build script will store temporary and resulting files
    */
   String buildOutputRoot
+  Path buildOutputDir
 
   /**
    * All log and debug files should be written to this directory. It will be automatically published to TeamCity artifacts
@@ -52,21 +56,20 @@ abstract class BuildPaths {
    * Path to a directory where resulting artifacts will be placed
    */
   String artifacts
+  Path artifactDir
 
   /**
    * Path to a directory containing distribution files ('bin', 'lib', 'plugins' directories) common for all operating systems
    */
-  String distAll
   Path distAllDir
+
+  String getDistAll() {
+    return distAllDir.toString().replace('\\', '/')
+  }
 
   /**
    * Path to a directory where temporary files required for a particular build step can be stored
    */
   final String temp
   final Path tempDir
-
-  /**
-   * Path to a directory containing JDK (currently Java 11) which is used to compile the project
-   */
-  String jdkHome
 }

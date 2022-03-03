@@ -47,14 +47,6 @@ public interface CodeInsightColors {
   /**
    * @deprecated as of version 16.
    * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#STATIC_FIELD} or define your own.
-   * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#STATIC_FIELD_ATTRIBUTES}.
-   * The field will be removed in future versions.
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  TextAttributesKey STATIC_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
-  /**
-   * @deprecated as of version 16.
-   * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#STATIC_FIELD} or define your own.
    * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#STATIC_FINAL_FIELD_ATTRIBUTES}.
    * The field will be removed in future versions.
    */

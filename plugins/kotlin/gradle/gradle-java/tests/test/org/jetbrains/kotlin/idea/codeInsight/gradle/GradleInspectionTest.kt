@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
 
-class GradleInspectionTest : KotlinGradleImportingTestCase() {
+class GradleInspectionTest4 : KotlinGradleImportingTestCase() {
     @Test
     fun testDifferentStdlibGradleVersion() {
         val problems = getInspectionResultFromTestDataProject()
@@ -51,7 +51,10 @@ class GradleInspectionTest : KotlinGradleImportingTestCase() {
         val problems = getInspectionResultFromTestDataProject()
 
         assertEquals(1, problems.size)
-        assertEquals("Plugin version ($LATEST_STABLE_GRADLE_PLUGIN_VERSION) is not the same as library version (1.3.30)", problems.single())
+        assertEquals(
+            "Plugin version ($LATEST_STABLE_GRADLE_PLUGIN_VERSION) is not the same as library version (1.3.30)",
+            problems.single()
+        )
     }
 
     @Test
@@ -161,12 +164,11 @@ class GradleInspectionTest : KotlinGradleImportingTestCase() {
                 resultRef.set(foundProblems)
             }
         }
+
         return resultRef.get()
     }
 
-    override fun testDataDirName(): String {
-        return "inspections"
-    }
+    override fun testDataDirName(): String = "inspections"
 
     companion object {
         private const val TOOL = "// TOOL: "

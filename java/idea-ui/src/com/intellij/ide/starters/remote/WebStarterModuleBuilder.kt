@@ -18,10 +18,14 @@ import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.preprocess
 import com.intellij.ide.starters.remote.wizard.WebStarterInitialStep
 import com.intellij.ide.starters.remote.wizard.WebStarterLibrariesStep
 import com.intellij.ide.starters.shared.*
-import com.intellij.ide.util.projectWizard.*
+import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.SettingsStep
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -29,13 +33,12 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -53,7 +56,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Url
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -71,8 +73,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   private val starterSettings: StarterWizardSettings by lazy { createSettings() }
 
   override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
-  override fun getParentGroup(): String = JavaModuleType.BUILD_TOOLS_GROUP
-  override fun getWeight(): Int = JavaModuleBuilder.BUILD_SYSTEM_WEIGHT + 10
+  override fun getWeight(): Int = JVM_WEIGHT
   open fun getHelpId(): String? = null
 
   // Required settings
@@ -191,7 +192,6 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
 
   protected abstract fun composeGeneratorUrl(serverUrl: String, starterContext: WebStarterContext): Url
 
-  @RequiresBackgroundThread
   protected abstract fun extractGeneratorResult(tempZipFile: File, contentEntryDir: File)
 
   protected open fun getPluginRecommendations(): List<PluginRecommendation> = emptyList()
@@ -209,11 +209,28 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, java.lang.Boolean.TRUE)
     }
 
+    try {
+      extractTemplate() // should be quite fast, only extracts single small ZIP file
+    }
+    catch (e: Exception) {
+      thisLogger().info(e)
+
+      StartupManager.getInstance(project).runAfterOpened {
+        EdtExecutorService.getScheduledExecutorInstance().schedule(
+          {
+            var message = JavaStartersBundle.message("error.text.with.error.content", e.message)
+            message = StringUtil.shortenTextWithEllipsis(message, 1024, 0) // exactly 1024 because why not
+            Messages.showErrorDialog(message, presentableName)
+          },
+          3, TimeUnit.SECONDS)
+      }
+      return
+    }
+
     preprocessModuleCreated(module, this, starterContext.frameworkVersion?.id)
 
     StartupManager.getInstance(project).runAfterOpened {
-      // a hack to avoid "Assertion failed: Network shouldn't be accessed in EDT or inside read action"
-      ApplicationManager.getApplication().invokeLater({ extractAndImport(module) },
+      ApplicationManager.getApplication().invokeLater({ runImport(module) },
                                                       ModalityState.NON_MODAL, module.disposed)
     }
   }
@@ -234,25 +251,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     doAddContentEntry(modifiableRootModel)
   }
 
-  private fun extractAndImport(module: Module) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        try {
-          extractTemplate()
-        }
-        catch (e: Exception) {
-          thisLogger().info(e)
-
-          EdtExecutorService.getScheduledExecutorInstance().schedule(
-            {
-              var message = JavaStartersBundle.message("error.text.with.error.content", e.message)
-              message = StringUtil.shortenTextWithEllipsis(message, 1024, 0) // exactly 1024 because why not
-              Messages.showErrorDialog(message, presentableName)
-            },
-            3, TimeUnit.SECONDS)
-        }
-      }, JavaStartersBundle.message("message.state.preparing.template"), true, module.project)
-
+  private fun runImport(module: Module) {
     LocalFileSystem.getInstance().refresh(false) // to avoid IDEA-232806
 
     preprocessModuleOpened(module, this, starterContext.frameworkVersion?.id)
@@ -262,6 +261,15 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     }
 
     openSampleFiles(module, getFilePathsToOpen())
+    if (starterContext.gitIntegration) {
+      val moduleContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
+                              ?: throw IllegalStateException("Module root not found")
+
+      runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
+        GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot)
+      }
+    }
+
     importModule(module)
 
     verifyIdePlugins(module.project)
@@ -282,9 +290,6 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     else {
       FileUtil.copy(tempFile, File(contentEntryDir, downloadResult.filename))
     }
-
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentEntryDir)
-    VfsUtil.markDirtyAndRefresh(false, true, false, vf)
   }
 
   private fun verifyIdePlugins(project: Project) {

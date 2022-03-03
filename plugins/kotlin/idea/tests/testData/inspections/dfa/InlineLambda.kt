@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import kotlin.contracts.*
 
 fun lambdaGlobalReturn(ints: Array<Int>, b : Boolean) {

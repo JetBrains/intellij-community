@@ -1,7 +1,0 @@
-package test
-
-class SomeClass
-
-typealias AliasedSomeClass = SomeClass
-
-fun usage(param: AliasedSomeClass): AliasedSomeClass = param

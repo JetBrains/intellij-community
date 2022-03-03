@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -63,7 +63,7 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
 
   public static void parseTestResults(Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
     try (Reader reader = readerSupplier.get()) {
-      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+      SAXParser parser = SAXParserFactory.newDefaultInstance().newSAXParser();
       parser.parse(new InputSource(reader), ImportTestOutputExtension.findHandler(readerSupplier, processor));
     }
     catch (ParserConfigurationException | SAXException e) {

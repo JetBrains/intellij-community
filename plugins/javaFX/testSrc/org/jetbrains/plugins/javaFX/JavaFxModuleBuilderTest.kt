@@ -10,7 +10,7 @@ import org.junit.Test
 
 class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   @Test
-  fun EmptyMavenProject() {
+  fun emptyMavenProject() {
     JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = MAVEN_PROJECT
@@ -126,7 +126,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   }
 
   @Test
-  fun EmptyGradleProject() {
+  fun emptyGradleProject() {
     JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = GRADLE_PROJECT

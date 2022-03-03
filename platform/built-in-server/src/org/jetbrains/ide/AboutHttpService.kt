@@ -66,7 +66,7 @@ internal class AboutHttpService : RestService() {
     val origin = origin ?: return false
     @Suppress("SpellCheckingInspection")
     val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill.org$")
-    val academyJetbrainsRegex = Regex("https://([a-z0-9-]+)*.jetbrains.com$")
+    val academyJetbrainsRegex = Regex("https://([a-z0-9-.]+)\\.jetbrains.com$")
     return origin.matches(hyperskillRegex) || origin.matches(academyJetbrainsRegex)
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.diagnostic.VMOptions
@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
@@ -27,14 +28,15 @@ import java.util.*
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class SystemRuntimeCollector : ApplicationUsagesCollector() {
+class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
   private val VENDORS = listOf("JetBrains", "Apple", "Oracle", "Sun", "IBM", "Azul", "Other")
   private val VM_OPTIONS = listOf("Xmx", "Xms", "SoftRefLRUPolicyMSPerMB", "ReservedCodeCacheSize")
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
+  private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
 
-  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 15)
+  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 16)
   private val CORES: EventId1<Int> = GROUP.registerEvent("cores", Int("value"))
   private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", Int("gigabytes"))
   private val SWAP_SIZE: EventId1<Int> = GROUP.registerEvent("swap.size", Int("gigabytes"))
@@ -46,6 +48,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTY: EventId2<String?, Boolean> =
     GROUP.registerEvent("jvm.client.properties", String("name", SYSTEM_PROPERTIES), Boolean("value"))
   private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
+  private val RENDERING: EventId1<String?> = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -65,6 +68,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     }
 
     result += GC.metric(getGcName())
+
+    // Proper detection implemented only for macOS
+    if (SystemInfo.isMac) result += RENDERING.metric(getRenderingPipelineName())
 
     result += JVM.metric(
       Version(1, JavaVersion.current().feature, 0),
@@ -122,6 +128,8 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     }
     return "Other"
   }
+
+  private fun getRenderingPipelineName() = if (SystemInfo.isMetalRendering) "Metal" else "OpenGL"
 
   private fun getJavaVendor(): String =
     when {

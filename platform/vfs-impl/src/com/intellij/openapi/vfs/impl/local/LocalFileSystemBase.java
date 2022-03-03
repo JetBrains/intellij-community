@@ -412,11 +412,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
+    long l = file.getLength();
+    if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
+    int length = (int)l;
+    if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
+    return loadFileContent(ioFile, length);
+  }
+
+  protected static byte @NotNull [] loadFileContent(@NotNull File ioFile, int length) throws IOException {
     try (InputStream stream = new FileInputStream(ioFile)) {
-      long l = file.getLength();
-      if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
-      int length = (int)l;
-      if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
       // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
       // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
       return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
@@ -601,20 +605,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  private static final String[] ourRootPaths;
-  static {
-    //noinspection SpellCheckingInspection
-    List<String> roots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
-    roots.sort((o1, o2) -> o2.length() - o1.length());  // longest first
-    ourRootPaths = ArrayUtilRt.toStringArray(roots);
-  }
-
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
-    for (String customRootPath : ourRootPaths) {
-      if (normalizedPath.startsWith(customRootPath)) return customRootPath;
-    }
-
     String rootPath = FileUtil.extractRootPath(normalizedPath);
     return StringUtil.notNullize(rootPath);
   }
@@ -695,14 +687,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isWindows && file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // UNC roots
     }
-    return getAttributes(path);
+    return myAttrGetter.accessDiskWithCheckCanceled(file);
   }
 
-  protected FileAttributes getAttributes(@NotNull String path) {
-    return myAttrGetter.accessDiskWithCheckCanceled(FileUtilRt.toSystemDependentName(path));
-  }
-
-  private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
+  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(LocalFileSystemBase::getAttributesWithCustomTimestamp);
   private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list());
 
   @Override
@@ -730,5 +718,19 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
+  }
+
+  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(@NotNull VirtualFile file) {
+    final FileAttributes fs = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+    if (fs == null) return null;
+
+    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+      final Long custom = provider.getTimestamp(file);
+      if (custom != null) {
+        return new FileAttributes(fs.isDirectory(), fs.isSpecial(), fs.isSymLink(), fs.isHidden(), fs.length, custom, fs.isWritable(), fs.areChildrenCaseSensitive());
+      }
+    }
+
+    return fs;
   }
 }

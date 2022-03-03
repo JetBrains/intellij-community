@@ -784,7 +784,7 @@
     <depends optional="true">com.intellij.modules.sql</depends>
     <depends optional="true">-com-intellij-plugins-html-instantEditing-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.wsl/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.wsl.remoteSdk/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-wsl-</id>
     <name>WSL Support Framework</name>
     <depends>com.intellij.modules.ultimate</depends>

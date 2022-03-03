@@ -1,5 +1,5 @@
 // FIX: Convert sealed sub-class to object
-// WITH_RUNTIME
+// WITH_STDLIB
 
 sealed class Sealed
 

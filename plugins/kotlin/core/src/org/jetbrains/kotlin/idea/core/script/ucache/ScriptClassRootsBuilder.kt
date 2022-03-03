@@ -41,7 +41,7 @@ class ScriptClassRootsBuilder(
         vFile: VirtualFile,
         configuration: ScriptCompilationConfigurationWrapper
     ) {
-        sdks.addSdk(configuration.javaHome)
+        sdks.addSdk(configuration.javaHome?.toPath())
 
         configuration.dependenciesClassPath.forEach { file ->
             val path = file.toPath()

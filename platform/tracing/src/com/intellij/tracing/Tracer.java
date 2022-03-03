@@ -207,6 +207,6 @@ public class Tracer {
   }
 
   static long getTimeUs(long timeNs) {
-    return (tracingStartMs * 1000_000 - tracingStartNs + timeNs) / 1000;
+    return (tracingStartMs * 1_000_000 - tracingStartNs + timeNs) / 1000;
   }
 }

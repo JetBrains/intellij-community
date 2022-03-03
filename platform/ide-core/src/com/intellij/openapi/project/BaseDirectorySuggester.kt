@@ -19,7 +19,3 @@ interface BaseDirectorySuggester {
    */
   fun suggestBaseDirectory(project: Project): VirtualFile?
 }
-
-internal class FooBarBaz {
-  internal fun foo() {}
-}

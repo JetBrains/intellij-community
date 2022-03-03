@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -74,8 +75,10 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
   }
 
   @Override
-  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
-    return myFix.applyFixForPreview(project, myProblemDescriptor.getDescriptorForPreview(file));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
+    return myFix.generatePreview(project, myProblemDescriptor.getDescriptorForPreview(file));
   }
 }
 

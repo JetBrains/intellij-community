@@ -51,6 +51,25 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
     return library;
   }
 
+  static void updateLibrary(Sdk sdk) {
+    final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+    final Library library = libraryTableModel.getLibraryByName(PythonFacetUtil.getFacetLibraryName(sdk.getName()));
+    if (library == null) return;
+    final Library.ModifiableModel model = library.getModifiableModel();
+    for (String url : library.getRootProvider().getUrls(OrderRootType.CLASSES)) {
+      model.removeRoot(url, OrderRootType.CLASSES);
+    }
+    for (String url : library.getRootProvider().getUrls(OrderRootType.SOURCES)) {
+      model.removeRoot(url, OrderRootType.SOURCES);
+    }
+    for (String url : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
+      model.addRoot(url, OrderRootType.CLASSES);
+      model.addRoot(url, OrderRootType.SOURCES);
+    }
+    model.commit();
+    libraryTableModel.commit();
+  }
+
   private static void removeLibrary(final Sdk sdk) {
     ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       final LibraryTable.ModifiableModel libraryTableModel =

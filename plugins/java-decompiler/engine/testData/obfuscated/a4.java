@@ -66,21 +66,21 @@ public class a4 implements ac {
 
          while(true) {
             var10007 = var4[var10006];
-            switch(var1 % 5) {
-            case 0:
-               var10008 = 50;
-               break;
-            case 1:
-               var10008 = 113;
-               break;
-            case 2:
-               var10008 = 115;
-               break;
-            case 3:
-               var10008 = 78;
-               break;
-            default:
-               var10008 = 89;
+            switch (var1 % 5) {
+               case 0:
+                  var10008 = 50;
+                  break;
+               case 1:
+                  var10008 = 113;
+                  break;
+               case 2:
+                  var10008 = 115;
+                  break;
+               case 3:
+                  var10008 = 78;
+                  break;
+               default:
+                  var10008 = 89;
             }
 
             var4[var10006] = (char)(var10007 ^ var10008);
@@ -125,21 +125,21 @@ public class a4 implements ac {
 
       while(true) {
          var10007 = var4[var10006];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 50;
-            break;
-         case 1:
-            var10008 = 113;
-            break;
-         case 2:
-            var10008 = 115;
-            break;
-         case 3:
-            var10008 = 78;
-            break;
-         default:
-            var10008 = 89;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 50;
+               break;
+            case 1:
+               var10008 = 113;
+               break;
+            case 2:
+               var10008 = 115;
+               break;
+            case 3:
+               var10008 = 78;
+               break;
+            default:
+               var10008 = 89;
          }
 
          var4[var10006] = (char)(var10007 ^ var10008);

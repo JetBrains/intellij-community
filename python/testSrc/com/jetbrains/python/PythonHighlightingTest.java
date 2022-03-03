@@ -533,6 +533,16 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON39, false, false);
   }
 
+  // PY-24653
+  public void testSelfHighlightingInInnerFunc() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
+  // PY-24653
+  public void testNestedParamHighlightingInInnerFunc() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();

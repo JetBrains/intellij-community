@@ -38,9 +38,9 @@ class BundledPluginsStateTest : LightPlatformTestCase() {
 
   @Test
   fun testSavingState() {
-    val savedIds = BundledPluginsState.getBundledPlugins(PathManager.getConfigDir())
+    val savedIds = BundledPluginsState.getBundledPlugins(PathManager.getConfigDir())!!.toMutableList()
     val bundledIds = PluginManagerCore.getLoadedPlugins().filter { it.isBundled }
-    assertEquals(bundledIds.map { Pair(it.pluginId, it.category) }, savedIds)
+    assertSameElements(bundledIds.map { Pair(it.pluginId, it.category) }, savedIds)
     assertEquals(false, BundledPluginsState.shouldSave())
   }
 

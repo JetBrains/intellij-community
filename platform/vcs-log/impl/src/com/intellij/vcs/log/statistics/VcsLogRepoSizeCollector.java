@@ -2,8 +2,8 @@
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -22,11 +22,26 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @NonNls
 public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.data", 5);
+  private static final EventId DATA_INITIALIZED = GROUP.registerEvent("dataInitialized");
+  private static final EventId1<Integer> COMMIT_COUNT = GROUP.registerEvent("commit.count", EventFields.Count);
+  private static final EventId1<Integer> BRANCHES_COUNT = GROUP.registerEvent("branches.count", EventFields.Count);
+  private static final EventId1<Integer> USERS_COUNT = GROUP.registerEvent("users.count", EventFields.Count);
+  public static final StringEventField VCS_FIELD = new StringEventField("vcs") {
+    @NotNull
+    @Override
+    public List<String> getValidationRule() {
+      return List.of("{enum#vcs}", "{enum:third.party}");
+    }
+  };
+  private static final EventId2<Integer, String>
+    ROOT_COUNT = GROUP.registerEvent("root.count", EventFields.Count, VCS_FIELD);
 
   @NotNull
   @Override
@@ -39,15 +54,14 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
         int commitCount = dataPack.getPermanentGraph().getAllCommits().size();
         int branchesCount = dataPack.getRefsModel().getBranches().size();
         int usersCount = logData.getAllUsers().size();
-        Set<MetricEvent> usages = ContainerUtil.newHashSet(new MetricEvent("dataInitialized"));
-        usages.add(MetricEventFactoryKt.newCounterMetric("commit.count", StatisticsUtil.roundToPowerOfTwo(commitCount)));
-        usages.add(MetricEventFactoryKt.newCounterMetric("branches.count", StatisticsUtil.roundToPowerOfTwo(branchesCount)));
-        usages.add(MetricEventFactoryKt.newCounterMetric("users.count", StatisticsUtil.roundToPowerOfTwo(usersCount)));
+        Set<MetricEvent> usages = ContainerUtil.newHashSet(DATA_INITIALIZED.metric());
+        usages.add(COMMIT_COUNT.metric(StatisticsUtil.roundToPowerOfTwo(commitCount)));
+        usages.add(BRANCHES_COUNT.metric(StatisticsUtil.roundToPowerOfTwo(branchesCount)));
+        usages.add(USERS_COUNT.metric(StatisticsUtil.roundToPowerOfTwo(usersCount)));
         MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
         for (VcsKey vcs : groupedRoots.keySet()) {
-          FeatureUsageData vcsData = new FeatureUsageData().addData("vcs", getVcsKeySafe(vcs));
           int rootCount = groupedRoots.get(vcs).size();
-          usages.add(MetricEventFactoryKt.newCounterMetric("root.count", StatisticsUtil.roundToPowerOfTwo(rootCount), vcsData));
+          usages.add(ROOT_COUNT.metric(StatisticsUtil.roundToPowerOfTwo(rootCount), getVcsKeySafe(vcs)));
         }
         return usages;
       }
@@ -74,14 +88,8 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
     return result;
   }
 
-  @NotNull
   @Override
-  public String getGroupId() {
-    return "vcs.log.data";
-  }
-
-  @Override
-  public int getVersion() {
-    return 4;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 }

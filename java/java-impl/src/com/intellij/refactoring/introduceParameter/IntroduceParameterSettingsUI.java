@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -14,7 +14,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
 
@@ -153,8 +153,8 @@ public abstract class IntroduceParameterSettingsUI {
     }
   }
 
-  protected TIntArrayList getParametersToRemove() {
-    TIntArrayList parameters = new TIntArrayList();
+  protected IntList getParametersToRemove() {
+    IntList parameters = new IntArrayList();
     for (int i = 0; i < myParametersToRemoveChecked.length; i++) {
       if (myParametersToRemoveChecked[i]) {
         parameters.add(i);

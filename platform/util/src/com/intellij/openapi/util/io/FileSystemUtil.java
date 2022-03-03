@@ -372,8 +372,9 @@ public final class FileSystemUtil {
 
         Class<? extends BasicFileAttributes> schema = SystemInfo.isWindows ? DosFileAttributes.class : PosixFileAttributes.class;
         BasicFileAttributes attributes = Files.readAttributes(path, schema, myNoFollowLinkOptions);
-        boolean isSymbolicLink =
-          attributes.isSymbolicLink() || SystemInfo.isWindows && attributes.isOther() && attributes.isDirectory() && path.getParent() != null;
+        boolean isSymbolicLink = attributes != null &&
+                                 (attributes.isSymbolicLink() ||
+                                  SystemInfo.isWindows && attributes.isOther() && attributes.isDirectory() && path.getParent() != null);
         if (isSymbolicLink) {
           try {
             attributes = Files.readAttributes(path, schema);
@@ -381,6 +382,9 @@ public final class FileSystemUtil {
           catch (NoSuchFileException e) {
             return FileAttributes.BROKEN_SYMLINK;
           }
+        }
+        if (attributes == null) {
+          return null;
         }
 
         boolean isDirectory = attributes.isDirectory();

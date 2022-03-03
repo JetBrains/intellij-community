@@ -1,25 +1,24 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.CommonBundle
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.impl.VcsUserImpl
-
-interface LoadingDetails
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Fake [com.intellij.vcs.log.impl.VcsCommitMetadataImpl] implementation that is used to indicate that details are not ready for the moment,
- * they are being retrieved from the VCS.
+ * Marker interface for [VcsShortCommitDetails] and [VcsFullCommitDetails] instances to indicate
+ * that this is a placeholder object without any data.
  *
- * @author Kirill Likhodedov
+ * @see [VcsLog.getSelectedShortDetails]
+ * @see [VcsLog.getSelectedDetails]
  */
-open class LoadingDetailsImpl(private val commitIdComputable: Computable<out CommitId>, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
-  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { commitIdComputable.compute() }
+interface LoadingDetails
+
+@ApiStatus.Internal
+open class LoadingDetailsImpl(storage: VcsLogStorage, commitIndex: Int, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
+  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { storage.getCommitId(commitIndex)!! }
 
   override fun getId(): Hash = commitId.hash
   override fun getRoot(): VirtualFile = commitId.root

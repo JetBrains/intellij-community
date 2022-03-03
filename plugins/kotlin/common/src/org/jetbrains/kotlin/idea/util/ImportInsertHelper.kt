@@ -28,12 +28,25 @@ abstract class ImportInsertHelper {
         forceAllUnderImport: Boolean = false
     ): ImportDescriptorResult
 
+    @Deprecated("Use importDescriptor(KtElement)", ReplaceWith("importDescriptor(element, descriptor)"))
+    fun importDescriptor(
+        file: KtFile,
+        descriptor: DeclarationDescriptor,
+        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD,
+        forceAllUnderImport: Boolean = false
+    ): ImportDescriptorResult = importDescriptor(
+        element = file,
+        descriptor = descriptor,
+        actionRunningMode = actionRunningMode,
+        forceAllUnderImport = forceAllUnderImport
+    )
+
     fun importDescriptor(
         file: KtFile,
         descriptor: DeclarationDescriptor,
         forceAllUnderImport: Boolean = false
     ): ImportDescriptorResult = importDescriptor(
-        file,
+        file as KtElement,
         descriptor,
         ActionRunningMode.RUN_IN_CURRENT_THREAD,
         forceAllUnderImport

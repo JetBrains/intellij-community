@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.search.OptionDescription;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,12 +12,11 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  */
 final class PluginOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
-
   @Override
   public @NotNull Collection<OptionDescription> getOptions() {
-    return PluginManagerConfigurable.getVisiblePlugins()
+    return PluginManager.getVisiblePlugins(false)
       .map(PluginBooleanOptionDescriptor::new)
-      .collect(Collectors.toUnmodifiableList());
+      .collect(Collectors.toList());
   }
 
   @Override

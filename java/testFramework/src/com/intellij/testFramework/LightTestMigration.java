@@ -87,7 +87,7 @@ class LightTestMigration {
     Path targetFile = myBaseDir.resolve(testName + ".java");
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     LightProjectDescriptor descriptor = new LightProjectDescriptor();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(descriptor);
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(descriptor, testName);
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     JavaCodeInsightTestFixture javaFixture =
       JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));

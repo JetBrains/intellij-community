@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k;
 
@@ -590,11 +590,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/binaryExpression/lessThanEqual.java");
         }
 
-        @TestMetadata("lhsObjectPlusString.java")
-        public void testLhsObjectPlusString() throws Exception {
-            runTest("testData/newJ2k/binaryExpression/lhsObjectPlusString.java");
-        }
-
         @TestMetadata("minus.java")
         public void testMinus() throws Exception {
             runTest("testData/newJ2k/binaryExpression/minus.java");
@@ -608,6 +603,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("multiply.java")
         public void testMultiply() throws Exception {
             runTest("testData/newJ2k/binaryExpression/multiply.java");
+        }
+
+        @TestMetadata("operatorPrecedence.java")
+        public void testOperatorPrecedence() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/operatorPrecedence.java");
         }
 
         @TestMetadata("or.java")
@@ -638,6 +638,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("shiftRight.java")
         public void testShiftRight() throws Exception {
             runTest("testData/newJ2k/binaryExpression/shiftRight.java");
+        }
+
+        @TestMetadata("stringConcatenation.java")
+        public void testStringConcatenation() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/stringConcatenation.java");
         }
 
         @TestMetadata("unsignedRightShift.java")
@@ -1502,6 +1507,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("GetterSetterUsages.java")
         public void testGetterSetterUsages() throws Exception {
             runTest("testData/newJ2k/detectProperties/GetterSetterUsages.java");
+        }
+
+        @TestMetadata("GetterSetterUsagesShadowing.java")
+        public void testGetterSetterUsagesShadowing() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterSetterUsagesShadowing.java");
+        }
+
+        @TestMetadata("GetterSetterUsagesShadowingWithConstructor.java")
+        public void testGetterSetterUsagesShadowingWithConstructor() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterSetterUsagesShadowingWithConstructor.java");
+        }
+
+        @TestMetadata("GetterSetterUsagesShadowingWithRename.java")
+        public void testGetterSetterUsagesShadowingWithRename() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterSetterUsagesShadowingWithRename.java");
         }
 
         @TestMetadata("GetterTypeNotMatch.java")
@@ -3826,16 +3846,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/newJavaFeatures")
-    public static class NewJavaFeatures extends AbstractNewJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("yieldOutsideWhen.java")
-        public void testYieldOutsideWhen() throws Exception {
-            runTest("testData/newJ2k/newJavaFeatures/yieldOutsideWhen.java");
-        }
-
+    public abstract static class NewJavaFeatures extends AbstractNewJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/newJ2k/newJavaFeatures/enhancedSwitchStatement")
         public static class EnhancedSwitchStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
@@ -3944,6 +3955,19 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             @TestMetadata("switchExpressionWithArrow.java")
             public void testSwitchExpressionWithArrow() throws Exception {
                 runTest("testData/newJ2k/newJavaFeatures/switchExpression/switchExpressionWithArrow.java");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/newJ2k/newJavaFeatures")
+        public static class Uncategorized extends AbstractNewJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("yieldOutsideWhen.java")
+            public void testYieldOutsideWhen() throws Exception {
+                runTest("testData/newJ2k/newJavaFeatures/yieldOutsideWhen.java");
             }
         }
     }

@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 open class XdProject {
     val haha<caret>: String by lazy { "gogog" }
 }

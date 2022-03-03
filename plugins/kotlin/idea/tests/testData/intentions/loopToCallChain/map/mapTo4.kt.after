@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filter{}.mapTo(){}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filter{}.mapTo(){}'"
 fun foo(list: List<String>): List<Int> {

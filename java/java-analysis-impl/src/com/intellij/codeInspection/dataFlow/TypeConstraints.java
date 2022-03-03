@@ -6,12 +6,10 @@ import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -139,7 +137,7 @@ public final class TypeConstraints {
 
   public static @NotNull TypeConstraint exactSubtype(@NotNull PsiElement id, @NotNull List<PsiClass> superClasses) {
     TypeConstraint.Exact[] supers = ContainerUtil.map2Array(superClasses, TypeConstraint.Exact.class, cls -> exactClass(cls));
-    if (StreamEx.of(supers).anyMatch(TypeConstraint.Exact::isFinal)) return BOTTOM;
+    if (ContainerUtil.or(supers, TypeConstraint.Exact::isFinal)) return BOTTOM;
     if (supers.length == 0) {
       supers = new TypeConstraint.Exact[]{EXACTLY_OBJECT};
     }
@@ -243,7 +241,15 @@ public final class TypeConstraints {
           return ArraySuperInterface.SERIALIZABLE;
       }
     }
-    return new ExactClass(psiClass);
+    return new ExactClass(psiClass, false);
+  }
+
+  @NotNull
+  public static TypeConstraint.Exact singleton(@NotNull PsiClass psiClass) {
+    if (!psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+      throw new IllegalArgumentException("Singleton class must be final");
+    }
+    return new ExactClass(psiClass, true);
   }
 
   private enum PrimitiveArray implements TypeConstraint.Exact {
@@ -362,15 +368,22 @@ public final class TypeConstraints {
 
   private static final class ExactClass implements TypeConstraint.Exact {
     private final @NotNull PsiClass myClass;
+    private final boolean mySingleton;
 
-    ExactClass(@NotNull PsiClass aClass) {
+    ExactClass(@NotNull PsiClass aClass, boolean singleton) {
       assert !(aClass instanceof PsiTypeParameter);
+      mySingleton = singleton;
       myClass = aClass;
     }
 
     @Override
     public boolean isEnum() {
       return myClass.isEnum();
+    }
+
+    @Override
+    public boolean isSingleton() {
+      return mySingleton;
     }
 
     @Override
@@ -388,6 +401,7 @@ public final class TypeConstraints {
     @Override
     public boolean equals(Object obj) {
       return obj == this || obj instanceof ExactClass &&
+                            mySingleton == ((ExactClass)obj).mySingleton &&
                             myClass.getManager().areElementsEquivalent(myClass, ((ExactClass)obj).myClass);
     }
 

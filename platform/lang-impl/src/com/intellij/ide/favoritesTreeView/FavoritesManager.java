@@ -11,6 +11,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -46,6 +47,7 @@ import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
 })
 public final class FavoritesManager implements PersistentStateComponent<Element> {
+  private final static Logger LOG = Logger.getInstance(FavoritesManager.class);
   // fav list name -> list of (root: root url, root class)
   private final Map<String, List<TreeItem<Pair<AbstractUrl, String>>>> myName2FavoritesRoots = new TreeMap<>();
   private final List<String> myFavoritesRootsOrder = new ArrayList<>();
@@ -359,6 +361,11 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
       myFavoritesRootsOrder.add(name);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  @Override
+  public void noStateLoaded() {
+    LOG.info("no state loaded for old favorites");
   }
 
   @NonNls private static final String CLASS_NAME = "klass";

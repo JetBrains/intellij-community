@@ -49,6 +49,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return ourInstance;
   }
 
+  @NotNull
   public static ExpressionEvaluator build(final TextWithImports text,
                                           @Nullable PsiElement contextElement,
                                           @Nullable final SourcePosition position,
@@ -64,7 +65,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
   }
 
   @Override
-  public ExpressionEvaluator build(final PsiElement codeFragment, final SourcePosition position) throws EvaluateException {
+  public @NotNull ExpressionEvaluator build(final PsiElement codeFragment, final SourcePosition position) throws EvaluateException {
     return new Builder(position).buildElement(codeFragment);
   }
 

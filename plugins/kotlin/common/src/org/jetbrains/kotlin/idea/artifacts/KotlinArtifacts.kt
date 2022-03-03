@@ -28,12 +28,9 @@ abstract class KotlinArtifacts(val kotlincDistDir: File) {
     val kotlinStdlib = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB)
     val kotlinStdlibSources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_SOURCES)
     val kotlinStdlibJdk7 = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7)
-    val kotlinStdlibJdk7Sources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7_SOURCES)
     val kotlinStdlibJdk8 = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8)
-    val kotlinStdlibJdk8Sources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8_SOURCES)
     val kotlinReflect = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_REFLECT)
     val kotlinStdlibJs = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JS)
-    val kotlinStdlibJsSources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JS_SOURCES)
     val kotlinTest = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST)
     val kotlinTestJunit = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST_JUNIT)
     val kotlinTestJs = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST_JS)
@@ -59,15 +56,9 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
 
     val libFile = pluginJar.parent.takeIf { it.name == "lib" }
     if (libFile == null || !libFile.exists()) {
-        if ("compile-server" in pluginJar.pathString && pluginJar.resolveSibling("kotlinc").exists()) {
-            // WSL JPS build copies all JPS plugin jars to the cache directory, without an intervening 'lib' directory,
-            // and the kotlinc directory becomes a subdirectory of the cache directory (see KotlinBuildProcessParametersProvider.getAdditionalPluginPaths())
-            pluginJar.parent.toFile()
-        } else {
-            // Don't throw exception because someone may want to just try to initialize
-            // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
-            File("\"<invalid_kotlinc_path>\"")
-        }
+        // Don't throw exception because someone may want to just try to initialize
+        // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
+        File("\"<invalid_kotlinc_path>\"")
     } else {
         libFile.parent.toFile()
     }

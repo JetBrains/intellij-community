@@ -10,9 +10,11 @@
       <excludeFolder url="file://$MODULE_DIR$/restApiDocGenerator/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/protobuf/cache" />
       <excludeFolder url="file://$MODULE_DIR$/protobuf/bin" />
+      <excludeFolder url="file://$MODULE_DIR$/download" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" exported="" />
+    <orderEntry type="library" scope="RUNTIME" name="test-discovery-plugin-base" level="project" />
   </component>
 </module>

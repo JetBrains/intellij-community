@@ -2,6 +2,7 @@
 package git4idea.log
 
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -18,12 +19,17 @@ internal class SimpleGitCommitSignatureLoader(private val project: Project) : Gi
         override fun run(indicator: ProgressIndicator) {
 
           for ((root, hashes) in commits.groupBy({ it.root }, { it.hash })) {
-            indicator.checkCanceled()
-            val signatures = loadCommitSignatures(root, hashes)
+            try {
+              indicator.checkCanceled()
+              val signatures = loadCommitSignatures(root, hashes)
 
-            val result = signatures.mapKeys { CommitId(it.key, root) }
-            runInEdt {
-              if (!indicator.isCanceled) onChange(result)
+              val result = signatures.mapKeys { CommitId(it.key, root) }
+              runInEdt {
+                if (!indicator.isCanceled) onChange(result)
+              }
+            }
+            catch (e: Exception) {
+              thisLogger().info("Failed to load commit signatures", e)
             }
           }
         }

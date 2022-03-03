@@ -72,13 +72,6 @@ public final class SystemProperties {
     return getBooleanProperty(key, false);
   }
 
-  /** @deprecated 1. trivial 2. bad practice */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static boolean has(String key) {
-    return System.getProperty(key) != null;
-  }
-
   /** @deprecated please use {@link System#lineSeparator()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
@@ -86,11 +79,5 @@ public final class SystemProperties {
     return System.lineSeparator();
   }
 
-  /** @deprecated moved to {@link com.intellij.openapi.editor.EditorCoreUtil} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static boolean isTrueSmoothScrollingEnabled() {
-    return getBooleanProperty("idea.true.smooth.scrolling", false);
-  }
   //</editor-fold>
 }

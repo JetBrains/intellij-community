@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util
+package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -25,10 +25,9 @@ class ProjectInfoBuilder private constructor(id: String, private val base: Virtu
     modules.add(builder.create())
   }
 
-  fun moduleInfo(ideName: String, relativeRoot: String, simpleName: String? = null, useKotlinDsl: Boolean? = null) {
+  fun moduleInfo(ideName: String, relativeRoot: String, useKotlinDsl: Boolean? = null) {
     moduleInfo(ideName, relativeRoot) {
       this.useKotlinDsl = useKotlinDsl
-      this.simpleName = simpleName
       modulesPerSourceSet.add("$ideName.main")
       modulesPerSourceSet.add("$ideName.test")
     }
@@ -60,8 +59,7 @@ class ProjectInfoBuilder private constructor(id: String, private val base: Virtu
   data class ProjectInfo(val rootModule: ModuleInfo,
                          val modules: List<ModuleInfo>)
 
-  data class ModuleInfo(val simpleName: String,
-                        val ideName: String,
+  data class ModuleInfo(val ideName: String,
                         val externalName: String,
                         val root: VirtualFile,
                         val groupId: String?,
@@ -72,8 +70,6 @@ class ProjectInfoBuilder private constructor(id: String, private val base: Virtu
                         val modulesPerSourceSet: List<String>)
 
   inner class ModuleInfoBuilder(val root: VirtualFile, val ideName: String) {
-
-    var simpleName: String? = null
 
     var groupId: String? = null
     var artifactId: String? = null
@@ -86,12 +82,11 @@ class ProjectInfoBuilder private constructor(id: String, private val base: Virtu
     fun create(): ModuleInfo {
       val (externalName, isFlat) = getExternalName(root)
       return ModuleInfo(
-        simpleName ?: root.name,
         ideName,
         externalName,
         root,
         groupId,
-        artifactId ?: simpleName ?: root.name,
+        artifactId ?: root.name,
         version,
         isFlat,
         useKotlinDsl ?: this@ProjectInfoBuilder.useKotlinDsl,

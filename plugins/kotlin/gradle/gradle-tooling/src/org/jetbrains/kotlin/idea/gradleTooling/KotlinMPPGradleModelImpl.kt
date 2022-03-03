@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.AbstractCompilerArgumentsCacheAware
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
@@ -73,13 +72,13 @@ class KotlinSourceSetImpl(
         additionalVisibleSourceSets = HashSet(kotlinSourceSet.additionalVisibleSourceSets),
         actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
     ) {
-        this.isTestModule = kotlinSourceSet.isTestModule
+        this.isTestComponent = kotlinSourceSet.isTestComponent
     }
 
     override var actualPlatforms: KotlinPlatformContainer = actualPlatforms
         internal set
 
-    override var isTestModule: Boolean = isTestModule
+    override var isTestComponent: Boolean = isTestModule
         internal set
 
     override fun toString() = name
@@ -183,7 +182,7 @@ data class KotlinCompilationImpl(
         internal set
 
     // TODO: Logic like this is duplicated *and different*
-    override val isTestModule: Boolean
+    override val isTestComponent: Boolean
         get() = name == KotlinCompilation.TEST_COMPILATION_NAME
                 || platform == KotlinPlatform.ANDROID && name.contains("Test")
 

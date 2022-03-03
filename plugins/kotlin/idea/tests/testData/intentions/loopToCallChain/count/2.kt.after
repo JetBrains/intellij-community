@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'count()'"
 // IS_APPLICABLE_2: false
 fun foo(list: Iterable<String>): Int {

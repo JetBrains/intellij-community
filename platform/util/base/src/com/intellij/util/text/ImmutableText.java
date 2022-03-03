@@ -207,7 +207,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     if (!(obj instanceof ImmutableText)) {
       return false;
     }
-    return CharArrayUtil.regionMatches(this, 0, (ImmutableText)obj);
+    return ((ImmutableText)obj).length() == length() && CharArrayUtil.regionMatches(this, 0, (ImmutableText)obj);
   }
 
   private transient int hash;

@@ -32,7 +32,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
     shouldReportNulls = true
   }
 
-  override fun createOptionsPanel(): JComponent = panel {
+  override fun createGroovyOptionsPanel(): JComponent = panel {
     row {
       checkBox(GroovyBundle.message("checkbox.report.unmatched.null")).bindSelected(::shouldReportNulls)
     }

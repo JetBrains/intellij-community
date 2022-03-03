@@ -14,10 +14,7 @@ import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowStateListener
-import javax.swing.Action
-import javax.swing.JFrame
-import javax.swing.JPopupMenu
-import javax.swing.JSeparator
+import javax.swing.*
 
 internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(frame) {
   private val iconifyAction: Action = CustomFrameAction(ActionsBundle.message("action.MinimizeCurrentWindow.text"),

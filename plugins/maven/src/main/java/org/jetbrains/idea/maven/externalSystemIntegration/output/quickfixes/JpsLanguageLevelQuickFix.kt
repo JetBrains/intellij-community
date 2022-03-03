@@ -34,7 +34,8 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
                                 kind: MessageEvent.Kind,
                                 virtualFile: VirtualFile?,
                                 navigatable: Navigatable?): BuildIssue? {
-    val mavenManager = MavenProjectsManager.getInstance(project);
+    if (project.isDisposed) return null
+    val mavenManager = MavenProjectsManager.getInstance(project)
     if (!mavenManager.isMavenizedProject) return null
 
     if (moduleNames.size != 1) {

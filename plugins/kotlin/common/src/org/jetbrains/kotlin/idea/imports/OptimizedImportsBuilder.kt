@@ -39,7 +39,6 @@ class OptimizedImportsBuilder(
     private val apiVersion: ApiVersion,
 ) {
     companion object {
-        @get:TestOnly
         @set:TestOnly
         var testLog: StringBuilder? = null
     }
@@ -88,14 +87,12 @@ class OptimizedImportsBuilder(
         file.importDirectives.mapNotNull { it.importPath }.toSet()
     }
 
-    private val importMapper get() = ImportMapper.getInstance(file.project)
-
     fun buildOptimizedImports(): List<ImportPath>? {
         file.importDirectives
             .asSequence()
             .filter { it.mayReferToSomeUnresolvedName() || it.isExistedUnresolvedName() }
             .mapNotNull { it.importPath }
-            .mapNotNullTo(importRules) { ImportRule.Add(it) }
+            .mapTo(importRules) { ImportRule.Add(it) }
 
         while (true) {
             ProgressManager.checkCanceled()
@@ -124,11 +121,11 @@ class OptimizedImportsBuilder(
 
     private val DeclarationDescriptor.importDescriptorWithMapping: FqName?
         get() = importableFqName?.let { fqName ->
-            importMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
+            ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
         }
 
     private val ImportableDescriptor.importDescriptorWithMapping: FqName
-        get() = importMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
+        get() = ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
 
     private fun tryBuildOptimizedImports(): List<ImportPath>? {
         val importsToGenerate = hashSetOf<ImportPath>()
@@ -140,7 +137,7 @@ class OptimizedImportsBuilder(
             for (name in data.namesToImport.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
-                val resultFqName = importMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
+                val resultFqName = ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
                 val explicitImportPath = ImportPath(resultFqName, false, alias)
                 if (explicitImportPath in importsToGenerate) continue
 
@@ -255,7 +252,7 @@ class OptimizedImportsBuilder(
 
     private fun lockImportForDescriptor(descriptor: DeclarationDescriptor, existingNames: Collection<Name>) {
         val fqName = descriptor.importDescriptorWithMapping ?: return
-        val names = data.namesToImport.getOrElse(fqName) { listOf(descriptor.name) }.intersect(existingNames)
+        val names = data.namesToImport.getOrElse(fqName) { listOf(descriptor.name) }.intersect(existingNames.toSet())
 
         val starImportPath = ImportPath(fqName.parent(), true)
         for (name in names) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -68,6 +69,14 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
 
     override fun startInWriteAction() = false
 
+    override fun checkFile(file: PsiFile): Boolean {
+        return true
+    }
+
+    override fun preparePsiElementForWriteIfNeeded(target: KtClass): Boolean {
+        return true
+    }
+
     override fun applyTo(element: KtClass, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
 
@@ -87,6 +96,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
         KotlinNameSuggester.suggestNameByName(defaultTargetName(baseName)) { container?.hasSameDeclaration(it) != true }
 
     private fun createNestedSubclass(sealedClass: KtClass, sealedName: String, editor: Editor) {
+        if (!super.preparePsiElementForWriteIfNeeded(sealedClass)) return
         val project = sealedClass.project
         val klass = runWriteAction {
             val builder = buildClassHeader(targetNameWithoutConflicts(sealedName, sealedClass), sealedClass, sealedName)
@@ -134,6 +144,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
             }
             chooseAndImplementMethods(project, klass, CodeInsightUtil.positionCursor(project, file, klass) ?: editor)
         } else {
+            if (!super.preparePsiElementForWriteIfNeeded(baseClass)) return
             val klass = runWriteAction {
                 val builder = buildClassHeader(
                     targetNameWithoutConflicts(baseName, baseClass.containingClassOrObject),

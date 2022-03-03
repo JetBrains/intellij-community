@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
@@ -24,6 +25,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -514,7 +516,7 @@ public final class FormatDecode {
       }
       else {
         if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
-          return null;
+          return fromPrintFormatAnnotation(expression);
         }
 
         formatArgumentIndex = IntStream.range(0, arguments.length).filter(i -> ExpressionUtils.hasStringType(arguments[i])).findFirst().orElse(-1);
@@ -530,7 +532,28 @@ public final class FormatDecode {
       }
       return new FormatArgument(formatArgumentIndex, formatArgument);
     }
-    
+
+    private static FormatArgument fromPrintFormatAnnotation(@NotNull PsiMethodCallExpression call) {
+      PsiExpressionList argList = call.getArgumentList();
+      if (argList.isEmpty()) return null;
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return null;
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length < 2) return null;
+      PsiType lastParameterType = parameters[parameters.length - 1].getType();
+      if (lastParameterType instanceof PsiArrayType && TypeUtils.isJavaLangObject(((PsiArrayType)lastParameterType).getComponentType())) {
+        int formatIndex = parameters.length - 2;
+        PsiParameter maybeFormat = parameters[formatIndex];
+        if (TypeUtils.isJavaLangString(maybeFormat.getType()) &&
+            AnnotationUtil.isAnnotated(maybeFormat, "org.intellij.lang.annotations.PrintFormat", AnnotationUtil.CHECK_EXTERNAL)) {
+          PsiExpression[] args = argList.getExpressions();
+          if (args.length <= formatIndex) return null;
+          return new FormatArgument(formatIndex + 1, args[formatIndex]);
+        }
+      }
+      return null;
+    }
+
     public String calculateValue() {
        final PsiType formatType = myExpression.getType();
       if (formatType == null) {

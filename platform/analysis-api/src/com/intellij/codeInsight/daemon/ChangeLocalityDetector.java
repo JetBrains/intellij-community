@@ -23,6 +23,14 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This extension point allows highlighting subsystem to define scope (i.e., containing {@link PsiElement})
+ * which should be re-highlighted on specified {@link PsiElement} change.
+ *
+ * For example, {@link com.intellij.codeInsight.daemon.impl.JavaChangeLocalityDetector} specifies that for any change inside code block,
+ * only this code block should be re-highlighted (except constructors and class initializers).
+ * This optimization could greatly improve highlighting speed.
+ */
 public interface ChangeLocalityDetector {
   /**
    * @return the psi element (ancestor of the changedElement) which should be re-highlighted/re-inspected, or null if unsure.

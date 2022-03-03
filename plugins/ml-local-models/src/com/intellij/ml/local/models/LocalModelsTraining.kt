@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -146,7 +147,7 @@ object LocalModelsTraining {
     val fileIds = mutableSetOf<Int>()
     runReadAction {
       index.iterateContent(ContentIterator { file ->
-        if (file is VirtualFileWithId && file.fileType == fileType) {
+        if (file is VirtualFileWithId && FileTypeRegistry.getInstance().isFileOfType(file, fileType)) {
           fileIds.add(file.id)
         }
         true

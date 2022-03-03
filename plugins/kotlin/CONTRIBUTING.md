@@ -51,8 +51,9 @@ to the "up-for-grabs" tag is a safe way to go.
 We have several requirements for the Pull Requests:
 
 1. A Pull Request must solve some issue. So the issue identifier must be specified.  
-   We use [KT](https://youtrack.jetbrains.com/issues/KT) and [KTIJ](https://youtrack.jetbrains.com/issues/KTIJ) projects on YouTrack.
-   If the issue doesn't exist yet, please create it in [KTIJ](https://youtrack.jetbrains.com/issues/KTIJ).
+   We use [KTIJ](https://youtrack.jetbrains.com/issues/KTIJ) project on YouTrack.
+   If the issue doesn't exist yet, please [create it](https://youtrack.jetbrains.com/newIssue?project=KTIJ).
+   <br/> We also kindly ask you to follow "Commits Requirements" described in [README](README.md).
 2. Do not submit Pull Requests that solve multiple issues that aren't interconnected. Create several PRs instead.
 3. The plugin must still work after the change. Please ensure the plugin compiles and runs successfully after the change.
 4. Each non-trivial change in plugin functionality must come with tests, so add new tests or adapt existing ones. 

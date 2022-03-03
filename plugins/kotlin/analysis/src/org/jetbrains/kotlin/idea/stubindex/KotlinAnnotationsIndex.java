@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry;
 
 import java.util.Collection;
 
-public class KotlinAnnotationsIndex extends StringStubIndexExtension<KtAnnotationEntry> {
+public class KotlinAnnotationsIndex extends AbstractStringStubIndexExtension<KtAnnotationEntry> {
     private static final StubIndexKey<String, KtAnnotationEntry> KEY = KotlinIndexUtil.createIndexKey(KotlinAnnotationsIndex.class);
 
     private static final KotlinAnnotationsIndex ourInstance = new KotlinAnnotationsIndex();
@@ -21,7 +20,9 @@ public class KotlinAnnotationsIndex extends StringStubIndexExtension<KtAnnotatio
         return ourInstance;
     }
 
-    private KotlinAnnotationsIndex() {}
+    private KotlinAnnotationsIndex() {
+        super(KtAnnotationEntry.class);
+    }
 
     @NotNull
     @Override

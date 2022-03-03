@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Import members from 'java.util.regex.Pattern'"
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 'field' is never used
 // AFTER-WARNING: Variable 'fieldFqn' is never used
 

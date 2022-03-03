@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status
 
 import com.intellij.openapi.diagnostic.logger
@@ -227,6 +227,7 @@ private class Entry {
     revision = Revision.of(localStatus.revision ?: -1L)
     isWorkingCopyLocked = localStatus.isWorkingCopyLocked
     isCopied = localStatus.isCopied
+    movedFrom = localStatus.movedFrom?.let { SvnUtil.resolvePath(base, it) }
     isSwitched = localStatus.isSwitched
     isTreeConflicted = localStatus.isTreeConflicted
     commitInfo = localStatus.commit
@@ -266,6 +267,9 @@ private class WorkingCopyStatus {
 
   @XmlAttribute(name = "copied")
   var isCopied = false
+
+  @XmlAttribute(name = "moved-from")
+  var movedFrom: String? = null
 
   @XmlAttribute(name = "switched")
   var isSwitched = false

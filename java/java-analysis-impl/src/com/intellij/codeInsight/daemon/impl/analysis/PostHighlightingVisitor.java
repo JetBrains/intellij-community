@@ -65,7 +65,7 @@ class PostHighlightingVisitor {
   private final HighlightInfoType myDeadCodeInfoType;
   private final UnusedDeclarationInspectionBase myDeadCodeInspection;
 
-  private void optimizeImportsOnTheFlyLater(@NotNull final ProgressIndicator progress) {
+  private void optimizeImportsOnTheFlyLater(@NotNull ProgressIndicator progress) {
     if ((myHasRedundantImports || myHasMisSortedImports) && !progress.isCanceled()) {
       // schedule optimise action at the time of session disposal, which is after all applyInformation() calls
       Disposable invokeFixLater = () -> {
@@ -122,22 +122,17 @@ class PostHighlightingVisitor {
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
-    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-
-    boolean unusedSymbolEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
-    GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection, unusedSymbolEnabled);
-
     boolean errorFound = false;
 
-    if (unusedSymbolEnabled) {
-      final FileViewProvider viewProvider = myFile.getViewProvider();
-      final Set<Language> relevantLanguages = viewProvider.getLanguages();
+    if (isToolEnabled(myDeadCodeKey)) {
+      GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection, true);
+      FileViewProvider viewProvider = myFile.getViewProvider();
+      Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language language : relevantLanguages) {
         ProgressManager.checkCanceled();
         PsiElement psiRoot = viewProvider.getPsi(language);
-        if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiRoot)) continue;
+        HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
+        if (!highlightingLevelManager.shouldInspect(psiRoot) || highlightingLevelManager.runEssentialHighlightingOnly(psiRoot)) continue;
         List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, 0, myFile.getTextLength());
         for (PsiElement element : elements) {
           ProgressManager.checkCanceled();
@@ -158,10 +153,10 @@ class PostHighlightingVisitor {
     if (isUnusedImportEnabled(unusedImportKey)) {
       PsiImportList importList = ((PsiJavaFile)myFile).getImportList();
       if (importList != null) {
-        final PsiImportStatementBase[] imports = importList.getAllImportStatements();
+        PsiImportStatementBase[] imports = importList.getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
           ProgressManager.checkCanceled();
-          final HighlightInfo info = processImport(statement, unusedImportKey);
+          HighlightInfo info = processImport(statement, unusedImportKey);
           if (info != null) {
             errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
             result.add(info);
@@ -172,6 +167,8 @@ class PostHighlightingVisitor {
     }
 
     if (errorFound) {
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
     }
 
@@ -179,16 +176,19 @@ class PostHighlightingVisitor {
   }
 
   private boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey) {
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    if (profile.isToolEnabled(unusedImportKey, myFile) &&
-        myFile instanceof PsiJavaFile &&
-        HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile)) {
-      return true;
-    }
+    if (isToolEnabled(unusedImportKey)) return true;
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof UnusedImportProvider && ((UnusedImportProvider)provider).isUnusedImportEnabled(myFile)) return true;
     }
     return false;
+  }
+
+  private boolean isToolEnabled(HighlightDisplayKey displayKey) {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    return profile.isToolEnabled(displayKey, myFile) &&
+           myFile instanceof PsiJavaFile &&
+           HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile) &&
+           !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
   }
 
   @Nullable
@@ -206,7 +206,7 @@ class PostHighlightingVisitor {
     }
     if (parent instanceof PsiParameter) {
       PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
-      final boolean needToProcessParameter;
+      boolean needToProcessParameter;
       if (declarationScope instanceof PsiMethod || declarationScope instanceof PsiLambdaExpression) {
         if (declarationScope instanceof PsiLambdaExpression) {
           declarationScope = PsiTreeUtil.getParentOfType(declarationScope, PsiModifierListOwner.class);
@@ -230,7 +230,7 @@ class PostHighlightingVisitor {
       }
     }
     if (parent instanceof PsiClass) {
-      final String acceptedVisibility = ((PsiClass)parent).getContainingClass() == null ? myUnusedSymbolInspection.getClassVisibility()
+      String acceptedVisibility = ((PsiClass)parent).getContainingClass() == null ? myUnusedSymbolInspection.getClassVisibility()
                                                                                         : myUnusedSymbolInspection.getInnerClassVisibility();
       if (compareVisibilities((PsiModifierListOwner)parent, acceptedVisibility)) {
         return processClass(myProject, (PsiClass)parent, identifier, progress, helper);
@@ -239,7 +239,7 @@ class PostHighlightingVisitor {
     return null;
   }
 
-  private static boolean compareVisibilities(PsiModifierListOwner listOwner, final String visibility) {
+  private static boolean compareVisibilities(PsiModifierListOwner listOwner, String visibility) {
     if (visibility != null) {
       while (listOwner != null) {
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(listOwner.getModifierList()), visibility) >= 0) {
@@ -278,7 +278,7 @@ class PostHighlightingVisitor {
     }
 
     if (message != null) {
-      final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+      HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
       QuickFixAction.registerQuickFixAction(highlightInfo, fix, myDeadCodeKey);
       return highlightInfo;
     }
@@ -287,8 +287,8 @@ class PostHighlightingVisitor {
   }
 
   @Nullable
-  private HighlightInfo processField(@NotNull final Project project,
-                                     @NotNull final PsiField field,
+  private HighlightInfo processField(@NotNull Project project,
+                                     @NotNull PsiField field,
                                      @NotNull PsiIdentifier identifier,
                                      @NotNull ProgressIndicator progress,
                                      @NotNull GlobalUsageHelper helper) {
@@ -296,7 +296,7 @@ class PostHighlightingVisitor {
       return null;
     }
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-      final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
+      QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
       if (!myRefCountHolder.isReferenced(field) && !UnusedSymbolUtil.isImplicitUsage(myProject, field)) {
         String message = JavaErrorBundle.message("private.field.is.not.used", identifier.getText());
 
@@ -308,7 +308,7 @@ class PostHighlightingVisitor {
         return highlightInfo;
       }
 
-      final boolean readReferenced = myRefCountHolder.isReferencedForRead(field);
+      boolean readReferenced = myRefCountHolder.isReferencedForRead(field);
       if (!readReferenced && !UnusedSymbolUtil.isImplicitRead(project, field)) {
         String message = getNotUsedForReadingMessage(field, identifier);
         return suggestionsToMakeFieldUsed(field, identifier, message);
@@ -317,10 +317,10 @@ class PostHighlightingVisitor {
       if (field.hasInitializer()) {
         return null;
       }
-      final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
+      boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
       if (!writeReferenced && !UnusedSymbolUtil.isImplicitWrite(project, field)) {
         String message = JavaErrorBundle.message("private.field.is.not.assigned", identifier.getText());
-        final HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+        HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
 
         QuickFixAction.registerQuickFixAction(info, quickFixFactory.createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
@@ -350,10 +350,10 @@ class PostHighlightingVisitor {
   }
 
   @NotNull
-  private static @NlsContexts.DetailedDescription String getNotUsedForReadingMessage(@NotNull final PsiField field, @NotNull final PsiIdentifier identifier) {
-    final String visibility = VisibilityUtil.getVisibilityStringToDisplay(field);
+  private static @NlsContexts.DetailedDescription String getNotUsedForReadingMessage(@NotNull PsiField field, @NotNull PsiIdentifier identifier) {
+    String visibility = VisibilityUtil.getVisibilityStringToDisplay(field);
 
-    final String message = JavaErrorBundle.message("field.is.not.used.for.reading", visibility, identifier.getText());
+    String message = JavaErrorBundle.message("field.is.not.used.for.reading", visibility, identifier.getText());
 
     return StringUtil.capitalize(message);
   }
@@ -465,8 +465,8 @@ class PostHighlightingVisitor {
   }
 
   @Nullable
-  private HighlightInfo processMethod(@NotNull final Project project,
-                                      @NotNull final PsiMethod method,
+  private HighlightInfo processMethod(@NotNull Project project,
+                                      @NotNull PsiMethod method,
                                       @NotNull PsiIdentifier identifier,
                                       @NotNull ProgressIndicator progress,
                                       @NotNull GlobalUsageHelper helper) {
@@ -481,7 +481,7 @@ class PostHighlightingVisitor {
     int options = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES;
     String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY, options);
     String message = JavaErrorBundle.message(key, symbolName);
-    final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+    HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), myDeadCodeKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
       IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName);
@@ -524,15 +524,15 @@ class PostHighlightingVisitor {
   }
 
 
-  private static HighlightInfo formatUnusedSymbolHighlightInfo(@NotNull final Project project,
+  private static HighlightInfo formatUnusedSymbolHighlightInfo(@NotNull Project project,
                                                                @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String pattern,
-                                                               @NotNull final PsiNameIdentifierOwner aClass,
+                                                               @NotNull PsiNameIdentifierOwner aClass,
                                                                HighlightDisplayKey highlightDisplayKey,
                                                                @NotNull HighlightInfoType highlightInfoType,
                                                                @NotNull PsiElement identifier) {
     String symbolName = aClass.getName();
     String message = JavaErrorBundle.message(pattern, symbolName);
-    final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+    HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(aClass), highlightDisplayKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, annoName -> {
       QuickFixAction

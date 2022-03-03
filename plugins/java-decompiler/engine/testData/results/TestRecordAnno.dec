@@ -6,8 +6,7 @@ public record TestRecordAnno(@RC @TA int x, int y) {
       this.y = y;
    }
 
-   @TA
-   public int x() {
+   public @TA int x() {
       return this.x;
    }
 
@@ -25,15 +24,15 @@ class 'records/TestRecordAnno' {
    }
 
    method 'x ()I' {
-      1      10
-      4      10
+      1      9
+      4      9
    }
 
    method 'y ()I' {
-      1      15
-      4      15
+      1      14
+      4      14
    }
 }
 
 Lines mapping:
-5 <-> 16
+5 <-> 15

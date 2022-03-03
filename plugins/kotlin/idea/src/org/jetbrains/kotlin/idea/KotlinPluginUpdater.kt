@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
@@ -8,10 +8,7 @@ import com.google.gson.JsonSyntaxException
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationListener
-import com.intellij.notification.NotificationType
+import com.intellij.notification.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
@@ -87,10 +84,7 @@ sealed class PluginUpdateStatus {
 class KotlinPluginUpdater : Disposable {
     private var updateDelay = INITIAL_UPDATE_DELAY
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-    private val notificationGroup = NotificationGroup(
-        KotlinBundle.message("plugin.updater.notification.group"),
-        NotificationDisplayType.STICKY_BALLOON, true
-    )
+    private val notificationGroup get() = NotificationGroupManager.getInstance().getNotificationGroup("Kotlin plugin updates")
 
     @Volatile
     private var checkQueued = false
@@ -251,6 +245,7 @@ class KotlinPluginUpdater : Disposable {
                     notifyPluginUpdateAvailable(update)
                 }
             })
+            .setIcon(KotlinIcons.SMALL_LOGO)
             .notify(null)
     }
 

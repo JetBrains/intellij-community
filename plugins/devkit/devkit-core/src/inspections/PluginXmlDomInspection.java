@@ -312,7 +312,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
       // only highlight if located in same module
       if (!StringUtil.startsWith(psiClassFqn, pluginPackage + ".") &&
-          domValue.getModule() == ModuleUtilCore.findModuleForPsiElement(psiClass)) {
+          module == ModuleUtilCore.findModuleForPsiElement(psiClass)) {
         holder.createProblem(domValue, HighlightSeverity.ERROR,
                              DevKitBundle.message("inspections.plugin.xml.dependency.class.located.in.wrong.package",
                                                   psiClassFqn, pluginPackage),

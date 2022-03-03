@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun castMayFail(b: Boolean) {
     val x : Any = if (b) "x" else 5
     val y = x as String

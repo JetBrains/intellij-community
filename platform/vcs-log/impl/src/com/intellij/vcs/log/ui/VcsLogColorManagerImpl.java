@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,7 @@ import java.util.*;
 /**
  * @author Kirill Likhodedov
  */
-public class VcsLogColorManagerImpl implements VcsLogColorManager {
+public final class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Logger LOG = Logger.getInstance(VcsLogColorManagerImpl.class);
 
   private static final Color[] ROOT_COLORS =
@@ -57,7 +57,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
 
   @NotNull
   public static JBColor getBackgroundColor(@NotNull final Color baseRootColor) {
-    return new JBColor(() -> ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75));
+    return JBColor.lazy(() -> ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75));
   }
 
   @NotNull

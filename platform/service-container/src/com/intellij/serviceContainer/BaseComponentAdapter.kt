@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
@@ -19,10 +21,14 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
                                              val pluginDescriptor: PluginDescriptor,
                                              @field:Volatile private var initializedInstance: Any?,
                                              private var implementationClass: Class<*>?) : ComponentAdapter {
+  @Volatile
   private var initializing = false
 
   val pluginId: PluginId
     get() = pluginDescriptor.pluginId
+
+  val isInitializing: Boolean
+    get() = initializing
 
   protected abstract val implementationClassName: String
 
@@ -166,6 +172,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, Disposable {
         synchronized(this) {
+          @Suppress("DEPRECATION")
           if (initializedInstance === instance && instance is Disposable && !Disposer.isDisposed(instance)) {
             Disposer.dispose(instance)
           }

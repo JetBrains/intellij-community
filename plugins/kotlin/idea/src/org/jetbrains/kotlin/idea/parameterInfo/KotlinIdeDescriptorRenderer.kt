@@ -385,7 +385,7 @@ open class KotlinIdeDescriptorRenderer(
         is TypeParameterDescriptor -> highlight(renderClassifierName(cd)) { asTypeParameterName }
         is ClassDescriptor -> highlight(renderClassifierName(cd)) { asClassName }
         is TypeAliasDescriptor -> highlight(renderClassifierName(cd)) { asTypeAlias }
-        null -> highlight(typeConstructor.toString()) { asClassName }
+        null -> highlight(escape(typeConstructor.toString())) { asClassName }
         else -> error("Unexpected classifier: " + cd::class.java)
     }
 

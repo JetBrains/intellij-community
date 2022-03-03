@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 // LANGUAGE_VERSION: 1.2
 fun test(foo: Int?) {
     <caret>if (foo == null) {

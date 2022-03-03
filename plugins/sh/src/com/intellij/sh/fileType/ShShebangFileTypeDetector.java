@@ -34,7 +34,7 @@ public final class ShShebangFileTypeDetector implements DocumentListener, Dispos
   public void documentChanged(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile instanceof LightVirtualFile) return;
+    if (virtualFile == null || virtualFile instanceof LightVirtualFile) return;
     Project project = ProjectUtil.guessProjectForFile(virtualFile);
     if (project == null) return;
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);

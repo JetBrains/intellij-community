@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // SHOULD_FAIL_WITH: 'foo' in class B will require class instance, 'foo' in function test() will require class instance, 'foo' in function test() will require class instance, 'foo' in function test() will require class instance
 class A {
     companion object {

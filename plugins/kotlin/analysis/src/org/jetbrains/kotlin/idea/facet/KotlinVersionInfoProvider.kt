@@ -23,7 +23,7 @@ interface KotlinVersionInfoProvider {
     fun getCompilerVersion(module: Module): String?
     fun getLibraryVersions(
         module: Module,
-        platformKind: IdePlatformKind<*>,
+        platformKind: IdePlatformKind,
         rootModel: ModuleRootModel?
     ): Collection<String>
 }
@@ -31,7 +31,7 @@ interface KotlinVersionInfoProvider {
 fun getRuntimeLibraryVersions(
     module: Module,
     rootModel: ModuleRootModel?,
-    platformKind: IdePlatformKind<*>
+    platformKind: IdePlatformKind
 ): Collection<String> {
     return KotlinVersionInfoProvider.EP_NAME.extensionList.asSequence()
         .map { it.getLibraryVersions(module, platformKind, rootModel) }
@@ -41,14 +41,14 @@ fun getRuntimeLibraryVersions(
 fun getLibraryLanguageLevel(
     module: Module,
     rootModel: ModuleRootModel?,
-    platformKind: IdePlatformKind<*>?,
+    platformKind: IdePlatformKind?,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
 ) = getLibraryVersion(module, rootModel, platformKind, coerceRuntimeLibraryVersionToReleased).languageVersion
 
 fun getLibraryVersion(
     module: Module,
     rootModel: ModuleRootModel?,
-    platformKind: IdePlatformKind<*>?,
+    platformKind: IdePlatformKind?,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
 ): Version {
     val minVersion = getRuntimeLibraryVersions(module, rootModel, platformKind.orDefault())
@@ -77,7 +77,7 @@ fun getDefaultLanguageLevel(
 ) = getDefaultVersion(module, explicitVersion, coerceRuntimeLibraryVersionToReleased).languageVersion
 
 fun String?.toLanguageVersion(): LanguageVersion = when {
-    this == null -> VersionView.RELEASED_VERSION
+    this == null -> LanguageVersion.LATEST_STABLE
     startsWith("1.6") -> LanguageVersion.KOTLIN_1_6
     startsWith("1.5") -> LanguageVersion.KOTLIN_1_5
     startsWith("1.4") -> LanguageVersion.KOTLIN_1_4
@@ -85,13 +85,13 @@ fun String?.toLanguageVersion(): LanguageVersion = when {
     startsWith("1.2") -> LanguageVersion.KOTLIN_1_2
     startsWith("1.1") -> LanguageVersion.KOTLIN_1_1
     startsWith("1.0") -> LanguageVersion.KOTLIN_1_0
-    else -> VersionView.RELEASED_VERSION
+    else -> LanguageVersion.LATEST_STABLE
 }
 
 fun String?.toApiVersion(): ApiVersion = ApiVersion.createByLanguageVersion(toLanguageVersion())
 
 private fun Iterable<String>.addReleaseVersionIfNecessary(shouldAdd: Boolean): Iterable<String> =
-    if (shouldAdd) this + VersionView.RELEASED_VERSION.versionString else this
+    if (shouldAdd) this + LanguageVersion.LATEST_STABLE.versionString else this
 
 fun getRuntimeLibraryVersion(module: Module): String? {
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(module.project) ?: return null

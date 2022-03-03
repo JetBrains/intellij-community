@@ -409,9 +409,9 @@ final class SearchForUsagesRunnable implements Runnable {
 
           UsageViewManagerImpl.showTooManyUsagesWarningLater(
             myProject, tooManyUsagesStatus, originalIndicator, usageView,
-            r -> UsageViewStatisticsCollector.logTooManyDialog(myProject,
+            () -> UsageViewBundle.message("find.excessive.usage.count.prompt"), r -> UsageViewStatisticsCollector.logTooManyDialog(myProject,
                 r == UsageLimitUtil.Result.ABORT ? TooManyUsagesUserAction.Aborted : TooManyUsagesUserAction.Continued,
-                elementClass, scopeText, language));
+                                                                                                                                   elementClass, scopeText, language));
 
           UsageViewStatisticsCollector.logTooManyDialog(myProject, TooManyUsagesUserAction.Shown,
                                                         elementClass, scopeText, language);

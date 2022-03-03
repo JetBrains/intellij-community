@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_DESCRIPTOR: val data: kotlin.collections.(Mutable)List<kotlin.String!> defined in test
 // PARAM_TYPES: kotlin.collections.List<kotlin.String!>, kotlin.collections.MutableList<kotlin.String!>, kotlin.collections.MutableCollection<kotlin.String!>, kotlin.collections.Collection<kotlin.String!>
 fun test(): Boolean {

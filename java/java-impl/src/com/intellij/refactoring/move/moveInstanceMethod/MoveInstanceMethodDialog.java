@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -13,7 +13,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +54,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     JPanel mainPanel = new JPanel(new GridBagLayout());
     final TitledSeparator separator = new TitledSeparator();
     mainPanel.add(separator, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                    JBUI.emptyInsets(), 0, 0));
+                                                    JBInsets.emptyInsets(), 0, 0));
 
     myList = createTargetVariableChooser();
     myList.addListSelectionListener(new ListSelectionListener() {
@@ -68,16 +68,16 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     mainPanel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                     JBUI.emptyInsets(), 0, 0));
+                                                     JBInsets.emptyInsets(), 0, 0));
 
     myVisibilityPanel = createVisibilityPanel();
     mainPanel.add(myVisibilityPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
-                                                            JBUI.emptyInsets(), 0, 0));
+                                                            JBInsets.emptyInsets(), 0, 0));
 
     final JPanel parametersPanel = createParametersPanel();
     if (parametersPanel != null) {
       mainPanel.add(parametersPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                            JBUI.emptyInsets(), 0, 0));
+                                                            JBInsets.emptyInsets(), 0, 0));
     }
 
     separator.setLabelFor(myList);

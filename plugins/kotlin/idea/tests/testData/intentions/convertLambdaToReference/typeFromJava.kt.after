@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // See KT-13411
 
 fun use() {

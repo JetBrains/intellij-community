@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 abstract class B: A() {
     // INFO: {"checked": "true", "toAbstract": "true"}
     val y: Int get() = 2

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -135,7 +136,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
         val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
         val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
 
-        val bindingContext = analyze(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+        val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
         if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
             val resolvedCall = getResolvedCall(bindingContext)
             if (resolvedCall != null) {
@@ -301,7 +302,14 @@ fun PsiElement.deleteSingle() {
 
 fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
     companionObjects.firstOrNull()?.let { return it }
-    return addDeclaration(KtPsiFactory(this).createCompanionObject())
+    return appendDeclaration(KtPsiFactory(this).createCompanionObject())
+}
+
+inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
+    val body = getOrCreateBody()
+    val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
+    val newDeclaration = if (anchor?.nextSibling is PsiErrorElement) body.addBefore(declaration, anchor) else body.addAfter(declaration, anchor)
+    return newDeclaration as T
 }
 
 fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
@@ -309,17 +317,7 @@ fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
         return null
     }
 
-    val bindingContext = analyze()
-    // TODO: temporary code
-    if (this is KtPrimaryConstructor) {
-        return this.getContainingClassOrObject().resolveToDescriptorIfAny()?.unsubstitutedPrimaryConstructor
-    }
-
-    val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
-    if (descriptor is ValueParameterDescriptor) {
-        return bindingContext[BindingContext.VALUE_PARAMETER_AS_PROPERTY, descriptor]
-    }
-    return descriptor
+    return resolveToDescriptorIfAny()
 }
 
 fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken, addImplicitVisibilityModifier: Boolean = false) {
@@ -467,7 +465,7 @@ fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? =
 
 fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
     var predictedModality = predictImplicitModality()
-    val bindingContext = analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this] ?: return predictedModality
     val containingDescriptor = descriptor.containingDeclaration ?: return predictedModality
 

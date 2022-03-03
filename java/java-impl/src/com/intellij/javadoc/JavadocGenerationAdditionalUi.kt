@@ -3,18 +3,15 @@ package com.intellij.javadoc
 
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiKeyword
-import com.intellij.ui.Gray
-import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import java.util.*
+import com.intellij.ui.layout.selected
 import javax.swing.*
 
 class JavadocGenerationAdditionalUi {
@@ -23,7 +20,7 @@ class JavadocGenerationAdditionalUi {
 
   lateinit var myTfOutputDir: TextFieldWithBrowseButton
 
-  lateinit var myScopeSlider: JSlider
+  lateinit var myScopeCombo: ComboBox<@NlsSafe String>
 
   lateinit var myHierarchy: JCheckBox
   lateinit var myNavigator: JCheckBox
@@ -42,15 +39,7 @@ class JavadocGenerationAdditionalUi {
 
   lateinit var myOpenInBrowserCheckBox: JCheckBox
 
-  @SuppressWarnings("UseOfObsoleteCollectionType")
-  private val mylabelTable = Hashtable<Int, JComponent>().apply {
-    put(Integer.valueOf(1), JLabel(PsiKeyword.PUBLIC))
-    put(Integer.valueOf(2), JLabel(PsiKeyword.PROTECTED))
-    put(Integer.valueOf(3), JLabel(PsiKeyword.PACKAGE))
-    put(Integer.valueOf(4), JLabel(PsiKeyword.PRIVATE))
-  }
-
-  val panel = panel {
+  val panel: JPanel = panel {
     group(JavaBundle.message("javadoc.generate.options.separator")) {
       row {
         myIncludeLibraryCb = checkBox(JavaBundle.message("javadoc.generate.include.jdk.library.sources.in.sourcepath.option")).component
@@ -66,28 +55,13 @@ class JavadocGenerationAdditionalUi {
           .component
         bottomGap(BottomGap.MEDIUM)
       }
+        .layout(RowLayout.INDEPENDENT)
+      row(JavaBundle.message("javadoc.generate.scope.row")) {
+        myScopeCombo = comboBox(listOf(PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PACKAGE, PsiKeyword.PRIVATE))
+          .component
+      }
+        .layout(RowLayout.INDEPENDENT)
       row {
-        panel {
-          row {
-            myScopeSlider = cell(JSlider())
-              .applyToComponent {
-                orientation = JSlider.VERTICAL
-                maximum = 4; minimum = 1
-                value = 1
-                labelTable = mylabelTable
-                putClientProperty(UIUtil.JSLIDER_ISFILLED, true)
-                preferredSize = JBUI.size(84, 110)
-                paintLabels = true
-                snapToTicks = true
-                addChangeListener { handleSlider() }
-              }
-              .horizontalAlign(HorizontalAlign.CENTER)
-              .verticalAlign(VerticalAlign.FILL)
-              .component
-          }
-        }
-          .gap(RightGap.COLUMNS)
-          .verticalAlign(VerticalAlign.TOP)
         panel {
           row {
             myHierarchy = checkBox(JavaBundle.message("javadoc.generate.options.hierarchy")).component
@@ -96,12 +70,14 @@ class JavadocGenerationAdditionalUi {
             myNavigator = checkBox(JavaBundle.message("javadoc.generate.options.navigator")).component
           }
           row {
-            myIndex = checkBox(JavaBundle.message("javadoc.generate.options.index")).applyToComponent {
-              addChangeListener { mySeparateIndex.isEnabled = myIndex.isSelected }
-            }.component
+            myIndex = checkBox(JavaBundle.message("javadoc.generate.options.index")).component
           }
-          row {
-            mySeparateIndex = checkBox(JavaBundle.message("javadoc.generate.options.index.per.letter")).component
+          indent {
+            row {
+              mySeparateIndex = checkBox(JavaBundle.message("javadoc.generate.options.index.per.letter"))
+                .enabledIf(myIndex.selected)
+                .component
+            }
           }
         }
           .gap(RightGap.COLUMNS)
@@ -117,12 +93,14 @@ class JavadocGenerationAdditionalUi {
             myTagVersion = checkBox("@version").component
           }
           row {
-            myTagDeprecated = checkBox("@deprecated").applyToComponent {
-              addChangeListener { myDeprecatedList.isEnabled = myTagDeprecated.isSelected }
-            }.component
+            myTagDeprecated = checkBox("@deprecated").component
           }
-          row {
-            myDeprecatedList = checkBox(JavaBundle.message("javadoc.generate.tag.list.deprecated")).component
+          indent {
+            row {
+              myDeprecatedList = checkBox(JavaBundle.message("javadoc.generate.tag.list.deprecated"))
+                .enabledIf(myTagDeprecated.selected)
+                .component
+            }
           }
         }
           .verticalAlign(VerticalAlign.TOP)
@@ -140,39 +118,14 @@ class JavadocGenerationAdditionalUi {
       }
       row(JavaBundle.message("javadoc.generate.heap.size")) {
         myHeapSizeField = intTextField(IntRange(0, Int.MAX_VALUE), 128)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .gap(RightGap.SMALL)
           .component
+        @Suppress("DialogTitleCapitalization")
+        label(JavaBundle.message("megabytes.unit"))
       }
       row {
         myOpenInBrowserCheckBox = checkBox(JavaBundle.message("javadoc.generate.open.in.browser")).component
       }
     }
-  }
-
-  private fun handleSlider() {
-    val value = myScopeSlider.value
-    val enumeration: Enumeration<Int> = mylabelTable.keys()
-    while (enumeration.hasMoreElements()) {
-      val key = enumeration.nextElement()
-      mylabelTable[key]?.foreground = if (key <= value) JBColor.BLACK else Gray._100
-    }
-  }
-
-  fun setScope(scope: String) {
-    myScopeSlider.value = when (scope) {
-      PsiKeyword.PUBLIC -> 1
-      PsiKeyword.PROTECTED -> 2
-      PsiKeyword.PRIVATE -> 4
-      else -> 3
-    }
-    handleSlider()
-  }
-
-  fun getScope(): String? = when (myScopeSlider.value) {
-    1 -> PsiKeyword.PUBLIC
-    2 -> PsiKeyword.PROTECTED
-    3 -> PsiKeyword.PACKAGE
-    4 -> PsiKeyword.PRIVATE
-    else -> null
   }
 }

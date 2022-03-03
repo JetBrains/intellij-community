@@ -14,7 +14,6 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependencies.Companion.scriptCacheDependencies
 import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
 import org.jetbrains.kotlin.idea.core.util.readObject
 import org.jetbrains.kotlin.idea.core.util.writeObject
@@ -44,6 +43,20 @@ class ScriptClassRootsCache(
 
     fun withUpdatedSdks(newSdks: ScriptSdks) =
         ScriptClassRootsCache(scripts, classes, sources, customDefinitionsUsed, newSdks)
+
+    fun builder(project: Project): ScriptClassRootsBuilder {
+        return ScriptClassRootsBuilder(
+            project,
+            classes.toMutableSet(),
+            sources.toMutableSet(),
+            scripts.toMutableMap()
+        ).also { builder ->
+            if (customDefinitionsUsed) {
+                builder.useCustomScriptDefinition()
+            }
+            builder.sdks.addAll(sdks)
+        }
+    }
 
     abstract class LightScriptInfo(val definition: ScriptDefinition?) {
         @Volatile
@@ -83,7 +96,7 @@ class ScriptClassRootsCache(
         val configuration = lightScriptInfo.buildConfiguration() ?: return null
 
         val roots = configuration.dependenciesClassPath
-        val sdk = sdks[SdkId(configuration.javaHome)]
+        val sdk = sdks[SdkId(configuration.javaHome?.toPath())]
 
         return if (sdk == null) {
             HeavyScriptInfo(configuration, compose(toVfsRoots(roots)), null)

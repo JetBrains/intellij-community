@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -36,7 +37,7 @@ public final class FileTypeAssocTable<T> {
     myExactFileNameMappings = new ConcurrentHashMap<>(exactFileNameMappings);
     myExactFileNameAnyCaseMappings = createCharSequenceConcurrentMap(exactFileNameAnyCaseMappings);
     myHashBangMap = new ConcurrentHashMap<>(hashBangMap);
-    myMatchingMappings = Collections.synchronizedList(new ArrayList<>(matchingMappings));
+    myMatchingMappings = new CopyOnWriteArrayList<>(matchingMappings);
   }
 
   public FileTypeAssocTable() {
@@ -119,14 +120,12 @@ public final class FileTypeAssocTable<T> {
       if (t != null) return t;
     }
 
-    if (!myExactFileNameAnyCaseMappings.isEmpty()) {   // even hash lookup with case insensitive hasher is costly for isIgnored checks during compile
+    if (!myExactFileNameAnyCaseMappings.isEmpty()) {   // even hash lookup with case-insensitive hasher is costly for isIgnored checks during compile
       T t = myExactFileNameAnyCaseMappings.get(fileName);
       if (t != null) return t;
     }
 
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myMatchingMappings.size(); i++) {
-      Pair<FileNameMatcher, T> mapping = myMatchingMappings.get(i);
+    for (Pair<FileNameMatcher, T> mapping : myMatchingMappings) {
       if (mapping.getFirst().acceptsCharSequence(fileName)) return mapping.getSecond();
     }
 

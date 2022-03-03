@@ -19,6 +19,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
   @NotNull
   private final WeakReference<Component> myComponent;
   private Activatable myTarget;
+  private boolean myDeferred = true;
 
   public UiNotifyConnector(@NotNull Component component, @NotNull Activatable target) {
     myComponent = new WeakReference<>(component);
@@ -33,6 +34,11 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
       return;
     }
     component.addHierarchyListener(this);
+  }
+
+  public UiNotifyConnector(@NotNull Component component, @NotNull Activatable target, boolean deferred) {
+    this(component, target);
+    myDeferred = deferred;
   }
 
   @Override
@@ -55,12 +61,17 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
       }
     };
 
-    Application app = ApplicationManager.getApplication();
-    if (app != null && app.isDispatchThread()) {
-      app.invokeLater(runnable, ModalityState.current());
+    if (myDeferred) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null && app.isDispatchThread()) {
+        app.invokeLater(runnable, ModalityState.current());
+      }
+      else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
     else {
-      SwingUtilities.invokeLater(runnable);
+      runnable.run();
     }
   }
 

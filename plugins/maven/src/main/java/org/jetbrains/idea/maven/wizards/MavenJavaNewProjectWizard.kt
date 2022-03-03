@@ -10,25 +10,31 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
-  override val name = MavenUtil.SYSTEM_ID.readableName
+  override val name = MAVEN
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) =
-    object : MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
-      override fun setupProject(project: Project) {
-        val builder = InternalMavenModuleBuilder().apply {
-          moduleJdk = sdk
-          name = parentStep.name
-          contentEntryPath = parentStep.projectPath.systemIndependentPath
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
-          parentProject = parentData
-          aggregatorProject = parentData
-          projectId = MavenId(groupId, artifactId, version)
-          isInheritGroupId = parentData?.mavenId?.groupId == groupId
-          isInheritVersion = parentData?.mavenId?.version == version
-        }
+  class Step(parent: JavaNewProjectWizard.Step) : MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
+    override fun setupProject(project: Project) {
+      val builder = InternalMavenModuleBuilder().apply {
+        moduleJdk = sdk
+        name = parentStep.name
+        contentEntryPath = parentStep.projectPath.systemIndependentPath
 
-        ExternalProjectsManagerImpl.setupCreatedProject(project)
-        builder.commit(project)
+        parentProject = parentData
+        aggregatorProject = parentData
+        projectId = MavenId(groupId, artifactId, version)
+        isInheritGroupId = parentData?.mavenId?.groupId == groupId
+        isInheritVersion = parentData?.mavenId?.version == version
       }
+
+      ExternalProjectsManagerImpl.setupCreatedProject(project)
+      builder.commit(project)
     }
+  }
+
+  companion object {
+    @JvmField
+    val MAVEN = MavenUtil.SYSTEM_ID.readableName
+  }
 }

@@ -79,6 +79,9 @@
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
               topic="git4idea.repo.GitRepositoryChangeListener"/>
+
+    <listener topic="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$ListChangesListener"
+              class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController$RepoListListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="Git4Idea">

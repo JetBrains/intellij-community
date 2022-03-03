@@ -1,5 +1,5 @@
 // "Import" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Unresolved reference: aaa
 
 fun test() {

@@ -1,5 +1,5 @@
 // "Add '@JvmStatic' annotation to 'foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 open class A {
     companion object {
         protected val foo = 2

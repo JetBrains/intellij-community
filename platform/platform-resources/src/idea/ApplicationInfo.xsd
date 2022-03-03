@@ -357,14 +357,14 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:string" name="svg">
+    <xs:attribute type="xs:string" name="svg" use="required">
       <xs:annotation>
         <xs:documentation>
           Path to an svg file with the product icon.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:string" name="svg-small">
+    <xs:attribute type="xs:string" name="svg-small" use="required">
       <xs:annotation>
         <xs:documentation>
           Path to an svg file with a simplified version of the product icon which looks good when shown as 16x16 image. The file must be

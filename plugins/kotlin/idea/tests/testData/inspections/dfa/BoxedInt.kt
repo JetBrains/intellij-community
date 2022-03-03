@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(x : Int?) {
     if (x != null && x > 5) {}
     if (<warning descr="Condition 'x != null && x > 5 && x < 3' is always false">x != null && x > 5 && <warning descr="Condition 'x < 3' is always false when reached">x < 3</warning></warning>) {}

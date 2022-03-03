@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.project
 
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactory
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.AbsentDescriptorHandler
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.LocalDescriptorResolver
 import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class IdeaLocalDescriptorResolver(
     private val resolveElementCache: ResolveElementCache,
@@ -27,10 +29,19 @@ class IdeaLocalDescriptorResolver(
 class IdeaAbsentDescriptorHandler(
     private val declarationProviderFactory: DeclarationProviderFactory
 ) : AbsentDescriptorHandler {
+
     override fun diagnoseDescriptorNotFound(declaration: KtDeclaration): DeclarationDescriptor {
-        throw NoDescriptorForDeclarationException(
-            declaration,
-            (declarationProviderFactory as? PluginDeclarationProviderFactory)?.debugToString()
-        )
+        val exceptionWithAttachments =
+            declarationProviderFactory.safeAs<PluginDeclarationProviderFactory>()?.let {
+                NoDescriptorForDeclarationException(declaration)
+                    .withAttachment("declarationProviderFactory", it.debugToString())
+            } ?: NoDescriptorForDeclarationException(declaration, declarationProviderFactory.toString())
+        throw exceptionWithAttachments
+            .withPsiAttachment("KtDeclaration.kt", declaration)
+            .withAttachment(
+                "KtDeclaration location",
+                kotlin.runCatching { declaration.containingFile.virtualFile }.getOrNull()
+            )
     }
+
 }

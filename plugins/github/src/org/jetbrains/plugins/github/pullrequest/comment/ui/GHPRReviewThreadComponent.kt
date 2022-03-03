@@ -76,8 +76,10 @@ object GHPRReviewThreadComponent {
         add(diffComponentFactory.createComponent(thread.diffHunk, thread.startLine), VerticalLayout.FILL_HORIZONTAL)
 
         add(GHPRReviewThreadCommentsPanel.create(thread,
-                                                 GHPRReviewCommentComponent.factory(project, reviewDataProvider, avatarIconsProvider, false)),
-            VerticalLayout.FILL_HORIZONTAL)
+                                                 GHPRReviewCommentComponent.factory(
+                                                   project, reviewDataProvider, avatarIconsProvider, false
+                                                 )
+          ), VerticalLayout.FILL_HORIZONTAL)
 
         if (reviewDataProvider.canComment()) {
           add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser),
@@ -190,7 +192,7 @@ object GHPRReviewThreadComponent {
     val toggleModel = SingleValueModel(false)
     val textFieldModel = GHSubmittableTextFieldModel(project) { text ->
       reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
-        thread.addComment(GHPRReviewCommentModel.convert(it))
+        thread.addComment(GHPRReviewCommentModel.convert(it, thread.startLine))
         toggleModel.value = false
       }
     }

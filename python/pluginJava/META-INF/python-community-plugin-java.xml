@@ -8,7 +8,6 @@
     <newProjectWizard.language implementation="com.jetbrains.python.newProject.PythonNewProjectWizard"/>
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
     <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
-    <framework.detector implementation="com.jetbrains.python.facet.PythonFacetType$PythonFrameworkDetector"/>
     <frameworkSupport implementation="com.jetbrains.python.facet.PythonFrameworkSupportProvider"/>
     <projectStructureDetector implementation="com.jetbrains.python.module.PyProjectStructureDetector"/>
     <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>

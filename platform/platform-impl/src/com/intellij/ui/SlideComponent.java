@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
@@ -128,7 +129,7 @@ class SlideComponent extends JComponent {
         .setPreferredPosition(myVertical ? Balloon.Position.atLeft : Balloon.Position.above)
         .setBorderColor(Color.BLACK)
         .setAwtTooltip(true)
-        .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+        .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
         .setTextBg(HintUtil.getInformationColor())
         .setShowImmediately(true);
 

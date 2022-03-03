@@ -56,7 +56,7 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
             )
             holder.registerProblem(
                 lambda,
-                KotlinBundle.message("function.with.and.inferred.return.type"),
+                KotlinBundle.message("inspection.function.with.lambda.expression.body.display.name"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 *fixes.toTypedArray()
             )
@@ -74,8 +74,8 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val lambda = descriptor.psiElement as? KtLambdaExpression ?: return
-            val body = lambda.functionLiteral.bodyExpression ?: return
-            val replaced = lambda.replaced(body)
+            val singleStatement = lambda.functionLiteral.bodyExpression?.statements?.singleOrNull() ?: return
+            val replaced = lambda.replaced(singleStatement)
             replaced.setTypeIfNeed()
         }
     }
@@ -88,7 +88,7 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val lambda = descriptor.psiElement as? KtLambdaExpression ?: return
             val body = lambda.functionLiteral.bodyExpression ?: return
-            val replaced = lambda.replaced(KtPsiFactory(lambda).createExpressionByPattern("run { $0 }", body))
+            val replaced = lambda.replaced(KtPsiFactory(lambda).createExpressionByPattern("run { $0 }", body.allChildren))
             replaced.setTypeIfNeed()
         }
     }

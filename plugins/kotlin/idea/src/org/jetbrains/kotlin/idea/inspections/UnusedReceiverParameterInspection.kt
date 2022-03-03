@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -87,9 +88,7 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                         if (used) return
                         element.acceptChildren(this)
 
-                        val resolvedCall = element.getResolvedCall(context) ?: return
-
-                        if (isUsageOfDescriptor(callable, resolvedCall, context)) {
+                        if (isUsageOfDescriptor(callable, element, context)) {
                             used = true
                         }
                     }
@@ -162,21 +161,53 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
     }
 }
 
-fun isUsageOfDescriptor(descriptor: DeclarationDescriptor, resolvedCall: ResolvedCall<*>, bindingContext: BindingContext): Boolean {
-    // As receiver of call
-    if (resolvedCall.dispatchReceiver.getThisReceiverOwner(bindingContext) == descriptor ||
-        resolvedCall.extensionReceiver.getThisReceiverOwner(bindingContext) == descriptor
-    ) {
-        return true
-    }
-    // As explicit "this"
-    if ((resolvedCall.candidateDescriptor as? ReceiverParameterDescriptor)?.containingDeclaration == descriptor) {
-        return true
+fun isUsageOfDescriptor(descriptor: DeclarationDescriptor, element: KtElement, context: BindingContext): Boolean {
+    fun isUsageOfDescriptorInResolvedCall(resolvedCall: ResolvedCall<*>): Boolean {
+        // As receiver of call
+        if (resolvedCall.dispatchReceiver.getThisReceiverOwner(context) == descriptor ||
+            resolvedCall.extensionReceiver.getThisReceiverOwner(context) == descriptor
+        ) {
+            return true
+        }
+        // As explicit "this"
+        if ((resolvedCall.candidateDescriptor as? ReceiverParameterDescriptor)?.containingDeclaration == descriptor) {
+            return true
+        }
+
+        if (resolvedCall is VariableAsFunctionResolvedCall) {
+            return isUsageOfDescriptorInResolvedCall(resolvedCall.variableCall)
+        }
+
+        return false
     }
 
-    if (resolvedCall is VariableAsFunctionResolvedCall) {
-        return isUsageOfDescriptor(descriptor, resolvedCall.variableCall, bindingContext)
+    if (element !is KtExpression) return false
+    return when (element) {
+        is KtDestructuringDeclarationEntry -> {
+            listOf { context[BindingContext.COMPONENT_RESOLVED_CALL, element] }
+        }
+        is KtProperty -> {
+            val elementDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] as? VariableDescriptorWithAccessors
+            if (elementDescriptor != null) {
+                listOf(
+                    { context[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, elementDescriptor.getter] },
+                    { context[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, elementDescriptor.setter] },
+                    { context[BindingContext.PROVIDE_DELEGATE_RESOLVED_CALL, elementDescriptor] },
+                )
+            } else {
+                emptyList()
+            }
+        }
+        else -> {
+            listOf(
+                { element.getResolvedCall(context) },
+                { context[BindingContext.LOOP_RANGE_ITERATOR_RESOLVED_CALL, element] },
+                { context[BindingContext.LOOP_RANGE_HAS_NEXT_RESOLVED_CALL, element] },
+                { context[BindingContext.LOOP_RANGE_NEXT_RESOLVED_CALL, element] }
+            )
+        }
+    }.any { getResolveCall ->
+        val resolvedCall = getResolveCall() ?: return@any false
+        isUsageOfDescriptorInResolvedCall(resolvedCall)
     }
-
-    return false
 }

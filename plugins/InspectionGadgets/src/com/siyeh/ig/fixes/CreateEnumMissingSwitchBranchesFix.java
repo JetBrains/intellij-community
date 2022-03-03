@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 public final class CreateEnumMissingSwitchBranchesFix extends CreateMissingSwitchBranchesFix {
   public CreateEnumMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names) {
-    super(block, names, false);
+    super(block, names);
   }
 
   @Override

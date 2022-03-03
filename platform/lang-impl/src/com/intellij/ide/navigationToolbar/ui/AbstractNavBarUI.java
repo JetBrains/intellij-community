@@ -1,14 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.navigationToolbar.NavBarItem;
+import com.intellij.ide.navigationToolbar.NavBarModel;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
+import com.intellij.ide.navigationToolbar.NavBarPopup;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.RelativeFont;
+import com.intellij.ui.*;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,18 +36,29 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
-    return isPopupElement ? JBInsets.create(1, 2) : JBUI.emptyInsets();
+    return isPopupElement ? JBInsets.create(1, 2) :
+           ExperimentalUI.isNewUI() ? JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1)) : JBInsets.emptyInsets();
   }
 
   @Override
+  @Deprecated
   public JBInsets getElementPadding() {
-    return JBUI.insets(3);
+    return getElementPadding(null);
+  }
+
+  @Override
+  public JBInsets getElementPadding(NavBarItem item) {
+    return ExperimentalUI.isNewUI() ?
+            item != null && item.isInFloatingMode() ?
+              JBUI.insets("StatusBar.Breadcrumbs.floatingItemInsets", JBUI.insets(1)) :
+              JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0)) :
+            JBUI.insets(3);
   }
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
-    Font font = UIUtil.getLabelFont();
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
+    Font font = StartupUiUtil.getLabelFont();
+    return !ExperimentalUI.isNewUI() && UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
   }
 
   @Override
@@ -69,50 +80,113 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar) {
-    final boolean floating = navbar.isInFloatingMode();
-    boolean toolbarVisible = UISettings.getInstance().getShowMainToolbar();
-    final boolean selected = item.isSelected() && item.isFocused();
-    boolean nextSelected = item.isNextSelected() && navbar.isFocused();
+    JBInsets paddings = getElementPadding(item);
 
-    ImageType type;
-    if (floating) {
-      type = selected ? ImageType.ACTIVE_FLOATING : nextSelected ? ImageType.NEXT_ACTIVE_FLOATING : ImageType.INACTIVE_FLOATING;
+    if (ExperimentalUI.isNewUI()) {
+      Rectangle rect = new Rectangle(item.getSize());
+      JBInsets.removeFrom(rect, paddings);
+
+      int offset = rect.x;
+      if (!item.isFirstElement()) {
+        NavBarItem.CHEVRON_ICON.paintIcon(item, g, offset, rect.y + (rect.height - NavBarItem.CHEVRON_ICON.getIconHeight()) / 2);
+        int delta = NavBarItem.CHEVRON_ICON.getIconWidth() + JBUI.CurrentTheme.StatusBar.Breadcrumbs.CHEVRON_INSET.get();
+        offset += delta;
+        rect.width -= delta;
+      }
+
+      paintHighlight(g, navbar, item, new Rectangle(offset, rect.y, rect.width, rect.height));
+
+      boolean paintIcon = false;
+      if (item.needPaintIcon()) {
+        Icon icon = item.getIcon();
+        if (icon != null) {
+          paintIcon = true;
+          offset += item.getIpad().left;
+          icon.paintIcon(item, g, offset, rect.y + (rect.height - icon.getIconHeight()) / 2);
+          offset += icon.getIconWidth();
+        }
+      }
+
+      offset += paintIcon ? item.getIconTextGap() : item.getIpad().left;
+      item.doPaintText(g, offset);
     }
     else {
-      if (toolbarVisible) {
-        type = selected ? ImageType.ACTIVE : nextSelected ? ImageType.NEXT_ACTIVE : ImageType.INACTIVE;
+      final boolean floating = navbar.isInFloatingMode();
+      boolean toolbarVisible = UISettings.getInstance().getShowMainToolbar();
+      final boolean selected = item.isSelected() && item.isFocused();
+      boolean nextSelected = item.isNextSelected() && navbar.isFocused();
+
+      ImageType type;
+      if (floating) {
+        type = selected ? ImageType.ACTIVE_FLOATING : nextSelected ? ImageType.NEXT_ACTIVE_FLOATING : ImageType.INACTIVE_FLOATING;
       }
       else {
-        type = selected ? ImageType.ACTIVE_NO_TOOLBAR : nextSelected ? ImageType.NEXT_ACTIVE_NO_TOOLBAR : ImageType.INACTIVE_NO_TOOLBAR;
+        if (toolbarVisible) {
+          type = selected ? ImageType.ACTIVE : nextSelected ? ImageType.NEXT_ACTIVE : ImageType.INACTIVE;
+        }
+        else {
+          type = selected ? ImageType.ACTIVE_NO_TOOLBAR : nextSelected ? ImageType.NEXT_ACTIVE_NO_TOOLBAR : ImageType.INACTIVE_NO_TOOLBAR;
+        }
       }
-    }
 
-    // see: https://github.com/JetBrains/intellij-community/pull/1111
-    Map<ImageType, ScaleContext.Cache<BufferedImage>> cache = AbstractNavBarUI.cache.computeIfAbsent(item, k -> new HashMap<>());
-    ScaleContext.Cache<BufferedImage> imageCache = cache.computeIfAbsent(type, k -> {
-      return new ScaleContext.Cache<>(ctx -> {
-        return drawToBuffer(item, ctx, floating, toolbarVisible, selected, navbar);
+      // see: https://github.com/JetBrains/intellij-community/pull/1111
+      Map<ImageType, ScaleContext.Cache<BufferedImage>> cache = AbstractNavBarUI.cache.computeIfAbsent(item, k -> new HashMap<>());
+      ScaleContext.Cache<BufferedImage> imageCache = cache.computeIfAbsent(type, k -> {
+        return new ScaleContext.Cache<>(ctx -> {
+          return drawToBuffer(item, ctx, floating, toolbarVisible, selected, navbar);
+        });
       });
-    });
-    BufferedImage image = imageCache.getOrProvide(ScaleContext.create(g));
-    if (image == null) {
-      return;
-    }
-
-    StartupUiUtil.drawImage(g, image, 0, 0, null);
-
-    final int offset = item.isFirstElement() ? getFirstElementLeftOffset() : 0;
-    int textOffset = getElementPadding().width() + offset;
-    if (item.needPaintIcon()) {
-      Icon icon = item.getIcon();
-      if (icon != null) {
-        int iconOffset = getElementPadding().left + offset;
-        icon.paintIcon(item, g, iconOffset, (item.getHeight() - icon.getIconHeight()) / 2);
-        textOffset += icon.getIconWidth();
+      BufferedImage image = imageCache.getOrProvide(ScaleContext.create(g));
+      if (image == null) {
+        return;
       }
-    }
 
-    item.doPaintText(g, textOffset);
+      StartupUiUtil.drawImage(g, image, 0, 0, null);
+
+      final int offset = item.isFirstElement() ? getFirstElementLeftOffset() : 0;
+      int textOffset = paddings.width() + offset;
+      if (item.needPaintIcon()) {
+        Icon icon = item.getIcon();
+        if (icon != null) {
+          int iconOffset = paddings.left + offset;
+          icon.paintIcon(item, g, iconOffset, (item.getHeight() - icon.getIconHeight()) / 2);
+          textOffset += icon.getIconWidth();
+        }
+      }
+
+      item.doPaintText(g, textOffset);
+    }
+  }
+
+  private static void paintHighlight(Graphics2D g, NavBarPanel panel, NavBarItem item, Rectangle rectangle) {
+    Color color;
+    NavBarModel model = panel.getModel();
+    NavBarPopup popup = panel.getNodePopup();
+    if (item.isMouseHover()) {
+      color = JBUI.CurrentTheme.StatusBar.Breadcrumbs.HOVER_BACKGROUND;
+    }
+    else if ((model.getSelectedIndex() == item.getIndex()) && item.isFocused()) {
+      color = JBUI.CurrentTheme.StatusBar.Breadcrumbs.SELECTION_BACKGROUND;
+    }
+    else if ((model.getSelectedIndex() == item.getIndex()) && popup != null && popup.isVisible() && popup.getItemIndex() == item.getIndex()) {
+      color = JBUI.CurrentTheme.StatusBar.Breadcrumbs.SELECTION_INACTIVE_BACKGROUND;
+    }
+    else return;
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      g2.setColor(color);
+
+      float arc = JBUIScale.scale(4);
+      RoundRectangle2D shape = new RoundRectangle2D.Float(rectangle.x, rectangle.y, rectangle.width, rectangle.height, arc, arc);
+      g2.fill(shape);
+    }
+    finally {
+      g2.dispose();
+    }
   }
 
   private static BufferedImage drawToBuffer(NavBarItem item,
@@ -210,16 +284,18 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public Dimension getOffsets(NavBarItem item) {
     final Dimension size = new Dimension();
-    if (! item.isPopupElement()) {
-      size.width += getDecorationOffset() + getElementPadding().width() + (item.isFirstElement() ? getFirstElementLeftOffset() : 0);
-      size.height += getElementPadding().height();
+    if (!item.isPopupElement()) {
+      JBInsets.addTo(size, getElementPadding(item));
+      if (!ExperimentalUI.isNewUI()) {
+        size.width += getDecorationOffset() + (item.isFirstElement() ? getFirstElementLeftOffset() : 0);
+      }
     }
     return size;
   }
 
   @Override
   public Insets getWrapperPanelInsets(Insets insets) {
-    final JBInsets result = JBUI.insets(insets);
+    final JBInsets result = JBInsets.create(insets);
     if (shouldPaintWrapperPanel()) {
       result.top += JBUIScale.scale(1);
     }
@@ -236,7 +312,9 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public void clearItems() {
-    cache.clear();
+    if (!ExperimentalUI.isNewUI()) {
+      cache.clear();
+    }
   }
 
   @Override

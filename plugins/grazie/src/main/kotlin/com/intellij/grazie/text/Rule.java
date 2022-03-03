@@ -6,22 +6,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
-import java.util.List;
 import java.util.Objects;
 
 /** A representation of rules from various {@link TextChecker}s. */
 public abstract class Rule {
   private final String globalId;
   private final String presentableName;
-  private final List<String> categories;
-
-  /**
-   * Create a rule in a single category
-   * @see #Rule(String, String, List)
-   */
-  public Rule(String globalId, String presentableName, String category) {
-    this(globalId, presentableName, List.of(category));
-  }
+  private final String category;
 
   /**
    * @param globalId a rule identifier that should be as unique as possible.
@@ -29,16 +20,12 @@ public abstract class Rule {
    *                 and some code of the language that it checks, separated by dots.
    *                 These ids are stored in {@link GrazieConfig.State} when a rule is enabled/disabled manually.
    * @param presentableName the presentable name of the rule
-   * @param categories a non-empty list of the presentable names of the rule's categories.
-   *                   It's used to group the rules in the settings, starting from the language node.
+   * @param category the presentable name of the rule's category, to group the rules in the settings
    */
-  public Rule(String globalId, String presentableName, List<String> categories) {
+  public Rule(String globalId, String presentableName, String category) {
     this.globalId = globalId;
     this.presentableName = presentableName;
-    this.categories = List.copyOf(categories);
-    if (categories.isEmpty()) {
-      throw new IllegalArgumentException("There should be at least one category specified for rule " + globalId);
-    }
+    this.category = category;
     if (!globalId.contains(".")) {
       throw new IllegalArgumentException("Global id should be a qualified name with at least one dot inside: " + this);
     }
@@ -72,21 +59,9 @@ public abstract class Rule {
     return null;
   }
 
-  /**
-   * @return the presentable name of the rule's topmost category
-   * @deprecated use {@link #getCategories()} instead
-   */
-  @Deprecated
+  /** @return the presentable name of the rule's category */
   public final String getCategory() {
-    return categories.get(0);
-  }
-
-  /**
-   * @return a non-empty list consisting of presentable names of the rule's categories:
-   * the nodes it should be placed into in the Rule settings tree, starting from the language node
-   */
-  public List<String> getCategories() {
-    return categories;
+    return category;
   }
 
   /**

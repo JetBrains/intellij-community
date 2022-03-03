@@ -12,6 +12,9 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.io.zipFile
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -24,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * An improved variant of [org.junit.rules.TemporaryFolder] with lazy init, no symlinks in a temporary directory path, better directory name,
  * and more convenient [newFile], [newDirectory] methods.
  */
-class TempDirectory : ExternalResource() {
+open class TempDirectory : ExternalResource() {
   private var myName: String? = null
   private val myNextDirNameSuffix = AtomicInteger()
   private var myRoot: File? = null
@@ -53,11 +56,15 @@ class TempDirectory : ExternalResource() {
     }
 
   override fun apply(base: Statement, description: Description): Statement {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName.take(30), true), true)
+    before(description.methodName)
     return super.apply(base, description)
   }
 
-  override fun after() {
+  fun before(methodName: String) {
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(methodName.take(30), true), true)
+  }
+
+  public override fun after() {
     val path = myRoot?.toPath()
     val vfsDir = myVirtualFileRoot
 
@@ -160,5 +167,15 @@ class TempDirectory : ExternalResource() {
       makeDirectories(path.parent)
       Files.createDirectory(path)
     }
+  }
+}
+
+class TempDirectoryExtension : TempDirectory(), BeforeEachCallback, AfterEachCallback {
+  override fun beforeEach(context: ExtensionContext) {
+    before(context.displayName)
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    after()
   }
 }

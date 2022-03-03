@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.enums
 
 enum class PluginsGroupType {
+  BUNDLED_UPDATE,
   UPDATE,
   INSTALLING,
   INSTALLED,

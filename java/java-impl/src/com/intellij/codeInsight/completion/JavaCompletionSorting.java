@@ -1,16 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
+import com.intellij.codeInsight.StaticAnalysisAnnotationManager;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -24,20 +28,13 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-
-/**
- * @author peter
- */
 public final class JavaCompletionSorting {
   private JavaCompletionSorting() {
   }
@@ -48,11 +45,12 @@ public final class JavaCompletionSorting {
     CompletionType type = parameters.getCompletionType();
     boolean smart = type == CompletionType.SMART;
     boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
+    Project project = parameters.getOriginalFile().getProject();
 
     List<LookupElementWeigher> afterProximity = new ArrayList<>();
     ContainerUtil.addIfNotNull(afterProximity, PreferMostUsedWeigher.create(position));
-    afterProximity.add(new PreferContainingSameWords(expectedTypes));
-    afterProximity.add(new PreferShorter(expectedTypes));
+    afterProximity.add(new PreferContainingSameWords(project, expectedTypes));
+    afterProximity.add(new PreferShorter(project, expectedTypes));
     afterProximity.add(new DispreferTechnicalOverloads(position));
 
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
@@ -60,6 +58,11 @@ public final class JavaCompletionSorting {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes, position));
     } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
+    }
+
+    PsiClassType serviceType = getServiceType(position);
+    if (serviceType != null) {
+      sorter = sorter.weighBefore("liftShorter", new PreferImplementor(serviceType));
     }
 
     PsiElement parent = position.getParent();
@@ -93,7 +96,7 @@ public final class JavaCompletionSorting {
     }
 
     ContainerUtil.addIfNotNull(afterStats, recursion(parameters, expectedTypes));
-    afterStats.add(new PreferSimilarlyEnding(expectedTypes));
+    afterStats.add(new PreferSimilarlyEnding(project, expectedTypes));
     if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiType.VOID))) {
       afterStats.add(new PreferNonGeneric());
     }
@@ -104,9 +107,22 @@ public final class JavaCompletionSorting {
     return result.withRelevanceSorter(sorter);
   }
 
+  private static @Nullable PsiClassType getServiceType(PsiElement position) {
+    if (position.getParent() instanceof PsiJavaCodeReferenceElement) {
+      PsiElement refList = position.getParent().getParent();
+      if (refList instanceof PsiReferenceList) {
+        PsiElement parent = refList.getParent();
+        if (parent instanceof PsiProvidesStatement) {
+          return ((PsiProvidesStatement)parent).getInterfaceType();
+        }
+      }
+    }
+    return null;
+  }
+
   @Nullable
   private static LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
-    TObjectIntHashMap<PsiMethod> previousChainCalls = new TObjectIntHashMap<>();
+    Object2IntMap<PsiMethod> previousChainCalls = new Object2IntOpenHashMap<>();
     if (position.getParent() instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)position.getParent();
       PsiMethodCallExpression qualifier = getCallQualifier(ref);
@@ -119,7 +135,7 @@ public final class JavaCompletionSorting {
             boolean seemsLikeExpectsMultipleCalls =
               name.startsWith("put") || name.startsWith("add") || name.startsWith("append") || name.startsWith("get");
             if (!seemsLikeExpectsMultipleCalls && qualifierClass == method.getContainingClass()) {
-              previousChainCalls.put(method, previousChainCalls.get(method) + 1);
+              previousChainCalls.put(method, previousChainCalls.getInt(method) + 1);
             }
           }
           qualifier = getCallQualifier(qualifier.getMethodExpression());
@@ -130,7 +146,7 @@ public final class JavaCompletionSorting {
       @Override
       public Boolean weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
         PsiElement psi = element.getPsiElement();
-        return psi instanceof PsiMethod && previousChainCalls.get((PsiMethod)psi) == 1;
+        return psi instanceof PsiMethod && previousChainCalls.getInt(psi) == 1;
       }
     };
   }
@@ -141,7 +157,7 @@ public final class JavaCompletionSorting {
   }
 
   private static ExpectedTypeInfo @NotNull [] getExpectedTypesWithDfa(CompletionParameters parameters, PsiElement position) {
-    if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(position)) {
+    if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText(".")).accepts(position)) {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
 
@@ -271,20 +287,6 @@ public final class JavaCompletionSorting {
       }
     }
     return hasNonVoid;
-  }
-
-  @Nullable
-  private static String getLookupObjectName(Object o) {
-    if (o instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)o;
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
-      VariableKind variableKind = codeStyleManager.getVariableKind(variable);
-      return codeStyleManager.variableNameToPropertyName(variable.getName(), variableKind);
-    }
-    if (o instanceof PsiMethod) {
-      return ((PsiMethod)o).getName();
-    }
-    return null;
   }
 
   private static int getNameEndMatchingDegree(final String name, ExpectedTypeInfo[] expectedInfos) {
@@ -494,6 +496,9 @@ public final class JavaCompletionSorting {
         final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
         if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, myPosition, null)) return MyEnum.INACCESSIBLE;
         if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return MyEnum.DEPRECATED;
+        if (AnnotationUtil.isAnnotated(member, StaticAnalysisAnnotationManager.getInstance().getKnownUnstableApiAnnotations(), 0)) {
+          return MyEnum.DISCOURAGED;
+        }
         if (member instanceof PsiClass) {
           PsiFile file = member.getContainingFile();
           if (file instanceof PsiJavaFile) {
@@ -569,6 +574,24 @@ public final class JavaCompletionSorting {
     }
   }
 
+  private static class PreferImplementor extends LookupElementWeigher {
+    private final @NotNull PsiType myOrigType;
+
+    private PreferImplementor(@NotNull PsiType type) {
+      super("implementor");
+      myOrigType = type;
+    }
+
+    @Override
+    public @Nullable Boolean weigh(@NotNull LookupElement element) {
+      PsiClass psiClass = ObjectUtils.tryCast(element.getObject(), PsiClass.class);
+      if (psiClass == null) return true;
+      PsiClassType type = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+      return psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
+             !myOrigType.isAssignableFrom(type);
+    }
+  }
+
   private static class PreferConvertible extends LookupElementWeigher {
     private final @NotNull PsiType myOrigType;
 
@@ -603,7 +626,7 @@ public final class JavaCompletionSorting {
     SUBTYPE, CONVERTIBLE, HAS_NESTED, UNKNOWN, SUPERTYPE, NON_CONVERTIBLE
   }
 
-  private static class PreferExpected extends LookupElementWeigher {
+  private static final class PreferExpected extends LookupElementWeigher {
     private final boolean myConstructorPossible;
     private final ExpectedTypeInfo[] myExpectedTypes;
     private final PsiElement myPosition;
@@ -655,12 +678,33 @@ public final class JavaCompletionSorting {
     }
   }
 
-  private static class PreferSimilarlyEnding extends LookupElementWeigher {
-    private final ExpectedTypeInfo[] myExpectedTypes;
+  private static abstract class ExpectedTypeBasedWeigher extends LookupElementWeigher {
+    final ExpectedTypeInfo[] myExpectedTypes;
+    private final JavaCodeStyleManager myCodeStyleManager;
 
-    PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes) {
-      super("nameEnd");
+    ExpectedTypeBasedWeigher(@NotNull Project project, @NotNull String name, ExpectedTypeInfo[] expectedTypes) {
+      super(name);
       myExpectedTypes = expectedTypes;
+      myCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+    }
+
+    @Nullable String getLookupObjectName(Object o) {
+      if (o instanceof PsiVariable) {
+        final PsiVariable variable = (PsiVariable)o;
+        VariableKind variableKind = myCodeStyleManager.getVariableKind(variable);
+        String name = variable.getName();
+        return name == null ? null : myCodeStyleManager.variableNameToPropertyName(name, variableKind);
+      }
+      if (o instanceof PsiMethod) {
+        return ((PsiMethod)o).getName();
+      }
+      return null;
+    }
+  }
+
+  private static class PreferSimilarlyEnding extends ExpectedTypeBasedWeigher {
+    PreferSimilarlyEnding(@NotNull Project project, ExpectedTypeInfo[] expectedTypes) {
+      super(project, "nameEnd", expectedTypes);
     }
 
     @NotNull
@@ -671,12 +715,9 @@ public final class JavaCompletionSorting {
     }
   }
 
-  private static class PreferContainingSameWords extends LookupElementWeigher {
-    private final ExpectedTypeInfo[] myExpectedTypes;
-
-    PreferContainingSameWords(ExpectedTypeInfo[] expectedTypes) {
-      super("sameWords");
-      myExpectedTypes = expectedTypes;
+  private static class PreferContainingSameWords extends ExpectedTypeBasedWeigher {
+    PreferContainingSameWords(@NotNull Project project, ExpectedTypeInfo[] expectedTypes) {
+      super(project, "sameWords", expectedTypes);
     }
 
     @NotNull
@@ -691,7 +732,7 @@ public final class JavaCompletionSorting {
         for (ExpectedTypeInfo myExpectedInfo : myExpectedTypes) {
           String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName();
           if (expectedName != null) {
-            final THashSet<String> set = new THashSet<>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
+            final Set<String> set = new HashSet<>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
             set.retainAll(wordsNoDigits);
             max = Math.max(max, set.size());
           }
@@ -702,12 +743,9 @@ public final class JavaCompletionSorting {
     }
   }
 
-  private static class PreferShorter extends LookupElementWeigher {
-    private final ExpectedTypeInfo[] myExpectedTypes;
-
-    PreferShorter(ExpectedTypeInfo[] expectedTypes) {
-      super("shorter");
-      myExpectedTypes = expectedTypes;
+  private static class PreferShorter extends ExpectedTypeBasedWeigher {
+    PreferShorter(@NotNull Project project, ExpectedTypeInfo[] expectedTypes) {
+      super(project, "shorter", expectedTypes);
     }
 
     @NotNull

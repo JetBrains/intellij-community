@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
@@ -84,11 +86,19 @@ internal fun doShowChangeMasterPasswordDialog(contextComponent: Component?,
                                               setNewMasterPassword: (current: CharArray, new: CharArray) -> Boolean): Boolean {
   val currentPasswordField = JPasswordField()
   val newPasswordField = JPasswordField()
-  val panel = panel {
-    row(CredentialStoreBundle.message("kee.pass.row.current.password")) { currentPasswordField().focused() }
-    row(CredentialStoreBundle.message("kee.pass.row.new.password")) { newPasswordField() }
-
-    commentRow(CredentialStoreBundle.message("kee.pass.row.comment"))
+  val panel = com.intellij.ui.dsl.builder.panel {
+    row(CredentialStoreBundle.message("kee.pass.row.current.password")) {
+      cell(currentPasswordField)
+        .columns(COLUMNS_MEDIUM)
+        .focused()
+    }
+    row(CredentialStoreBundle.message("kee.pass.row.new.password")) {
+      cell(newPasswordField)
+        .columns(COLUMNS_MEDIUM)
+    }
+    row {
+      comment(CredentialStoreBundle.message("kee.pass.row.comment"))
+    }
   }
 
   return dialog(title = CredentialStoreBundle.message("kee.pass.dialog.default.title"), panel = panel, parent = contextComponent) {

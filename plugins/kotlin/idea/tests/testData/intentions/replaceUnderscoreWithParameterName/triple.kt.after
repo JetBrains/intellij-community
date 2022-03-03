@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 'third' is never used
 
 fun foo(t: Triple<String, Int, Boolean>) {

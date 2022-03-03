@@ -17,6 +17,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows providing custom actions for {@link LookupElement} that are available
@@ -34,6 +35,6 @@ public interface LookupActionProvider {
    * @param lookup current lookup
    * @param consumer a consumer to pass the resulting actions to
    */
-  void fillActions(LookupElement element, Lookup lookup, Consumer<LookupElementAction> consumer);
+  void fillActions(@NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer);
 
 }

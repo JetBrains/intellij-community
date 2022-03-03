@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
-import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.Variance
 import java.util.*
 
@@ -31,9 +31,20 @@ object CreateLocalVariableActionFactory : KotlinSingleIntentionActionFactory() {
         return CreateLocalFromUsageAction(refExpr)
     }
 
-    private fun getContainer(refExpr: KtNameReferenceExpression) = refExpr.parents
-        .filter { it is KtBlockExpression || it is KtDeclarationWithBody && it.bodyExpression != null }
-        .firstOrNull() as? KtElement
+    private fun getContainer(refExpr: KtNameReferenceExpression): KtElement? {
+        var element: PsiElement = refExpr
+        while (true) {
+            when (val parent = element.parent) {
+                null, is KtAnnotationEntry -> return null
+                is KtBlockExpression -> return parent
+                is KtDeclarationWithBody -> {
+                    if (parent.bodyExpression == element) return parent
+                    element = parent
+                }
+                else -> element = parent
+            }
+        }
+    }
 
     class CreateLocalFromUsageAction(refExpr: KtNameReferenceExpression, val propertyName: String = refExpr.getReferencedName())
         : CreateFromUsageFixBase<KtNameReferenceExpression>(refExpr) {

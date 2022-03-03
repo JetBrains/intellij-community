@@ -1,14 +1,14 @@
 class Test {
   {
     Holder h = null;
-    Result<String> r1 = new Result<error descr="Cannot infer arguments"><></error>(h);
+    Result<String> r1 = <error descr="Incompatible types. Found: 'Result<Holder>', required: 'Result<java.lang.String>'">new Result<>(h);</error>
     Result<String> r2 = <error descr="Incompatible types. Found: 'Result<Holder>', required: 'Result<java.lang.String>'">Result.create(h);</error>
 
     Holder dataHolder = null;
-    Result<String> r3 = new Result<error descr="Cannot infer arguments"><></error>(new Holder<>(dataHolder));
+    Result<String> r3 = <error descr="Incompatible types. Found: 'Result<Holder>', required: 'Result<java.lang.String>'">new Result<>(new Holder<>(dataHolder));</error>
     Result<String> r4 = <error descr="Incompatible types. Found: 'Result<Holder>', required: 'Result<java.lang.String>'">Result.create(new Holder<>(dataHolder));</error>
 
-    Result<String> r5 = new Result<error descr="Cannot infer arguments"><></error>(Holder.create(dataHolder));
+    Result<String> r5 = <error descr="Incompatible types. Found: 'Result<Holder>', required: 'Result<java.lang.String>'">new Result<>(Holder.create(dataHolder));</error>
     Result<String> r6 = <error descr="Incompatible types. Found: 'Result<Holder>', required: 'Result<java.lang.String>'">Result.create(Holder.create(dataHolder));</error>
 
   }

@@ -14,14 +14,11 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.Kotlin
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.LAST_SNAPSHOT
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_3_30
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_3_72
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_0
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_32
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_10
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_31
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_10
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
-import org.junit.AssumptionViolatedException
 import org.junit.Rule
 import org.junit.runners.Parameterized
 import java.io.File
@@ -86,24 +83,23 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     companion object {
         val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: LAST_SNAPSHOT.toString()
         const val kotlinAndGradleParametersName: String = "Gradle-{0}, KotlinGradlePlugin-{1}"
-        private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("6.8.2", "master"))
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
+            val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.3.3", "master"))
+
             if (IS_UNDER_SAFE_PUSH)
                 return safePushParams
             else
                 return listOf<Array<Any>>(
                     arrayOf("4.9", V_1_3_30.toString()),
                     arrayOf("5.6.4", V_1_3_72.toString()),
-                    arrayOf("6.7.1", V_1_4_0.toString()),
                     arrayOf("6.8.2", V_1_4_32.toString()),
-                    arrayOf("7.0.2", V_1_5_10.toString()),
-                    arrayOf("7.0.2", V_1_5_21.toString()),
-                    arrayOf("7.0.2", V_1_5_31.toString()),
-                    arrayOf("7.0.2", "master")
+                    arrayOf("7.3.3", V_1_5_31.toString()),
+                    arrayOf("7.3.3", V_1_6_10.toString()),
+                    arrayOf("6.8.2", "master"),
                 ).plus(safePushParams)
         }
     }
@@ -115,6 +111,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     )
 
     val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
+
     fun hmppProperties(): Map<String, String> =
         if (isHmppEnabledByDefault) {
             mapOf(
@@ -137,10 +134,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
             putAll(androidProperties())
+            putAll(hmppProperties())
             put("kotlin_plugin_version", kotlinPluginVersionString)
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))
-            putAll(hmppProperties())
         }
 
     protected open fun checkProjectStructure(
@@ -194,35 +191,4 @@ private fun localKotlinGradlePluginExists(): Boolean {
         .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/${MultiplePluginVersionGradleImportingTestCase.masterKotlinPluginVersion}")
 
     return localKotlinGradlePlugin.exists()
-}
-
-/***
- * KTIJ-21316 Some MPP tests are failing with KGP and currently bundled Kotlin IDE Plugin
- * Such tests can be muted until new Kotlin IDE plugin is bundled
- *
- * This util function attempts to run failing test and in case it pass reports an error.
- */
-fun MultiplePluginVersionGradleImportingTestCase.assumeFailsDueToKTIJ21316(code: () -> Unit) {
-    if (kotlinPluginParameter == "master") {
-        try {
-            code()
-        } catch (e: AssertionError) {
-            throw AssumptionViolatedException(
-                """
-                    KTIJ-21316: This test is expected to fail with latest Kotlin Gradle Plugin.
-                    Wait for upgrade of bundled Kotlin IDE Plugin to >=1.6.10
-                """.trimIndent(),
-                e
-            )
-        }
-
-        throw AssertionError(
-            """
-                KTIJ-21316: It seems like bundled Kotlin IDE Plugin was upgraded.
-                And this test is no longer failing. Please REMOVE function `assumeFailsDueToKTIJ21316`!
-            """.trimIndent()
-        )
-    } else {
-        code()
-    }
 }

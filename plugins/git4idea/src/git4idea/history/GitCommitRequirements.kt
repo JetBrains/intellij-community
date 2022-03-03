@@ -1,20 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
-import com.intellij.openapi.util.registry.Registry
-
 data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
-                                 val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GIT_CONFIG,
+                                 val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GitConfig,
                                  val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
 
   fun configParameters(): List<String> {
     val result = mutableListOf<String>()
     when (diffRenameLimit) {
-      DiffRenameLimit.INFINITY -> result.add(renameLimit(0))
-      DiffRenameLimit.REGISTRY -> result.add(renameLimit(Registry.intValue("git.diff.renameLimit")))
-      DiffRenameLimit.NO_RENAMES -> result.add("diff.renames=false")
-      else -> {
-      }
+      DiffRenameLimit.Infinity -> result.add(renameLimit(0))
+      is DiffRenameLimit.Value -> result.add(renameLimit(diffRenameLimit.limit))
+      DiffRenameLimit.NoRenames -> result.add("diff.renames=false")
+      DiffRenameLimit.GitConfig -> {}
     }
 
     if (!includeRootChanges) {
@@ -25,7 +22,7 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
 
   fun commandParameters(): List<String> {
     val result = mutableListOf<String>()
-    if (diffRenameLimit != DiffRenameLimit.NO_RENAMES) {
+    if (diffRenameLimit != DiffRenameLimit.NoRenames) {
       result.add("-M")
     }
     when (diffInMergeCommits) {
@@ -41,23 +38,26 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     return "diff.renameLimit=$limit"
   }
 
-  enum class DiffRenameLimit {
+  sealed class DiffRenameLimit {
     /**
      * Use zero value
      */
-    INFINITY,
+    object Infinity : DiffRenameLimit()
+
     /**
-     * Use value set in registry (usually 1000)
+     * Use specified value
      */
-    REGISTRY,
+    class Value(val limit: Int) : DiffRenameLimit()
+
     /**
      * Use value set in users git.config
      */
-    GIT_CONFIG,
+    object GitConfig : DiffRenameLimit()
+
     /**
      * Disable renames detection
      */
-    NO_RENAMES
+    object NoRenames : DiffRenameLimit()
   }
 
   enum class DiffInMergeCommits {
@@ -65,10 +65,12 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
      * Do not report changes for merge commits
      */
     NO_DIFF,
+
     /**
      * Report combined changes (same as `git log -c`)
      */
     COMBINED_DIFF,
+
     /**
      * Report changes to all of the parents (same as `git log -m`)
      */

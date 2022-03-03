@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.run;
 
 import com.intellij.execution.BeforeRunTaskProvider;
@@ -22,12 +22,12 @@ import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,7 +50,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   @Override
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
-    Set<ArtifactPointer> pointers = new THashSet<>();
+    Set<ArtifactPointer> pointers = new HashSet<>();
     for (Artifact artifact : artifacts) {
       pointers.add(ArtifactPointerManager.getInstance(myProject).createPointer(artifact));
     }

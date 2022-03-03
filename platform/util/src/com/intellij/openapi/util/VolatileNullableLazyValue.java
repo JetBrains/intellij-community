@@ -1,26 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * NOTE: Assumes that values computed by different threads are equal and interchangeable
- * and readers should be ready to get different instances on different invocations of the {@link #getValue()}
- *
- * @author peter
- */
+@ApiStatus.NonExtendable
 public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> {
   private volatile boolean myComputed;
-  @Nullable private volatile T myValue;
+  private volatile @Nullable T myValue;
+
+  /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
+  @Deprecated
+  protected VolatileNullableLazyValue() { }
 
   @Override
-  @Nullable
-  protected abstract T compute();
-
-  @Override
-  @Nullable
-  public T getValue() {
+  @SuppressWarnings("DuplicatedCode")
+  public @Nullable T getValue() {
     boolean computed = myComputed;
     T value = myValue;
     if (!computed) {
@@ -34,22 +30,20 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
     return value;
   }
 
-  public void drop() {
-    myComputed = false;
-    myValue = null;
+  @Override
+  public boolean isComputed() {
+    return myComputed;
   }
 
+  /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
+  @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @NotNull
-  public static <T> VolatileNullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
+  public static @NotNull <T> VolatileNullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {
     return new VolatileNullableLazyValue<T>() {
-
-      @Nullable
       @Override
-      protected T compute() {
+      protected @Nullable T compute() {
         return value.create();
       }
     };
   }
-
 }

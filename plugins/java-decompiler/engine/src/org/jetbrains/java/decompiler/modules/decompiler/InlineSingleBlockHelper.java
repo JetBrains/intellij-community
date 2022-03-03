@@ -145,13 +145,13 @@ public final class InlineSingleBlockHelper {
         break;
       }
 
-      if (parent.type == Statement.TYPE_TRYCATCH ||
-          parent.type == Statement.TYPE_CATCHALL) {
+      if (parent.type == Statement.TYPE_TRY_CATCH ||
+          parent.type == Statement.TYPE_CATCH_ALL) {
         if (parent.getFirst() == from) {
           return false;
         }
       }
-      else if (parent.type == Statement.TYPE_SYNCRONIZED) {
+      else if (parent.type == Statement.TYPE_SYNCHRONIZED) {
         if (parent.getStats().get(1) == from) {
           return false;
         }
@@ -166,7 +166,7 @@ public final class InlineSingleBlockHelper {
   private static boolean noExitLabels(Statement block, Statement sequence) {
 
     for (StatEdge edge : block.getAllSuccessorEdges()) {
-      if (edge.getType() != StatEdge.TYPE_REGULAR && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
+      if (edge.getType() != StatEdge.TYPE_REGULAR && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
         if (!sequence.containsStatementStrict(edge.getDestination())) {
           return false;
         }

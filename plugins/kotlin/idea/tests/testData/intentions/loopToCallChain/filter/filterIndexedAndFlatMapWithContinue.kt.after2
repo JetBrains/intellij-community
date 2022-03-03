@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with '...flatMap{}.filter{}.mapTo(){}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence()...flatMap{}.filter{}.mapTo(){}'"
 // AFTER-WARNING: Parameter 's' is never used, could be renamed to _

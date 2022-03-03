@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -141,7 +142,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       try {
         final PsiMethod constructor = filtered.get(0);
         final LinkedHashSet<PsiField> fields = new LinkedHashSet<>();
-        getFieldsToFix().add(myField);
+        fieldsToFix.add(myField);
         for (SmartPsiElementPointer<PsiField> elementPointer : fieldsToFix) {
           final PsiField field = elementPointer.getElement();
           if (field != null && isAvailable(field) && filterConstructorsIfFieldAlreadyAssigned(new PsiMethod[]{constructor}, field).contains(constructor)) {
@@ -177,10 +178,12 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     GlobalInspectionContextBase.cleanupElements(project, null, cleanupElements);
   }
 
-   @NotNull
+  @NotNull
   private Collection<SmartPsiElementPointer<PsiField>> getFieldsToFix() {
     Map<SmartPsiElementPointer<PsiField>, Boolean> fields = myClass.getUserData(FIELDS);
-    if (fields == null) myClass.putUserData(FIELDS, fields = ContainerUtil.createConcurrentWeakMap());
+    if (fields == null) {
+      fields = ((UserDataHolderEx)myClass).putUserDataIfAbsent(FIELDS, ContainerUtil.createConcurrentWeakMap());
+    }
     final Map<SmartPsiElementPointer<PsiField>, Boolean> finalFields = fields;
     return new AbstractCollection<>() {
       @Override

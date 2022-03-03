@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredText;
 import com.intellij.ui.LayeredIcon;
@@ -128,10 +128,12 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Nullable
   private VirtualFile getVirtualFileForValue() {
-    PsiElement psiElement = extractPsiFromValue();
-    if (psiElement == null) {
-      return null;
+    Object value = getEqualityObject();
+    if (value instanceof SmartPsiElementPointer<?>) {
+      SmartPsiElementPointer<?> pointer = (SmartPsiElementPointer<?>)value;
+      return pointer.getVirtualFile(); // do not retrieve PSI element
     }
+    PsiElement psiElement = extractPsiFromValue();
     return PsiUtilCore.getVirtualFile(psiElement);
   }
 
@@ -250,17 +252,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public boolean contains(@NotNull final VirtualFile file) {
-    final PsiElement psiElement = extractPsiFromValue();
-    if (psiElement == null || !psiElement.isValid()) {
-      return false;
-    }
-
-    final PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile == null) {
-      return false;
-    }
-    final VirtualFile valueFile = containingFile.getVirtualFile();
-    return file.equals(valueFile);
+    return file.equals(getVirtualFileForValue());
   }
 
   @Nullable

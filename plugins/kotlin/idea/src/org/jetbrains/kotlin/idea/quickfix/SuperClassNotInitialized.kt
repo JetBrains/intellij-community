@@ -3,10 +3,13 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -127,7 +130,7 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
                 baseClass.createPrimaryConstructorIfAbsent()
             }
 
-            if (putCaretIntoParenthesis) {
+            if (putCaretIntoParenthesis && newSpecifier.isPhysical) {
                 if (editor != null) {
                     val offset = newSpecifier.valueArgumentList!!.leftParenthesis!!.endOffset
                     editor.moveCaret(offset)
@@ -142,12 +145,11 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
     private class AddParametersFix(
         element: KtSuperTypeEntry,
         classDeclaration: KtClass,
-        parametersToAdd: Collection<KtParameter>,
+        private val parametersToAdd: Collection<KtParameter>, // non-physical parameter, no pointer is necessary
         private val argumentText: String,
         @Nls private val text: String
     ) : KotlinQuickFixAction<KtSuperTypeEntry>(element) {
         private val classDeclarationPointer = classDeclaration.createSmartPointer()
-        private val parametersToAddPointers = parametersToAdd.map { it.createSmartPointer() }
 
         companion object {
             fun create(
@@ -206,7 +208,6 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val element = element ?: return
             val classDeclaration = classDeclarationPointer.element ?: return
-            val parametersToAdd = parametersToAddPointers.map { it.element ?: return }
             val factory = KtPsiFactory(project)
 
             val typeRefsToShorten = ArrayList<KtTypeReference>()
@@ -221,6 +222,18 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
             element.replace(delegatorCall)
 
             ShortenReferences.DEFAULT.process(typeRefsToShorten)
+        }
+
+        override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+            val clazz = classDeclarationPointer.element ?: return null
+            val element = element ?: return null
+            return AddParametersFix(
+                PsiTreeUtil.findSameElementInCopy(element, target),
+                PsiTreeUtil.findSameElementInCopy(clazz, target),
+                parametersToAdd,
+                argumentText,
+                text
+            )
         }
     }
 }

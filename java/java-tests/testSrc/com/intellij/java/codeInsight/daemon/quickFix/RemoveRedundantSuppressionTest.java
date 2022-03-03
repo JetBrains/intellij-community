@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
@@ -13,22 +12,13 @@ import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.siyeh.ig.controlflow.FallthruInSwitchStatementInspection;
 import com.siyeh.ig.inheritance.RefusedBequestInspection;
 import com.siyeh.ig.jdk.AutoBoxingInspection;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     new MyTestInjector(getPsiManager()).injectAll(getTestRootDisposable());
-    enableInspectionTools(new RedundantSuppressInspection() {
-                            @Nls(capitalization = Nls.Capitalization.Sentence)
-                            @NotNull
-                            @Override
-                            public String getDisplayName() {
-                              return InspectionsBundle.message("inspection.redundant.suppression.name");
-                            }
-                          },
+    enableInspectionTools(new RedundantSuppressInspection(),
                           new PossibleHeapPollutionVarargsInspection(),
                           new UncheckedWarningLocalInspection(),
                           new FallthruInSwitchStatementInspection(),

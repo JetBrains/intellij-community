@@ -17,8 +17,3 @@ fun isDev(version: String): Boolean {
 fun isSnapshot(version: String): Boolean {
     return version.contains("SNAPSHOT", ignoreCase = true)
 }
-
-val buildNumber: String by lazy {
-    val versionFile = KotlinArtifacts.instance.kotlincDirectory.toPath().resolve("build.txt")
-    if (versionFile.exists()) versionFile.readText().trim() else "unknown"
-}

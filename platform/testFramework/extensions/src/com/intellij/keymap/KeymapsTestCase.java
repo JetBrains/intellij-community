@@ -45,7 +45,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control B",                "GotoDeclaration", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
     { "control C",                "$Copy", "Terminal.CopySelectedText", "org.jetbrains.r.console.RConsoleView.RInterruptAction"},
     { "control D",                "EditorDuplicate", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop", "org.jetbrains.r.console.RConsoleView.REofAction"},
-    { "control E",                "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox", "Vcs.ShowMessageHistory"},
+    { "control E",                "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
     { "control I",                "ImplementMethods", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
     { "control INSERT",           "$Copy", "Terminal.CopySelectedText"},
     { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
@@ -107,7 +107,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt button1",              "EditorCreateRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
     { "button2",                  "EditorPasteFromX11", "GotoDeclaration", "EditorCreateRectangularSelectionOnMouseDrag"},
     { "ESCAPE",                   "CloseGotItTooltip", "EditorEscape", "FocusEditor", "Terminal.SwitchFocusToEditor"},
-    { "SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter"},
+    { "SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter", "CollapsiblePanel-toggle"},
     { "ctrl L",                   "FindNext", "Terminal.ClearBuffer"},
     { "control alt button1",      "GotoImplementation", "UiInspector"},
     {"alt shift RIGHT",           "Diff.NextChange", "NextEditorTab"},
@@ -428,7 +428,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
     "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
     "ActivateInspectionResultsToolWindow",
-    "GoFmtProjectAction", "GoGenerateFileAction", "GoShareInPlaygroundAction",
     ""
   );
 

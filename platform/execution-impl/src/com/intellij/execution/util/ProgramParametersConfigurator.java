@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -54,18 +55,19 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
-    parameters.getProgramParametersList().addParametersString(parametersString);
-
-    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
-
     Map<String, String> envs = new HashMap<>(configuration.getEnvs());
     EnvironmentUtil.inlineParentOccurrences(envs);
     for (Map.Entry<String, String> each : envs.entrySet()) {
       each.setValue(expandPath(each.getValue(), module, project));
     }
-
     parameters.setEnv(envs);
+
+    parameters.getProgramParametersList().patchMacroWithEnvs(envs);
+
+    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
+    parameters.getProgramParametersList().addParametersString(parametersString);
+
+    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
@@ -147,10 +149,11 @@ public class ProgramParametersConfigurator {
     }
   }
 
+  @SystemIndependent
   public @Nullable String getWorkingDir(@NotNull CommonProgramRunConfigurationParameters configuration,
                                         @NotNull Project project,
                                         @Nullable Module module) {
-    String workingDirectory = configuration.getWorkingDirectory();
+    String workingDirectory = PathUtil.toSystemIndependentName(configuration.getWorkingDirectory());
 
     String projectDirectory = getDefaultWorkingDir(project);
     if (StringUtil.isEmptyOrSpaces(workingDirectory)) {

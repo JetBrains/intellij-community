@@ -1,5 +1,5 @@
 // "Replace with 'newFun(*elements)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @Deprecated("", ReplaceWith("newFun(*elements)"))
 fun oldFun(vararg elements: java.io.File?) {

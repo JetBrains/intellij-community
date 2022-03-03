@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Document;
@@ -6,10 +6,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,23 +20,20 @@ import static com.intellij.openapi.util.NlsContexts.Label;
 public abstract class TemplateContextType {
   public static final ExtensionPointName<TemplateContextType> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
 
-  @NotNull
-  private final String myContextId;
-  @NotNull
-  private final @Label String myPresentableName;
-  private final VolatileNullableLazyValue<TemplateContextType> myBaseContextType;
+  private final @NotNull String myContextId;
+  private final @NotNull @Label String myPresentableName;
+  private final TemplateContextTypeCache myBaseContextType;
 
-  protected TemplateContextType(@NotNull @NonNls String id, @Label @NotNull String presentableName) {
+  protected TemplateContextType(@NotNull String id, @Label @NotNull String presentableName) {
     this(id, presentableName, EverywhereContextType.class);
   }
 
-  protected TemplateContextType(@NotNull @NonNls String id,
+  protected TemplateContextType(@NotNull String id,
                                 @Label @NotNull String presentableName,
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     myContextId = id;
     myPresentableName = presentableName;
-    myBaseContextType =
-      VolatileNullableLazyValue.createValue(() -> baseContextType == null ? null : EP_NAME.findExtension(baseContextType));
+    myBaseContextType = new TemplateContextTypeCache(baseContextType);
   }
 
   /**
@@ -53,7 +48,7 @@ public abstract class TemplateContextType {
    * @return unique ID to be used on configuration files to flag if this context is enabled for particular template
    */
   @NotNull
-  public @NonNls String getContextId() {
+  public String getContextId() {
     return myContextId;
   }
 
@@ -114,5 +109,28 @@ public abstract class TemplateContextType {
    */
   public Document createDocument(CharSequence text, Project project) {
     return EditorFactory.getInstance().createDocument(text);
+  }
+
+  private static class TemplateContextTypeCache {
+    private final @Nullable Class<? extends TemplateContextType> myBaseContextType;
+    private boolean myComputed;
+    private @Nullable TemplateContextType myValue;
+
+    private TemplateContextTypeCache(@Nullable Class<? extends TemplateContextType> baseContextType) {
+      myBaseContextType = baseContextType;
+    }
+
+    private synchronized @Nullable TemplateContextType getValue() {
+      if (!myComputed) {
+        myValue = myBaseContextType == null ? null : EP_NAME.findExtension(myBaseContextType);
+        myComputed = true;
+      }
+      return myValue;
+    }
+
+    private synchronized void drop() {
+      myComputed = false;
+      myValue = null;
+    }
   }
 }

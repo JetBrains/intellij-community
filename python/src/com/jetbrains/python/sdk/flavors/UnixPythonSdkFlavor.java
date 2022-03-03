@@ -8,15 +8,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 
 public final class UnixPythonSdkFlavor extends CPythonSdkFlavor {
+  private final static Pattern PYTHON_3_RE = Pattern.compile("(python-?3\\.(\\d){1,2})|(python-?3)");
+
   private UnixPythonSdkFlavor() {
   }
 
@@ -55,16 +59,8 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor {
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
           final String childName = StringUtil.toLowerCase(child.getName());
-          for (String name : NAMES) {
-            if (childName.startsWith(name) || PYTHON_RE.matcher(childName).matches()) {
-              final String childPath = child.getPath();
-              if (!childName.endsWith("-config") &&
-                  !childName.startsWith("pythonw") &&
-                  !childName.endsWith("m")) {
-                candidates.add(childPath);
-              }
-              break;
-            }
+          if (ArrayUtil.contains(childName, NAMES) || PYTHON_3_RE.matcher(childName).matches()) {
+            candidates.add(child.getPath());
           }
         }
       }

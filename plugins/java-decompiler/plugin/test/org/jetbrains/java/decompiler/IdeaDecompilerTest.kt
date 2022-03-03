@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
@@ -12,6 +12,7 @@ import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -188,20 +189,35 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   private fun getTestFile(name: String): VirtualFile {
     val path = if (FileUtil.isAbsolute(name)) name else "${myFixture.testDataPath}/${name}"
     val fs = if (path.contains(URLUtil.JAR_SEPARATOR)) StandardFileSystems.jar() else StandardFileSystems.local()
-    return fs.refreshAndFindFileByPath(path)!!
+    val file = fs.refreshAndFindFileByPath(path)!!
+    if (file.isDirectory) file.refresh(false, true)
+    return file
   }
 
   private class MyFileVisitor(private val psiManager: PsiManager) : VirtualFileVisitor<Any>() {
+    private val negativeTests = setOf("TestUnsupportedConstantPoolEntry")
+
     override fun visitFile(file: VirtualFile): Boolean {
       if (file.isDirectory) {
         println(file.path)
       }
       else if (file.fileType === JavaClassFileType.INSTANCE && !file.name.contains('$')) {
-        val psiFile = psiManager.findFile(file)!!
+        val psiFile = psiManager.findFile(file)
+        if (psiFile == null) {
+          throw AssertionError("PSI file for ${file.name} not found")
+        }
+        if (psiFile.language != JavaLanguage.INSTANCE) {
+          return true //do not test kotlin decompiler here
+        }
         if (psiFile !is ClsFileImpl) {
-          assertTrue("Psi file for ${file.name} should be an instance of ${ClsFileImpl::javaClass.name}", psiFile is ClsFileImpl)
+          throw AssertionError("PSI file for ${file.name} should be an instance of ${ClsFileImpl::javaClass.name}")
+        }
+
+        if (file.nameWithoutExtension in negativeTests) {
+          assertEquals("corrupted_class_file", psiFile.packageName)
           return true
         }
+
         val decompiled = psiFile.mirror.text
         assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
 

@@ -13,6 +13,7 @@ import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.Language
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -41,7 +42,7 @@ class GrazieInspection : LocalInspectionTool() {
         val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
         if (texts.sumOf { it.length } > 50_000) return // too large text
 
-        for (extracted in texts) {
+        for (extracted in sortByPriority(texts, session.priorityRange)) {
           val runner = CheckerRunner(extracted)
           runner.run(checkers) { problem ->
             runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
@@ -83,6 +84,18 @@ class GrazieInspection : LocalInspectionTool() {
           lang = lang.baseLanguage
         }
         lang != null && lang.id in disabledLanguages
+      }
+    }
+
+    @JvmStatic
+    fun sortByPriority(texts: List<TextContent>, priorityRange: TextRange): List<TextContent> {
+      return texts.sortedBy { text ->
+        val textRangeInFile = text.textRangeToFile(TextRange(0, text.length))
+        when {
+          textRangeInFile.contains(priorityRange) -> 0
+          textRangeInFile.intersects(priorityRange) -> 1
+          else -> 2
+        }
       }
     }
   }

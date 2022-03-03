@@ -16,9 +16,20 @@ interface KotlinCacheService {
         fun getInstance(project: Project): KotlinCacheService = project.getServiceSafe()
     }
 
+    /**
+     * Provides resolution facade for [elements], guaranteeing that the resolution will be seen from the [platform]-perspective.
+     *
+     * This allows to get resolution for common sources in MPP from the perspective of given platform (with expects substituted to actuals,
+     * declarations resolved from platform-specific artifacts, ModuleDescriptors will contain only platform dependencies, etc.)
+     *
+     * It is equivalent to usual [getResolutionFacade]-overloads if platform(s) of module(s) containing [elements] are equal to [platform]
+     *
+     * Doesn't support scripts or any other 'special' files.
+     */
+    fun getResolutionFacadeWithForcedPlatform(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade
+
     fun getResolutionFacade(element: KtElement): ResolutionFacade
     fun getResolutionFacade(elements: List<KtElement>): ResolutionFacade
-    fun getResolutionFacade(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade
     fun getResolutionFacadeByFile(file: PsiFile, platform: TargetPlatform): ResolutionFacade?
 
     fun getSuppressionCache(): KotlinSuppressCache

@@ -11,6 +11,7 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
@@ -180,6 +182,20 @@ public final class TextDiffViewerUtil {
     }
   }
 
+  public static void applyModification(@NotNull Document document1,
+                                       int line1,
+                                       int line2,
+                                       @NotNull Document document2,
+                                       int oLine1,
+                                       int oLine2,
+                                       boolean isLocalChangeRevert) {
+    DiffUtil.applyModification(document1, line1, line2, document2, oLine1, oLine2);
+
+    if (isLocalChangeRevert) {
+      DiffUtil.clearLineModificationFlags(document1, line1, line1 + (oLine2 - oLine1));
+    }
+  }
+
   //
   // Actions
   //
@@ -221,8 +237,13 @@ public final class TextDiffViewerUtil {
     @NotNull
     protected abstract @Nls String getText(@NotNull T option);
 
-    private class MyAction extends AnAction implements DumbAware {
+    private class MyAction extends AnAction implements Toggleable, DumbAware {
       @NotNull private final T myOption;
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        Toggleable.setSelected(e.getPresentation(), getValue() == myOption);
+      }
 
       MyAction(@NotNull T option) {
         super(getText(option));
@@ -292,7 +313,7 @@ public final class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull HighlightPolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.highlight.policy", option, mySettings.getPlace());
+      DiffUsageTriggerCollector.logToggleHighlightPolicy(option, mySettings.getPlace());
       mySettings.setHighlightPolicy(option);
     }
 
@@ -334,7 +355,7 @@ public final class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull IgnorePolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.ignore.policy", option, mySettings.getPlace());
+      DiffUsageTriggerCollector.logToggleIgnorePolicy(option, mySettings.getPlace());
       mySettings.setIgnorePolicy(option);
     }
 

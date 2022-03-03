@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filter{}.maxOrNull()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filter{}.maxOrNull()'"
 // AFTER-WARNING: Variable 'result' is never used

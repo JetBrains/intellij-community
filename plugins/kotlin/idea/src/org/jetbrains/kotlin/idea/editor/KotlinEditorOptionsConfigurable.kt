@@ -1,14 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.editor
 
-import com.intellij.application.options.editor.*
-import com.intellij.openapi.options.BeanConfigurable
-import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.ui.IdeBorderFactory
+import com.intellij.application.options.editor.CheckboxDescriptor
+import com.intellij.openapi.options.ConfigurableBuilder
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinBundle.message
-import javax.swing.JComponent
 
 private val editorOptions = KotlinEditorOptions.getInstance()
 
@@ -49,13 +46,7 @@ internal val kotlinEditorOptionsDescriptors
         cbAutoAddValKeywordToCtorParameters
     ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
-class KotlinEditorOptionsConfigurable : BeanConfigurable<KotlinEditorOptions?>(KotlinEditorOptions.getInstance()),
-                                        UnnamedConfigurable {
-    override fun createComponent(): JComponent {
-        val component = super.createComponent()!!
-        component.border = IdeBorderFactory.createTitledBorder(message(ID))
-        return component
-    }
+class KotlinEditorOptionsConfigurable : ConfigurableBuilder(message(ID)) {
 
     init {
         checkBox(cbConvertPastedJavaToKotlin)

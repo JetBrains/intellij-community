@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -312,7 +311,7 @@ public final class EditorEmbeddedComponentManager {
     }
 
     private void setup() {
-      EditorUtil.disposeWithEditor(myEditor, this);
+      Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
       myEditor.getFoldingModel().addListener(new FoldingListener() {
         @Override
         public void onFoldProcessingEnd() {

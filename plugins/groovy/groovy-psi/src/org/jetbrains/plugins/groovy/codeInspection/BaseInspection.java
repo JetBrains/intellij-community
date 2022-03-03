@@ -26,9 +26,17 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.utils.GrInspectionUIUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
-public abstract class BaseInspection extends LocalInspectionTool {
+import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
+
+public abstract class BaseInspection extends LocalInspectionTool implements FileTypeAwareInspection {
+
+  public @NotNull Set<String> explicitlyEnabledFileTypes = new HashSet<>();
+
   @Nullable
   @InspectionMessage
   protected String buildErrorString(Object... args) {
@@ -37,6 +45,16 @@ public abstract class BaseInspection extends LocalInspectionTool {
 
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return false;
+  }
+
+  @Override
+  public final @Nullable JComponent createOptionsPanel() {
+    JComponent actualPanel = createGroovyOptionsPanel();
+    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, actualPanel);
+  }
+
+  protected @Nullable JComponent createGroovyOptionsPanel() {
+    return null;
   }
 
   @Nullable
@@ -51,7 +69,14 @@ public abstract class BaseInspection extends LocalInspectionTool {
                                         @NotNull LocalInspectionToolSession session) {
     BaseInspectionVisitor visitor = buildVisitor();
     visitor.initialize(this, holder, isOnTheFly);
-    return new GroovyPsiElementVisitor(visitor);
+    return new GroovyPsiElementVisitor(visitor) {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (GrInspectionUIUtil.checkInspectionEnabledByFileType(BaseInspection.this, element)) {
+          super.visitElement(element);
+        }
+      }
+    };
   }
 
   @NotNull
@@ -60,5 +85,11 @@ public abstract class BaseInspection extends LocalInspectionTool {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public static String getProbableBugs() {
     return GroovyBundle.message("inspection.bugs");
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getDisableableFileTypeNamesContainer() {
+    return explicitlyEnabledFileTypes;
   }
 }

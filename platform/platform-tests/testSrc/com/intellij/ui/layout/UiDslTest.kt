@@ -122,11 +122,6 @@ abstract class UiDslTest {
   }
 
   @Test
-  fun `hideable row`() {
-    doTest { hideableRow() }
-  }
-
-  @Test
   fun subRowsIndent() {
     doTest { rowWithIndent() }
   }

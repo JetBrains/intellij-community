@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Key
-import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -40,13 +39,11 @@ import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
 import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.projectModel.ArgsInfo
 import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
@@ -55,7 +52,6 @@ import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
-import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -96,8 +92,8 @@ class KotlinGradleProjectSettingsDataService : AbstractProjectDataService<Projec
                 ?.settings ?: return@mapNotNull null
             if (settings.useProjectSettings) null else settings
         }
-        val languageVersion = allSettings.asSequence().mapNotNullTo(LinkedHashSet()) { it.languageLevel }.singleOrNull()
-        val apiVersion = allSettings.asSequence().mapNotNullTo(LinkedHashSet()) { it.apiLevel }.singleOrNull()
+        val languageVersion = allSettings.mapNotNullTo(LinkedHashSet()) { it.languageLevel }.singleOrNull()
+        val apiVersion = allSettings.mapNotNullTo(LinkedHashSet()) { it.apiLevel }.singleOrNull()
         KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
             if (languageVersion != null) {
                 this.languageVersion = languageVersion.versionString
@@ -207,7 +203,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
     }
 }
 
-fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind<*>? {
+fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val pluginId = moduleNode.kotlinGradleProjectDataOrNull?.platformPluginId
     return IdePlatformKind.ALL_KINDS.firstOrNull { it.tooling.gradlePluginId == pluginId }
 }
@@ -227,7 +223,7 @@ fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind
     }
 }
 
-private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind<*>? {
+private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val detectedPlatforms =
         mavenLibraryIdToPlatform.entries
             .filter { moduleNode.getResolvedVersionByModuleData(KOTLIN_GROUP_ID, listOf(it.key)) != null }
@@ -270,10 +266,8 @@ fun configureFacetByGradleModule(
     val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
         .firstOrNull { it.data.sourceSetName == sourceSetName }
 
-    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion
-    // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
-        ?: KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode)
-        ?: return null
+    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion ?: return null
+
 
     // TODO there should be a way to figure out the correct platform version
     val platform = platformKind?.defaultPlatform
@@ -317,7 +311,7 @@ fun configureFacetByGradleModule(
     return kotlinFacet
 }
 
-private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind<*>?) {
+private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?) {
 
     fun DataNode<KotlinGradleSourceSetData>.compilerArgumentsOrNull(cacheHolder: CompilerArgumentsCacheHolder): CommonCompilerArguments? =
         CachedArgumentsRestoring.restoreExtractedArgs(data.cachedArgsInfo, cacheHolder).currentCompilerArguments

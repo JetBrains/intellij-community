@@ -2,8 +2,10 @@
 package com.intellij.compiler.server;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +43,10 @@ public abstract class BuildProcessParametersProvider {
   }
 
   public @NotNull List<String> getVMArguments() {
+    return Collections.emptyList();
+  }
+
+  public @NotNull List<Pair<String, Path>> getPathParameters() {
     return Collections.emptyList();
   }
 

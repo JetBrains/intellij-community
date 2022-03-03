@@ -5,25 +5,17 @@ curses.COLOR_PAIRS  # Initialized after start_color
 curses.COLS  # Initialized only after initscr call.
 curses.LINES  # Initialized only after initscr call.
 distutils.command.bdist_msi  # msi is only available on windows
-grp.struct_group._asdict  # PyStructSequence
-grp.struct_group._make  # PyStructSequence
-grp.struct_group._replace  # PyStructSequence
 os.EX_NOTFOUND
 os.SF_MNOWAIT
 os.SF_NODISKIO
 os.SF_SYNC
-os.chflags
-os.lchflags
-os.lchmod
 os.plock
 posix.EX_NOTFOUND
+posix.NGROUPS_MAX
 select.EPOLL_RDHUP
 selectors.KqueueSelector
 signal.SIGEMT
 signal.SIGINFO
-spwd.struct_spwd._asdict  # PyStructSequence
-spwd.struct_spwd._make  # PyStructSequence
-spwd.struct_spwd._replace  # PyStructSequence
 
 # ==========
 # Allowlist entries that cannot or should not be fixed
@@ -39,13 +31,30 @@ msvcrt
 winreg
 winsound
 
-# NamedTuple like, but not actually NamedTuples (PyStructSequence)
-posix.[a-z]+_(param|result)._(asdict|make|replace)
+# Aliases for OSError
+posix.error.characters_written
+resource.error.characters_written
 
 # Platform differences that cannot be captured by the type system
 fcntl.[A-Z0-9_]+
 os.SCHED_[A-Z_]+
+posix.SCHED_[A-Z_]+
 
 # Loadable SQLite extensions are disabled on GitHub runners
 (sqlite3(.dbapi2)?.Connection.enable_load_extension)?
 (sqlite3(.dbapi2)?.Connection.load_extension)?
+
+# Exists at runtime, but missing from stubs
+distutils.msvccompiler.MSVCCompiler.get_msvc_paths
+distutils.msvccompiler.MSVCCompiler.set_path_env_var
+distutils.msvccompiler.MacroExpander
+mimetypes.MimeTypes.read_windows_registry
+selectors.DefaultSelector.fileno
+socket.MsgFlag.MSG_CMSG_CLOEXEC
+socket.MsgFlag.MSG_CONFIRM
+socket.MsgFlag.MSG_ERRQUEUE
+socket.MsgFlag.MSG_FASTOPEN
+socket.MsgFlag.MSG_MORE
+socket.MsgFlag.MSG_NOSIGNAL
+spwd.struct_spwd.sp_nam
+spwd.struct_spwd.sp_pwd

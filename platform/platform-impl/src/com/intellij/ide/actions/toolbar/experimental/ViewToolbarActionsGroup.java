@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.toolbar.experimental;
 
 import com.intellij.ide.ui.ToolbarSettings;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
@@ -12,11 +11,7 @@ final class ViewToolbarActionsGroup extends DefaultActionGroup implements DumbAw
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-    var isEnabled = !ToolbarSettings.getInstance().isEnabled();
+    boolean isEnabled = !ToolbarSettings.getInstance().isEnabled();
     e.getPresentation().setEnabledAndVisible(isEnabled);
-    for (AnAction action : getChildren(e)) {
-      action.getTemplatePresentation().setEnabledAndVisible(isEnabled);
-    }
   }
 }

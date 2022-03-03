@@ -76,7 +76,17 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       }
       restoreByUi()
       test {
-        invokeActionViaShortcut("ENTER")
+        Thread.sleep(500) // wait items loading
+        val jList = previous.ui as? JList<*> ?: error("No list")
+        val itemIndex = LessonUtil.findItem(jList) { item ->
+          if (item is PsiNameIdentifierOwner)
+            item.name == requiredClassName
+          else item.isToStringContains(requiredClassName)
+        } ?: error("No item")
+
+        ideFrame {
+          jListFixture(jList).clickItem(itemIndex)
+        }
       }
     }
 

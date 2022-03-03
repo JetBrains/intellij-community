@@ -9,12 +9,6 @@ import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 
 val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
-val KOBALT_SYSTEM_ID = ProjectSystemId("KOBALT")
-
-fun isExternalLibrary(library: Library): Boolean = ExternalSystemApiUtil.isExternalSystemLibrary(library, ProjectSystemId.IDE) ||
-        ExternalSystemApiUtil.isExternalSystemLibrary(library, GRADLE_SYSTEM_ID) ||
-        ExternalSystemApiUtil.isExternalSystemLibrary(library, KOBALT_SYSTEM_ID) ||
-        ExternalSystemApiUtil.isExternalSystemLibrary(library, MAVEN_SYSTEM_ID)
 
 @Deprecated(
     "Moved to the org.jetbrains.kotlin.idea.configuration package.",

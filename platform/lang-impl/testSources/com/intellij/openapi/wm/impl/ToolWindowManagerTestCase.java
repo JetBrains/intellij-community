@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
@@ -17,16 +18,17 @@ public abstract class ToolWindowManagerTestCase extends LightPlatformCodeInsight
   public void setUp() throws Exception {
     super.setUp();
 
-    manager = new ToolWindowManagerImpl(getProject()) {
+    Project project = getProject();
+    manager = new ToolWindowManagerImpl(project) {
       @Override
       protected void fireStateChanged() {
       }
     };
-    ServiceContainerUtil.replaceService(getProject(), ToolWindowManager.class, manager, getTestRootDisposable());
+    ServiceContainerUtil.replaceService(project, ToolWindowManager.class, manager, getTestRootDisposable());
 
     ProjectFrameHelper frame = new ProjectFrameHelper(new IdeFrameImpl(), null);
     frame.init();
-    manager.init(frame);
+    manager.doInit(frame, project.getMessageBus().connect(getTestRootDisposable()));
   }
 
   @Override

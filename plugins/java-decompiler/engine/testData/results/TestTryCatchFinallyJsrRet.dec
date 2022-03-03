@@ -1,0 +1,102 @@
+package pkg;
+
+public class TestTryCatchFinallyJsrRet {
+   public void test1(String var1) {
+      try {
+         System.out.println("sout1");// 36
+      } catch (Exception var10) {
+         try {
+            System.out.println("sout2");// 39
+         } catch (Exception var9) {// 40
+         }
+      } finally {
+         System.out.println("finally");// 46
+      }
+
+   }// 48
+
+   int foo(int var1) throws Exception {
+      if (var1 < 1) {// 51
+         throw new RuntimeException();// 52
+      } else if (var1 < 5) {// 53
+         return var1;// 54
+      } else {
+         throw new Exception();// 57
+      }
+   }
+
+   public int test(String var1) {
+      try {
+         int var2 = Integer.parseInt(var1);// 63
+         return var2;
+      } catch (Exception var7) {// 65
+         System.out.println("Error" + var7);
+      } finally {
+         System.out.println("Finally");// 67
+      }
+
+      return -1;
+   }
+}
+
+class 'pkg/TestTryCatchFinallyJsrRet' {
+   method 'test1 (Ljava/lang/String;)V' {
+      0      5
+      3      5
+      5      5
+      f      8
+      12      8
+      14      8
+      1a      9
+      21      12
+      23      12
+      29      12
+      35      15
+   }
+
+   method 'foo (I)I' {
+      1      18
+      2      18
+      c      19
+      e      20
+      f      20
+      13      21
+      1b      23
+   }
+
+   method 'test (Ljava/lang/String;)I' {
+      1      29
+      4      29
+      a      31
+      b      32
+      15      32
+      1e      32
+      21      32
+      2a      34
+      2b      34
+      30      34
+      37      37
+      3a      30
+   }
+}
+
+Lines mapping:
+36 <-> 6
+39 <-> 9
+40 <-> 10
+46 <-> 13
+48 <-> 16
+51 <-> 19
+52 <-> 20
+53 <-> 21
+54 <-> 22
+57 <-> 24
+63 <-> 30
+65 <-> 32
+67 <-> 35
+Not mapped:
+37
+38
+45
+66
+69

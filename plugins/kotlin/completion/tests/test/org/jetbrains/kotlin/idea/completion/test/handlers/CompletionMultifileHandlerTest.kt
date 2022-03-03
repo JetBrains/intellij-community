@@ -20,7 +20,7 @@ import java.io.File
 @TestRoot("idea/tests")
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("testData/handlers/multifile")
-class CompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
+class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCase() {
     fun testExtensionFunctionImport() = doTest()
     fun testExtensionPropertyImport() = doTest()
     fun testImportAlreadyImportedObject() = doTest()

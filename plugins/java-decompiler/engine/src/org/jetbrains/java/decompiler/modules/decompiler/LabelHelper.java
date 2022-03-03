@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -46,7 +47,7 @@ public final class LabelHelper {
           break;
         case StatEdge.TYPE_BREAK:
           Statement dest = edge.getDestination();
-          if (dest.type != Statement.TYPE_DUMMYEXIT) {
+          if (dest.type != Statement.TYPE_DUMMY_EXIT) {
             Statement parent = dest.getParent();
 
             List<Statement> lst = new ArrayList<>();
@@ -90,9 +91,9 @@ public final class LabelHelper {
     boolean ok = (stat.type != Statement.TYPE_DO);
     if (!ok) {
       DoStatement dostat = (DoStatement)stat;
-      ok = dostat.getLooptype() == DoStatement.LOOP_DO ||
-           dostat.getLooptype() == DoStatement.LOOP_WHILE ||
-           (dostat.getLooptype() == DoStatement.LOOP_FOR && dostat.getIncExprent() == null);
+      ok = dostat.getLoopType() == LoopType.DO ||
+           dostat.getLoopType() == LoopType.WHILE ||
+           (dostat.getLoopType() == LoopType.FOR && dostat.getIncExprent() == null);
     }
 
     if (ok) {
@@ -175,14 +176,14 @@ public final class LabelHelper {
 
 
     switch (stat.type) {
-      case Statement.TYPE_TRYCATCH:
-      case Statement.TYPE_CATCHALL:
+      case Statement.TYPE_TRY_CATCH:
+      case Statement.TYPE_CATCH_ALL:
 
         for (Statement st : stat.getStats()) {
           HashMap<Statement, List<StatEdge>> mapEdges1 = setExplicitEdges(st);
           processEdgesWithNext(st, mapEdges1, null);
 
-          if (stat.type == Statement.TYPE_TRYCATCH || st == stat.getFirst()) { // edges leaving a finally catch block are always explicit
+          if (stat.type == Statement.TYPE_TRY_CATCH || st == stat.getFirst()) { // edges leaving a finally catch block are always explicit
             // merge the maps
             if (mapEdges1 != null) {
               for (Entry<Statement, List<StatEdge>> entr : mapEdges1.entrySet()) {
@@ -274,7 +275,7 @@ public final class LabelHelper {
         }
 
         break;
-      case Statement.TYPE_SYNCRONIZED:
+      case Statement.TYPE_SYNCHRONIZED:
         SynchronizedStatement synstat = (SynchronizedStatement)stat;
 
         processEdgesWithNext(synstat.getFirst(), setExplicitEdges(stat.getFirst()), synstat.getBody()); // FIXME: basic block?
@@ -304,14 +305,14 @@ public final class LabelHelper {
     }
 
     // no next for a do statement
-    if (stat.type == Statement.TYPE_DO && ((DoStatement)stat).getLooptype() == DoStatement.LOOP_DO) {
+    if (stat.type == Statement.TYPE_DO && ((DoStatement)stat).getLoopType() == LoopType.DO) {
       next = null;
     }
 
     if (next == null) {
       if (mapEdges.size() == 1) {
         List<StatEdge> lstEdges = mapEdges.values().iterator().next();
-        if (lstEdges.size() > 1 && mapEdges.keySet().iterator().next().type != Statement.TYPE_DUMMYEXIT) {
+        if (lstEdges.size() > 1 && mapEdges.keySet().iterator().next().type != Statement.TYPE_DUMMY_EXIT) {
           StatEdge edge_example = lstEdges.get(0);
 
           Statement closure = stat.getParent();
@@ -347,7 +348,7 @@ public final class LabelHelper {
       if (stat.getAllSuccessorEdges().isEmpty() && !implfound) {
         List<StatEdge> lstEdges = null;
         for (Entry<Statement, List<StatEdge>> entr : mapEdges.entrySet()) {
-          if (entr.getKey().type != Statement.TYPE_DUMMYEXIT &&
+          if (entr.getKey().type != Statement.TYPE_DUMMY_EXIT &&
               (lstEdges == null || entr.getValue().size() > lstEdges.size())) {
             lstEdges = entr.getValue();
           }
@@ -390,7 +391,7 @@ public final class LabelHelper {
         if (stlast.getExprents() != null && stlast.getExprents().isEmpty()) {
           if (!stlast.getAllSuccessorEdges().get(0).explicit) {
             List<StatEdge> lstEdges = swst.getCaseEdges().get(last);
-            lstEdges.remove(swst.getDefault_edge());
+            lstEdges.remove(swst.getDefaultEdge());
 
             if (lstEdges.isEmpty()) {
               swst.getCaseStatements().remove(last);

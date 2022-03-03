@@ -3,7 +3,7 @@ from typing_extensions import TypedDict
 
 from pygments.token import _TokenType
 
-ansicolors: Set[str]  # not intended to be mutable
+ansicolors: Set[str]  # not intended to be mutable (== typing.AbstractSet, not builtins.set)
 
 class _StyleDict(TypedDict):
     color: str | None

@@ -2,11 +2,10 @@
 package com.intellij.ui.tabs.layout
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
@@ -16,10 +15,9 @@ import javax.swing.SwingConstants.TOP
 
 class TabsLayoutSettingsUi {
   companion object {
-    private val LOG = Logger.getInstance(TabsLayoutSettingsUi::class.java)
 
     internal fun tabsLayoutComboBox(tabPlacementComboBoxModel: DefaultComboBoxModel<Int>): ComboBox<TabsLayoutInfo> {
-      val model = DefaultComboBoxModel<TabsLayoutInfo>(TabsLayoutSettingsHolder.instance.installedInfos.toTypedArray())
+      val model = DefaultComboBoxModel(TabsLayoutSettingsHolder.instance.installedInfos.toTypedArray())
       val comboBox = comboBox(model,
                               SimpleListCellRenderer.create<TabsLayoutInfo> { label, value, _ ->
                                 label.text = value.name
@@ -28,36 +26,36 @@ class TabsLayoutSettingsUi {
         val selectedInfo = getSelectedInfo(comboBox)
         if (selectedInfo == null) {
           tabPlacementComboBoxModel.removeAllElements()
-          tabPlacementComboBoxModel.addElement(TOP);
+          tabPlacementComboBoxModel.addElement(TOP)
           return@addActionListener
         }
 
-        var availableTabsPositions: Array<Int>? = selectedInfo.getAvailableTabsPositions();
+        val availableTabsPositions = selectedInfo.availableTabsPositions
         if (availableTabsPositions == null || availableTabsPositions.isEmpty()) {
           tabPlacementComboBoxModel.removeAllElements()
-          tabPlacementComboBoxModel.addElement(TOP);
+          tabPlacementComboBoxModel.addElement(TOP)
           return@addActionListener
         }
 
         var needToResetSelected = true
         var selectedValue: Int? = null
         if (tabPlacementComboBoxModel.selectedItem is Int) {
-          var prevSelectedValue = tabPlacementComboBoxModel.selectedItem as Int
+          val prevSelectedValue = tabPlacementComboBoxModel.selectedItem as Int
           if (prevSelectedValue in availableTabsPositions) {
-            selectedValue = prevSelectedValue;
-            needToResetSelected = false;
+            selectedValue = prevSelectedValue
+            needToResetSelected = false
           }
         }
 
         if (needToResetSelected) {
-          selectedValue = availableTabsPositions[0];
+          selectedValue = availableTabsPositions[0]
         }
 
-        tabPlacementComboBoxModel.removeAllElements();
+        tabPlacementComboBoxModel.removeAllElements()
         for (value in availableTabsPositions) {
-          tabPlacementComboBoxModel.addElement(value);
+          tabPlacementComboBoxModel.addElement(value)
         }
-        tabPlacementComboBoxModel.selectedItem = selectedValue;
+        tabPlacementComboBoxModel.selectedItem = selectedValue
       }
       return comboBox
     }
@@ -74,7 +72,7 @@ class TabsLayoutSettingsUi {
       return component
     }
 
-    fun prepare(builder: CellBuilder<JComboBox<TabsLayoutInfo>>,
+    fun prepare(builder: Cell<JComboBox<TabsLayoutInfo>>,
                 comboBox: JComboBox<TabsLayoutInfo>) {
 
       builder.onApply {

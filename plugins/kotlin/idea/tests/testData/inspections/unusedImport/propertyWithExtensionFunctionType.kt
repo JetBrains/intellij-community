@@ -7,4 +7,4 @@ fun test() {
     CrExtended().funExtension()
 }
 
-// WITH_RUNTIME
+// WITH_STDLIB

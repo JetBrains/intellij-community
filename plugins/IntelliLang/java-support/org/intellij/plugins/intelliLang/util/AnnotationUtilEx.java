@@ -129,6 +129,7 @@ public final class AnnotationUtilEx {
   public static void visitAnnotatedElements(@Nullable PsiElement element, AnnotatedElementVisitor visitor) {
     if (element == null) return;
     for (PsiElement cur = ContextComputationProcessor.getTopLevelInjectionTarget(element); cur != null; cur = cur.getParent()) {
+      if (cur instanceof PsiMethodCallExpression) break;
       if (!visitAnnotatedElementInner(cur, visitor)) return;
     }
   }

@@ -75,7 +75,7 @@ public class AbstractTreeUi {
 
       return myNodeDescriptorComparator != null
              ? myNodeDescriptorComparator.compare(nodeDescriptor1, nodeDescriptor2)
-             : nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
+             : Integer.compare(nodeDescriptor1.getIndex(), nodeDescriptor2.getIndex());
     }
   };
 

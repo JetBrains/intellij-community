@@ -84,9 +84,11 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
         Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
-    if (!allTargets(dataContext).isEmpty()) {
-      return true;
-    }
+    return canFindUsages(project, dataContext) ||
+           !allTargets(dataContext).isEmpty();
+  }
+
+  private static boolean canFindUsages(@NotNull Project project, @NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return false;

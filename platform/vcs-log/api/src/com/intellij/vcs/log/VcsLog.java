@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,19 +23,25 @@ public interface VcsLog {
   List<CommitId> getSelectedCommits();
 
   /**
-   * Returns metadata of the selected commit which are visible in the table. <br/>
-   * Metadata can be retrieved from index, or loaded from the repository.
-   * Metadata is loaded faster than full details and since it is done while scrolling,
+   * Returns cached metadata of the commits selected in the table.
+   * For commits that are not loaded a placeholder object
+   * (an instance of {@link com.intellij.vcs.log.data.LoadingDetails}) is returned.
+   * <br/>
+   * Metadata are loaded faster than full details and since it is done while scrolling,
    * there is a better chance that details for a commit are loaded when user selects it.
    * This makes this method preferable to {@link #getSelectedDetails()}.
-   * Still, check for LoadingDetails instance has to be done when using details from this list.
+   *
+   * @see com.intellij.vcs.log.data.LoadingDetails
    */
   @NotNull
   List<VcsCommitMetadata> getSelectedShortDetails();
 
   /**
-   * Returns details of the selected commits.
-   * For commits that are not loaded an instance of LoadingDetails is returned.
+   * Returns cached details of the selected commits.
+   * For commits that are not loaded a placeholder object
+   * (an instance of {@link com.intellij.vcs.log.data.LoadingDetails}) is returned.
+   *
+   * @see com.intellij.vcs.log.data.LoadingDetails
    */
   @NotNull
   List<VcsFullCommitDetails> getSelectedDetails();
@@ -47,7 +53,7 @@ public interface VcsLog {
    *
    * @param consumer called in EDT after all details are loaded.
    */
-  void requestSelectedDetails(@NotNull Consumer<? super List<VcsFullCommitDetails>> consumer);
+  void requestSelectedDetails(@NotNull Consumer<? super List<? extends VcsFullCommitDetails>> consumer);
 
   /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable yet.

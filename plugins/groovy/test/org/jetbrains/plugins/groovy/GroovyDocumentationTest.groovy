@@ -157,7 +157,7 @@ new Gr<caret>oovyDocTest<Integer>()""", """\
 class GroovyDocTest<T> { }
 
 new Gr<caret>oovyDocTest<Integer>()""", """\
-<div class='definition'><pre><span style="color:#000043;font-weight:bold;">class</span> <span style="color:#000000;">GroovyDocTest</span><span style="">&lt;</span><span style="color:#20999d;">T</span><span style="">&gt;</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'>&lt;<span style="color:#20999d;">T</span>&gt; &ndash;  kej</td></table>\
+<div class='definition'><pre><span style="color:#000043;font-weight:bold;">class</span> <span style="color:#000000;">GroovyDocTest</span><span style="">&lt;</span><span style="color:#20999d;">T</span><span style="">&gt;</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'><code>&lt;<span style="color:#20999d;">T</span>&gt;</code> &ndash;  kej</td></table>\
 """
   }
 

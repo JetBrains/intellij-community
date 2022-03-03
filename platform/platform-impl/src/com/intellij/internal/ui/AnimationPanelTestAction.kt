@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.fields.ExpandableTextField
@@ -20,7 +21,7 @@ import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.hover.HoverStateListener
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.animation.*
 import com.intellij.util.animation.components.BezierPainter
 import com.intellij.util.ui.EmptyIcon
@@ -28,20 +29,19 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.*
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.Point2D
+import java.awt.geom.Rectangle2D
 import java.lang.Math.PI
 import java.text.NumberFormat
 import java.util.function.Consumer
-import javax.swing.Action
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.SwingConstants
+import javax.swing.*
 import javax.swing.border.CompoundBorder
 import kotlin.math.absoluteValue
 import kotlin.math.pow
-import kotlin.math.roundToInt
 
 @Suppress("HardCodedStringLiteral")
 class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
@@ -74,6 +74,17 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
       addToCenter(OpaquePanel(VerticalLayout(15, SwingConstants.CENTER)).also {
         it.add(showDemoBtn, VerticalLayout.CENTER)
         it.add(showTestPageLnk, VerticalLayout.CENTER)
+
+        val buttonsPanel = JPanel(FlowLayout()).apply {
+          add(JButton("Guess the value").apply {
+            addActionListener {
+              this@DemoPanel.removeAll()
+              loadStage4()
+              this@DemoPanel.revalidate()
+            }
+          })
+        }
+        it.add(buttonsPanel, VerticalLayout.BOTTOM)
       })
 
       val icons = arrayOf(AllIcons.Process.Step_1, AllIcons.Process.Step_2, AllIcons.Process.Step_3,
@@ -90,6 +101,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
 
       iconAnimator.animate(animation(icons, showDemoBtn::setIcon).apply {
         duration = iconAnimator.period * icons.size
+        easing = Easing.LINEAR
       })
 
       val fadeOutElements = listOf(
@@ -118,19 +130,19 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
       )
 
       showDemoBtn.addActionListener {
-        animate {
+        JBAnimator().animate(
           fadeOutElements + animation().runWhenExpired {
             loadStage2()
           }
-        }
+        )
       }
 
       showTestPageLnk.addActionListener {
-        animate {
+        JBAnimator().animate(
           fadeOutElements + animation().runWhenExpired {
             loadTestPage()
           }
-        }
+        )
       }
 
       UpdateColorsOnHover(showDemoBtn)
@@ -185,10 +197,10 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         0.34, 1.56, 0.64, 1
       """.trimIndent()
 
-      animate {
+      JBAnimator().apply {
         type = JBAnimator.Type.EACH_FRAME
 
-        makeSequent(
+        animate(makeSequent(
           animation(scroller.preferredSize, size, scroller::setPreferredSize).apply {
             duration = 500
             delay = 500
@@ -228,8 +240,63 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
               })
             }
           }
-        )
+        ))
       }
+    }
+
+    private fun loadStage4() {
+      val fields = listOf(
+        JBLabel().apply { font = font.deriveFont(24f) },
+        JBLabel(UIUtil.ComponentStyle.LARGE),
+        JBLabel(UIUtil.ComponentStyle.REGULAR),
+        JBLabel(UIUtil.ComponentStyle.SMALL),
+        JBLabel(UIUtil.ComponentStyle.MINI),
+        JBLabel(UIUtil.ComponentStyle.MINI),
+        JBLabel(UIUtil.ComponentStyle.MINI),
+      )
+      val wheel = JPanel(GridLayout(fields.size, 1, 0, 10))
+      fields.onEach {
+        it.horizontalAlignment = SwingConstants.CENTER
+        wheel.add(it)
+      }
+      fun updateColor(color: RColors) {
+        val colors = RColors.values()
+        fields.forEachIndexed { index, label ->
+          label.text = colors[(color.ordinal + index) % colors.size].toString()
+        }
+      }
+      updateColor(RColors.RED)
+      addToCenter(wheel)
+
+      addToBottom(JButton("Start").apply {
+        addActionListener(object : ActionListener {
+          val animator = JBAnimator(JBAnimator.Thread.POOLED_THREAD, disposable)
+          val context = AnimationContext<RColors>()
+          var taskId = -1L
+          override fun actionPerformed(e: ActionEvent?) {
+            if (!animator.isRunning(taskId)) {
+              text = "Stop"
+              animator.apply {
+                isCyclic = true
+                type = JBAnimator.Type.EACH_FRAME
+                taskId = animate(
+                  Animation.withContext(context, DoubleArrayFunction(RColors.values())).apply {
+                    val oneElementTimeOnScreen = 30
+                    easing = Easing.LINEAR
+                    duration = RColors.values().size * oneElementTimeOnScreen
+                    runWhenUpdated {
+                      context.value?.let(::updateColor)
+                    }
+                  }
+                )
+              }
+            } else {
+              text = "The ${context.value} wins! Try again!"
+              animator.stop()
+            }
+          }
+        })
+      })
     }
 
     private fun loadTestPage() = hideAllComponentsAndRun {
@@ -245,13 +312,18 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
       val animations = listOf(
         animation(custom::value::set),
         animation(linear::value::set),
-        animation().runWhenUpdated {
-          content.repaint()
-        }
+        animation { content.repaint() }
       )
-      val fillers = JBAnimator(disposable)
+      val fillers = JBAnimator(JBAnimator.Thread.POOLED_THREAD, disposable)
+      var taskId = -1L
 
-      addToLeft(AnimationSettings { options ->
+      addToLeft(AnimationSettings { options, button ->
+        if (fillers.isRunning(taskId)) {
+          fillers.stop()
+          button.icon = AllIcons.Actions.Execute
+          button.text = "Start Animation"
+          return@AnimationSettings
+        }
         fillers.period = options.period
         fillers.isCyclic = options.cyclic
         fillers.type = options.type
@@ -274,7 +346,16 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
             animation.easing = animation.easing.mirror()
           }
         }
-        fillers.animate(animations)
+        taskId = fillers.animate(animations + animation().apply {
+          delay = animations.first().finish
+          duration = 0
+          runWhenExpiredOrCancelled {
+            button.icon = AllIcons.Actions.Execute
+            button.text = "Start Animation"
+          }
+        })
+        button.icon = AllIcons.Actions.Suspend
+        button.text = "Stop Animation"
       })
 
       revalidate()
@@ -311,7 +392,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         it.duration = 800
       }
 
-      animate { remover }
+      JBAnimator().animate(remover)
     }
 
     private fun createScrollPaneWithAnimatedActions(textArea: JBTextArea): JBScrollPane {
@@ -345,7 +426,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
 
   class Options {
     var period: Int = 10
-    var duration: Int = 1000
+    var duration: Int = 500
     var delay: Int = 0
     var cyclic: Boolean = false
     var reverse: Boolean = false
@@ -356,50 +437,50 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     var type: JBAnimator.Type = JBAnimator.Type.IN_TIME
   }
 
-  private class AnimationSettings(val onStart: (Options) -> Unit) : BorderLayoutPanel() {
+  private class AnimationSettings(val onStart: (Options, customize: JButton) -> Unit) : BorderLayoutPanel() {
 
     private val options = Options()
 
     init {
       val panel = panel {
         row("Duration:") {
-          spinner(options::duration, 0, 5000, 50)
+          spinner(0..60000, 50).bindIntValue(options::duration)
         }
         row("Period:") {
-          spinner(options::period, 5, 1000, 5)
+          spinner(5..1000, 5).bindIntValue(options::period)
         }
         row("Delay:") {
-          spinner(options::delay, 0, 5000, 100)
+          spinner(0..10000, 100).bindIntValue(options::delay)
         }
         row {
-          checkBox("Cyclic", options::cyclic)
+          checkBox("Cyclic").bindSelected(options::cyclic)
         }
         row {
-          checkBox("Reverse", options::reverse)
+          checkBox("Reverse").bindSelected(options::reverse)
         }
         row {
-          checkBox("Inverse", options::inverse)
+          checkBox("Inverse").bindSelected(options::inverse)
         }
         row {
-          checkBox("Mirror", options::mirror)
+          checkBox("Mirror").bindSelected(options::mirror)
         }
         row("Coerce (%)") {
-          spinner(options::coerceMin, 0, 100, 5)
-          spinner(options::coerceMax, 0, 100, 5)
+          spinner(0..100, 5).bindIntValue(options::coerceMin)
+          spinner(0..100, 5).bindIntValue(options::coerceMax)
         }
         row {
-          comboBox(EnumComboBoxModel(JBAnimator.Type::class.java), options::type, listCellRenderer { value, _, _ ->
-            text = value.toString().split("_").joinToString(" ") {
+          comboBox(JBAnimator.Type.values().toList(), SimpleListCellRenderer.create { label, value, _ ->
+            label.text = value.toString().split("_").joinToString(" ") {
               it.toLowerCase().capitalize()
             }
-          })
+          }).bindItem(options::type)
         }
       }
       addToCenter(panel)
-      addToBottom(JButton("Start Animation").apply {
+      addToBottom(JButton("Start Animation", AllIcons.Actions.Execute).apply {
         addActionListener {
           panel.apply()
-          onStart(options)
+          onStart(options, this@apply)
         }
       })
     }
@@ -423,14 +504,18 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         y += insets.top
       }
 
-      val fillHeight = (bounds.height * value).roundToInt()
-      val fillY = bounds.y + bounds.height - fillHeight.coerceAtLeast(0)
+      val fillHeight = bounds.height * value
+      val fillY = bounds.y + bounds.height - fillHeight.coerceAtLeast(0.0)
+      val rectangle = Rectangle2D.Double(bounds.x.toDouble(), fillY, bounds.width.toDouble(), fillHeight.absoluteValue)
       g2d.color = background
-      g2d.fillRect(bounds.x, fillY, bounds.width, fillHeight.absoluteValue)
+      g2d.fill(rectangle)
 
       g2d.color = UIUtil.getPanelBackground()
-      g2d.stroke = BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, floatArrayOf(3f), 0f)
+      g2d.stroke = BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, floatArrayOf(3f), 0f)
       g2d.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y)
+      g2d.drawLine(bounds.x, bounds.y + bounds.height / 4, bounds.x + bounds.width, bounds.y + bounds.height / 4)
+      g2d.drawLine(bounds.x, bounds.y + bounds.height / 2, bounds.x + bounds.width, bounds.y + bounds.height / 2)
+      g2d.drawLine(bounds.x, bounds.y + bounds.height * 3 / 4, bounds.x + bounds.width, bounds.y + bounds.height * 3 / 4)
       g2d.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height)
 
       val textX = bounds.width
@@ -471,12 +556,12 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
             }
           }
           catch (ignore: NumberFormatException) {
-            animate {
-              listOf(animation(UIUtil.getErrorForeground(), UIUtil.getTextFieldForeground(), display::setForeground).apply {
+            JBAnimator().animate(
+              animation(UIUtil.getErrorForeground(), UIUtil.getTextFieldForeground(), display::setForeground).apply {
                 duration = 800
                 easing = Easing { x -> x * x * x }
-              })
-            }
+              }
+            )
           }
         })
     }
@@ -603,5 +688,15 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     }
 
     override fun hoverChanged(component: Component, hovered: Boolean) = helper.setVisible(hovered)
+  }
+
+  private enum class RColors {
+    RED,
+    ORANGE,
+    YELLOW,
+    GREEN,
+    BLUE,
+    INDIGO,
+    VIOLET,
   }
 }

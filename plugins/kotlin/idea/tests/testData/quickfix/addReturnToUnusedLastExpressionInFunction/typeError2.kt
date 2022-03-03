@@ -1,5 +1,5 @@
 // "Add 'return' before the expression" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Compiler warning 'UNUSED_EXPRESSION' options
 // ACTION: Create local variable 'FunctionReference'
 // ACTION: Create object 'FunctionReference'

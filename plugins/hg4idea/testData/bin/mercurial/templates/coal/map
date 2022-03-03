@@ -1,0 +1,2 @@
+__base__ = ../paper/map
+header = header.tmpl

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 class Receiver(val x: Int = 0)
 class Argument(val y: Int = 1)
 

@@ -1,7 +1,7 @@
 // FILE: first.before.kt
 // "Add '@OptIn(Ann::class)' annotation to 'test'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: This declaration is experimental and its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'
 import `fun`.optin.C
 
@@ -22,7 +22,7 @@ class C
 // FILE: first.after.kt
 // "Add '@OptIn(Ann::class)' annotation to 'test'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: This declaration is experimental and its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'
 import `fun`.optin.Ann
 import `fun`.optin.C

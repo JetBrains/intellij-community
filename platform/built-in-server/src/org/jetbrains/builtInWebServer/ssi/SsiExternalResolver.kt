@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer.ssi
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.size
 import io.netty.handler.codec.http.HttpRequest
+import org.jetbrains.builtInWebServer.RootProvider
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -42,7 +46,20 @@ internal class SsiExternalResolver(private val project: Project,
     return value ?: request.headers().get(name)
   }
 
-  fun findFile(originalPath: String, virtual: Boolean): Path? {
+  fun findFileInProject(originalPath: String, virtual: Boolean): Path? {
+    val path = findFile(originalPath, virtual)
+    val underProjectRoot = runReadAction { ModuleManager.getInstance(project).modules }
+      .filter { !it.isDisposed }
+      .any { module ->
+        RootProvider.values().asSequence()
+          .flatMap { rootProvider -> rootProvider.getRoots(module.rootManager).asSequence() }
+          .any { root -> FileUtil.isAncestor(root.path, path.toString(), false) }
+      }
+
+    return if (underProjectRoot) path else null
+  }
+
+  private fun findFile(originalPath: String, virtual: Boolean): Path? {
     var path = FileUtil.toCanonicalPath(originalPath, '/')
     if (!virtual) {
       return parentFile.resolve(path)
@@ -59,12 +76,12 @@ internal class SsiExternalResolver(private val project: Project,
   }
 
   fun getFileLastModified(path: String, virtual: Boolean): Long {
-    val file = findFile(path, virtual)
+    val file = findFileInProject(path, virtual)
     return if (file == null || !file.exists()) 0 else file.lastModified().toMillis()
   }
 
   fun getFileSize(path: String, virtual: Boolean): Long {
-    val file = findFile(path, virtual)
+    val file = findFileInProject(path, virtual)
     return if (file == null || !file.exists()) -1 else file.size()
   }
 }

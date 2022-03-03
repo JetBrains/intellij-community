@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.JBComponent;
@@ -341,7 +342,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.addHyperlinkListener(createHyperlinkListener());
         ComponentUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
-        myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+        myEditorPane.setEditorKit(HTMLEditorKitBuilder.simple());
         updateEditorPaneStyle();
 
         if (myEditorPane.getCaret() instanceof DefaultCaret) {

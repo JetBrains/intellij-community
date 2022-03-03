@@ -15,10 +15,11 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
-import com.intellij.vcs.log.ui.table.column.VcsLogExternalStatusColumn
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import com.intellij.vcs.log.ui.table.column.isVisible
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.flow.*
 import javax.swing.JScrollPane
 import javax.swing.JTable
@@ -30,7 +31,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
 
   private val providers = mutableMapOf<GraphTableModel, CachingVcsCommitsDataLoader<T>>()
 
-  fun initialize(table: VcsLogGraphTable, column: VcsLogExternalStatusColumn<T>) {
+  fun initialize(table: VcsLogGraphTable, column: VcsLogCustomColumn<T>) {
     if (table.model in providers) return
 
     val loader = getDataLoader(table.logData.project)
@@ -59,7 +60,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
 
     @OptIn(FlowPreview::class)
     private fun <T : VcsCommitExternalStatus> loadDataForVisibleRows(table: VcsLogGraphTable,
-                                                                     column: VcsLogExternalStatusColumn<T>,
+                                                                     column: VcsLogCustomColumn<T>,
                                                                      dataProvider: VcsCommitsDataLoader<T>) {
 
       // `later()` is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
@@ -105,7 +106,9 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
 
     private fun JTable.modelChangedFlow(): Flow<Unit> =
       callbackFlow {
-        val emit = { offer(Unit) }
+        val emit: () -> Unit = {
+          trySend(Unit).onClosed { throw IllegalStateException(it) }
+        }
         val listener = TableModelListener {
           if (it.column == TableModelEvent.ALL_COLUMNS) emit()
         }
@@ -130,7 +133,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
       val scrollPane = viewport.parent as? JScrollPane ?: return emptyFlow()
 
       val flow = callbackFlow {
-        val emit = { offer(getVisibleRows()) }
+        val emit: () -> Unit = { trySend(getVisibleRows()).onClosed { throw IllegalStateException(it) } }
         val listener = ChangeListener { emit() }
 
         emit() // initial value

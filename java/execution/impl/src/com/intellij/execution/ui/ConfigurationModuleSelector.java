@@ -55,7 +55,23 @@ public class ConfigurationModuleSelector {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ConfigurationModuleSelector(@NotNull Project project, final JComboBox<? extends Module> modulesList) {
-    this(project, modulesList, JavaPsiBundle.message("list.item.no.module"));
+    String noModule = JavaPsiBundle.message("list.item.no.module");
+    myProject = project;
+    myModulesList = modulesList;
+    myModulesDescriptionsComboBox = null;
+    new ComboboxSpeedSearch(modulesList){
+      @Override
+      protected String getElementText(Object element) {
+        if (element instanceof Module){
+          return ((Module)element).getName();
+        } else if (element == null) {
+          return noModule;
+        }
+        return super.getElementText(element);
+      }
+    };
+    myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
+    myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
   }
 
   public ConfigurationModuleSelector(@NotNull Project project, ModulesComboBox modulesComboBox) {
@@ -84,30 +100,6 @@ public class ConfigurationModuleSelector {
     myModulesList = modulesComboBox;
     myModulesDescriptionsComboBox = null;
     modulesComboBox.allowEmptySelection(noModule);
-  }
-
-  /**
-   * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox, String)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ConfigurationModuleSelector(@NotNull Project project, final JComboBox<? extends Module> modulesList, final @NlsContexts.ListItem String noModule) {
-    myProject = project;
-    myModulesList = modulesList;
-    myModulesDescriptionsComboBox = null;
-    new ComboboxSpeedSearch(modulesList){
-      @Override
-      protected String getElementText(Object element) {
-        if (element instanceof Module){
-          return ((Module)element).getName();
-        } else if (element == null) {
-          return noModule;
-        }
-        return super.getElementText(element);
-      }
-    };
-    myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
-    myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
   }
 
   public void applyTo(final ModuleBasedConfiguration configurationModule) {

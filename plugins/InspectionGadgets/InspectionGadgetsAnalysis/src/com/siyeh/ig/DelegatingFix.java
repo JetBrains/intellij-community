@@ -2,14 +2,12 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -58,8 +56,8 @@ public class DelegatingFix extends InspectionGadgetsFix implements Iconable, Pri
   }
 
   @Override
-  public boolean applyFixForPreview(@NotNull Project project,
-                                    @NotNull ProblemDescriptor previewDescriptor) {
-    return delegate.applyFixForPreview(project, previewDescriptor);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull ProblemDescriptor previewDescriptor) {
+    return delegate.generatePreview(project, previewDescriptor);
   }
 }

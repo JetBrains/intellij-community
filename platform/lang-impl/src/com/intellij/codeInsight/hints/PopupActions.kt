@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -43,13 +42,13 @@ class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
   }
 
   override fun update(e: AnActionEvent) {
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+    val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     
     val offset = editor.caretModel.offset
     val info = getHintInfoFromProvider(offset, file, editor)
     if (info is MethodInfo) {
-      e.presentation.setText(CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()), false)
+      e.presentation.setText(info.getDisableHintText(), false)
     }
     else {
       e.presentation.isVisible = false
@@ -72,8 +71,8 @@ class ShowParameterHintsSettings : AnAction(), UpdateInBackground {
 }
 
 fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String?) {
-  val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-  val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+  val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
+  val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
   val fileLanguage = file.language
   InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
@@ -268,7 +267,7 @@ class ToggleInlineHintsAction : AnAction(), UpdateInBackground {
       return
     }
 
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
     val isHintsShownNow = isParameterHintsEnabledForLanguage(file.language)
     e.presentation.text = if (isHintsShownNow)
       CodeInsightBundle.message("inlay.hints.disable.action.text")
@@ -278,7 +277,7 @@ class ToggleInlineHintsAction : AnAction(), UpdateInBackground {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
     val language = file.language
     val before = isParameterHintsEnabledForLanguage(language)
     setShowParameterHintsForLanguage(!before, language)
@@ -292,8 +291,14 @@ private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boole
   if (editor is EditorWindow || editor is ImaginaryEditor) return false
   
   val offset = editor.caretModel.offset
-  val element = file.findElementAt(offset)
-  
+  val elementToRight = file.findElementAt(offset)
+  if (hasHints(elementToRight, offset, editor)) return true
+  return offset > 0 && hasHints(file.findElementAt(offset - 1), offset, editor)
+}
+
+private fun hasHints(element: PsiElement?,
+                     offset: Int,
+                     editor: Editor): Boolean {
   val startOffset = element?.textRange?.startOffset ?: offset
   val endOffset = element?.textRange?.endOffset ?: offset
   
@@ -316,16 +321,25 @@ private fun refreshAllOpenEditors() {
 
 
 private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor): HintInfo? {
-  val element = file.findElementAt(offset) ?: return null
+  val element = file.findElementAt(offset)
+  val infoForElementToRight = getInfoForElement(file, element, editor)
+  if (infoForElementToRight != null) return infoForElementToRight
+  if (offset == 0) return null
+  return getInfoForElement(file, file.findElementAt(offset - 1), editor)
+}
+
+private fun getInfoForElement(file: PsiFile,
+                              element: PsiElement?,
+                              editor: Editor): HintInfo? {
   val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
 
-  val method = PsiTreeUtil.findFirstParent(element) { it is PsiFile
-                                                      // hint owned by element
-                                                      || (provider.getHintInfo(it, file)?.isOwnedByPsiElement(it, editor) ?: false)}
+  val method = PsiTreeUtil.findFirstParent(element) {
+    it is PsiFile
+    // hint owned by element
+    || (provider.getHintInfo(it, file)?.isOwnedByPsiElement(it, editor) ?: false)
+  }
   if (method == null || method is PsiFile) return null
   return provider.getHintInfo(method, file)
 }
 
 fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
-
-private fun String.capitalizeFirstLetter() = StringUtil.capitalize(this)

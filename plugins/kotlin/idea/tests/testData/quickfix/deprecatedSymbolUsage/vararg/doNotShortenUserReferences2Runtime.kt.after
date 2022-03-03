@@ -1,5 +1,5 @@
 // "Replace with 'newFun(*c)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @Deprecated("", ReplaceWith("newFun(*c)"))
 fun oldFun(vararg c: Char){}

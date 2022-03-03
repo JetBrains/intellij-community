@@ -100,6 +100,13 @@ public interface TypeConstraint {
   }
 
   /**
+   * @return true if this type constraint represents a known singleton type (an object that has exactly one instance)
+   */
+  default boolean isSingleton() {
+    return false;
+  }
+
+  /**
    * @param className fully-qualified class name to check
    * @return true if all types that satisfy this constraint are subtypes of a given class name
    */

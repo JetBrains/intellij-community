@@ -47,7 +47,6 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class LocalFileSystemTest extends BareTestFixtureTestCase {
@@ -570,7 +569,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileCaseChange() throws IOException {
-    assumeFalse("Case-insensitive FS expected", SystemInfo.isFileSystemCaseSensitive);
+    assumeCaseInsensitiveFS();
 
     File file = tempDir.newFile("file.txt");
 

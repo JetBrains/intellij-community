@@ -14,10 +14,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.caches.project.getAllProjectSdks
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.core.script.scriptingWarnLog
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
-import java.io.File
+import java.nio.file.Path
 
 class ScriptSdksBuilder(
     val project: Project,
@@ -53,13 +53,17 @@ class ScriptSdksBuilder(
         sdks.putAll(other.sdks)
     }
 
+    fun addAll(other: ScriptSdks) {
+        sdks.putAll(other.sdks)
+    }
+
     // add sdk by home path with checking for removed sdk
     fun addSdk(sdkId: SdkId): Sdk? {
         val canonicalPath = sdkId.homeDirectory ?: return addDefaultSdk()
-        return addSdk(File(canonicalPath))
+        return addSdk(Path.of(canonicalPath))
     }
 
-    fun addSdk(javaHome: File?): Sdk? {
+    fun addSdk(javaHome: Path?): Sdk? {
         if (javaHome == null) return addDefaultSdk()
 
         return sdks.getOrPut(SdkId(javaHome)) {
@@ -67,10 +71,10 @@ class ScriptSdksBuilder(
         }
     }
 
-    private fun getScriptSdkByJavaHome(javaHome: File): Sdk? {
+    private fun getScriptSdkByJavaHome(javaHome: Path): Sdk? {
         // workaround for mismatched gradle wrapper and plugin version
         val javaHomeVF = try {
-            VfsUtil.findFileByIoFile(javaHome, true)
+            VfsUtil.findFile(javaHome, true)
         } catch (e: Throwable) {
             null
         } ?: return null

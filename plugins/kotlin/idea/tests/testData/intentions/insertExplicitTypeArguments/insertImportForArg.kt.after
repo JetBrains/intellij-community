@@ -6,4 +6,4 @@ fun foo(c: kotlin.collections.AbstractIterator<kotlin.properties.ObservablePrope
 
 fun <T> bar(t: T): T = t
 
-// WITH_RUNTIME
+// WITH_STDLIB

@@ -435,6 +435,7 @@ public final class MavenServerManager implements Disposable {
     }
   }
 
+  @NotNull
   public MavenEmbedderWrapper createEmbedder(final Project project,
                                              final boolean alwaysOnline,
                                              @Nullable String workingDirectory,

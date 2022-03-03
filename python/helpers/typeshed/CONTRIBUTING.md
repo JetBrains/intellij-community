@@ -24,20 +24,77 @@ it takes a bit longer. For more details, read below.
 
 ## Preparing the environment
 
-To reformat the code, check for common problems, and
-run the tests, you need to prepare a
-[virtual environment](https://docs.python.org/3/tutorial/venv.html)
-with the necessary libraries installed. To do this, run:
+### Code away!
+
+Typeshed runs continuous integration (CI) on all pull requests. This will
+automatically fix formatting (using `black`, `isort`) and run tests.
+It means you can ignore all local setup on your side, focus on the
+code and rely on the CI to fix everything, or point you to the places that
+need fixing.
+
+### ... Or create a local development environment
+
+If you prefer to run the tests & formatting locally, it's
+possible too. Follow platform-specific instructions below.
+
+Whichever platform you're using, you will need a
+virtual environment. If you're not familiar with what it is and how it works,
+please refer to this
+[documentation](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
+
+### Linux/Mac OS
+
+On Linux and Mac OS, you will be able to run the full test suite on Python 3.8
+or 3.9. Running the tests on <=3.7 is not supported, and the pytype tests
+[cannot currently be run on Python 3.10](https://github.com/google/pytype/issues/1022).
+
+To install the necessary requirements, run the following commands from a
+terminal window:
 
 ```
 $ python3 -m venv .venv3
 $ source .venv3/bin/activate
 (.venv3)$ pip install -U pip
-(.venv3)$ pip install -r requirements-tests-py3.txt
+(.venv3)$ pip install -r requirements-tests.txt
 ```
 
-To automatically check your code before committing, copy the file
-`pre-commit` to `.git/hooks/pre-commit`.
+### Windows
+
+If you are using a Windows operating system, you will not be able to run the
+full test suite. One option is to install
+[Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/faq),
+which will allow you to run the full suite of tests. If you choose to install
+WSL, follow the Linux/Mac OS instructions above.
+
+If you do not wish to install WSL, you will not be able to run the pytype
+tests, as pytype
+[does not currently support running on Windows](https://github.com/google/pytype#requirements).
+However, the upside of this is that you will be able to run all
+Windows-compatible tests on Python 3.9, 3.8 or 3.10, as it is only the pytype
+tests that cannot currently be run on 3.10.
+
+To install all non-pytype requirements on Windows without WSL, run the
+following commands from a Windows terminal:
+
+```
+> python3 -m venv .venv3
+> ".venv3/Scripts/activate"
+(.venv3) > python -m pip install -U pip
+(.venv3) > python -m pip install -r requirements-tests.txt
+```
+
+## Code formatting
+
+The code is formatted by `black` and `isort`.
+
+The repository is equipped with a [`pre-commit.ci`](https://pre-commit.ci/)
+configuration file. This means that you don't *need* to do anything yourself to
+run the code formatters. When you push a commit, a bot will run those for you
+right away and add a commit to your PR. Neat, no?
+
+That being said, if you *want* to run the checks locally when you commit, you
+can install the hooks: please refer to the [pre-commit](https://pre-commit.com/)
+documentation.
 
 ## Where to make changes
 
@@ -187,10 +244,13 @@ instead in typeshed stubs. This currently affects:
 - `Literal` (new in Python 3.8)
 - `SupportsIndex` (new in Python 3.8)
 - `TypedDict` (new in Python 3.8)
+- `Concatenate` (new in Python 3.10)
+- `ParamSpec` (new in Python 3.10)
 - `TypeGuard` (new in Python 3.10)
 
-An exception is `Protocol`: although it was added in Python 3.8, it
-can be used in stubs regardless of Python version.
+Two exceptions are `Protocol` and `runtime_checkable`: although
+these were added in Python 3.8, they can be used in stubs regardless
+of Python version.
 
 ### What to include
 
@@ -304,7 +364,7 @@ class date:
     @classmethod
     def today(cls: Type[_S]) -> _S: ...
     @classmethod
-    def fromordinal(cls: Type[_S], n: int) -> _S: ...
+    def fromordinal(cls: Type[_S], __n: int) -> _S: ...
     @property
     def year(self) -> int: ...
     def replace(self, year: int = ..., month: int = ..., day: int = ...) -> date: ...
@@ -354,7 +414,9 @@ Some further tips for good type hints:
 * in Python 2, whenever possible, use `unicode` if that's the only
   possible type, and `Text` if it can be either `unicode` or `bytes`;
 * use platform checks like `if sys.platform == 'win32'` to denote
-  platform-dependent APIs.
+  platform-dependent APIs;
+* use mypy error codes for mypy-specific `# type: ignore` annotations,
+  e.g. `# type: ignore[override]` for Liskov Substitution Principle violations.
 
 Imports in stubs are considered private (not part of the exported API)
 unless:

@@ -27,7 +27,7 @@ public class PatchCreationTest extends PatchTestCase {
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
     Map<String, Long> checkSums = digest(patch, myOlderDir);
-    assertThat(checkSums.size()).isEqualTo(11);
+    assertThat(checkSums).hasSize(11);
   }
 
   @Test

@@ -14,7 +14,7 @@ class ConvertStringTemplateToBuildStringIntention : SelfTargetingIntention<KtStr
     KotlinBundle.lazyMessage("convert.string.template.to.build.string"),
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression, caretOffset: Int): Boolean {
-        return !element.text.startsWith("\"\"\"")
+        return !element.text.startsWith("\"\"\"") && !element.mustBeConstant()
     }
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {

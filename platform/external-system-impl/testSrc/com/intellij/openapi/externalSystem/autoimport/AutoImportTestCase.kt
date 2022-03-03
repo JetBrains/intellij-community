@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.core.CoreBundle
@@ -16,9 +16,9 @@ import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCo
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
-import com.intellij.openapi.externalSystem.test.TestExternalSystemManager
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -47,7 +47,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()
 
   protected lateinit var testDisposable: Disposable
-  private val notificationAware get() = ProjectNotificationAware.getInstance(myProject)
+  private val notificationAware get() =  AutoImportProjectNotificationAware.getInstance(myProject)
   private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject).also { it.enableAutoImportInTests() }
   private val projectTrackerSettings get() = AutoImportProjectTrackerSettings.getInstance(myProject)
 

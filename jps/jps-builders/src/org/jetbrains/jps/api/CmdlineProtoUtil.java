@@ -45,9 +45,13 @@ public final class CmdlineProtoUtil {
 
   public static List<TargetTypeBuildScope> createAllModulesScopes(final boolean forceBuild) {
     return Arrays.asList(
-      createAllTargetsScope(JavaModuleBuildTargetType.PRODUCTION, forceBuild),
+      createAllModulesProductionScope(forceBuild),
       createAllTargetsScope(JavaModuleBuildTargetType.TEST, forceBuild)
     );
+  }
+
+  public static TargetTypeBuildScope createAllModulesProductionScope(final boolean forceBuild) {
+    return createAllTargetsScope(JavaModuleBuildTargetType.PRODUCTION, forceBuild);
   }
 
   public static TargetTypeBuildScope createAllTargetsScope(BuildTargetType<?> type, boolean forceBuild) {

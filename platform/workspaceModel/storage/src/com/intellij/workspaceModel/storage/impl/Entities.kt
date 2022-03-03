@@ -5,7 +5,9 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -66,9 +68,9 @@ import kotlin.reflect.full.memberProperties
  *
  *       override fun persistentId(): NameId = NameId(name)
  *
-*        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
-*            addMetaData(it, snapshot)
-*        }
+ *        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
+ *            addMetaData(it, snapshot)
+ *        }
  *   }
  *   ```
  *
@@ -131,7 +133,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
     return EntityReferenceImpl(this.id)
   }
 
-  override fun toString(): String = "$id"
+  override fun toString(): String = id.asString()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -151,7 +153,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
 abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
 
   internal lateinit var original: WorkspaceEntityData<T>
-  internal lateinit var diff: WorkspaceEntityStorageBuilderImpl
+  lateinit var diff: WorkspaceEntityStorageBuilder
 
   internal val modifiable = ThreadLocal.withInitial { false }
 
@@ -165,7 +167,57 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
     }
   }
 
-  internal fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
+  open fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
+
+  open fun applyToBuilder(builder: WorkspaceEntityStorageBuilder, entitySource: EntitySource) {
+    throw NotImplementedError()
+  }
+
+  open fun getEntityData(): WorkspaceEntityData<T> {
+    throw NotImplementedError()
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun addToBuilder() {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    builder.putEntity(getEntityData())
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun applyRef(connectionId: ConnectionId, child: WorkspaceEntityData<*>?, children: List<WorkspaceEntityData<*>>?) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneChildOfParent(connectionId, id, child!!.createEntityId().asChild())
+      ConnectionId.ConnectionType.ONE_TO_MANY -> builder.updateOneToManyChildrenOfParent(connectionId, id, children!!.map { it.createEntityId().asChild() }.asSequence())
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyChildrenOfParent(connectionId, id.asParent(), children!!.map { it.createEntityId().asChild() }.asSequence())
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneChildOfParent(connectionId, id.asParent(), child!!.createEntityId().asChild())
+    }
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    builder.getMutableVirtualFileUrlIndex().index(entity, propertyName, virtualFileUrl)
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).index((entity as WorkspaceEntityBase).id,
+                                                                                                propertyName, virtualFileUrls)
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun indexJarDirectories(entity: WorkspaceEntity, virtualFileUrls: Set<VirtualFileUrl>) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).indexJarDirectories(
+      (entity as WorkspaceEntityBase).id, virtualFileUrls)
+  }
 }
 
 interface SoftLinkable {

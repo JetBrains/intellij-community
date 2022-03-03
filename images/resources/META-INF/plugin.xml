@@ -1,20 +1,19 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin implementation-detail="true" package="org.intellij.images">
   <vendor>JetBrains</vendor>
   <name>Images</name>
   <id>com.intellij.platform.images</id>
   <description>Adds support for image file type preview, SVG file type contents language</description>
-
-  <content>
-    <module name="intellij.platform.images/copyright"/>
-  </content>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter" dynamic="true"/>
   </extensionPoints>
 
   <resource-bundle>messages.ImagesBundle</resource-bundle>
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.xml</depends>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
@@ -67,7 +66,7 @@
       <group id="Images.ImageViewActions">
         <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
                 id="Images.ToggleTransparencyChessboard"
-                icon="ImagesIcons.ToggleTransparencyChessboard">
+                icon="org.intellij.images.ImagesIcons.ToggleTransparencyChessboard">
         </action>
         <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
                 id="Images.SetBackgroundImage">

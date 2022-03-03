@@ -14,7 +14,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinLightClassInheritorTest : KotlinLightCodeInsightFixtureTestCase() {
+class KotlinLightClassInheritorTest11 : KotlinLightCodeInsightFixtureTestCase() {
     fun testAnnotation() {
         doTestInheritorByText("annotation class A", "java.lang.annotation.Annotation", false)
     }

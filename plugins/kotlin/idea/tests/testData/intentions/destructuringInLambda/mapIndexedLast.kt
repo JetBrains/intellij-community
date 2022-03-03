@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 data class Package(val name: String, val version: String, val source: String, val id: String)
 

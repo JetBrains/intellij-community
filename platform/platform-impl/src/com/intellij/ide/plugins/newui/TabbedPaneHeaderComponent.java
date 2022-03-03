@@ -179,6 +179,10 @@ public class TabbedPaneHeaderComponent extends JPanel {
     }
   }
 
+  public void setTabTooltip(int index, @Nullable @Nls String tooltip) {
+    myTabbedPane.setToolTipTextAt(index, tooltip);
+  }
+
   public int getSelectionTab() {
     return myTabbedPane.getSelectedIndex();
   }

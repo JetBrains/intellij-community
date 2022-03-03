@@ -9,33 +9,30 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Consumer
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     companion object {
-        private val RETURN_AND_THROW = TokenSet.create(KtTokens.RETURN_KEYWORD, KtTokens.THROW_KEYWORD)
-
         private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-            if (target !is LeafPsiElement || target.elementType !in RETURN_AND_THROW) {
-                return null
-            }
-
-            val returnOrThrow = PsiTreeUtil.getParentOfType<KtExpression>(
-                target,
-                KtReturnExpression::class.java,
-                KtThrowExpression::class.java
-            ) ?: return null
-
+            val returnOrThrow = when (val parent = target.parent) {
+                is KtReturnExpression, is KtThrowExpression -> parent
+                is KtLabelReferenceExpression ->
+                    PsiTreeUtil.getParentOfType(
+                        target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
+                    )?.takeUnless { it is KtFunction }
+                else -> null
+            } as? KtExpression ?: return null
             return OnExitUsagesHandler(editor, file, returnOrThrow)
         }
 
@@ -77,6 +74,16 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                     target.getRelevantDeclaration()
                 }
 
+            if (target is KtReturnExpression || target is KtThrowExpression) {
+                when (relevantFunction) {
+                    is KtNamedFunction -> (relevantFunction.nameIdentifier ?: relevantFunction.funKeyword)?.let { addOccurrence(it) }
+                    is KtFunctionLiteral -> relevantFunction.getStrictParentOfType<KtLambdaArgument>()
+                        ?.getStrictParentOfType<KtCallExpression>()
+                        ?.calleeExpression
+                        ?.let { addOccurrence(it) }
+                }
+            }
+
             relevantFunction?.accept(object : KtVisitorVoid() {
                 override fun visitKtElement(element: KtElement) {
                     ProgressIndicatorProvider.checkCanceled()
@@ -100,8 +107,8 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                         return false
                     }
 
-                    val bindingContext = expression.analyze(BodyResolveMode.FULL)
-                    if (!expression.isUsedAsResultOfLambda(bindingContext)) {
+                    val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL)
+                    if (bindingContext == BindingContext.EMPTY || !expression.isUsedAsResultOfLambda(bindingContext)) {
                         return false
                     }
 
@@ -135,9 +142,8 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
 
 private fun KtExpression.getRelevantDeclaration(): KtDeclarationWithBody? {
     if (this is KtReturnExpression) {
-        (this.getTargetLabel()?.mainReference?.resolve() as? KtFunction)?.let {
-            return it
-        }
+        val targetFunction = getTargetFunction(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) as? KtDeclarationWithBody
+        if (targetFunction != null) return targetFunction
     }
 
     if (this is KtThrowExpression || this is KtReturnExpression) {
@@ -148,7 +154,7 @@ private fun KtExpression.getRelevantDeclaration(): KtDeclarationWithBody? {
                 }
 
                 if (InlineUtil.canBeInlineArgument(parent) &&
-                    !InlineUtil.isInlinedArgument(parent as KtFunction, parent.analyze(BodyResolveMode.FULL), false)
+                    !InlineUtil.isInlinedArgument(parent as KtFunction, parent.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL), false)
                 ) {
                     return parent
                 }

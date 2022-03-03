@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(list: List<Int>): List<Int> {
     return if (!list.isEmpty<caret>()) {
         list

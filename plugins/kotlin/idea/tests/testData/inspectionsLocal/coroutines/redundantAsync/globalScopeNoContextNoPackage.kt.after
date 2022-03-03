@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

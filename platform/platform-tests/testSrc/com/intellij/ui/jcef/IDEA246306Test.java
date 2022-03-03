@@ -22,15 +22,12 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
  * @author tav
  */
 public class IDEA246306Test {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
   }
 
   @After

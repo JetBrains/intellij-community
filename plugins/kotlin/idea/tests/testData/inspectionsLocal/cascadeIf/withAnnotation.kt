@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(a: Any) {
     <caret>if (a == "") {
         println(a)

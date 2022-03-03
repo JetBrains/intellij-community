@@ -16,10 +16,12 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiArrayAccessExpression
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UArrayAccessExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
+@ApiStatus.Internal
 class JavaUArrayAccessExpression(
   override val sourcePsi: PsiArrayAccessExpression,
   givenParent: UElement?

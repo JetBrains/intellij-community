@@ -3,7 +3,7 @@
 
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder.Companion.settingsScript
 import java.util.function.Consumer
 

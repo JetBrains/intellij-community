@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -24,7 +24,7 @@ class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
             val platform = function.containingKtFile.module?.platform ?: return null
             if (platform.isCommon() || !platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
 
-            return Info(AllIcons.RunConfigurations.TestState.Run, null, *ExecutorAction.getActions(0))
+            return Info(AllIcons.RunConfigurations.TestState.Run, null, *ExecutorAction.getActions(Int.MAX_VALUE))
         }
 
         return null

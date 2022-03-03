@@ -20,10 +20,10 @@ class MavenRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val confi
       row(message("maven.target.configurable.home.path.label")) {
         val cellBuilder: CellBuilder<*>
         if (targetType is BrowsableTargetEnvironmentType) {
-          cellBuilder = TargetUIUtil.textFieldWithBrowseButton(this, targetType, targetSupplier,
-                                                               project,
-                                                               message("maven.target.configurable.home.path.title"),
-                                                               config::homePath.toBinding())
+          cellBuilder = textFieldWithBrowseTargetButton(this, targetType, targetSupplier,
+                                                        project,
+                                                        message("maven.target.configurable.home.path.title"),
+                                                        config::homePath.toBinding())
         }
         else {
           cellBuilder = textField(config::homePath)

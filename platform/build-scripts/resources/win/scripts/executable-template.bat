@@ -20,17 +20,9 @@ IF NOT "%@@product_uc@@_JDK%" == "" (
   IF EXIST "%@@product_uc@@_JDK%" SET "JRE=%@@product_uc@@_JDK%"
 )
 
-SET BITS=64
-SET "_USER_JRE64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk"
-SET BITS=
-SET "_USER_JRE_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk"
-IF "%JRE%" == "" (
-  SET _JRE_CANDIDATE=
-  IF EXIST "%_USER_JRE64_FILE%" (
-    SET /P _JRE_CANDIDATE=<"%_USER_JRE64_FILE%"
-  ) ELSE IF EXIST "%_USER_JRE_FILE%" (
-    SET /P _JRE_CANDIDATE=<"%_USER_JRE_FILE%"
-  )
+SET _JRE_CANDIDATE=
+IF "%JRE%" == "" IF EXIST "%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk" (
+  SET /P _JRE_CANDIDATE=<"%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk"
 )
 IF "%JRE%" == "" (
   IF NOT "%_JRE_CANDIDATE%" == "" IF EXIST "%_JRE_CANDIDATE%" SET "JRE=%_JRE_CANDIDATE%"
@@ -60,7 +52,6 @@ IF NOT EXIST "%JAVA_EXE%" (
 :: ---------------------------------------------------------------------
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
-SET BITS=64
 SET VM_OPTIONS_FILE=
 SET USER_VM_OPTIONS_FILE=
 IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" (
@@ -93,20 +84,19 @@ IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
 )
 IF NOT "%VM_OPTIONS_FILE%" == "" (
   IF "%USER_GC%" == "" (
-    FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+    FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL SET ACC=%%ACC%% "%%i"
   ) ELSE (
-    FOR /F "eol=# usebackq delims=" %%i IN (`FINDSTR /R /V /C:"-XX:\+Use.*GC" "%VM_OPTIONS_FILE%"`) DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+    FOR /F "eol=# usebackq delims=" %%i IN (`FINDSTR /R /V /C:"-XX:\+Use.*GC" "%VM_OPTIONS_FILE%"`) DO CALL SET ACC=%%ACC%% "%%i"
   )
 )
 IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
-  FOR /F "eol=# usebackq delims=" %%i IN ("%USER_VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+  FOR /F "eol=# usebackq delims=" %%i IN ("%USER_VM_OPTIONS_FILE%") DO CALL SET ACC=%%ACC%% "%%i"
 )
 IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
   ECHO ERROR: cannot find a VM options file
 )
 
 @@class_path@@
-IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET "CLASS_PATH=%CLASS_PATH%;%@@product_uc@@_CLASS_PATH%"
 
 :: ---------------------------------------------------------------------
 :: Run the IDE.

@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
 import org.jetbrains.kotlin.idea.hierarchy.calls.CalleeReferenceProcessor
 import org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallHierarchyNodeDescriptor
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
@@ -100,8 +101,11 @@ class KotlinMethodNode(
                 }
             }
         }
-        val query = myMethod.getRepresentativeLightMethod()?.let { MethodReferencesSearch.search(it, it.useScope, true) }
-            ?: ReferencesSearch.search(myMethod, myMethod.useScope)
+
+        val query = myMethod.getRepresentativeLightMethod()
+            ?.let { MethodReferencesSearch.search(it, it.useScope(), true) }
+            ?: ReferencesSearch.search(myMethod, myMethod.useScope())
+
         query.forEach { processor.process(it) }
         return callers.toList()
     }

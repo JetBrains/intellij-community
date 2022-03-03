@@ -6,4 +6,4 @@ import java.io.File
 val File.<caret>name: String
     get() = getName()
 
-// WITH_RUNTIME
+// WITH_STDLIB

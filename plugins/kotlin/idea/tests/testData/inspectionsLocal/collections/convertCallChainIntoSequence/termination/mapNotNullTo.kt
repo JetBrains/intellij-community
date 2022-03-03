@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test(list: List<Int>) {
     val mapNotNullTo: MutableList<Int> = list.<caret>filter { it > 1 }.mapNotNullTo(mutableListOf()) { it }

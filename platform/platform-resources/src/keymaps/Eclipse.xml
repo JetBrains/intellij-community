@@ -151,6 +151,7 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control F12"/>
   </action>
+  <action id="FindPrevWordAtCaret"/>
   <action id="Forward">
     <keyboard-shortcut first-keystroke="alt RIGHT"/>
     <mouse-shortcut keystroke="button5"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.google.common.collect.Maps;
@@ -20,6 +20,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitSharedSettings;
@@ -137,7 +138,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }
 
     Notification notification = STANDARD_NOTIFICATION.createNotification(message.toString(), NotificationType.INFORMATION);
-    notification.setDisplayId("git.branch.deleted");
+    notification.setDisplayId(GitNotificationIdsHolder.BRANCH_DELETED);
     notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> {
       notification.expire();
       restoreInBackground(notification);

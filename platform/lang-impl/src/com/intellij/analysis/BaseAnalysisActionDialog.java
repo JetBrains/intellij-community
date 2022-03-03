@@ -12,21 +12,17 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -99,6 +95,8 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     init();
     setTitle(title);
+    setResizable(false);
+    setOKButtonText(getOKButtonText());
   }
 
   @Override
@@ -111,22 +109,16 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myAnalyzeInjectedCode.setVisible(false);
 
     ArrayList<JRadioButton> buttons = new ArrayList<>();
-    JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource, myAnalyzeInjectedCode, buttons, myDisposable);
+    JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource,
+                                                          myAnalyzeInjectedCode, buttons, myDisposable,
+                                                          getAdditionalActionSettings(myProject));
     buttons.forEach(b -> myGroup.add(b));
 
     preselectButton();
-
-    BorderLayoutPanel wholePanel = new BorderLayoutPanel();
-    Border border = SystemInfoRt.isMac && UIUtil.isUnderIntelliJLaF() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty();
-    wholePanel.setBorder(border);
-    wholePanel.addToTop(panel);
-    final JComponent additionalPanel = getAdditionalActionSettings(myProject);
-    if (additionalPanel != null) {
-      wholePanel.addToCenter(additionalPanel);
-    }
     new RadioUpDownListener(buttons.toArray(new JRadioButton[0]));
 
-    return wholePanel;
+    panel.setPreferredSize(panel.getMinimumSize());
+    return panel;
   }
 
   public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
@@ -263,5 +255,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project) {
     return null;
+  }
+
+  @NotNull
+  public @Nls String getOKButtonText() {
+    return CodeInsightBundle.message("action.analyze.verb");
   }
 }

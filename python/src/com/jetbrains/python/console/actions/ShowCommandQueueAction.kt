@@ -27,10 +27,6 @@ class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
     fun isCommandQueueIcon(icon: Icon): Boolean = icon == emptyQueueIcon || icon == notEmptyQueueIcon
   }
 
-  override fun isSelected(e: AnActionEvent): Boolean {
-    return consoleView.isShowQueue
-  }
-
   override fun update(e: AnActionEvent) {
     super.update(e)
     val communication = consoleView.file.getCopyableUserData(CONSOLE_COMMUNICATION_KEY)
@@ -41,6 +37,10 @@ class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
         e.presentation.icon = notEmptyQueueIcon
       }
     }
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return consoleView.isShowQueue
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

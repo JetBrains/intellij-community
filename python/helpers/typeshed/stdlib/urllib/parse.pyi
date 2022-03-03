@@ -116,10 +116,10 @@ def urldefrag(url: bytes | None) -> DefragResultBytes: ...
 def urlencode(
     query: Mapping[Any, Any] | Mapping[Any, Sequence[Any]] | Sequence[tuple[Any, Any]] | Sequence[tuple[Any, Sequence[Any]]],
     doseq: bool = ...,
-    safe: AnyStr = ...,
+    safe: _Str = ...,
     encoding: str = ...,
     errors: str = ...,
-    quote_via: Callable[[str, AnyStr, str, str], str] = ...,
+    quote_via: Callable[[AnyStr, _Str, str, str], str] = ...,
 ) -> str: ...
 def urljoin(base: AnyStr, url: AnyStr | None, allow_fragments: bool = ...) -> AnyStr: ...
 @overload

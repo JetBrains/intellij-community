@@ -1,5 +1,5 @@
 // FIX: "Replace with '!!' operator"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(p: Array<String?>) {
     val v = p[0]!!<caret>

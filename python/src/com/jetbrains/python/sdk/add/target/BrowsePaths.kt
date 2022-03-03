@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.add.target
 import com.intellij.execution.target.BrowsableTargetEnvironmentType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.getTargetType
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -13,9 +13,10 @@ import java.util.function.Supplier
 
 fun TextFieldWithBrowseButton.addBrowseFolderListener(@NlsContexts.DialogTitle title: String,
                                                       project: Project?,
-                                                      configuration: TargetEnvironmentConfiguration?) {
+                                                      configuration: TargetEnvironmentConfiguration?,
+                                                      fileChooserDescriptor: FileChooserDescriptor) {
   if (configuration == null) {
-    addBrowseFolderListener(title, null, project, FileChooserDescriptorFactory.createSingleFolderDescriptor())
+    addBrowseFolderListener(title, null, project, fileChooserDescriptor)
   }
   else {
     val targetType = configuration.getTargetType()

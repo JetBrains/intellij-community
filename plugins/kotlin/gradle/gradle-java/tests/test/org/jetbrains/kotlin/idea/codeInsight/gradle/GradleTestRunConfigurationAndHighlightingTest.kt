@@ -16,13 +16,20 @@ import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
 import java.io.File
 
-class GradleTestRunConfigurationAndHighlightingTest : KotlinGradleImportingTestCase() {
-    @Test fun testExpectClassWithTests() = doTest()
-    @Test fun preferredConfigurations() = doTest()
-    @Test fun multiplatformTestsInObject() = doTest()
-    @Test fun testMultiProjectBuild() = doTest()
+class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
+    @Test
+    fun testExpectClassWithTests() = doTest()
 
-    private fun doTest() {
+    @Test
+    fun preferredConfigurations() = doTest()
+
+    @Test
+    fun multiplatformTestsInObject() = doTest()
+
+    @Test
+    fun testMultiProjectBuild() = doTest()
+
+    protected fun doTest() {
         val files = importProjectFromTestData()
         val project = myTestFixture.project
 

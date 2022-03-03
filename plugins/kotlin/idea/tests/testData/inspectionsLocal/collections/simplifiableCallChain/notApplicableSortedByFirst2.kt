@@ -1,6 +1,6 @@
 // PROBLEM: none
 // API_VERSION: 1.3
-// WITH_RUNTIME
+// WITH_STDLIB
 data class Foo(val x: Int?)
 
 fun main() {

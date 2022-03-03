@@ -77,6 +77,38 @@ class L {
         set(v) { topLevel2(v) }
 }
 
+interface I {
+    //FunctionBreakpoint!
+    fun f1()
+    //FunctionBreakpoint!
+    fun f2()
+    //FunctionBreakpoint!
+    fun f3()
+}
+
+abstract class M {
+    //FunctionBreakpoint!
+    abstract fun f4()
+}
+
+class Impl : M(), I {
+    override fun f1() {
+        return
+    }
+
+    override fun f2() {
+        return
+    }
+
+    override fun f3() {
+        return
+    }
+
+    override fun f4() {
+        return
+    }
+}
+
 fun main() {
     A()
     B()
@@ -102,4 +134,10 @@ fun main() {
     l.a
     l.b
     l.b = 2
+
+    val impl = Impl()
+    impl.f1()
+    impl.f2()
+    impl.f3()
+    impl.f4()
 }

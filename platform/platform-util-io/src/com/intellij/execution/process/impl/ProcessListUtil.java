@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -22,7 +22,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -390,7 +393,7 @@ public final class ProcessListUtil {
     try {
       return PathManager.findBinFileWithException(WIN_PROCESS_LIST_HELPER_FILENAME);
     }
-    catch (FileNotFoundException e) {
+    catch (RuntimeException e) {
       LOG.error(e);
       return null;
     }

@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public interface FileNavigator {
@@ -10,10 +9,15 @@ public interface FileNavigator {
     return ApplicationManager.getApplication().getService(FileNavigator.class);
   }
 
-  default boolean canNavigate(@NotNull VirtualFile file) {
-    return file.isValid();
+  default boolean canNavigate(@NotNull OpenFileDescriptor descriptor) {
+    return descriptor.getFile().isValid();
+  }
+
+  default boolean canNavigateToSource(@NotNull OpenFileDescriptor descriptor) {
+    return descriptor.getFile().isValid();
   }
 
   void navigate(@NotNull OpenFileDescriptor descriptor, boolean requestFocus);
+
   boolean navigateInEditor(@NotNull OpenFileDescriptor descriptor, boolean requestFocus);
 }

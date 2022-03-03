@@ -10,11 +10,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -216,7 +219,11 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         final LightweightHint hint = myPanel.getHint();
         if (hint != null) {
           myPanel.getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
-            hint.setSize(myPanel.getPreferredSize());
+            Dimension size = myPanel.getPreferredSize();
+            if (ExperimentalUI.isNewUI()) {
+              JBInsets.addTo(size, JBUI.CurrentTheme.StatusBar.Breadcrumbs.floatingBorderInsets());
+            }
+            hint.setSize(size);
             hint.setLocation(relativePoint);
             if (after != null) {
               after.run();

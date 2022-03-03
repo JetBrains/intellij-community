@@ -32,9 +32,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-action-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.1.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.1.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/0.1.1/find-action-model-0.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/0.1.2/find-action-model-0.1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

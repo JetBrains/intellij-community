@@ -65,11 +65,13 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     return group;
   }
 
-  public static List<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
+  @NotNull
+  public static List<@NotNull HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
     return getSeverities(severityRegistrar, true);
   }
 
-  public static List<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
+  @NotNull
+  public static List<@NotNull HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
     final List<HighlightSeverity> severities = new ArrayList<>();
     for (final SeverityRegistrar.SeverityBasedTextAttributes type : SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar)) {
       severities.add(type.getSeverity());
@@ -80,9 +82,9 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     return severities;
   }
 
-  protected abstract void onChosen(final HighlightSeverity severity);
+  protected abstract void onChosen(@NotNull HighlightSeverity severity);
 
-  public void setChosen(final HighlightSeverity severity) {
+  public void setChosen(@NotNull HighlightSeverity severity) {
     myChosen = severity;
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setText(SingleInspectionProfilePanel.renderSeverity(severity));
@@ -90,13 +92,15 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
   }
 
   private final class HighlightSeverityAction extends DumbAwareAction {
+    @NotNull
     private final HighlightSeverity mySeverity;
 
-    public HighlightSeverity getSeverity() {
+    @NotNull
+    HighlightSeverity getSeverity() {
       return mySeverity;
     }
 
-    private HighlightSeverityAction(final HighlightSeverity severity) {
+    private HighlightSeverityAction(@NotNull HighlightSeverity severity) {
       mySeverity = severity;
       final Presentation presentation = getTemplatePresentation();
       presentation.setText(SingleInspectionProfilePanel.renderSeverity(severity));

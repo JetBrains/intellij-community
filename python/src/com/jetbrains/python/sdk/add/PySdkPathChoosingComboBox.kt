@@ -33,8 +33,8 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.ui.ManualPathEntryDialog
 import java.awt.event.ActionListener
 import java.util.function.Supplier
@@ -79,7 +79,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
             val virtualFile = it.firstOrNull() ?: return@chooseFiles
             val path = PathUtil.toSystemDependentName(virtualFile.path)
             selectedSdk =
-              items.find { it.homePath == path } ?: PyDetectedSdk(path).apply {
+              items.find { it.homePath == path } ?: createDetectedSdk(path, isLocal = true).apply {
                 addSdkItemOnTop(this)
               }
           }
@@ -101,7 +101,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
           ActionListener {
             val dialog = ManualPathEntryDialog(project = null, platform = Platform.UNIX)
             if (dialog.showAndGet()) {
-              childComponent.selectedItem = PyDetectedSdk(dialog.path).apply { addSdkItemOnTop(this) }
+              childComponent.selectedItem = createDetectedSdk(dialog.path, isLocal = false).apply { addSdkItemOnTop(this) }
             }
           }
         }
@@ -152,10 +152,12 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
   companion object {
     private val PY_SDK_COMBOBOX_TEXT_ACCESSOR = object : TextComponentAccessor<JComboBox<PySdkComboBoxItem>> {
       override fun getText(component: JComboBox<PySdkComboBoxItem>): String =
-        (component.selectedItem as? PySdkComboBoxItem)?.getText().orEmpty()
+        (component.selectedItem as? ExistingPySdkComboBoxItem)?.getText().orEmpty()
 
       override fun setText(component: JComboBox<PySdkComboBoxItem>, text: String) {
-        component.addItem(ExistingPySdkComboBoxItem(PyDetectedSdk(text)))
+        val newItem = ExistingPySdkComboBoxItem(createDetectedSdk(text, isLocal = false))
+        component.addItem(newItem)
+        component.selectedItem = newItem
       }
     }
 

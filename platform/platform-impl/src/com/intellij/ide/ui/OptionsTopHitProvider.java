@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -33,22 +32,12 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   public static final ExtensionPointName<OptionsSearchTopHitProvider.ProjectLevelProvider>
     PROJECT_LEVEL_EP = new ExtensionPointName<>("com.intellij.search.projectOptionsTopHitProvider");
 
-  /**
-   * @deprecated Use {@link OptionsSearchTopHitProvider.ApplicationLevelProvider} or {@link OptionsSearchTopHitProvider.ProjectLevelProvider}
-   * <p>
-   * ConfigurableOptionsTopHitProvider will be refactored later.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract @NotNull Collection<OptionDescription> getOptions(@Nullable Project project);
-
   private static @NotNull Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
                                                                          @Nullable Project project,
                                                                          @Nullable PluginDescriptor pluginDescriptor) {
     TopHitCache cache = project == null || provider instanceof ApplicationLevelProvider
        ? TopHitCache.getInstance()
        : ProjectTopHitCache.getInstance(project);
-
     return cache.getCachedOptions(provider, project, pluginDescriptor);
   }
 
@@ -166,7 +155,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     Activity() {
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-        throw ExtensionNotApplicableException.INSTANCE;
+        throw ExtensionNotApplicableException.create();
       }
     }
 
@@ -195,15 +184,18 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       });
 
       if (project != null) {
+        TopHitCache cache = ProjectTopHitCache.getInstance(project);
         PROJECT_LEVEL_EP.processWithPluginDescriptor((provider, pluginDescriptor) -> {
           if (indicator != null) {
             indicator.checkCanceled();
           }
           try {
-            getCachedOptions(provider, project, pluginDescriptor);
+            cache.getCachedOptions(provider, project, pluginDescriptor);
           }
           catch (Exception e) {
-            if (e instanceof ControlFlowException) throw e;
+            if (e instanceof ControlFlowException) {
+              throw e;
+            }
             Logger.getInstance(OptionsTopHitProvider.class).error(e);
           }
         });

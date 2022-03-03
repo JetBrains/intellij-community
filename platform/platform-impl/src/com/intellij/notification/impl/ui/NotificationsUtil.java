@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -13,7 +13,9 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 
 /**
@@ -139,7 +142,7 @@ public final class NotificationsUtil {
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontSize();
     }
-    Font font = UIUtil.getLabelFont();
+    Font font = StartupUiUtil.getLabelFont();
     return font == null ? null : font.getSize();
   }
 
@@ -149,7 +152,7 @@ public final class NotificationsUtil {
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontFace();
     }
-    Font font = UIUtil.getLabelFont();
+    Font font = StartupUiUtil.getLabelFont();
     return font == null ? null : font.getName();
   }
 
@@ -170,6 +173,19 @@ public final class NotificationsUtil {
         }
       }
     };
+  }
+
+  public static void setLinkForeground(@NotNull StyleSheet styleSheet) {
+    JBColor color = JBColor.namedColor("Notification.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
+    styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(color) + "}");
+  }
+
+  public static @NotNull Color getMoreButtonForeground() {
+    return JBColor.namedColor("Notification.MoreButton.foreground", new JBColor(0x666666, 0x8C8C8C));
+  }
+
+  public static @NotNull Color getMoreButtonBackground() {
+    return JBColor.namedColor("Notification.MoreButton.background", new JBColor(0xE3E3E3, 0x3A3C3D));
   }
 
   @NotNull

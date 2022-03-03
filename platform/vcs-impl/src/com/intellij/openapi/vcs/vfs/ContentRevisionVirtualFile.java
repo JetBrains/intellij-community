@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.Set;
 
 
 public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
@@ -23,16 +23,16 @@ public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   private volatile boolean myContentLoadFailed;
   private final Object LOCK = new Object();
 
-  private static final Map<ContentRevision, ContentRevisionVirtualFile> ourMap = ContainerUtil.createWeakMap();
+  private static final Set<ContentRevisionVirtualFile> ourCache = ContainerUtil.createWeakSet();
 
   public static ContentRevisionVirtualFile create(@NotNull ContentRevision contentRevision) {
-    synchronized(ourMap) {
-      ContentRevisionVirtualFile revisionVirtualFile = ourMap.get(contentRevision);
-      if (revisionVirtualFile == null) {
-        revisionVirtualFile = new ContentRevisionVirtualFile(contentRevision);
-        ourMap.put(contentRevision, revisionVirtualFile);
+    synchronized (ourCache) {
+      for (ContentRevisionVirtualFile file : ourCache) {
+        if (contentRevision.equals(file.getContentRevision())) return file;
       }
-      return revisionVirtualFile;
+      ContentRevisionVirtualFile file = new ContentRevisionVirtualFile(contentRevision);
+      ourCache.add(file);
+      return file;
     }
   }
 

@@ -1,5 +1,5 @@
 // "Remove 'val' from parameter" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun f() {
     try {
 

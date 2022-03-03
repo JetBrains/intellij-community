@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
@@ -23,14 +22,12 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.types.ErrorUtils
-import java.util.*
 
 fun findDecompiledDeclaration(
     project: Project,
@@ -52,7 +49,7 @@ fun findDecompiledDeclaration(
         return builtInsSearchScope?.let { findInScope(referencedDescriptor, it) }
         // fallback on searching everywhere since builtIns are accessible from any context
             ?: findInScope(referencedDescriptor, GlobalSearchScope.allScope(project))
-            ?: findInScope(referencedDescriptor, EverythingGlobalScope(project))
+            ?: findInScope(referencedDescriptor, GlobalSearchScope.everythingScope(project))
     }
     return null
 }

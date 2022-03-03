@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
@@ -94,21 +93,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return vcs.getFactoryFromSettings();
   }
 
-
-  /**
-   * @deprecated use {@link #checkout(Project, File, Url, Revision, Depth, boolean, Listener, WorkingCopyFormat)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void checkout(final Project project,
-                              final File target,
-                              final String url,
-                              final Revision revision,
-                              final Depth depth,
-                              final boolean ignoreExternals,
-                              final Listener listener, final WorkingCopyFormat selectedFormat) {
-    checkout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener, selectedFormat);
-  }
 
   public static void checkout(Project project,
                               File target,

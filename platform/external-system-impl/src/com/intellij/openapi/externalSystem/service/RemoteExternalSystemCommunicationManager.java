@@ -159,6 +159,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
           ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
           if (manager != null) {
             params.getClassPath().add(PathUtil.getJarPathForClass(manager.getProjectResolverClass()));
+            params.getClassPath().add(PathUtil.getJarPathForClass(manager.getClass().getSuperclass()));
             params.getProgramParametersList().add(manager.getProjectResolverClass().getName());
             params.getProgramParametersList().add(manager.getTaskManagerClass().getName());
             manager.enhanceRemoteProcessing(params);

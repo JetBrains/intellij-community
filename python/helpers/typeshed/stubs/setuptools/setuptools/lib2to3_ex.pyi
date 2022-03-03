@@ -2,7 +2,7 @@ from distutils.util import Mixin2to3 as _Mixin2to3
 from lib2to3.refactor import RefactoringTool
 
 class DistutilsRefactoringTool(RefactoringTool):
-    def log_error(self, msg, *args, **kw) -> None: ...  # type: ignore
+    def log_error(self, msg, *args, **kw) -> None: ...  # type: ignore[override]
     def log_message(self, msg, *args) -> None: ...
     def log_debug(self, msg, *args) -> None: ...
 

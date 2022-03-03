@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.util.TypeVisibilityStateHolder;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 
-public abstract class ChooseByNameFilterConfiguration<T> implements PersistentStateComponent<ChooseByNameFilterConfiguration.Items>  {
+public abstract class ChooseByNameFilterConfiguration<T>
+  implements TypeVisibilityStateHolder<T>, PersistentStateComponent<ChooseByNameFilterConfiguration.Items> {
   /**
    * state object for the configuration
    */
@@ -31,12 +33,7 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
     items = state;
   }
 
-  /**
-   * Set filtering state for file type
-   *
-   * @param type  a type of the file to update
-   * @param value if false, a file type will be filtered out
-   */
+  @Override
   public void setVisible(T type, boolean value) {
     if (value) {
       items.getFilteredOutFileTypeNames().remove(nameForElement(type));
@@ -53,8 +50,15 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
    *
    * @param type a file type to check
    * @return false if file of the specified type should be filtered out
+   * @deprecated use a more general method {@link #isVisible}
    */
+  @Deprecated
   public boolean isFileTypeVisible(T type) {
+    return isVisible(type);
+  }
+
+  @Override
+  public boolean isVisible(T type) {
     return !items.getFilteredOutFileTypeNames().contains(nameForElement(type));
   }
 

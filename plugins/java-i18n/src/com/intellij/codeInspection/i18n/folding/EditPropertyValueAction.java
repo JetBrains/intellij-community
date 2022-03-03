@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
@@ -281,7 +281,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
 
       @Override
       public Insets getInsets() {
-        return JBUI.emptyInsets();
+        return JBInsets.emptyInsets();
       }
     };
     button.setLook(ActionButtonLook.INPLACE_LOOK);

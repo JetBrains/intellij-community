@@ -1,20 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.remote.wizard
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.starters.JavaStartersBundle
+import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.remote.*
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ValidationFunctions.*
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
-import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.ModuleNameGenerator
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -24,8 +23,8 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
 import com.intellij.openapi.roots.ui.configuration.validateSdk
 import com.intellij.openapi.ui.DialogPanel
@@ -35,10 +34,14 @@ import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.EMPTY_LABEL
+import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.AsyncProcessIcon
@@ -79,6 +82,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   private val applicationTypeProperty: GraphProperty<StarterAppType?> = propertyGraph.graphProperty { starterContext.applicationType }
   private val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { starterContext.includeExamples }
 
+  private val gitProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { false }
+
   private var entityName: String by entityNameProperty.map { it.trim() }
   private var location: String by locationProperty
   private var groupId: String by groupIdProperty.map { it.trim() }
@@ -95,9 +100,9 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   private val languageLevelsModel: DefaultComboBoxModel<StarterLanguageLevel> = DefaultComboBoxModel<StarterLanguageLevel>()
   private val applicationTypesModel: DefaultComboBoxModel<StarterAppType> = DefaultComboBoxModel<StarterAppType>()
 
-  private lateinit var projectTypesSelector: ButtonSelectorToolbar
-  private lateinit var packagingTypesSelector: ButtonSelectorToolbar
-  private lateinit var languagesSelector: ButtonSelectorToolbar
+  private lateinit var projectTypesSelector: SegmentedButton<StarterProjectType?>
+  private lateinit var packagingTypesSelector: SegmentedButton<StarterAppPackaging?>
+  private lateinit var languagesSelector: SegmentedButton<StarterLanguage>
 
   private var languages: List<StarterLanguage> = starterSettings.languages
   private var applicationTypes: List<StarterAppType> = starterSettings.applicationTypes
@@ -110,6 +115,9 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   @Volatile
   private var currentRequest: Future<*>? = null
 
+  @Volatile
+  private var isDisposed: Boolean = false
+
   private val serverOptionsLoadingSemaphore: Semaphore = Semaphore()
   private val serverSettingsButton: InplaceButton = InplaceButton(
     IconButton(JavaStartersBundle.message("button.tooltip.configure"), AllIcons.General.Gear, AllIcons.General.GearHover),
@@ -120,6 +128,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
   init {
     Disposer.register(parentDisposable, Disposable {
+      isDisposed = true
       sdkModel.disposeUIResources()
       currentRequest?.cancel(true)
     })
@@ -143,9 +152,10 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     starterContext.testFramework = testFrameworkProperty.get()
     starterContext.applicationType = applicationTypeProperty.get()
     starterContext.includeExamples = exampleCodeProperty.get()
+    starterContext.gitIntegration = gitProperty.get()
 
     wizardContext.projectName = entityName
-    wizardContext.setProjectFileDirectory(location)
+    wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
     val sdk = sdkProperty.get()
     if (wizardContext.project == null) {
@@ -166,7 +176,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   }
 
   private fun suggestLocationByName(): String {
-    return FileUtil.join(wizardContext.projectFileDirectory, entityName)
+    return wizardContext.projectFileDirectory
   }
 
   private fun suggestPackageName(): String {
@@ -174,9 +184,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   }
 
   private fun createComponent(): DialogPanel {
-    entityNameProperty.dependsOn(locationProperty) { File(location).name }
     entityNameProperty.dependsOn(artifactIdProperty) { artifactId }
-    locationProperty.dependsOn(entityNameProperty, ::suggestLocationByName)
     artifactIdProperty.dependsOn(entityNameProperty) { entityName }
 
     packageNameProperty.dependsOn(artifactIdProperty, ::suggestPackageName)
@@ -198,7 +206,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       row(JavaStartersBundle.message("title.project.name.label")) {
         textField(entityNameProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
+          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
+                                 createLocationWarningValidator(locationProperty))
           .focused()
 
         for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
@@ -209,29 +218,26 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
         }
       }.largeGapAfter()
 
-      row(JavaStartersBundle.message("title.project.location.label")) {
-        projectLocationField(locationProperty, wizardContext)
-          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR), CHECK_LOCATION_FOR_WARNING)
-      }.largeGapAfter()
+      addProjectLocationUi()
 
       addFieldsBefore(this)
 
       if (starterSettings.languages.size > 1) {
         row(JavaStartersBundle.message("title.project.language.label")) {
-          languagesSelector = buttonSelector(starterSettings.languages, languageProperty) { it.title }
+          languagesSelector = segmentedButton(starterSettings.languages, languageProperty) { it.title }
         }.largeGapAfter()
       }
 
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.type.label")) {
-          projectTypesSelector = buttonSelector(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
+          projectTypesSelector = segmentedButton(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       if (starterSettings.testFrameworks.isNotEmpty()) {
         row(JavaStartersBundle.message("title.project.test.framework.label")) {
-          buttonSelector(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
@@ -277,7 +283,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
       if (starterSettings.packagingTypes.isNotEmpty()) {
         row(JavaStartersBundle.message("title.project.packaging.label")) {
-          packagingTypesSelector = buttonSelector(starterSettings.packagingTypes, packagingProperty) { it?.title ?: "" }
+          packagingTypesSelector = segmentedButton(starterSettings.packagingTypes, packagingProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
@@ -350,6 +356,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       requestServerOptions()
     }
 
+    val newOptionsRef: Ref<WebStarterServerOptions> = Ref.create()
+
     ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
       val progressIndicator = ProgressManager.getInstance().progressIndicator
       progressIndicator.isIndeterminate = true
@@ -357,13 +365,35 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       for (i in 0 until 30) {
         progressIndicator.checkCanceled()
         if (serverOptionsLoadingSemaphore.waitFor(500)) {
-          serverOptions?.let { updatePropertiesWithServerOptions(it) }
+          serverOptions?.let {
+            newOptionsRef.set(it)
+          }
           return@Runnable
         }
       }
     }, JavaStartersBundle.message("message.state.connecting.and.retrieving.options"), true, wizardContext.project)
 
+    if (!newOptionsRef.isNull) {
+      updatePropertiesWithServerOptions(newOptionsRef.get())
+    }
+
     return serverOptions != null
+  }
+
+  private fun LayoutBuilder.addProjectLocationUi() {
+    val locationRow = row(JavaStartersBundle.message("title.project.location.label")) {
+      projectLocationField(locationProperty, wizardContext)
+        .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
+    }
+
+    if (wizardContext.isCreatingNewProject) {
+      // Git should not be enabled for single module
+      row(EMPTY_LABEL) {
+        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), gitProperty)
+      }.largeGapAfter()
+    } else {
+      locationRow.largeGapAfter()
+    }
   }
 
   protected open fun addFieldsBefore(layout: LayoutBuilder) {}
@@ -447,7 +477,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     return ModalityState.stateForComponent(wizardContext.getUserData(AbstractWizard.KEY)!!.contentComponent)
   }
 
-  private fun getDisposed(): Condition<Any> = Condition<Any> { Disposer.isDisposed(parentDisposable) }
+  private fun getDisposed(): Condition<Any> = Condition<Any> { isDisposed }
 
   private fun configureServer() {
     val currentServerUrl = starterContext.serverUrl
@@ -536,9 +566,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (types.isNotEmpty() && types != this.projectTypes && ::projectTypesSelector.isInitialized) {
         val correspondingOption = types.find { it.id == projectTypeProperty.get()?.id }
         projectTypeProperty.set(correspondingOption ?: types.first())
-        val actionGroup = projectTypesSelector.actionGroup as DefaultActionGroup
-        actionGroup.removeAll()
-        actionGroup.addAll(types.map { ButtonSelectorAction(it, projectTypeProperty, it.title, it.description) })
+        projectTypesSelector.items(types)
         this.projectTypes = types
       }
     }
@@ -554,9 +582,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (types.isNotEmpty() && types != this.packagingTypes && ::packagingTypesSelector.isInitialized) {
         val correspondingOption = types.find { it.id == packagingProperty.get()?.id }
         packagingProperty.set(correspondingOption ?: types.first())
-        val actionGroup = packagingTypesSelector.actionGroup as DefaultActionGroup
-        actionGroup.removeAll()
-        actionGroup.addAll(types.map { ButtonSelectorAction(it, packagingProperty, it.title, it.description) })
+        packagingTypesSelector.items(types)
         this.packagingTypes = types
       }
     }
@@ -564,9 +590,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (languages.isNotEmpty() && languages != this.languages && ::languagesSelector.isInitialized) {
         val correspondingOption = languages.find { it.id == languageProperty.get().id }
         languageProperty.set(correspondingOption ?: languages.first())
-        val actionGroup = languagesSelector.actionGroup as DefaultActionGroup
-        actionGroup.removeAll()
-        actionGroup.addAll(languages.map { ButtonSelectorAction(it, languageProperty, it.title, it.description) })
+        languagesSelector.items(languages)
         this.languages = languages
       }
     }

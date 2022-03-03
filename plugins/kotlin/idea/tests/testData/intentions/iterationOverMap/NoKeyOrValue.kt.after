@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'args' is never used
 // AFTER-WARNING: Variable 'key' is never used
 // AFTER-WARNING: Variable 'value' is never used

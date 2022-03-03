@@ -16,26 +16,33 @@ import org.jetbrains.kotlin.renderer.PropertyAccessorRenderingPolicy
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import javax.swing.Icon
 
+data class CallableMemberInfo(
+    val isInvoke: Boolean,
+    val isExtension: Boolean,
+    val name: String
+) {
+    constructor(descriptor: CallableMemberDescriptor) :
+            this(
+                descriptor is FunctionInvokeDescriptor,
+                descriptor.isExtension,
+                descriptor.getMethodName()
+            )
+}
+
 class KotlinMethodSmartStepTarget(
-    private val descriptor: CallableMemberDescriptor,
-    declaration: KtDeclaration?,
-    label: String,
+    lines: Range<Int>,
     highlightElement: PsiElement,
-    lines: Range<Int>
+    label: String,
+    declaration: KtDeclaration?,
+    private val info: CallableMemberInfo
 ) : KotlinSmartStepTarget(label, highlightElement, false, lines) {
     val declaration = declaration?.let(SourceNavigationHelper::getNavigationElement)
 
     init {
-        assert(declaration != null || isInvoke)
+        assert(declaration != null || info.isInvoke)
     }
 
-    val isInvoke: Boolean
-        get() = descriptor is FunctionInvokeDescriptor
-
-    private val isExtension: Boolean
-        get() = descriptor.isExtension
-
-    override fun getIcon(): Icon = if (isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
+    override fun getIcon(): Icon = if (info.isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
 
     companion object {
         private val renderer = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.withOptions {
@@ -52,14 +59,14 @@ class KotlinMethodSmartStepTarget(
     }
 
     override fun createMethodFilter() =
-        KotlinMethodFilter(descriptor, callingExpressionLines, isInvoke, declaration)
+        KotlinMethodFilter(declaration, info.isInvoke, callingExpressionLines, info.name)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
 
         if (other == null || other !is KotlinMethodSmartStepTarget) return false
 
-        if (isInvoke && other.isInvoke) {
+        if (info.isInvoke && other.info.isInvoke) {
             // Don't allow to choose several invoke targets in smart step into as we can't distinguish them reliably during debug
             return true
         }
@@ -67,7 +74,7 @@ class KotlinMethodSmartStepTarget(
     }
 
     override fun hashCode(): Int {
-        if (isInvoke) {
+        if (info.isInvoke) {
             // Predefined value to make all FunctionInvokeDescriptor targets equal
             return 42
         }

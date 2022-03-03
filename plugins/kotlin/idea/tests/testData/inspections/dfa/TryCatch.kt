@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun divisionByZero(x: Int) {
     val result = try { 100 / x } catch(ex: ArithmeticException) { 200 }
     if (result == 200) {

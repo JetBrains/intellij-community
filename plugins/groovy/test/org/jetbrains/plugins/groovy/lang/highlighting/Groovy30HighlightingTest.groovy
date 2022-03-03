@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -213,5 +213,17 @@ switch (10) {
     highlightingTest """
 <error>record</error> X() {}
 """
+  }
+
+  void 'test IDEA-285153'() {
+    highlightingTest """
+<error>class MyClass implements MyInterface</error> {
+}
+
+interface MyInterface {
+    void myAbstractMethod()
+
+    default void myDefaultMethod() {}
+}"""
   }
 }

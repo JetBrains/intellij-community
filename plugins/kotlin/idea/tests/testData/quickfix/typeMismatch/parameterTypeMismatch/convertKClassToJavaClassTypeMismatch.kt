@@ -1,5 +1,5 @@
 // "Convert 'KClass' to 'Class'" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // IGNORE_IRRELEVANT_ACTIONS
 // DISABLE-ERRORS
 

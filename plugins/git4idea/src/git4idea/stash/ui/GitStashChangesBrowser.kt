@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.openapi.Disposable
@@ -49,6 +49,7 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
   init {
     init()
     viewer.emptyText.text = GitBundle.message("stash.changes.empty")
+    hideViewerBorder()
 
     Disposer.register(parentDisposable, this)
   }
@@ -103,7 +104,9 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
     setData(stash, parents) { statusText -> statusText.text = "" }
   }
 
-  private fun setData(stash: Collection<Change>, parents: Collection<GitCommit>, updateEmptyText: (StatusText) -> Unit) {
+  private fun setData(stash: Collection<Change>,
+                      parents: Collection<GitCommit>,
+                      updateEmptyText: (StatusText) -> Unit) {
     stashedChanges = stash
     otherChanges = parents.associate { parent ->
       val tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
@@ -137,7 +140,14 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
     diffPreviewProcessor = newProcessor
 
     if (isInEditor) {
-      editorTabPreview = GitStashEditorDiffPreview(newProcessor, viewer, this)
+      editorTabPreview = object : GitStashEditorDiffPreview(newProcessor, viewer, this@GitStashChangesBrowser) {
+        override fun getCurrentName(): String {
+          return changeViewProcessor.currentChangeName?.let { changeName ->
+            val stashId = currentStash?.stash?.capitalize() ?: GitBundle.message("stash.editor.diff.preview.empty.title")
+            GitBundle.message("stash.editor.diff.preview.id.change.title", stashId, changeName)
+          } ?: GitBundle.message("stash.editor.diff.preview.empty.title")
+        }
+      }
     }
     else {
       editorTabPreview = null

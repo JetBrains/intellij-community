@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo() = listOf(1)
 
 fun test(list: List<Int>): List<Int> {

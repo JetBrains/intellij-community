@@ -19,85 +19,72 @@ import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
 
 /**
- * See paired [GradleMppNoJvmRunConfigurationProducersTest]
+ * See paired [GradleMppNoJvmRunConfigurationProducersTest216]
  */
-abstract class GradleMppJvmRunConfigurationProducersTest : GradleTestRunConfigurationProducerTestCase() {
-
-    protected lateinit var projectData: ProjectData
-
+class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationProducerTestCase() {
+    private lateinit var projectData: ProjectData
 
     override fun setUp() {
         super.setUp()
         projectData = generateAndImportMppProject()
     }
 
-    class AllTestsInJvmClass : GradleMppJvmRunConfigurationProducersTest() {
-        @Test
-        fun allTestsInJvmClass() {
-            assertConfigurationFromContext<TestClassGradleConfigurationProducer>(
-                """:cleanJvmTest :jvmTest --tests "org.jetbrains.JvmTests"""",
-                runReadActionAndWait {
-                    val psiClass = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element
-                    psiClass
-                }
-            )
-        }
+    @Test
+    fun allTestsInJvmClass() {
+        assertConfigurationFromContext<TestClassGradleConfigurationProducer>(
+            """:cleanJvmTest :jvmTest --tests "org.jetbrains.JvmTests"""",
+            runReadActionAndWait {
+                val psiClass = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element
+                psiClass
+            }
+        )
     }
 
-    class TestForJvmMethod : GradleMppJvmRunConfigurationProducersTest() {
-        @Test
-        fun testForJvmMethod() {
-            assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
-                """:cleanJvmTest :jvmTest --tests "org.jetbrains.JvmTests.jvmTest"""",
-                runReadActionAndWait {
-                    val psiMethod = projectData["project.jvmTest"]["org.jetbrains.JvmTests"]["jvmTest"].element
-                    psiMethod
-                }
-            )
-        }
-
+    @Test
+    fun testForJvmMethod() {
+        assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
+            """:cleanJvmTest :jvmTest --tests "org.jetbrains.JvmTests.jvmTest"""",
+            runReadActionAndWait {
+                val psiMethod = projectData["project.jvmTest"]["org.jetbrains.JvmTests"]["jvmTest"].element
+                psiMethod
+            }
+        )
     }
 
-    class AllTestsInJvmPackage : GradleMppJvmRunConfigurationProducersTest() {
-        @Test
-        fun allTestsInJvmPackage() {
-            assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
-                """:cleanJvmTest :jvmTest --tests "org.jetbrains.*"""",
-                runReadActionAndWait {
-                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                    jetBrainsDir
-                }
-            )
-        }
+    @Test
+    fun allTestsInJvmPackage() {
+        assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
+            """:cleanJvmTest :jvmTest --tests "org.jetbrains.*"""",
+            runReadActionAndWait {
+                val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
+                jetBrainsDir
+            }
+        )
     }
 
-    class AllTestsInJvmDirectory : GradleMppJvmRunConfigurationProducersTest() {
-        @Test
-        fun allTestsInJvmDirectory() {
-            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-                """:cleanJvmTest :jvmTest""",
-                runReadActionAndWait {
-                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
-                    kotlinDir
-                }
-            )
-        }
+    @Test
+    fun allTestsInJvmDirectory() {
+        assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
+            """:cleanJvmTest :jvmTest""",
+            runReadActionAndWait {
+                val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
+                val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
+                kotlinDir
+            }
+        )
     }
 
-    class AllTestsInJvmModule : GradleMppJvmRunConfigurationProducersTest() {
-        @Test
-        fun allTestsInJvmModule() {
-            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-                """:cleanJvmTest :jvmTest""",
-                runReadActionAndWait {
-                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
-                    val moduleDirectory = kotlinDir?.parentDirectory
-                    moduleDirectory!!
-                }
-            )
-        }
+    @Test
+    fun allTestsInJvmModule() {
+        assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
+            """:cleanJvmTest :jvmTest""",
+            runReadActionAndWait {
+                val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
+                val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
+                val moduleDirectory = kotlinDir?.parentDirectory
+                moduleDirectory!!
+            }
+        )
     }
 
     override fun extractClassData(file: VirtualFile) = runReadActionAndWait {
@@ -130,7 +117,8 @@ abstract class GradleMppJvmRunConfigurationProducersTest : GradleTestRunConfigur
         createProjectSubFile("build.gradle", buildscript {
             withPlugin("org.jetbrains.kotlin.multiplatform", TestedKotlinGradlePluginVersions.ALL_PUBLIC.last().toString())
             withPrefix {
-                code("""
+                code(
+                    """
                 repositories {
                     ${listRepositories(false, gradleVersion.version)}                    
                 }

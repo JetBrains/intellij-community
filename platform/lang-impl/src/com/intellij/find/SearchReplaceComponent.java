@@ -329,12 +329,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public void setRegularBackground() {
-    mySearchTextComponent.setBackground(UIUtil.getTextFieldBackground());
+    mySearchTextComponent.setForeground(UIUtil.getTextFieldForeground());
     myStatusColor = UIUtil.getLabelForeground();
   }
 
   public void setNotFoundBackground() {
-    mySearchTextComponent.setBackground(LightColors.RED);
+    mySearchTextComponent.setForeground(JBColor.namedColor("SearchField.errorForeground", JBColor.RED));
     myStatusColor = UIUtil.getErrorForeground();
   }
 

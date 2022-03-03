@@ -119,11 +119,8 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
       if (event instanceof VFilePropertyChangeEvent) {
         handlePropChange((VFilePropertyChangeEvent)event, filesDeleted, filesChanged);
       }
-      else if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent) {
+      else if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent || event instanceof VFileCopyEvent) {
         collectPaths(event.getFile(), filesChanged);
-      }
-      else if (event instanceof VFileCopyEvent) {
-        collectPaths(((VFileCopyEvent)event).findCreatedFile(), filesChanged);
       }
     }
 

@@ -2,14 +2,20 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
+import org.eclipse.aether.version.Version
+import org.jetbrains.idea.maven.aether.ArtifactKind
+import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -28,6 +34,7 @@ import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
+import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.versions.findKotlinRuntimeLibrary
 import org.jetbrains.kotlin.idea.versions.updateLibraries
 import org.jetbrains.kotlin.psi.KtFile
@@ -150,8 +157,33 @@ fun askUpdateRuntime(project: Project, requiredVersion: ApiVersion, librariesToU
         if (rc != Messages.OK) return false
     }
 
-    updateLibraries(project, librariesToUpdate)
+    val upToMavenVersion = requiredVersion.toMavenArtifactVersion(project) ?: run {
+        Messages.showErrorDialog(
+            KotlinJvmBundle.message("cant.fetch.available.maven.versions"),
+            KotlinJvmBundle.message("cant.fetch.available.maven.versions.title")
+        )
+        return false
+    }
+    updateLibraries(project, upToMavenVersion, librariesToUpdate)
     return true
+}
+
+internal fun ApiVersion.toMavenArtifactVersion(project: Project): String? {
+    val apiVersion = this
+    var mavenVersion: String? = null
+    object : Task.Modal(project, KotlinJvmBundle.message("fetching.available.maven.versions.title"), true) {
+        override fun run(indicator: ProgressIndicator) {
+            val repositoryLibraryProperties = LibraryJarDescriptor.RUNTIME_JDK8_JAR.repositoryLibraryProperties
+            val version: Version? = ArtifactRepositoryManager(JarRepositoryManager.getLocalRepositoryPath()).getAvailableVersions(
+                repositoryLibraryProperties.groupId,
+                repositoryLibraryProperties.artifactId,
+                "[${apiVersion.versionString},)",
+                ArtifactKind.ARTIFACT
+            ).firstOrNull()
+            mavenVersion = version?.toString()
+        }
+    }.queue()
+    return mavenVersion
 }
 
 fun askUpdateRuntime(module: Module, requiredVersion: ApiVersion): Boolean {

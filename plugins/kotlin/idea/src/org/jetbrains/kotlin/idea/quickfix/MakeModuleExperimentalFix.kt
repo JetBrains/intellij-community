@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.caches.project.toDescriptor
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
+import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
 import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.fqNameIsExisting
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.projectStructure.module
@@ -42,14 +42,15 @@ open class MakeModuleExperimentalFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
         try {
-            val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false, commitModel = true)
-            val facetSettings = facet.configuration.settings
-            val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
-                facetSettings.compilerSettings = it
-            }
+            module.getOrCreateConfiguredFacet(modelsProvider, useProjectSettings = false, commitModel = true) {
+                val facetSettings = configuration.settings
+                val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
+                    facetSettings.compilerSettings = it
+                }
 
-            compilerSettings.additionalArguments += " $compilerArgument"
-            facetSettings.updateMergedArguments()
+                compilerSettings.additionalArguments += " $compilerArgument"
+                facetSettings.updateMergedArguments()
+            }
             project.invalidateProjectRoots()
         } finally {
             modelsProvider.dispose()

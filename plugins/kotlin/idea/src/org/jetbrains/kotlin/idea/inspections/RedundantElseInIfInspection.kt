@@ -11,10 +11,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.refactoring.getLineNumber
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -62,16 +62,18 @@ private class RemoveRedundantElseFix : LocalQuickFix {
         val lastThenEndLine = elseKeyword.getPrevSiblingIgnoringWhitespaceAndComments()?.takeIf {
             it is KtContainerNodeForControlStructureBody && it.node.elementType == KtNodeTypes.THEN
         }?.getLineNumber(start = false)
-        val elseStartLine = ((elseExpression as? KtBlockExpression)?.statements?.firstOrNull() ?: elseExpression).getLineNumber()
-        if (elseKeywordLineNumber == lastThenEndLine && elseKeywordLineNumber == elseStartLine) {
+
+        val elseStartLine = (elseExpression as? KtBlockExpression)?.statements?.firstOrNull()?.getLineNumber()
+        if (elseStartLine == null || elseKeywordLineNumber == lastThenEndLine && elseKeywordLineNumber == elseStartLine) {
             parent.addAfter(KtPsiFactory(ifExpression).createNewLine(), ifExpression)
         }
-        elseExpression.delete()
+
+        elseExpression.parent.delete()
         elseKeyword.delete()
 
         ifExpression.containingFile.adjustLineIndent(
             ifExpression.endOffset,
-            (added.getNextSiblingIgnoringWhitespace() ?: added.parent).endOffset
+            (added.getNextSiblingIgnoringWhitespace() ?: added.parent).endOffset,
         )
     }
 }
@@ -85,8 +87,8 @@ private fun KtIfExpression.lastSingleElseKeyword(): PsiElement? {
 }
 
 private fun KtIfExpression.hasRedundantElse(): Boolean {
-    val context = analyze()
-    if (isUsedAsExpression(context)) return false
+    val context = safeAnalyzeNonSourceRootCode()
+    if (context == BindingContext.EMPTY || isUsedAsExpression(context)) return false
     var ifExpression = this
     while (true) {
         if ((ifExpression.then)?.isReturnOrNothing(context) != true) return false

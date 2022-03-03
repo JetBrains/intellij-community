@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS",
                                 JavaBundle.message("code.style.settings.angle.spacing.brackets"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_ANNOTATION_EQ",
+                                JavaBundle.message("checkbox.spaces.around.annotation.eq"), getInstance().SPACES_OTHER);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_RECORD_HEADER",
                                 JavaBundle.message("checkbox.spaces.record.header"), getInstance().SPACES_WITHIN);
 
@@ -204,12 +207,27 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 JavaBundle.message("wrapping.annotation.parameters"));
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "NEW_LINE_AFTER_LPAREN_IN_ANNOTATION",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                JavaBundle.message("wrapping.annotation.parameters"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "RPAREN_ON_NEW_LINE_IN_ANNOTATION",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                JavaBundle.message("wrapping.annotation.parameters"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ALIGN_MULTILINE_TEXT_BLOCKS",
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
                                 JavaBundle.message("wrapping.text.blocks") );
 
-      String groupName = ApplicationBundle.message("wrapping.fields.annotation");
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), groupName);
+      String fieldAnnotations = ApplicationBundle.message("wrapping.fields.annotation");
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION",
+                                JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), fieldAnnotations);
+
+      String parameterAnnotationsWrapping = ApplicationBundle.message("wrapping.parameters.annotation");
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER",
+                                JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), parameterAnnotationsWrapping);
 
       // Record components
       String recordComponentsGroup = JavaBundle.message("wrapping.record.components");
@@ -230,6 +248,16 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RPAREN_ON_NEW_LINE_IN_RECORD_HEADER",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 recordComponentsGroup);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "MULTI_CATCH_TYPES_WRAP",
+                                JavaBundle.message("wrapping.multi.catch.types"),
+                                ApplicationBundle.message("wrapping.try.statement"),
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_TYPES_IN_MULTI_CATCH",
+                                JavaBundle.message("align.types.in.multi.catch"),
+                                ApplicationBundle.message("wrapping.try.statement"));
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();

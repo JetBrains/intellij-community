@@ -154,6 +154,11 @@ public final class ParameterHintsPresentationManager implements Disposable {
       updateState(editor, text, widthAdjustment, animated);
     }
 
+    @Override
+    public String toString() {
+      return "[" + this.getText() + "]";
+    }
+
     public void update(Editor editor, String newText, HintWidthAdjustment widthAdjustment, boolean animated) {
       updateState(editor, newText, widthAdjustment, animated);
     }
@@ -177,7 +182,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
 
     private void updateState(Editor editor, String text, HintWidthAdjustment widthAdjustment, boolean animated) {
       setWidthAdjustment(widthAdjustment);
-      FontMetrics metrics = getFontMetrics(editor).getMetrics();
+      FontMetrics metrics = getFontMetrics(editor, useEditorFont()).getMetrics();
       startWidth = calcHintTextWidth(getText(), metrics);
       setText(text);
       int endWidth = calcHintTextWidth(getText(), metrics);

@@ -25,7 +25,7 @@ class KtDestructuringDeclarationReferenceDescriptorsImpl(
 
     override fun resolve() = multiResolve(false).asSequence()
         .map { it.element }
-        .first { it is KtDestructuringDeclarationEntry }
+        .firstOrNull { it is KtDestructuringDeclarationEntry }
 
     override fun getRangeInElement() = TextRange(0, element.textLength)
 

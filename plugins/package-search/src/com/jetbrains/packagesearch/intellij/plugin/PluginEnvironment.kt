@@ -27,12 +27,6 @@ internal object PluginEnvironment {
     val isNonModalLoadingEnabled
         get() = System.getProperty("idea.pkgs.disableLoading") != "true" && !isTestEnvironment
 
-    object Caches {
-
-        val version
-            get() = 2
-
-        val maxAttempts
-            get() = System.getProperty("idea.pkgs.caches.attempts")?.toInt() ?: 30
-    }
+    val cachesVersion
+        get() = 1
 }

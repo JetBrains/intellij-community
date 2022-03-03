@@ -10,7 +10,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.VfsTestUtil;
 import junit.framework.AssertionFailedError;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import com.intellij.maven.testFramework.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;

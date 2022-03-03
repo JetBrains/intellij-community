@@ -60,7 +60,17 @@ public class GitExecutableDetector {
 
 
   @Nullable
-  public String getExecutable(@Nullable WSLDistribution projectWslDistribution) {
+  public String getExecutable(@Nullable WSLDistribution projectWslDistribution, boolean detectIfNeeded) {
+    if (detectIfNeeded) {
+      return detect(projectWslDistribution);
+    }
+    else {
+      return getCachedExecutable(projectWslDistribution);
+    }
+  }
+
+  @Nullable
+  private String getCachedExecutable(@Nullable WSLDistribution projectWslDistribution) {
     List<Detector> detectors = collectDetectors(projectWslDistribution);
     return getExecutable(detectors);
   }

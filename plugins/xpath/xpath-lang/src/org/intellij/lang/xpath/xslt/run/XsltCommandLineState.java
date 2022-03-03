@@ -25,13 +25,12 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -133,11 +132,9 @@ public final class XsltCommandLineState extends CommandLineState {
     }
     vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
-    PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-    if (pluginId != null) {
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
-      assert descriptor != null;
-      Path rtPath = descriptor.getPluginPath().resolve("lib/rt/xslt-rt.jar");
+    PluginDescriptor plugin = PluginManager.getPluginByClass(getClass());
+    if (plugin != null) {
+      Path rtPath = plugin.getPluginPath().resolve("lib/rt/xslt-rt.jar");
       if (!Files.exists(rtPath)) {
         throw new CantRunException(XPathBundle.message("dialog.message.runtime.classes.not.found.at", rtPath));
       }

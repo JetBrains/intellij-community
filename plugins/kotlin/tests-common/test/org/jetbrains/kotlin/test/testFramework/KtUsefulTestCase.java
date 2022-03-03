@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.test.testFramework;
 
@@ -39,8 +39,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.Equality;
-import gnu.trove.THashSet;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -66,6 +64,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 @SuppressWarnings("ALL")
@@ -506,8 +505,8 @@ public abstract class KtUsefulTestCase extends TestCase {
 
         final StringBuilder builder = new StringBuilder();
         for (final Object o : collection) {
-            if (o instanceof THashSet) {
-                builder.append(new TreeSet<>((THashSet<?>)o));
+            if (o instanceof Set) {
+                builder.append(new TreeSet<>((Set<?>)o));
             }
             else {
                 builder.append(o);
@@ -560,13 +559,13 @@ public abstract class KtUsefulTestCase extends TestCase {
     public static <T> void assertOrderedEquals(@NotNull String errorMsg,
             @NotNull Iterable<? extends T> actual,
             @NotNull Iterable<? extends T> expected) {
-        assertOrderedEquals(errorMsg, actual, expected, Equality.CANONICAL);
+        assertOrderedEquals(errorMsg, actual, expected, (o1, o2) -> o1 != null ? o1.equals(o2) : o2 == null);
     }
 
     public static <T> void assertOrderedEquals(@NotNull String errorMsg,
             @NotNull Iterable<? extends T> actual,
             @NotNull Iterable<? extends T> expected,
-            @NotNull Equality<? super T> comparator) {
+            @NotNull BiPredicate<? super T, ? super T> comparator) {
         if (!equals(actual, expected, comparator)) {
             String expectedString = toString(expected);
             String actualString = toString(actual);
@@ -577,12 +576,12 @@ public abstract class KtUsefulTestCase extends TestCase {
 
     private static <T> boolean equals(@NotNull Iterable<? extends T> a1,
             @NotNull Iterable<? extends T> a2,
-            @NotNull Equality<? super T> comparator) {
+            @NotNull BiPredicate<? super T, ? super T> comparator) {
         Iterator<? extends T> it1 = a1.iterator();
         Iterator<? extends T> it2 = a2.iterator();
         while (it1.hasNext() || it2.hasNext()) {
             if (!it1.hasNext() || !it2.hasNext()) return false;
-            if (!comparator.equals(it1.next(), it2.next())) return false;
+            if (!comparator.test(it1.next(), it2.next())) return false;
         }
         return true;
     }

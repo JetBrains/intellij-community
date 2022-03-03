@@ -102,7 +102,8 @@ public class IndexInfrastructureVersionBase {
       FileBasedIndexExtension.EXTENSION_POINT_NAME.findFirstSafe(ex -> ex.getName().equals(StubUpdatingIndex.INDEX_ID));
 
     if (stubUpdatingIndex == null) {
-      throw new RuntimeException("Failed to find " + StubUpdatingIndex.INDEX_ID);
+      LOG.warn("Failed to find " + StubUpdatingIndex.INDEX_ID);
+      return Collections.emptyMap();
     }
 
     String commonPrefix = stubUpdatingIndex.getVersion() + ":";

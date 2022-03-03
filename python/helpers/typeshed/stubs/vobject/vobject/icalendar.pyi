@@ -36,7 +36,7 @@ class TimezoneComponent(Component):
     normal_attributes: Any
     @staticmethod
     def pickTzid(tzinfo, allowUTC: bool = ...): ...
-    def prettyPrint(self, level, tabwidth) -> None: ...  # type: ignore
+    def prettyPrint(self, level, tabwidth) -> None: ...  # type: ignore[override]
 
 class RecurringComponent(Component):
     isNative: bool

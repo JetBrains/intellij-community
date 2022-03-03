@@ -36,6 +36,8 @@ import java.util.*;
  * @see #createDecorator(JTree)
  */
 public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFactory {
+  public static final String DECORATOR_KEY = "ToolbarDecoratorMarker";
+
   protected Border myPanelBorder;
   protected Border myToolbarBorder;
   protected Border myScrollPaneBorder;
@@ -437,6 +439,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     installUpdaters();
     updateButtons();
     installDnD();
+    panel.putClientProperty(DECORATOR_KEY, Boolean.TRUE);
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
 
     panel.setBorder(myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL));

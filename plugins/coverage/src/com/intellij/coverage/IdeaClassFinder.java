@@ -7,11 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.util.classFinder.ClassFinder;
 import com.intellij.rt.coverage.util.classFinder.ClassPathEntry;
-import com.intellij.util.lang.UrlClassLoader;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -49,7 +47,7 @@ final class IdeaClassFinder extends ClassFinder {
       final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(coverageManager, module, myCurrentSuite.isTrackTestFolders());
       if (roots == null) continue;
       for (VirtualFile root : roots) {
-        entries.add(new ClassPathEntry(root.getPath(), UrlClassLoader.build().files(Collections.singletonList(root.toNioPath())).get()));
+        entries.add(new ClassPathEntry(root.getPath()));
       }
     }
     return entries;

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(list: List<String>) {
     for ((i, s) in list.withIndex()) {
         println(i)

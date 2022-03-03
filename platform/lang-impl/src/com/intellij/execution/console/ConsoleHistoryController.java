@@ -294,7 +294,6 @@ public class ConsoleHistoryController implements Disposable {
     MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
       myNext = next;
       myUpDownKeystrokes = upDownKeystrokes;
-      getTemplatePresentation().setVisible(false);
     }
 
     @Override
@@ -307,10 +306,10 @@ public class ConsoleHistoryController implements Disposable {
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
       boolean enabled = myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext);
       //enabled &= getModel().hasHistory(myNext);
       e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(false);
     }
 
     private boolean isUpDownKey(@NotNull AnActionEvent e) {

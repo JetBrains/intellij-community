@@ -25,7 +25,7 @@ public final class GitChangesParser {
   @NotNull
   public static List<Change> parse(@NotNull Project project,
                                    @NotNull VirtualFile root,
-                                   @NotNull List<? extends VcsFileStatusInfo> statusInfos,
+                                   @NotNull List<VcsFileStatusInfo> statusInfos,
                                    @NotNull String hash,
                                    @NotNull Date date,
                                    @Nullable String parentsHash) {

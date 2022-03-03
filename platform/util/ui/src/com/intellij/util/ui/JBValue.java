@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -60,7 +60,7 @@ public abstract class JBValue {
    *
    * @see JBUI#uiIntValue(String,int)
    */
-  public static class UIInteger extends JBValue {
+  public static final class UIInteger extends JBValue {
     private final @NotNull String key;
     private final int defValue;
 

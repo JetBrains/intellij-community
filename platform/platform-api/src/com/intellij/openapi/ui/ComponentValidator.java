@@ -19,10 +19,7 @@ import com.intellij.ui.EditorTextComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -173,11 +170,15 @@ public class ComponentValidator {
    * Convenient wrapper for mostly used scenario.
    */
   public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
-    textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+    DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
       }
+    };
+    textComponent.getDocument().addDocumentListener(listener);
+    Disposer.register(parentDisposable, () -> {
+      textComponent.getDocument().removeDocumentListener(listener);
     });
     return this;
   }
@@ -272,7 +273,7 @@ public class ComponentValidator {
     JEditorPane tipComponent = new JEditorPane();
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
-    tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    tipComponent.setEditorKit(HTMLEditorKitBuilder.simple());
 
     EditorKit kit = tipComponent.getEditorKit();
     if (kit instanceof HTMLEditorKit) {

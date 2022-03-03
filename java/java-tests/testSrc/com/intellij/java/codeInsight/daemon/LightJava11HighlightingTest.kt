@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
@@ -38,7 +38,7 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
                                  |i*<error descr="Expression expected"><error descr="Unexpected token">*</error></error>;
                                  |}}""".trimMargin())
     myFixture.checkHighlighting()
-    Assert.assertTrue(HighlightClassUtil.isJavaHashBangScript(file))
+    Assert.assertTrue(JavaHighlightUtil.isJavaHashBangScript(file))
   }
 
   private fun doTest() {

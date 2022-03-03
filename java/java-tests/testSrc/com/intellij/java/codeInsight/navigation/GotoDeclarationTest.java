@@ -101,6 +101,20 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     assertInstanceOf(containingClass, PsiAnonymousClass.class);
   }
 
+  public void testToFieldFromQualifierInNew() {
+    configureFromFileText("A.java", "class A {Util myContext;\n" +
+                                    "    private class Util {\n" +
+                                    "        public class Filter {\n" +
+                                    "            public Filter() {\n" +
+                                    "            }\n" +
+                                    "        }}\n" +
+                                    "    private void method() {\n" +
+                                    "        Util.Filter filter = my<caret>Context.new Filter();\n" +
+                                    "    }}");
+    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertInstanceOf(element, PsiField.class);
+  }
+
   public void testArrayIndexNotCovered() {
     configureFromFileText("A.java", "class A {{ String[] arr; int index; arr[index]<caret>; }}");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());

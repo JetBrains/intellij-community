@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -8,10 +8,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,38 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
 
   public @Nullable PsiClass findClass(final String qualifiedName) {
     if (qualifiedName == null) return null;
-    return JavaExecutionUtil.findMainClass(getProject(), qualifiedName, getSearchScope());
+    Project project = getProject();
+    GlobalSearchScope searchScope = getSearchScope();
+    PsiClass mainClass = JavaExecutionUtil.findMainClass(project, qualifiedName, searchScope);
+    if (mainClass == null && !PsiNameHelper.getInstance(project).isQualifiedName(qualifiedName)) {
+      return findClass(StringUtil.getShortName(qualifiedName), StringUtil.getPackageName(qualifiedName), project, searchScope);
+    }
+    return mainClass;
+  }
+
+  private static PsiClass findClass(String shortName, String packageName, Project project, GlobalSearchScope searchScope) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
+    if (aPackage != null) {
+      int dollarIdx = shortName.indexOf("$");
+      String topLevelClassName = dollarIdx > 0 && dollarIdx < shortName.length() - 1 ? shortName.substring(0, dollarIdx) : shortName;
+      PsiClass topLevelClass = ContainerUtil.find(aPackage.getClasses(searchScope), aClass -> topLevelClassName.equals(aClass.getName()));
+      if (topLevelClass != null && !topLevelClassName.equals(shortName)) {
+        String innerClassName = shortName.substring(dollarIdx + 1);
+        return ClassUtil.findPsiClass(PsiManager.getInstance(project), innerClassName, topLevelClass, true);
+      }
+      return topLevelClass;
+    }
+
+    if (packageName.isEmpty()) {
+      assert false : "Default package doesn't exist";
+      return null;
+    }
+
+    PsiClass topClass = findClass(StringUtil.getShortName(packageName), StringUtil.getPackageName(packageName), project, searchScope);
+    if (topClass != null) {
+      return topClass.findInnerClassByName(shortName, true);
+    }
+    return null;
   }
 
   @NotNull

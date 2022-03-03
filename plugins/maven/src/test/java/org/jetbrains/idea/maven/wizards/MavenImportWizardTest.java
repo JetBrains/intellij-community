@@ -6,9 +6,10 @@ import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenTestCase;
+import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -79,9 +80,11 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
       "<artifactId>project2</artifactId>" +
       "<version>1</version>"));
     Module module = importProjectFrom(pom1.toString(), null, new MavenProjectImportProvider());
-    List<String> paths = MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getManagedFilesPaths();
+    List<Path> paths = ContainerUtil.map(
+      MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
+    );
     assertEquals(2, paths.size());
-    assertContainsElements(paths, pom1.toString(), pom2.toString());
+    assertContainsElements(paths, pom1, pom2);
   }
 
   public void testImportProjectWithDirectPom() throws Exception {
@@ -95,9 +98,11 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     MavenProjectBuilder builder = (MavenProjectBuilder)provider.doGetBuilder();
     builder.setFileToImport(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom2));
     Module module = importProjectFrom(pom1.toString(), null, provider);
-    List<String> paths = MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getManagedFilesPaths();
+    List<Path> paths = ContainerUtil.map(
+      MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
+    );
     assertEquals(1, paths.size());
-    assertContainsElements(paths, pom2.toString());
+    assertContainsElements(paths, pom2);
   }
 
   private @NotNull Path createPom() throws IOException {

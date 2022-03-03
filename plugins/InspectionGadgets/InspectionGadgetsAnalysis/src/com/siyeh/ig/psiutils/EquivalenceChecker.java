@@ -806,7 +806,7 @@ public class EquivalenceChecker {
     }
     final PsiExpression qualifier1 = PsiUtil.skipParenthesizedExprDown(referenceExpression1.getQualifierExpression());
     final PsiExpression qualifier2 = PsiUtil.skipParenthesizedExprDown(referenceExpression2.getQualifierExpression());
-    if (qualifier1 != null && !(qualifier1 instanceof PsiThisExpression || qualifier1 instanceof PsiSuperExpression)) {
+    if (qualifier1 != null && !(qualifier1 instanceof PsiQualifiedExpression)) {
       if (qualifier2 == null) {
         return EXACT_MISMATCH;
       }
@@ -823,7 +823,7 @@ public class EquivalenceChecker {
       return match;
     }
     else {
-      if (qualifier2 != null && !(qualifier2 instanceof PsiThisExpression || qualifier2 instanceof PsiSuperExpression)) {
+      if (qualifier2 != null && !(qualifier2 instanceof PsiQualifiedExpression)) {
         return EXACT_MISMATCH;
       }
     }

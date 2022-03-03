@@ -8,14 +8,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class InspectionManager {
-  public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION =
-    ExtensionPointName.create("com.intellij.cantBeStatic");
+  public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION = ExtensionPointName.create("com.intellij.cantBeStatic");
 
   public static InspectionManager getInstance(Project project) {
     return project.getService(InspectionManager.class);
@@ -169,4 +171,7 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract GlobalInspectionContext createNewGlobalContext();
+
+  @NotNull
+  public abstract List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file);
 }

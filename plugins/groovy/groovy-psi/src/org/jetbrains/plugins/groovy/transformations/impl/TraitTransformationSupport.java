@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -36,7 +36,8 @@ public class TraitTransformationSupport implements AstTransformationSupport {
     process(context, (trait, substitutor) -> {
       if (trait instanceof GrTypeDefinition) {
         for (PsiMethod method : trait.getMethods()) {
-          if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) &&
+          if ((((GrTypeDefinition)trait).isTrait() || method.getModifierList().hasExplicitModifier(PsiModifier.DEFAULT)) &&
+              !method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) &&
               !method.getModifierList().hasExplicitModifier(PsiModifier.PRIVATE)) {
             context.addMethods(getExpandingMethods(codeClass, method, substitutor));
           }

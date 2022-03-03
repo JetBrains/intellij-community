@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -18,7 +18,7 @@ public class JavaProblemHighlightFilter extends ProblemHighlightFilter {
     return psiFile.getFileType() != JavaFileType.INSTANCE ||
            !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile) ||
            ScratchUtil.isScratch(psiFile.getVirtualFile()) ||
-           HighlightClassUtil.isJavaHashBangScript(psiFile);
+           JavaHighlightUtil.isJavaHashBangScript(psiFile);
   }
 
   @Override

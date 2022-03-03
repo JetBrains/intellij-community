@@ -117,6 +117,33 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     assertOutput(module, fs(), true);  // make sure B is not compiled, even if it is modified
   }
 
+  public void testMakeProductionClassesOnly() {
+    final String aText = "class A{ public static void foo(int param) {} }";
+    VirtualFile a = createFile("src/A.java", aText);
+    final String bText = "class B { void bar() {A.foo(10);}}";
+    VirtualFile b = createFile("testSrc/B.java", bText);
+    Module module = addModule("a", a.getParent(), b.getParent(), null);
+    make(module);
+    assertOutput(module, fs().file("A.class"), false);
+    assertOutput(module, fs().file("B.class"), true);
+    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, false));
+    assertNotNull(output);
+    final VirtualFile testOutput = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, true));
+    assertNotNull(testOutput);
+    final VirtualFile classFile = output.findChild("A.class");
+    assertNotNull(classFile);
+    final VirtualFile testClassFile = testOutput.findChild("B.class");
+    assertNotNull(testClassFile);
+    deleteFile(classFile);
+    deleteFile(testClassFile);
+    changeFile(a, aText + "  "); // touch a
+    changeFile(b, bText + "  "); // touch b
+
+    make(getCompilerManager().createModulesCompileScope(new Module[] {module}, false, false, false));
+    assertOutput(module, fs().file("A.class"), false);
+    assertOutput(module, fs(), true); // make sure B is not compiled, even if it is modified
+  }
+
   public void testMakeTwoModules() {
     VirtualFile file1 = createFile("m1/src/A.java", "class A{}");
     Module m1 = addModule("m1", file1.getParent());

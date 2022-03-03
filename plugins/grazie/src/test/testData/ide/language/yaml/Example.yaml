@@ -2,12 +2,12 @@
 receipt:     Oz-Ware Purchase Invoice
 date:        2012-08-06
 customer:
-  first_name:   Dorothyer
+  first_name:   <TYPO descr="Typo: In word 'Dorothyer'">Dorothyer</TYPO>
   family_name:  Gale
 
 items:
   - part_no:   A4786
-    descrip:   Water Bucket (Filled)
+    <TYPO descr="Typo: In word 'descrip'">descrip</TYPO>:   Water Bucket (Filled)
     # This
 
     # Are good price
@@ -24,7 +24,7 @@ items:
     price:     133.7
     quantity:
       - It <warning descr="IT_VBZ">are</warning> error here
-      - xcvxcv
+      - <TYPO descr="Typo: In word 'xcvxcv'">xcvxcv</TYPO>
 
 bill-to:  &id001
   street: |

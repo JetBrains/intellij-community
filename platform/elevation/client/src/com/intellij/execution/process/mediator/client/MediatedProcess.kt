@@ -172,16 +172,14 @@ private class MediatedProcessHandle private constructor(
   companion object {
     fun create(client: ProcessMediatorClient): MediatedProcessHandle {
       val lifetimeChannel = client.openHandle().produceIn(client.coroutineScope)
-      try {
-        val handleId = runBlocking {
-          lifetimeChannel.receiveOrNull() ?: throw IOException("Failed to receive handleId")
+      val handleId = runBlocking {
+        lifetimeChannel.receiveCatching().getOrElse {
+          val ex = it ?: IOException("Failed to receive handleId")
+          lifetimeChannel.cancel(ex as? CancellationException ?: CancellationException("Failed to initialize client-side handle", ex))
+          throw ex
         }
-        return MediatedProcessHandle(client, handleId, lifetimeChannel)
       }
-      catch (e: Throwable) {
-        lifetimeChannel.cancel(e as? CancellationException ?: CancellationException("Failed to initialize client-side handle", e))
-        throw e
-      }
+      return MediatedProcessHandle(client, handleId, lifetimeChannel)
     }
   }
 

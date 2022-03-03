@@ -18,6 +18,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityStateListener
 import com.intellij.openapi.application.impl.LaterInvocator.*
+import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import junit.framework.TestCase
@@ -56,21 +57,21 @@ class RunnableActionsTest : HeavyPlatformTestCase() {
     val project = getProject()
     Testable()
       .suspendEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL) }
+      .execute { invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(1)) }
       .flushEDT()
       .execute { enterModal(myApplicationModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current()) }
+      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(2)) }
       .flushEDT()
       .execute { enterModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL) }
+      .execute { invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(3)) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current()) }
+      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(4)) }
       .flushEDT()
       .execute { leaveModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL) }
+      .execute { invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(5)) }
       .flushEDT()
       .execute { leaveModal(myApplicationModalDialog) }
       .flushEDT()

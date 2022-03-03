@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -186,11 +186,7 @@ public final class TypeInferenceHelper {
    */
   private static void internalize(@NotNull List<DefinitionMap> maps) {
     Map<DefinitionMap, DefinitionMap> internedMaps = new HashMap<>();
-    for (int i = 0; i < maps.size(); i++) {
-      DefinitionMap map = maps.get(i);
-      DefinitionMap internedMap = internedMaps.computeIfAbsent(map, Function.identity());
-      maps.set(i, internedMap);
-    }
+    maps.replaceAll(map -> internedMaps.computeIfAbsent(map, Function.identity()));
   }
 
   @Nullable
@@ -259,5 +255,11 @@ public final class TypeInferenceHelper {
     }
 
     return null;
+  }
+
+  static boolean isSimpleEnoughForAugmenting(Instruction @NotNull [] flow) {
+    // in large flows there is a lot of variables, so minor inability to infer type for a parameter should not be noticeable.
+    // on the other side, people may omit types of parameters in short methods, so augmenting may be useful there
+    return flow.length < 50;
   }
 }

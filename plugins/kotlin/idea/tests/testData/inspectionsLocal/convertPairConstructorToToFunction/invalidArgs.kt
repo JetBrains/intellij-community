@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 // DISABLE-ERRORS
 import kotlin.Pair
 fun test() {

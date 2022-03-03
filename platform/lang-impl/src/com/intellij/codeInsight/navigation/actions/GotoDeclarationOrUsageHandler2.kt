@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
@@ -37,7 +37,7 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration")
-    if (navigateToLookupItem(project, editor, file)) {
+    if (navigateToLookupItem(project)) {
       return
     }
     if (EditorUtil.isCaretInVirtualSpace(editor)) {
@@ -61,7 +61,7 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
       null -> notifyNowhereToGo(project, editor, file, offset)
       is GTDUActionResult.GTD -> {
         GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
-        gotoDeclaration(editor, file, actionResult.gtdActionResult)
+        gotoDeclaration(project, editor, actionResult.navigationActionResult)
       }
       is GTDUActionResult.SU -> {
         GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
@@ -77,7 +77,14 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
       .add(CommonDataKeys.EDITOR, editor)
       .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor.contentComponent)
       .build()
-    showUsages(project, dataContext, searchTargets)
+    try {
+      showUsages(project, dataContext, searchTargets)
+    }
+    catch (e: IndexNotReadyException) {
+      DumbService.getInstance(project).showDumbModeNotification(
+        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update")
+      )
+    }
   }
 
   @TestOnly

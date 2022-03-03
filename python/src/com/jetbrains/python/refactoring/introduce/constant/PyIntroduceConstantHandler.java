@@ -67,7 +67,7 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
     assert containingFile instanceof PyFile;
     PsiElement initialPosition = AddImportHelper.getFileInsertPosition((PyFile)containingFile);
 
-    List<PsiElement> sameFileRefs = collectReferencedDefinitionsInSameFile(operation);
+    List<PsiElement> sameFileRefs = collectReferencedDefinitionsInSameFile(operation.getElement(), operation.getFile());
     PsiElement maxPosition = getLowermostTopLevelStatement(sameFileRefs);
 
     if (maxPosition == null) {
@@ -102,39 +102,12 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
     Editor editor = operation.getEditor();
     if (editor == null) return false;
 
-    List<PsiElement> sameFileRefs = collectReferencedDefinitionsInSameFile(operation);
+    List<PsiElement> sameFileRefs = collectReferencedDefinitionsInSameFile(operation.getElement(), operation.getFile());
     if (!ContainerUtil.all(sameFileRefs, it -> PyUtil.isTopLevel(it))) return false;
     PsiElement maxPosition = getLowermostTopLevelStatement(sameFileRefs);
     if (maxPosition == null) return true;
     return PsiUtilCore.compareElementsByPosition(maxPosition, selectionElement) <= 0 &&
            !PsiTreeUtil.isAncestor(maxPosition, selectionElement, false);
-  }
-
-  private static @NotNull List<PsiElement> collectReferencedDefinitionsInSameFile(@NotNull IntroduceOperation operation) {
-    PsiElement selectionElement = getOriginalSelectionCoveringElement(operation.getElement());
-    TextRange textRange = getTextRangeForOperationElement(operation.getElement());
-
-    return StreamEx.of(PsiTreeUtil.collectElementsOfType(selectionElement, PyReferenceExpression.class))
-      .filter(it -> textRange.contains(it.getTextRange()))
-      .filter(ref -> !ref.isQualified())
-      .flatMap(expr -> PyResolveUtil.resolveLocally(expr).stream())
-      .filter(it -> it != null && it.getContainingFile() == operation.getFile())
-      .toList();
-  }
-
-  private static @NotNull TextRange getTextRangeForOperationElement(@NotNull PsiElement operationElement) {
-    var userData = operationElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
-    if (userData == null || userData.first == null || userData.second == null) {
-      return operationElement.getTextRange();
-    }
-    else {
-      return userData.second.shiftRight(userData.first.getTextOffset());
-    }
-  }
-
-  private static @NotNull PsiElement getOriginalSelectionCoveringElement(@NotNull PsiElement operationElement) {
-    var userData = operationElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
-    return userData == null ? operationElement : userData.first;
   }
 
   private static @Nullable PsiElement getLowermostTopLevelStatement(@NotNull List<PsiElement> elements) {

@@ -53,20 +53,17 @@ public final class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpress
     });
 
     PsiManager psiManager = PsiManager.getInstance(project);
-    psiManager.startBatchFilesProcessingMode();
-    try {
+    psiManager.runInBatchFilesMode(() -> {
       for (Map.Entry<VirtualFile, int[]> entry : fileOffsets.entrySet()) {
         VirtualFile file = entry.getKey();
         int[] offsets = entry.getValue();
         ProgressManager.checkCanceled();
         if (!processFile(file, offsets, psiManager, targetMethod, consumer, dumbService)) {
-          return;
+          return null;
         }
       }
-    }
-    finally {
-      psiManager.finishBatchFilesProcessingMode();
-    }
+      return null;
+    });
   }
 
   private static boolean processFile(VirtualFile file,

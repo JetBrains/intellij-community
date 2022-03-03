@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -525,7 +525,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static void logJavacCall(ModuleChunk chunk, Iterable<? extends String> options, final String mode) {
+  private static void logJavacCall(ModuleChunk chunk, Iterable<String> options, final String mode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug((Iterators.contains(options, PROC_ONLY_OPTION)? "Running processors for chunk" : "Compiling chunk") + " [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\", mode=" + mode);
     }

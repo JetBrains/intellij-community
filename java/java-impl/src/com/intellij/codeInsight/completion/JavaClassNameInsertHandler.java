@@ -23,6 +23,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -230,7 +231,14 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
   static boolean isArrayTypeExpected(PsiExpression expr) {
     return ContainerUtil.exists(ExpectedTypesProvider.getExpectedTypes(expr, true),
-                                info -> info.getType() instanceof PsiArrayType);
+                                info -> {
+                                  if (info.getType() instanceof PsiArrayType) {
+                                    PsiMethod method = info.getCalledMethod();
+                                    return method == null || !method.isVarArgs() || !(expr.getParent() instanceof PsiExpressionList) ||
+                                           MethodCallUtils.getParameterForArgument(expr) != null;
+                                  }
+                                  return false;
+                                });
   }
 
   private static boolean insertingAnnotation(InsertionContext context, LookupElement item) {

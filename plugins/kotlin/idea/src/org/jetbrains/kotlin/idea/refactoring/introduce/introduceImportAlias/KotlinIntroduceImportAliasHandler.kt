@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.search.fileScope
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
@@ -91,14 +92,16 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
         }
         val newName = suggestionsName.first()
         suggestedImportAliasNames = suggestionsName
-        val newDirective = ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName))
+        project.executeWriteCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
+            val newDirective = ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName))
 
-        replaceUsages(usages, newName)
-        cleanImport(file, fqName)
+            replaceUsages(usages, newName)
+            cleanImport(file, fqName)
 
-        if (elementInImportDirective) editor.moveCaret(newDirective.alias?.nameIdentifier?.textOffset ?: newDirective.endOffset)
+            if (elementInImportDirective) editor.moveCaret(newDirective.alias?.nameIdentifier?.textOffset ?: newDirective.endOffset)
 
-        invokeRename(project, editor, newDirective.alias, suggestionsName)
+            invokeRename(project, editor, newDirective.alias, suggestionsName)
+        }
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {

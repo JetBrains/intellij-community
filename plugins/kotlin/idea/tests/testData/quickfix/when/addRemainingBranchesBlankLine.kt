@@ -1,5 +1,5 @@
 // "Add remaining branches" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 sealed class A
 class B : A()

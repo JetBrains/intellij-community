@@ -39,4 +39,6 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
     doTest(); 
   }
   public void testStaticFieldInAnonymous() { doTest(); }
+
+  public void testMutabilityJdk16() { doTest(); }
 }

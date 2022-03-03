@@ -3,12 +3,14 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * The extension helps to provide a custom processing logic for overridden methods.
  * For example, Kotlin has a certain <code>override</code> modifier, while Java has annotation {@link Override}.
  */
+@ApiStatus.Internal
 public interface OverrideMethodsProcessor {
   ExtensionPointName<OverrideMethodsProcessor> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.overrideMethodProcessor");
 

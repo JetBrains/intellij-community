@@ -1,5 +1,5 @@
 // "Change JVM name" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo {
     @JvmName
     fun <caret>bar(foo: List<String>): String {

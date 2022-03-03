@@ -645,6 +645,35 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
+  protected void dumpKeysOnCorruption() {
+    try {
+      force();
+    }
+    catch (Exception e) {
+      // ignore...
+    }
+
+    lockStorageWrite();
+    try {
+      try {
+        LOG.info("Listing corrupted enumerator:");
+        doIterateData((offset, data) -> {
+          LOG.info("Enumerator entry '" + data.toString() + "'");
+          return true;
+        });
+        LOG.info("Listing ended.");
+      }
+      catch (Throwable throwable) {
+        LOG.info(throwable);
+      }
+
+    }
+    finally {
+      unlockStorageWrite();
+    }
+  }
+
+  @Override
   public void close() throws IOException {
     try {
       super.close();

@@ -3,7 +3,6 @@ package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInspection.InspectionEngine;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
@@ -17,6 +16,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.util.PairProcessor;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -29,7 +29,8 @@ public class SSRCodeInsightTest extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
+    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor(),
+                                                                                                        getTestName(false));
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
     myInspection = new SSBasedInspection();
@@ -109,13 +110,11 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     final ToolsImpl tools = profile.getToolsOrNull("SSBasedInspection", myFixture.getProject());
     final SSBasedInspection inspection = (SSBasedInspection)tools.getTool().getTool();
     final PsiFile file = myFixture.getFile();
-    final InspectionManager inspectionManager = InspectionManager.getInstance(myFixture.getProject());
-
     PlatformTestUtil.startPerformanceTest("Chained method call inspection performance", 1500,
-                                          () -> {
-                                            InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(inspection)), file, inspectionManager, true,
-                                                                       new DaemonProgressIndicator());
-                                          }).assertTiming();
+                                          () -> InspectionEngine.inspectEx(
+                                            Collections.singletonList(new LocalInspectionToolWrapper(inspection)), file,
+                                            file.getTextRange(),
+                                            file.getTextRange(), true, false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue())).assertTiming();
   }
 
   private void doTest(final String searchPattern, final String patternName) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -9,10 +9,12 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +39,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     return myToolWindowId;
   }
 
-  public static void ensureToolWindowActionRegistered(@NotNull ToolWindow toolWindow) {
-    ActionManager actionManager = ActionManager.getInstance();
+  public static void ensureToolWindowActionRegistered(@NotNull ToolWindow toolWindow, @NotNull ActionManager actionManager) {
     String actionId = getActionIdForToolWindow(toolWindow.getId());
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
@@ -50,8 +51,9 @@ public class ActivateToolWindowAction extends DumbAwareAction {
 
   public static void unregister(@NotNull String id) {
     String actionId = getActionIdForToolWindow(id);
-    if (ActionManager.getInstance().getAction(actionId) != null) {
-      ActionManager.getInstance().unregisterAction(actionId);
+    ActionManager actionManager = ActionManager.getInstance();
+    if (actionManager.getAction(actionId) != null) {
+      actionManager.unregisterAction(actionId);
     }
   }
 
@@ -93,6 +95,11 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     Icon icon = toolWindow.getIcon();
     if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
       icon = AllIcons.Ide.Notification.InfoEvents;
+    }
+    if (ExperimentalUI.isNewUI() && icon instanceof ScalableIcon) {
+      icon = ((ScalableIcon)icon).scale(16f / icon.getIconWidth());
+      presentation.setIcon(icon);
+      return;
     }
     presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
   }

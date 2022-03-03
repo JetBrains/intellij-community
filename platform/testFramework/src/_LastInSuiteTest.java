@@ -73,7 +73,6 @@ public class _LastInSuiteTest extends TestCase {
     Collection<Language> languages = Language.getRegisteredLanguages();
     Map<String, Language> displayNames = new HashMap<>();
     for (Language language : languages) {
-      System.out.println(language);
       Language prev = displayNames.put(language.getDisplayName(), language);
       if (prev != null) {
         fail(prev + " ("+prev.getClass()+") and " + language +" ("+language.getClass()+") both have identical display name: "+language.getDisplayName());

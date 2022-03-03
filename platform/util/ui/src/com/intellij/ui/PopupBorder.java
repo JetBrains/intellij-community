@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +70,7 @@ public interface PopupBorder extends Border {
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      return myVisible ? JBUI.insets(1) : JBUI.emptyInsets();
+      return myVisible ? JBUI.insets(1) : JBInsets.emptyInsets();
     }
 
     @Override

@@ -55,6 +55,7 @@ The rest of options can be left as they are: they are aimed at professional reve
 - nns (0): allow for not set synthetic attribute (workaround to a compiler bug)
 - uto (1): consider nameless types as java.lang.Object (workaround to a compiler architecture flaw)
 - udv (1): reconstruct variable names from debug information, if present
+- ump (1): reconstruct parameter names from corresponding attributes, if present
 - rer (1): remove empty exception ranges
 - fdi (1): de-inline finally structures
 - mpm (0): maximum allowed processing time per decompiled method, in seconds. 0 means no upper limit

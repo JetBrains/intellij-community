@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -14,7 +12,6 @@ import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
@@ -44,6 +41,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -62,11 +60,9 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration
-import kotlin.time.seconds
 
 @Service(Service.Level.PROJECT)
 internal class PackageSearchProjectService(private val project: Project) : CoroutineScope by project.lifecycleScope {
-
     private val retryFromErrorChannel = Channel<Unit>()
     private val restartChannel = Channel<Unit>()
     val dataProvider = ProjectDataProvider(
@@ -82,14 +78,12 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
     private val installedPackagesStep2LoadingFlow = MutableStateFlow(false)
     private val installedPackagesDifferenceLoadingFlow = MutableStateFlow(false)
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
-    private val availableUpgradesLoadingFlow = MutableStateFlow(false)
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
 
     private val json = Json { prettyPrint = true }
 
-    private val cacheDirectory = project.packageSearchProjectCachesService.projectCacheDirectory
-        .resolve("installedDependencies")
+    private val cacheDirectory = project.packageSearchProjectCachesService.projectCacheDirectory.resolve("installedDependencies")
 
     val isLoadingFlow = combineTransform(
         projectModulesLoadingFlow,
@@ -100,14 +94,13 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         installedPackagesStep2LoadingFlow,
         installedPackagesDifferenceLoadingFlow,
         packageUpgradesLoadingFlow
-    ) { booleans -> emit(booleans.any { it }) }
-        .stateIn(this, SharingStarted.Eagerly, false)
+    ) { booleans -> emit(booleans.any { it }) }.stateIn(this, SharingStarted.Eagerly, false)
 
     private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { isProjectTrusted ->
         if (isProjectTrusted) project.nativeModulesChangesFlow else flowOf(emptyList())
     }
         .replayOnSignals(
-            retryFromErrorChannel.receiveAsFlow().throttle(10.seconds),
+            retryFromErrorChannel.receiveAsFlow().throttle(Duration.seconds(10), true),
             project.moduleChangesSignalFlow,
             restartChannel.receiveAsFlow()
         )
@@ -131,8 +124,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         )
         .shareIn(this, SharingStarted.Eagerly)
 
-    val projectModulesStateFlow = projectModulesSharedFlow
-        .stateIn(this, SharingStarted.Eagerly, emptyList())
+    val projectModulesStateFlow = projectModulesSharedFlow.stateIn(this, SharingStarted.Eagerly, emptyList())
 
     val isAvailable
         get() = projectModulesStateFlow.value.isNotEmpty()
@@ -156,7 +148,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         buildFileChangesFlow.filter { it.isNotEmpty() },
         operationExecutedChannel.consumeAsFlow()
     )
-        .batchAtIntervals(1.seconds)
+        .batchAtIntervals(Duration.seconds(1))
         .map { it.flatMap { it }.distinct() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesChangesFlow",
@@ -199,7 +191,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
-    val dependenciesByModuleStateFlow = projectModulesSharedFlow
+    private val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
             fetchProjectDependencies(it, cacheDirectory, json)
         }
@@ -208,7 +200,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                 installed.parallelUpdatedKeys(changedModules) { it.installedDependencies(cacheDirectory, json) }
             }
             logTrace("installedPackagesStep1LoadingFlow") {
-                "Took ${time} to process diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
+                "Took ${time} to elaborate diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
             }
             result
         }
@@ -219,7 +211,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             retryChannel = retryFromErrorChannel
         )
         .flowOn(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher())
-        .stateIn(this, SharingStarted.Eagerly, emptyMap())
+        .shareIn(this, SharingStarted.Eagerly)
 
     val installedPackagesStateFlow = dependenciesByModuleStateFlow
         .mapLatestTimedWithLoading("installedPackagesStep2LoadingFlow", installedPackagesStep2LoadingFlow) {
@@ -239,24 +231,14 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         .flowOn(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher())
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
-    val packageUpgradesStateFlow = combine(
-        installedPackagesStateFlow,
-        moduleModelsStateFlow,
-        knownRepositoriesFlow
-    ) { installedPackages, moduleModels, repos ->
-        availableUpgradesLoadingFlow.whileLoading {
-            val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
-            val nativeModulesMap = moduleModels.associateBy { it.projectModule }
-
-            val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
-                computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
+    val packageUpgradesStateFlow = installedPackagesStateFlow
+        .mapLatestTimedWithLoading("packageUpgradesStateFlow", packageUpgradesLoadingFlow) {
+            coroutineScope {
+                val stableUpdates = async { computePackageUpgrades(it, true, packageVersionNormalizer) }
+                val allUpdates = async { computePackageUpgrades(it, false, packageVersionNormalizer) }
+                PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
             }
-
-            val stableUpdates = async { getUpgrades(true) }
-            val allUpdates = async { getUpgrades(false) }
-            PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
-        }.value
-    }
+        }
         .catchAndLog(
             context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
             message = "Error while evaluating packages upgrade candidates",
@@ -275,7 +257,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         var controller: BackgroundLoadingBarController? = null
 
         if (PluginEnvironment.isNonModalLoadingEnabled) {
-            isLoadingFlow.throttle(1.seconds)
+            isLoadingFlow.throttle(Duration.seconds(1), true)
                 .onEach { controller?.clear() }
                 .filter { it }
                 .onEach {

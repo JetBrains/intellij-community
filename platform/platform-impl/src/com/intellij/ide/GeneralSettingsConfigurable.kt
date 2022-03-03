@@ -11,13 +11,11 @@ import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.IdeUICustomization
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import javax.swing.JComponent
 
 // @formatter:off
 private val model = GeneralSettings.getInstance()
@@ -63,61 +61,57 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
         checkBox(myConfirmExit)
       }
 
-      row {
-        cell {
-          label(IdeBundle.message("group.settings.process.tab.close"))
-          buttonGroup(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation) {
-            radioButton(IdeBundle.message("radio.process.close.terminate"), GeneralSettings.ProcessCloseConfirmation.TERMINATE)
-            radioButton(IdeBundle.message("radio.process.close.disconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT).withLargeLeftGap()
-            radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK).withLargeLeftGap()
-          }
+      buttonsGroup {
+        row(IdeBundle.message("group.settings.process.tab.close")) {
+          radioButton(IdeBundle.message("radio.process.close.terminate"), GeneralSettings.ProcessCloseConfirmation.TERMINATE)
+          radioButton(IdeBundle.message("radio.process.close.disconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT)
+          radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK)
         }
-      }.largeGapAfter()
+      }.bind(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation)
 
-      titledRow(IdeUICustomization.getInstance().projectMessage("tab.title.project")) {
+      group(IdeUICustomization.getInstance().projectMessage("tab.title.project")) {
         row {
           checkBox(myChkReopenLastProject)
         }
-        row {
-          cell(isFullWidth = true) {
-            label(IdeUICustomization.getInstance().projectMessage("label.open.project.in"))
-            buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
-              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
-              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW).withLargeLeftGap()
-              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"), GeneralSettings.OPEN_PROJECT_ASK).withLargeLeftGap()
-              if (PlatformUtils.isDataSpell()) {
-                radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH).withLargeLeftGap()
-              }
+        buttonsGroup {
+          row(IdeUICustomization.getInstance().projectMessage("label.open.project.in")) {
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"),
+                        GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"),
+                        GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"),
+                        GeneralSettings.OPEN_PROJECT_ASK)
+            if (PlatformUtils.isDataSpell()) {
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"),
+                          GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH)
             }
-          }
-        }
+          }.layout(RowLayout.INDEPENDENT)
+        }.bind(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject)
 
         if (PlatformUtils.isDataSpell()) {
           row {
             checkBox(mySkipWelcomeScreen)
           }
         }
-        nestedPanel {
-          row {
-            label(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory"))
-            textFieldWithBrowseButton(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory,
-                                      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                                        .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
-              .growPolicy(GrowPolicy.MEDIUM_TEXT)
-              .comment(IdeBundle.message("settings.general.directory.preselected"), 80, true)
-            label("").constraints(CCFlags.pushX)
-          }
+        row(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory")) {
+          textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                                      .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
+            .bindText(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory)
+            .columns(COLUMNS_MEDIUM)
+            .comment(IdeBundle.message("settings.general.directory.preselected"), 80)
         }
       }
 
-      titledRow(IdeBundle.message("settings.general.synchronization")) {
+      group(IdeBundle.message("settings.general.synchronization")) {
         row {
-          cell(isFullWidth = true) {
-            val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive)
-            intTextField(model::getInactiveTimeout, model::setInactiveTimeout, columns = 4).enableIf(autoSaveCheckbox.selected)
-            @Suppress("DialogTitleCapitalization")
-            label(IdeBundle.message("label.inactive.timeout.sec"))
-          }
+          val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive).gap(RightGap.SMALL)
+          intTextField(GeneralSettings.SAVE_FILES_AFTER_IDLE_SEC.asRange())
+            .bindIntText(model::getInactiveTimeout, model::setInactiveTimeout)
+            .columns(4)
+            .enabledIf(autoSaveCheckbox.selected)
+            .gap(RightGap.SMALL)
+          @Suppress("DialogTitleCapitalization")
+          label(IdeBundle.message("label.inactive.timeout.sec"))
         }
         row {
           checkBox(myChkSaveOnFrameDeactivation)
@@ -128,21 +122,16 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
         row {
           checkBox(myChkSyncOnFrameActivation)
         }
-        createNoteOrCommentRow(createAutosaveComment())
+        row {
+          comment(IdeBundle.message("label.autosave.comment")) {
+            HelpManager.getInstance().invokeHelp("autosave")
+          }
+        }.topGap(TopGap.SMALL)
       }
 
       for (configurable in configurables) {
-        appendDslConfigurableRow(configurable)
+        appendDslConfigurable(configurable)
       }
-    }
-  }
-
-  private fun createAutosaveComment(): JComponent {
-    return HyperlinkLabel().apply {
-      setTextWithHyperlink(IdeBundle.message("label.autosave.comment"))
-      foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, this)
-      addHyperlinkListener { HelpManager.getInstance().invokeHelp("autosave") }
     }
   }
 

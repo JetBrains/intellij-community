@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Unresolved reference: unresolvedFun
 // INTENTION_TEXT: "Replace with 'map{}.map{}.firstOrNull{}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().map{}.map{}.firstOrNull{}'"

@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,9 +50,6 @@ public final class EditorFragmentComponent extends JPanel {
   }
 
   private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
-    boolean newRendering = editor instanceof EditorImpl;
-    int savedScrollOffset = newRendering ? 0 : editor.getScrollingModel().getHorizontalScrollOffset();
-
     FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
     if (!showFolding) {
@@ -68,23 +64,20 @@ public final class EditorFragmentComponent extends JPanel {
     try {
       Document doc = editor.getDocument();
       int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(Math.max(0, endLine - 1)) : doc.getTextLength();
-      int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
+      int widthAdjustment = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
       textImageWidth = Math.min(
         editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
         getWidthLimit(editor)
       );
 
-      Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
-      Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
-      int y1 = p1.y;
-      int y2 = p2.y;
-      textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
+      int startVisualLine = editor.logicalToVisualPosition(new LogicalPosition(startLine, 0)).line;
+      int endVisualLine = editor.logicalToVisualPosition(new LogicalPosition(Math.max(endLine, startLine + 1), 0)).line;
+      int y1 = editor.visualLineToY(startVisualLine);
+      // as endLine is exclusive (not shown), we should also exclude block inlays associated with it
+      int y2 = editor.visualLineToY(endVisualLine) - EditorUtil.getInlaysHeight(editor, endVisualLine, true);
+      textImageHeight = y2 <= y1 ? editor.getLineHeight() : y2 - y1;
       LOG.assertTrue(textImageHeight > 0,
-                     "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
-
-      if (savedScrollOffset > 0) {
-        editor.getScrollingModel().scrollHorizontally(0);
-      }
+                     "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; y1:" + y1 + "; y2:" + y2);
 
       textImage = UIUtil.createImage(editor.getContentComponent(), textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
       Graphics textGraphics = textImage.getGraphics();
@@ -122,10 +115,6 @@ public final class EditorFragmentComponent extends JPanel {
       if (!showFolding) {
         foldingModel.setFoldingEnabled(isFoldingEnabled);
       }
-    }
-
-    if (savedScrollOffset > 0) {
-      editor.getScrollingModel().scrollHorizontally(savedScrollOffset);
     }
 
     JComponent component = new JComponent() {

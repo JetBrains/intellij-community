@@ -18,7 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ResourceUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import kotlin.Pair;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -32,9 +32,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -134,47 +131,16 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     identifierTable = processor.getIdentifierTable();
   }
 
-  static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter, @NotNull BiConsumer<? super String, ? super Element> consumer) {
+  static void processSearchableOptions(@NotNull Predicate<String> fileNameFilter, @NotNull BiConsumer<String, Element> consumer) {
     Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-    MethodType methodType = MethodType.methodType(void.class, String.class, Predicate.class, BiConsumer.class);
-    MethodHandles.Lookup lookup = MethodHandles.lookup();
-
-    Map<Class<?>, MethodHandle> handleCache = new HashMap<>();
-
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
-      ClassLoader classLoader = plugin.getClassLoader();
-      if (!visited.add(classLoader)) {
-        continue;
-      }
-
-      MethodHandle methodHandle;
-      Class<?> loaderClass = classLoader.getClass();
-      if (loaderClass.isAnonymousClass() || loaderClass.isMemberClass()) {
-        loaderClass = loaderClass.getSuperclass();
-      }
-
-      try {
-        methodHandle = handleCache.computeIfAbsent(loaderClass, aClass -> {
-          try {
-            return lookup.findVirtual(aClass, "processResources", methodType);
-          }
-          catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-          }
-        });
-      }
-      catch (RuntimeException e) {
-        if (e.getCause() instanceof NoSuchMethodException) {
-          LOG.error(loaderClass + " is not supported", e);
-        }
-        else {
-          LOG.error(e);
-        }
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPluginSet().getRawListOfEnabledModules()) {
+      ClassLoader classLoader = plugin.getPluginClassLoader();
+      if (!(classLoader instanceof UrlClassLoader) || !visited.add(classLoader)) {
         continue;
       }
 
       try {
-        methodHandle.invoke(classLoader, "search", fileNameFilter, (BiConsumer<String, InputStream>)(name, stream) -> {
+        ((UrlClassLoader)classLoader).processResources("search", fileNameFilter, (name, stream) -> {
           try {
             consumer.accept(name, JDOMUtil.load(stream));
           }
@@ -183,8 +149,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
           }
         });
       }
-      catch (Throwable e) {
-        throw new RuntimeException("Cannot search (fileNameFilter=" + fileNameFilter + ", plugin=" + plugin + ")", e);
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
   }
@@ -241,9 +207,10 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
                                                      @Nullable Collection<Configurable> configurables,
                                                      @NotNull String option,
                                                      @Nullable Project project) {
-    if (ContainerUtil.isEmpty(configurables)) {
+    if (configurables == null || configurables.isEmpty()) {
       configurables = null;
     }
+
     Collection<Configurable> effectiveConfigurables;
     if (configurables == null) {
       effectiveConfigurables = new LinkedHashSet<>();
@@ -256,15 +223,17 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       effectiveConfigurables = configurables;
     }
 
-    String optionToCheck = StringUtil.toLowerCase(option.trim());
+    String optionToCheck = Strings.toLowerCase(option.trim());
     Set<String> options = getProcessedWordsWithoutStemming(optionToCheck);
 
     Set<Configurable> nameHits = new LinkedHashSet<>();
     Set<Configurable> nameFullHits = new LinkedHashSet<>();
 
     for (Configurable each : effectiveConfigurables) {
-      if (each.getDisplayName() == null) continue;
-      final String displayName = StringUtil.toLowerCase(each.getDisplayName());
+      if (each.getDisplayName() == null) {
+        continue;
+      }
+      final String displayName = Strings.toLowerCase(each.getDisplayName());
       final List<String> allWords = StringUtil.getWordsIn(displayName);
       if (displayName.contains(optionToCheck)) {
         nameFullHits.add(each);

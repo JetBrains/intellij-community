@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tower.NewVariableAsFunctionResolvedCallImpl
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
@@ -66,15 +67,24 @@ class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
                 return
             }
 
-            function.equalsToken?.apply {
-                // TODO: This should be done by formatter but there is no rule for this now
-                if (prevSibling.isSpace() && nextSibling.isSpace()) {
-                    prevSibling.delete()
+            function.replaceBlockExpressionWithLambdaBody(function.bodyExpression?.safeAs<KtLambdaExpression>()?.bodyExpression)
+        }
+    }
+
+    companion object {
+        fun KtDeclarationWithBody.replaceBlockExpressionWithLambdaBody(lambdaBody: KtBlockExpression?) {
+            equalsToken?.let { token ->
+                val ktPsiFactory = KtPsiFactory(project)
+                val lambdaBodyRange = lambdaBody?.allChildren
+                val newBlockBody: KtBlockExpression = if (lambdaBodyRange?.isEmpty == false) {
+                    ktPsiFactory.createDeclarationByPattern<KtNamedFunction>("fun foo() {$0}", lambdaBodyRange).bodyBlockExpression!!
+                } else {
+                    ktPsiFactory.createBlock("")
                 }
-                delete()
+
+                bodyExpression?.delete()
+                token.replace(newBlockBody)
             }
         }
-
-        private fun PsiElement.isSpace() = text == " "
     }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,9 +115,23 @@ public final class BuildRunner {
     myForceCleanCaches = forceCleanCaches;
   }
 
+  /**
+   * @deprecated Use {@link #runBuild(ProjectDescriptor, CanceledStatus, MessageHandler, BuildType, List, boolean)} instead.
+   * constantSearch parameter is ignored
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public void runBuild(ProjectDescriptor pd,
                        CanceledStatus cs,
                        @Nullable Callbacks.ConstantAffectionResolver constantSearch,
+                       MessageHandler msgHandler,
+                       BuildType buildType,
+                       List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
+    runBuild(pd, cs, msgHandler, buildType, scopes, includeDependenciesToScope);
+  }
+
+  public void runBuild(ProjectDescriptor pd,
+                       CanceledStatus cs,
                        MessageHandler msgHandler,
                        BuildType buildType,
                        List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {

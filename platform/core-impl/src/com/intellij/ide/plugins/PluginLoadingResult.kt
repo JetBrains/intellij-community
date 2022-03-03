@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet")
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
 
 // https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
@@ -23,21 +24,17 @@ import java.util.function.Supplier
 class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<String?>>,
                           @JvmField val productBuildNumber: Supplier<BuildNumber>,
                           private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
-  @JvmField
-  val incompletePlugins = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField val incompletePlugins = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
   private val plugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
   // only read is concurrent, write from the only thread
-  @JvmField
-  val idMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
-  @JvmField
-  var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
+  @JvmField val idMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
   private val pluginErrors = ConcurrentHashMap<PluginId, PluginLoadingError>()
-  private val globalErrors = Collections.synchronizedList(ArrayList<Supplier<String>>())
+  private val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
 
   @VisibleForTesting
-  @JvmField
-  val shadowedBundledIds = HashSet<PluginId>()
+  @JvmField val shadowedBundledIds = HashSet<PluginId>()
 
   // result, after calling finishLoading
   private var enabledPlugins: List<IdeaPluginDescriptorImpl>? = null
@@ -68,13 +65,9 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     return (brokenPluginVersions.get(descriptor.pluginId) ?: return false).contains(descriptor.version)
   }
 
-  internal fun getPluginErrors(): Map<PluginId, PluginLoadingError> = Collections.unmodifiableMap(pluginErrors)
+  internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = HashMap(pluginErrors)
 
-  fun getGlobalErrors(): List<Supplier<String>> {
-    synchronized(globalErrors) {
-      return ArrayList(globalErrors)
-    }
-  }
+  internal fun copyGlobalErrors(): List<Supplier<String>> = ArrayList(globalErrors)
 
   internal fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
     // do not report if some compatible plugin were already added

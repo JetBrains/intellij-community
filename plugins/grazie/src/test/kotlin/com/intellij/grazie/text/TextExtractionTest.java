@@ -22,7 +22,7 @@ import one.util.streamex.IntStreamEx;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraphImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,10 +31,6 @@ import java.util.Set;
 import static com.intellij.grazie.text.TextContentTest.unknownOffsets;
 
 public class TextExtractionTest extends BasePlatformTestCase {
-  public void testFindPsiAtLastOffset() {
-    assertInstanceOf(extractText("a.txt", "foo", 1).findPsiElementAt(3), PsiPlainText.class);
-  }
-
   public void testMarkdownInlineLink() {
     TextContent extracted = extractText("a.md", "* list [item](http://x) with a local link", 3);
     assertEquals("list item with a local link", unknownOffsets(extracted));
@@ -290,7 +286,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
       @Override
       protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
                                                              @NotNull Set<TextContent.TextDomain> allowedDomains) {
-        if (element instanceof MarkdownParagraphImpl) {
+        if (element instanceof MarkdownParagraph) {
           count++;
         }
         return delegate.buildTextContents(element, allowedDomains);

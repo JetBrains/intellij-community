@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
@@ -34,6 +33,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.idea.maven.utils.ManifestBuilder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -41,8 +41,10 @@ import org.jetbrains.jps.maven.model.impl.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,12 +69,14 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     }
 
     final BuildManager buildManager = BuildManager.getInstance();
-    final File projectSystemDir = buildManager.getProjectSystemDirectory(project);
-    if (projectSystemDir == null) {
+    File projectSystemIoFile = buildManager.getProjectSystemDirectory(project);
+    if (projectSystemIoFile == null) {
       return;
     }
-    Function<String, String> transformer = createValueTransformer(project);
-    final File mavenConfigFile = new File(projectSystemDir, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
+
+    final Path projectSystemDir = projectSystemIoFile.toPath();
+    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
+    final Path mavenConfigFile = projectSystemDir.resolve(MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
 
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
@@ -81,11 +85,11 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     final int mavenConfigCrc = mavenProjectsManager.getFilterConfigCrc(fileIndex);
     final int crc = mavenConfigCrc + projectRootModificationCount;
 
-    final File crcFile = new File(mavenConfigFile.getParent(), "configuration.crc");
+    final Path crcFile = mavenConfigFile.resolveSibling("configuration.crc");
 
     if (!force) {
       try {
-        DataInputStream crcInput = new DataInputStream(new FileInputStream(crcFile));
+        DataInputStream crcInput = new DataInputStream(Files.newInputStream(crcFile, StandardOpenOption.READ));
         try {
           final int lastCrc = crcInput.readInt();
           if (lastCrc == crc) return; // Project had not change since last config generation.
@@ -122,13 +126,13 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
       if (parentId != null) {
         resourceConfig.parentId = new MavenIdBean(parentId.getGroupId(), parentId.getArtifactId(), parentId.getVersion());
       }
-      resourceConfig.directory = transformer.apply(FileUtil.toSystemIndependentName(mavenProject.getDirectory()));
+      resourceConfig.directory = transformer.toRemotePathOrSelf(FileUtil.toSystemIndependentName(mavenProject.getDirectory()));
       resourceConfig.delimitersPattern = MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern();
       for (Map.Entry<String, String> entry : mavenProject.getModelMap().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
         if (value != null) {
-          resourceConfig.modelMap.put(key, transformer.apply(value));
+          resourceConfig.modelMap.put(key, transformer.toRemotePathOrSelf(value));
         }
       }
 
@@ -136,21 +140,21 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
       Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
       resourceConfig.outputDirectory =
-        transformer.apply(getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "resources"));
+        transformer.toRemotePathOrSelf(getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "resources"));
       resourceConfig.testOutputDirectory =
-        transformer.apply(getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "testResources"));
+        transformer.toRemotePathOrSelf(getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "testResources"));
 
       addResources(transformer, resourceConfig.resources, mavenProject.getResources());
       addResources(transformer, resourceConfig.testResources, mavenProject.getTestResources());
 
       addWebResources(transformer, module, projectConfig, mavenProject);
-      addEjbClientArtifactConfiguration(transformer, module, projectConfig, mavenProject);
+      addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
 
       final Properties properties = getFilteringProperties(mavenProject, mavenProjectsManager);
       for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
-        resourceConfig.properties.put((String)propEntry.getKey(), transformer.apply((String)propEntry.getValue()));
+        resourceConfig.properties.put((String)propEntry.getKey(), transformer.toRemotePathOrSelf((String)propEntry.getValue()));
       }
 
       resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", null);
@@ -175,10 +179,10 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
       if (!project.isDefault()) {
         buildManager.clearState(project);
       }
-      FileUtil.createIfDoesntExist(mavenConfigFile);
       try {
-        JdomKt.write(element, mavenConfigFile.toPath());
-        DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
+        JdomKt.write(element, mavenConfigFile);
+        DataOutputStream crcOutput = new DataOutputStream(
+          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)));
         try {
           crcOutput.writeInt(crc);
         }
@@ -191,17 +195,6 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
         throw new RuntimeException(e);
       }
     });
-  }
-
-  private static Function<String, String> createValueTransformer(Project project) {
-    WslPath path = WslPath.parseWindowsUncPath(project.getBasePath());
-    if (path == null) return Function.identity();
-    return s -> {
-      if (s == null) return null;
-      WslPath wslPath = WslPath.parseWindowsUncPath(s);
-      if (wslPath == null) return s;
-      return wslPath.getLinuxPath();
-    };
   }
 
   private static void addEarModelMapEntries(@NotNull MavenProject mavenProject, @NotNull Map<String, String> modelMap) {
@@ -295,7 +288,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     return properties;
   }
 
-  private static void addResources(Function<String, String> transformer,
+  private static void addResources(RemotePathTransformerFactory.Transformer transformer,
                                    final List<ResourceRootConfiguration> container,
                                    @NotNull Collection<MavenResource> resources) {
 
@@ -306,9 +299,9 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
       }
 
       final ResourceRootConfiguration props = new ResourceRootConfiguration();
-      props.directory = transformer.apply(FileUtil.toSystemIndependentName(dir));
+      props.directory = transformer.toRemotePathOrSelf(FileUtil.toSystemIndependentName(dir));
 
-      final String target = transformer.apply(resource.getTargetPath());
+      final String target = transformer.toRemotePathOrSelf(resource.getTargetPath());
       props.targetPath = target != null ? FileUtil.toSystemIndependentName(target) : null;
 
       props.isFiltered = resource.isFiltered();
@@ -324,7 +317,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     }
   }
 
-  private static void addWebResources(Function<String, String> transformer,
+  private static void addWebResources(RemotePathTransformerFactory.Transformer transformer,
                                       @NotNull Module module,
                                       MavenProjectConfiguration projectCfg,
                                       MavenProject mavenProject) {
@@ -356,7 +349,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
       warSourceDirectory = mavenProject.getDirectory() + '/' + warSourceDirectory;
     }
     artifactResourceCfg.warSourceDirectory =
-      transformer.apply(FileUtil.toSystemIndependentName(StringUtil.trimEnd(warSourceDirectory, '/')));
+      transformer.toRemotePathOrSelf(FileUtil.toSystemIndependentName(StringUtil.trimEnd(warSourceDirectory, '/')));
 
     addSplitAndTrimmed(artifactResourceCfg.warSourceIncludes, warCfg.getChildTextTrim("warSourceIncludes"));
     addSplitAndTrimmed(artifactResourceCfg.warSourceExcludes, warCfg.getChildTextTrim("warSourceExcludes"));
@@ -371,7 +364,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
           directory = mavenProject.getDirectory() + '/' + directory;
         }
 
-        r.directory = transformer.apply(directory);
+        r.directory = transformer.toRemotePathOrSelf(directory);
         r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
 
         r.targetPath = resource.getChildTextTrim("targetPath");
@@ -385,7 +378,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
     if (filterWebXml) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
-      r.directory = transformer.apply(warSourceDirectory);
+      r.directory = transformer.toRemotePathOrSelf(warSourceDirectory);
       r.includes = Collections.singleton("WEB-INF/web.xml");
       r.isFiltered = true;
       r.targetPath = "";
@@ -416,8 +409,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     }
   }
 
-  private static void addEjbClientArtifactConfiguration(Function<String, String> transformer,
-                                                        Module module,
+  private static void addEjbClientArtifactConfiguration(Module module,
                                                         MavenProjectConfiguration projectCfg,
                                                         MavenProject mavenProject) {
     Element pluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-ejb-plugin");
@@ -453,7 +445,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     }
   }
 
-  private static void addNonMavenResources(Function<String, String> transformer,
+  private static void addNonMavenResources(RemotePathTransformerFactory.Transformer transformer,
                                            @NotNull MavenProjectConfiguration projectCfg,
                                            @NotNull MavenProjectsManager mavenProjectsManager,
                                            @NotNull Project project) {
@@ -492,7 +484,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
             List<ResourceRootConfiguration> resourcesList = folder.isTestSource() ? configuration.testResources : configuration.resources;
 
             final ResourceRootConfiguration cfg = new ResourceRootConfiguration();
-            cfg.directory = transformer.apply(FileUtil.toSystemIndependentName(file.getPath()));
+            cfg.directory = transformer.toRemotePathOrSelf(FileUtil.toSystemIndependentName(file.getPath()));
 
             CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
             if (compilerModuleExtension == null) continue;
@@ -502,7 +494,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
                                        ? compilerModuleExtension.getCompilerOutputUrlForTests()
                                        : compilerModuleExtension.getCompilerOutputUrl();
 
-            cfg.targetPath = transformer.apply(VfsUtilCore.urlToPath(compilerOutputUrl));
+            cfg.targetPath = transformer.toRemotePathOrSelf(VfsUtilCore.urlToPath(compilerOutputUrl));
 
             convertIdeaExcludesToMavenExcludes(cfg, (CompilerConfigurationImpl)compilerConfiguration);
 

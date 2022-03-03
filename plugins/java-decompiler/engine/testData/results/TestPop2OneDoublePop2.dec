@@ -2,7 +2,7 @@ package pkg;
 
 public class TestPop2OneDoublePop2 {
    public static void main(String... var0) {
-      double var10002 = 3.14159265358D;// 24
+      double var10002 = 3.14159265358;// 24
       System.out.println(1234567890);// 22 23 26
    }// 27
 }

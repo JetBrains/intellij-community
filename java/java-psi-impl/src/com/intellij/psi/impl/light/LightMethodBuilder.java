@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -29,13 +29,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @author peter
  */
 public class LightMethodBuilder extends LightElement implements PsiMethod, OriginInfoAwareElement {
   private final String myName;
-  private Computable<? extends PsiType> myReturnType;
+  private Supplier<? extends PsiType> myReturnType;
   private final PsiModifierList myModifierList;
   private final PsiParameterList myParameterList;
   private final PsiTypeParameterList myTypeParameterList;
@@ -167,10 +168,15 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
 
   @Override
   public PsiType getReturnType() {
-    return myReturnType == null ? null : myReturnType.compute();
+    return myReturnType == null ? null : myReturnType.get();
   }
 
   public LightMethodBuilder setMethodReturnType(Computable<? extends PsiType> returnType) {
+    myReturnType = () -> returnType.compute();
+    return this;
+  }
+
+  public LightMethodBuilder setMethodReturnType(Supplier<? extends PsiType> returnType) {
     myReturnType = returnType;
     return this;
   }

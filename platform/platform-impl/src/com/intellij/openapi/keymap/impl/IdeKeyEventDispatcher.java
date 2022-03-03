@@ -15,7 +15,10 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
@@ -581,13 +584,8 @@ public final class IdeKeyEventDispatcher {
   };
 
   public boolean processAction(@NotNull InputEvent e, @NotNull ActionProcessor processor) {
-    boolean result = processAction(
-      e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
-      new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
-    if (!result) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
-    }
-    return result;
+    return processAction(e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
+                         new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
   }
 
   boolean processAction(@NotNull InputEvent e,
@@ -620,8 +618,7 @@ public final class IdeKeyEventDispatcher {
 
       if (!myContext.getSecondStrokeActions().contains(chosen.first)) {
         AnActionEvent actionEvent = chosen.second.withDataContext(wrappedContext); // use not frozen data context
-        if (Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") &&
-            !ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
+        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
           LOG.warn("Action '" + actionEvent.getPresentation().getText() + "' (" + chosen.first.getClass() + ") " +
                    "has become disabled in `beforeActionPerformedUpdate` right after successful `update`");
           logTimeMillis(chosen.third, chosen.first);
@@ -649,7 +646,6 @@ public final class IdeKeyEventDispatcher {
       waitSecondStroke(chosen.first, chosen.second.getPresentation());
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
       showDumbModeBalloonLater(project, getActionUnavailableMessage(wouldBeEnabledIfNotDumb), () -> {
         //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() ->
@@ -702,9 +698,7 @@ public final class IdeKeyEventDispatcher {
     ActionUtil.performDumbAwareWithCallbacks(action, actionEvent, () -> {
       LOG.assertTrue(eventCount == IdeEventQueue.getInstance().getEventCount(),
                      "Event counts do not match: " + eventCount + " != " + IdeEventQueue.getInstance().getEventCount());
-      try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
-        processor.performAction(e, action, actionEvent);
-      }
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> processor.performAction(e, action, actionEvent));
     });
   }
 

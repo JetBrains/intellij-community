@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -11,10 +12,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PerformanceTestInfo {
-  private final ThrowableRunnable<?> test; // runnable to measure
+  private final ThrowableComputable<Integer, ?> test; // runnable to measure; returns actual input size
   private final int expectedMs;           // millis the test is expected to run
+  private final int expectedInputSize;    // size of input the test is expected to process;
   private ThrowableRunnable<?> setup;      // to run before each test
   private int usedReferenceCpuCores = 1;
   private int maxRetries = 4;             // number of retries if performance failed
@@ -28,10 +31,12 @@ public class PerformanceTestInfo {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
   }
 
-  PerformanceTestInfo(@NotNull ThrowableRunnable<?> test, int expectedMs, @NotNull String what) {
+  PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedMs, int expectedInputSize, @NotNull String what) {
     this.test = test;
     this.expectedMs = expectedMs;
+    this.expectedInputSize = expectedInputSize;
     assert expectedMs > 0 : "Expected must be > 0. Was: " + expectedMs;
+    assert expectedInputSize > 0 : "Expected input size must be > 0. Was: " + expectedInputSize;
     this.what = what;
   }
 
@@ -99,29 +104,29 @@ public class PerformanceTestInfo {
     }
     int initialMaxRetries = maxRetries;
 
-    boolean testPassed = false;
-    String logMessage;
-
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       CpuUsageData data;
+      AtomicInteger actualInputSize;
       try {
         if (setup != null) setup.run();
         PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
-        data = CpuUsageData.measureCpuUsage(test);
+        actualInputSize = new AtomicInteger(expectedInputSize);
+        data = CpuUsageData.measureCpuUsage(() -> {
+          actualInputSize.set(test.compute());
+        });
       }
       catch (Throwable throwable) {
         ExceptionUtil.rethrowUnchecked(throwable);
         throw new RuntimeException(throwable);
       }
 
-      int expectedOnMyMachine = getExpectedTimeOnThisMachine();
+      int expectedOnMyMachine = getExpectedTimeOnThisMachine(actualInputSize.get());
       IterationResult iterationResult = data.getIterationResult(expectedOnMyMachine);
 
-      testPassed |= iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
+      boolean testPassed = iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
+      String logMessage = formatMessage(data, expectedOnMyMachine, actualInputSize.get(), iterationResult, initialMaxRetries);
 
-      logMessage = formatMessage(data, expectedOnMyMachine, iterationResult, initialMaxRetries);
-
-      if (iterationResult == IterationResult.ACCEPTABLE) {
+      if (testPassed) {
         TeamCityLogger.info(logMessage);
         System.out.println("\nSUCCESS: " + logMessage);
         return;
@@ -133,7 +138,6 @@ public class PerformanceTestInfo {
 
       JitUsageResult jitUsage = updateJitUsage();
       if (attempt == maxRetries) {
-        if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
       if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < initialMaxRetries+30 && maxRetries != 1) {
@@ -153,6 +157,7 @@ public class PerformanceTestInfo {
 
   private @NotNull String formatMessage(@NotNull CpuUsageData data,
                                         int expectedOnMyMachine,
+                                        int actualInputSize,
                                         @NotNull IterationResult iterationResult,
                                         int initialMaxRetries) {
     long duration = data.durationMs;
@@ -165,6 +170,7 @@ public class PerformanceTestInfo {
       (iterationResult == IterationResult.DISTRACTED && initialMaxRetries != 1 ? " (but JIT compilation took too long, will retry anyway)" : "") +
       "\n  Expected: " + expectedOnMyMachine + "ms (" + StringUtil.formatDuration(expectedOnMyMachine) + ")" +
       "\n  Actual:   " + duration + "ms (" + StringUtil.formatDuration(duration) + ")" +
+      (expectedInputSize != actualInputSize ? "\n  (Expected time was adjusted accordingly to input size: expected " + expectedInputSize + ", actual " + actualInputSize + ".)": "") +
       "\n  Timings:  " + Timings.getStatistics() +
       "\n  Threads:  " + data.getThreadStats() +
       "\n  GC stats: " + data.getGcStats() +
@@ -207,8 +213,8 @@ public class PerformanceTestInfo {
     DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g., JIT or GC)
   }
 
-  private int getExpectedTimeOnThisMachine() {
-    int expectedOnMyMachine = expectedMs;
+  private int getExpectedTimeOnThisMachine(int actualInputSize) {
+    int expectedOnMyMachine = (int) (((long)expectedMs) * actualInputSize / expectedInputSize);
     if (adjustForCPU) {
       int coreCountUsedHere = usedReferenceCpuCores < 8
                               ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores)

@@ -16,8 +16,6 @@ import static java.util.Collections.emptyList;
 /**
  * Allows to provide a language-specific breadcrumbs,
  * i.e. path to the file root from a selected PSI element.
- *
- * @author Alexey.Pegov
  */
 public interface BreadcrumbsProvider {
   ExtensionPointName<BreadcrumbsProvider> EP_NAME = ExtensionPointName.create("com.intellij.breadcrumbsInfoProvider");

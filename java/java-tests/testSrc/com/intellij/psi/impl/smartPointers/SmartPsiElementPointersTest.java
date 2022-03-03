@@ -307,9 +307,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   }
 
   public void testCreatePointerWhenNoPsiFile() {
-    myPsiManager.startBatchFilesProcessingMode(); // to use weak refs
-
-    try {
+    // to use weak refs
+    myPsiManager.runInBatchFilesMode(() -> {
       final PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
       assertNotNull(aClass);
 
@@ -321,10 +320,10 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       final SmartPsiElementPointer pointer = createPointer(aClass);
 
       System.gc();
-      /*
-      PsiFile psiFile = myPsiManager.getFileManager().getCachedPsiFile(vFile);
-      assertNull(psiFile);
-      */
+        /*
+        PsiFile psiFile = myPsiManager.getFileManager().getCachedPsiFile(vFile);
+        assertNull(psiFile);
+        */
 
       insertString(document, 0, "class Foo{}\n");
 
@@ -342,10 +341,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       assertNotNull(element);
       assertTrue(element instanceof PsiClass);
       assertTrue(element.isValid());
-    }
-    finally {
-      myPsiManager.finishBatchFilesProcessingMode(); // to use weak refs
-    }
+      return null;
+    });
   }
 
   public void testReplaceFile() {

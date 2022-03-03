@@ -4,6 +4,7 @@ package org.jetbrains.plugins.notebooks.jupyter.preview.viewOnly
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,7 +12,7 @@ import org.jetbrains.plugins.notebooks.jupyter.JupyterFileType
 
 
 class JupyterViewOnlyProvider : FileEditorProvider, DumbAware {
-  override fun accept(project: Project, file: VirtualFile): Boolean = file.fileType == JupyterFileType
+  override fun accept(project: Project, file: VirtualFile): Boolean = FileTypeRegistry.getInstance().isFileOfType(file, JupyterFileType)
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor = JupyterViewOnlyFileEditor.create(file)
 

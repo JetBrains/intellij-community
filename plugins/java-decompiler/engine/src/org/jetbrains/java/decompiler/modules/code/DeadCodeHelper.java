@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.code;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -26,8 +26,8 @@ public final class DeadCodeHelper {
     while (!stack.isEmpty()) {
       BasicBlock block = stack.removeFirst();
 
-      List<BasicBlock> lstSuccs = new ArrayList<>(block.getSuccs());
-      lstSuccs.addAll(block.getSuccExceptions());
+      List<BasicBlock> lstSuccs = new ArrayList<>(block.getSuccessors());
+      lstSuccs.addAll(block.getSuccessorExceptions());
 
       for (BasicBlock succ : lstSuccs) {
         if (!setStacked.contains(succ)) {
@@ -71,8 +71,8 @@ public final class DeadCodeHelper {
 
     if (block.getSeq().isEmpty()) {
 
-      if (block.getSuccs().size() > 1) {
-        if (block.getPreds().size() > 1) {
+      if (block.getSuccessors().size() > 1) {
+        if (block.getPredecessors().size() > 1) {
           // ambiguous block
           throw new RuntimeException("ERROR: empty block with multiple predecessors and successors found");
         }
@@ -81,33 +81,33 @@ public final class DeadCodeHelper {
         }
       }
 
-      HashSet<BasicBlock> setExits = new HashSet<>(graph.getLast().getPreds());
+      HashSet<BasicBlock> setExits = new HashSet<>(graph.getLast().getPredecessors());
 
-      if (block.getPredExceptions().isEmpty() &&
-          (!setExits.contains(block) || block.getPreds().size() == 1)) {
+      if (block.getPredecessorExceptions().isEmpty() &&
+          (!setExits.contains(block) || block.getPredecessors().size() == 1)) {
 
         if (setExits.contains(block)) {
-          BasicBlock pred = block.getPreds().get(0);
+          BasicBlock pred = block.getPredecessors().get(0);
 
           // FIXME: flag in the basic block
-          if (pred.getSuccs().size() != 1 || (!pred.getSeq().isEmpty()
+          if (pred.getSuccessors().size() != 1 || (!pred.getSeq().isEmpty()
                                               && pred.getSeq().getLastInstr().group == CodeConstants.GROUP_SWITCH)) {
             return false;
           }
         }
 
-        HashSet<BasicBlock> setPreds = new HashSet<>(block.getPreds());
-        HashSet<BasicBlock> setSuccs = new HashSet<>(block.getSuccs());
+        HashSet<BasicBlock> setPreds = new HashSet<>(block.getPredecessors());
+        HashSet<BasicBlock> setSuccs = new HashSet<>(block.getSuccessors());
 
         // collect common exception ranges of predecessors and successors
         HashSet<BasicBlock> setCommonExceptionHandlers = null;
         for (int i = 0; i < 2; ++i) {
           for (BasicBlock pred : i == 0 ? setPreds : setSuccs) {
             if (setCommonExceptionHandlers == null) {
-              setCommonExceptionHandlers = new HashSet<>(pred.getSuccExceptions());
+              setCommonExceptionHandlers = new HashSet<>(pred.getSuccessorExceptions());
             }
             else {
-              setCommonExceptionHandlers.retainAll(pred.getSuccExceptions());
+              setCommonExceptionHandlers.retainAll(pred.getSuccessorExceptions());
             }
           }
         }
@@ -115,7 +115,7 @@ public final class DeadCodeHelper {
         // check the block to be in each of the common ranges
         if (setCommonExceptionHandlers != null && !setCommonExceptionHandlers.isEmpty()) {
           for (BasicBlock handler : setCommonExceptionHandlers) {
-            if (!block.getSuccExceptions().contains(handler)) {
+            if (!block.getSuccessorExceptions().contains(handler)) {
               return false;
             }
           }
@@ -143,10 +143,10 @@ public final class DeadCodeHelper {
 
         // connect remaining nodes
         if (merging) {
-          BasicBlock pred = block.getPreds().get(0);
+          BasicBlock pred = block.getPredecessors().get(0);
           pred.removeSuccessor(block);
 
-          List<BasicBlock> lstSuccs = new ArrayList<>(block.getSuccs());
+          List<BasicBlock> lstSuccs = new ArrayList<>(block.getSuccessors());
           for (BasicBlock succ : lstSuccs) {
             block.removeSuccessor(succ);
             pred.addSuccessor(succ);
@@ -215,15 +215,15 @@ public final class DeadCodeHelper {
         return false;
       }
 
-      for (int i = 0; i < node.getPreds().size(); i++) {
-        BasicBlock pred = node.getPreds().get(i);
+      for (int i = 0; i < node.getPredecessors().size(); i++) {
+        BasicBlock pred = node.getPredecessors().get(i);
         if (pred != dom && !marked.contains(pred)) {
           lstNodes.add(pred);
         }
       }
 
-      for (int i = 0; i < node.getPredExceptions().size(); i++) {
-        BasicBlock pred = node.getPredExceptions().get(i);
+      for (int i = 0; i < node.getPredecessorExceptions().size(); i++) {
+        BasicBlock pred = node.getPredecessorExceptions().get(i);
         if (pred != dom && !marked.contains(pred)) {
           lstNodes.add(pred);
         }
@@ -249,7 +249,7 @@ public final class DeadCodeHelper {
   public static void connectDummyExitBlock(ControlFlowGraph graph) {
 
     BasicBlock exit = graph.getLast();
-    for (BasicBlock block : new HashSet<>(exit.getPreds())) {
+    for (BasicBlock block : new HashSet<>(exit.getPredecessors())) {
       exit.removePredecessor(block);
       block.addSuccessor(exit);
     }
@@ -265,7 +265,7 @@ public final class DeadCodeHelper {
 
         Set<BasicBlock> setPreds = new HashSet<>();
         for (BasicBlock block : range.getProtectedRange()) {
-          setPreds.addAll(block.getPreds());
+          setPreds.addAll(block.getPredecessors());
         }
         for (BasicBlock basicBlock : range.getProtectedRange()) {
           setPreds.remove(basicBlock);
@@ -304,7 +304,7 @@ public final class DeadCodeHelper {
 
         Set<BasicBlock> setSuccs = new HashSet<>();
         for (BasicBlock block : range.getProtectedRange()) {
-          setSuccs.addAll(block.getSuccs());
+          setSuccs.addAll(block.getSuccessors());
         }
         for (BasicBlock basicBlock : range.getProtectedRange()) {
           setSuccs.remove(basicBlock);
@@ -330,10 +330,10 @@ public final class DeadCodeHelper {
         }
 
         BasicBlock handlerBlock = range.getHandler();
-        if(handlerBlock.getSuccs().size() != 1) {
+        if(handlerBlock.getSuccessors().size() != 1) {
           continue; // non-unique handler successor
         }
-        BasicBlock succHandler = handlerBlock.getSuccs().get(0);
+        BasicBlock succHandler = handlerBlock.getSuccessors().get(0);
         InstructionSequence succHandlerSeq = succHandler.getSeq();
         if(succHandlerSeq.isEmpty() || succHandlerSeq.getLastInstr().opcode != CodeConstants.opc_athrow) {
           continue; // not a standard synchronized range
@@ -361,24 +361,23 @@ public final class DeadCodeHelper {
           }
 
           // build a separate block
-          BasicBlock newblock = new BasicBlock(++graph.last_id);
-          newblock.setSeq(seq);
+          BasicBlock newBlock = new BasicBlock(++graph.last_id, seq);
 
           // insert new block
-          for (BasicBlock block : succBlock.getPreds()) {
-            block.replaceSuccessor(succBlock, newblock);
+          for (BasicBlock block : succBlock.getPredecessors()) {
+            block.replaceSuccessor(succBlock, newBlock);
           }
 
-          newblock.addSuccessor(succBlock);
-          graph.getBlocks().addWithKey(newblock, newblock.id);
+          newBlock.addSuccessor(succBlock);
+          graph.getBlocks().addWithKey(newBlock, newBlock.id);
 
-          succBlock = newblock;
+          succBlock = newBlock;
         }
 
         // copy exception edges and extend protected ranges (successor block)
-        BasicBlock rangeExitBlock = succBlock.getPreds().get(0);
-        for (int j = 0; j < rangeExitBlock.getSuccExceptions().size(); j++) {
-          BasicBlock hd = rangeExitBlock.getSuccExceptions().get(j);
+        BasicBlock rangeExitBlock = succBlock.getPredecessors().get(0);
+        for (int j = 0; j < rangeExitBlock.getSuccessorExceptions().size(); j++) {
+          BasicBlock hd = rangeExitBlock.getSuccessorExceptions().get(j);
           succBlock.addSuccessorException(hd);
 
           ExceptionRangeCFG rng = graph.getExceptionRange(hd, rangeExitBlock);
@@ -445,29 +444,29 @@ public final class DeadCodeHelper {
 
         if (ok) {
 
-          if (!block.getPreds().isEmpty()) {
+          if (!block.getPredecessors().isEmpty()) {
 
             HashSet<BasicBlock> setPredHandlersUnion = new HashSet<>();
             HashSet<BasicBlock> setPredHandlersIntersection = new HashSet<>();
 
             boolean firstpred = true;
-            for (BasicBlock pred : block.getPreds()) {
+            for (BasicBlock pred : block.getPredecessors()) {
               if (firstpred) {
-                setPredHandlersIntersection.addAll(pred.getSuccExceptions());
+                setPredHandlersIntersection.addAll(pred.getSuccessorExceptions());
                 firstpred = false;
               }
               else {
-                setPredHandlersIntersection.retainAll(pred.getSuccExceptions());
+                setPredHandlersIntersection.retainAll(pred.getSuccessorExceptions());
               }
 
-              setPredHandlersUnion.addAll(pred.getSuccExceptions());
+              setPredHandlersUnion.addAll(pred.getSuccessorExceptions());
             }
 
             // add exception ranges from predecessors
-            for (BasicBlock basicBlock : block.getSuccExceptions()) {
+            for (BasicBlock basicBlock : block.getSuccessorExceptions()) {
               setPredHandlersIntersection.remove(basicBlock);
             }
-            BasicBlock predecessor = block.getPreds().get(0);
+            BasicBlock predecessor = block.getPredecessors().get(0);
 
             for (BasicBlock handler : setPredHandlersIntersection) {
               ExceptionRangeCFG range = graph.getExceptionRange(handler, predecessor);
@@ -477,7 +476,7 @@ public final class DeadCodeHelper {
             }
 
             // remove redundant ranges
-            HashSet<BasicBlock> setRangesToBeRemoved = new HashSet<>(block.getSuccExceptions());
+            HashSet<BasicBlock> setRangesToBeRemoved = new HashSet<>(block.getSuccessorExceptions());
             setRangesToBeRemoved.removeAll(setPredHandlersUnion);
 
             for (BasicBlock handler : setRangesToBeRemoved) {
@@ -491,14 +490,14 @@ public final class DeadCodeHelper {
           }
 
 
-          if (block.getPreds().size() == 1 && block.getPredExceptions().isEmpty()) {
+          if (block.getPredecessors().size() == 1 && block.getPredecessorExceptions().isEmpty()) {
 
-            BasicBlock bpred = block.getPreds().get(0);
-            if (bpred.getSuccs().size() == 1) {
+            BasicBlock bpred = block.getPredecessors().get(0);
+            if (bpred.getSuccessors().size() == 1) {
 
               // add exception ranges of predecessor
-              for (BasicBlock succ : bpred.getSuccExceptions()) {
-                if (!block.getSuccExceptions().contains(succ)) {
+              for (BasicBlock succ : bpred.getSuccessorExceptions()) {
+                if (!block.getSuccessorExceptions().contains(succ)) {
                   ExceptionRangeCFG range = graph.getExceptionRange(succ, bpred);
 
                   range.getProtectedRange().add(block);
@@ -507,8 +506,8 @@ public final class DeadCodeHelper {
               }
 
               // remove superfluous ranges from successors
-              for (BasicBlock succ : new HashSet<>(block.getSuccExceptions())) {
-                if (!bpred.getSuccExceptions().contains(succ)) {
+              for (BasicBlock succ : new HashSet<>(block.getSuccessorExceptions())) {
+                if (!bpred.getSuccessorExceptions().contains(succ)) {
                   ExceptionRangeCFG range = graph.getExceptionRange(succ, block);
 
                   if (range.getProtectedRange().size() > 1) {
@@ -535,12 +534,12 @@ public final class DeadCodeHelper {
 
         InstructionSequence seq = block.getSeq();
 
-        if (block.getSuccs().size() == 1) {
-          BasicBlock next = block.getSuccs().get(0);
+        if (block.getSuccessors().size() == 1) {
+          BasicBlock next = block.getSuccessors().get(0);
 
           if (next != graph.getLast() && (seq.isEmpty() || seq.getLastInstr().group != CodeConstants.GROUP_SWITCH)) {
 
-            if (next.getPreds().size() == 1 && next.getPredExceptions().isEmpty()
+            if (next.getPredecessors().size() == 1 && next.getPredecessorExceptions().isEmpty()
                 && next != graph.getFirst()) {
               // TODO: implement a dummy start block
               boolean sameRanges = true;
@@ -554,7 +553,7 @@ public final class DeadCodeHelper {
 
               if (sameRanges) {
                 seq.addSequence(next.getSeq());
-                block.getInstrOldOffsets().addAll(next.getInstrOldOffsets());
+                block.getOriginalOffsets().addAll(next.getOriginalOffsets());
                 next.getSeq().clear();
 
                 removeEmptyBlock(graph, next, true);

@@ -28,13 +28,13 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder.Target.READ_ONLY_PROPERTY
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 class ConvertFunctionToPropertyIntention :
@@ -50,7 +50,7 @@ class ConvertFunctionToPropertyIntention :
 
         private val newName: String by lazy {
             val name = callableDescriptor.name
-            (SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(name) ?: name).asString()
+            (propertyNameByGetMethodName(name) ?: name).asString()
         }
 
         private fun convertFunction(originalFunction: KtNamedFunction, psiFactory: KtPsiFactory, moveCaret: Boolean) {

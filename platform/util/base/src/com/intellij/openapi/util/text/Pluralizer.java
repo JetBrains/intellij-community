@@ -25,17 +25,11 @@
  */
 package com.intellij.openapi.util.text;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,11 +49,11 @@ import java.util.regex.Pattern;
 final class Pluralizer {
   static final Pluralizer PLURALIZER;
 
-  private final Map<String, String> irregularSingles = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final Map<String, String> irregularPlurals = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final Set<String> uncountables = new THashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final List<Pair<Pattern, String>> pluralRules = new ArrayList<>();
-  private final List<Pair<Pattern, String>> singularRules = new ArrayList<>();
+  private final Map<String, String> irregularSingles = CollectionFactory.createCaseInsensitiveStringMap();
+  private final Map<String, String> irregularPlurals = CollectionFactory.createCaseInsensitiveStringMap();
+  private final Set<String> uncountables = CollectionFactory.createCaseInsensitiveStringSet();
+  private final List<Map.Entry<Pattern, String>> pluralRules = new ArrayList<>();
+  private final List<Map.Entry<Pattern, String>> singularRules = new ArrayList<>();
 
   /**
    * Pass in a word token to produce a function that can replicate the case on
@@ -95,16 +89,16 @@ final class Pluralizer {
   /**
    * Sanitize a word by passing in the word and sanitization rules.
    */
-  private String sanitizeWord(String word, List<? extends Pair<Pattern, String>> rules) {
+  private String sanitizeWord(String word, List<Map.Entry<Pattern, String>> rules) {
     if (Strings.isEmpty(word) || uncountables.contains(word)) return word;
 
     int len = rules.size();
 
     while (--len > -1) {
-      Pair<Pattern, String> rule = rules.get(len);
-      Matcher matcher = rule.first.matcher(word);
+      Map.Entry<Pattern, String> rule = rules.get(len);
+      Matcher matcher = rule.getKey().matcher(word);
       if (matcher.find()) {
-        return matcher.replaceFirst(rule.second);
+        return matcher.replaceFirst(rule.getValue());
       }
     }
     return null;
@@ -118,7 +112,7 @@ final class Pluralizer {
   private String replaceWord(String word,
                              Map<String, String> replaceMap,
                              Map<String, String> keepMap,
-                             List<? extends Pair<Pattern, String>> rules) {
+                             List<Map.Entry<Pattern, String>> rules) {
     if (Strings.isEmpty(word)) return word;
 
     // Get the correct token and case restoration functions.
@@ -160,11 +154,11 @@ final class Pluralizer {
   }
 
   private void addPluralRule(String rule, String replacement) {
-    pluralRules.add(Pair.create(sanitizeRule(rule), replacement));
+    pluralRules.add(new AbstractMap.SimpleImmutableEntry<>(sanitizeRule(rule), replacement));
   }
 
   private void addSingularRule(String rule, String replacement) {
-    singularRules.add(Pair.create(sanitizeRule(rule), replacement));
+    singularRules.add(new AbstractMap.SimpleImmutableEntry<>(sanitizeRule(rule), replacement));
   }
 
   private void addUncountableRule(String word) {

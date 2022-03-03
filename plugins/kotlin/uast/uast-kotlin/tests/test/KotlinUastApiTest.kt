@@ -4,6 +4,7 @@ package org.jetbrains.uast.test.kotlin
 import com.intellij.psi.*
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.*
@@ -736,6 +737,22 @@ class KotlinUastApiTest : AbstractKotlinUastTest() {
         }
     }
 
+    @Test
+    fun testComplicatedTypes() = 
+        doTest("ComplicatedTypes") { _, file ->
+            val render = StringBuilder()
+            file.accept(object: AbstractUastVisitor(){
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    render.appendLine("${node.asRenderString()} -> typeArguments: ${node.typeArguments}")
+                    return super.visitCallExpression(node)
+                }
+            })
+            assertEquals("""
+                getGenericSuperclass() -> typeArguments: [PsiType:<ErrorType>]
+                getActualTypeArguments() -> typeArguments: []
+                first() -> typeArguments: []
+            """.trimIndent(), render.toString().trimEnd())
+        }
 }
 
 fun <T, R> Iterable<T>.assertedFind(value: R, transform: (T) -> R): T =

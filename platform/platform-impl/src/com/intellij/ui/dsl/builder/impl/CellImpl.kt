@@ -3,12 +3,11 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.LabelPosition
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -23,9 +22,8 @@ import javax.swing.JLabel
 internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
-  val parent: RowImpl,
-  val viewComponent: JComponent = component,
-  visualPaddings: Gaps?) : CellBaseImpl<Cell<T>>(), Cell<T> {
+  private val parent: RowImpl,
+  val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
     private set
@@ -38,11 +36,6 @@ internal class CellImpl<T : JComponent>(
 
   var labelPosition: LabelPosition = LabelPosition.LEFT
     private set
-
-  var customGaps: Gaps? = null
-    private set
-
-  val visualPaddings: Gaps = visualPaddings ?: getViewComponentVisualPaddings()
 
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
@@ -80,7 +73,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  fun enabledFromParent(parentEnabled: Boolean) {
+  override fun enabledFromParent(parentEnabled: Boolean) {
     doEnabled(parentEnabled && enabled)
   }
 
@@ -93,12 +86,11 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun enabledIf(predicate: ComponentPredicate): Cell<T> {
-    enabled(predicate())
-    predicate.addListener { enabled(it) }
+    super.enabledIf(predicate)
     return this
   }
 
-  fun visibleFromParent(parentVisible: Boolean) {
+  override fun visibleFromParent(parentVisible: Boolean) {
     doVisible(parentVisible && visible)
   }
 
@@ -111,8 +103,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun visibleIf(predicate: ComponentPredicate): CellImpl<T> {
-    visible(predicate())
-    predicate.addListener { visible(it) }
+    super.visibleIf(predicate)
     return this
   }
 
@@ -121,9 +112,18 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun comment(comment: String?, maxLineLength: Int): Cell<T> {
+    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+    return this
+  }
+
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
     this.comment = if (comment == null) null else createComment(comment, maxLineLength, action)
     return this
+  }
+
+  override fun commentHtml(comment: String?, action: HyperlinkEventAction): Cell<T> {
+    return comment(if (comment == null) null else removeHtml(comment), MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
   override fun label(label: String, position: LabelPosition): CellImpl<T> {
@@ -133,6 +133,7 @@ internal class CellImpl<T : JComponent>(
   override fun label(label: JLabel, position: LabelPosition): CellImpl<T> {
     this.label = label
     labelPosition = position
+    label.putClientProperty(DslComponentPropertyInternal.CELL_LABEL, true)
     return this
   }
 
@@ -198,7 +199,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun customize(customGaps: Gaps): CellImpl<T> {
-    this.customGaps = customGaps
+    super.customize(customGaps)
     return this
   }
 
@@ -222,9 +223,12 @@ internal class CellImpl<T : JComponent>(
     comment?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
   }
+}
 
-  private fun getViewComponentVisualPaddings(): Gaps {
-    val insets = viewComponent.origin.insets
-    return Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
-  }
+private const val HTML = "<html>"
+
+@Deprecated("Not needed in the future")
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+internal fun removeHtml(text: String): String {
+  return if (text.startsWith(HTML, ignoreCase = true)) text.substring(HTML.length) else text
 }

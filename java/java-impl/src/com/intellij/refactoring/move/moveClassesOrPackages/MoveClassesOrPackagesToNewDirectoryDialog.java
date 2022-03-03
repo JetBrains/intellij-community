@@ -1,13 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -15,18 +18,20 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.JavaRefactoringFactory;
-import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.MoveDestination;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,16 +76,13 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
         }
       }
     });
-    if (elementsToMove.length == 1) {
-      PsiElement firstElement = elementsToMove[0];
-      myNameLabel.setText(JavaRefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement),
-                                                    UsageViewUtil.getLongName(firstElement)));
-    }
-    else if (elementsToMove.length > 1) {
-      myNameLabel.setText(elementsToMove[0] instanceof PsiClass
-                          ? JavaRefactoringBundle.message("move.specified.classes")
-                          : JavaRefactoringBundle.message("move.specified.packages"));
-    }
+    mySourceNameLabel.setText(HtmlChunk.html()
+                                .addRaw(StringUtil.join(elementsToMove, 
+                                                        element -> element instanceof PsiFileSystemItem 
+                                                         ? "../" + SymbolPresentationUtil.getFilePathPresentation((PsiFileSystemItem)element) 
+                                                         : SymbolPresentationUtil.getSymbolPresentableText(element),
+                                                        "<br/>"))
+                                .toString());
     final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     mySearchInCommentsAndStringsCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_IN_COMMENTS);
     mySearchForTextOccurrencesCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_FOR_TEXT);
@@ -114,6 +116,16 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
       myPreserveSourceRoot.setVisible(sourceRoots.size() > 1);
       myPreserveSourceRoot.setSelected(sameModule);
     }
+    else if (elementsToMove.length < 2) {
+      myPreserveSourceRoot.setVisible(false);
+      myPreserveSourceRoot.setSelected(false);
+    }
+
+    myTooltipLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    myTooltipLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
+    myTooltipLabel.setBorder(JBUI.Borders.emptyLeft(10));
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+    myTooltipLabel.setText(RefactoringBundle.message("path.completion.shortcut", shortcutText));
     init();
   }
 
@@ -121,9 +133,9 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   private JCheckBox mySearchForTextOccurrencesCheckBox;
   private JCheckBox mySearchInCommentsAndStringsCheckBox;
   private JPanel myRootPanel;
-  private JLabel myNameLabel;
   private JCheckBox myPreserveSourceRoot;
-  private JPanel myOpenInEditor;
+  private JLabel mySourceNameLabel;
+  private JBLabel myTooltipLabel;
 
   private boolean isSearchInNonJavaFiles() {
     return mySearchForTextOccurrencesCheckBox.isSelected();
@@ -232,6 +244,11 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   @Override
   protected @NotNull String getRefactoringId() {
     return "MoveClassWithTarget";
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "refactoring.moveFile";
   }
 }
 

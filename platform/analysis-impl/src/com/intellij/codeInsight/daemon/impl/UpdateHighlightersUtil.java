@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -24,6 +26,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +78,7 @@ public final class UpdateHighlightersUtil {
                                                   @NotNull HighlightInfo info,
                                                   @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   int group,
-                                                  @NotNull Map<TextRange, RangeMarker> ranges2markersCache) {
+                                                  @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (!accept(project, info)) {
@@ -161,7 +165,9 @@ public final class UpdateHighlightersUtil {
 
     assertMarkupConsistent(markup, project);
 
-    setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<>(highlights), markup, group);
+    if (psiFile != null) {
+      setHighlightersInRange(project, psiFile, document, range, colorsScheme, new ArrayList<>(highlights), markup, group);
+    }
   }
 
 
@@ -223,7 +229,7 @@ public final class UpdateHighlightersUtil {
     };
     DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, null, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
 
-    Map<TextRange, RangeMarker> ranges2markersCache = new HashMap<>(10);
+    Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(filteredInfos, proc);
     SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
@@ -245,9 +251,12 @@ public final class UpdateHighlightersUtil {
       }
       return true;
     });
-    for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      highlighter.dispose();
-      changed[0] = true;
+
+    if (!HighlightingLevelManager.getInstance(project).runEssentialHighlightingOnly(psiFile)) {
+      for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
+        highlighter.dispose();
+        changed[0] = true;
+      }
     }
 
     if (changed[0]) {
@@ -257,6 +266,7 @@ public final class UpdateHighlightersUtil {
   }
 
   static void setHighlightersInRange(@NotNull Project project,
+                                     @NotNull PsiFile psiFile,
                                      @NotNull Document document,
                                      @NotNull TextRange range,
                                      @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
@@ -284,8 +294,7 @@ public final class UpdateHighlightersUtil {
 
     List<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
     ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NODUPS);
-    Map<TextRange, RangeMarker> ranges2markersCache = new HashMap<>(10);
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
@@ -293,7 +302,7 @@ public final class UpdateHighlightersUtil {
       if (!atStart) {
         return true;
       }
-      if (info.isFileLevelAnnotation() && psiFile != null) {
+      if (info.isFileLevelAnnotation()) {
         codeAnalyzer.addFileLevelHighlight(group, info, psiFile);
         changed[0] = true;
         return true;
@@ -301,21 +310,29 @@ public final class UpdateHighlightersUtil {
       if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
         return true;
       }
-      if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset() && psiFile != null) {
+      if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
         createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove, ranges2markersCache, severityRegistrar);
         changed[0] = true;
       }
       return true;
     });
-    for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      highlighter.dispose();
-      changed[0] = true;
+
+    // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
+    if (!HighlightingLevelManager.getInstance(project).runEssentialHighlightingOnly(psiFile) || shouldRemoveInfosEvenInEssentialMode(group)) {
+      for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
+        highlighter.dispose();
+        changed[0] = true;
+      }
     }
 
     if (changed[0]) {
       clearWhiteSpaceOptimizationFlag(document);
     }
     assertMarkupConsistent(markup, project);
+  }
+
+  private static boolean shouldRemoveInfosEvenInEssentialMode(int group) {
+    return group != Pass.LOCAL_INSPECTIONS && group != Pass.EXTERNAL_TOOLS && group != Pass.WHOLE_FILE_LOCAL_INSPECTIONS;
   }
 
   private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
@@ -348,7 +365,7 @@ public final class UpdateHighlightersUtil {
                                                   @NotNull PsiFile psiFile,
                                                   @NotNull MarkupModelEx markup,
                                                   @Nullable HighlightersRecycler infosToRemove,
-                                                  @NotNull Map<TextRange, RangeMarker> ranges2markersCache,
+                                                  @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache,
                                                   @NotNull SeverityRegistrar severityRegistrar) {
     int infoStartOffset = info.startOffset;
     int infoEndOffset = info.endOffset;
@@ -368,7 +385,7 @@ public final class UpdateHighlightersUtil {
     int layer = getLayer(info, severityRegistrar);
     RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
 
-    TextRange finalInfoRange = new TextRange(infoStartOffset, infoEndOffset);
+    long finalInfoRange = TextRange.toScalarRange(infoStartOffset, infoEndOffset);
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
@@ -407,7 +424,7 @@ public final class UpdateHighlightersUtil {
         info.quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
       }
       ProperTextRange fixRange = info.getFixTextRange();
-      if (finalInfoRange.equals(fixRange)) {
+      if (fixRange.equalsToRange(finalInfoRange)) {
         info.fixMarker = null; // null means it the same as highlighter'
       }
       else {
@@ -462,8 +479,8 @@ public final class UpdateHighlightersUtil {
   }
 
   @NotNull
-  private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Map<TextRange, RangeMarker> ranges2markersCache, @NotNull TextRange textRange) {
-    return ranges2markersCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(textRange));
+  private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache, TextRange textRange) {
+    return ranges2markersCache.computeIfAbsent(textRange.toScalarRange(), __ -> document.createRangeMarker(textRange));
   }
 
   private static final Key<Boolean> TYPING_INSIDE_HIGHLIGHTER_OCCURRED = Key.create("TYPING_INSIDE_HIGHLIGHTER_OCCURRED");

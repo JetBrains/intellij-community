@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun simpleRange(x: Int) = when {
     x > 10 -> 10
     <warning descr="Condition 'x > 15' is always false">x > 15</warning> -> 15

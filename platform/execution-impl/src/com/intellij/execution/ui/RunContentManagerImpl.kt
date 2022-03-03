@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -364,6 +365,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
     val contentManager = getContentManagerByToolWindowId(id)
     if (contentManager != null) {
+      updateToolWindowDecoration(id, executor)
       return contentManager
     }
 
@@ -387,6 +389,18 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
     return null
+  }
+
+  private fun updateToolWindowDecoration(id: String, executor: Executor) {
+    if (project.serviceIfCreated<RunDashboardManager>()?.toolWindowId == id) {
+      return
+    }
+
+    getToolWindowManager().getToolWindow(id)?.apply {
+      stripeTitle = executor.actionName
+      setIcon(executor.icon)
+      toolWindowIdToBaseIcon[id] = executor.icon
+    }
   }
 
   private inline fun processToolWindowContentManagers(processor: (ToolWindow, ContentManager) -> Unit) {
@@ -634,6 +648,7 @@ private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentD
 private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {
   val content = ContentFactory.SERVICE.getInstance().createContent(descriptor.component, descriptor.displayName, true)
   content.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
+  if (Registry.`is`("start.run.configurations.pinned", false)) content.isPinned = true
   content.icon = descriptor.icon ?: executor.toolWindowIcon
   return content
 }

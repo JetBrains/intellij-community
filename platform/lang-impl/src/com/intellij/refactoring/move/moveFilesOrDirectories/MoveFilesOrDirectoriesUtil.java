@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -37,17 +39,21 @@ public final class MoveFilesOrDirectoriesUtil {
    */
   public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException {
     PsiManager manager = aDirectory.getManager();
-    // do actual move
-    checkMove(aDirectory, destDirectory);
+    doJustMoveDirectory(aDirectory, destDirectory, manager);
+    if (ModelBranch.getPsiBranch(destDirectory) == null) {
+      DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
+    }
+  }
 
+  private static void doJustMoveDirectory(@NotNull PsiDirectory aDirectory,
+                                          @NotNull PsiDirectory destDirectory,
+                                          @Nullable Object requestor) {
+    checkMove(aDirectory, destDirectory);
     try {
-      aDirectory.getVirtualFile().move(manager, destDirectory.getVirtualFile());
+      aDirectory.getVirtualFile().move(requestor, destDirectory.getVirtualFile());
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e);
-    }
-    if (ModelBranch.getPsiBranch(destDirectory) == null) {
-      DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
     }
   }
 
@@ -154,6 +160,46 @@ public final class MoveFilesOrDirectoriesUtil {
         if (els.isEmpty()) {
           doneCallback.run();
         }
+        else if (DumbService.isDumb(project)) {
+          if (doneCallback != null) {
+            ApplicationManager.getApplication().invokeAndWait(doneCallback);
+          }
+          Set<SmartPsiElementPointer<PsiFile>> filePointers = new HashSet<>();
+          if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) {
+            SmartPointerManager manager = SmartPointerManager.getInstance(project);
+            for (PsiElement element : elements) {
+              addFilePointers(filePointers, element, manager);
+            }
+          }
+          WriteCommandAction.runWriteCommandAction(project, RefactoringBundle.message("move.title"), null, () -> {
+            try {
+              for (PsiElement element : elements) {
+                if (element instanceof PsiDirectory) {
+                  doJustMoveDirectory((PsiDirectory)element, targetDirectory, MoveFilesOrDirectoriesUtil.class);
+                }
+                else if (element instanceof PsiFile) {
+                  final PsiFile movedFile = (PsiFile)element;
+                  PsiFile moving = targetDirectory.findFile(movedFile.getName());
+                  if (moving == null) {
+                    doMoveFile(movedFile, targetDirectory);
+                  }
+                }
+              }
+            }
+            finally {
+              if (moveCallback != null) {
+                moveCallback.refactoringCompleted();
+              }
+              if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) {
+                ApplicationManager.getApplication().invokeLater(
+                  () -> EditorHelper.openFilesInEditor(
+                    filePointers.stream().map(SmartPsiElementPointer::getContainingFile).filter(file -> file != null && file.isValid())
+                      .toArray(PsiFile[]::new)),
+                  project.getDisposed());
+              }
+            }
+          });
+        }
         else {
           new MoveFilesOrDirectoriesProcessor(project, els.toArray(PsiElement.EMPTY_ARRAY), targetDirectory,
                                               RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE,
@@ -164,6 +210,19 @@ public final class MoveFilesOrDirectoriesUtil {
         CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), "refactoring.moveFile", project);
       }
     }, MoveHandler.getRefactoringName(), null);
+  }
+
+  private static void addFilePointers(@NotNull Set<SmartPsiElementPointer<PsiFile>> pointers,
+                                      @NotNull PsiElement element,
+                                      @NotNull SmartPointerManager manager) {
+    if (element instanceof PsiFile) {
+      pointers.add(manager.createSmartPsiElementPointer((PsiFile)element, (PsiFile)element));
+    }
+    else if (element instanceof PsiDirectory) {
+      for (PsiElement child : element.getChildren()) {
+        addFilePointers(pointers, child, manager);
+      }
+    }
   }
 
   @Nullable

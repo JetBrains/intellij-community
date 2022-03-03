@@ -1,7 +1,6 @@
 package use_of_clone;
 
 import java.util.concurrent.Callable;
-import java.util.function.UnaryOperator;
 
 class UseOfClone implements <warning descr="Use of 'Cloneable'">Cloneable</warning> {
 
@@ -19,10 +18,6 @@ class UseOfClone implements <warning descr="Use of 'Cloneable'">Cloneable</warni
 
   void h() {
     Callable r = <warning descr="Use of 'this::clone'">this::clone</warning>;
-  }
-
-  void methodRef() {
-    UnaryOperator<byte[]> un = byte[]::clone;
   }
 }
 interface I extends <warning descr="Use of 'Cloneable'">Cloneable</warning> {

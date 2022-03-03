@@ -123,7 +123,7 @@ class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   @Override
   public Insets getBorderInsets(Component c) {
     if (ComponentUtil.getParentOfType((Class<? extends ComboBoxCompositeEditor>)ComboBoxCompositeEditor.class, c) != null) {
-      return JBUI.emptyInsets().asUIResource();
+      return JBInsets.emptyInsets().asUIResource();
     }
     return (DarculaUIUtil.isTableCellEditor(c) ?
             JBUI.insets(1) :

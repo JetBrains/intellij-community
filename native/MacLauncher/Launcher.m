@@ -30,16 +30,19 @@ NSString* minRequiredJavaVersion = @"1.8";
 
 @interface NSDictionary (TypedGetters)
 - (NSDictionary *)dictionaryForKey:(id)key;
+- (NSArray *)arrayForKey:(id)key;
 - (id)valueForKey:(NSString *)key inDictionary:(NSString *)dictKey defaultObject:(NSString *)defaultValue;
 @end
 
 @implementation NSDictionary (TypedGetters)
 - (NSDictionary *)dictionaryForKey:(id)key {
     id answer = self[key];
-    if ([answer isKindOfClass:[NSDictionary class]]) {
-        return answer;
-    }
-    return nil;
+    return [answer isKindOfClass:[NSDictionary class]] ? answer : nil;
+}
+
+- (NSArray *)arrayForKey:(id)key {
+    id answer = self[key];
+    return [answer isKindOfClass:[NSArray class]] ? answer : nil;
 }
 
 - (id)valueForKey:(NSString *)key inDictionary:(NSString *)dictKey defaultObject: (NSString*) defaultValue {
@@ -78,7 +81,7 @@ BOOL appendBundle(NSString *path, NSMutableArray *sink) {
         NSLog(@"Can't find bundled java.The folder doesn't exist: %@", path);
     }
     else {
-        if ([path hasSuffix:@"jdk"] || [path hasSuffix:@"jre"] || [path hasSuffix:@"jbr"]) { // Android Studio: bundle under "jre"
+        if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"] || [path hasSuffix:@"jbr"]) {
             NSBundle *bundle = [NSBundle bundleWithPath:path];
             if (bundle != nil) {
                 [sink addObject:bundle];
@@ -120,7 +123,7 @@ NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
 
     NSBundle *bundle = [NSBundle mainBundle];
-    appendBundle([bundle.bundlePath stringByAppendingPathComponent:@"Contents/jre"], jvmBundlePaths); // Android Studio: bundle under "jre"
+    appendBundle([bundle.bundlePath stringByAppendingPathComponent:@"Contents/jbr"], jvmBundlePaths);
 
     if (jvmBundlePaths.count == 0 || !satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required)) {
         NSLog(@"Can't get bundled java version. It is probably corrupted.");
@@ -287,10 +290,7 @@ CFBundleRef NSBundle2CFBundle(NSBundle *bundle) {
 NSString *getJVMProperty(NSString *property) {
     NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSDictionary *properties = [jvmInfo dictionaryForKey:@"Properties"];
-    if (properties != nil) {
-        return properties[property];
-    }
-    return nil;
+    return properties != nil ? properties[property] : nil;
 }
 
 NSString *getSelector() {
@@ -403,7 +403,12 @@ NSString *getOverridePropertiesPath() {
     return [[NSProcessInfo processInfo] environment][variable];
 }
 
-- (void)fillArgs:(NSMutableArray *)args_array fromProperties:(NSDictionary *)properties {
+- (void)fillArgs:(NSMutableArray *)args_array fromOptions:(NSArray *)options fromProperties:(NSDictionary *)properties {
+    if (options != nil) {
+        for (id value in options) {
+            [args_array addObject:value];
+        }
+    }
     if (properties != nil) {
         for (id key in properties) {
             [args_array addObject:[NSString stringWithFormat:@"-D%@=%@", key, properties[key]]];
@@ -429,7 +434,7 @@ NSString *getOverridePropertiesPath() {
         [args_array addObject:[NSString stringWithFormat:@"-Didea.properties.file=%@", properties]];
     }
 
-    [self fillArgs:args_array fromProperties:[jvmInfo dictionaryForKey:@"Properties"]];
+    [self fillArgs:args_array fromOptions:[jvmInfo arrayForKey:@"Options"] fromProperties:[jvmInfo dictionaryForKey:@"Properties"]];
 
     JavaVMInitArgs args;
     args.version = JNI_VERSION_1_6;

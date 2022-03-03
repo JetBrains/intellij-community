@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.util.plugins.DataLoader
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*

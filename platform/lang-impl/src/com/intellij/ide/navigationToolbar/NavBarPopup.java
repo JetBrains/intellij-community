@@ -38,11 +38,13 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
   private final NavBarPanel myPanel;
   private final int myIndex;
+  private final int myItemIndex;
 
-  public NavBarPopup(final NavBarPanel panel, int sourceItemIndex, Object[] siblings, final int selectedIndex) {
+  public NavBarPopup(final NavBarPanel panel, int sourceItemIndex, Object[] siblings, int itemIndex, final int selectedIndex) {
     super(createPopupContent(panel, sourceItemIndex, siblings));
     myPanel = panel;
     myIndex = selectedIndex;
+    myItemIndex = itemIndex;
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
     panel.installPopupHandler(getList(), selectedIndex);
@@ -96,7 +98,9 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private void show(final NavBarItem item, boolean checkRepaint) {
     UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
-    final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
+    int relativeY = ExperimentalUI.isNewUI() ? -getComponent().getPreferredSize().height : item.getHeight();
+
+    final RelativePoint point = new RelativePoint(item, new Point(0, relativeY));
     final Point p = point.getPoint(myPanel);
     if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
       //noinspection SSBasedInspection
@@ -133,6 +137,10 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         }
       });
     }
+  }
+
+  public int getItemIndex() {
+    return myItemIndex;
   }
 
   @Override

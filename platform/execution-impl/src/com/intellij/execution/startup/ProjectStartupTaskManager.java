@@ -6,6 +6,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -15,7 +16,7 @@ import java.util.*;
 
 @Service
 final class ProjectStartupTaskManager {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Project Startup Tasks Messages");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Project Startup Tasks Messages");
   public static final String PREFIX = "Project Startup Tasks: ";
 
   private final Project myProject;

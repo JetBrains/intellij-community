@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // SUGGESTED_NAMES: i, getKm
 // PARAM_TYPES: kotlin.Int
 // PARAM_DESCRIPTOR: public final val meters: kotlin.Int? defined in A

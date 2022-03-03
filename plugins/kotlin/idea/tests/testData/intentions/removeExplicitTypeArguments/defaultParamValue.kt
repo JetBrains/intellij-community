@@ -1,5 +1,5 @@
 // IS_APPLICABLE: true
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'p' is never used
 
 fun foo(p: List<String> = listOf<caret><String>()) {

@@ -1,6 +1,6 @@
 // "Replace with assignment (original is empty)" "true"
 // TOOL: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(otherList: List<Int>) {
     var list = listOf<Int>()
     foo()

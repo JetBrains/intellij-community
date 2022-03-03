@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Merge call chain to 'withContext'
 
 package kotlinx.coroutines

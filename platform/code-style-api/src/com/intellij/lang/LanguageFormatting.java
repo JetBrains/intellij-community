@@ -32,10 +32,18 @@ public final class LanguageFormatting extends LanguageExtension<FormattingModelB
     if (builder == null) {
       builder = forLanguage(language);
     }
+    Formatter formatter = Formatter.getInstance();
     PsiFile file = context.getContainingFile();
-    return ExternalFormatProcessor.useExternalFormatter(file)
-           ? Formatter.getInstance().createExternalFormattingModelBuilder(file, builder)
-           : builder;
+
+    builder = ExternalFormatProcessor.useExternalFormatter(file)
+              ? formatter.createExternalFormattingModelBuilder(file, builder)
+              : builder;
+
+    builder = formatter.isEligibleForVirtualFormatting(context)
+              ? formatter.wrapForVirtualFormatting(context, builder)
+              : builder;
+
+    return builder;
   }
 
   @Nullable

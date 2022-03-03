@@ -2,12 +2,8 @@
 
 package com.intellij.util.containers;
 
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
@@ -234,10 +230,9 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      * writes to be conservative.
      */
 
-  @SuppressWarnings("unchecked")
   static <V> Node<V> tabAt(Node<V>[] tab, int i) {
     try {
-      Object o = getObjectVolatileHandle.invokeExact((Object)tab, ((long)i << ASHIFT) + ABASE);
+      Object o = Unsafe.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
       return (Node<V>)o;
     }
     catch (Throwable throwable) {
@@ -248,7 +243,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   static <V> boolean casTabAt(Node<V>[] tab, int i,
                                  Node<V> c, Node<V> v) {
     try {
-      return (boolean)compareAndSwapObjectHandle.invokeExact((Object)tab, ((long)i << ASHIFT) + ABASE, (Object)c, (Object)v);
+      return Unsafe.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -257,7 +252,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
   static <V> void setTabAt(Node<V>[] tab, int i, Node<V> v) {
     try {
-      putObjectVolatileHandle.invokeExact((Object)tab, ((long)i << ASHIFT) + ABASE, (Object)v);
+      Unsafe.putObjectVolatile(tab, ((long)i << ASHIFT) + ABASE, v);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -1067,7 +1062,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       if ((sc = sizeCtl) < 0) {
         Thread.yield(); // lost initialization race; just spin
       }
-      else if (compareAndSwapInt(this, SIZECTL, sc, -1)) {
+      else if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, -1)) {
         try {
           if ((tab = table) == null || tab.length == 0) {
             int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
@@ -1100,7 +1095,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     CounterCell[] as;
     long b, s;
     if ((as = counterCells) != null ||
-        !compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
+        !Unsafe.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
       CounterCell a;
       long v;
       int m;
@@ -1108,7 +1103,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       if (as == null || (m = as.length - 1) < 0 ||
           (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
           !(uncontended =
-              compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {
+              Unsafe.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {
         fullAddCount(x, uncontended);
         return;
       }
@@ -1129,11 +1124,11 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               transferIndex <= 0) {
             break;
           }
-          if (compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
+          if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
             transfer(tab, nt);
           }
         }
-        else if (compareAndSwapInt(this, SIZECTL, sc,
+        else if (Unsafe.compareAndSwapInt(this, SIZECTL, sc,
                                      (rs << RESIZE_STAMP_SHIFT) + 2)) {
           transfer(tab, null);
         }
@@ -1157,7 +1152,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
             sc == rs + MAX_RESIZERS || transferIndex <= 0) {
           break;
         }
-        if (compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
+        if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
           transfer(tab, nextTab);
           break;
         }
@@ -1181,7 +1176,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       int n;
       if (tab == null || (n = tab.length) == 0) {
         n = Math.max(sc, c);
-        if (compareAndSwapInt(this, SIZECTL, sc, -1)) {
+        if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, -1)) {
           try {
             if (table == tab) {
               @SuppressWarnings("unchecked")
@@ -1207,11 +1202,11 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               transferIndex <= 0) {
             break;
           }
-          if (compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
+          if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
             transfer(tab, nt);
           }
         }
-        else if (compareAndSwapInt(this, SIZECTL, sc,
+        else if (Unsafe.compareAndSwapInt(this, SIZECTL, sc,
                                      (rs << RESIZE_STAMP_SHIFT) + 2)) {
           transfer(tab, null);
         }
@@ -1257,7 +1252,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           i = -1;
           advance = false;
         }
-        else if (compareAndSwapInt
+        else if (Unsafe.compareAndSwapInt
           (this, TRANSFERINDEX, nextIndex,
            nextBound = (nextIndex > stride ?
                         nextIndex - stride : 0))) {
@@ -1274,7 +1269,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           sizeCtl = (n << 1) - (n >>> 1);
           return;
         }
-        if (compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
+        if (Unsafe.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
           if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT) {
             return;
           }
@@ -1406,7 +1401,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           if (cellsBusy == 0) {            // Try to attach new Cell
             CounterCell r = new CounterCell(x); // Optimistic create
             if (cellsBusy == 0 &&
-                compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
+                Unsafe.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
               boolean created = false;
               try {               // Recheck under lock
                 CounterCell[] rs;
@@ -1433,7 +1428,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         {
           wasUncontended = true;      // Continue after rehash
         }
-        else if (compareAndSwapLong(a, CELLVALUE, v = a.value, v + x)) {
+        else if (Unsafe.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x)) {
           break;
         }
         else if (counterCells != as || n >= NCPU) {
@@ -1443,7 +1438,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           collide = true;
         }
         else if (cellsBusy == 0 &&
-                 compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
+                 Unsafe.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
           try {
             if (counterCells == as) {// Expand table unless stale
               CounterCell[] rs = new CounterCell[n << 1];
@@ -1462,7 +1457,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         h = ThreadLocalRandom.advanceProbe(h);
       }
       else if (cellsBusy == 0 && counterCells == as &&
-               compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
+               Unsafe.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
         boolean init = false;
         try {                           // Initialize table
           if (counterCells == as) {
@@ -1479,7 +1474,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           break;
         }
       }
-      else if (compareAndSwapLong(this, BASECOUNT, v = baseCount, v + x)) {
+      else if (Unsafe.compareAndSwapLong(this, BASECOUNT, v = baseCount, v + x)) {
         break;                          // Fall back on using base
       }
     }
@@ -1669,7 +1664,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      * Acquires write lock for tree restructuring.
      */
     private void lockRoot() {
-      if (!compareAndSwapInt(this, LOCKSTATE, 0, WRITER)) {
+      if (!Unsafe.compareAndSwapInt(this, LOCKSTATE, 0, WRITER)) {
         contendedLock(); // offload to separate method
       }
     }
@@ -1688,7 +1683,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       boolean waiting = false;
       for (int s; ; ) {
         if (((s = lockState) & ~WAITER) == 0) {
-          if (compareAndSwapInt(this, LOCKSTATE, s, WRITER)) {
+          if (Unsafe.compareAndSwapInt(this, LOCKSTATE, s, WRITER)) {
             if (waiting) {
               waiter = null;
             }
@@ -1696,7 +1691,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           }
         }
         else if ((s & WAITER) == 0) {
-          if (compareAndSwapInt(this, LOCKSTATE, s, s | WAITER)) {
+          if (Unsafe.compareAndSwapInt(this, LOCKSTATE, s, s | WAITER)) {
             waiting = true;
             waiter = Thread.currentThread();
           }
@@ -1722,7 +1717,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           }
           e = e.next;
         }
-        else if (compareAndSwapInt(this, LOCKSTATE, s,
+        else if (Unsafe.compareAndSwapInt(this, LOCKSTATE, s,
                                      s + READER)) {
           TreeNode<V> r;
           TreeNode<V> p;
@@ -1745,7 +1740,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     private static int getAndAddInt(Object object, long offset, int v) {
       try {
-        return (int)getAndAddIntHandle.invokeExact(object, offset, v);
+        return Unsafe.getAndAddInt(object, offset, v);
       }
       catch (Throwable t) {
         throw new RuntimeException(t);
@@ -2192,12 +2187,9 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     static {
       try {
-        Object unsafe = ReflectionUtil.getUnsafe();
-        MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
-        MethodHandle objectFieldOffset =
-          publicLookup.findVirtual(unsafe.getClass(), "objectFieldOffset", MethodType.methodType(long.class, Field.class));
         Class<?> k = TreeBin.class;
-        LOCKSTATE = (long)objectFieldOffset.invoke(unsafe, k.getDeclaredField("lockState"));
+        Field field = k.getDeclaredField("lockState");
+        LOCKSTATE = Unsafe.objectFieldOffset(field);
       }
       catch (Throwable t) {
         throw new Error(t);
@@ -2750,8 +2742,6 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   }
 
   // -------------------------------------------------------
-
-
   // Unsafe mechanics
   private static final long SIZECTL;
   private static final long TRANSFERINDEX;
@@ -2760,75 +2750,25 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private static final long CELLVALUE;
   private static final long ABASE;
   private static final int ASHIFT;
-
-  private static final MethodHandle putObjectVolatileHandle;
-  private static final MethodHandle getObjectVolatileHandle;
-  private static final MethodHandle compareAndSwapObjectHandle;
-  private static final MethodHandle compareAndSwapIntHandle;
-  private static final MethodHandle compareAndSwapLongHandle;
-  private static final MethodHandle getAndAddIntHandle;
-
   static {
     try {
-      MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
-      Object unsafe = ReflectionUtil.getUnsafe();
-      MethodHandle objectFieldOffset = publicLookup.findVirtual(unsafe.getClass(), "objectFieldOffset", MethodType.methodType(long.class, Field.class));
-      Class<?> k = ConcurrentIntObjectHashMap.class;
-      SIZECTL = (long) objectFieldOffset.invoke(unsafe, k.getDeclaredField("sizeCtl"));
-      TRANSFERINDEX = (long) objectFieldOffset.invoke(unsafe, k.getDeclaredField("transferIndex"));
-      BASECOUNT = (long) objectFieldOffset.invoke(unsafe, k.getDeclaredField("baseCount"));
-      CELLSBUSY = (long) objectFieldOffset.invoke(unsafe, k.getDeclaredField("cellsBusy"));
-      Class<?> ck = CounterCell.class;
-      CELLVALUE = (long) objectFieldOffset.invoke(unsafe, ck.getDeclaredField("value"));
-      Class<?> ak = Node[].class;
-      ABASE = (int)publicLookup.findVirtual(unsafe.getClass(), "arrayBaseOffset", MethodType.methodType(int.class, Class.class)).invoke(unsafe, ak);
-      int scale = (int)publicLookup.findVirtual(unsafe.getClass(), "arrayIndexScale", MethodType.methodType(int.class, Class.class)).invoke(unsafe, ak);
+      Class<?> k = ConcurrentLongObjectHashMap.class;
+      SIZECTL = Unsafe.objectFieldOffset(k.getDeclaredField("sizeCtl"));
+      TRANSFERINDEX = Unsafe.objectFieldOffset(k.getDeclaredField("transferIndex"));
+      BASECOUNT = Unsafe.objectFieldOffset(k.getDeclaredField("baseCount"));
+      CELLSBUSY = Unsafe.objectFieldOffset(k.getDeclaredField("cellsBusy"));
+      CELLVALUE = Unsafe.objectFieldOffset(CounterCell.class.getDeclaredField("value"));
+      ABASE = Unsafe.arrayBaseOffset(Node[].class);
+      int scale = Unsafe.arrayIndexScale(Node[].class);
       if ((scale & (scale - 1)) != 0) {
         throw new Error("data type scale not a power of two");
       }
       ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
-      putObjectVolatileHandle = publicLookup
-        .findVirtual(unsafe.getClass(), "putObjectVolatile", MethodType.methodType(void.class, Object.class, long.class, Object.class))
-        .bindTo(unsafe);
-      getObjectVolatileHandle = publicLookup
-        .findVirtual(unsafe.getClass(), "getObjectVolatile", MethodType.methodType(Object.class, Object.class, long.class))
-        .bindTo(unsafe);
-      compareAndSwapObjectHandle = publicLookup
-        .findVirtual(unsafe.getClass(), "compareAndSwapObject", MethodType.methodType(boolean.class, Object.class, long.class, Object.class, Object.class))
-        .bindTo(unsafe);
-      compareAndSwapIntHandle = publicLookup
-        .findVirtual(unsafe.getClass(), "compareAndSwapInt", MethodType.methodType(boolean.class, Object.class, long.class, int.class, int.class))
-        .bindTo(unsafe);
-      compareAndSwapLongHandle = publicLookup
-        .findVirtual(unsafe.getClass(), "compareAndSwapLong", MethodType.methodType(boolean.class, Object.class, long.class, long.class, long.class))
-        .bindTo(unsafe);
-      getAndAddIntHandle = publicLookup
-        .findVirtual(unsafe.getClass(), "getAndAddInt", MethodType.methodType(int.class, Object.class, long.class, int.class))
-        .bindTo(unsafe);
     }
-    catch (Throwable t) {
-      throw new Error(t);
+    catch (Throwable e) {
+      throw new RuntimeException(e);
     }
   }
-
-  private static boolean compareAndSwapInt(Object object, long offset, int expected, int value) {
-    try {
-      return (boolean)compareAndSwapIntHandle.invokeExact(object, offset, expected, value);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-
-  private static boolean compareAndSwapLong(Object object, long offset, long expected, long value) {
-    try {
-      return (boolean)compareAndSwapLongHandle.invokeExact(object, offset, expected, value);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-
   /**
    * @return value if there is no entry in the map, or corresponding value if entry already exists
    */

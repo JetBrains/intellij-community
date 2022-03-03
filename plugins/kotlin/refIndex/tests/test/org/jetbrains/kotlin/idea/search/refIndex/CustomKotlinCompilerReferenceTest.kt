@@ -30,7 +30,7 @@ import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberFunctions
 
 @SkipSlowTestLocally
-class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
+class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
     override fun getTestDataPath(): String = KotlinRoot.DIR
         .resolve("refIndex/tests/testData/")
         .resolve("customCompilerIndexData")

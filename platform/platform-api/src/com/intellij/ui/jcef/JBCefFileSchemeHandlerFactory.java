@@ -33,7 +33,7 @@ final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory  {
   public static final Map<CefBrowser, Map<String/* url */, String /* html */>> LOADHTML_REQUEST_MAP = ContainerUtil.createWeakMap();
 
   @Override
-  public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
+  public CefResourceHandler create(@NotNull CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
     if (!FILE_SCHEME_NAME.equals(schemeName)) return null;
 
     String url = request.getURL();

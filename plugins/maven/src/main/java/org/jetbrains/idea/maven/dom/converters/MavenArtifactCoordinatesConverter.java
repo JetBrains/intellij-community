@@ -25,8 +25,8 @@ import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
@@ -37,7 +37,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,16 +49,16 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
     Project contextProject = context.getProject();
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(contextProject);
+    MavenIndicesManager manager = MavenIndicesManager.getInstance(contextProject);
 
     ConverterStrategy strategy = selectStrategy(context);
     boolean isValid = strategy.isValid(id, manager, context);
     if (!isValid) {
-      File localRepository = MavenProjectsManager.getInstance(contextProject).getLocalRepository();
-      VirtualFile file = MavenUtil.getRepositoryFile(contextProject, id, "pom", null);
-      if (file != null) {
-        File artifactFile = new File(file.getPath());
-        MavenIndicesManager.getInstance(contextProject).fixArtifactIndexAsync(artifactFile, localRepository);
+      MavenIndex localIndex = manager.getIndex().getLocalIndex();
+      if (localIndex == null) return null;
+      Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), id, "pom", null);
+      if (artifactPath != null && artifactPath.toFile().exists()) {
+        MavenIndicesManager.getInstance(contextProject).addArtifactIndexAsync(id, artifactPath.toFile());
         return s;
       }
       return null;
@@ -66,7 +66,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return s;
   }
 
-  protected abstract boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context);
+  protected abstract boolean doIsValid(MavenId id, MavenIndicesManager manager, ConvertContext context);
 
   @Override
   public String toString(@Nullable String s, ConvertContext context) {
@@ -178,14 +178,15 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      MavenProjectIndicesManager.getInstance(project).scheduleUpdateAll();
+      MavenIndicesManager.getInstance(project).scheduleUpdateContentAll();
     }
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return MavenUtil.isPomFile(project, file.getVirtualFile()) &&
-             MavenProjectIndicesManager.getInstance(project).hasRemotesExceptCentral();
-
+      return MavenUtil.isPomFile(project, file.getVirtualFile())
+             && MavenIndicesManager.getInstance(project).getIndex()
+               .getRemoteIndices().stream()
+               .anyMatch(i -> !"central".equals(i.getRepositoryId()));
     }
   }
 
@@ -195,7 +196,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return MavenDomBundle.message("artifact.0.not.found", MavenArtifactCoordinatesHelper.getId(context));
     }
 
-    public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
+    public boolean isValid(MavenId id, MavenIndicesManager manager, ConvertContext context) {
       return doIsValid(id, manager, context) || resolveBySpecifiedPath() != null;
     }
 
@@ -249,7 +250,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
+    public boolean isValid(MavenId id, MavenIndicesManager manager, ConvertContext context) {
       return true;
     }
   }
@@ -333,7 +334,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
+    public boolean isValid(MavenId id, MavenIndicesManager manager, ConvertContext context) {
       return true;
     }
   }
@@ -352,7 +353,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
+    public boolean isValid(MavenId id, MavenIndicesManager manager, ConvertContext context) {
       if (StringUtil.isEmpty(id.getGroupId())) {
         for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
           id = new MavenId(each, id.getArtifactId(), id.getVersion());
@@ -398,10 +399,10 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       // Try to resolve to plugin with latest version
       PsiManager psiManager = context.getPsiManager();
 
-      File artifactFile = MavenArtifactUtil
-        .getArtifactFile(projectsManager.getLocalRepository(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+      Path artifactFile = MavenArtifactUtil
+        .getArtifactNioPath(projectsManager.getLocalRepository(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
 
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(artifactFile);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(artifactFile);
       if (virtualFile != null) {
         return psiManager.findFile(virtualFile);
       }

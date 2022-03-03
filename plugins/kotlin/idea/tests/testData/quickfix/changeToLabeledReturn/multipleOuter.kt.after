@@ -1,7 +1,7 @@
 // "Change to 'return@foo'" "true"
 // ACTION: Change to 'return@forEach'
 // ACTION: Introduce local variable
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(f:()->Int){}
 

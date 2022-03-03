@@ -1,4 +1,4 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 const val <caret>x = 13

@@ -3,7 +3,7 @@
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // COMPILER_ARGUMENTS_AFTER: -Xopt-in=kotlin.RequiresOptIn -Xopt-in=test.MyExperimentalAPI
 // DISABLE-ERRORS
-// WITH_RUNTIME
+// WITH_STDLIB
 
 package test
 

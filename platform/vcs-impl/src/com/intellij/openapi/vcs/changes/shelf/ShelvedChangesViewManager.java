@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffPlaces;
@@ -537,6 +538,7 @@ public class ShelvedChangesViewManager implements Disposable {
                                             @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
       String message = constructDeleteSuccessfullyMessage(fileListSize, shelvedListsToDelete.size(), getFirstItem(shelvedListsToDelete));
       Notification shelfDeletionNotification = new ShelfDeleteNotification(message);
+      shelfDeletionNotification.setDisplayId(VcsNotificationIdsHolder.SHELF_UNDO_DELETE);
       shelfDeletionNotification.addAction(new UndoShelfDeletionAction(myProject, createdDeletedListsWithOriginalDate));
       shelfDeletionNotification.addAction(ActionManager.getInstance().getAction("ShelvedChanges.ShowRecentlyDeleted"));
       VcsNotifier.getInstance(myProject).showNotificationAndHideExisting(shelfDeletionNotification, ShelfDeleteNotification.class);
@@ -735,7 +737,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
 
       if (isEditorPreview) {
-        myEditorChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
+        myEditorChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree, true);
         Disposer.register(this, myEditorChangeProcessor);
         myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
       }
@@ -744,7 +746,7 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       if (hasSplitterPreview) {
-        mySplitterChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
+        mySplitterChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree, false);
         Disposer.register(this, mySplitterChangeProcessor);
         mySplitterDiffPreview = installSplitterPreview(mySplitterChangeProcessor);
       }
@@ -865,12 +867,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
   private static class MyShelvedPreviewProcessor extends ChangeViewDiffRequestProcessor implements DiffPreviewUpdateProcessor {
     @NotNull private final ShelfTree myTree;
+    private final boolean myIsInEditor;
 
     @NotNull private final PatchesPreloader myPreloader;
 
-    MyShelvedPreviewProcessor(@NotNull Project project, @NotNull ShelfTree tree) {
+    MyShelvedPreviewProcessor(@NotNull Project project, @NotNull ShelfTree tree, boolean isInEditor) {
       super(project, DiffPlaces.SHELVE_VIEW);
       myTree = tree;
+      myIsInEditor = isInEditor;
       myPreloader = new PatchesPreloader(project);
       putContextUserData(PatchesPreloader.SHELF_PRELOADER, myPreloader);
     }
@@ -880,6 +884,11 @@ public class ShelvedChangesViewManager implements Disposable {
     public void clear() {
       setCurrentChange(null);
       dropCaches();
+    }
+
+    @Override
+    protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
+      return !myIsInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents);
     }
 
     @Override

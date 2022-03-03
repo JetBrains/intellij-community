@@ -4,6 +4,6 @@ public class Test {
       private int myInt = i;      
       public void run(){
       }
-    }
+    };
   }
 }

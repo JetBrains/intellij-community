@@ -3,15 +3,20 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ui.InspectionOptionContainer;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ReflectionUtil;
@@ -88,6 +93,30 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
         setOption(project, vFile, myValue);
       }
     });
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull ProblemDescriptor previewDescriptor) {
+    InspectionToolWrapper<?, ?> tool =
+      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, previewDescriptor.getPsiElement());
+    if (tool == null) return IntentionPreviewInfo.EMPTY;
+    JComponent panel = tool.getTool().createOptionsPanel();
+    if (!(panel instanceof InspectionOptionContainer)) return IntentionPreviewInfo.EMPTY;
+    HtmlChunk label = ((InspectionOptionContainer)panel).getLabelForCheckbox(myProperty);
+    HtmlChunk.Element checkbox = HtmlChunk.tag("input").attr("type", "checkbox").attr("readonly", "true");
+    if (myValue) {
+      checkbox = checkbox.attr("checked", "true");
+    }
+    HtmlChunk info = HtmlChunk.tag("table")
+      .child(HtmlChunk.tag("tr").children(
+        HtmlChunk.tag("td").child(checkbox),
+        HtmlChunk.tag("td").child(label)
+      ));
+    return new IntentionPreviewInfo.Html(
+      new HtmlBuilder().append(myValue ? QuickFixBundle.message("set.inspection.option.description.check")
+                                       : QuickFixBundle.message("set.inspection.option.description.uncheck"))
+        .br().br().append(info).toFragment());
   }
 
   private void setOption(@NotNull Project project, @NotNull VirtualFile vFile, boolean value) {

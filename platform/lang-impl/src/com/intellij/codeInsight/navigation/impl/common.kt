@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.navigation.EmptyNavigatable
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -34,14 +33,13 @@ private fun <X : Any> fromHostEditor(editor: Editor, offset: Int, function: (edi
   return function(editor.delegate, editor.document.injectedToHost(offset))
 }
 
-internal fun gtdTargetNavigatable(targetElement: PsiElement): Navigatable {
-  val target = TargetElementUtil.getInstance().getGotoDeclarationTarget(targetElement, targetElement.navigationElement)
-               ?: return EmptyNavigatable.INSTANCE
-  return psiNavigatable(target)
+internal fun PsiElement.gtdTargetNavigatable(): Navigatable? {
+  return TargetElementUtil.getInstance()
+    .getGotoDeclarationTarget(this, navigationElement)
+    ?.psiNavigatable()
 }
 
-internal fun psiNavigatable(targetElement: PsiElement): Navigatable {
-  return targetElement as? Navigatable
-         ?: EditSourceUtil.getDescriptor(targetElement)
-         ?: EmptyNavigatable.INSTANCE
+internal fun PsiElement.psiNavigatable(): Navigatable? {
+  return this as? Navigatable
+         ?: EditSourceUtil.getDescriptor(this)
 }

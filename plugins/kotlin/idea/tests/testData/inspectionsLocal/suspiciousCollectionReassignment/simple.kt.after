@@ -1,5 +1,5 @@
 // FIX: Change type to mutable
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     val list = mutableListOf(1)<caret>
     list <selection>+=</selection> 2

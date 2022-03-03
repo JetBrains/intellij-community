@@ -1,6 +1,4 @@
-// "Create member function 'foo'" "false"
-// ACTION: Rename reference
-// ERROR: Unresolved reference: foo
+// "Create member function 'A.Companion.foo'" "true"
 
 class A<T>(val n: T)
 

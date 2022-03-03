@@ -118,32 +118,29 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
             bytes = Files.readAllBytes(Path.of(resourceName))
           }
           is UITheme -> {
-            val stream = requestor.providerClassLoader.getResourceAsStream(resourceName.removePrefix("/"))
-            if (stream == null) {
+            bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), requestor.providerClassLoader)
+            if (bytes == null) {
               LOG.error("Cannot find $resourceName in ${requestor.providerClassLoader}")
               return
             }
-            bytes = stream.use { it.readAllBytes()  }
           }
           else -> {
-            val stream = (if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader)
-              .getResourceAsStream(resourceName.removePrefix("/"))
-            if (stream == null) {
+            bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"),
+                                                    (if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader))
+            if (bytes == null) {
               LOG.error("Cannot read scheme from $resourceName")
               return
             }
-            bytes = stream.use { it.readAllBytes()  }
           }
         }
       }
       else {
         val classLoader = pluginDescriptor.classLoader
-        val stream = classLoader.getResourceAsStream(resourceName.removePrefix("/"))
-        if (stream == null) {
+        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
+        if (bytes == null) {
           LOG.error("Cannot found scheme $resourceName in $classLoader")
           return
         }
-        bytes = stream.use { it.readAllBytes()  }
       }
 
       lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->

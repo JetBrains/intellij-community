@@ -115,7 +115,7 @@ open class ArtifactBridge(
   override fun getRootElement(): CompositePackagingElement<*> {
     val artifactEntity = entityStorage.base.get(artifactId)
     val rootElement = artifactEntity.rootElement!!
-    val compositeElement = rootElement.toCompositeElement(project, entityStorage.base)
+    val compositeElement = rootElement.toCompositeElement(project, entityStorage)
     if (!compositeElement.hasStorage() || (compositeElement.storageIsStore() && diffOrNull != null)) {
       compositeElement.setStorage(entityStorage, project, elementsWithDiff, PackagingElementInitializer)
       if (entityStorage is VersionedEntityStorageOnBuilder) {

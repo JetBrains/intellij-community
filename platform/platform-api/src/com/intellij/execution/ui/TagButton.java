@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.icons.AllIcons;
@@ -16,6 +16,7 @@ import com.intellij.ui.InplaceButton;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 
@@ -125,7 +126,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
   }
 
   protected void layoutButtons() {
-    myButton.setMargin(JBUI.emptyInsets());
+    myButton.setMargin(JBInsets.emptyInsets());
     Dimension size = myButton.getPreferredSize();
     Dimension iconSize = myCloseButton.getPreferredSize();
     Dimension tagSize = new Dimension(size.width + iconSize.width - ourInset * 2, size.height);

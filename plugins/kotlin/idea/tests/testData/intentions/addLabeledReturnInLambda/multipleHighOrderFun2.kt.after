@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Add 'return@bar'"
 // AFTER-WARNING: Parameter 'a' is never used
 // AFTER-WARNING: Parameter 'b' is never used

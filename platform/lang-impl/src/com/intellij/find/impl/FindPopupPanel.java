@@ -208,10 +208,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     if (myDialog != null && myDialog.isVisible()) {
       return;
     }
-    if (myDialog != null && !Disposer.isDisposed(myDialog.getDisposable())) {
+    if (myDialog != null && !myDialog.isDisposed()) {
       myDialog.doCancelAction();
     }
-    if (myDialog == null || Disposer.isDisposed(myDialog.getDisposable())) {
+    if (myDialog == null || myDialog.isDisposed()) {
       myDialog = new DialogWrapper(myHelper.getProject(), null, true, DialogWrapper.IdeModalityType.MODELESS, false) {
         {
           init();

@@ -5,10 +5,13 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.util.PathUtilRt
 import com.intellij.util.Processor
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
@@ -21,6 +24,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
+import java.util.concurrent.ForkJoinTask
+import java.util.function.Supplier
 
 @CompileStatic
 final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
@@ -50,7 +55,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     Path distBinDir = winDistPath.resolve("bin")
     Files.createDirectories(distBinDir)
 
-    buildContext.messages.progress("Building distributions for $targetOs.osName")
+    buildContext.messages.progress("build distributions for Windows")
     buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -74,13 +79,13 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildWinLauncher(winDistPath)
     customizer.copyAdditionalFiles(buildContext, winDistPath.toString())
     FileFilter signFileFilter = createFileFilter("exe", "dll")
-    for (Path nativeRoot : [distBinDir, pty4jNativeDir]) {
+    for (Path nativeRoot : List.of(distBinDir, pty4jNativeDir)) {
       FileUtil.processFilesRecursively(nativeRoot.toFile(), new Processor<File>() {
         @Override
         boolean process(File file) {
           if (signFileFilter.accept(file)) {
-            buildContext.executeStep("Signing $file", BuildOptions.WIN_SIGN_STEP) {
-              buildContext.signFile(file.absolutePath, BuildOptions.WIN_SIGN_OPTIONS)
+            buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", file.toString()), BuildOptions.WIN_SIGN_STEP) {
+              buildContext.signFile(file.toPath(), BuildOptions.WIN_SIGN_OPTIONS)
             }
           }
           return true
@@ -93,70 +98,67 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(@NotNull Path winDistPath) {
     copyFilesForOsDistribution(winDistPath)
 
-    String zipPath = null, exePath = null
-    Path jreDir = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
-    if (jreDir != null) {
-      Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
-      try {
-        BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
-      }
-      catch (NoSuchFileException ignore) {
-/* Android Studio: suppress error in code added by commit 8272ffe8
-        buildContext.messages.error(
-          "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
-          "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
-          "If DLL was relocated to another place, please correct the path in this code.")
-Android Studio: suppress error in code added by commit 8272ffe8 */
-      }
+    ForkJoinTask<Path> zipPathTask = null
+    String exePath = null
+    Path jreDir = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.WINDOWS, JvmArchitecture.x64)
+
+    Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
+    if (!Files.exists(vcRtDll)) {
+      buildContext.messages.error(
+        "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
+        "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
+        "If DLL was relocated to another place, please correct the path in this code.")
     }
+
+    BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
 
     if (customizer.buildZipArchive) {
       List<Path> jreDirectoryPaths
       if (customizer.zipArchiveWithBundledJre) {
-        if (jreDir == null) {
-          buildContext.messages.error("Bundled jre is not found, but it's required for .win.zip")
-        }
-
-        jreDirectoryPaths = [jreDir]
-      } else {
-        jreDirectoryPaths = []
+        jreDirectoryPaths = List.of(jreDir)
       }
-      zipPath = buildWinZip(jreDirectoryPaths, ".win", winDistPath)
+      else {
+        jreDirectoryPaths = List.of()
+      }
+      zipPathTask = createBuildWinZipTask(jreDirectoryPaths, ".win", winDistPath, customizer, buildContext).fork()
     }
 
-    /* Android Studio: this is handled by ADRT?
-    buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
-      generateProductJson(productJsonDir, jreDir != null)
-      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath.toString(), jreDir.toString()], [])
-      exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, '')
-    } */
+    buildContext.executeStep("build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP, new Runnable() {
+      @Override
+      void run() {
+        Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
+        generateProductJson(productJsonDir, jreDir != null, buildContext)
+        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winDistPath, jreDir), [])
+        exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, "", buildContext).toString()
+      }
+    })
 
-    if (buildContext.options.isInDevelopmentMode || zipPath == null || exePath == null) {
+    Path zipPath = zipPathTask == null ? null : zipPathTask.join()
+    if (buildContext.options.isInDevelopmentMode || zipPathTask == null || exePath == null) {
       return
     }
 
     if (!SystemInfoRt.isLinux) {
-      buildContext.messages.warning("Comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
+      Span.current().addEvent("comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
       return
     }
 
-    buildContext.messages.info("Comparing ${new File(zipPath).name} vs. ${new File(exePath).name} ...")
+    Span.current().addEvent("compare ${zipPath.fileName} vs. ${PathUtilRt.getFileName(exePath)}")
 
     Path tempZip = Files.createTempDirectory(buildContext.paths.tempDir, "zip-")
     Path tempExe = Files.createTempDirectory(buildContext.paths.tempDir, "exe-")
     try {
       BuildHelper.runProcess(buildContext, List.of("7z", "x", "-bd", exePath), tempExe)
-      BuildHelper.runProcess(buildContext, List.of("unzip", "-qq", zipPath), tempZip)
+      BuildHelper.runProcess(buildContext, List.of("unzip", "-q", zipPath.toString()), tempZip)
       //noinspection SpellCheckingInspection
-      FileUtil.delete(tempExe.resolve("\$PLUGINSDIR"))
+      NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
       BuildHelper.runProcess(buildContext, List.of("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
-      RepairUtilityBuilder.generateManifest(buildContext, tempExe.toString(), Paths.get(exePath).fileName.toString())
+      RepairUtilityBuilder.generateManifest(buildContext, tempExe, Path.of(exePath).fileName.toString())
     }
     finally {
-      FileUtil.delete(tempZip)
-      FileUtil.delete(tempExe)
+      NioFiles.deleteRecursively(tempZip)
+      NioFiles.deleteRecursively(tempExe)
     }
   }
 
@@ -165,12 +167,19 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
     String fullName = buildContext.applicationInfo.productName
     String baseName = buildContext.productProperties.baseFileName
     String scriptName = "${baseName}.bat"
-    String vmOptionsFileName = "${baseName}%BITS%.exe"
+    String vmOptionsFileName = "${baseName}64.exe"
 
-    String classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\"\n"
-    classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it\"" }.join("\n")
-    if (buildContext.productProperties.toolsJarRequired) {
-      classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar\""
+    List<String> classPathJars = buildContext.bootClassPathJarNames
+    String classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${classPathJars.get(0)}\""
+    for (int i = 1; i < classPathJars.size(); i++) {
+      classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars.get(i)}\""
+    }
+
+    List<String> additionalJvmArguments = buildContext.additionalJvmArguments
+    if (!buildContext.xBootClassPathJarNames.isEmpty()) {
+      additionalJvmArguments = new ArrayList<>(additionalJvmArguments)
+      String bootCp = String.join(';', buildContext.xBootClassPathJarNames.collect { "%IDE_HOME%\\lib\\${it}" })
+      additionalJvmArguments.add('"-Xbootclasspath/a:' + bootCp + '"')
     }
 
     buildContext.ant.copy(todir: distBinDir.toString()) {
@@ -182,7 +191,7 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
         filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
+        filter(token: "ide_jvm_args", value: additionalJvmArguments.join(' '))
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: scriptName)
         filter(token: "base_name", value: baseName)
@@ -197,52 +206,7 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
       buildContext.patchInspectScript(targetPath)
     }
 
-    // Android Studio: go/project-aplos
-    buildGameToolsScripts(classPath, distBinDir, fullName, vmOptionsFileName)
-    buildContext.ant.fixcrlf(srcdir: distBinDir, includes: "*.bat", eol: "dos")
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void buildGameToolsScripts(String classPath, Path distBinDir, String fullName, String vmOptionsFileName) {
-    // We manually set the classpath to include everything the game tools need and disable all plugin loading at runtime with
-    // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidGameDevelopmentToolsPlugin.xml, the starting plugin XML, is
-    // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidGameDevelopmentToolsPlugin.xml
-    // directly references all needed Intellij platform components so that the unneeded ones (for example, shift-shift to find everything)
-    // are ignored. See go/project-aplos-design for more details.
-    String gameToolsClassPath = classPath + "\n" + [
-      "plugins/android/lib/*",
-      "plugins/android/resources/*",
-      "plugins/java/lib/java-api.jar",
-      "plugins/java/lib/java-impl.jar",
-      "plugins/java/lib/resources.jar",
-      "plugins/java/lib/java_resources_en.jar"].
-      collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\$it" }.join("\n")
-
-    buildContext.ant.copy(todir: "$distBinDir") {
-      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
-      filterset(begintoken: "@@", endtoken: "@@") {
-        filter(token: "product_full", value: fullName + "GameTools")
-        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
-        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
-        filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
-        filter(token: "system_selector", value: "AndroidGameDevelopmentTools")
-        // Here we overwrite idea.platform.prefix to start the distinct entry point of game tools.
-        filter(token: "ide_jvm_args", value:
-          buildContext.additionalJvmArguments.join(' ') + " -Didea.platform.prefix=AndroidGameDevelopmentTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not")
-        filter(token: "class_path", value: gameToolsClassPath)
-        filter(token: "script_name", value: "game-tools.bat")
-        filter(token: "base_name", value: "game-tools")
-      }
-    }
-    buildContext.ant.move(file: "$distBinDir/executable-template.bat", tofile: "$distBinDir/game-tools.bat")
-    buildContext.ant.move(file: "$distBinDir/profiler.bat", tofile: "$distBinDir/profiler.bat")
-
-    // Copy the profiler launcher executable.
-    buildContext.ant.copy(todir: "$distBinDir") {
-      fileset(dir: "$buildContext.paths.communityHome/../../prebuilts/tools/windows/game-tools/GameToolsWinLauncher")
-    }
-    buildContext.ant.move(file: "$distBinDir/ProfilerWinLauncher.exe", tofile: "$distBinDir/profiler.exe")
+    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.bat", eol: "dos")
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -261,6 +225,7 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
       List<String> vmOptions = buildContext.additionalJvmArguments + ['-Dide.native.launcher=true']
       def productName = buildContext.applicationInfo.shortProductName
       String classPath = buildContext.bootClassPathJarNames.join(";")
+      String bootClassPath = buildContext.xBootClassPathJarNames.join(";")
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
       Path icoFilesDirectory = buildContext.paths.tempDir.resolve("win-launcher-ico")
       Path appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
@@ -276,7 +241,8 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
         IDS_VM_OPTIONS_ENV_VAR=${envVarBaseName}_VM_OPTIONS
         IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
         IDS_VM_OPTIONS=${vmOptions.join(' ')}
-        IDS_CLASSPATH_LIBS=${classPath}""".stripIndent().trim())
+        IDS_CLASSPATH_LIBS=${classPath}
+        IDS_BOOTCLASSPATH_LIBS=${bootClassPath}""".stripIndent().trim())
 
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/WinLauncher.exe"
@@ -333,30 +299,35 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
     return patchedFile
   }
 
-  private String buildWinZip(List<Path> jreDirectoryPaths, String zipNameSuffix, Path winDistPath) {
-    return buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
-      String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      Path targetFile = Paths.get(buildContext.paths.artifacts, "${baseName}${zipNameSuffix}.zip")
-      buildContext.messages.progress("Building Windows $targetFile archive")
-      Path productJsonDir = Paths.get(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix")
-      generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
+  private static ForkJoinTask<Path> createBuildWinZipTask(List<Path> jreDirectoryPaths,
+                                                          String zipNameSuffix,
+                                                          Path winDistPath,
+                                                          WindowsDistributionCustomizer customizer,
+                                                          BuildContext context) {
+    String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+    Path targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
+    return BuildHelper.getInstance(context).createTask(TracerManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
+                                                         .setAttribute("targetFile", targetFile.toString()), new Supplier<Path>() {
+      @Override
+      Path get() {
+        Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
+        generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
 
-      String zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath]  // Android Studio: modified by Change I5f8329b4
-      BuildHelper.zipWithPrefix(buildContext, targetFile, dirs, zipPrefix)
-/* TODO(b/118034991): generate product-info.json files (or not)
-      ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), zipPrefix)
-TODO(b/118034991): generate product-info.json files (or not) */
-      buildContext.notifyArtifactWasBuilt(targetFile)
-      return targetFile
-    }
+        String zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
+        List<Path> dirs = [context.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
+        BuildHelper.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
+        ProductInfoValidator.checkInArchive(context, targetFile, zipPrefix)
+        context.notifyArtifactWasBuilt(targetFile)
+        return targetFile
+      }
+    })
   }
 
-  private void generateProductJson(@NotNull Path targetDir, boolean isJreIncluded) {
-    String launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
-    String vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
+  private static void generateProductJson(@NotNull Path targetDir, boolean isJreIncluded, BuildContext context) {
+    String launcherPath = "bin/${context.productProperties.baseFileName}64.exe"
+    String vmOptionsPath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions"
     String javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
-    new ProductInfoGenerator(buildContext)
+    new ProductInfoGenerator(context)
       .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 

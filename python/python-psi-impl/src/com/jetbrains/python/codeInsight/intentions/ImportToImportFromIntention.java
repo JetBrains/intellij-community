@@ -132,7 +132,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           if (!FileModificationService.getInstance().preparePsiElementForWrite(elt)) {
             return;
           }
-          assert parentElt instanceof PyReferenceExpression;
+          assert parentElt instanceof PyReferenceExpression: parentElt.getClass();
           final PyElement newReference = generator.createExpressionFromText(languageLevel, nameUsed);
           parentElt.replace(newReference);
         }

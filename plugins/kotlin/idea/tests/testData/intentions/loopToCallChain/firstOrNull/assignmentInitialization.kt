@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'firstOrNull{}'"
 // IS_APPLICABLE_2: false
 // AFTER-WARNING: The value 'list.firstOrNull { it.length > 0 }' assigned to 'var result: String? defined in foo' is never used

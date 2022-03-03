@@ -35,7 +35,8 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   private static final String REQUIRES_BACKGROUND_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresBackgroundThread";
   private static final String REQUIRES_READ_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresReadLock";
   private static final String REQUIRES_WRITE_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresWriteLock";
-  private static final String REQUIRES_NO_READ_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresNoReadLock";
+  private static final String REQUIRES_READ_LOCK_ABSENCE_CLASS_NAME =
+    "com/intellij/util/concurrency/annotations/fake/RequiresReadLockAbsence";
   private static final String APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/fake/ApplicationManager";
   private static final String APPLICATION_CLASS_NAME = "com/intellij/openapi/application/fake/Application";
 
@@ -92,7 +93,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccessAllowed"));
   }
 
-  public void testRequiresNoReadLockAssertion() throws Exception {
+  public void testRequiresReadLockAbsenceAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessNotAllowed"));
   }
@@ -195,7 +196,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
       new TMHAssertionGenerator.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
       new TMHAssertionGenerator.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
       new TMHAssertionGenerator.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertNoReadAccess(REQUIRES_NO_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
+      new TMHAssertionGenerator.AssertNoReadAccess(REQUIRES_READ_LOCK_ABSENCE_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
     ), true);
     return instrumented ? writer.toByteArray() : null;
   }

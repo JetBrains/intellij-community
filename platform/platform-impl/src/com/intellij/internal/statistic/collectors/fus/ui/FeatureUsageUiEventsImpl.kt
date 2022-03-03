@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -86,11 +86,9 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
     }
   }
 
-  private fun logSettingsEvent(configurable: Configurable, event: EventId1<Class<*>?>) {
-    val base: Any? = if (configurable is ConfigurableWrapper) configurable.configurable else configurable
-    base?.let {
-      event.log(if (configurable is ConfigurableWrapper) configurable.project else null, base::class.java)
-    }
+  private fun logSettingsEvent(configurable: Configurable, event: EventId1<Class<*>>) {
+    val wrapper = configurable as? ConfigurableWrapper
+    event.log(wrapper?.project, (wrapper?.configurable ?: configurable)::class.java)
   }
 
   override fun logShowDialog(name: String, context: Class<*>) {

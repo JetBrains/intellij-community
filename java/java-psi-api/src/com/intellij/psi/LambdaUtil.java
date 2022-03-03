@@ -4,6 +4,7 @@ package com.intellij.psi;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -937,6 +938,15 @@ public final class LambdaUtil {
             return false;
           }
         }
+      }
+    }
+    else if (PsiPolyExpressionUtil.isInAssignmentOrInvocationContext(lambda)) {
+      PsiType origType = lambda.getFunctionalInterfaceType();
+      if (origType != null) {
+        PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)copyWithExpectedType(lambda, origType);
+        PsiExpression replacement = replacer.apply(lambdaCopy);
+        PsiType type = replacement.getType();
+        return type != null && origType.isAssignableFrom(type);
       }
     }
     return true;

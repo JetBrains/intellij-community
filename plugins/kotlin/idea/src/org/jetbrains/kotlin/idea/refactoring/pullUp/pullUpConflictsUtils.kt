@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -215,7 +216,7 @@ private fun KotlinPullUpData.checkAccidentalOverrides(
     if (memberDescriptor is CallableDescriptor && !member.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
         val memberDescriptorInTargetClass = memberDescriptor.substitute(sourceToTargetClassSubstitutor)
         if (memberDescriptorInTargetClass != null) {
-            val sequence = HierarchySearchRequest<PsiElement>(targetClass, targetClass.useScope)
+            val sequence = HierarchySearchRequest<PsiElement>(targetClass, targetClass.useScope())
                 .searchInheritors()
                 .asSequence()
                 .filterNot { it.isSourceOrTarget(this) }

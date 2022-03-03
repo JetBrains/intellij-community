@@ -10,4 +10,8 @@ public class SomeClass {
     public void singleParamDslWithSameParamName(String singleParamDslWithSameParamName) {
 
     }
+
+    public void sameFirstParamNameAndVararg(String sameFirstParamNameAndVararg, Object... variables) {
+
+    }
 }

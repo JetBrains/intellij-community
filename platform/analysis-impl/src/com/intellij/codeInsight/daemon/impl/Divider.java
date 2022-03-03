@@ -32,7 +32,7 @@ public final class Divider {
   public static final class DividedElements {
     private final long modificationStamp;
     private final long restrictRange;
-    final long priorityRange;
+    public final long priorityRange;
     public final List<PsiElement> inside = new ArrayList<>();
     final LongList insideRanges = new LongArrayList();
     public final List<PsiElement> outside = new ArrayList<>();
@@ -60,36 +60,8 @@ public final class Divider {
       if (rootFilter == null || !rootFilter.test(root)) {
         continue;
       }
-      divideInsideAndOutsideInOneRoot(root, toScalarRange(restrictRange), toScalarRange(priorityRange), processor);
+      divideInsideAndOutsideInOneRoot(root, restrictRange.toScalarRange(), priorityRange.toScalarRange(), processor);
     }
-  }
-
-  static long toScalarRange(@NotNull TextRange range) {
-    return toScalarRange(range.getStartOffset(), range.getEndOffset());
-  }
-  static long toScalarRange(int start, int end) {
-    return ((long)start << 32) | end;
-  }
-  static long union(long range1, long range2) {
-    if (range1 == range2) return range1;
-    int start = Math.min(startOffset(range1), startOffset(range2));
-    int end = Math.max(endOffset(range1), endOffset(range2));
-    return toScalarRange(start, end);
-  }
-
-  static int endOffset(long range) {
-    return (int)range & Integer.MAX_VALUE;
-  }
-
-  static int startOffset(long range) {
-    return (int)(range >>> 32);
-  }
-
-  static boolean contains(long outerRange, long innerRange) {
-    return containsRange(outerRange, startOffset(innerRange), endOffset(innerRange));
-  }
-  static boolean containsRange(long outerRange, int innerRangeStartOffset, int innerRangeEndOffset) {
-    return startOffset(outerRange) <= innerRangeStartOffset && innerRangeEndOffset <= endOffset(outerRange);
   }
 
   static void divideInsideAndOutsideInOneRoot(@NotNull PsiFile root,
@@ -102,7 +74,7 @@ public final class Divider {
     if (cached != null &&
         cached.modificationStamp == modificationStamp &&
         cached.restrictRange == restrictRange &&
-        contains(cached.priorityRange, priorityRange)) {
+        TextRange.contains(cached.priorityRange, priorityRange)) {
       elements = cached;
     }
     else {
@@ -127,8 +99,8 @@ public final class Divider {
                                                       @NotNull List<? super PsiElement> outParents,
                                                       @NotNull LongList outParentRanges,
                                                       boolean includeParents) {
-    int startOffset = startOffset(restrictRange);
-    int endOffset = endOffset(restrictRange);
+    int startOffset = TextRange.startOffset(restrictRange);
+    int endOffset = TextRange.endOffset(restrictRange);
 
     Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
 
@@ -168,13 +140,13 @@ public final class Divider {
 
         int start = starts.pop();
         if (startOffset <= start && offset <= endOffset) {
-          if (containsRange(priorityRange, start, offset)) {
+          if (TextRange.containsRange(priorityRange, start, offset)) {
             inside.add(element);
-            insideRanges.add(toScalarRange(start, offset));
+            insideRanges.add(TextRange.toScalarRange(start, offset));
           }
           else {
             outside.add(element);
-            outsideRanges.add(toScalarRange(start, offset));
+            outsideRanges.add(TextRange.toScalarRange(start, offset));
           }
         }
 
@@ -203,7 +175,7 @@ public final class Divider {
           outParents.add(parent);
           TextRange textRange = parent.getTextRange();
           assert textRange != null : "Text range for " + parent + " is null. " + parent.getClass() +"; root: "+root+": "+root.getVirtualFile();
-          outParentRanges.add(toScalarRange(textRange));
+          outParentRanges.add(textRange.toScalarRange());
         }
       }
     }

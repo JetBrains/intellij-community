@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filterIsInstance<>().map{}.firstOrNull()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filterIsInstance<>().map{}.firstOrNull()'"
 fun foo(list: List<Any>): Int? {

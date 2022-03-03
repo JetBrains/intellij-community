@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.configurationStore.deserialize
@@ -20,7 +20,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class PluginsAdvertiserTest {
-
   companion object {
     @JvmField
     @ClassRule
@@ -31,7 +30,7 @@ class PluginsAdvertiserTest {
     fun loadExtensions() {
       val path = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginAdvertiser/extensions.json"
       File(path).inputStream().use {
-        MarketplaceRequests.Instance.deserializeExtensionsForIdes(it)
+        MarketplaceRequests.getInstance().deserializeExtensionsForIdes(it)
       }
     }
 
@@ -40,22 +39,22 @@ class PluginsAdvertiserTest {
     fun loadJetBrainsPlugins() {
       val path = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginAdvertiser/jetBrainsPlugins.json"
       File(path).inputStream().use {
-        MarketplaceRequests.Instance.deserializeJetBrainsPluginsIds(it)
+        MarketplaceRequests.getInstance().deserializeJetBrainsPluginsIds(it)
       }
     }
   }
 
   @Test
   fun testSerializeKnownExtensions() {
-    val expected = PluginFeatureMap(mapOf("foo" to setOf(PluginData("foo", "Foo"))))
-    PluginFeatureCacheService.instance.extensions = expected
+    val expected = PluginFeatureMap(hashMapOf("foo" to hashSetOf(PluginData("foo", "Foo"))))
+    PluginFeatureCacheService.getInstance().extensions = expected
 
-    val state = serialize(PluginFeatureCacheService.instance.state)!!
-    PluginFeatureCacheService.instance.loadState(deserialize(state))
+    val state = serialize(PluginFeatureCacheService.getInstance().state)!!
+    PluginFeatureCacheService.getInstance().loadState(deserialize(state))
 
-    val actual = PluginFeatureCacheService.instance.extensions
+    val actual = PluginFeatureCacheService.getInstance().extensions
     assertNotNull(actual, "Extensions information for PluginsAdvertiser has not been loaded")
-    assertEquals("foo", actual["foo"].single().pluginIdString)
+    assertEquals("foo", actual.get("foo").single().pluginIdString)
   }
 
   @Test
@@ -127,9 +126,9 @@ class PluginsAdvertiserTest {
   }
 
   private fun preparePluginCache(vararg ext: Pair<String, PluginData?>) {
-    fun PluginData?.nullableToSet() = this?.let { setOf(it) } ?: emptySet()
+    fun PluginData?.nullableToSet() = this?.let { hashSetOf(it) } ?: hashSetOf()
 
-    PluginFeatureCacheService.instance.extensions = PluginFeatureMap(ext.associate { (extensionOrFileName, pluginData) -> extensionOrFileName to pluginData.nullableToSet() })
+    PluginFeatureCacheService.getInstance().extensions = PluginFeatureMap(ext.associate { (extensionOrFileName, pluginData) -> extensionOrFileName to pluginData.nullableToSet() })
     for ((extensionOrFileName, pluginData) in ext) {
       PluginAdvertiserExtensionsStateService.instance.updateCache(extensionOrFileName, pluginData.nullableToSet())
     }

@@ -331,7 +331,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       // ensure events from controller are processed after FSState initialization
       myEventsProcessor.startProcessing();
 
-      myBuildRunner.runBuild(pd, cs, null, msgHandler, myBuildType, myScopes, false);
+      myBuildRunner.runBuild(pd, cs, msgHandler, myBuildType, myScopes, false);
       TimingLog.LOG.debug("Build finished");
     }
     finally {

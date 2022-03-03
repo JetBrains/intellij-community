@@ -47,8 +47,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.new" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.j2k.old" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.j2k.services" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.jps-common" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.junit" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="PROVIDED" />
@@ -75,5 +74,6 @@
     <orderEntry type="module" module-name="kotlin.testng" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.features-trainer" scope="PROVIDED" />
   </component>
 </module>

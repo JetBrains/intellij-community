@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
@@ -23,6 +23,7 @@ import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.callback.CefNativeAdapter;
 import org.cef.handler.*;
+import org.cef.network.CefCookieManager;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,6 +143,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
+  // Empiric observation: some client handlers may be ignored for CEF version 95 (and later) without adding at least one router
+  // TODO: remove when IDEA259472Test starts running with empty list of message routers
+  private @Nullable CefMessageRouter myEmptyRouter;
+
   /**
    * The browser instance is disposed automatically with {@link JBCefClient}
    * as the parent {@link com.intellij.openapi.Disposable} (see {@link #getJBCefClient()}).
@@ -238,6 +243,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myRequestHandler = null;
       myContextMenuHandler = null;
     }
+
+    myCefClient.getCefClient().addMessageRouter(myEmptyRouter = CefMessageRouter.create());
 
     if (builder.myCreateImmediately) createImmediately();
   }
@@ -349,6 +356,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull
   public final JBCefClient getJBCefClient() {
     return myCefClient;
+  }
+
+  public static @NotNull JBCefCookieManager getGlobalJBCefCookieManager() {
+    return new JBCefCookieManager(CefCookieManager.getGlobalManager());
   }
 
   @NotNull
@@ -470,6 +481,12 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
 
+      if (myEmptyRouter != null) {
+        myCefClient.getCefClient().removeMessageRouter(myEmptyRouter);
+        myEmptyRouter.dispose();
+        myEmptyRouter = null;
+      }
+
       myCefBrowser.stopLoad();
       myCefBrowser.setCloseAllowed();
       myCefBrowser.close(true);
@@ -579,13 +596,12 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         html = html.replace("${failedUrl}", failedUrl);
 
         ScaleContext ctx = ScaleContext.create();
-        ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
+        ctx.setScale(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
         // Reset sys scale to prevent raster downscaling on passing the image to jcef.
         // Overriding is used to prevent scale change during further intermediate context transformations.
         ctx.overrideScale(SYS_SCALE.of(1.0));
 
         html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
-
         return html;
       }
     };
@@ -603,7 +619,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * Sets the error page to display in the browser on load error.
    * <p></p>
-   * By default no error page is displayed. To enable displaying default error page pass {@link ErrorPage#DEFAULT}.
+   * By default, no error page is displayed. To enable displaying default error page pass {@link ErrorPage#DEFAULT}.
    * Passing {@code null} prevents the browser from displaying an error page.
    *
    * @param errorPage the error page producer, or null

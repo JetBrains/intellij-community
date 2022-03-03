@@ -3,37 +3,42 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ProtectedMemberInFinalClassInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+class ProtectedMemberInFinalClassInspectionTest extends LightJavaCodeInsightFixtureTestCase5 {
+  ProtectedMemberInFinalClassInspectionTest() {
+    super(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  }
+
+  @BeforeEach
+  void setUp() {
+    getFixture().enableInspections(new ProtectedMemberInFinalClassInspection());
+  }
+
   @Override
-  protected String getBasePath() {
+  public @NotNull String getRelativePath() {
     return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/classlayout/protected_member_in_final_class";
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
-
-  private void doTest() {
-    myFixture.enableInspections(new ProtectedMemberInFinalClassInspection());
-    myFixture.testHighlighting(getTestName(false) + ".java");
-    final String inspectionName = InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
-    final IntentionAction intention = myFixture.findSingleIntention(
-      InspectionsBundle.message("fix.all.inspection.problems.in.file", inspectionName));
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    myFixture.checkResultByFile(getTestName(false) + ".after.java");
-  }
-
-  public void testProtectedMemberInFinalClass() {
+  @Test
+  void testProtectedMemberInFinalClass() {
     doTest();
   }
 
+  private void doTest() {
+    getFixture().testHighlighting(getTestName(false) + ".java");
+    String inspectionName = InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
+    IntentionAction intention = getFixture().findSingleIntention(InspectionsBundle.message("fix.all.inspection.problems.in.file", inspectionName));
+    assertNotNull(intention);
+    getFixture().launchAction(intention);
+    getFixture().checkResultByFile(getTestName(false) + ".after.java");
+  }
 }

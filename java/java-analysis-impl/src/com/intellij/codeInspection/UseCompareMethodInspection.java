@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -10,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +32,14 @@ import java.util.Map;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
+  public boolean suggestFloatingCompare = true;
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    return InspectionOptionsPanel.singleCheckBox(
+      this, JavaAnalysisBundle.message("inspection.use.compare.method.option.double"), "suggestFloatingCompare");
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -63,8 +74,12 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       private void register(CompareInfo info, PsiElement nameElement) {
+        if (!suggestFloatingCompare && info.myMayChangeSemantics) return;
+        LocalQuickFix turnOffFloating = info.myMayChangeSemantics ? new SetInspectionOptionFix(
+          UseCompareMethodInspection.this, "suggestFloatingCompare",
+          JavaAnalysisBundle.message("inspection.use.compare.method.turn.off.double"), false) : null;
         holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.expression.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
-                               new ReplaceWithPrimitiveCompareFix(info.getReplacementText()));
+                               new ReplaceWithPrimitiveCompareFix(info.getReplacementText()), turnOffFloating);
       }
     };
   }
@@ -186,7 +201,8 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     PsiClassType boxedType = leftType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)leftType).getBoxedType(expression) :
                              tryCast(leftType, PsiClassType.class);
     if (boxedType == null) return null;
-    return new CompareInfo(template, expression, canonicalPair.getFirst(), canonicalPair.getSecond(), boxedType);
+    return new CompareInfo(template, expression, canonicalPair.getFirst(), canonicalPair.getSecond(), boxedType,
+                           TypeConversionUtil.isFloatOrDoubleType(boxedType));
   }
 
   private static Pair<PsiExpression, PsiExpression> getOperands(PsiExpression expression, IElementType expectedToken) {
@@ -226,7 +242,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     if (left == null) return null;
     PsiExpression right = extractPrimitive(boxedType, primitiveType, arg);
     if (right == null) return null;
-    return new CompareInfo(call, call, left, right, boxedType);
+    return new CompareInfo(call, call, left, right, boxedType, false);
   }
 
   @Nullable
@@ -290,17 +306,20 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     final @NotNull PsiExpression myLeft;
     final @NotNull PsiExpression myRight;
     final @NotNull PsiClassType myClass;
+    final boolean myMayChangeSemantics;
 
     CompareInfo(@NotNull PsiElement template,
                 @NotNull PsiExpression toReplace,
                 @NotNull PsiExpression left,
                 @NotNull PsiExpression right,
-                @NotNull PsiClassType aClass) {
+                @NotNull PsiClassType aClass,
+                boolean mayChangeSemantics) {
       myTemplate = template;
       myToReplace = toReplace;
       myLeft = left;
       myRight = right;
       myClass = aClass;
+      myMayChangeSemantics = mayChangeSemantics;
     }
 
     private @NotNull PsiElement replace(PsiElement toReplace, CommentTracker ct) {

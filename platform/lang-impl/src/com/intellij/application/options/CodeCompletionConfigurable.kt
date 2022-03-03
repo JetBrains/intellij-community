@@ -107,7 +107,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
     val settings = CodeInsightSettings.getInstance()
 
     return panel {
-      buttonGroup {
+      buttonsGroup {
         row {
           cbMatchCase = checkBox(ApplicationBundle.message("completion.option.match.case"))
             .component
@@ -124,7 +124,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
       val smartTypeCompletion = OptionsApplicabilityFilter.isApplicable(OptionId.COMPLETION_SMART_TYPE)
 
       if (codeCompletion || smartTypeCompletion) {
-        buttonGroup(ApplicationBundle.message("label.autocomplete.when.only.one.choice")) {
+        buttonsGroup(ApplicationBundle.message("label.autocomplete.when.only.one.choice")) {
           if (codeCompletion) {
             row {
               checkBox(ApplicationBundle.message("checkbox.autocomplete.basic"))

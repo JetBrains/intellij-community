@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'contains()'"
 // IS_APPLICABLE_2: false
 // AFTER-WARNING: Variable 'v' is never used

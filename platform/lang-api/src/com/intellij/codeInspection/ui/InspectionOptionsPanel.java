@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
@@ -14,11 +15,14 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.util.HashMap;
+import java.util.Map;
 
-public class InspectionOptionsPanel extends JPanel {
+public class InspectionOptionsPanel extends JPanel implements InspectionOptionContainer {
 
   @Nullable
   private final OptionAccessor myOptionAccessor;
+  private final @NotNull Map<@NonNls String, @NlsContexts.Checkbox String> myCheckBoxLabels = new HashMap<>();
 
   public InspectionOptionsPanel() {
     this((OptionAccessor)null);
@@ -77,7 +81,17 @@ public class InspectionOptionsPanel extends JPanel {
     final JCheckBox checkBox = new JCheckBox(label, selected);
     checkBox.addItemListener(e -> myOptionAccessor.setOption(property, e.getStateChange() == ItemEvent.SELECTED));
     addComponent(checkBox);
+    myCheckBoxLabels.put(property, label);
     return checkBox;
+  }
+
+  @Override
+  public @NotNull HtmlChunk getLabelForCheckbox(@NotNull @NonNls String property) {
+    String label = myCheckBoxLabels.get(property);
+    if (label == null) {
+      throw new IllegalArgumentException("Invalid property name: " + property);
+    }
+    return HtmlChunk.text(label);
   }
 
   public JCheckBox addDependentCheckBox(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property,

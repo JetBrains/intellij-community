@@ -4,14 +4,19 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.projectWizard.NewProjectWizard
 import com.intellij.ide.projectWizard.ProjectTypeStep
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.Step
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
-import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.project.Project
@@ -25,12 +30,16 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.ui.UIBundle
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
-import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ModuleInfo
-import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ProjectInfo
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleFrameworksWizardStep
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleStructureWizardStep
+import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
+import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ModuleInfo
+import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ProjectInfo
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.artifactId
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.parentData
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.useKotlinDsl
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.version
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.isSupported
@@ -119,57 +128,65 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
   }
 
   private fun createProject(projectInfo: ProjectInfo): Project {
-    return createProject(projectInfo.rootModule.root.path) { step ->
-      configureWizardStepSettings(step, projectInfo.rootModule, null)
+    return createProject(projectInfo.rootModule.root.path) {
+      configureWizardStepSettings(it, projectInfo.rootModule, null)
     }
   }
 
   private fun createModule(moduleInfo: ModuleInfo, project: Project) {
     val parentData = findProjectData(project, GradleConstants.SYSTEM_ID, project.basePath!!)!!
-    return createModule(moduleInfo.root.path, project) { step ->
-      configureWizardStepSettings(step, moduleInfo, parentData.data)
+    return createModule(moduleInfo.root.path, project) {
+      configureWizardStepSettings(it, moduleInfo, parentData.data)
     }
   }
 
-  private fun configureWizardStepSettings(step: ModuleWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
-    when (step) {
-      is ProjectTypeStep -> {
-        step.setSelectedTemplate("Gradle", null)
-        val frameworksStep = step.frameworksStep
-        frameworksStep as GradleFrameworksWizardStep
-        frameworksStep.setUseKotlinDsl(moduleInfo.useKotlinDsl)
-      }
-      is GradleStructureWizardStep -> {
-        step.parentData = parentData
-        moduleInfo.groupId?.let { step.groupId = it }
-        step.artifactId = moduleInfo.artifactId
-        moduleInfo.version?.let { step.version = it }
-        step.entityName = moduleInfo.simpleName
-        step.location = moduleInfo.root.path
-      }
-    }
+  private fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
+    step.name = moduleInfo.root.name
+    step.path = moduleInfo.root.parent.path
+    step.language = "Java"
+    step.buildSystem = "Gradle"
+    step.useKotlinDsl = moduleInfo.useKotlinDsl
+    step.parentData = parentData
+    moduleInfo.groupId?.let { step.groupId = it }
+    step.artifactId = moduleInfo.artifactId
+    moduleInfo.version?.let { step.version = it }
   }
 
-  private fun createProject(directory: String, configure: (ModuleWizardStep) -> Unit): Project {
+  private fun createProject(directory: String, configure: (NewProjectWizardStep) -> Unit): Project {
     return waitForProjectReload {
       invokeAndWaitIfNeeded {
         val wizard = createWizard(null, directory)
-        wizard.runWizard(configure)
+        wizard.runWizard {
+          getNewProjectWizardStep(UIBundle.message("label.project.wizard.project.generator.name"))
+            ?.also(configure)
+        }
         wizard.disposeIfNeeded()
         NewProjectUtil.createFromWizard(wizard, null)
       }
     }
   }
 
-  private fun createModule(directory: String, project: Project, configure: (ModuleWizardStep) -> Unit) {
+
+  private fun createModule(directory: String, project: Project, configure: (NewProjectWizardStep) -> Unit) {
     waitForProjectReload {
       ApplicationManager.getApplication().invokeAndWait {
         val wizard = createWizard(project, directory)
-        wizard.runWizard(configure)
+        wizard.runWizard {
+          getNewProjectWizardStep(UIBundle.message("label.project.wizard.module.generator.name"))
+            ?.also(configure)
+        }
         wizard.disposeIfNeeded()
         NewModuleAction().createModuleFromWizard(project, null, wizard)
       }
     }
+  }
+
+  private fun Step.getNewProjectWizardStep(group: String): NewProjectWizardStep? {
+    if (this is ProjectTypeStep) {
+      assertTrue(setSelectedTemplate(group, null))
+      return customStep as NewProjectWizardStep
+    }
+    return null
   }
 
   private fun createWizard(project: Project?, directory: String): AbstractProjectWizard {
@@ -179,7 +196,7 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
     }
   }
 
-  private fun AbstractProjectWizard.runWizard(configure: ModuleWizardStep.() -> Unit) {
+  private fun AbstractProjectWizard.runWizard(configure: Step.() -> Unit) {
     while (true) {
       val currentStep = currentStepObject
       currentStep.configure()
@@ -198,16 +215,16 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
     val builder = StringBuilder()
     val rootModuleInfo = projectInfo.rootModule
     val useKotlinDsl = rootModuleInfo.useKotlinDsl
-    builder.appendln(defineProject(rootModuleInfo.artifactId, useKotlinDsl))
+    builder.appendLine(defineProject(rootModuleInfo.artifactId, useKotlinDsl))
     for (moduleInfo in projectInfo.modules) {
       val externalName = moduleInfo.externalName
       val artifactId = moduleInfo.artifactId
       when (moduleInfo.isFlat) {
-        true -> builder.appendln(includeFlatModule(externalName, useKotlinDsl))
-        else -> builder.appendln(includeModule(externalName, useKotlinDsl))
+        true -> builder.appendLine(includeFlatModule(externalName, useKotlinDsl))
+        else -> builder.appendLine(includeModule(externalName, useKotlinDsl))
       }
       if (externalName != artifactId) {
-        builder.appendln(renameModule(externalName, artifactId, useKotlinDsl))
+        builder.appendLine(renameModule(externalName, artifactId, useKotlinDsl))
       }
     }
     val settingsFileName = getSettingsFileName(useKotlinDsl)
@@ -216,8 +233,8 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
   }
 
   private fun assertFileContent(file: File, content: String) {
-    val expected = convertLineSeparators(file.readText().trim())
-    val actual = convertLineSeparators(content.trim())
+    val actual = convertLineSeparators(file.readText().trim())
+    val expected = convertLineSeparators(content.trim())
     assertEquals(expected, actual)
   }
 

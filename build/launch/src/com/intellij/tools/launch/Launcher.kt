@@ -52,6 +52,7 @@ object Launcher {
       "-Didea.fix.mac.env=true",
       "-Djdk.attach.allowAttachSelf",
       "-Djdk.module.illegalAccess.silent=true",
+      "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
       "-Dkotlinx.coroutines.debug=off",
       "-Dsun.awt.disablegrab=true",
       "-Dsun.io.useCanonCaches=false",

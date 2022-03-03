@@ -33,7 +33,7 @@ import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -317,7 +317,7 @@ object UpdateChecker {
    * otherwise, returns versions compatible with the specified build.
    */
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   @JvmOverloads
   @JvmStatic
   fun getInternalPluginUpdates(
@@ -326,7 +326,7 @@ object UpdateChecker {
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
     if (System.getProperty("idea.ignore.disabled.plugins") == null) {
-      val brokenPlugins = MarketplaceRequests.Instance.getBrokenPlugins(ApplicationInfo.getInstance().build)
+      val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
         PluginManagerCore.updateBrokenPlugins(brokenPlugins)
       }
@@ -422,14 +422,14 @@ object UpdateChecker {
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   private fun findUpdatesInJetBrainsRepository(updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
                                                toUpdate: MutableMap<PluginId, PluginDownloader>,
                                                toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
                                                buildNumber: BuildNumber?,
                                                state: InstalledPluginsState,
                                                indicator: ProgressIndicator?) {
-    val marketplacePluginIds = MarketplaceRequests.Instance.getMarketplacePlugins(indicator)
+    val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     updateable.forEach { (id, descriptor) ->

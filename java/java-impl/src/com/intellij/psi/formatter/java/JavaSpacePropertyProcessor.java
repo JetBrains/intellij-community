@@ -1384,7 +1384,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
-    if (myType1 == JavaTokenType.CASE_KEYWORD || myType1 == JavaTokenType.ARROW || myType2 == JavaTokenType.ARROW) {
+    if (myType1 == JavaTokenType.ARROW && myType2 == JavaElementType.BLOCK_STATEMENT) {
+      myResult = getSpaceBeforeLBrace(myChild2, true, null);
+    }
+    else if (myType1 == JavaTokenType.CASE_KEYWORD || myType1 == JavaTokenType.ARROW || myType2 == JavaTokenType.ARROW) {
       createSpaceProperty(true, false, 0);
     }
   }
@@ -1754,6 +1757,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
              myRole2 == ChildRole.ANNOTATION_VALUE) {
       createSpaceInCode(true);
     }
+    else if (myRole1 == ChildRole.LPARENTH && myChild2.getElementType() == JavaElementType.NAME_VALUE_PAIR && myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_ANNOTATION) {
+      int spacesCount = mySettings.SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE ? 1 : 0;
+      myResult = Spacing.createDependentLFSpacing(spacesCount, spacesCount, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else if (myChild1.getElementType() == JavaElementType.NAME_VALUE_PAIR && myRole2 == ChildRole.RPARENTH && myJavaSettings.RPAREN_ON_NEW_LINE_IN_ANNOTATION) {
+      myResult = Spacing.createDependentLFSpacing(0, 0, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
     }
@@ -1768,7 +1778,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitNameValuePair(PsiNameValuePair pair) {
     if (myRole1 == ChildRole.OPERATION_SIGN || myRole2 == ChildRole.OPERATION_SIGN) {
-      createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
+      createSpaceInCode(myJavaSettings.SPACE_AROUND_ANNOTATION_EQ);
     }
   }
 

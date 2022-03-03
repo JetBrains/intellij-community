@@ -72,7 +72,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   @Override
   protected void customizeComponent(HighlightSeverity value, JTable table, boolean isSelected) {
     super.customizeComponent(value, table, isSelected);
-    HighlightDisplayLevel hdl = HighlightDisplayLevel.find(value);
+    HighlightDisplayLevel hdl = HighlightDisplayLevel.find(value == null ? HighlightSeverity.INFORMATION : value);
     setDisabledIcon(hdl != null ? IconLoader.getDisabledIcon(hdl.getIcon()) : DEFAULT_DISABLED_ICON);
   }
 

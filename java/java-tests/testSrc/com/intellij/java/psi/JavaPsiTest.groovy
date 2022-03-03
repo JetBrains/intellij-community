@@ -8,6 +8,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
+import com.intellij.psi.javadoc.PsiSnippetDocTag
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
@@ -257,12 +258,33 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  void "test snippet comment"() {
+    def docComment = PsiElementFactory.getInstance(project).createDocCommentFromText("""
+/**
+ * Attributes:
+ * {@snippet attr1="Value1"
+ * attr2=value2
+ *  :
+ *    Body Line 1
+ *    Body Line 2
+ * }
+ */
+""")
+    def comment = PsiTreeUtil.findChildOfType(docComment, PsiSnippetDocTag.class)
+    def valueElement = comment.valueElement
+    def attributes = valueElement.attributeList.attributes
+    assert ["attr1", "attr2"] == attributes.collect { it.name }
+    assert ['"Value1"', "value2"] == attributes.collect { it.value.text }
+    assert ['    Body Line 1', '    Body Line 2', ' '] == valueElement.body.content.collect { it.text }
+  }
+
   private void withLanguageLevel(LanguageLevel level, Runnable r) {
     def old = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel()
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level)
     try {
       r.run()
-    } finally {
+    }
+    finally {
       LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(old)
     }
   }

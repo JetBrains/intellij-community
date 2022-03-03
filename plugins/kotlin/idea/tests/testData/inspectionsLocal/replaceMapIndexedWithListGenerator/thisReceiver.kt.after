@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun List<String>.test() {
     List(this.size) { index ->
         index + 42

@@ -1,19 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.XmlDomReader
+import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
-import org.apache.tools.ant.util.SplitClassLoader
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -31,16 +30,6 @@ final class BuildUtils {
     addToClassLoaderClassPath(path, ant, BuildUtils.class.classLoader)
   }
 
-  @CompileDynamic
-  static void addToSystemClasspath(File file) {
-    def classLoader = ClassLoader.getSystemClassLoader()
-    if (!(classLoader instanceof URLClassLoader)) {
-      throw new BuildException("Cannot add to system classpath: unsupported class loader $classLoader (${classLoader.getClass()})")
-    }
-
-    classLoader.addURL(file.toURI().toURL())
-  }
-
   static void addToJpsClassPath(String path, AntBuilder ant) {
     //we need to add path to classloader of BuilderService to ensure that classes from that path will be returned by JpsServiceManager.getExtensions
     addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
@@ -55,11 +44,16 @@ final class BuildUtils {
       else if (classLoader instanceof AntClassLoader) {
         classLoader.addPathElement(path)
       }
+      else if (classLoader instanceof UrlClassLoader) {
+        classLoader.addFiles(List.of(Path.of(path)))
+      }
       else if (classLoader.metaClass.respondsTo(classLoader, 'addURL', URL)) {
-        classLoader.addURL(new File(path).toURI().toURL())
+        classLoader.addURL(FileUtil.fileToUri(new File(path)).toURL())
       }
       else {
-        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method")
+        throw new BuildException(
+          "Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method\n" +
+          "most likely you need to add -Djava.system.class.loader=org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader to run configuration\n\n")
       }
       ant.project.log("'$path' added to classpath", Project.MSG_INFO)
     }
@@ -75,7 +69,26 @@ final class BuildUtils {
     return text
   }
 
-  static void copyAndPatchFile(@NotNull Path sourcePath, @NotNull Path targetPath, Map<String, String> replacements, String marker = "__", String lineSeparator = "") {
+  static void replaceAll(Path file, String marker, String ...replacements) {
+    String text = Files.readString(file)
+    for (int i = 0; i < replacements.length; i += 2) {
+      text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
+    }
+    Files.writeString(file, text)
+  }
+
+  static String replaceAll(String text, String marker, String ...replacements) {
+    for (int i = 0; i < replacements.length; i += 2) {
+      text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
+    }
+    return text
+  }
+
+  static void copyAndPatchFile(@NotNull Path sourcePath,
+                               @NotNull Path targetPath,
+                               Map<String, String> replacements,
+                               String marker = "__",
+                               String lineSeparator = "") {
     Files.createDirectories(targetPath.parent)
     String content = replaceAll(Files.readString(sourcePath), replacements, marker)
     if (!lineSeparator.isEmpty()) {
@@ -103,54 +116,6 @@ final class BuildUtils {
     catch (Throwable ignored) {
     }
     return System.out
-  }
-
-  static void defineFtpTask(BuildContext context) {
-    List<File> commonsNetJars = context.project.libraryCollection.findLibrary("commons-net").getFiles(JpsOrderRootType.COMPILED) +
-      [context.paths.communityHomeDir.resolve("lib/ant/lib/ant-commons-net.jar").toFile()]
-    defineFtpTask(context.ant, commonsNetJars)
-  }
-
-  /**
-   * Defines ftp task using libraries from IntelliJ IDEA project sources.
-   */
-  @CompileDynamic
-  static void defineFtpTask(AntBuilder ant, List<File> commonsNetJars) {
-    def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER"
-    if (ant.project.hasReference(ftpTaskLoaderRef)) return
-
-    /*
-      We need this to ensure that FTP task class isn't loaded by the main Ant classloader, otherwise Ant will try to load FTPClient class
-      by the main Ant classloader as well and fail because 'commons-net-*.jar' isn't included to Ant classpath.
-      Probably we could call FTPClient directly to avoid this hack.
-     */
-    org.apache.tools.ant.types.Path ftpPath = new org.apache.tools.ant.types.Path(ant.project)
-    commonsNetJars.each {
-      ftpPath.createPathElement().setLocation(it)
-    }
-    ant.project.addReference(ftpTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), ftpPath, ant.project,
-                                                                    ["FTP", "FTPTaskConfig"] as String[]))
-    ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
-  }
-
-  /**
-   * Defines sshexec task using libraries from IntelliJ IDEA project sources.
-   */
-  @CompileDynamic
-  static void defineSshTask(BuildContext context) {
-    List<File> jschJars = context.project.libraryCollection.findLibrary("JSch").getFiles(JpsOrderRootType.COMPILED) +
-                                [context.paths.communityHomeDir.resolve("lib/ant/lib/ant-jsch.jar").toFile()]
-    def ant = context.ant
-    def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
-    if (ant.project.hasReference(sshTaskLoaderRef)) return
-
-    org.apache.tools.ant.types.Path pathSsh = new org.apache.tools.ant.types.Path(ant.project)
-    jschJars.each {
-      pathSsh.createPathElement().setLocation(it)
-    }
-    ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
-                                                                    ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
-    ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)
   }
 
   static List<String> propertiesToJvmArgs(Map<String, Object> properties) {
@@ -191,6 +156,7 @@ final class BuildUtils {
       }
     }
     catch (NoSuchFileException ignore) {
+      return null
     }
   }
 }

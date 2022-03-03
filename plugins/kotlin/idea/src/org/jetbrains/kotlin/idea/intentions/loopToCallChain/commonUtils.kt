@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 fun KtExpression.isConstant(): Boolean {
@@ -123,7 +122,7 @@ fun KtCallableDeclaration.hasDifferentSetsOfUsages(elements1: Collection<KtEleme
 fun KtExpressionWithLabel.targetLoop(context: BindingContext? = null): KtLoopExpression? {
     val label = getTargetLabel()
     return if (label == null) {
-        parents.firstIsInstance<KtLoopExpression>()
+        parents.firstIsInstanceOrNull()
     } else {
         //TODO: does PARTIAL always work here?
         (context ?: analyze(BodyResolveMode.PARTIAL))[BindingContext.LABEL_TARGET, label] as? KtLoopExpression

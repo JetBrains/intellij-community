@@ -5,7 +5,7 @@
 // ACTION: Create field 'foobar'
 // ACTION: Create parameter 'foobar'
 // ACTION: Create local variable 'foobar'
-// WITH_RUNTIME
+// WITH_STDLIB
 package bar;
 
 public class Foo {
@@ -32,7 +32,7 @@ class Bar {
 // ACTION: Create field 'foobar'
 // ACTION: Create parameter 'foobar'
 // ACTION: Create local variable 'foobar'
-// WITH_RUNTIME
+// WITH_STDLIB
 package bar;
 
 import static foo.Bar.foobar;

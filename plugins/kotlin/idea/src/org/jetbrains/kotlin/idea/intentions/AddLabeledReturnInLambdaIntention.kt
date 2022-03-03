@@ -6,12 +6,13 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
 class AddLabeledReturnInLambdaIntention : SelfTargetingRangeIntention<KtBlockExpression>(
@@ -34,7 +35,8 @@ class AddLabeledReturnInLambdaIntention : SelfTargetingRangeIntention<KtBlockExp
     }
 
     private fun isApplicableTo(block: KtBlockExpression): Boolean {
-        val lastStatement = block.statements.lastOrNull()
-        return lastStatement !is KtReturnExpression && lastStatement?.isUsedAsExpression(lastStatement.analyze()) == true
+        val lastStatement = block.statements.lastOrNull().takeIf { it !is KtReturnExpression } ?: return false
+        val bindingContext = lastStatement.safeAnalyzeNonSourceRootCode().takeIf { it != BindingContext.EMPTY } ?: return false
+        return lastStatement.isUsedAsExpression(bindingContext)
     }
 }

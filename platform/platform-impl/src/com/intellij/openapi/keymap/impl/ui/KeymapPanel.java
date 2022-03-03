@@ -58,10 +58,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAllToolbarsImmediately;
 
@@ -636,7 +634,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.addSeparator();
 
-    for (Shortcut shortcut : selectedKeymap.getShortcuts(actionId)) {
+    Shortcut[] shortcuts = selectedKeymap.getShortcuts(actionId);
+    for (Shortcut shortcut : shortcuts) {
       group.add(new RemoveShortcutAction(shortcut, selectedKeymap, actionId));
     }
 
@@ -644,8 +643,16 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.addAction(new RemoveAbbreviationAction(abbreviation, actionId));
     }
 
-    if (myManager.canResetActionInKeymap(selectedKeymap, actionId)) {
+    boolean separator = true;
+    if (shortcuts.length > 2) {
       group.add(new Separator());
+      group.add(new RemoveAllShortcuts(selectedKeymap, actionId));
+      separator = false;
+    }
+    if (myManager.canResetActionInKeymap(selectedKeymap, actionId)) {
+      if (separator) {
+        group.add(new Separator());
+      }
       group.add(new ResetShortcutsAction(selectedKeymap, actionId));
     }
     return group;
@@ -963,6 +970,23 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     public void actionPerformed(@NotNull AnActionEvent event) {
       myManager.resetActionInKeymap(mySelectedKeymap, myActionId);
       repaintLists();
+    }
+  }
+
+  private class RemoveAllShortcuts extends DumbAwareAction {
+    private final Keymap mySelectedKeymap;
+    private final String myActionId;
+
+    private RemoveAllShortcuts(Keymap selectedKeymap, @NotNull String actionId) {
+      super(IdeBundle.messagePointer("action.text.remove.all.shortcuts"));
+      mySelectedKeymap = selectedKeymap;
+      myActionId = actionId;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent event) {
+      myManager.getMutableKeymap(mySelectedKeymap).removeAllActionShortcuts(myActionId);
+      currentKeymapChanged();
     }
   }
 }

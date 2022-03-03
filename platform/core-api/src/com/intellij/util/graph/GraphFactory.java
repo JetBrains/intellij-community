@@ -25,5 +25,11 @@ public abstract class GraphFactory {
    * such as {@link Network#isDirected()}. Other properties, such as {@link
    * NetworkBuilder#expectedNodeCount(int)}, are not set in the new builder.
    */
-  public abstract <N, E> @NotNull NetworkBuilder<N, E> from(@NotNull Network<N, E> network);
+  public abstract <N, E> @NotNull NetworkBuilder<N, E> newNetworkWithSameProperties(@NotNull Network<N, E> network);
+
+  /**
+   * Converts given {@code graph} to the {@link MutableNetwork}
+   * assuming that edges will be represented by {@link EndpointPair}s.
+   */
+  public abstract <N> @NotNull MutableNetwork<N, EndpointPair<N>> toNetwork(@NotNull Graph<N> graph);
 }

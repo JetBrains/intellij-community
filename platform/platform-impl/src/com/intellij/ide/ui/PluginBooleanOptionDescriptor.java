@@ -60,10 +60,9 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
       return;
     }
 
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     Collection<? extends IdeaPluginDescriptor> autoSwitchedDescriptors = enable ?
-                                                                         getDependenciesToEnable(descriptors, pluginIdMap) :
-                                                                         getDependentsToDisable(descriptors, pluginIdMap);
+                                                                         getDependenciesToEnable(descriptors) :
+                                                                         getDependentsToDisable(descriptors);
 
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
     boolean appliedWithoutRestart = enable ?
@@ -88,8 +87,9 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
                                                  boolean enabled) {
     String title = IdeBundle.message(enabled ? "plugins.auto.enabled.notification.title" : "plugins.auto.disabled.notification.title");
     Notification switchNotification = NotificationGroupManager.getInstance()
-      .getNotificationGroup("Plugins AutoSwitch")
+      .getNotificationGroup("Plugin Update Results")
       .createNotification(content, NotificationType.INFORMATION)
+      .setDisplayId("plugin.auto.switch")
       .setTitle(title)
       .addAction(new NotificationAction(IdeBundle.message("plugins.auto.switch.action.name")) {
         @Override
@@ -128,28 +128,28 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     switchNotification.notify(null);
   }
 
-  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
       result.add(descriptor);
 
-      if (descriptor instanceof IdeaPluginDescriptorImpl) {
-        PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, dependency ->
-          PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
-          dependency.isEnabled() ||
-          !result.add(dependency) ?
-          FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process it's dependencies */ :
-          FileVisitResult.CONTINUE);
+      if (!(descriptor instanceof IdeaPluginDescriptorImpl)) {
+        continue;
       }
+
+      PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, dependency ->
+        PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
+        dependency.isEnabled() ||
+        !result.add(dependency) ?
+        FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process it's dependencies */ :
+        FileVisitResult.CONTINUE);
     }
 
     return Collections.unmodifiableSet(result);
   }
 
-  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
 
@@ -157,7 +157,6 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
       result.add(descriptor);
 
       result.addAll(MyPluginModel.getDependents(descriptor,
-                                                pluginIdMap,
                                                 applicationInfo));
     }
 
@@ -180,11 +179,12 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     }
 
     Notification newNotification = NotificationGroupManager.getInstance()
-      .getNotificationGroup("Plugins updates")
+      .getNotificationGroup("IDE and Plugin Updates")
       .createNotification(
         IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
         NotificationType.INFORMATION)
       .setTitle(IdeBundle.message("plugins.changed.notification.title"))
+      .setDisplayId("plugins.updated.restart.required")
       .addAction(new DumbAwareAction(IdeBundle.message("ide.restart.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

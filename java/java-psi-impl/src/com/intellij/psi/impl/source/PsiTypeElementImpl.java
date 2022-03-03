@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -182,8 +183,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         if (e instanceof PsiExpression) {
           if (!(e instanceof PsiArrayInitializerExpression)) {
             PsiExpression expression = (PsiExpression)e;
+            RecursionGuard.StackStamp stamp = RecursionManager.markStack();
             PsiType type = RecursionManager.doPreventingRecursion(expression, true, () -> expression.getType());
-            return type == null ? null : JavaVarTypeUtil.getUpwardProjection(type);
+            if (stamp.mayCacheNow()) {
+              return type == null ? null : JavaVarTypeUtil.getUpwardProjection(type);
+            }
+            return null;
           }
           return null;
         }

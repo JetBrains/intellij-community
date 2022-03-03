@@ -1,5 +1,5 @@
 // "Change parameter 'code' type of primary constructor of class 'TestDelegate' to '() -> Logger'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 import kotlin.reflect.KProperty
 
 object Test {

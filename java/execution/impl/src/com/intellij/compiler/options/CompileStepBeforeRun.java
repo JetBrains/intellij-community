@@ -1,15 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
-import com.intellij.execution.BeforeRunTask;
-import com.intellij.execution.BeforeRunTaskProvider;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +16,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -138,7 +136,25 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
                           runConfiguration.getClass().getName());
               }
             }
-            projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true);
+
+            final Ref<Boolean> includeTests = new Ref<>(true); // use the biggest scope by default
+            if (configuration instanceof JavaRunConfigurationBase) {
+              try {
+                // use more fine-grained compilation scope avoiding compiling classes, not relevant for running this configuration
+                final JavaRunConfigurationBase conf = (JavaRunConfigurationBase)configuration;
+                final String runClass = conf.getRunClass();
+                final JavaRunConfigurationModule confModule = conf.getConfigurationModule();
+                if (runClass != null && confModule != null) {
+                  DumbService.getInstance(confModule.getProject()).runWithAlternativeResolveEnabled(
+                    () -> includeTests.set((JavaParametersUtil.getClasspathType(confModule, runClass, false, true) & JavaParameters.TESTS_ONLY) != 0)
+                  );
+                }
+              }
+              catch (CantRunException ignored) {
+              }
+            }
+
+            projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true, includeTests.get());
           }
           else if (runConfiguration.isBuildProjectOnEmptyModuleList()){
             projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);

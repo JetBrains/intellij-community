@@ -1,5 +1,5 @@
 // "Let 'B' implement interface 'A'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 package let.implement
 
 fun bar() {

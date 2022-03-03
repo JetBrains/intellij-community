@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @get:Throws(RuntimeException::class)
 val a: String

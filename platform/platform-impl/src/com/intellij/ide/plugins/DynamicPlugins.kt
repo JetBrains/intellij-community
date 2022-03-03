@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -24,9 +24,6 @@ import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.util.TipDialog
 import com.intellij.idea.IdeaLogger
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -95,6 +92,7 @@ import kotlin.collections.component2
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
+
 private const val GROUP_ID = "Dynamic plugin installation"
 
 object DynamicPlugins {
@@ -162,7 +160,15 @@ object DynamicPlugins {
       }
     }
 
-    var comparator = PluginSet.getTopologicalComparator(allPlugins)
+    // todo make internal:
+    //  1) ModuleGraphBase;
+    //  2) SortedModuleGraph;
+    //  3) SortedModuleGraph.topologicalComparator;
+    //  4) PluginSetBuilder.sortedModuleGraph.
+    var comparator = PluginSetBuilder(allPlugins)
+      .moduleGraph
+      .topologicalComparator
+
     if (!load) {
       comparator = comparator.reversed()
     }
@@ -464,7 +470,7 @@ object DynamicPlugins {
     }
     catch (e: Exception) {
       logger<DynamicPlugins>().error(e)
-      reportUnloadResultToFus(success = false, pluginDescriptor)
+      logDescriptorUnload(pluginDescriptor, success = false)
       return false
     }
 
@@ -492,8 +498,9 @@ object DynamicPlugins {
           app.extensionArea.clearUserCache()
           for (project in ProjectUtil.getOpenProjects()) {
             (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
-            (project.serviceIfCreated<CachedValuesManager>() as CachedValuesManagerImpl?)?.clearCachedValues()
           }
+          clearCachedValues()
+
           jdomSerializer.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
           app.getServiceIfCreated(TopHitCache::class.java)?.clear()
@@ -586,7 +593,7 @@ object DynamicPlugins {
           InstalledPluginsState.getInstance().isRestartRequired = true
         }
 
-        reportUnloadResultToFus(classLoaderUnloaded, pluginDescriptor)
+        logDescriptorUnload(pluginDescriptor, success = classLoaderUnloaded)
       }
     }
 
@@ -833,15 +840,11 @@ object DynamicPlugins {
         loadOptionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet, listenerCallbacks)
         clearPluginClassLoaderParentListCache(pluginSet)
 
-        for (openProject in ProjectUtil.getOpenProjects()) {
-          (CachedValuesManager.getManager(openProject) as CachedValuesManagerImpl).clearCachedValues()
-        }
+        clearCachedValues()
 
         listenerCallbacks.forEach(Runnable::run)
 
-        val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
-        @Suppress("DEPRECATION")
-        FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", "load", fuData)
+        logDescriptorLoad(pluginDescriptor)
         LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
       }
       finally {
@@ -1024,13 +1027,6 @@ private fun loadOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDescrip
     for (subDescriptor in entry.value) {
       loadModule(sequenceOf(subDescriptor), app, listenerCallbacks)
     }
-  }
-}
-
-private fun clearPluginClassLoaderParentListCache(pluginSet: PluginSet) {
-  // yes, clear not only enabled plugins, but all, just to be sure, it is cheap operation
-  for (descriptor in pluginSet.allPlugins) {
-    (descriptor.pluginClassLoader as? PluginClassLoader ?: continue).clearParentListCache()
   }
 }
 
@@ -1350,9 +1346,15 @@ private fun setClassLoaderState(pluginDescriptor: IdeaPluginDescriptorImpl, stat
   }
 }
 
-private fun reportUnloadResultToFus(success: Boolean, pluginDescriptor: IdeaPluginDescriptorImpl) {
-  val eventId = if (success) "unload.success" else "unload.fail"
-  val usageData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
-  @Suppress("DEPRECATION")
-  FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", eventId, usageData)
+private fun clearPluginClassLoaderParentListCache(pluginSet: PluginSet) {
+  // yes, clear not only enabled plugins, but all, just to be sure; it's a cheap operation
+  for (descriptor in pluginSet.allPlugins) {
+    (descriptor.pluginClassLoader as? PluginClassLoader)?.clearParentListCache()
+  }
+}
+
+private fun clearCachedValues() {
+  for (project in ProjectUtil.getOpenProjects()) {
+    (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
+  }
 }

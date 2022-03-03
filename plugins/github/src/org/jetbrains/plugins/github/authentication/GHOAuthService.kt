@@ -12,6 +12,7 @@ import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @Service
@@ -31,7 +32,7 @@ internal class GHOAuthService : OAuthServiceBase<Credentials>() {
 
     private val codeVerifier = PkceUtils.generateCodeVerifier()
 
-    private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, false)
+    private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, Base64.getEncoder())
 
     override val authorizationCodeUrl: Url
       get() = newFromEncoded("http://127.0.0.1:$port/${RestService.PREFIX}/$SERVICE_NAME/authorization_code")

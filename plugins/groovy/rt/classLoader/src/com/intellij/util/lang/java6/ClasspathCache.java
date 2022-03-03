@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang.java6;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.BloomFilterBase;
 import com.intellij.util.containers.IntObjectHashMap;
 import com.intellij.util.lang.java6.fastutil.StrippedIntOpenHashSet;
 import com.intellij.util.lang.java6.fastutil.StrippedLongOpenHashSet;

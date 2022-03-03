@@ -105,7 +105,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       sink.occurrence(GrScriptClassNameIndex.KEY, name);
       final String pName = GrStubUtils.getPackageName(stub);
       final String fqn = StringUtil.isEmpty(pName) ? name : pName + "." + name;
-      sink.occurrence(GrFullScriptNameIndex.KEY, fqn.hashCode());
+      sink.occurrence(GrFullScriptNameIndex.KEY, fqn);
     }
 
     for (String anno : stub.getAnnotations()) {

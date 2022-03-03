@@ -1,5 +1,5 @@
 // IS_APPLICABLE: true
-// WITH_RUNTIME
+// WITH_STDLIB
 val list = listOf(1, 2, 3).map { Utils.foo(it) }
 
 object Utils {

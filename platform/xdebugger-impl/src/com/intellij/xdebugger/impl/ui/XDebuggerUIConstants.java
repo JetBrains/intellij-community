@@ -35,6 +35,7 @@ public final class XDebuggerUIConstants {
 
   public static final SimpleTextAttributes TYPE_ATTRIBUTES = SimpleTextAttributes.GRAY_ATTRIBUTES;
   public static final String LAYOUT_VIEW_BREAKPOINT_CONDITION = "breakpoint";
+  public static final String LAYOUT_VIEW_FINISH_CONDITION = "finish";
 
   private static SimpleTextAttributes get(JBColor c) {
     return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, c);

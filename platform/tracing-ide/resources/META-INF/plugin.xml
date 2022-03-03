@@ -2,7 +2,9 @@
              implementation-detail="true">
   <id>com.intellij.tracing.ide</id>
   <vendor>JetBrains</vendor>
-
+  <description>
+    Infrastructure to conveniently gather tracing information from builds.
+  </description>
   <depends optional="false">com.intellij.modules.java</depends>
 
   <actions>

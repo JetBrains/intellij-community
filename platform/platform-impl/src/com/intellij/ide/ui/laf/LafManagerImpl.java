@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -26,8 +26,8 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -75,7 +76,7 @@ import java.util.function.BooleanSupplier;
 
 @State(name = "LafManager", storages = @Storage("laf.xml"), category = SettingsCategory.UI)
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance(LafManager.class);
+  private static final Logger LOG = Logger.getInstance(LafManagerImpl.class);
 
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ELEMENT_PREFERRED_LIGHT_LAF = "preferred-light-laf";
@@ -217,7 +218,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     });
 
     UIThemeProvider.EP_NAME.forEachExtensionSafe(provider -> {
-      if (!DEFAULT_LIGHT_THEME_ID.equals(provider.id)) {
+      if (shouldCreateTheme(provider)) {
         UITheme theme = provider.createTheme();
         if (theme != null) {
           lafList.add(new UIThemeBasedLookAndFeelInfo(theme));
@@ -226,6 +227,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     });
     sortThemes(lafList);
     return lafList;
+  }
+
+  private static boolean shouldCreateTheme(UIThemeProvider provider) {
+    if (DEFAULT_LIGHT_THEME_ID.equals(provider.id)) return false;
+    if (!ExperimentalUI.isNewUI() && "ExperimentalLight".equals(provider.id)) return false;
+    if (!ExperimentalUI.isNewUI() && "ExperimentalDark".equals(provider.id)) return false;
+    return true;
   }
 
   private static void sortThemes(@NotNull List<? extends UIManager.LookAndFeelInfo> list) {
@@ -246,11 +254,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) {
     myEventDispatcher.addListener(listener);
-  }
-
-  @Override
-  public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) {
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC, listener);
   }
 
   @Override
@@ -654,18 +657,20 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.clear();
     defaults.putAll(ourDefaults);
     if (!myFirstSetup) {
-      SVGLoader.setColorPatcherForSelection(null);
+      SVGLoader.setContextColorPatcher(null);
+      SVGLoader.setSelectionColorPatcherProvider(null);
     }
 
     // set L&F
-    if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
+    String lafClassName = lookAndFeelInfo.getClassName();
+    if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lafClassName)) {
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
         AppUIUtil.updateForDarcula(true);
-        if (lafNameOrder.containsKey(lookAndFeelInfo.getName())) {
-          updateIconsUnderSelection(true);
-        }
+        //if (lafNameOrder.containsKey(lookAndFeelInfo.getName())) {
+        //  updateIconsUnderSelection(true);
+        //}
       }
       catch (Exception e) {
         LOG.error(e);
@@ -685,18 +690,19 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           laf = ((PluggableLafInfo)lookAndFeelInfo).createLookAndFeel();
         }
         else {
-          laf = (LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).getConstructor().newInstance();
-          if (laf instanceof MetalLookAndFeel) {
-            MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
-          }
-          else if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+          laf = (LookAndFeel)LafManagerImpl.class.getClassLoader().loadClass(lafClassName).getConstructor().newInstance();
+          // avoid loading MetalLookAndFeel class here - check for UIThemeBasedLookAndFeelInfo first
+          if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
             if (laf instanceof UserDataHolder) {
               UserDataHolder userDataHolder = (UserDataHolder)laf;
               userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
             }
-            if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
-              updateIconsUnderSelection(false);
-            }
+            //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
+            //  updateIconsUnderSelection(false);
+            //}
+          }
+          else if (laf instanceof MetalLookAndFeel) {
+            MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
           }
         }
 
@@ -741,53 +747,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       installLinuxFonts(UIManager.getLookAndFeelDefaults());
     }
     return false;
-  }
-
-  private static void updateIconsUnderSelection(boolean darcula) {
-    Map<String, String> map = new HashMap<>();
-    if (darcula) {
-      map.put("#5e5e5e", "#5778ad");
-      map.put("#c75450", "#a95768");
-      map.put("#6e6e6e", "#afb1b3");
-      //map.put("#f26522", "#b76554"); //red
-      map.put("#f26522b3", "#bc6b43"); //red 70%
-      map.put("#f2652299", "#bc6b43"); //red 60% (same as 70%)
-      map.put("#62b54399", "#579b41"); //green 60%
-      map.put("#f98b9e99", "#ba7481"); //pink 60%
-      map.put("#f4af3d99", "#aa823f"); //yellow 60%
-      map.put("#b99bf899", "#977fca"); //purple 60%
-      map.put("#9aa7b0cc", "#97acc6"); //noun gray 80%
-      map.put("#9aa7b099", "#97acc6"); //noun gray 60% (same as 80%)
-    }
-    else {
-      map.put("#6e6e6e", "#afb1b3");
-      map.put("#db5860", "#b75e73");
-      //map.put("#f26522", "#b56a51"); //red
-      map.put("#f26522b3", "#d38369"); //red 70%
-      map.put("#f2652299", "#d38369"); //red 60% (same as 70%)
-      map.put("#40b6e099", "#5eb6d4"); //blue 60%
-      map.put("#62b54399", "#7ebe65"); //green 60%
-      map.put("#f98b9e99", "#f1a4b2"); //pink 60%
-      map.put("#f4af3d99", "#ecc27d"); //yellow 60%
-      map.put("#b99bf899", "#b49ee2"); //purple 60%
-      map.put("#9aa7b0cc", "#aebdc6"); //noun gray 80%
-      map.put("#9aa7b099", "#aebdc6"); //noun gray 60% (same as 80%)
-      map.put("#40b6e0b3", "#5eb6d4"); //blue 70%
-      map.put("#62b543b3", "#7ebe65"); //green 70%
-      map.put("#f98b9eb3", "#f1a4b2"); //pink 70%
-      map.put("#f4af3db3", "#ecc27d"); //yellow 70%
-      map.put("#b99bf8b3", "#b49ee2"); //purple 70%
-    }
-
-    Map<String, Integer> alpha = new HashMap<>(map.size());
-    map.forEach((key, value) -> alpha.put(value, 255));
-
-     SVGLoader.setColorPatcherForSelection(new SVGLoader.SvgElementColorPatcherProvider() {
-       @Override
-       public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
-         return SVGLoader.newPatcher(null, map, alpha);
-       }
-     });
   }
 
   private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf, boolean processChangeSynchronously) {
@@ -857,12 +816,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS,
                    AppUIUtil.adjustFractionalMetrics(UISettings.Companion.getPreferredFractionalMetricsValue()));
 
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
+    myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
+
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
     }
-
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
-    myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
   }
 
   @NotNull
@@ -965,12 +924,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       String key = entry.getKey().toString();
       if (value instanceof Dimension) {
         if (value instanceof UIResource || myDimensionKeys.contains(key)) {
-          entry.setValue(JBUI.size((Dimension)value).asUIResource());
+          entry.setValue(JBDimension.size((Dimension)value).asUIResource());
         }
       }
       else if (value instanceof Insets) {
         if (value instanceof UIResource) {
-          entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
+          entry.setValue(JBInsets.create(((Insets)value)).asUIResource());
         }
       }
       else if (value instanceof Integer) {
@@ -1003,9 +962,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   /**
-   * The following code is a trick! By default Swing uses lightweight and "medium" weight
+   * The following code is a trick! By default, Swing uses lightweight and "medium" weight
    * popups to show JPopupMenu. The code below force the creation of real heavyweight menus -
-   * this increases speed of popups and allows to get rid of some drawing artifacts.
+   * this increases speed of popups and allows getting rid of some drawing artifacts.
    */
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
@@ -1191,7 +1150,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       String cleanupKey = "LafManagerImpl.rootPaneCleanup";
       boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != ComponentUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
-        UIUtil.markAsTypeAheadAware(window);
         window.setMinimumSize(null); // clear min-size from prev invocations on JBR11
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
@@ -1228,7 +1186,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private static Point fixPopupLocation(final Component contents, final int x, int y) {
       if (!(contents instanceof JToolTip)) {
         if (IdeaPopupMenuUI.isUnderPopup(contents)) {
-          int topBorder = JBUI.insets("PopupMenu.borderInsets", JBUI.emptyInsets()).top;
+          int topBorder = JBUI.insets("PopupMenu.borderInsets", JBInsets.emptyInsets()).top;
           Component invoker = ((JPopupMenu)contents).getInvoker();
           if (invoker instanceof ActionMenu) {
             y -= topBorder / 2;
@@ -1397,22 +1355,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
   }
 
-  private final class PreferredLafAction extends DefaultActionGroup {
+  private final class PreferredLafAction extends DefaultActionGroup implements DumbAware {
     private PreferredLafAction() {
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText(IdeBundle.message("preferred.theme.text"));
       getTemplatePresentation().setDescription(IdeBundle.message("preferred.theme.description"));
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return true;
-    }
-
-    @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
+      getTemplatePresentation().setPerformGroup(true);
     }
 
     @Override

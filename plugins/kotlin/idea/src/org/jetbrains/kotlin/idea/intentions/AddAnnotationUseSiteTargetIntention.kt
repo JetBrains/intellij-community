@@ -15,13 +15,18 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
+import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.AnnotationChecker
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationEntry>(
     KtAnnotationEntry::class.java,
@@ -33,57 +38,70 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
         if (useSiteTargets.isEmpty()) return false
         if (useSiteTargets.size == 1) {
             setTextGetter(KotlinBundle.lazyMessage("text.add.use.site.target.0", useSiteTargets.first().renderName))
+        } else {
+            setTextGetter(KotlinBundle.lazyMessage("add.use.site.target"))
         }
         return true
     }
 
     override fun applyTo(element: KtAnnotationEntry, editor: Editor?) {
-        val project = editor?.project ?: return
         val useSiteTargets = element.applicableUseSiteTargets()
-        CommandProcessor.getInstance().runUndoTransparentAction {
-            if (useSiteTargets.size == 1)
-                element.addUseSiteTarget(useSiteTargets.first(), project)
-            else
-                JBPopupFactory
-                    .getInstance()
-                    .createListPopup(createListPopupStep(element, useSiteTargets, project))
-                    .showInBestPositionFor(editor)
-        }
+        element.addUseSiteTarget(useSiteTargets, editor)
     }
+}
 
-    private fun createListPopupStep(
-        annotationEntry: KtAnnotationEntry,
-        useSiteTargets: List<AnnotationUseSiteTarget>,
-        project: Project
-    ): ListPopupStep<*> {
-        return object : BaseListPopupStep<AnnotationUseSiteTarget>(KotlinBundle.message("title.choose.use.site.target"), useSiteTargets) {
-            override fun isAutoSelectionEnabled() = false
+fun KtAnnotationEntry.addUseSiteTarget(useSiteTargets: List<AnnotationUseSiteTarget>, editor: Editor?) {
+    val project = this.project
+    if (!isPhysical) {
+        // For preview
+        if (useSiteTargets.isNotEmpty()) {
+            doAddUseSiteTarget(useSiteTargets.first())
+        }
+        return
+    }
+    CommandProcessor.getInstance().runUndoTransparentAction {
+        if (useSiteTargets.size == 1 || editor == null)
+            addUseSiteTarget(useSiteTargets.first(), project)
+        else
+            JBPopupFactory
+                .getInstance()
+                .createListPopup(createListPopupStep(this, useSiteTargets, project))
+                .showInBestPositionFor(editor)
+    }
+}
 
-            override fun onChosen(selectedValue: AnnotationUseSiteTarget, finalChoice: Boolean): PopupStep<*>? {
-                if (finalChoice) {
-                    annotationEntry.addUseSiteTarget(selectedValue, project)
-                }
-                return PopupStep.FINAL_CHOICE
+private fun createListPopupStep(
+    annotationEntry: KtAnnotationEntry,
+    useSiteTargets: List<AnnotationUseSiteTarget>,
+    project: Project
+): ListPopupStep<*> {
+    return object : BaseListPopupStep<AnnotationUseSiteTarget>(KotlinBundle.message("title.choose.use.site.target"), useSiteTargets) {
+        override fun isAutoSelectionEnabled() = false
+
+        override fun onChosen(selectedValue: AnnotationUseSiteTarget, finalChoice: Boolean): PopupStep<*>? {
+            if (finalChoice) {
+                annotationEntry.addUseSiteTarget(selectedValue, project)
             }
+            return PopupStep.FINAL_CHOICE
+        }
 
-            override fun getIconFor(value: AnnotationUseSiteTarget) = PlatformIcons.ANNOTATION_TYPE_ICON
+        override fun getIconFor(value: AnnotationUseSiteTarget) = PlatformIcons.ANNOTATION_TYPE_ICON
 
-            override fun getTextFor(value: AnnotationUseSiteTarget): String {
-                @Suppress("UnnecessaryVariable")
-                @NlsSafe val renderName = value.renderName
-                return renderName
-            }
+        override fun getTextFor(value: AnnotationUseSiteTarget): String {
+            @Suppress("UnnecessaryVariable")
+            @NlsSafe val renderName = value.renderName
+            return renderName
         }
     }
 }
 
-private fun KtAnnotationEntry.applicableUseSiteTargets(): List<AnnotationUseSiteTarget> {
+fun KtAnnotationEntry.applicableUseSiteTargets(): List<AnnotationUseSiteTarget> {
     if (useSiteTarget != null) return emptyList()
     val annotationShortName = this.shortName ?: return emptyList()
     val modifierList = getStrictParentOfType<KtModifierList>() ?: return emptyList()
     val annotated = modifierList.owner as? KtElement ?: return emptyList()
 
-    val applicableTargets = when (annotated) {
+    val candidateTargets = when (annotated) {
         is KtParameter ->
             if (annotated.getStrictParentOfType<KtPrimaryConstructor>() != null)
                 when (annotated.valOrVarKeyword?.node?.elementType) {
@@ -119,13 +137,24 @@ private fun KtAnnotationEntry.applicableUseSiteTargets(): List<AnnotationUseSite
             }
         is KtTypeReference -> listOf(RECEIVER)
         else -> emptyList()
-    }
+    }.toMutableList()
+    if (candidateTargets.isEmpty()) return emptyList()
 
     val existingTargets = modifierList.annotationEntries.mapNotNull {
         if (annotationShortName == it.shortName) it.useSiteTarget?.getAnnotationUseSiteTarget() else null
     }
+    if (existingTargets.isNotEmpty()) {
+        candidateTargets.removeIf { it in existingTargets }
+        if (candidateTargets.isEmpty()) return emptyList()
+    }
 
-    val targets = applicableTargets.filter { it !in existingTargets }
+    val context = analyze(BodyResolveMode.PARTIAL)
+    val descriptor = context[BindingContext.ANNOTATION, this]
+    val applicableTargets = descriptor?.let { AnnotationChecker.applicableTargetSet(descriptor) }.orEmpty()
+    if (applicableTargets.isNotEmpty()) {
+        candidateTargets.removeIf { KotlinTarget.USE_SITE_MAPPING[it] !in applicableTargets }
+        if (candidateTargets.isEmpty()) return emptyList()
+    }
 
     return if (isUnitTestMode()) {
         val chosenTarget = containingKtFile.findDescendantOfType<PsiComment>()
@@ -135,16 +164,20 @@ private fun KtAnnotationEntry.applicableUseSiteTargets(): List<AnnotationUseSite
             ?.getOrNull(1)
             ?.trim()
         if (chosenTarget.isNullOrBlank())
-            targets.take(1)
+            candidateTargets.take(1)
         else
-            targets.asSequence().filter { it.renderName == chosenTarget }.take(1).toList()
+            candidateTargets.asSequence().filter { it.renderName == chosenTarget }.take(1).toList()
     } else {
-        targets
+        candidateTargets
     }
 }
 
 fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget, project: Project) {
     project.executeWriteCommand(KotlinBundle.message("add.use.site.target")) {
-        replace(KtPsiFactory(this).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
+        doAddUseSiteTarget(useSiteTarget)
     }
+}
+
+private fun KtAnnotationEntry.doAddUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget) {
+    replace(KtPsiFactory(this).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
 }

@@ -68,7 +68,6 @@ internal class IftComponentFinder(private val basicFinder: ComponentFinder,
 
   private fun collectAll(hierarchy: ComponentHierarchy, root: Component, allComponents: MutableSet<Component>) {
     for (c in hierarchy.childrenOf(root)) {
-      if (c == null) continue
       collectAll(hierarchy, c, allComponents)
     }
     allComponents.add(root)
@@ -85,7 +84,7 @@ internal class IftComponentFinder(private val basicFinder: ComponentFinder,
   }
 
   private fun rootsOf(hierarchy: ComponentHierarchy): Collection<Component> {
-    return invokeAndWaitIfNeeded(ModalityState.any()) { hierarchy.roots().filterNotNull() }
+    return invokeAndWaitIfNeeded(ModalityState.any()) { hierarchy.roots() }
   }
 
   override fun printer(): ComponentPrinter {

@@ -4,18 +4,19 @@ package com.intellij.openapi.module.impl;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class JavaAwareModuleTypeManagerImpl extends ModuleTypeManagerImpl{
   @NonNls private static final String JAVA_MODULE_ID_OLD = "JAVA";
 
   @Override
-  public ModuleType<?> getDefaultModuleType() {
+  public @NotNull ModuleType<?> getDefaultModuleType() {
     return StdModuleTypes.JAVA;
   }
 
   @Override
-  public ModuleType<?> findByID(@Nullable String moduleTypeId) {
+  public @NotNull ModuleType<?> findByID(@Nullable String moduleTypeId) {
     if (moduleTypeId != null) {
       if (JAVA_MODULE_ID_OLD.equals(moduleTypeId)) {
         return StdModuleTypes.JAVA; // for compatibility with the previous ID that Java modules had

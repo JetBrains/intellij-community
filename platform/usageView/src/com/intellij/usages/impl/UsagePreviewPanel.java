@@ -183,7 +183,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       }
     }
     Balloon balloon = editor.getUserData(REPLACEMENT_BALLOON_KEY);
-    if (balloon != null && !Disposer.isDisposed(balloon)) {
+    if (balloon != null && !balloon.isDisposed()) {
       Disposer.dispose(balloon);
       editor.putUserData(REPLACEMENT_BALLOON_KEY, null);
     }

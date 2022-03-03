@@ -11,8 +11,6 @@ class MiscIntermediateOperationsTest : StreamExTestCase() {
 
   fun testChain() = doStreamExWithResultTest()
 
-  fun testSkipOrdered() = doStreamExWithResultTest()
-
   fun testParallel() = doStreamExVoidTest()
 
   fun testZipWithSameSizes() = doStreamExVoidTest()

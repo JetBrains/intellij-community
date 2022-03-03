@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun assertCall(x: Int, b: Boolean, c: Boolean) {
     if (x < 0) return
     if (Math.random() > 0.5) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
@@ -27,7 +27,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     PsiFile containingFile = element.getContainingFile();
     if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null ||
         element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element)) {
-      if (HighlightClassUtil.isJavaHashBangScript(containingFile)) {
+      if (JavaHighlightUtil.isJavaHashBangScript(containingFile)) {
         return null;
       }
 

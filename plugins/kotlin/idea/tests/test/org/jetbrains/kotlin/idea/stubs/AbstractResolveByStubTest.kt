@@ -2,8 +2,11 @@
 
 package org.jetbrains.kotlin.idea.stubs
 
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.test.AstAccessControl
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -33,7 +36,12 @@ abstract class AbstractResolveByStubTest : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    // In compiler repo for these test MOCK_JDK is used which is currently 1.6 JDK
+    override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+        listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
+    ) {
+        override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk16()
+    }
 
     private fun performTest(path: String) {
         val file = file as KtFile

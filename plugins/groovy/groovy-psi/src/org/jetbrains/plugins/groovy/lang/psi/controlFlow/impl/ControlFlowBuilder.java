@@ -928,7 +928,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (!section.isDefault() &&
           expressionPatterns.length > 0 &&
           ContainerUtil.and(expressionPatterns, expr -> expr instanceof GrReferenceExpression &&
-                                                        ((GrReferenceExpression)expr).resolve() instanceof PsiClass)) {
+                                                        ((GrReferenceExpression)expr).getStaticReference().resolve() instanceof PsiClass)) {
         GrExpression expressionPattern = expressionPatterns[0];
         if (expressionPattern != null && expressionPattern.getParent() instanceof GrExpressionList) {
           ConditionInstruction cond = registerCondition(section, false);

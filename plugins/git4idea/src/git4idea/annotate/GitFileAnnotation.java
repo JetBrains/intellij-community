@@ -2,11 +2,14 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -17,12 +20,13 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
@@ -35,13 +39,17 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public final class GitFileAnnotation extends FileAnnotation {
+  private static final Logger LOG = Logger.getInstance(GitFileAnnotation.class);
+
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
   @NotNull private final FilePath myFilePath;
@@ -75,7 +83,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     new GitAnnotationAspect(LineAnnotationAspect.AUTHOR, VcsBundle.message("line.annotation.aspect.author"), true) {
       @Override
       protected String doGetValue(LineInfo lineInfo) {
-        return lineInfo.getAuthor();
+        return VcsUserUtil.toExactString(lineInfo.getAuthorUser());
       }
     };
   private final VcsLogUiProperties.PropertiesChangeListener myLogSettingChangeListener = this::onLogSettingChange;
@@ -185,7 +193,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
     atb.appendRevisionLine(revisionNumber, it -> GitCommitTooltipLinkHandler.createLink(it.asString(), it));
-    atb.appendLine(VcsBundle.message("commit.description.tooltip.author", lineInfo.getAuthor()));
+    atb.appendLine(VcsBundle.message("commit.description.tooltip.author", VcsUserUtil.toExactString(lineInfo.getAuthorUser())));
     atb.appendLine(VcsBundle.message("commit.description.tooltip.date", DateFormatUtil.formatDateTime(getDate(lineInfo))));
 
     if (!myFilePath.equals(lineInfo.getFilePath())) {
@@ -259,8 +267,27 @@ public final class GitFileAnnotation extends FileAnnotation {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         LineInfo info = myLines.get(lineNum);
 
-        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, false,
-                                                                 () -> getRevisionsChangesProvider().getChangesIn(lineNum));
+        VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(myFilePath);
+        if (root == null) return;
+
+        CompletableFuture<Boolean> shownInLog;
+        if (ModalityState.current() == ModalityState.NON_MODAL &&
+            Registry.is("vcs.blame.show.affected.files.in.log")) {
+          Hash hash = HashImpl.build(info.getRevisionNumber().asString());
+          shownInLog = VcsLogNavigationUtil.jumpToRevisionAsync(myProject, root, hash, info.getFilePath());
+        }
+        else {
+          shownInLog = CompletableFuture.completedFuture(false); // can't use log tabs in modal dialogs (ex: commit, merge)
+        }
+        shownInLog.whenCompleteAsync((success, ex) -> {
+          if (ex != null) {
+            LOG.error(ex);
+          }
+          if (!Boolean.TRUE.equals(success)) {
+            AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, false,
+                                                                     () -> getRevisionsChangesProvider().getChangesIn(lineNum));
+          }
+        }, EdtExecutorService.getInstance());
       }
     }
   }
@@ -277,14 +304,14 @@ public final class GitFileAnnotation extends FileAnnotation {
     @NotNull private final String mySubject;
 
     CommitInfo(@NotNull Project project,
-             @NotNull GitRevisionNumber revision,
-             @NotNull FilePath path,
-             @NotNull Date committerDate,
-             @NotNull Date authorDate,
-             @NotNull VcsUser author,
-             @NotNull String subject,
-             @Nullable GitRevisionNumber previousRevision,
-             @Nullable FilePath previousPath) {
+               @NotNull GitRevisionNumber revision,
+               @NotNull FilePath path,
+               @NotNull Date committerDate,
+               @NotNull Date authorDate,
+               @NotNull VcsUser author,
+               @NotNull String subject,
+               @Nullable GitRevisionNumber previousRevision,
+               @Nullable FilePath previousPath) {
       myProject = project;
       myRevision = revision;
       myFilePath = path;
@@ -328,12 +355,17 @@ public final class GitFileAnnotation extends FileAnnotation {
     }
 
     @NotNull
-    public String getAuthor() {
+    public @Nls String getAuthor() {
       return myAuthor.getName();
     }
 
     @NotNull
-    public String getSubject() {
+    public VcsUser getAuthorUser() {
+      return myAuthor;
+    }
+
+    @NotNull
+    public @Nls String getSubject() {
       return mySubject;
     }
   }
@@ -388,8 +420,13 @@ public final class GitFileAnnotation extends FileAnnotation {
     }
 
     @NotNull
-    public String getAuthor() {
+    public @Nls String getAuthor() {
       return myCommitInfo.getAuthor();
+    }
+
+    @NotNull
+    public VcsUser getAuthorUser() {
+      return myCommitInfo.getAuthorUser();
     }
 
     @NlsSafe
@@ -420,7 +457,7 @@ public final class GitFileAnnotation extends FileAnnotation {
   public boolean isBaseRevisionChanged(@NotNull VcsRevisionNumber number) {
     if (!myFile.isInLocalFileSystem()) return false;
     final VcsRevisionNumber currentCurrentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
-    return myBaseRevision != null && ! myBaseRevision.equals(currentCurrentRevision);
+    return myBaseRevision != null && !myBaseRevision.equals(currentCurrentRevision);
   }
 
 

@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -171,7 +172,7 @@ public final class ExitHelper {
   private static Statement isExitEdge(StatEdge edge) {
     Statement dest = edge.getDestination();
 
-    if (edge.getType() == StatEdge.TYPE_BREAK && dest.type == Statement.TYPE_BASICBLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
+    if (edge.getType() == StatEdge.TYPE_BREAK && dest.type == Statement.TYPE_BASIC_BLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
       List<Exprent> data = dest.getExprents();
 
       if (data != null && data.size() == 1) {
@@ -192,9 +193,9 @@ public final class ExitHelper {
         if (ed.getType() == StatEdge.TYPE_REGULAR) {
           Statement source = ed.getSource();
 
-          if (source.type == Statement.TYPE_BASICBLOCK || (source.type == Statement.TYPE_IF &&
+          if (source.type == Statement.TYPE_BASIC_BLOCK || (source.type == Statement.TYPE_IF &&
                                                            ((IfStatement)source).iftype == IfStatement.IFTYPE_IF) ||
-              (source.type == Statement.TYPE_DO && ((DoStatement)source).getLooptype() != DoStatement.LOOP_DO)) {
+              (source.type == Statement.TYPE_DO && ((DoStatement)source).getLoopType() != LoopType.DO)) {
             return false;
           }
         }

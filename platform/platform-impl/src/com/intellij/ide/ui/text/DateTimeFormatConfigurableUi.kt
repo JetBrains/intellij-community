@@ -36,14 +36,14 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
               { settings.dateFormatPattern = it })
             .columns(16)
           browserLink(IdeBundle.message("date.format.date.patterns"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html")
-        }.enabledIf(overrideSystemDateFormatting.selected)
+        }
 
         row {
           checkBox(IdeBundle.message("date.format.24.hours"))
             .bindSelected({ settings.isUse24HourTime },
               { settings.isUse24HourTime = it })
-        }.enabledIf(overrideSystemDateFormatting.selected)
-      }
+        }
+      }.enabledIf(overrideSystemDateFormatting.selected)
 
       row {
         checkBox(IdeBundle.message("date.format.pretty"))

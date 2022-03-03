@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -77,6 +77,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
                              private val activate: () -> Unit) :
   JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
+  private val disposableFlag = Disposer.newCheckedDisposable()
 
   private val _tree: MyChangesTree
   val tree: ChangesTree get() = _tree
@@ -124,7 +125,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     toolbarGroup.addSeparator()
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
     toolbar = ActionManager.getInstance().createActionToolbar(GIT_STAGE_PANEL_PLACE, toolbarGroup, true)
-    toolbar.setTargetComponent(tree)
+    toolbar.targetComponent = tree
 
     PopupHandler.installPopupMenu(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
 
@@ -168,8 +169,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     updateChangesStatusPanel()
 
     Disposer.register(disposableParent, this)
+    Disposer.register(this, disposableFlag)
 
-    runInEdtAsync(this) { update() }
+    runInEdtAsync(disposableFlag) { update() }
   }
 
   private fun isRefreshInProgress(): Boolean {
@@ -362,13 +364,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     override fun installGroupingSupport(): ChangesGroupingSupport {
       val result = ChangesGroupingSupport(project, this, false)
 
-      if (PropertiesComponent.getInstance(project).getValues(GROUPING_PROPERTY_NAME) == null) {
-        val oldGroupingKeys = (PropertiesComponent.getInstance(project).getValues(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
+      if (PropertiesComponent.getInstance(project).getList(GROUPING_PROPERTY_NAME) == null) {
+        val oldGroupingKeys = (PropertiesComponent.getInstance(project).getList(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
         oldGroupingKeys.add(REPOSITORY_GROUPING)
-        PropertiesComponent.getInstance(project).setValues(GROUPING_PROPERTY_NAME, *oldGroupingKeys.toTypedArray())
+        PropertiesComponent.getInstance(project).setList(GROUPING_PROPERTY_NAME, oldGroupingKeys.toList())
       }
 
-      installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
+      installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
       return result
     }
 
@@ -408,13 +410,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private inner class MyGitChangeProviderListener : GitRefreshListener {
     override fun progressStarted() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateProgressState()
       }
     }
 
     override fun progressStopped() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateProgressState()
       }
     }
@@ -433,7 +435,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private inner class MyChangeListListener : ChangeListListener {
     override fun changeListUpdateDone() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateChangesStatusPanel()
       }
     }

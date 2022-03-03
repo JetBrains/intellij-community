@@ -1,11 +1,26 @@
 <html>
 <body>
-  Reports methods overriding superclass methods without the
-  <code>@java.lang.Override</code> annotation.
-<p>
-  Annotating methods improves code readability since it shows the intent. In addition, the compiler emits an error when a signature
-  of the overridden method doesn't match the superclass method.
-</p>
+  Reports methods overriding superclass methods but are not annotated with <code>@java.lang.Override</code>.
+  <p>
+  Annotating methods with <code>@java.lang.Override</code> improves code readability since it shows the intent.
+  In addition, the compiler emits an error when a signature of the overridden method doesn't match the superclass method.
+  <p><b>Example:</b></p>
+  <pre><code>
+    class X {
+      public String toString() {
+        return "hello world";
+      }
+    }
+  </code></pre>
+  <p>After the quick-fix is applied:</p>
+  <pre><code>
+    class X {
+      @Override
+      public String toString() {
+        return "hello world";
+      }
+    }
+  </code></pre>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <ul>
@@ -20,8 +35,12 @@
     Use the <b>Ignore methods in anonymous classes</b> option to ignore methods
     in anonymous classes.
   </li>
+  <li>
+    Disable the <b>Warn on super method that overriding methods are not annotated '@Override'</b> to only
+    warn on overriding methods, and not on overridden methods.
+  </li>
 </ul>
-<p>This inspection is only applicable if the language level of the project or module is 5 or higher.</p>
+<p>This inspection only reports if the language level of the project or module is 5 or higher.</p>
 
 </body>
 </html>

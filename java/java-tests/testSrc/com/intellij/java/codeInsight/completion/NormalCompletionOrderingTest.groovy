@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
+import com.intellij.internal.DumpLookupElementWeights
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
@@ -978,5 +979,35 @@ class Foo {
     myFixture.configureByText("a.java", "class X { String getName() {return \"\";} void test() {System.out.println(this.n<caret>);}}")
     myFixture.completeBasic()
     assertStringItems "getName", "clone", "toString", "notify", "notifyAll", "finalize"
+  }
+
+  @NeedsIndex.Full
+  void "test import nested classes order"() {
+    myFixture.addClass("public class Cls { public static class TestImport {}}")
+    myFixture.addClass("public class Cls2 { public static class TestImport {}}")
+    myFixture.addClass("package demo;public class TestImport {}")
+    myFixture.addClass("public class TestImport {}")
+    myFixture.configureByText("a.java", "import demo.*;import static Cls2.*; class Test {TestIm<caret>}")
+    myFixture.completeBasic()
+    def elements = myFixture.lookupElements
+    assert elements.length == 4
+    def weights = DumpLookupElementWeights.getLookupElementWeights(lookup, false)
+    assert elements[0].as(JavaPsiClassReferenceElement).getQualifiedName() == "TestImport"
+    assert weights[0].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_TOP_LEVEL,") // same package
+    assert elements[1].as(JavaPsiClassReferenceElement).getQualifiedName() == "demo.TestImport"
+    assert weights[1].contains("explicitlyImported=CLASS_ON_DEMAND_TOP_LEVEL,") // on-demand import
+    assert elements[2].as(JavaPsiClassReferenceElement).getQualifiedName() == "Cls2.TestImport"
+    assert weights[2].contains("explicitlyImported=CLASS_ON_DEMAND_NESTED,") // same package, nested class imported
+    assert elements[3].as(JavaPsiClassReferenceElement).getQualifiedName() == "Cls.TestImport"
+    assert weights[3].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_NESTED,") // same package but nested class not imported
+  }
+
+  @NeedsIndex.Full
+  void "test discourage experimental"() {
+    myFixture.addClass("package org.jetbrains.annotations;public class ApiStatus{public @interface Experimental {}}");
+    myFixture.addClass("class Cls {@org.jetbrains.annotations.ApiStatus.Experimental public void methodA() {} public void methodB() {}}")
+    myFixture.configureByText("a.java", "class Test {void t(Cls cls) {cls.me<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["methodB", "methodA"]
   }
 }

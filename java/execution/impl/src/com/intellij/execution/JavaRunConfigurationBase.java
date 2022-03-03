@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,13 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
   protected boolean runsUnderWslJdk() {
     String path = getAlternativeJrePath();
     if (path != null) {
+      Sdk sdk = ProjectJdkTable.getInstance().findJdk(path);
+      if (sdk != null) {
+        String homePath = sdk.getHomePath();
+        if (homePath != null) {
+          return WslDistributionManager.isWslPath(homePath);
+        }
+      }
       return WslDistributionManager.isWslPath(path);
     }
     Module module = getConfigurationModule().getModule();

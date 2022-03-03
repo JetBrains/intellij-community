@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ide
@@ -50,6 +50,7 @@ import java.awt.image.BufferedImage
 import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
@@ -106,7 +107,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       namesToResolve.clear()
     }
     for (p in paths) {
-      nameCache.put(p, readProjectName(p))
+      nameCache[p] = readProjectName(p)
     }
   }
 
@@ -157,7 +158,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         val newAdditionalInfo = linkedMapOf<String, RecentProjectMetaInfo>()
         for (recentPath in recentPaths.asReversed()) {
           val value = state.additionalInfo.get(recentPath) ?: continue
-          newAdditionalInfo.put(recentPath, value)
+          newAdditionalInfo[recentPath] = value
         }
 
         if (newAdditionalInfo != state.additionalInfo) {
@@ -183,14 +184,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     for (path in openPaths) {
       val info = state.additionalInfo.remove(path)
       if (info != null) {
-        oldInfoMap.put(path, info)
+        oldInfoMap[path] = info
       }
     }
 
     for (path in openPaths.asReversed()) {
       val info = oldInfoMap.get(path) ?: RecentProjectMetaInfo()
       info.opened = true
-      state.additionalInfo.put(path, info)
+      state.additionalInfo[path] = info
     }
     openPaths.clear()
     modCounter.incrementAndGet()
@@ -258,7 +259,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   @Deprecated("Use getProjectIcon(String, Boolean)", ReplaceWith("getProjectIcon(path, generateFromName)"))
-  fun getProjectIcon(path: String, isDark: Boolean, generateFromName: Boolean) = getProjectIcon(path, generateFromName)
+  fun getProjectIcon(path: String, @Suppress("UNUSED_PARAMETER") isDark: Boolean, generateFromName: Boolean) = getProjectIcon(path, generateFromName)
 
   fun getProjectIcon(path: String, generateFromName: Boolean): Icon {
     return projectIconHelper.getProjectIcon(path, generateFromName)
@@ -287,7 +288,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       // remove instead of get to re-order
       val info = state.additionalInfo.remove(path) ?: RecentProjectMetaInfo()
-      state.additionalInfo.put(path, info)
+      state.additionalInfo[path] = info
       modCounter.incrementAndGet()
       val appInfo = ApplicationInfoEx.getInstanceEx()
       info.displayName = getProjectDisplayName(project)
@@ -364,7 +365,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       if (!app.isHeadlessEnvironment) {
         manager.updateProjectInfo(project, WindowManager.getInstance() as WindowManagerImpl, writLastProjectInfo = false)
       }
-      manager.nameCache.put(path, project.name)
+      manager.nameCache[path] = project.name
     }
 
     override fun projectClosed(project: Project) {
@@ -443,9 +444,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
     return future
       .whenComplete { _, _ ->
-        ApplicationManager.getApplication().invokeAndWait {
-          WelcomeFrame.showIfNoProjectOpened()
-        }
+        WelcomeFrame.showIfNoProjectOpened(null)
         disableUpdatingRecentInfo.set(false)
       }
   }
@@ -758,7 +757,13 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val file = Path.of(path)
+  val file = try {
+    Path.of(path)
+  }
+  catch (e: InvalidPathException) {
+    return path
+  }
+
   if (!file.isDirectory()) {
     val fileName = file.fileName
     if (fileName != null) {

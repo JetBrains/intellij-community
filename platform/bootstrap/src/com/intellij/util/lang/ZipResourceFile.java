@@ -2,17 +2,15 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.lang.ZipFile.ZipResource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -21,12 +19,10 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 @SuppressWarnings("SuspiciousPackagePrivateAccess")
-public final class ZipResourceFile implements ResourceFile {
-  private static final int MANIFEST_HASH_CODE = 0x4099_fd89;  // = Murmur3_32Hash.MURMUR3_32.hashString(JarFile.MANIFEST_NAME)
+final class ZipResourceFile implements ResourceFile {
+  private final ZipFile zipFile;
 
-  private final ImmutableZipFile zipFile;
-
-  public ZipResourceFile(@NotNull Path file) {
+  ZipResourceFile(@NotNull Path file) {
     ZipFilePool pool = ZipFilePool.POOL;
     try {
       if (pool == null) {
@@ -34,7 +30,7 @@ public final class ZipResourceFile implements ResourceFile {
       }
       else {
         Object zipFile = pool.loadZipFile(file);
-        this.zipFile = (ImmutableZipFile)zipFile;
+        this.zipFile = (ZipFile)zipFile;
       }
     }
     catch (IOException e) {
@@ -46,57 +42,61 @@ public final class ZipResourceFile implements ResourceFile {
   public void processResources(@NotNull String dir,
                                @NotNull Predicate<? super String> nameFilter,
                                @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
-    int minNameLength = dir.length() + 2;
-    for (ImmutableZipEntry entry : zipFile.getEntries()) {
-      String name = entry.getName();
-      if (name.length() >= minNameLength && name.startsWith(dir) && name.charAt(dir.length()) == '/' && nameFilter.test(name)) {
-        try (InputStream stream = entry.getInputStream(zipFile)) {
-          consumer.accept(name, stream);
-        }
-      }
-    }
+    zipFile.processResources(dir, nameFilter, consumer);
   }
 
   @Override
   public @Nullable Attributes loadManifestAttributes() throws IOException {
-    ImmutableZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME, MANIFEST_HASH_CODE);
-    return entry == null ? null : new Manifest(new ByteArrayInputStream(entry.getData(zipFile))).getMainAttributes();
+    InputStream stream = zipFile.getInputStream(JarFile.MANIFEST_NAME);
+    if (stream == null) {
+      return null;
+    }
+
+    try {
+      return new Manifest(stream).getMainAttributes();
+    }
+    finally {
+      stream.close();
+    }
   }
 
   @Override
-  public @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() throws IOException {
+  public @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() {
     // name hash is not added - doesn't make sense as fast lookup by name is supported by ImmutableZipFile
-    ImmutableZipEntry packageIndex = zipFile.getEntry("__packageIndex__");
-    if (packageIndex == null) {
+    if (zipFile instanceof ImmutableZipFile) {
+      ImmutableZipFile file = (ImmutableZipFile)zipFile;
+      return new ClasspathCache.IndexRegistrar() {
+        @Override
+        public int classPackageCount() {
+          return file.classPackages.length;
+        }
+
+        @Override
+        public int resourcePackageCount() {
+          return file.resourcePackages.length;
+        }
+
+        @Override
+        public long[] classPackages() {
+          return file.classPackages;
+        }
+
+        @Override
+        public long[] resourcePackages() {
+          return file.resourcePackages;
+        }
+      };
+    }
+    else {
       return computePackageIndex();
     }
-
-    ByteBuffer buffer = packageIndex.getByteBuffer(zipFile);
-    buffer.order(ByteOrder.LITTLE_ENDIAN);
-    int[] classPackages = new int[buffer.getInt()];
-    int[] resourcePackages = new int[buffer.getInt()];
-    IntBuffer intBuffer = buffer.asIntBuffer();
-    intBuffer.get(classPackages);
-    intBuffer.get(resourcePackages);
-    return (classMap, resourceMap, loader) -> {
-      ClasspathCache.addResourceEntries(classPackages, classMap, loader);
-      ClasspathCache.addResourceEntries(resourcePackages, resourceMap, loader);
-    };
   }
 
   private @NotNull ClasspathCache.LoaderDataBuilder computePackageIndex() {
-    ClasspathCache.LoaderDataBuilder builder = new ClasspathCache.LoaderDataBuilder(false);
-    for (ImmutableZipEntry entry : zipFile.getRawNameSet()) {
-      if (entry == null) {
-        continue;
-      }
-
-      String name = entry.name;
-      if (name.endsWith(ClassPath.CLASS_EXTENSION)) {
-        builder.addClassPackageFromName(name);
-      }
-      else {
-        builder.addResourcePackageFromName(name);
+    ClasspathCache.LoaderDataBuilder builder = new ClasspathCache.LoaderDataBuilder();
+    for (ImmutableZipEntry entry : ((HashMapZipFile)zipFile).getRawNameSet()) {
+      if (entry != null) {
+        builder.addPackageFromName(entry.name);
       }
     }
     return builder;
@@ -105,60 +105,60 @@ public final class ZipResourceFile implements ResourceFile {
   @Override
   public @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException {
-    ImmutableZipEntry entry = zipFile.getEntry(fileName);
-    if (entry == null) {
-      return null;
-    }
+    if (classConsumer.isByteBufferSupported(className)) {
+      ByteBuffer buffer = zipFile.getByteBuffer(fileName);
+      if (buffer == null) {
+        return null;
+      }
 
-    if (classConsumer.isByteBufferSupported(className, null)) {
-      ByteBuffer buffer = entry.getByteBuffer(zipFile);
       try {
-        return classConsumer.consumeClassData(className, buffer, jarLoader, null);
+        return classConsumer.consumeClassData(className, buffer, jarLoader);
       }
       finally {
-        entry.releaseBuffer(buffer);
+        zipFile.releaseBuffer(buffer);
       }
     }
     else {
-      return classConsumer.consumeClassData(className, entry.getData(zipFile), jarLoader, null);
+      byte[] data = zipFile.getData(fileName);
+      if (data == null) {
+        return null;
+      }
+      return classConsumer.consumeClassData(className, data, jarLoader);
     }
   }
 
   @Override
-  public @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) throws IOException {
-    ImmutableZipEntry entry = zipFile.getEntry(name);
-    if (entry == null) {
-      return null;
-    }
-    return new ZipFileResource(jarLoader, entry, zipFile);
+  public @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) {
+    ZipResource entry = zipFile.getResource(name);
+    return entry == null ? null : new ZipFileResource(jarLoader, entry, name);
   }
 
   private static final class ZipFileResource implements Resource {
     private final URL baseUrl;
     private URL url;
-    private final ImmutableZipEntry entry;
-    private final ImmutableZipFile file;
+    private final String name;
+    private final ZipResource entry;
     private @Nullable("if mimicJarUrlConnection equals to false") final Path path;
 
-    private ZipFileResource(@NotNull JarLoader jarLoader, @NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file) {
+    private ZipFileResource(@NotNull JarLoader jarLoader, @NotNull ZipResource entry, @NotNull String name) {
       this.baseUrl = jarLoader.url;
       this.entry = entry;
-      this.file = file;
-      this.path = jarLoader.configuration.mimicJarUrlConnection ? jarLoader.path : null;
+      this.name = name;
+      this.path = jarLoader.configuration.mimicJarUrlConnection ? jarLoader.getPath() : null;
     }
 
     @Override
     public String toString() {
-      return "ZipFileResource(name=" + entry.getName() + ", file=" + file + ')';
+      return "ZipFileResource(name=" + entry + ")";
     }
 
     @Override
     public @NotNull URL getURL() {
       URL result = url;
       if (result == null) {
-        URLStreamHandler handler = new MyJarUrlStreamHandler(entry, file, path);
+        URLStreamHandler handler = new MyJarUrlStreamHandler(entry, path);
         try {
-          result = new URL(baseUrl, entry.getName(), handler);
+          result = new URL(baseUrl, name, handler);
         }
         catch (MalformedURLException e) {
           throw new RuntimeException(e);
@@ -170,56 +170,50 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public @NotNull InputStream getInputStream() throws IOException {
-      return entry.getInputStream(file);
+      return entry.getInputStream();
     }
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      return entry.getData(file);
+      return entry.getData();
     }
   }
 
   private static final class MyJarUrlStreamHandler extends URLStreamHandler {
-    private @NotNull final ImmutableZipEntry entry;
-    private @NotNull final ImmutableZipFile file;
+    private @NotNull final ZipResource entry;
     private @Nullable final Path path;
 
-    private MyJarUrlStreamHandler(@NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file, @Nullable Path path) {
+    private MyJarUrlStreamHandler(@NotNull ZipResource entry, @Nullable Path path) {
       this.entry = entry;
-      this.file = file;
       this.path = path;
     }
 
     @Override
     protected URLConnection openConnection(URL url) throws MalformedURLException {
-      return path == null ? new MyUrlConnection(url, entry, file) : new MyJarUrlConnection(url, entry, file, path);
+      return path == null ? new MyUrlConnection(url, entry) : new MyJarUrlConnection(url, entry, path);
     }
   }
 
   private static final class MyUrlConnection extends URLConnection {
-    private final ImmutableZipEntry entry;
-    private final ImmutableZipFile file;
+    private final ZipResource entry;
     private byte[] data;
 
-    MyUrlConnection(@NotNull URL url,
-                    @NotNull ImmutableZipEntry entry,
-                    @NotNull ImmutableZipFile file) {
+    MyUrlConnection(@NotNull URL url, @NotNull ZipResource entry) {
       super(url);
       this.entry = entry;
-      this.file = file;
     }
 
     private byte[] getData() throws IOException {
       byte[] result = data;
       if (result == null) {
-        result = entry.getData(file);
+        result = entry.getData();
         data = result;
       }
       return result;
     }
 
     @Override
-    public void connect() throws IOException {
+    public void connect() {
     }
 
     @Override
@@ -229,42 +223,37 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public InputStream getInputStream() throws IOException {
-      return entry.getInputStream(file);
+      return entry.getInputStream();
     }
 
     @Override
     public int getContentLength() {
-      return entry.uncompressedSize;
+      return entry.getUncompressedSize();
     }
   }
 
   private static final class MyJarUrlConnection extends JarURLConnection {
-    private final ImmutableZipEntry entry;
-    private final ImmutableZipFile file;
+    private final ZipResource entry;
     private final Path path;
     private byte[] data;
 
-    MyJarUrlConnection(@NotNull URL url,
-                       @NotNull ImmutableZipEntry entry,
-                       @NotNull ImmutableZipFile file,
-                       @NotNull Path path) throws MalformedURLException {
+    MyJarUrlConnection(@NotNull URL url, @NotNull ZipResource entry, @NotNull Path path) throws MalformedURLException {
       super(url);
       this.entry = entry;
-      this.file = file;
       this.path = path;
     }
 
     private byte[] getData() throws IOException {
       byte[] result = data;
       if (result == null) {
-        result = entry.getData(file);
+        result = entry.getData();
         data = result;
       }
       return result;
     }
 
     @Override
-    public void connect() throws IOException {
+    public void connect() {
     }
 
     @Override
@@ -274,12 +263,12 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public InputStream getInputStream() throws IOException {
-      return entry.getInputStream(file);
+      return entry.getInputStream();
     }
 
     @Override
     public int getContentLength() {
-      return entry.uncompressedSize;
+      return entry.getUncompressedSize();
     }
 
     @Override

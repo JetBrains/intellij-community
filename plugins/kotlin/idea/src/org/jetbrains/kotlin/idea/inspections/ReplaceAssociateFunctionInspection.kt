@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -146,13 +147,19 @@ class ReplaceAssociateFunctionFix(private val function: AssociateFunction, priva
         }
     }
 
-    private fun BuilderByPattern<KtExpression>.appendLambda(lambda: KtLambdaExpression, body: KtExpression? = lambda.bodyExpression) {
+    private fun BuilderByPattern<KtExpression>.appendLambda(lambda: KtLambdaExpression, body: KtExpression? = null) {
         appendFixedText("{")
         lambda.valueParameters.firstOrNull()?.nameAsName?.also {
             appendName(it)
             appendFixedText("->")
         }
-        appendExpression(body)
+
+        if (body != null) {
+            appendExpression(body)
+        } else {
+            lambda.bodyExpression?.allChildren?.let(this::appendChildRange)
+        }
+
         appendFixedText("}")
     }
 

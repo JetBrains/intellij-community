@@ -385,6 +385,9 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="meta F3"/>
   </action>
+  <action id="FindPrevWordAtCaret">
+    <keyboard-shortcut first-keystroke="meta shift F3"/>
+  </action>
   <action id="ActivateStructureToolWindow">
     <keyboard-shortcut first-keystroke="meta alt F"/>
   </action>

@@ -5,6 +5,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -116,7 +117,9 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   }
 
   @Override
-  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
-    return myFix.applyFixForPreview(project, myDescriptor.getDescriptorForPreview(file));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
+    return myFix.generatePreview(project, myDescriptor.getDescriptorForPreview(file));
   }
 }

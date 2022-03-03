@@ -1574,7 +1574,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           if (element instanceof PsiReferenceExpression) {
             final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
             final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
-            if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
+            if (qualifierExpression instanceof PsiQualifiedExpression) {
               referenceExpression.setQualifierExpression(null);
             }
           }

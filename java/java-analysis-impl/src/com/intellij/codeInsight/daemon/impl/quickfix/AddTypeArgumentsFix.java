@@ -28,7 +28,8 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
   @Override
   @NotNull
   public String getText() {
-    if (myArgList.getExpressionCount() == 1) {
+    PsiExpressionList list = myArgList.getElement();
+    if (list != null && list.getExpressionCount() == 1) {
       return QuickFixBundle.message("add.type.arguments.single.argument.text");
     }
 
@@ -131,8 +132,10 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
   }
 
   @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiExpressionList list = myArgList.getElement();
+    if (list == null) return null;
+    return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
                                    myArgumentFixerActionFactory);
   }
 

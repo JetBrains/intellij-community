@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.java.JavaBundle;
@@ -32,7 +31,10 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -45,6 +47,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -54,6 +57,7 @@ import com.intellij.util.containers.ContainerUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +96,9 @@ public class JavaDocInfoGenerator {
   private static final String INHERIT_DOC_TAG = "inheritDoc";
   private static final String DOC_ROOT_TAG = "docRoot";
   private static final String VALUE_TAG = "value";
+  private static final String INDEX_TAG = "index";
+  private static final String SUMMARY_TAG = "summary";
+  private static final String SNIPPET_TAG = "snippet";
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
   private static final String NBSP = "&nbsp;";
@@ -320,7 +327,7 @@ public class JavaDocInfoGenerator {
     return null;
   }
 
-  private static DocTagLocator<PsiDocTag> exceptionLocator(String name) {
+  private static DocTagLocator<PsiDocTag> exceptionLocator(@NotNull String name) {
     return (owner, comment) -> {
       if (comment == null) return null;
 
@@ -381,7 +388,7 @@ public class JavaDocInfoGenerator {
    * Converts a relative link into {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL PSI_ELEMENT_PROTOCOL}-type link if possible.
    */
   @Nullable
-  static String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
+  public static String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
     String fragment = null;
     int hashPosition = relativeLink.indexOf('#');
     if (hashPosition >= 0) {
@@ -649,6 +656,7 @@ public class JavaDocInfoGenerator {
       items = ((PsiPackage)myElement).getDirectories(GlobalSearchScope.everythingScope(myProject));
     }
     else {
+      if (myElement == null || myElement.getNavigationElement() == null) return false;
       PsiFile containingFile = myElement.getNavigationElement().getContainingFile();
       if (containingFile == null) return false;
       items = new PsiFileSystemItem[]{containingFile};
@@ -1413,7 +1421,7 @@ public class JavaDocInfoGenerator {
     appendStyledSpan(buffer, getHighlightingManager().getParenthesesAttributes(), "(");
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiFile file = method.getContainingFile();
-    int indent = getIndent(isTooltip, file);
+    int indent = isTooltip ? 0 : file != null ? CodeStyle.getIndentSize(file) : 4;
     if (parameters.length > 0 && !isTooltip) {
       buffer.append(BR_TAG);
     }
@@ -1449,10 +1457,6 @@ public class JavaDocInfoGenerator {
         }
       }
     }
-  }
-  
-  private static int getIndent(boolean isTooltip, PsiFile file) {
-    return isTooltip ? 0 : file != null && !(file instanceof PsiCompiledFile)  ? CodeStyle.getIndentSize(file) : 4;
   }
 
   private PsiDocComment getMethodDocComment(PsiMethod method) {
@@ -1594,6 +1598,7 @@ public class JavaDocInfoGenerator {
           generateLinkValue(tag, buffer, true);
         }
         else if (tagName.equals(INHERIT_DOC_TAG)) {
+          if (provider == null) continue;
           Pair<PsiElement[], InheritDocProvider<PsiElement[]>> inheritInfo = provider.getInheritDoc();
           if (inheritInfo != null) {
             generateValue(buffer, inheritInfo.first, inheritInfo.second);
@@ -1605,18 +1610,142 @@ public class JavaDocInfoGenerator {
         else if (tagName.equals(VALUE_TAG)) {
           generateValueValue(tag, buffer, element);
         }
+        else if (tagName.equals(INDEX_TAG)) {
+          generateIndexValue(buffer, tag);
+        }
+        else if (tagName.equals(SUMMARY_TAG)) {
+          generateLiteralValue(buffer, tag, false);
+        }
+        else if (tagName.equals(SNIPPET_TAG)) {
+          generateSnippetValue(buffer, tag);
+        }
       }
       else {
-        appendPlainText(buffer, element.getText());
+        final String text;
+        if (element instanceof PsiWhiteSpace) {
+          text = getWhitespacesBeforeLFWhenLeadingAsterisk(element);
+        }
+        else {
+          text = element.getText();
+        }
+        appendPlainText(buffer, text);
       }
     }
   }
 
+  @Contract(mutates = "param1")
+  private static void generateSnippetValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
+    if (!(tag instanceof PsiSnippetDocTag)) {
+      LOG.error("Snippet tag must have type PsiSnippetDocTag, but was" + tag.getClass(), tag.getText());
+      return;
+    }
+    PsiSnippetDocTag snippetTag = (PsiSnippetDocTag)tag;
+
+    PsiSnippetDocTagValue value = snippetTag.getValueElement();
+    if (value == null) {
+      appendPlainText(buffer, snippetTag.getText());
+      return;
+    }
+    buffer.append("Snippet:");
+    PsiSnippetAttributeList attributes = value.getAttributeList();
+    for (PsiSnippetAttribute attribute : attributes.getAttributes()) {
+      buffer.append(BR_TAG);
+      String attributeName = attribute.getName();
+      PsiElement valueElement = attribute.getValue();
+      String attributeValue = valueElement != null ? valueElement.getText() : "";
+      buffer.append(attributeName).append(" = ").append(attributeValue);
+    }
+    buffer.append(BR_TAG);
+    PsiSnippetDocTagBody body = value.getBody();
+    if (body != null) {
+      buffer.append("<pre>");
+      for (PsiElement contentElement : body.getContent()) {
+        buffer.append('\n').append(contentElement.getText());
+      }
+      buffer.append("</pre>");
+    }
+  }
+
+  @Contract(pure = true)
+  private static String getWhitespacesBeforeLFWhenLeadingAsterisk(PsiElement element) {
+    final PsiElement sibling = element.getNextSibling();
+    if (sibling == null || sibling.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+      return element.getText();
+    }
+
+    final int lf = element.getText().lastIndexOf('\n');
+
+    return lf == -1 ? element.getText() : element.getText().substring(0, lf + 1);
+  }
+
+  @Contract(mutates = "param1")
+  private static void generateIndexValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
+    final PsiDocTagValue indexTagValue = PsiTreeUtil.findChildOfType(tag, PsiDocTagValue.class);
+    if (indexTagValue != null) {
+      buffer.append(indexTagValue.getText());
+      return;
+    }
+
+    // probably the index value is inside double quotes, so let's extract it
+    final PsiElement[] elements = tag.getDataElements();
+    final int first = getFirstIndexOfElementWithQuote(elements);
+    if (first == -1) return;
+
+    final PsiElement indexValueStart = elements[first];
+    final String indexValueText = indexValueStart.getText();
+    final int quoteBeginIdx = indexValueText.indexOf('"');
+    final int quoteEndIdx = indexValueText.lastIndexOf('"');
+    if (quoteBeginIdx != quoteEndIdx) {
+      buffer.append(indexValueText, quoteBeginIdx + 1, quoteEndIdx);
+      return;
+    }
+
+    buffer.append(indexValueText, quoteBeginIdx + 1, indexValueText.length());
+
+    for (int i = first + 1, length = elements.length; i < length; i++) {
+      final PsiElement element = elements[i];
+      if (element instanceof PsiWhiteSpace) continue;
+      if (element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+
+      buffer.append(' ');
+
+      final String text = element.getText();
+      final int indexOfQuote = text.indexOf('"');
+      final int until = indexOfQuote == -1 ? text.length() : indexOfQuote;
+      buffer.append(text, 0, until);
+
+      if (indexOfQuote != -1) {
+        return;
+      }
+    }
+  }
+
+  @Contract(pure = true)
+  private static int getFirstIndexOfElementWithQuote(PsiElement[] elements) {
+    for (int i = 0, length = elements.length; i < length; i++) {
+      final PsiElement e = elements[i];
+      if (e instanceof PsiWhiteSpace) continue;
+      if (e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+
+      if (e.textContains('"')) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   private static boolean isCodeBlock(PsiInlineDocTag tag) {
-    PsiElement prevSibling = tag.getPrevSibling();
-    return CODE_TAG.equals(tag.getName())
-           && (prevSibling instanceof PsiDocToken)
-           && StringUtil.endsWithIgnoreCase(StringUtil.trim(prevSibling.getText()), "<pre>");
+    if (!CODE_TAG.equals(tag.getName())) return false;
+
+    ASTNode prevNode = tag.getNode().getTreePrev();
+    while (prevNode != null) {
+      String text = prevNode.getText();
+      if (prevNode.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && StringUtil.endsWithIgnoreCase(StringUtil.trim(text), "<pre>")) {
+        return true;
+      }
+      prevNode = prevNode.getTreePrev();
+    }
+    return false;
   }
 
   private void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
@@ -1629,13 +1758,15 @@ public class JavaDocInfoGenerator {
       buffer.setLength(lastNonWhite + 1);
     }
 
+    final int offset = isCodeBlock ? getCodeTagOffset(tag) : 0;
+
     buffer.append("<code style='font-size:");
     buffer.append(DocumentationSettings.getMonospaceFontSizeCorrection(isRendered()));
     buffer.append("%;'>");
     int pos = buffer.length();
 
     StringBuilder codeSnippetBuilder = new StringBuilder();
-    generateLiteralValue(codeSnippetBuilder, tag, false);
+    generateLiteralValue(codeSnippetBuilder, tag, !isCodeBlock && getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.NO_HIGHLIGHTING);
     String codeSnippet = codeSnippetBuilder.toString();
     if (isCodeBlock) {
       codeSnippet = StringsKt.trimIndent(codeSnippet);
@@ -1662,7 +1793,7 @@ public class JavaDocInfoGenerator {
     if (isCodeBlock) {
       // indent code block
       codeSnippet = Arrays.stream(codeSnippet.contains(BR_TAG) ? codeSnippet.split(BR_TAG) : codeSnippet.split("\n"))
-        .map(it -> "  " + it)
+        .map(it -> " ".repeat(offset + 1) + it)
         .collect(Collectors.joining(BR_TAG));
     }
     else {
@@ -1673,6 +1804,13 @@ public class JavaDocInfoGenerator {
     buffer.append(codeSnippet);
     buffer.append("</code>");
     if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
+  }
+
+  private static int getCodeTagOffset(@NotNull PsiInlineDocTag tag) {
+    final PsiElement sibling = tag.getPrevSibling();
+    if (sibling == null || !sibling.getText().isBlank()) return 0;
+
+    return sibling.getTextLength();
   }
 
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag, boolean doEscaping) {
@@ -1808,7 +1946,12 @@ public class JavaDocInfoGenerator {
     PsiDocTag tag = comment.findTagByName(tagName);
     if (tag != null) {
       startHeaderSection(buffer, computePresentableName.get()).append("<p>");
-      generateValue(buffer, tag.getDataElements(), ourEmptyElementsProvider);
+      final PsiElement[] elements = Arrays.stream(tag.getChildren())
+        .skip(1)
+        .filter(e -> e.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)
+        .toArray(PsiElement[]::new);
+
+      generateValue(buffer, elements, ourEmptyElementsProvider);
       buffer.append(DocumentationMarkup.SECTION_END);
     }
   }
@@ -1896,7 +2039,7 @@ public class JavaDocInfoGenerator {
   private void generateParametersSection(StringBuilder buffer, String titleMessage, List<ParamInfo> collectedTags) {
     if (!collectedTags.isEmpty()) {
       startHeaderSection(buffer, titleMessage)
-        .append(StringUtil.join(collectedTags, tag -> generateOneParameter(tag), "<p>"))
+        .append(StringUtil.join(collectedTags, tag -> generateOneParameter(tag), "<br/>"))
         .append(DocumentationMarkup.SECTION_END);
     }
   }
@@ -1931,7 +2074,9 @@ public class JavaDocInfoGenerator {
     if (elements.length == 0) return "";
     String text = elements[0].getText();
     StringBuilder buffer = new StringBuilder();
+    buffer.append("<code>");
     buffer.append(tag.presentableName);
+    buffer.append("</code>");
     StringBuilder descriptionBuffer = new StringBuilder();
     generateValue(descriptionBuffer, tag, elements, text);
     if (!StringUtil.isEmptyOrSpaces(descriptionBuffer)) {
@@ -1979,120 +2124,104 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateThrowsSection(StringBuilder buffer, PsiMethod method, PsiDocComment comment) {
-    PsiDocTag[] localTags = getThrowsTags(comment);
-    PsiDocTag[] thrownTags = localTags;
-    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(method.getProject());
+    final PsiDocTag[] throwsJavadocTags = getThrowsTags(comment);
 
-    Set<PsiClass> reported = new HashSet<>();
-    if (!isRendered()) {
-      for (HierarchicalMethodSignature signature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
-        PsiMethod superMethod = ObjectUtils.tryCast(signature.getMethod().getNavigationElement(), PsiMethod.class);
-        PsiDocComment docComment = superMethod != null ? superMethod.getDocComment() : null;
-        if (docComment != null) {
-          PsiDocTag[] uncheckedExceptions = Arrays.stream(getThrowsTags(docComment)).filter(tag -> {
-            PsiDocTagValue valueElement = tag.getValueElement();
-            if (valueElement == null) return false;
-            if (Arrays.stream(localTags)
-              .map(PsiDocTag::getValueElement)
-              .filter(Objects::nonNull)
-              .anyMatch(docTagValue -> areWeakEqual(docTagValue.getText(), valueElement.getText()))) {
-              return false;
-            }
-            PsiClass exClass = psiFacade.getResolveHelper().resolveReferencedClass(valueElement.getText(), docComment);
-            if (exClass == null) return false;
-            return ExceptionUtil.isUncheckedException(exClass) && reported.add(exClass);
-          }).toArray(PsiDocTag[]::new);
-          thrownTags = ArrayUtil.mergeArrays(thrownTags, uncheckedExceptions);
-        }
+    final PsiJavaCodeReferenceElement[] methodThrows = isRendered() ? PsiJavaCodeReferenceElement.EMPTY_ARRAY
+                                                                    : method.getThrowsList().getReferenceElements();
+
+    final int totalThrowsToDocument = throwsJavadocTags.length + methodThrows.length;
+    if (totalThrowsToDocument == 0) return;
+
+    final class Data {
+      final @NotNull PsiJavaCodeReferenceElement ref;
+      final @Nullable PsiDocTag tag;
+
+      private Data(@NotNull PsiJavaCodeReferenceElement ref, @Nullable PsiDocTag tag) {
+        this.ref = ref;
+        this.tag = tag;
       }
     }
 
-    LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags = new LinkedList<>();
-    List<PsiClassType> declaredThrows = isRendered() ? Collections.emptyList()
-                                                     : new ArrayList<>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
+    final Map<@NotNull String, @NotNull Data> throwTags = new LinkedHashMap<>(totalThrowsToDocument, 1.0f);
 
-    for (int i = thrownTags.length - 1; i > -1; i--) {
-      PsiDocTagValue valueElement = thrownTags[i].getValueElement();
+    for (PsiDocTag tag : throwsJavadocTags) {
+      final PsiDocTagValue value = tag.getValueElement();
+      if (value == null) continue;
 
-      if (valueElement != null) {
-        for (Iterator<PsiClassType> iterator = declaredThrows.iterator(); iterator.hasNext(); ) {
-          PsiClassType classType = iterator.next();
-          if (Comparing.strEqual(valueElement.getText(), classType.getClassName()) ||
-              Comparing.strEqual(valueElement.getText(), classType.getCanonicalText())) {
-            iterator.remove();
-            break;
-          }
-        }
+      final ASTNode[] children = value.getNode().getChildren(TokenSet.create(JavaDocElementType.DOC_REFERENCE_HOLDER));
+      if (children.length != 1) continue;
 
-        Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag = isRendered() ? null
-                                                                          : findInheritDocTag(method,
-                                                                                              exceptionLocator(valueElement.getText()));
-        collectedTags.addFirst(new Pair<>(thrownTags[i], new InheritDocProvider<>() {
-          @Override
-          public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-            return tag;
-          }
-
-          @Override
-          public PsiClass getElement() {
-            return method.getContainingClass();
-          }
-        }));
+      final PsiJavaCodeReferenceElement element = ObjectUtils.tryCast(children[0].getFirstChildNode(), PsiJavaCodeReferenceElement.class);
+      if (element != null) {
+        throwTags.put(element.getQualifiedName(), new Data(element, tag));
       }
     }
 
-    for (PsiClassType trouser : declaredThrows) {
-      if (trouser != null) {
-        String paramName = trouser.getCanonicalText();
-        Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> parmTag = null;
+    Arrays.stream(methodThrows)
+      .filter(e -> !throwTags.containsKey(e.getQualifiedName()))
+      .forEach(e -> throwTags.put(e.getQualifiedName(), new Data(e, null)));
 
-        for (PsiDocTag localTag : thrownTags) {
-          PsiDocTagValue value = localTag.getValueElement();
-          if (value != null) {
-            String tagName = value.getText();
-            if (tagName != null && areWeakEqual(tagName, paramName)) {
-              parmTag = Pair.create(localTag, ourEmptyProvider);
-              break;
-            }
-          }
-        }
+    if (throwTags.isEmpty()) return;
 
-        if (parmTag == null) {
-          parmTag = findInheritDocTag(method, exceptionLocator(paramName));
-        }
+    startHeaderSection(buffer, CodeInsightBundle.message("javadoc.throws"));
 
-        if (parmTag != null) {
-          collectedTags.addLast(parmTag);
-        }
-        else {
-          try {
-            PsiDocTag tag = psiFacade.getElementFactory().createDocTagFromText("@exception " + paramName);
-            collectedTags.addLast(Pair.create(tag, ourEmptyProvider));
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
+    for (Map.Entry<String, Data> throwTag : throwTags.entrySet()) {
+      final Data value = throwTag.getValue();
+      final PsiJavaCodeReferenceElement exceptionType = value.ref;
+      final PsiClass target = ObjectUtils.tryCast(exceptionType.resolve(), PsiClass.class);
+      final PsiDocTag tag = value.tag;
+      buffer.append("<p>");
+
+      final PsiElement[] elements = tag != null ? tag.getDataElements(): PsiElement.EMPTY_ARRAY;
+
+      if (target != null) {
+        generateLink(buffer, target);
       }
-    }
-
-    if (!collectedTags.isEmpty()) {
-      startHeaderSection(buffer, CodeInsightBundle.message("javadoc.throws"));
-      for (Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag : collectedTags) {
-        PsiElement[] elements = tag.first.getDataElements();
-        if (elements.length == 0) continue;
-        buffer.append("<p>");
-        String text = elements[0].getText();
-        int index = JavaDocUtil.extractReference(text);
-        String refText = text.substring(0, index).trim();
-        generateLink(buffer, refText, null, method, false);
-        String rest = text.substring(index);
-        if (!rest.isEmpty() || elements.length > 1) buffer.append(" &ndash; ");
-        buffer.append(rest);
-        generateValue(buffer, elements, 1, mapProvider(tag.second, true));
+      else if (elements.length != 0) {
+        generateLink(buffer, elements[0].getText(), null, method, false);
       }
-      buffer.append(DocumentationMarkup.SECTION_END);
+      else {
+        generateUnresolvedLink(buffer, exceptionType);
+      }
+
+      if (elements.length < 2) continue;
+
+      buffer.append(" &ndash; ");
+      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tagToInheritDocProvider = findInheritDocTag(method, exceptionLocator(exceptionType.getQualifiedName()));
+
+      generateValue(buffer, elements, 1, tagToInheritDocProvider == null ? null : new InheritDocProvider<>() {
+        @Override
+        public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc() {
+          final PsiElement[] docElements = tagToInheritDocProvider.first.getDataElements();
+
+          final PsiElement[] result = Arrays.stream(docElements)
+            .skip(1)
+            .toArray(PsiElement[]::new);
+
+          return Pair.pair(result, null);
+        }
+
+        @Override
+        public PsiClass getElement() {
+          return tagToInheritDocProvider.getSecond().getElement();
+        }
+      });
     }
+    buffer.append(DocumentationMarkup.SECTION_END);
+  }
+
+  private void generateUnresolvedLink(StringBuilder buffer, @NotNull PsiJavaCodeReferenceElement exceptionType) {
+    final String label = JavaDocUtil.getLabelText(exceptionType.getProject(),
+                                                  exceptionType.getManager(),
+                                                  exceptionType.getQualifiedName(),
+                                                  exceptionType);
+    appendMaybeUnresolvedLink(buffer, null, label, myProject, false);
+  }
+
+  @Contract(mutates = "param1")
+  private void generateLink(@NotNull StringBuilder buffer, @NotNull PsiClass target) {
+    final String label = JavaDocUtil.getLabelText(target.getProject(), target.getManager(), target.getName(), target);
+    appendMaybeUnresolvedLink(buffer, target, label, target.getProject(), false);
   }
 
   private static @Nullable String generateLink(@NotNull PsiElement element, String label, boolean plainLink, boolean isRenderedDoc) {
@@ -2465,7 +2594,15 @@ public class JavaDocInfoGenerator {
       StringBuilder buffer = new StringBuilder();
       appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), LT);
 
+      PsiFile file = owner.getContainingFile();
+      boolean allExtends = parameters.length > 1 & ContainerUtil.and(parameters, parameter -> parameter.getExtendsList().getReferenceElements().length > 0);
+      int indent = !allExtends ? 0 : file != null ? CodeStyle.getIndentSize(file) : 4;
+      if (indent > 0) {
+        buffer.append("\n");
+      }
+
       for (int i = 0; i < parameters.length; i++) {
+        buffer.append(StringUtil.repeatSymbol(' ', indent));
         PsiTypeParameter p = parameters[i];
 
         generateTypeAnnotations(buffer, p, p, true, false);
@@ -2475,7 +2612,7 @@ public class JavaDocInfoGenerator {
           getHighlightingManager().getTypeParameterNameAttributes(),
           Objects.requireNonNullElse(p.getName(), CommonBundle.getErrorTitle()));
 
-        PsiClassType[] refs = JavaDocUtil.getExtendsList(p);
+        PsiClassType[] refs = p.getExtendsList().getReferencedTypes();
         if (refs.length > 0) {
           appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), " extends ");
           for (int j = 0; j < refs.length; j++) {
@@ -2489,6 +2626,7 @@ public class JavaDocInfoGenerator {
         if (i < parameters.length - 1) {
           appendStyledSpan(buffer, getHighlightingManager().getCommaAttributes(), ", ");
         }
+        if (indent > 0) buffer.append("\n");
       }
 
       appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), GT);
@@ -2498,7 +2636,7 @@ public class JavaDocInfoGenerator {
     return "";
   }
 
-  private <T> Pair<T, InheritDocProvider<T>> searchDocTagInOverriddenMethod(PsiMethod method, PsiClass aSuper, DocTagLocator<T> loc) {
+  private static <T> Pair<T, InheritDocProvider<T>> searchDocTagInOverriddenMethod(PsiMethod method, PsiClass aSuper, DocTagLocator<T> loc) {
     if (aSuper != null) {
       PsiMethod overridden = findMethodInSuperClass(method, aSuper);
       if (overridden != null) {
@@ -2532,10 +2670,10 @@ public class JavaDocInfoGenerator {
   }
 
   @Nullable
-  private <T> Pair<T, InheritDocProvider<T>> searchDocTagInSupers(PsiClassType[] supers,
-                                                                  PsiMethod method,
-                                                                  DocTagLocator<T> loc,
-                                                                  Set<PsiClass> visitedClasses) {
+  private static <T> Pair<T, InheritDocProvider<T>> searchDocTagInSupers(PsiClassType[] supers,
+                                                                         PsiMethod method,
+                                                                         DocTagLocator<T> loc,
+                                                                         Set<PsiClass> visitedClasses) {
     try {
       for (PsiClassType superType : supers) {
         PsiClass aSuper = superType.resolve();
@@ -2561,10 +2699,10 @@ public class JavaDocInfoGenerator {
     return null;
   }
 
-  private <T> Pair<T, InheritDocProvider<T>> findInheritDocTagInClass(PsiMethod aMethod,
-                                                                      PsiClass aClass,
-                                                                      DocTagLocator<T> loc,
-                                                                      Set<PsiClass> visitedClasses) {
+  private static <T> Pair<T, InheritDocProvider<T>> findInheritDocTagInClass(PsiMethod aMethod,
+                                                                             PsiClass aClass,
+                                                                             DocTagLocator<T> loc,
+                                                                             Set<PsiClass> visitedClasses) {
     if (aClass == null) return null;
 
     Pair<T, InheritDocProvider<T>> delegate = findInheritDocTagInDelegate(aMethod, loc);
@@ -2583,7 +2721,7 @@ public class JavaDocInfoGenerator {
   }
 
   @Nullable
-  private <T> Pair<T, InheritDocProvider<T>> findInheritDocTagInDelegate(PsiMethod method, DocTagLocator<T> loc) {
+  private static <T> Pair<T, InheritDocProvider<T>> findInheritDocTagInDelegate(PsiMethod method, DocTagLocator<T> loc) {
     PsiMethod delegateMethod = findDelegateMethod(method);
     if (delegateMethod == null) return null;
 
@@ -2612,8 +2750,21 @@ public class JavaDocInfoGenerator {
     return delegate instanceof PsiMethod ? (PsiMethod)delegate : null;
   }
 
+  /**
+   * Finds the most specific applicable JavaDoc tag for the given method parameter
+   *
+   * @param method method for which parameter the JavaDoc tag is searched for
+   * @param index  parameter index
+   * @return the most specific applicable JavaDoc tag if found, {@code null} otherwise
+   */
   @Nullable
-  private <T> Pair<T, InheritDocProvider<T>> findInheritDocTag(PsiMethod method, DocTagLocator<T> loc) {
+  public static PsiDocTag findInheritDocTag(PsiMethod method, int index) {
+    Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInheritDocTag(method, parameterLocator(index));
+    return pair != null ? pair.first : null;
+  }
+
+  @Nullable
+  private static <T> Pair<T, InheritDocProvider<T>> findInheritDocTag(PsiMethod method, DocTagLocator<T> loc) {
     PsiClass aClass = method.getContainingClass();
     return aClass != null ? findInheritDocTagInClass(method, aClass, loc, new HashSet<>()) : null;
   }

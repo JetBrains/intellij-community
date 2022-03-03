@@ -22,9 +22,9 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
 
-internal object SourceRootPropertiesHelper {
+object SourceRootPropertiesHelper {
   @Suppress("UNCHECKED_CAST")
-  internal fun <P : JpsElement?> findSerializer(rootType: JpsModuleSourceRootType<P>): JpsModuleSourceRootPropertiesSerializer<P>? {
+  fun <P : JpsElement?> findSerializer(rootType: JpsModuleSourceRootType<P>): JpsModuleSourceRootPropertiesSerializer<P>? {
     val serializer = if (rootType is UnknownSourceRootType) {
       UnknownSourceRootPropertiesSerializer.forType(rootType as UnknownSourceRootType)
     }

@@ -10,4 +10,4 @@ class Foo {
 }
 
 // NO_CHECK_INFOS
-// WITH_RUNTIME
+// WITH_STDLIB

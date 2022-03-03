@@ -4,6 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
 
+@Deprecated("Use instead BuildSystemNewProjectWizardData")
 interface NewProjectWizardBuildSystemData : NewProjectWizardLanguageData {
 
   val buildSystemProperty: GraphProperty<String>

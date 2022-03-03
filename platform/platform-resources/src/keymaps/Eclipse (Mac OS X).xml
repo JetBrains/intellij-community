@@ -126,6 +126,7 @@
     <keyboard-shortcut first-keystroke="meta shift U"/>
   </action>
   <action id="FindWordAtCaret"/>
+  <action id="FindPrevWordAtCaret"/>
   <action id="Forward">
     <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
     <mouse-shortcut keystroke="button5"/>

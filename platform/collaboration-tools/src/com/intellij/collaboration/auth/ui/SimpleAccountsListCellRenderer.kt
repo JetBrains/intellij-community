@@ -123,7 +123,7 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
     }
   }
 
-  private fun isDefault(account: A): Boolean = account == listModel.defaultAccount
+  private fun isDefault(account: A): Boolean = (listModel is AccountsListModel.WithDefault) && account == listModel.defaultAccount
   private fun editAccount(parentComponent: JComponent, account: A) = listModel.editAccount(parentComponent, account)
 
   private fun getDetails(account: A): D? = detailsProvider.getDetails(account)

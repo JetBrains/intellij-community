@@ -22,8 +22,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -1177,7 +1179,29 @@ public final class RefactoringUtil {
       paramTag.delete();
     }
     for (PsiDocTag psiDocTag : newTags) {
-      anchor = anchor != null && anchor.isValid() ? docComment.addAfter(psiDocTag, anchor) : docComment.add(psiDocTag);
+      anchor = anchor != null && anchor.isValid()
+               ? docComment.addAfter(psiDocTag, anchor)
+               : docComment.add(psiDocTag);
+    }
+    formatJavadocIgnoringSettings(method, docComment);
+  }
+
+  public static void formatJavadocIgnoringSettings(@NotNull PsiMethod method, @NotNull PsiDocComment docComment) {
+    PsiFile containingFile = method.getContainingFile();
+    if (containingFile == null) {
+      return;
+    }
+
+    // Here we temporarily enable javadoc (we can't produce reasonable javadoc in change signature without formatting)
+    // This is an explicit action which affects javadoc, so it shouldn't be unexpected for user.
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(containingFile);
+    boolean javadocEnabled = settings.ENABLE_JAVADOC_FORMATTING;
+    try {
+      settings.ENABLE_JAVADOC_FORMATTING = true;
+      CommentFormatter formatter = new CommentFormatter(method.getContainingFile());
+      formatter.processComment(docComment.getNode());
+    } finally {
+      settings.ENABLE_JAVADOC_FORMATTING = javadocEnabled;
     }
   }
 

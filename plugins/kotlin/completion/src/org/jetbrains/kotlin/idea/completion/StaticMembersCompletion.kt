@@ -54,7 +54,7 @@ class StaticMembersCompletion(
             descriptor: DeclarationDescriptor, useReceiverTypes: Boolean,
             qualifyNestedClasses: Boolean, includeClassTypeArguments: Boolean,
             parametersAndTypeGrayed: Boolean
-        ) = null
+        ): LookupElement? = null
     }
 
     fun membersFromImports(file: KtFile): Collection<DeclarationDescriptor> {
@@ -109,8 +109,10 @@ class StaticMembersCompletion(
 
     fun completeFromImports(file: KtFile, collector: LookupElementsCollector) {
         val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER_FROM_IMPORTS)
-        membersFromImports(file).flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
-            .forEach { collector.addElement(it) }
+        membersFromImports(file).forEach { descriptor ->
+            factory.createStandardLookupElementsForDescriptor(descriptor, useReceiverTypes = true).forEach(collector::addElement)
+            collector.flushToResultSet()
+        }
     }
 
     /**
@@ -132,18 +134,17 @@ class StaticMembersCompletion(
     ) {
         val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER)
 
-        val extensionsFromObjects = indicesHelper.getCallableExtensionsDeclaredInObjects(
+        indicesHelper.processCallableExtensionsDeclaredInObjects(
             callTypeAndReceiver,
             receiverTypes,
-            nameFilter = { prefixMatcher.prefixMatches(it) }
+            nameFilter = { prefixMatcher.prefixMatches(it) },
+            processor = { descriptor ->
+                if (descriptor !in alreadyAdded) {
+                    factory.createStandardLookupElementsForDescriptor(descriptor, useReceiverTypes = true).forEach(collector::addElement)
+                    collector.flushToResultSet()
+                }
+            }
         )
-
-        extensionsFromObjects.asSequence()
-            .filter { it !in alreadyAdded }
-            .flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
-            .forEach { collector.addElement(it) }
-
-        collector.flushToResultSet()
     }
 
     /**
@@ -163,24 +164,23 @@ class StaticMembersCompletion(
     ) {
         val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER)
 
-        val objectMemberExtensions = indicesHelper.getAllCallablesFromSubclassObjects(
+        indicesHelper.processAllCallablesFromSubclassObjects(
             callTypeAndReceiver,
             receiverTypes,
-            nameFilter = { prefixMatcher.prefixMatches(it) }
+            nameFilter = { prefixMatcher.prefixMatches(it) },
+            processor = { callableDescriptor ->
+                if (callableDescriptor.isExtension && callableDescriptor !in alreadyAdded) {
+                    factory.createStandardLookupElementsForDescriptor(callableDescriptor, useReceiverTypes = true).forEach(collector::addElement)
+                    collector.flushToResultSet()
+                }
+            }
         )
-
-        objectMemberExtensions
-            .filter { it.isExtension && it !in alreadyAdded }
-            .flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
-            .forEach { collector.addElement(it) }
-
-        collector.flushToResultSet()
     }
 
     fun completeFromIndices(indicesHelper: KotlinIndicesHelper, collector: LookupElementsCollector) {
         val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER)
-        processMembersFromIndices(indicesHelper) {
-            factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true).forEach { collector.addElement(it) }
+        processMembersFromIndices(indicesHelper) { descriptor ->
+            factory.createStandardLookupElementsForDescriptor(descriptor, useReceiverTypes = true).forEach(collector::addElement)
             collector.flushToResultSet()
         }
     }

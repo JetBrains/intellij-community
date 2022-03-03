@@ -9,6 +9,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.table.TableView;
@@ -22,10 +23,8 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
   private CopyPasteProviderPanel myPanel;
@@ -65,6 +64,12 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         editSelection(0);
       }
     });
+  }
+
+  @Override
+  public void setValues(List<? extends EnvironmentVariable> list) {
+    list.sort(Comparator.comparing(EnvironmentVariable::getName, NaturalComparator.INSTANCE));
+    super.setValues(list);
   }
 
   public List<EnvironmentVariable> getEnvironmentVariables() {

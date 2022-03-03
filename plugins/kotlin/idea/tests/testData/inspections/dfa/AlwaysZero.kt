@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(x : Int, y: Array<Int>) {
     if (x == 0) {
         other(x)

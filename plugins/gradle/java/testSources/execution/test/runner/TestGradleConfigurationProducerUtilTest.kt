@@ -3,9 +3,9 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertIterableEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 
 class TestGradleConfigurationProducerUtilTest {
 
@@ -37,7 +37,7 @@ class TestGradleConfigurationProducerUtilTest {
       }
     )
 
-    assertTrue("Test configuration was not applied", applied)
-    assertEquals(listOf("'task A'", "'task B'", "FILTER", ":module1:module2:taskC", "taskD", "FILTER"), settingsUnderTest.taskNames)
+    assertTrue(applied) { "Test configuration was not applied" }
+    assertIterableEquals(listOf("'task A'", "'task B'", "FILTER", ":module1:module2:taskC", "taskD", "FILTER"), settingsUnderTest.taskNames)
   }
 }

@@ -533,6 +533,27 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     }
   }
 
+  public static class ZeroSizeDfaProblemType extends DfaProblemType {
+    final SpecialField myField;
+
+    public ZeroSizeDfaProblemType(@NotNull SpecialField field) {
+      myField = field;
+    }
+
+    @Override
+    public CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
+      DfaValue topOfStack = history.myTopOfStack;
+      DfaValue value = myField.createValue(runner.getFactory(), topOfStack);
+      MemoryStateChange change = MemoryStateChange.create(history, new JvmPushInstruction(value, null), Map.of(), value);
+      return runner.findConstantValueCause(expression, change, 0);
+    }
+
+    @Override
+    public String toString() {
+      return JavaAnalysisBundle.message("dfa.find.cause.size.is.always.zero");
+    }
+  }
+
   static class CustomDfaProblemType extends DfaProblemType {
     private final @Nls String myMessage;
 
@@ -546,7 +567,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     }
   }
 
-  private CauseItem @NotNull [] findConstantValueCause(PsiExpression expression, MemoryStateChange history, Object expectedValue) {
+  private CauseItem @NotNull [] findConstantValueCause(@Nullable PsiExpression expression, MemoryStateChange history, Object expectedValue) {
     if (expression instanceof PsiLiteralExpression) return new CauseItem[0];
     Object constantExpressionValue = ExpressionUtils.computeConstantExpression(expression);
     DfaValue value = history.myTopOfStack;
@@ -554,7 +575,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return new CauseItem[]{new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.compile.time.constant", value), expression)};
     }
     Boolean boolConst = value.getDfType().getConstantOfType(Boolean.class);
-    if (boolConst != null && boolConst.equals(expectedValue)) {
+    if (boolConst != null && expression != null && boolConst.equals(expectedValue)) {
       return findBooleanResultCauses(expression, history, boolConst);
     }
     if (value instanceof DfaVariableValue) {
@@ -618,8 +639,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return new CauseItem(message, anchor);
   }
 
-  private CauseItem[] findBooleanResultCauses(PsiExpression expression,
-                                              MemoryStateChange history,
+  private CauseItem[] findBooleanResultCauses(@NotNull PsiExpression expression,
+                                              @NotNull MemoryStateChange history,
                                               boolean value) {
     if (BoolUtils.isNegation(expression)) {
       PsiExpression negated = BoolUtils.getNegated(expression);
@@ -1190,6 +1211,17 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           MemoryStateChange rValuePush = factDef.findSubExpressionPush(rExpression);
           if (rValuePush != null) {
             CauseItem assignmentItem = createAssignmentCause((AssignInstruction)factDef.myInstruction, value);
+            MemoryStateChange previous = factDef.getPrevious();
+            if (previous != null && previous.myInstruction instanceof WrapDerivedVariableInstruction) {
+              WrapDerivedVariableInstruction instruction = (WrapDerivedVariableInstruction)previous.myInstruction;
+              DerivedVariableDescriptor descriptor = instruction.getDerivedVariableDescriptor();
+              if (descriptor == SpecialField.UNBOX) {
+                DfaAnchor anchor = instruction.getDfaAnchor();
+                assignmentItem.addChildren(
+                  new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.primitive.boxed"),
+                                anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() : rExpression));
+              }
+            }
             assignmentItem.addChildren(findNullabilityCause(rValuePush, nullability));
             return assignmentItem;
           }

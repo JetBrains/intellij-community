@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Add import for 'java.util.regex.Pattern.matches'"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Unresolved reference: SomethingElse
 // ERROR: Unresolved reference: somethingElse
 // SKIP_ERRORS_AFTER

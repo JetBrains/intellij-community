@@ -1,37 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.java.codeInsight.daemon.quickFix
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase
-import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase5
 import com.intellij.codeInspection.dataFlow.DataFlowInspection
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
+import org.junit.jupiter.api.BeforeEach
 
 @CompileStatic
-class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return [new DataFlowInspection()] as LocalInspectionTool[]
+class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase5 {
+
+  @BeforeEach
+  void setupInspections() {
+    getFixture().enableInspections(DataFlowInspection.class);
+    if (getTestNameRule().getDisplayName().contains("Guava")) {
+      addGuavaOptional(getFixture());
+    }
   }
 
   @Override
@@ -39,15 +24,8 @@ class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable"
   }
 
-  static void addGuavaOptional(Project project) {
-    WriteCommandAction.runWriteCommandAction(project) {
-      VirtualFile optional = getSourceRoot()
-        .createChildDirectory(this, "com")
-        .createChildDirectory(this, "google")
-        .createChildDirectory(this, "common")
-        .createChildDirectory(this, "base")
-        .createChildData(this, "Optional.java")
-      VfsUtil.saveText(optional, """
+  static void addGuavaOptional(JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("""
 package com.google.common.base;
 public abstract class Optional<T> {
   public static <T> Optional<T> absent() { }
@@ -57,27 +35,6 @@ public abstract class Optional<T> {
   public static <T> Optional<T> fromNullable(T nullableReference) { }
 }
 """)
-    }
-  }
-
-  static void cleanupGuava(Project project) {
-    WriteCommandAction.runWriteCommandAction(project) {
-      getSourceRoot().findChild("com")?.delete(this)
-    }
-  }
-
-  @Override
-  protected void beforeActionStarted(String testName, String contents) {
-    if (testName.contains("Guava")) {
-      addGuavaOptional(project)
-    }
-    super.beforeActionStarted(testName, contents)
-  }
-
-  @Override
-  protected void afterActionCompleted(String testName, String contents) {
-    cleanupGuava(project)
-    super.afterActionCompleted(testName, contents)
   }
 
 }

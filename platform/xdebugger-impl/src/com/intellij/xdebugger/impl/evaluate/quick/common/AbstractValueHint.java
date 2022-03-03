@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -30,12 +31,14 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallbackBase;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -352,12 +355,43 @@ public abstract class AbstractValueHint {
     Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
     point.translate(0, myEditor.getLineHeight());
 
-    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), () -> {
+    var popup = new XDebuggerTreePopup<>(creator, myEditor, point, getProject(), () -> {
       disposeHighlighter();
       if (myHideRunnable != null) {
         myHideRunnable.run();
       }
     });
+    popup.show(descriptor);
+  }
+
+  @ApiStatus.Experimental
+  protected void showTextPopup(@NotNull XDebuggerTreeCreator creator,
+                               @NotNull Pair<XValue, String> descriptor,
+                               @NotNull String initialText,
+                               @Nullable XFullValueEvaluator evaluator) {
+    if (myEditor.isDisposed() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
+      hideHint();
+      return;
+    }
+
+    createHighlighter();
+    setHighlighterAttributes();
+
+    Project project = getProject();
+    Editor editor = getEditor();
+
+    Point point = editor.visualPositionToXY(editor.xyToVisualPosition(myPoint));
+    point.translate(0, editor.getLineHeight());
+
+    Runnable hideRunnable = () -> {
+      disposeHighlighter();
+      if (myHideRunnable != null) {
+        myHideRunnable.run();
+      }
+    };
+
+    var popup = new XDebuggerTextPopup<>(evaluator, creator, descriptor, editor, point, project, hideRunnable);
+    popup.show(initialText);
   }
 
   @Override

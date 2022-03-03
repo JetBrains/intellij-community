@@ -16,6 +16,7 @@ data class JsonFileProviderIndexStatistics(
   val contentLoadingTime: JsonDuration = JsonDuration(0),
   val numberOfTooLargeForIndexingFiles: Int = 0,
   val slowIndexedFiles: List<JsonSlowIndexedFile> = emptyList(),
+  val filesFullyIndexedByExtensions: List<String> = emptyList(),
   /**
    * Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
    */

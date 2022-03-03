@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -508,7 +508,9 @@ public final class InlineUtil {
     for (PsiReturnStatement returnStatement : returnStatements) {
       final PsiExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {
-        List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(returnValue);
+        List<PsiExpression> sideEffects = !singleReturnMethod(method) || !PsiUtil.isStatement(returnValue) 
+                                          ? SideEffectChecker.extractSideEffectExpressions(returnValue) 
+                                          : Collections.singletonList(returnValue);
         CommentTracker ct = new CommentTracker();
         sideEffects.forEach(ct::markUnchanged);
         PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, returnValue);
@@ -527,6 +529,14 @@ public final class InlineUtil {
         new CommentTracker().replaceAndRestoreComments(returnStatement, "continue;");
       }
     }
+  }
+
+  private static boolean singleReturnMethod(PsiMethod method) {
+    int statementCount = Objects.requireNonNull(method.getBody()).getStatementCount();
+    if (!method.hasModifierProperty(PsiModifier.STATIC) && PsiTreeUtil.getContextOfType(method, PsiClass.class) != null) { //this declaration
+      statementCount--;
+    }
+    return statementCount <= 1;
   }
 
   public static PsiExpression inlineInitializer(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) {

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'mapIndexed{}.sum()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().mapIndexed{}.sum()'"
 // AFTER-WARNING: Parameter 'index' is never used

@@ -3,6 +3,7 @@ package com.jetbrains.python.console.actions;
 
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.NlsSafe;
+import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,10 @@ public final class CommandQueueForPythonConsoleService {
     myListeners.put(consoleComm, listener);
   }
 
+  public synchronized void removeListener(@NotNull ConsoleCommunication consoleComm) {
+    myListeners.remove(consoleComm);
+  }
+
   public synchronized void removeFirstCommand(@NotNull ConsoleCommunication consoleComm) {
     var queue = getQueue(consoleComm);
     if (queue != null) {
@@ -56,6 +61,11 @@ public final class CommandQueueForPythonConsoleService {
   }
 
   public boolean isEmpty(@NotNull ConsoleCommunication consoleComm) {
+    if (consoleComm instanceof PydevConsoleCommunication) {
+      if (((PydevConsoleCommunication) consoleComm).isCommunicationClosed()) {
+        return true;
+      }
+    }
     var queue = getQueue(consoleComm);
     if (queue == null) return true;
     return queue.isEmpty();

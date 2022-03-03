@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -26,7 +27,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
   public DeployToServerConfigurationType(@NotNull ServerType<?> serverType) {
     super(serverType.getId() + "-deploy", serverType.getDeploymentConfigurationTypePresentableName(),
           CloudBundle.message("deploy.to.server.configuration.type.description", serverType.getPresentableName()),
-          serverType.getIcon());
+          NotNullLazyValue.lazy(serverType::getIcon));
 
     myServerTypeId = serverType.getId();
     if (serverType.mayHaveProjectSpecificDeploymentSources()) {

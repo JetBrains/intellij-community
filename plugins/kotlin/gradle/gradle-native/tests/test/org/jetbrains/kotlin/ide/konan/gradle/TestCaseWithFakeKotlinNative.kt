@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.ide.konan.gradle
 
-import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import java.io.File
 
-abstract class TestCaseWithFakeKotlinNative : MultiplePluginVersionGradleImportingTestCase() {
+abstract class TestCaseWithFakeKotlinNative : KotlinGradleImportingTestCase() {
     protected fun configureProject() {
         configureByFiles()
 

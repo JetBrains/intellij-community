@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Replace with 'repeat()'
 
 fun test(list: List<String>) {

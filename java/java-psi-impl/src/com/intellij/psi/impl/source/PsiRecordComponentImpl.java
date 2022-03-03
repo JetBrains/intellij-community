@@ -1,20 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRecordComponentStub;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.ref.Reference;
 
 public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponentStub> implements PsiRecordComponent {
@@ -39,18 +44,16 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
     }
   }
 
-  @Nullable
   @Override
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     PsiElement parent = getParent();
     if (parent == null) return null;
     PsiElement grandParent = parent.getParent();
     return grandParent instanceof PsiClass ? (PsiClass)grandParent : null;
   }
 
-  @NotNull
   @Override
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     final PsiModifierList modifierList = getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
     assert modifierList != null : this;
     return modifierList;
@@ -61,9 +64,8 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
     return getModifierList().hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     PsiRecordComponentStub stub = getStub();
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
@@ -80,9 +82,8 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
     return JavaSharedImplUtil.getType(typeElement, getNameIdentifier());
   }
 
-  @NotNull
   @Override
-  public PsiTypeElement getTypeElement() {
+  public @NotNull PsiTypeElement getTypeElement() {
     return findNotNullChildByType(JavaElementType.TYPE);
   }
 
@@ -92,15 +93,13 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
     JavaSharedImplUtil.normalizeBrackets(this);
   }
 
-  @Nullable
   @Override
-  public Object computeConstantValue() {
+  public @Nullable Object computeConstantValue() {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     return findNotNullChildByType(JavaTokenType.IDENTIFIER);
   }
 
@@ -115,9 +114,8 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
     return PsiImplUtil.setName(identifier, name);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     final PsiRecordComponentStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
@@ -126,14 +124,12 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
   }
 
   @Override
-  @NotNull
-  public CompositeElement getNode() {
+  public @NotNull CompositeElement getNode() {
     return (CompositeElement)super.getNode();
   }
 
-  @Nullable
   @Override
-  public PsiExpression getInitializer() {
+  public @Nullable PsiExpression getInitializer() {
     return null;
   }
 
@@ -154,5 +150,16 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
   @Override
   public String toString() {
     return "PsiRecordComponent:" + getName();
+  }
+
+  @Override
+  protected @Nullable Icon getElementIcon(int flags) {
+    return IconManager.getInstance()
+      .createLayeredIcon(this, PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+  }
+
+  @Override
+  public @NotNull SearchScope getUseScope() {
+    return PsiImplUtil.getMemberUseScope(this);
   }
 }

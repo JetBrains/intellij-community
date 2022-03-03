@@ -192,7 +192,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
       if (isIndeterminate()) {
         String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
                          "Please call setIndeterminate(false) before you start progress. " + getClass();
-        LOG.warn(message, new IllegalStateException());
+        LOG.info(message, new IllegalStateException());
         setIndeterminate(false);
       }
       myFraction = fraction;
@@ -228,14 +228,12 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
-  @SuppressWarnings({"deprecation", "NonAtomicOperationOnVolatileField"})
   public void startNonCancelableSection() {
     PluginException.reportDeprecatedUsage("ProgressIndicator#startNonCancelableSection", "Use `ProgressManager.executeNonCancelableSection()` instead");
     myNonCancelableSectionCount++;
   }
 
   @Override
-  @SuppressWarnings({"deprecation", "NonAtomicOperationOnVolatileField"})
   public void finishNonCancelableSection() {
     myNonCancelableSectionCount--;
   }

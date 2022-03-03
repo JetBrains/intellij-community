@@ -82,7 +82,7 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
       }
       proposeModificationRestore(afterFixText)
       test(waitEditorToBeReady = false) {
-        dialog(null) {
+        dialog(JavaDebuggerBundle.message("hotswap.dialog.title.with.session", JavaRunLessonsUtils.demoClassName)) {
           button("Reload").click()
         }
       }

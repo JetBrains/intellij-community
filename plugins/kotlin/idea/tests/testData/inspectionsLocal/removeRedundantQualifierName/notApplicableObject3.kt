@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 open class A(init: A.() -> Unit) {
     val prop: String = ""
 }

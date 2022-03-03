@@ -388,8 +388,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                       int alreadyProcessedFiles,
                                       @NotNull ProgressIndicator progress,
                                       @NotNull Processor<? super PsiFile> localProcessor) {
-    myManager.startBatchFilesProcessingMode();
-    try {
+    return myManager.runInBatchFilesMode(() -> {
       AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
       AtomicBoolean stopped = new AtomicBoolean(false);
       ProgressIndicator originalIndicator = ProgressWrapper.unwrapAll(progress);
@@ -411,10 +410,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         return !stopped.get();
       });
-    }
-    finally {
-      myManager.finishBatchFilesProcessingMode();
-    }
+    });
   }
 
   // Tries to run {@code localProcessor} for each file in {@code files} concurrently on ForkJoinPool.
@@ -1266,9 +1262,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return Collections.singletonList(idIndexQuery);
       }
 
+      if (!TrigramIndex.isEnabled()) {
+        return Collections.singletonList(idIndexQuery);
+      }
+
       FileBasedIndex.AllKeysQuery<Integer, Void> trigramIndexQuery =
         new FileBasedIndex.AllKeysQuery<>(TrigramIndex.INDEX_ID, myTrigrams, null);
-
       return Arrays.asList(idIndexQuery, trigramIndexQuery);
     }
 

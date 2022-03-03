@@ -2,7 +2,8 @@
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.TypeAnnotation;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.*;
+import org.jetbrains.java.decompiler.struct.StructTypePath;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
@@ -31,25 +32,49 @@ public class StructTypeAnnotationAttribute extends StructGeneralAttribute {
 
   private static TypeAnnotation parse(DataInputStream data, ConstantPool pool) throws IOException {
     int targetType = data.readUnsignedByte();
-    int target = targetType << 24;
+    TargetInfo targetInfo;
 
     switch (targetType) {
       case TypeAnnotation.CLASS_TYPE_PARAMETER:
       case TypeAnnotation.METHOD_TYPE_PARAMETER:
-      case TypeAnnotation.METHOD_PARAMETER:
-        target |= data.readUnsignedByte();
+        targetInfo = new TypeParameterTarget(data.readUnsignedByte());
         break;
-
       case TypeAnnotation.SUPER_TYPE_REFERENCE:
+        targetInfo = new SupertypeTarget(data.readUnsignedShort());
+        break;
       case TypeAnnotation.CLASS_TYPE_PARAMETER_BOUND:
       case TypeAnnotation.METHOD_TYPE_PARAMETER_BOUND:
+        targetInfo = new TypeParameterBoundTarget(data.readUnsignedByte(), data.readUnsignedByte());
+        break;
+      case TypeAnnotation.FIELD:
+      case TypeAnnotation.METHOD_RETURN_TYPE:
+      case TypeAnnotation.METHOD_RECEIVER:
+        targetInfo = new EmptyTarget();
+        break;
+      case TypeAnnotation.METHOD_PARAMETER:
+        targetInfo = new FormalParameterTarget(data.readUnsignedByte());
+        break;
       case TypeAnnotation.THROWS_REFERENCE:
+        targetInfo = new ThrowsTarget(data.readUnsignedShort());
+        break;
+      case TypeAnnotation.LOCAL_VARIABLE:
+      case TypeAnnotation.RESOURCE_VARIABLE:
+        int tableLength = data.readUnsignedShort();
+        LocalvarTarget.Offsets[] offsets = new LocalvarTarget.Offsets[tableLength];
+        for (int i = 0; i < tableLength; i++) {
+          offsets[i] = new LocalvarTarget.Offsets(data.readUnsignedShort(), data.readUnsignedShort(), data.readUnsignedShort());
+        }
+        targetInfo = new LocalvarTarget(offsets);
+        break;
+
       case TypeAnnotation.CATCH_CLAUSE:
+        targetInfo = new CatchTarget(data.readUnsignedShort());
+        break;
       case TypeAnnotation.EXPR_INSTANCEOF:
       case TypeAnnotation.EXPR_NEW:
       case TypeAnnotation.EXPR_CONSTRUCTOR_REF:
       case TypeAnnotation.EXPR_METHOD_REF:
-        target |= data.readUnsignedShort();
+        targetInfo = new OffsetTarget(data.readUnsignedShort());
         break;
 
       case TypeAnnotation.TYPE_ARG_CAST:
@@ -57,33 +82,21 @@ public class StructTypeAnnotationAttribute extends StructGeneralAttribute {
       case TypeAnnotation.TYPE_ARG_METHOD_CALL:
       case TypeAnnotation.TYPE_ARG_CONSTRUCTOR_REF:
       case TypeAnnotation.TYPE_ARG_METHOD_REF:
-        data.skipBytes(3);
+        targetInfo = new TypeArgumentTarget(data.readUnsignedShort(), data.readUnsignedByte());
         break;
-
-      case TypeAnnotation.LOCAL_VARIABLE:
-      case TypeAnnotation.RESOURCE_VARIABLE:
-        data.skipBytes(data.readUnsignedShort() * 6);
-        break;
-
-      case TypeAnnotation.FIELD:
-      case TypeAnnotation.METHOD_RETURN_TYPE:
-      case TypeAnnotation.METHOD_RECEIVER:
-        break;
-
       default:
         throw new RuntimeException("unknown target type: " + targetType);
     }
 
     int pathLength = data.readUnsignedByte();
-    byte[] path = null;
-    if (pathLength > 0) {
-      path = new byte[2 * pathLength];
-      data.readFully(path);
+    List<StructTypePath> paths = new ArrayList<>(pathLength);
+    for (int i = 0; i < pathLength; i++) {
+      paths.add(i, new StructTypePath(data.readUnsignedByte(), data.readUnsignedByte()));
     }
 
     AnnotationExprent annotation = StructAnnotationAttribute.parseAnnotation(data, pool);
 
-    return new TypeAnnotation(target, path, annotation);
+    return new TypeAnnotation(targetType, targetInfo, paths, annotation);
   }
 
   public List<TypeAnnotation> getAnnotations() {

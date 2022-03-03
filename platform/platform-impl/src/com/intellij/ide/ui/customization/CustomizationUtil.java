@@ -1,20 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +30,10 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public final class CustomizationUtil {
@@ -278,5 +286,126 @@ public final class CustomizationUtil {
       }, place);
     PopupMenuPreloader.install(component, place, popupHandler, actionGroupSupplier);
     return popupHandler;
+  }
+
+  /**
+   * Retrieve text and icon from the object and pass them to {@code consumer}.
+   * <p>This types of object can be processed:
+   *   <ul>
+   *   <li>{@link Group}</li>
+   *   <li>{@link String} (action ID)</li>
+   *   <li>{@link Pair}&lt;String actionId, Icon customIcon&gt;</li>
+   *   <li>{@link Separator}</li>
+   *   <li>{@link QuickList}</li>
+   *   </ul>
+   * </p>
+   *
+   * @throws IllegalArgumentException if {@code obj} has wrong type
+   */
+  public static void acceptObjectIconAndText(@Nullable Object obj, BiConsumer<@Nls @NotNull String, @Nullable Icon> consumer) {
+    @NotNull String text;
+    Icon icon = null;
+    if (obj instanceof Group) {
+      Group group = (Group)obj;
+      String name = group.getName();
+      @NlsSafe String id = group.getId();
+      text = name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group"));
+      icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
+    }
+    else if (obj instanceof String) {
+      String actionId = (String)obj;
+      AnAction action = ActionManager.getInstance().getAction(actionId);
+      String name = action != null ? action.getTemplatePresentation().getText() : null;
+      text = !StringUtil.isEmptyOrSpaces(name) ? name : actionId;
+      if (action != null) {
+        Icon actionIcon = action.getTemplatePresentation().getIcon();
+        if (actionIcon != null) {
+          icon = actionIcon;
+        }
+      }
+    }
+    else if (obj instanceof Pair) {
+      String actionId = (String)((Pair<?, ?>)obj).first;
+      AnAction action = ActionManager.getInstance().getAction(actionId);
+      var t = action != null ? action.getTemplatePresentation().getText() : null;
+      text = StringUtil.isNotEmpty(t) ? t : actionId;
+      icon = (Icon)((Pair<?, ?>)obj).second;
+    }
+    else if (obj instanceof Separator) {
+      text = "-------------";
+    }
+    else if (obj instanceof QuickList) {
+      text = ((QuickList)obj).getDisplayName();
+    }
+    else if (obj == null) {
+      //noinspection HardCodedStringLiteral
+      text = "null";
+    }
+    else {
+      throw new IllegalArgumentException("unknown obj: " + obj);
+    }
+    consumer.accept(text, icon);
+  }
+
+  /**
+   * Returns {@code schema} actions for the group with {@code groupId}.
+   *
+   * @param groupId action group ID
+   * @param schema schema where actions are
+   * @return list of objects
+   *
+   * @see CustomizationUtil#acceptObjectIconAndText(Object, BiConsumer)
+   *
+   * @throws IllegalStateException if group is not found
+   */
+  public static @NotNull List<Object> getGroupActions(@NotNull String groupId, @NotNull CustomActionsSchema schema) {
+    var group = getGroup(groupId, schema);
+    if (group == null) {
+      throw new IllegalStateException("ActionGroup[" + groupId + "] is not found");
+    }
+    return group.getChildren();
+  }
+
+  /**
+   * Returns {@link  Group} for specified {@code schema}.
+   *
+   * @param groupId action group ID
+   * @param schema schema where group is
+   * @return {@link Group} or {@code null} if group isn't found
+   */
+  public static @Nullable Group getGroup(@NotNull String groupId, @NotNull CustomActionsSchema schema) {
+    var group = ObjectUtils.tryCast(schema.getCorrectedAction(groupId), ActionGroup.class);
+    if (group == null) {
+      return null;
+    }
+    @NlsSafe
+    String displayName = schema.getDisplayName(groupId);
+    return ActionsTreeUtil.createGroup(group, displayName, null, null, false, action -> true);
+  }
+
+  /**
+   * Update group with {@code groupId} with {@code actions}.
+   *
+   * @param actions list of new actions to be set
+   * @param groupId target group ID to be updated
+   */
+  public static void updateActionGroup(@NotNull List<Object> actions, @NotNull String groupId) {
+    var defaultActionList = getGroupActions(groupId, new CustomActionsSchema());
+    var diff = new ArrayList<ActionUrl>();
+    var groupPath = new ArrayList<>(Arrays.asList("root", CustomActionsSchema.getInstance().getDisplayName(groupId)));
+    computeDiff(toActionUrls(groupPath, defaultActionList), toActionUrls(groupPath, actions), diff);
+
+    var globalSchema = CustomActionsSchema.getInstance();
+    var tmpSchema = new CustomActionsSchema();
+    tmpSchema.copyFrom(globalSchema);
+    tmpSchema.getActions().removeIf(url -> Objects.equals(groupPath, url.getGroupPath()));
+    tmpSchema.getActions().addAll(diff);
+
+    globalSchema.copyFrom(tmpSchema);
+    CustomActionsListener.fireSchemaChanged();
+  }
+
+  private static ActionUrl @NotNull [] toActionUrls(@NotNull ArrayList<String> groupPath, @NotNull List<Object> objects) {
+    return objects.stream().map(o -> new ActionUrl(groupPath, o, 0, -1)).toArray(ActionUrl[]::new);
   }
 }

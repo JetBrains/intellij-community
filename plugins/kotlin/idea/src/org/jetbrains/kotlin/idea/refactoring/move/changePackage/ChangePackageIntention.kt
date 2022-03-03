@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
@@ -27,6 +30,11 @@ class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackage
     }
 
     override fun isApplicableTo(element: KtPackageDirective) = element.packageNameExpression != null
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+        // Rename template only intention: no reasonable preview possible
+        return IntentionPreviewInfo.EMPTY
+    }
 
     override fun applyTo(element: KtPackageDirective, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")

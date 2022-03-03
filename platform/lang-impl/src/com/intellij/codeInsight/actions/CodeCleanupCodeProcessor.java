@@ -41,6 +41,7 @@ public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
   @Override
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
     return new FutureTask<>(() -> {
+      if (!file.isValid()) return false;
       Collection<TextRange> ranges = getRanges(file, processChangedTextOnly);
       GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), file);
       return true;

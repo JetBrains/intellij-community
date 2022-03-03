@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
@@ -8,6 +9,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +31,8 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ContentDescriptor;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
 
@@ -69,17 +72,14 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
 
     if (isSubDescriptor(s)) {
       final Module module = moduleManager.findModuleByName(getSubDescriptorModuleName(s));
-      if (module != null && (module == currentModule || getDependencies(currentModule).contains(module))) {
-        return findDescriptorFile(module, getSubDescriptorFilePath(s));
-      }
-      return null;
+      if (module == null) return null;
+      return findDescriptorFile(module, getSubDescriptorFilePath(s));
     }
 
     final Module module = moduleManager.findModuleByName(s);
-    if (module != null && getDependencies(currentModule).contains(module)) {
-      return findDescriptorFile(module, getDescriptorFilePath(module.getName()));
-    }
-    return null;
+    if (module == null) return null;
+
+    return findDescriptorFile(module, getDescriptorFilePath(module.getName()));
   }
 
   @Override
@@ -102,13 +102,18 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   }
 
   @Override
-  public @Nullable LookupElement createLookupElement(IdeaPlugin plugin) {
+  public @NotNull LookupElement createLookupElement(IdeaPlugin plugin) {
     final String displayName = getDisplayName(plugin);
-    return LookupElementBuilder.create(Objects.requireNonNull(getPsiElement(plugin)), displayName)
+    LookupElementBuilder builder = LookupElementBuilder.create(Objects.requireNonNull(getPsiElement(plugin)), displayName)
       .withIcon(ElementPresentationManager.getIconForClass(ContentDescriptor.ModuleDescriptor.class))
       .withBoldness(isSubDescriptor(displayName))
       .withTypeText(plugin.getPackage().getStringValue());
+
+    Double priority = plugin.getUserData(LOOKUP_PRIORITY);
+    return priority != null ? PrioritizedLookupElement.withPriority(builder, priority) : builder;
   }
+
+  private static final Key<Double> LOOKUP_PRIORITY = Key.create("LOOKUP_PRIORITY");
 
   @Override
   public @NotNull Collection<? extends IdeaPlugin> getVariants(ConvertContext context) {
@@ -117,25 +122,24 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
     final Project project = context.getProject();
     List<IdeaPlugin> variants = new SmartList<>();
 
-    final Set<Module> dependencies = getDependencies(currentModule);
-    dependencies.add(currentModule);
-    for (Module module : dependencies) {
+    final Set<Module> dependencies = new LinkedHashSet<>();
+    ModuleUtilCore.getDependencies(currentModule, dependencies);
+    dependencies.remove(currentModule);
+
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      boolean prioritize = module == currentModule || dependencies.contains(module);
       String moduleName = module.getName();
+
       processModuleSourceRoots(module, root -> {
         final Collection<IdeaPlugin> plugins = DescriptorUtil.getPlugins(project, GlobalSearchScopes.directoryScope(project, root, false));
+        if (prioritize) {
+          plugins.forEach(plugin -> plugin.putUserData(LOOKUP_PRIORITY, module == currentModule ? 200.0 : 100.0));
+        }
         variants.addAll(ContainerUtil.filter(plugins, plugin -> DomUtil.getFile(plugin).getName().startsWith(moduleName)));
         return true;
       });
     }
     return variants;
-  }
-
-  @NotNull
-  private static Set<Module> getDependencies(@NotNull Module currentModule) {
-    final Set<Module> dependencies = new LinkedHashSet<>();
-    ModuleUtilCore.getDependencies(currentModule, dependencies);
-    dependencies.remove(currentModule);
-    return dependencies;
   }
 
   @Nullable
@@ -155,7 +159,10 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   }
 
   private static void processModuleSourceRoots(@NotNull Module module, Processor<VirtualFile> processor) {
-    for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.PRODUCTION)) {
+    for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
+      if (!processor.process(root)) return;
+    }
+    for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.SOURCE)) {
       if (!processor.process(root)) return;
     }
   }

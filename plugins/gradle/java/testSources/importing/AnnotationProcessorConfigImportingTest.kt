@@ -3,8 +3,14 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.util.Computable
+import com.intellij.testFramework.runInEdtAndGet
 import org.assertj.core.api.BDDAssertions.then
+import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -411,5 +417,32 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       then(processorPath).contains("immutables")
       then(moduleNames).containsExactly("project.main")
     }
+  }
+
+  @Test
+  @TargetVersions("5.2+")
+  fun `test annotation processor profiles of non gradle projects are not removed`() {
+    val nonGradleModule = runInEdtAndGet {
+      ApplicationManager.getApplication().runWriteAction(Computable {
+        ModuleManager.getInstance(myProject).newModule(myProject.basePath!! + "/java_module", ModuleTypeId.JAVA_MODULE)
+      })
+    }
+
+    val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
+    val processorConfigProfileImpl = ProcessorConfigProfileImpl("other")
+    processorConfigProfileImpl.addModuleName(nonGradleModule.name)
+    config.addModuleProcessorProfile(processorConfigProfileImpl)
+
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaLibraryPlugin()
+        .addCompileOnlyDependency("org.projectlombok:lombok:1.18.8")
+        .addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+        .generate());
+
+    val annotationProcessingConfiguration = config.getAnnotationProcessingConfiguration(nonGradleModule)
+
+    then(annotationProcessingConfiguration.name)
+      .isEqualTo("other")
   }
 }

@@ -78,14 +78,7 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val projectJdkHomePath = ProjectRootManager.getInstance(myProject).projectSdk?.homePath
     if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution && MavenWslUtil.tryGetWslDistributionForPath(
         projectJdkHomePath) != myWslDistribution) {
-      MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(object : BuildIssue {
-        override val title: String = SyncBundle.message("maven.sync.wsl.jdk")
-        override val description: String = SyncBundle.message(
-          "maven.sync.wsl.jdk") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
-          "maven.sync.wsl.jdk.fix") + "</a>"
-        override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
-        override fun getNavigatable(project: Project): Navigatable? = null
-      }, MessageEvent.Kind.WARNING)
+      MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(BuildIssueWslJdk(), MessageEvent.Kind.WARNING)
     }
     else if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution && MavenWslUtil.tryGetWslDistributionForPath(
         projectJdkHomePath) == myWslDistribution) {
@@ -127,4 +120,13 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val process = wslEnvironment.createProcess(commandLine, MavenProgressIndicator(myProject, manager::getSyncConsole).indicator)
     return MavenWslProcessHandler(process, commandPresentation, myWslDistribution)
   }
+}
+
+class BuildIssueWslJdk : BuildIssue {
+  override val title: String = SyncBundle.message("maven.sync.wsl.jdk")
+  override val description: String = SyncBundle.message(
+    "maven.sync.wsl.jdk") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
+    "maven.sync.wsl.jdk.fix") + "</a>"
+  override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
+  override fun getNavigatable(project: Project): Navigatable? = null
 }

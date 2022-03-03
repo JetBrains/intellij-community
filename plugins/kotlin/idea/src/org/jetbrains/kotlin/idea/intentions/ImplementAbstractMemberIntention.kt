@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.ui.components.JBList
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
@@ -183,6 +185,16 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         }
     }
 
+    override fun startInWriteAction(): Boolean = false
+
+    override fun checkFile(file: PsiFile): Boolean {
+        return true
+    }
+
+    override fun preparePsiElementForWriteIfNeeded(target: KtNamedDeclaration): Boolean {
+        return true
+    }
+
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val project = element.project
@@ -190,7 +202,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         val classesToProcess = project.runSynchronouslyWithProgress(
             JavaBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"),
             true
-        ) { findClassesToProcess(element).toList() } ?: return
+        ) { runReadAction { findClassesToProcess(element).toList() } } ?: return
         if (classesToProcess.isEmpty()) return
 
         classesToProcess.singleOrNull()?.let { return implementInClass(element, listOf(it)) }

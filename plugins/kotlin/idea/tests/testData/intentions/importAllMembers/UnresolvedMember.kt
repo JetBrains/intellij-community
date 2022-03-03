@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Unresolved reference: unresolved
 
 import java.util.Objects

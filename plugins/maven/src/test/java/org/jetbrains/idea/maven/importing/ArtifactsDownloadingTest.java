@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -189,7 +190,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                            "<mirrors>" +
                            "  <mirror>" +
                            "    <id>central</id>" +
-                           "    <url>" + VfsUtilCore.pathToUrl(remoteRepo) + "</url>" +
+                           "    <url>" + VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)) + "</url>" +
                            "    <mirrorOf>*</mirrorOf>" +
                            "  </mirror>" +
                            "</mirrors>" +
@@ -206,7 +207,6 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
 
     createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-sources.jar");
     createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar");
-
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

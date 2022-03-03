@@ -17,16 +17,13 @@ class KotlinHighlightingSuspendNotificationProvider(private val project: Project
     override fun getKey(): Key<EditorNotificationPanel> = KEY
 
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
-        if (file.extension != KotlinFileType.EXTENSION && !FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)) return null
+        if (!FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)) return null
 
         if (!KotlinHighlightingSuspender.getInstance(project).isSuspended(file)) return null
 
-        return EditorNotificationPanel(fileEditor).apply {
-            text = KotlinIdeaAnalysisBundle.message("highlighting.for.0.is.suspended", file.name)
-            createActionLabel(KotlinIdeaAnalysisBundle.message("highlighting.action.text.ignore")) {
-                KotlinHighlightingSuspender.getInstance(project).unsuspend(file)
-            }
-        }
+        val panel = EditorNotificationPanel(fileEditor)
+        panel.text = KotlinIdeaAnalysisBundle.message("highlighting.for.0.is.suspended", file.name)
+        return panel
     }
 
     companion object {

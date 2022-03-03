@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.model;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.Serializable;
 import java.text.MessageFormat;
@@ -75,7 +77,7 @@ public class MavenProjectProblem implements Serializable {
     return myRecoverable;
   }
 
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return myDescription;
   }
 

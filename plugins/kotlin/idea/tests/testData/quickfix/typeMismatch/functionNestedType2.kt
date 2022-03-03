@@ -1,5 +1,5 @@
 // "Change type of 'myFunction' to '(Int) -> KFunction0<Boolean>'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     var myFunction: (Int, Int) -> Int = <caret>::verifyData

@@ -1052,6 +1052,11 @@ public class PsiTreeUtil {
     return result;
   }
 
+  /**
+   * @param element element to start the search from
+   * @return the first leaf descendant of the element (first child of first child and so on until leaf element is found).
+   * May return the input element if it has no children.
+   */
   public static @NotNull PsiElement getDeepestFirst(@NotNull PsiElement element) {
     PsiElement result = element;
     do {
@@ -1062,6 +1067,11 @@ public class PsiTreeUtil {
     while (true);
   }
 
+  /**
+   * @param element element to start the search from
+   * @return the last leaf descendant of the element (last child of last child and so on until leaf element is found).
+   * May return the input element if it has no children.
+   */
   public static @NotNull PsiElement getDeepestLast(@NotNull PsiElement element) {
     PsiElement result = element;
     do {
@@ -1072,48 +1082,79 @@ public class PsiTreeUtil {
     while (true);
   }
 
+  /**
+   * @param current element to start the search from
+   * @return the previous leaf element within the current file; null if there's no such an element
+   */
   public static @Nullable PsiElement prevLeaf(@NotNull PsiElement current) {
-    if (current instanceof PsiFileSystemItem) return null;
-    PsiElement prevSibling = current.getPrevSibling();
-    if (prevSibling != null) return lastChild(prevSibling);
-    PsiElement parent = current.getParent();
-    if (parent == null || parent instanceof PsiFile) return null;
-    return prevLeaf(parent);
+    while (true) {
+      if (current instanceof PsiFileSystemItem) return null;
+      PsiElement prevSibling = current.getPrevSibling();
+      if (prevSibling != null) return lastChild(prevSibling);
+      PsiElement parent = current.getParent();
+      if (parent == null || parent instanceof PsiFile) return null;
+      current = parent;
+    }
   }
 
+  /**
+   * @param current element to start the search from
+   * @return the next leaf element within the current file; null if there's no such an element
+   */
   public static @Nullable PsiElement nextLeaf(@NotNull PsiElement current) {
-    if (current instanceof PsiFileSystemItem) return null;
-    PsiElement nextSibling = current.getNextSibling();
-    if (nextSibling != null) return firstChild(nextSibling);
-    PsiElement parent = current.getParent();
-    if (parent == null || parent instanceof PsiFile) return null;
-    return nextLeaf(parent);
+    while (true) {
+      if (current instanceof PsiFileSystemItem) return null;
+      PsiElement nextSibling = current.getNextSibling();
+      if (nextSibling != null) return firstChild(nextSibling);
+      PsiElement parent = current.getParent();
+      if (parent == null || parent instanceof PsiFile) return null;
+      current = parent;
+    }
   }
 
+  /**
+   * The same as {@link #getDeepestLast(PsiElement)}
+   */
   public static @NotNull PsiElement lastChild(@NotNull PsiElement element) {
-    PsiElement lastChild = element.getLastChild();
-    if (lastChild != null) return lastChild(lastChild);
-    return element;
+    return getDeepestLast(element);
   }
 
+  /**
+   * The same as {@link #getDeepestFirst(PsiElement)}
+   */
   public static @NotNull PsiElement firstChild(@NotNull PsiElement element) {
-    PsiElement child = element.getFirstChild();
-    if (child != null) return firstChild(child);
-    return element;
+    return getDeepestFirst(element);
   }
 
+  /**
+   * @param element element to start the search from
+   * @param skipEmptyElements if true, empty elements (of zero length) will be skipped.
+   * @return the previous leaf element within the current file (skipping empty elements if skipEmptyElements is true);
+   * null if there's no such an element
+   * @see #prevLeaf(PsiElement)
+   */
   public static @Nullable PsiElement prevLeaf(@NotNull PsiElement element, boolean skipEmptyElements) {
     PsiElement prevLeaf = prevLeaf(element);
     while (skipEmptyElements && prevLeaf != null && prevLeaf.getTextLength() == 0) prevLeaf = prevLeaf(prevLeaf);
     return prevLeaf;
   }
 
+  /**
+   * @param element element to start the search from
+   * @return the previous leaf element within the current file that is not empty and not white-space only;
+   * null if there's no such an element
+   */
   public static @Nullable PsiElement prevVisibleLeaf(@NotNull PsiElement element) {
     PsiElement prevLeaf = prevLeaf(element, true);
     while (prevLeaf != null && StringUtil.isEmptyOrSpaces(prevLeaf.getText())) prevLeaf = prevLeaf(prevLeaf, true);
     return prevLeaf;
   }
 
+  /**
+   * @param element element to start the search from
+   * @return the next leaf element within the current file that is not empty and not white-space only;
+   * null if there's no such an element
+   */
   public static @Nullable PsiElement nextVisibleLeaf(@NotNull PsiElement element) {
     PsiElement nextLeaf = nextLeaf(element, true);
     while (nextLeaf != null && StringUtil.isEmptyOrSpaces(nextLeaf.getText())) nextLeaf = nextLeaf(nextLeaf, true);
@@ -1144,12 +1185,23 @@ public class PsiTreeUtil {
     return StringUtil.isEmptyOrSpaces(leaf.getText()) || getNonStrictParentOfType(leaf, PsiComment.class) != null;
   }
 
+  /**
+   * @param element element to start the search from
+   * @param skipEmptyElements if true, empty elements (of zero length) will be skipped.
+   * @return the next leaf element within the current file (skipping empty elements if skipEmptyElements is true);
+   * null if there's no such an element
+   * @see #nextLeaf(PsiElement)
+   */
   public static @Nullable PsiElement nextLeaf(@NotNull PsiElement element, boolean skipEmptyElements) {
     PsiElement nextLeaf = nextLeaf(element);
     while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);
     return nextLeaf;
   }
 
+  /**
+   * @param element element to search in
+   * @return true if it contains at least one {@link PsiErrorElement} descendant or is {@link PsiErrorElement} itself.
+   */
   public static boolean hasErrorElements(@NotNull PsiElement element) {
     return !SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
   }
@@ -1254,6 +1306,13 @@ public class PsiTreeUtil {
     return res;
   }
 
+  /**
+   * @param psiElement element to start the search from
+   * @return the first leaf descendant that is not empty or white-space only.
+   * Returns psiElement itself if it's visible and has no children.
+   * Returns the next visible leaf if the whole input psiElement is white-space only.
+   * Returns null if the whole input psiElement is white-space only and there's no next visible leaf.
+   */
   public static @Nullable PsiElement getDeepestVisibleFirst(@NotNull PsiElement psiElement) {
     PsiElement first = getDeepestFirst(psiElement);
     if (StringUtil.isEmptyOrSpaces(first.getText())) {
@@ -1262,6 +1321,13 @@ public class PsiTreeUtil {
     return first;
   }
 
+  /**
+   * @param psiElement element to start the search from
+   * @return the last leaf descendant that is not empty or white-space only.
+   * Returns psiElement itself if it's visible and has no children.
+   * Returns the previous visible leaf if the whole input psiElement is white-space only.
+   * Returns null if the whole input psiElement is white-space only and there's no previous visible leaf.
+   */
   public static @Nullable PsiElement getDeepestVisibleLast(@NotNull PsiElement psiElement) {
     PsiElement last = getDeepestLast(psiElement);
     if (StringUtil.isEmptyOrSpaces(last.getText())) {

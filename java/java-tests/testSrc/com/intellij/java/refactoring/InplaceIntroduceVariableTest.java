@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -99,10 +99,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
 
   public void testPlaceInsideLambdaBody() {
     doTestReplaceChoice("Runnable: () -> {...}", introducer -> type("expr"));
-  }
-
-  public void testPlaceInsideLambdaBody1() {
-    doTestReplaceChoice("Predicate<String>: s -> {...}", introducer -> type("first"));
   }
 
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() {

@@ -5,9 +5,8 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -117,13 +116,17 @@ public abstract class WslDistributionManager implements Disposable {
     return d;
   }
 
+  /**
+   * @deprecated use {@link WslPath#isWslUncPath(String)} instead
+   */
+  @Deprecated
   public static boolean isWslPath(@NotNull String path) {
-    return FileUtilRt.toSystemDependentName(path).startsWith(WslConstants.UNC_PREFIX);
+    return WslPath.isWslUncPath(path);
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
-    final int releaseId = WSLUtil.getWindowsReleaseId();
-    if (releaseId > 0 && releaseId < 2004) {
+    final Long windowsBuild = SystemInfo.getWinBuildNumber();
+    if ( windowsBuild != null && windowsBuild > 0 && windowsBuild < 19041) {
       final WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
       if (wslTool == null || (!wslTool.isVerboseFlagAvailable && !wslTool.isQuietFlagAvailable)) {
         //noinspection deprecation

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
@@ -31,6 +32,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecationStatus
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.JComponent
@@ -56,31 +59,36 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
             override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
                 val expressionParent = expression.parent
                 if (expressionParent is KtDotQualifiedExpression || expressionParent is KtPackageDirective || expressionParent is KtImportDirective) return
-                val expressionForAnalyze = expression.firstExpressionWithoutReceiver() ?: return
+                var expressionForAnalyze = expression.firstExpressionWithoutReceiver() ?: return
                 if (expressionForAnalyze.selectorExpression?.text == expressionParent.getNonStrictParentOfType<KtProperty>()?.name) return
 
-                val originalExpression: KtExpression = expressionForAnalyze.parent as? KtClassLiteralExpression ?: expressionForAnalyze
-
-                val receiverReference = expressionForAnalyze.receiverExpression.let {
-                    it.safeAs<KtQualifiedExpression>()?.receiverExpression ?: it
-                }.mainReference?.resolve()
-
-                val parentEnumEntry = expressionForAnalyze.getStrictParentOfType<KtEnumEntry>()
-                if (parentEnumEntry != null) {
-                    val companionObject = (receiverReference as? KtObjectDeclaration)?.takeIf { it.isCompanion() }
-                    if (companionObject?.containingClass() == parentEnumEntry.getStrictParentOfType<KtClass>()) return
+                val context = expression.safeAnalyzeNonSourceRootCode()
+                val receiver = expressionForAnalyze.receiverExpression
+                val receiverReference = receiver.declarationDescriptor(context)
+                var hasCompanion = false
+                var callingBuiltInEnumFunction = false
+                when {
+                    receiverReference.isEnumCompanionObject() -> when (receiver) {
+                        is KtDotQualifiedExpression -> {
+                            if (receiver.receiverExpression.declarationDescriptor(context).isEnumClass()) return
+                            expressionForAnalyze = receiver
+                        }
+                        else -> return
+                    }
+                    receiverReference.isEnumClass() -> {
+                        hasCompanion = expressionForAnalyze.selectorExpression?.declarationDescriptor(context).isEnumCompanionObject()
+                        callingBuiltInEnumFunction = expressionForAnalyze.isReferenceToBuiltInEnumFunction()
+                        when {
+                            receiver is KtDotQualifiedExpression -> expressionForAnalyze = receiver
+                            hasCompanion || callingBuiltInEnumFunction -> return
+                        }
+                    }
                 }
 
-                if (receiverReference?.safeAs<KtClass>()?.isEnum() == true
-                    && expressionForAnalyze.getParentOfTypesAndPredicate(true, KtClass::class.java) { it.isEnum() } != receiverReference
-                    && (expressionForAnalyze.isReferenceToBuiltInEnumFunction() || expressionForAnalyze.isCompanionObjectReference())
-                ) return
-
-                val context = originalExpression.analyze()
-
-                val originalDescriptor = expressionForAnalyze.getQualifiedElementSelector()
-                    ?.mainReference?.resolveToDescriptors(context)
-                    ?.firstOrNull() ?: return
+                val originalExpression: KtExpression = expressionForAnalyze.parent as? KtClassLiteralExpression ?: expressionForAnalyze
+                val originalDescriptor = expressionForAnalyze.getQualifiedElementSelector()?.declarationDescriptor(context)?.let {
+                    if (hasCompanion || callingBuiltInEnumFunction) it.safeAs<LazyClassDescriptor>()?.companionObjectDescriptor else it
+                } ?: return
 
                 val applicableExpression = expressionForAnalyze.firstApplicableExpression(
                     validator = { applicableExpression(originalExpression, context, originalDescriptor, unwrapFakeOverrides) },
@@ -102,12 +110,14 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
                 reportProblem(holder, applicableExpression)
             }
         }
-
-    private fun KtDotQualifiedExpression.isCompanionObjectReference(): Boolean {
-        val selector = receiverExpression.safeAs<KtDotQualifiedExpression>()?.selectorExpression ?: selectorExpression
-        return selector?.referenceExpression()?.mainReference?.resolve()?.safeAs<KtObjectDeclaration>()?.isCompanion() == true
-    }
 }
+
+private fun KtElement.declarationDescriptor(context: BindingContext): DeclarationDescriptor? =
+    (safeAs<KtQualifiedExpression>()?.selectorExpression ?: this).mainReference?.resolveToDescriptors(context)?.firstOrNull()
+
+private fun DeclarationDescriptor?.isEnumClass() = safeAs<ClassDescriptor>()?.kind == ClassKind.ENUM_CLASS
+
+private fun DeclarationDescriptor?.isEnumCompanionObject() = this?.isCompanionObject() == true && containingDeclaration.isEnumClass()
 
 private tailrec fun KtDotQualifiedExpression.firstExpressionWithoutReceiver(): KtDotQualifiedExpression? = if (hasNotReceiver())
     this
@@ -132,9 +142,7 @@ private fun KtDotQualifiedExpression.applicableExpression(
     val expressionText = originalExpression.text.substring(lastChild.startOffset - originalExpression.startOffset)
     val newExpression = KtPsiFactory(originalExpression).createExpressionIfPossible(expressionText) ?: return null
     val newContext = newExpression.analyzeAsReplacement(originalExpression, oldContext)
-    val newDescriptor = newExpression.selector()
-        ?.mainReference?.resolveToDescriptors(newContext)
-        ?.firstOrNull() ?: return null
+    val newDescriptor = newExpression.selector()?.declarationDescriptor(newContext) ?: return null
 
     fun DeclarationDescriptor.unwrapFakeOverrideIfNecessary(): DeclarationDescriptor {
         return if (unwrapFakeOverrides) this.unwrapIfFakeOverride() else this
@@ -159,7 +167,7 @@ private fun KtExpression.isApplicableReceiver(context: BindingContext): Boolean 
     if (this is KtInstanceExpressionWithLabel) return false
 
     val reference = getQualifiedElementSelector()
-    val descriptor = reference?.mainReference?.resolveToDescriptors(context)?.firstOrNull() ?: return false
+    val descriptor = reference?.declarationDescriptor(context) ?: return false
 
     return if (!descriptor.isCompanionObject()) true
     else descriptor.name.asString() != reference.text
@@ -168,7 +176,7 @@ private fun KtExpression.isApplicableReceiver(context: BindingContext): Boolean 
 private fun KtUserType.applicableExpression(context: BindingContext): KtUserType? {
     if (firstChild !is KtUserType) return null
     val referenceExpression = referenceExpression as? KtNameReferenceExpression ?: return null
-    val originalDescriptor = referenceExpression.mainReference.resolveToDescriptors(context).firstOrNull()?.let {
+    val originalDescriptor = referenceExpression.declarationDescriptor(context)?.let {
         it.safeAs<ClassConstructorDescriptor>()?.containingDeclaration ?: it
     } ?: return null
 
@@ -202,10 +210,15 @@ class RemoveRedundantQualifierNameQuickFix : LocalQuickFix {
         val file = descriptor.psiElement.containingFile as KtFile
         val range = when (val element = descriptor.psiElement) {
             is KtUserType -> IntRange(element.startOffset, element.endOffset)
-            is KtDotQualifiedExpression -> IntRange(
-                element.startOffset,
-                element.getLastParentOfTypeInRowWithSelf<KtDotQualifiedExpression>()?.getQualifiedElementSelector()?.endOffset ?: return
-            )
+            is KtDotQualifiedExpression -> {
+                val selectorReference = element.selectorExpression?.declarationDescriptor(element.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
+                val endOffset = if (selectorReference.isEnumClass() || selectorReference.isEnumCompanionObject()) {
+                    element.endOffset
+                } else {
+                    element.getLastParentOfTypeInRowWithSelf<KtDotQualifiedExpression>()?.getQualifiedElementSelector()?.endOffset ?: return
+                }
+                IntRange(element.startOffset, endOffset)
+            }
             else -> IntRange.EMPTY
         }
 

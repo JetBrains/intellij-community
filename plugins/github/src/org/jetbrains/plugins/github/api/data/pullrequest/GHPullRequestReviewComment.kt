@@ -14,7 +14,7 @@ open class GHPullRequestReviewComment(id: String,
                                       val databaseId: Long,
                                       val url: String,
                                       author: GHActor?,
-                                      bodyHTML: String,
+                                      body: String,
                                       createdAt: Date,
                                       val state: GHPullRequestReviewCommentState,
                                       val path: String,
@@ -27,6 +27,6 @@ open class GHPullRequestReviewComment(id: String,
                                       @JsonProperty("pullRequestReview") pullRequestReview: GHNode?,
                                       val viewerCanDelete: Boolean,
                                       val viewerCanUpdate: Boolean)
-  : GHComment(id, author, bodyHTML, createdAt) {
+  : GHComment(id, author, body, createdAt) {
   val reviewId = pullRequestReview?.id
 }

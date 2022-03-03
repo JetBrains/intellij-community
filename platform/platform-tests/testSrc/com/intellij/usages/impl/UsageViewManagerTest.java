@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindModel;
@@ -8,22 +8,21 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.testFramework.ProjectRule;
-import com.intellij.testFramework.TemporaryDirectory;
+import com.intellij.testFramework.ProjectExtension;
+import com.intellij.testFramework.TemporaryDirectoryExtension;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class UsageViewManagerTest {
-  @ClassRule
-  public static final ProjectRule projectRule = new ProjectRule();
+  @RegisterExtension
+  public static final ProjectExtension projectRule = new ProjectExtension();
 
-  @Rule
-  public final TemporaryDirectory temporaryDirectory = new TemporaryDirectory();
+  @RegisterExtension
+  public final TemporaryDirectoryExtension temporaryDirectory = new TemporaryDirectoryExtension();
 
   @Test
   public void scopeCreatedForFindInDirectory() {

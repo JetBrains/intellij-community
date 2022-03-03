@@ -1,5 +1,5 @@
 // FIX: Merge call chain to 'associateBy'
-// WITH_RUNTIME
+// WITH_STDLIB
 fun getKey(i: Int): Long = 1L
 
 fun test(list: List<Int>) {

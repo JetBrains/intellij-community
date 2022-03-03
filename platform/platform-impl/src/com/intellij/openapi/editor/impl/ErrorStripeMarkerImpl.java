@@ -46,8 +46,14 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
                     this + "(prev state: " + oldStart + "-" + oldEnd + ") is invalid after " + e);
       }
       else if (intervalStart() != myHighlighter.getStartOffset() || intervalEnd() != myHighlighter.getEndOffset()) {
+        String extendedHighlighterInfo = "";
+        if (myHighlighter instanceof PersistentRangeHighlighterImpl) {
+          PersistentRangeHighlighterImpl h = (PersistentRangeHighlighterImpl)myHighlighter;
+          extendedHighlighterInfo = "(prev state: " + h.prevStartOffset + "-" + h.prevEndOffset + ", stamps match: " +
+                                    (h.modificationStamp == (byte)e.getDocument().getModificationStamp()) + ")";
+        }
         reportError("Mirror highlighter " + this + "(prev state: " + oldStart + "-" + oldEnd +
-                    ") diverged from base one " + myHighlighter + " after " + e);
+                    ") diverged from base one " + myHighlighter + extendedHighlighterInfo + " after " + e);
         setIntervalStart(myHighlighter.getStartOffset());
         setIntervalEnd(myHighlighter.getEndOffset());
       }

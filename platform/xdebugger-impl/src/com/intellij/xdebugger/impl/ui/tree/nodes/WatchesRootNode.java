@@ -190,13 +190,10 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                                  int index,
                                  boolean navigateToWatchNode) {
     WatchNodeImpl message = new WatchNodeImpl(myTree, this, expression, stackFrame);
-    if (index == -1) {
-      myChildren.add(message);
-      index = myChildren.size() - 1;
+    if (index < 0 || index > myChildren.size()) {
+      index = myChildren.size();
     }
-    else {
-      myChildren.add(index, message);
-    }
+    myChildren.add(index, message);
     fireNodeInserted(index);
     TreeUtil.selectNode(myTree, message);
     if (navigateToWatchNode) {

@@ -43,6 +43,20 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ModuleBuilder extends AbstractModuleBuilder {
+  public static final int JVM_WEIGHT = 2000;
+  public static final int KOTLIN_WEIGHT = 1900;
+  public static final int GROOVY_WEIGHT = 1800;
+  public static final int SCALA_WEIGHT = 1700;
+  public static final int WEB_WEIGHT = 1600;
+  public static final int PYTHON_WEIGHT = 1500;
+  public static final int RUST_WEIGHT = 1400;
+  public static final int PHP_WEIGHT = 1300;
+  public static final int RUBY_WEIGHT = 1200;
+  public static final int GO_WEIGHT = 1100;
+  public static final int IJ_PLUGIN_WEIGHT = 1000;
+
+  public static final int OTHER_WEIGHT = 900;
+
   private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = new ExtensionPointName<>("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance(ModuleBuilder.class);

@@ -190,10 +190,6 @@ class KotlinDetachedUastTest : KotlinLightCodeInsightFixtureTestCase() {
             .prepareRenaming(element, "newName", linkedMapOf)
 
         UsefulTestCase.assertTrue(linkedMapOf.any())
-
-        for ((k, _) in linkedMapOf) {
-            TestCase.assertEquals(element, k.toUElement()?.sourcePsi)
-        }
     }
 
     fun testConvertCompiledClass() {

@@ -16,19 +16,18 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class LocalInspectionToolSession extends UserDataHolderBase {
   private final PsiFile myFile;
-  private final int myStartOffset;
-  private final int myEndOffset;
+  private final TextRange myPriorityRange;
 
-  public LocalInspectionToolSession(@NotNull PsiFile file, final int startOffset, final int endOffset) {
+  LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange) {
     myFile = file;
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
+    myPriorityRange = priorityRange;
   }
 
   @NotNull
@@ -36,11 +35,12 @@ public class LocalInspectionToolSession extends UserDataHolderBase {
     return myFile;
   }
 
-  public int getStartOffset() {
-    return myStartOffset;
-  }
-
-  public int getEndOffset() {
-    return myEndOffset;
+  /**
+   * @return range (inside the {@link #getFile()}) which the current session will try to highlight first.
+   * Usually it corresponds to the visible view port in the editor.
+   */
+  @NotNull
+  public TextRange getPriorityRange() {
+    return myPriorityRange;
   }
 }

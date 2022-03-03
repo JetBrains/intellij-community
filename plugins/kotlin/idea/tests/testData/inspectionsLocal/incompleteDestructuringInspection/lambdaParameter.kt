@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 data class Person(
     val name: String,
     val hobbies: List<String>,

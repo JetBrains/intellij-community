@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -11,14 +11,13 @@ import com.intellij.refactoring.rename.RenameJavaMethodProcessor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReferenceDescriptorImpl
+import org.jetbrains.kotlin.idea.search.syntheticGetter
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 
 class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
     override fun canProcessElement(element: PsiElement) =
-        element is PsiMethod && element !is KtLightMethod && JvmAbi.isGetterName(element.name)
+        super.canProcessElement(element) && element !is KtLightMethod && element is PsiMethod && JvmAbi.isGetterName(element.name)
 
     override fun findReferences(
         element: PsiElement,
@@ -27,8 +26,7 @@ class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
     ): Collection<PsiReference> {
         val getterReferences = super.findReferences(element, searchScope, searchInCommentsAndStrings)
         val getter = element as? PsiMethod ?: return getterReferences
-        val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(Name.identifier(getter.name))
-            ?: return getterReferences
+        val propertyName = getter.syntheticGetter ?: return getterReferences
         val setterName = JvmAbi.setterName(propertyName.asString())
         val containingClass = getter.containingClass ?: return getterReferences
         val setterReferences = containingClass

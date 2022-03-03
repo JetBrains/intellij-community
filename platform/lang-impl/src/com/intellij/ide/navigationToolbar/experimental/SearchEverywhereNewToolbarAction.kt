@@ -16,11 +16,14 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.BigPopup.searchFieldBackground
@@ -28,13 +31,17 @@ import com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_TEXT_COLOR
 import java.awt.Cursor
 import java.awt.Cursor.DEFAULT_CURSOR
 import java.awt.Cursor.TEXT_CURSOR
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 import javax.swing.FocusManager
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
+import javax.swing.event.AncestorEvent
 import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
@@ -46,37 +53,61 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   private var subscribedForDoubleShift = false
   private var firstOpened = false
   private var clearPosition = false
+  private var shouldShow = true
+  var seManager: SearchEverywhereManager? = null
 
   override fun update(event: AnActionEvent) {
     if (event.place != ActionPlaces.MAIN_TOOLBAR) {
       event.presentation.isEnabledAndVisible = false
       return
     }
+    val project = event.project ?: return
+    if (seManager == null) {
+      seManager = SearchEverywhereManager.getInstance(project)
+      Disposer.register(project) {
+        seManager = null
+      }
+    }
+    event.presentation.isEnabledAndVisible = shouldShow
     event.presentation.text = if (!showHotkey()) {
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
     else {
-      ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text")
+      val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).shortcuts
+      val shortcut = if (shortcuts.isEmpty()) {
+        ActionsBundle.message("action.SearchEverywhereToolbarHotKey.hotkey")
+      }
+      else KeymapUtil.getShortcutsText(shortcuts)
+      ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text", shortcut)
     }
     event.presentation.icon = AllIcons.Actions.Search
     if (!subscribedForDoubleShift) {
-      event.project?.let {
-        ApplicationManager.getApplication().messageBus.connect(it).subscribe(AnActionListener.TOPIC, this)
-        subscribedForDoubleShift = true
-      }
+      ApplicationManager.getApplication().messageBus.connect(project).subscribe(AnActionListener.TOPIC, this)
+      subscribedForDoubleShift = true
     }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
 
     return object : ActionButtonWithText(this, presentation, place,
-                                         ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-      var seManager: SearchEverywhereManager? = null
-
+                                         Dimension(0, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)) {
       init {
         FocusManager.getCurrentManager().addPropertyChangeListener { this.repaint() }
         setHorizontalTextAlignment(SwingConstants.LEFT)
         cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
+        this.addAncestorListener(object : AncestorListenerAdapter() {
+          override fun ancestorAdded(event: AncestorEvent?) {
+            rootPane?.addComponentListener(object : ComponentAdapter() {
+              override fun componentResized(e: ComponentEvent?) {
+                shouldShow = true
+              }
+            })
+          }
+        })
+      }
+
+      override fun getPreferredSize(): Dimension {
+        return Dimension(super.getPreferredSize().width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
       }
 
       override fun updateToolTipText() {
@@ -93,17 +124,16 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
           }
         }
         else {
-          if (presentation.isEnabledAndVisible) {
-            toolTipText = IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
+          toolTipText = if (presentation.isEnabledAndVisible) {
+            IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
           }
           else {
-            toolTipText = ""
+            ""
           }
         }
       }
 
       override fun actionPerformed(e: AnActionEvent) {
-        seManager = SearchEverywhereManager.getInstance(e.project)
         val focusManager = IdeFocusManager.findInstance()
         val focusedComponent = focusManager.focusOwner
         val ideWindow = focusManager.lastFocusedIdeWindow
@@ -131,24 +161,31 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
 
       override fun paint(g: Graphics?) {
+        if (!checkIfEnoughSpace()) return
+        if (preferredSize.width < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width) return
+        foreground = DISABLED_TEXT_COLOR
+        background = searchFieldBackground()
+        super.paint(g)
+      }
+
+      private fun checkIfEnoughSpace(): Boolean {
+        if (parent == null) return false
         if (parent.bounds.width < parent.preferredSize.width) {
-          if (presentation.isEnabledAndVisible) {
-            presentation.isEnabledAndVisible = false
+          if (shouldShow) {
+            shouldShow = false
             updateToolTipText()
             cursor = Cursor.getPredefinedCursor(DEFAULT_CURSOR)
           }
-          return
+          return false
         }
         else {
-          if (!presentation.isEnabledAndVisible) {
-            presentation.isEnabledAndVisible = true
+          if (!shouldShow) {
+            shouldShow = true
             updateToolTipText()
             cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
           }
         }
-        foreground = DISABLED_TEXT_COLOR
-        background = searchFieldBackground()
-        super.paint(g)
+        return true
       }
 
       override fun iconTextSpace(): Int {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.junit
 
@@ -11,10 +11,14 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.junit.*
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
 import org.jetbrains.kotlin.idea.run.asJvmModule
 import org.jetbrains.kotlin.idea.run.forceGradleRunnerInMPP
@@ -40,11 +44,16 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
             return false
         }
 
+        if (JUnitConfiguration.TEST_CLASS != configuration.testType && 
+            JUnitConfiguration.TEST_METHOD != configuration.testType) {
+            return false
+        }
+
         val element = context.location?.psiElement ?: return false
-        val testEntity = JunitKotlinTestFrameworkProvider.getJavaTestEntity(element, checkMethod = true) ?: return false
+        val javaEntity = JunitKotlinTestFrameworkProvider.getJavaEntity(element) ?: return false
 
         val testObject = configuration.testObject
-        if (!testObject.isConfiguredByElement(configuration, testEntity.testClass, testEntity.testMethod, null, null)) {
+        if (!testObject.isConfiguredByElement(configuration, javaEntity.testClass, javaEntity.method, null, null)) {
             return false
         }
 
@@ -71,13 +80,13 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
     ): Boolean {
         if (DumbService.getInstance(context.project).isDumb) return false
 
-        if (!isAvailableInMpp(context)) {
+        if (getInstance(PatternConfigurationProducer::class.java).isMultipleElementsSelected(context) || !isAvailableInMpp(context)) {
             return false
         }
 
         val location = context.location ?: return false
         val element = location.psiElement
-        val module = context.module?.asJvmModule() ?: return false
+        context.module?.asJvmModule() ?: return false
 
         if (!ProjectRootsUtil.isInProjectOrLibSource(element) || element.containingFile !is KtFile) {
             return false
@@ -90,6 +99,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
         
         val testEntity = JunitKotlinTestFrameworkProvider.getJavaTestEntity(element, checkMethod = true) ?: return false
 
+        val originalModule = configuration.configurationModule.module
         val testMethod = testEntity.testMethod
         if (testMethod != null) {
             configuration.beMethodConfiguration(PsiLocation.fromPsiElement(testMethod))
@@ -97,14 +107,23 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
             configuration.beClassConfiguration(testEntity.testClass)
         }
 
+        configuration.restoreOriginalModule(originalModule)
         JavaRunConfigurationExtensionManager.instance.extendCreatedConfiguration(configuration, location)
-        configuration.setModule(module)
         return true
     }
 
     override fun onFirstRun(fromContext: ConfigurationFromContext, context: ConfigurationContext, performRunnable: Runnable) {
-        val testEntity = JunitKotlinTestFrameworkProvider.getJavaTestEntity(fromContext.sourceElement, checkMethod = true)
-            ?: return super.onFirstRun(fromContext, context, performRunnable)
+        val testEntity =
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                ThrowableComputable {
+                    runReadAction {
+                        JunitKotlinTestFrameworkProvider.getJavaTestEntity(fromContext.sourceElement, checkMethod = true)
+                    }
+                },
+                KotlinBundle.message("progress.text.detect.test.framework"),
+                true,
+                context.project
+            ) ?: return super.onFirstRun(fromContext, context, performRunnable)
 
         val sourceElement = testEntity.testMethod ?: testEntity.testClass
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
@@ -75,56 +61,60 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
     final PsiElement body;
     if (psiMember instanceof PsiMethod) {
       body = ((PsiMethod)psiMember).getBody();
-    } else {
-      assert psiMember instanceof PsiField;
+    }
+    else if (psiMember instanceof PsiField) {
       body = ((PsiField)psiMember).getInitializer();
+    }
+    else if (psiMember instanceof PsiClass) {
+      body = psiMember;
+    }
+    else {
+      body = null;
     }
     if (body != null) {
       final PsiClass containingClass = psiMember.getContainingClass();
-      if (containingClass != null) {
-        final Set<PsiElement> elementsToCheck = new HashSet<>();
-        body.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiMethod || resolved instanceof PsiField) {
-              ContainerUtil.addAllNotNull(elementsToCheck, resolved);
-            }
+      final Set<PsiElement> elementsToCheck = new HashSet<>();
+      body.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          super.visitReferenceExpression(expression);
+          PsiElement resolved = expression.resolve();
+          if (resolved instanceof PsiMethod || resolved instanceof PsiField) {
+            ContainerUtil.addAllNotNull(elementsToCheck, resolved);
           }
+        }
 
-          @Override
-          public void visitLiteralExpression(PsiLiteralExpression expression) {
-            super.visitLiteralExpression(expression);
-            PsiReference @NotNull [] references = expression.getReferences();
-            for (PsiReference reference : references) {
-              if (reference instanceof PsiPolyVariantReference) {
-                PsiElement[] nonMembers = Arrays.stream(((PsiPolyVariantReference)reference).multiResolve(false))
-                  .map(result -> result.getElement())
-                  .filter(e -> !(e instanceof PsiMember))
-                  .toArray(PsiElement[]::new);
-                if (nonMembers.length < 10) {
-                  ContainerUtil.addAllNotNull(elementsToCheck, nonMembers);
-                }
+        @Override
+        public void visitLiteralExpression(PsiLiteralExpression expression) {
+          super.visitLiteralExpression(expression);
+          PsiReference @NotNull [] references = expression.getReferences();
+          for (PsiReference reference : references) {
+            if (reference instanceof PsiPolyVariantReference) {
+              PsiElement[] nonMembers = Arrays.stream(((PsiPolyVariantReference)reference).multiResolve(false))
+                .map(result -> result.getElement())
+                .filter(e -> !(e instanceof PsiMember))
+                .toArray(PsiElement[]::new);
+              if (nonMembers.length < 10) {
+                ContainerUtil.addAllNotNull(elementsToCheck, nonMembers);
               }
-              else {
-                PsiElement resolve = reference.resolve();
-                if (resolve != null && !(resolve instanceof PsiMember)) {
-                  elementsToCheck.add(resolve);
-                }
+            }
+            else {
+              PsiElement resolve = reference.resolve();
+              if (resolve != null && !(resolve instanceof PsiMember)) {
+                elementsToCheck.add(resolve);
               }
             }
           }
-        });
+        }
+      });
 
-        return elementsToCheck
-          .stream()
-          .filter(m -> !(m instanceof PsiMember) || containingClass.equals(((PsiMember)m).getContainingClass()) && !psiMember.equals(m))
-          .filter(m -> !(m instanceof PsiMethod) || ((PsiMethod)m).findDeepestSuperMethods().length == 0)
-          .filter(m -> m.isPhysical())
-          .filter(m -> usedOnlyIn(m, psiMember))
-          .collect(Collectors.toList());
-      }
+      return elementsToCheck
+        .stream()
+        .filter(m -> !(m instanceof PsiMember) || containingClass != null && containingClass.equals(((PsiMember)m).getContainingClass()) && !psiMember.equals(m))
+        .filter(m -> !(m instanceof PsiMethod) || ((PsiMethod)m).findDeepestSuperMethods().length == 0)
+        .filter(m -> m.isPhysical())
+        .filter(m -> usedOnlyIn(m, psiMember))
+        .collect(Collectors.toList());
     }
     return null;
   }

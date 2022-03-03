@@ -1,0 +1,16 @@
+<root>
+    <head/>
+    <body>
+        <arm>
+            <hand/>
+        </arm>
+        <arm/>
+<warning descr="Incorrect whitespace">
+
+
+        </warning><leg/>
+        <leg>
+            <foot/>
+        </leg>
+    </body>
+</root>

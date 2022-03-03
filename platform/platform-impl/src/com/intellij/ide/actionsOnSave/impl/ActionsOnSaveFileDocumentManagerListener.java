@@ -14,10 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class ActionsOnSaveFileDocumentManagerListener implements FileDocumentManagerListener {
   private static final ExtensionPointName<ActionOnSave> EP_NAME = new ExtensionPointName<>("com.intellij.actionOnSave");
@@ -79,6 +76,7 @@ public final class ActionsOnSaveFileDocumentManagerListener implements FileDocum
 
     FileDocumentManager manager = FileDocumentManager.getInstance();
 
+    List<Document> processedDocuments = new ArrayList<>();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       ProjectFileIndex index = ProjectFileIndex.getInstance(project);
       List<Document> projectDocuments = ContainerUtil.filter(documents, document -> {
@@ -92,12 +90,13 @@ public final class ActionsOnSaveFileDocumentManagerListener implements FileDocum
 
       for (ActionOnSave saveAction : EP_NAME.getExtensionList()) {
         if (saveAction.isEnabledForProject(project)) {
+          processedDocuments.addAll(projectDocuments);
           saveAction.processDocuments(project, projectDocuments.toArray(Document.EMPTY_ARRAY));
         }
       }
     }
 
-    for (Document document : documents) {
+    for (Document document : processedDocuments) {
       manager.saveDocument(document);
     }
   }

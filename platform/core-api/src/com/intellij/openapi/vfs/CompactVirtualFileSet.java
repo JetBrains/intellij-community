@@ -18,9 +18,8 @@ import java.util.stream.IntStream;
  * without materialization of all containing files.
  * Remove operations are not supported.
  * NOT thread-safe.
- * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet()} instead
+ * Use {@link VfsUtilCore#createCompactVirtualFileSet()} to instantiate a new set.
  */
-@Deprecated
 @ApiStatus.Internal
 public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implements VirtualFileSet {
   static final int BIT_SET_LIMIT = 1000;
@@ -34,16 +33,28 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   private BitSet fileIds;
   private boolean frozen;
 
+  /**
+   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet()} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   public CompactVirtualFileSet() {
   }
 
+  /**
+   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet(Collection)} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   CompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
     addAll(files);
   }
 
   //TODO hide it
+  /**
+   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet()} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   public CompactVirtualFileSet(int @NotNull [] fileIds) {
     idSet = new StrippedIntOpenHashSet();
@@ -173,8 +184,9 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
    * Make unmodifiable
    */
   @Override
-  public void freeze() {
+  public Set<VirtualFile> freeze() {
     frozen = true;
+    return this;
   }
 
   @Override

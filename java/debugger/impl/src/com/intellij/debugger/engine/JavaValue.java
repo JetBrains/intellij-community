@@ -564,6 +564,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor.getValueText();
   }
 
+  @Override
+  public boolean shouldShowTextValue() {
+    return myValueDescriptor.isString();
+  }
+
   @Nullable
   @Override
   public XReferrersProvider getReferrersProvider() {

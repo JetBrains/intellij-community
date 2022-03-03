@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -569,63 +570,25 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     });
 
-
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       try {
+        if (Objects.requireNonNull(context.getUserData(PHASE_KEY)) == 1) {
+          codeScanner.needToLog = true;
+        }
         entry.accept(codeScanner);
       }
-      // todo temporary decision for debugging, to be deleted
-      catch (StackOverflowError e) {
-        logFromEntryPoint(entry);
+      catch (StackOverflowPreventedException e) {
+        LOG.warn(e.getMessage());
+      }
+      finally {
+        codeScanner.clearLogs();
+        codeScanner.needToLog = false;
       }
     }
 
     while (codeScanner.newlyInstantiatedClassesCount() != 0) {
       codeScanner.cleanInstantiatedClassesCount();
       codeScanner.processDelayedMethods();
-    }
-  }
-
-  private static void logFromEntryPoint(RefElement entry) {
-    StringBuilder result = new StringBuilder("\n");
-    List<List<RefElement>> paths = new ArrayList<>();
-    paths.add(new ArrayList<>());
-    traverse(entry, paths, 0);
-    String rootText = String.format("%s %s (owner: %s, reachable: %s, entry: %s):", entry.getClass().getSimpleName(), entry.getName(),
-                                    entry.getOwner(), entry.isReachable(), entry.isEntry());
-    result.append(rootText).append("\n");
-    for (List<RefElement> path : paths) {
-      if (path.size() <= 1) continue;
-      StringJoiner pathJoiner = new StringJoiner(" --> ");
-      for (int i = 1; i < path.size(); i++) {
-        RefElement element = path.get(i);
-        String elementText = String.format("%s %s (owner: %s, reachable: %s)", element.getClass().getSimpleName(), element.getName(),
-                                           element.getOwner(), element.isReachable());
-        pathJoiner.add(elementText);
-      }
-      result.append(" --> ").append(pathJoiner).append("\n");
-    }
-    LOG.warn(result.toString());
-  }
-
-  private static void traverse(RefElement element, List<List<RefElement>> paths, Integer depth) {
-    int lastPathsIndex = paths.size() - 1;
-    List<RefElement> path = paths.get(lastPathsIndex);
-    if (path.contains(element)) {
-      LOG.warn(String.format("Cycle is detected on the element %s", element.getName()));
-      return;
-    }
-    path.add(element);
-    List<RefElement> outRefs = new ArrayList<>(element.getOutReferences());
-    for (int i = 0; i < outRefs.size(); i++) {
-      RefElement outRef = outRefs.get(i);
-      if (i > 0) {
-        List<RefElement> pathCopy = new ArrayList<>(path.subList(0, depth + 1));
-        paths.add(pathCopy);
-      }
-      depth++;
-      traverse(outRef, paths, depth);
-      depth--;
     }
   }
 
@@ -639,6 +602,23 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private int myInstantiatedClassesCount;
     private final Set<RefMethod> myProcessedMethods = new HashSet<>();
     private final Set<RefFunctionalExpression> myProcessedFunctionalExpressions = new HashSet<>();
+
+    // todo to be deleted
+    private boolean needToLog = false;
+    private final List<List<RefElement>> paths = new ArrayList<>();
+    private int temporaryDepth = 0;
+    private static int MAX_DEPTH = 400;
+
+    private void clearLogs() {
+      temporaryDepth = 0;
+      paths.clear();
+    }
+
+    static String log(@NotNull RefElement element) {
+      RefEntity owner = element.getOwner();
+      return String.format("%s %s (owner: %s %s)", element.getClass().getSimpleName(), element.getName(),
+                           owner.getClass().getSimpleName(), owner.getName());
+    }
 
     @Override
     public void visitMethod(@NotNull RefMethod method) {
@@ -724,14 +704,43 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     private void makeContentReachable(RefJavaElementImpl refElement) {
       refElement.setReachable(true);
-      for (RefElement refCallee : refElement.getOutReferences()) {
-        refCallee.accept(this);
-      }
+      makeReachable(refElement);
     }
 
     private void makeClassInitializersReachable(@Nullable RefClass refClass) {
-      if (refClass != null) {
-        for (RefElement refCallee : refClass.getOutReferences()) {
+      makeReachable(refClass);
+    }
+
+    private void makeReachable(@Nullable RefElement refElement) {
+      if (refElement == null) return;
+      if (needToLog) {
+        if (temporaryDepth == 0) {
+          paths.add(new ArrayList<>());
+        }
+        List<RefElement> lastPath = paths.get(paths.size() - 1);
+        if (lastPath.contains(refElement)) {
+          return;
+        }
+        else {
+          lastPath.add(refElement);
+        }
+        if (lastPath.size() > MAX_DEPTH) {
+          throw new StackOverflowPreventedException("Stack frames limit is exceeded");
+        }
+
+        int counter = 0;
+        for (RefElement refCallee : refElement.getOutReferences()) {
+          if (++counter > 1 && !(refCallee instanceof RefParameter)) {
+            ArrayList<RefElement> copy = new ArrayList<>(lastPath.subList(0, temporaryDepth + 1));
+            paths.add(copy);
+          }
+          temporaryDepth++;
+          refCallee.accept(this);
+          temporaryDepth--;
+        }
+      }
+      else {
+        for (RefElement refCallee : refElement.getOutReferences()) {
           refCallee.accept(this);
         }
       }

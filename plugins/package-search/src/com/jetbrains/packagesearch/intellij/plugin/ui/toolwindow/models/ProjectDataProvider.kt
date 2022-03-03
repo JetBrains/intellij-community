@@ -92,7 +92,10 @@ internal class ProjectDataProvider(
             .map { dependenciesToFetch -> apiClient.packagesByRange(dependenciesToFetch) }
             .map { it.packages }
             .catch {
-                logDebug("${this::class.qualifiedName!!}#fetchedPackages", it) { "Error while retrieving packages" }
+                logDebug(
+                    "${this::class.run { qualifiedName ?: simpleName ?: this }}#fetchedPackages",
+                    it,
+                ) { "Error while retrieving packages" }
                 emit(emptyList())
             }
             .toList()

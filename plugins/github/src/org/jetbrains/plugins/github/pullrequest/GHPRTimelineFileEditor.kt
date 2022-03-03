@@ -50,10 +50,11 @@ internal class GHPRTimelineFileEditor(private val project: Project,
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
 
+      val prevProvider = DataManager.getDataProvider(it)
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> dataProvider
-          else -> null
+          else -> prevProvider?.getData(dataId)
         }
       }
     }

@@ -29,7 +29,7 @@ final class WinExeInstallerBuilder {
   }
 
   private void generateInstallationConfigFileForSilentMode() {
-    Path targetFilePath = Paths.get(buildContext.paths.artifacts, "silent.config")
+    Path targetFilePath = buildContext.paths.artifactDir.resolve("silent.config")
     if (Files.exists(targetFilePath)) {
       return
     }
@@ -67,28 +67,26 @@ final class WinExeInstallerBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  String buildInstaller(Path winDistPath, Path additionalDirectoryToInclude, String suffix) {
+  Path buildInstaller(Path winDistPath, Path additionalDirectoryToInclude, String suffix, BuildContext context) {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
-      buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
+      context.messages.warning("Windows installer can be built only under Windows or Linux")
       return null
     }
 
-    String communityHome = buildContext.paths.communityHome
-    String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
-    buildContext.messages.progress("Building Windows installer $outFileName")
+    String communityHome = context.paths.communityHome
+    String outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
+    context.messages.progress("Building Windows installer $outFileName")
 
-    Path box = buildContext.paths.tempDir.resolve("winInstaller")
+    Path box = context.paths.tempDir.resolve("winInstaller")
     Path nsiConfDir = box.resolve("nsiconf")
     Files.createDirectories(nsiConfDir)
 
     boolean bundleJre = jreDir != null
     if (!bundleJre) {
-      buildContext.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
+      context.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
     }
 
-    ant.copy(todir: nsiConfDir.toString()) {
-      fileset(dir: "$communityHome/build/conf/nsis")
-    }
+    BuildHelper.getInstance(context).copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
 
     generateInstallationConfigFileForSilentMode()
 
@@ -99,7 +97,7 @@ final class WinExeInstallerBuilder {
 
     try {
       def generator = new NsisFileListGenerator()
-      generator.addDirectory(buildContext.paths.distAll)
+      generator.addDirectory(context.paths.distAll)
       generator.addDirectory(winDistPath.toString(), ["**/idea.properties", "**/*.vmoptions"])
       generator.addDirectory(additionalDirectoryToInclude.toString())
 
@@ -112,7 +110,7 @@ final class WinExeInstallerBuilder {
       generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh").toFile())
     }
     catch (IOException e) {
-      buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")
+      context.messages.error("Failed to generated list of files for NSIS installer: $e")
     }
 
     prepareConfigurationFiles(nsiConfDir, winDistPath)
@@ -122,19 +120,19 @@ final class WinExeInstallerBuilder {
     }
 
     // Log final nsi directory to make debugging easier
-    def logDir = new File(buildContext.paths.buildOutputRoot, "log")
+    def logDir = new File(context.paths.buildOutputRoot, "log")
     def nsiLogDir = new File(logDir, "nsi")
     NioFiles.deleteRecursively(nsiLogDir.toPath())
     FileUtil.copyDir(nsiConfDir.toFile(), nsiLogDir)
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
-    buildContext.messages.block("Running NSIS tool to build .exe installer for Windows") {
+    context.messages.block("Running NSIS tool to build .exe installer for Windows") {
       if (SystemInfoRt.isWindows) {
         ant.exec(executable: "${box}/NSIS/makensis.exe") {
           arg(value: "/V2")
           arg(value: "/DCOMMUNITY_DIR=${communityHome}")
           arg(value: "/DIPR=${customizer.associateIpr}")
-          arg(value: "/DOUT_DIR=${buildContext.paths.artifacts}")
+          arg(value: "/DOUT_DIR=${context.paths.artifacts}")
           arg(value: "/DOUT_FILE=${outFileName}")
           arg(value: "${box}/nsiconf/idea.nsi")
         }
@@ -145,7 +143,7 @@ final class WinExeInstallerBuilder {
           arg(value: "-V2")
           arg(value: "-DCOMMUNITY_DIR=${communityHome}")
           arg(value: "-DIPR=${customizer.associateIpr}")
-          arg(value: "-DOUT_DIR=${buildContext.paths.artifacts}")
+          arg(value: "-DOUT_DIR=${context.paths.artifacts}")
           arg(value: "-DOUT_FILE=${outFileName}")
           arg(value: "${box}/nsiconf/idea.nsi")
           env(key: "NSISDIR", value: "${box}/NSIS")
@@ -153,15 +151,15 @@ final class WinExeInstallerBuilder {
       }
     }
 
-    def installerPath = "${buildContext.paths.artifacts}/${outFileName}.exe"
-    if (!new File(installerPath).exists()) {
-      buildContext.messages.error("Windows installer wasn't created.")
+    Path installerFile = context.paths.artifactDir.resolve(outFileName + ".exe")
+    if (Files.notExists(installerFile)) {
+      context.messages.error("Windows installer wasn't created.")
     }
-    buildContext.executeStep("Signing $installerPath", BuildOptions.WIN_SIGN_STEP) {
-      buildContext.signFile(installerPath)
+    context.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
+      context.signFile(installerFile)
     }
-    buildContext.notifyArtifactBuilt(installerPath)
-    return installerPath
+    context.notifyArtifactWasBuilt(installerFile)
+    return installerFile
   }
 
   private void prepareConfigurationFiles(Path nsiConfDir, Path winDistPath) {

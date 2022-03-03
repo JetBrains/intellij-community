@@ -10,10 +10,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -203,9 +200,8 @@ public final class PluginInstallOperation {
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
-        Notifications.Bus.notify(
-          new Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, pluginNode.getName() + ": " + e.getMessage(),
-                           NotificationType.ERROR));
+        NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Plugin Error");
+        Notifications.Bus.notify(group.createNotification(title, pluginNode.getName() + ": " + e.getMessage(), NotificationType.ERROR));
         return false;
       }
     }
@@ -259,15 +255,18 @@ public final class PluginInstallOperation {
       previousVersion
     );
 
-    IdeaPluginDescriptorImpl descriptor = downloader.prepareToInstallAndLoadDescriptor(myIndicator);
-    if (descriptor != null) {
+    boolean prepared = downloader.prepareToInstall(myIndicator);
+    if (prepared) {
+      IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)downloader.getDescriptor();
+
       if (pluginNode.getDependencies().isEmpty() && !descriptor.getDependencies().isEmpty()) {  // installing from custom plugins repo
         if (!checkMissingDependencies(descriptor, pluginIds)) return false;
       }
 
-      boolean allowNoRestart = myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
+      boolean allowNoRestart = myAllowInstallWithoutRestart &&
+                               DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
       if (allowNoRestart) {
-        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile().toPath(), descriptor));
+        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFilePath(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
         if (state != null) {
           state.onPluginInstall(downloader.getDescriptor(), false, false);
@@ -279,18 +278,18 @@ public final class PluginInstallOperation {
           downloader.install();
         }
       }
-      myDependant.add(new PluginInstallCallbackData(downloader.getFile().toPath(), descriptor, !allowNoRestart));
+      myDependant.add(new PluginInstallCallbackData(downloader.getFilePath(), descriptor, !allowNoRestart));
       pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
       if (toDisable != null) {
-        myPluginEnabler.disablePlugins(Set.of(toDisable));
+        myPluginEnabler.disable(Set.of(toDisable));
       }
+
+      return true;
     }
     else {
       myShownErrors = downloader.isShownErrors();
       return false;
     }
-
-    return true;
   }
 
   @Nullable IdeaPluginDescriptor checkDependenciesAndReplacements(@NotNull IdeaPluginDescriptor pluginNode) {

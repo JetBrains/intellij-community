@@ -27,7 +27,8 @@ import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
 internal class IFTInteractiveCourse : InteractiveCourseFactory {
-  override fun getInteractiveCourseData(): InteractiveCourseData = IFTInteractiveCourseData()
+  override fun getInteractiveCourseData(): InteractiveCourseData? =
+    if (LangManager.getInstance().getLangSupport()?.useUserProjects == false) IFTInteractiveCourseData() else null
 }
 
 private class IFTInteractiveCourseData : InteractiveCourseData {

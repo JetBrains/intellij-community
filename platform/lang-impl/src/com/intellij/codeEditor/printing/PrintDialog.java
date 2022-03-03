@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.editor.EditorBundle;
@@ -11,6 +11,7 @@ import com.intellij.ui.FontComboBox;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,7 +90,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
 
     gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
 
     Object @NotNull [] params1 = new Object[]{(myFileName != null ? myFileName : "")};
     myRbCurrentFile = new JRadioButton(mySelectedFileCount > 1 ? EditorBundle.message("print.files.radio", mySelectedFileCount)
@@ -98,14 +99,14 @@ class PrintDialog extends DialogWrapper {
 
     myRbSelectedText = new JRadioButton(mySelectedText != null ? mySelectedText : EditorBundle.message("print.selected.text.radio"));
     gbConstraints.gridy++;
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
     panel.add(myRbSelectedText, gbConstraints);
 
     Object @NotNull [] params = new Object[]{(myDirectoryName != null ? myDirectoryName : "")};
     myRbCurrentPackage = new JRadioButton(
       EditorBundle.message("print.all.files.in.directory.radio", params));
     gbConstraints.gridy++;
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
     panel.add(myRbCurrentPackage, gbConstraints);
 
     myCbIncludeSubpackages = new JCheckBox(EditorBundle.message("print.include.subdirectories.checkbox"));

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -16,9 +17,11 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexableSetContributor
 import org.junit.Test
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -327,5 +330,51 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         "File ${fileSpec.file} is not in filter"
       }
     }
+  }
+
+  @Test
+  fun `indexing and unloading modules`() {
+    lateinit var contentFileToUnload: FileSpec
+    lateinit var contentFileToRetain: FileSpec
+    projectModelRule.createJavaModule("moduleToUnload") {
+      content("contentRoot") {
+        contentFileToUnload = file("ContentFileToUnload.java", "class ContentFileToUnload {}")
+      }
+    }
+    projectModelRule.createJavaModule("moduleToRetail") {
+      content("contentRoot") {
+        contentFileToRetain = file("contentFileToRetain.java", "class contentFileToRetain {}")
+      }
+    }
+    assertIndexableFiles(contentFileToUnload.file, contentFileToRetain.file)
+    ModuleManager.getInstance(project).setUnloadedModules(Arrays.asList("moduleToUnload"))
+    assertIndexableFiles(contentFileToRetain.file)
+    ModuleManager.getInstance(project).setUnloadedModules(Collections.emptyList())
+    assertIndexableFiles(contentFileToUnload.file, contentFileToRetain.file)
+  }
+
+  @Test
+  fun `test iterators from different modules for same libs are merged`() {
+    val libraryRoot = tempDirectory.newVirtualDirectory("library")
+    lateinit var classesDir: DirectorySpec
+
+    buildDirectoryContent(libraryRoot) {
+      dir("library") {
+        classesDir = dir("classes") {
+          file("ClassFile.java", "class ClassFile {}")
+        }
+      }
+    }
+    val module = projectModelRule.createModule(name = "first")
+    projectModelRule.addModuleLevelLibrary(module, "libraryName") { model ->
+      model.addRoot(classesDir.file, OrderRootType.CLASSES)
+    }
+    val otherModule = projectModelRule.createModule(name = "second")
+    projectModelRule.addModuleLevelLibrary(otherModule, "libraryName") { model ->
+      model.addRoot(classesDir.file, OrderRootType.CLASSES)
+    }
+    val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
+    val providers = fileBasedIndexEx.getIndexableFilesProviders(project)
+    UsefulTestCase.assertSize(1, providers)
   }
 }

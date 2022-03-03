@@ -93,7 +93,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     Map<PsiFile, List<ExternalAnnotator<?,?>>> allAnnotators = new HashMap<>();
     int externalAnnotatorsInRoots = 0;
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    Function<InspectionProfileImpl, InspectionProfileWrapper> custom = myFile.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(myFile);
     InspectionProfile profile;
     if (custom != null) {
       profile = custom.apply(currentProfile).getInspectionProfile();
@@ -103,7 +103,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
     for (Language language : viewProvider.getLanguages()) {
       PsiFile psiRoot = viewProvider.getPsi(language);
-      if (highlightingManager.shouldInspect(psiRoot)) {
+      if (highlightingManager.shouldInspect(psiRoot) && !highlightingManager.runEssentialHighlightingOnly(psiRoot)) {
         List<ExternalAnnotator<?,?>> annotators = ExternalLanguageAnnotators.allForFile(language, psiRoot);
         annotators = ContainerUtil.filter(annotators, annotator -> {
           String shortName = annotator.getPairedBatchInspectionShortName();

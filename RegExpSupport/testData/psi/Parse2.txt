@@ -6,6 +6,6 @@ REGEXP_FILE
           PsiElement(CHARACTER)('1')
         RegExpQuantifierImpl: <*>
           PsiElement(STAR)('*')
-          PsiErrorElement:Dangling metacharacter
+          PsiErrorElement:Dangling quantifier '*'
             <empty list>
   PsiElement(STAR)('*')

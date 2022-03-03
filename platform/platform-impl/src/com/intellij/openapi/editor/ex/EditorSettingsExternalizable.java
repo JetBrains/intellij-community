@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -69,6 +68,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
     public boolean SHOW_INTENTION_PREVIEW = false;
+    public boolean USE_EDITOR_FONT_IN_INLAYS = false;
 
     public boolean SMART_HOME = true;
 
@@ -123,15 +123,20 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @State(
     name = "OsSpecificEditorSettings",
     storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS),
-    category = SettingsCategory.CODE)
+    category = SettingsCategory.CODE
+  )
   public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 
     @Override
-    public OsSpecificState getState() { return this; }
+    public OsSpecificState getState() {
+      return this;
+    }
 
     @Override
-    public void loadState(@NotNull OsSpecificState state) { XmlSerializerUtil.copyBean(state, this); }
+    public void loadState(@NotNull OsSpecificState state) {
+      CARET_STOP_OPTIONS = state.CARET_STOP_OPTIONS;
+    }
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -162,12 +167,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public static EditorSettingsExternalizable getInstance() {
-    if (ApplicationManager.getApplication().isDisposed()) {
-      return new EditorSettingsExternalizable(new OsSpecificState());
-    }
-    else {
-      return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
-    }
+    return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
   }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable) {
@@ -742,5 +742,13 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setCaretStopOptions(@NotNull CaretStopOptions options) {
     myOsSpecificState.CARET_STOP_OPTIONS = options;
+  }
+
+  public boolean isUseEditorFontInInlays() {
+    return myOptions.USE_EDITOR_FONT_IN_INLAYS;
+  }
+
+  public void setUseEditorFontInInlays(boolean value) {
+    myOptions.USE_EDITOR_FONT_IN_INLAYS = value;
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.ui.tree.FieldDescriptor
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor
 import com.intellij.debugger.ui.tree.NodeDescriptor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -37,7 +38,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
-        if (context.frameProxy == null) return null
+        if (context.frameProxy == null || DumbService.isDumb(project)) return null
 
         return when(descriptor) {
             is FieldDescriptor -> computeSourcePosition(descriptor, context, nearest)

@@ -285,6 +285,8 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
 
     @Override
     public boolean importData(final TransferSupport support) {
+
+      //todo new maven importing
       if (canImport(support)) {
         List<VirtualFile> pomFiles = new ArrayList<>();
 

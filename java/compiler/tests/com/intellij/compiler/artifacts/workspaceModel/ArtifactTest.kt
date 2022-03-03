@@ -19,7 +19,9 @@ import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.InvalidArtifact
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
+import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactsTestingState
 import com.intellij.packaging.impl.artifacts.workspacemodel.forThisAndFullTree
+import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
@@ -33,6 +35,11 @@ import org.junit.Assume.assumeTrue
 import java.util.concurrent.Callable
 
 class ArtifactTest : ArtifactsTestCase() {
+
+  override fun tearDown() {
+    ArtifactsTestingState.reset()
+    super.tearDown()
+  }
 
   fun `test rename artifact via model`() = runWriteAction {
     assumeTrue(WorkspaceModel.enabledForArtifacts)
@@ -388,6 +395,51 @@ class ArtifactTest : ArtifactsTestCase() {
     (bridgeArtifact.rootElement.children.single() as MyCompositeWorkspacePackagingElement).children
     val artifactEntity = artifactEntity(project, "Artifact-0")
     assertTreesEquals(project, bridgeArtifact.rootElement, artifactEntity.rootElement!!)
+  }
+
+  fun `test async artifact initializing`() {
+    assumeTrue(WorkspaceModel.enabledForArtifacts)
+
+    repeat(1_000) {
+      val rootEntity = runWriteAction {
+        WorkspaceModel.getInstance(project).updateProjectModel {
+          it.addArtifactRootElementEntity(emptyList(), MySource)
+        }
+      }
+      val threads = List(10) {
+        Callable {
+          rootEntity.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+        }
+      }
+
+      val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test executor", JobSchedulerImpl.getCPUCoresCount())
+      val res = ConcurrencyUtil.invokeAll(threads, service).map { it.get() }.toSet()
+      assertOneElement(res)
+    }
+  }
+
+  fun `test artifacts with exceptions during initialization`() {
+    assumeTrue(WorkspaceModel.enabledForArtifacts)
+
+    var exceptionsThrown: List<Int> = emptyList()
+    repeat(4) {
+      val rootEntity = runWriteAction {
+        WorkspaceModel.getInstance(project).updateProjectModel {
+          it.addArtifactRootElementEntity(emptyList(), MySource)
+        }
+      }
+      ArtifactsTestingState.testLevel = it + 1
+      try {
+        rootEntity.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+      } catch (e: IllegalStateException) {
+        if (e.message?.contains("Exception on level") != true) {
+          error("Unexpected exception")
+        }
+      }
+
+      exceptionsThrown = ArtifactsTestingState.exceptionsThrows
+    }
+    TestCase.assertEquals(listOf(1, 2, 3, 4), exceptionsThrown)
   }
 
   fun `test async artifacts requesting`() {

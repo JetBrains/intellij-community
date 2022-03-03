@@ -160,6 +160,8 @@ class UISettingsState : BaseState() {
   var maxLookupListHeight by property(11)
   @get:OptionTag("DND_WITH_PRESSED_ALT_ONLY")
   var dndWithPressedAltOnly by property(false)
+  @get:OptionTag("SEPARATE_MAIN_MENU")
+  var separateMainMenu by property(false)
   @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE")
   var defaultAutoScrollToSource by property(false)
   @get:Transient

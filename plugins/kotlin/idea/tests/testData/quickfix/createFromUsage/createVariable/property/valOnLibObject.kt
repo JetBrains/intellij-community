@@ -1,5 +1,5 @@
 // "Create extension property 'Unit.foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test() {
     val a: Int = Unit.<caret>foo

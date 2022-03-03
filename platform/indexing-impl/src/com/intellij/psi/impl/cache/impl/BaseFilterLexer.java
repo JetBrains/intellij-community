@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl;
 
@@ -24,7 +10,8 @@ import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,15 +48,15 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
     myTodoScannedBound = end;
   }
 
-  public static class TodoScanningState {
+  public static final class TodoScanningState {
     final IndexPattern[] myPatterns;
     final Matcher[] myMatchers;
-    final TIntArrayList myOccurrences;
+    final IntList myOccurrences;
 
     public TodoScanningState(IndexPattern[] patterns, Matcher[] matchers) {
       myPatterns = patterns;
       myMatchers = matchers;
-      myOccurrences = new TIntArrayList(1);
+      myOccurrences = new IntArrayList(1);
     }
   }
 
@@ -89,7 +76,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   }
 
   public static void advanceTodoItemsCount(CharSequence input, OccurrenceConsumer consumer, TodoScanningState todoScanningState) {
-    todoScanningState.myOccurrences.resetQuick();
+    todoScanningState.myOccurrences.clear();
 
     for (int i = todoScanningState.myMatchers.length - 1; i >= 0; --i) {
       Matcher matcher = todoScanningState.myMatchers[i];
@@ -100,7 +87,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
         while (matcher.find()) {
           ProgressManager.checkCanceled();
           int start = matcher.start();
-          if (start != matcher.end() && todoScanningState.myOccurrences.indexOf(start) == -1) {
+          if (start != matcher.end() && !todoScanningState.myOccurrences.contains(start)) {
             consumer.incTodoOccurrence(todoScanningState.myPatterns[i]);
             todoScanningState.myOccurrences.add(start);
           }

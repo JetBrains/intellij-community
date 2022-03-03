@@ -27,8 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.GotItTooltip
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.MultiMap
+import com.intellij.util.SingleAlarm
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
@@ -43,7 +42,6 @@ import org.jetbrains.io.webSocket.WebSocketHandshakeHandler
 import java.awt.Point
 import java.net.URI
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
@@ -75,8 +73,10 @@ class WebServerPageConnectionService {
   fun fileRequested(request: FullHttpRequest, onlyIfHtmlFile: Boolean, fileSupplier: Supplier<out VirtualFile?>): String? {
     var reloadRequest = ReloadMode.DISABLED
     val uri = request.uri()
+    var path: String? = null
     if (uri != null && uri.contains(RELOAD_URL_PARAM)) {
       val decoder = QueryStringDecoder(uri)
+      path = decoder.path()
       reloadRequest = decoder.parameters()[RELOAD_URL_PARAM]?.get(0)?.let { ReloadMode.valueOf(it) } ?: ReloadMode.DISABLED
     }
     if (reloadRequest == ReloadMode.DISABLED && myState.isEmpty) return null
@@ -91,15 +91,21 @@ class WebServerPageConnectionService {
       return null
     }
     if (onlyIfHtmlFile && !WebBrowserXmlService.getInstance().isHtmlFile(file)) return null
-    val clientId = myState.pageRequested(uri, file, reloadRequest)
+    if (path == null) {
+      LOGGER.warn("path not evaluated for $uri")
+      return null
+    }
+    myState.pageRequested(path, file, reloadRequest)
 
     val optionalConsoleLog =
-      if (LOGGER.isDebugEnabled) "\nconsole.log('JetBrains Reload on Save script loaded, clientId = $clientId');" else ""
+      if (LOGGER.isDebugEnabled) "\nconsole.log('JetBrains Reload on Save script loaded');" else ""
     //language=HTML
     return """
 <script>
 (function() {$optionalConsoleLog
-  var ws = new WebSocket('ws://' + window.location.host + '/jb-server-page?$RELOAD_CLIENT_ID_URL_PARAMETER=$clientId');
+  var ws = new WebSocket('ws://' + window.location.host + 
+             '/jb-server-page?$RELOAD_MODE_URL_PARAMETER=$reloadRequest&'+
+             '$REFERRER_URL_PARAMETER=' + encodeURIComponent(window.location.pathname));
   ws.onmessage = function (msg) {
       if (msg.data === 'reload') {
           window.location.reload();
@@ -154,35 +160,37 @@ class WebServerPageConnectionService {
       override fun afterVfsChange() {
         showGotItTooltip(modifiedFiles)
         for ((requestedPage, affectedFiles) in affectedClients) {
-          val clientFuture = requestedPage.myClient
           if (affectedFiles.isEmpty()) {
-            LOGGER.debug("Reload page for clientId = ${requestedPage.myClientId}")
-            clientFuture.thenAccept { client: WebSocketClient? -> client!!.send(RELOAD_PAGE_MESSAGE.retainedDuplicate()) }
+            LOGGER.debug("Reloading page for $requestedPage")
+            for (client in requestedPage.clients) {
+              client.webSocket.send(RELOAD_PAGE_MESSAGE.retainedDuplicate())
+            }
           }
           else {
-            val messageId = myState.getNextMessageId()
-            myState.linkedFilesRequested(messageId, affectedFiles)
-            for (affectedFile in affectedFiles) {
-              LOGGER.debug("Reload file ${affectedFile.name} for clientId = ${requestedPage.myClientId}")
-              clientFuture.thenAccept { client: WebSocketClient? ->
-                val message = UPDATE_LINK_WS_REQUEST_PREFIX + messageId
-                client!!.send(Unpooled.copiedBuffer(message, Charsets.UTF_8))
+            for ((clientIndex, client) in requestedPage.clients.withIndex()) {
+              val messageId = myState.getNextMessageId()
+              myState.linkedFilesRequested(messageId, affectedFiles)
+              val message = UPDATE_LINK_WS_REQUEST_PREFIX + messageId
+              for (affectedFile in affectedFiles) {
+                if (clientIndex == 0) LOGGER.debug("Reload file ${affectedFile.name} for $requestedPage")
+                client.webSocket.send(Unpooled.copiedBuffer(message, Charsets.UTF_8))
               }
+              JobScheduler.getScheduler().schedule(
+                {
+                  if (!myState.isAllLinkedFilesReloaded(messageId)) {
+                    LOGGER.debug("Some files weren't reloaded, reload whole $requestedPage for client")
+                    client.webSocket.send(RELOAD_PAGE_MESSAGE.retainedDuplicate())
+                  }
+                }, 1, TimeUnit.SECONDS)
             }
-            JobScheduler.getScheduler().schedule({
-              if (!myState.isAllLinkedFilesReloaded(messageId)) {
-                LOGGER.debug("Some files weren't reloaded, reload whole page for clientId = ${requestedPage.myClientId}")
-                clientFuture.thenAccept { client: WebSocketClient? -> client!!.send(RELOAD_PAGE_MESSAGE.retainedDuplicate()) }
-              }
-            }, 1, TimeUnit.SECONDS)
           }
         }
       }
     }
   }
 
-  private fun clientConnected(client: WebSocketClient, clientId: Int) {
-    myState.clientConnected(client, clientId)
+  private fun clientConnected(client: WebSocketClient, referrer: String, reloadMode: ReloadMode) {
+    myState.clientConnected(client, referrer, reloadMode)
   }
 
   private fun clientDisconnected(client: WebSocketClient) {
@@ -243,11 +251,15 @@ class WebServerPageConnectionService {
 
     override fun connected(client: Client, parameters: Map<String, List<String>>?) {
       if (parameters == null || client !is WebSocketClient) return
-      val ids = parameters[RELOAD_CLIENT_ID_URL_PARAMETER]!!
-      if (ids.size != 1) return
-      val id = StringUtil.parseInt(ids[0], -1)
-      if (id == -1) return
-      instance.clientConnected(client, id)
+      val reloadModeParam = parameters[RELOAD_MODE_URL_PARAMETER] ?: return
+      if (reloadModeParam.size != 1) return
+      val reloadMode = try { ReloadMode.valueOf(reloadModeParam[0]) } catch (_:Throwable) { null } ?: return
+
+      val referrerParam = parameters[REFERRER_URL_PARAMETER] ?: return
+      if (referrerParam.size != 1) return
+      val referrer = referrerParam[0]
+
+      instance.clientConnected(client, referrer, reloadMode)
     }
 
     override fun disconnected(client: Client) {
@@ -258,9 +270,8 @@ class WebServerPageConnectionService {
   }
 
   private class RequestedPagesState {
-    private var myLastClientId = 0
     private val myRequestedFilesWithoutReferrer: MutableSet<VirtualFile?> = HashSet()
-    private val myRequestedPages = MultiMap<String, RequestedPage?>()
+    private val myRequestedPages: MutableMap<String, RequestedPage> = HashMap()
 
     /**
      * Start to listen for files changes on HTTP request with RELOAD_URL_PARAM, stop on last WS client disconnect
@@ -274,8 +285,8 @@ class WebServerPageConnectionService {
     @Synchronized
     fun clear() {
       LOGGER.debug("Requested pages cleared")
-      for (requestedPage in myRequestedPages.values()) {
-        requestedPage!!.myClient.cancel(false)
+      for (requestedPage in myRequestedPages.values) {
+        requestedPage.clear()
       }
       myRequestedPages.clear()
       cleanupIfEmpty()
@@ -286,13 +297,10 @@ class WebServerPageConnectionService {
       val referer = request.headers()[HttpHeaders.REFERER]
       var associatedPageFound = false
       try {
-        val refererUri = URI.create(referer)
-        val refererWithoutHost = refererUri.path + "?" + refererUri.query
-        val pages = myRequestedPages[refererWithoutHost]
-        for (page in pages) {
-          page!!.myFiles.add(file)
-        }
-        associatedPageFound = !pages.isEmpty()
+        val path = extractRequestedPagePath(referer)
+        val page = myRequestedPages[path]
+        page?.associatedFiles?.add(file)
+        associatedPageFound = page != null
 
         val messageIds = QueryStringDecoder(request.uri()).parameters()[UPDATE_LINKS_ID_URL_PARAMETER]
         if (messageIds != null && messageIds.size == 1) {
@@ -306,10 +314,14 @@ class WebServerPageConnectionService {
       }
     }
 
+    private fun extractRequestedPagePath(referer: String): String {
+      return URI.create(referer).path
+    }
+
     @Synchronized
-    fun pageRequested(uri: String, file: VirtualFile, reloadMode: ReloadMode): Int {
-      LOGGER.assertTrue(myRequestedPages.isEmpty == (myFileListenerDisposable == null),
-        "isEmpty: ${myRequestedPages.isEmpty}, disposable is null: ${myFileListenerDisposable == null}")
+    fun pageRequested(path: String, file: VirtualFile, reloadMode: ReloadMode) {
+      LOGGER.assertTrue(myRequestedPages.isEmpty() == (myFileListenerDisposable == null),
+        "isEmpty: ${myRequestedPages.isEmpty()}, disposable is null: ${myFileListenerDisposable == null}")
 
       if (myFileListenerDisposable == null) {
         val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myFileListenerDisposable")
@@ -328,62 +340,45 @@ class WebServerPageConnectionService {
         }, disposable)
         myDocumentListenerDisposable = disposable
       }
-      val clientId = ++myLastClientId
-      LOGGER.debug("Page is requested for $uri, clientId = $clientId")
-      val newPage = RequestedPage(clientId, file, reloadMode)
-      myRequestedPages.putValue(uri, newPage)
-      JobScheduler.getScheduler().schedule({ stopWaitingForClient(uri, newPage) }, 30, TimeUnit.SECONDS)
-      return clientId
+      LOGGER.debug("Page is requested for $path")
+
+      val page = myRequestedPages.getOrPut(path) { RequestedPage(path) }
+      page.associatedFiles.add(file)
+      page.scheduleCleanup()
     }
 
-    private fun isTrackedFile(virtualFile: VirtualFile?) = myRequestedFilesWithoutReferrer.contains(virtualFile)
-      || myRequestedPages.values().stream().filter{ p -> p?.reloadMode == ReloadMode.RELOAD_ON_CHANGE }
-                                                             .anyMatch { it!!.myFiles.contains(virtualFile) }
-
+    private fun isTrackedFile(virtualFile: VirtualFile?) =
+      myRequestedFilesWithoutReferrer.contains(virtualFile) ||
+      myRequestedPages.values.any {
+        it.associatedFiles.contains(virtualFile) && it.clients.any { c -> c.reloadMode == ReloadMode.RELOAD_ON_CHANGE }
+      }
 
     @Synchronized
-    private fun stopWaitingForClient(uri: String, page: RequestedPage) {
-      if (page.myClient.isDone) return
-      page.myClient.cancel(false)
-      myRequestedPages.remove(uri, page)
-      cleanupIfEmpty()
-      LOGGER.error("Timeout on waiting for WebSocket client for $uri, clientId = ${page.myClientId}")
-    }
-
-    @Synchronized
-    fun clientConnected(client: WebSocketClient, clientId: Int) {
-      val requestedPage = ContainerUtil.find(myRequestedPages.values()) { it?.myClientId == clientId }
-      if (requestedPage != null) {
-        requestedPage.myClient.complete(client)
+    fun clientConnected(client: WebSocketClient, referrer: String, reloadMode: ReloadMode) {
+      LOGGER.debug("WebSocket client connected for $referrer")
+      val requestedPage = myRequestedPages[extractRequestedPagePath(referrer)]
+      if (requestedPage == null) {
+        LOGGER.warn("referrer not found")
+        return
       }
-      else {
-        // possible if 'clear' happens between page is registered and connected
-        LOGGER.info("Cannot find client for clientId = $clientId")
-      }
+      requestedPage.clientConnected(client, reloadMode)
     }
 
     @Synchronized
     fun clientDisconnected(client: WebSocketClient) {
-      var requestedPageKey: String? = null
       var requestedPage: RequestedPage? = null
-      for ((key, value) in myRequestedPages.entrySet()) {
-        for (page in value) {
-          if (page!!.myClient.isDone && page.myClient.getNow(null) === client) {
-            requestedPageKey = key
-            requestedPage = page
-            break
-          }
+      for (page in myRequestedPages.values) {
+        if (page.clients.removeIf { it.webSocket == client }) {
+          requestedPage = page
+          break
         }
       }
-      LOGGER.debug("WebSocket client disconnected for URI $requestedPageKey")
-      if (requestedPageKey != null) {
-        myRequestedPages.remove(requestedPageKey, requestedPage)
-      }
-      cleanupIfEmpty()
+      LOGGER.debug("WebSocket client disconnected for $requestedPage")
+      requestedPage?.scheduleCleanup()
     }
 
     private fun cleanupIfEmpty() {
-      if (myRequestedPages.isEmpty) {
+      if (myRequestedPages.isEmpty()) {
         myRequestedFilesWithoutReferrer.clear()
         if (myFileListenerDisposable != null) {
           Disposer.dispose(Objects.requireNonNull(myFileListenerDisposable)!!)
@@ -405,14 +400,14 @@ class WebServerPageConnectionService {
     }
 
     /**
-     * @return For each affected clients either a list of linked files to reload, or reload the whole page if list is empty
+     * @return For each affected page either a list of linked files to reload, or reload the whole page if list is empty
      */
     @Synchronized
     fun collectAffectedPages(files: List<VirtualFile>): Map<RequestedPage, List<VirtualFile>> {
       val result = HashMap<RequestedPage, List<VirtualFile>>()
       for (modifiedFile in files) {
-        for (requestedPage in myRequestedPages.values()) {
-          if (requestedPage!!.myFiles.contains(modifiedFile)) {
+        for (requestedPage in myRequestedPages.values) {
+          if (requestedPage.associatedFiles.contains(modifiedFile)) {
             if (StringUtil.equalsIgnoreCase(modifiedFile.extension, "css")) {
               if (!result.containsKey(requestedPage)) {
                 result[requestedPage] = mutableListOf(modifiedFile)
@@ -449,15 +444,45 @@ class WebServerPageConnectionService {
 
     @get:Synchronized
     val isEmpty: Boolean
-      get() = myRequestedPages.isEmpty
-  }
+      get() = myRequestedPages.isEmpty()
 
-  private class RequestedPage(val myClientId: Int, requestedPageFile: VirtualFile, val reloadMode: ReloadMode) {
-    val myFiles: MutableSet<VirtualFile?> = HashSet()
-    val myClient = CompletableFuture<WebSocketClient?>()
+    @Synchronized
+    fun removeRequestedPageIfEmpty(requestedPage: RequestedPage) {
+      LOGGER.assertTrue(myRequestedPages[requestedPage.url] == requestedPage)
+      if (requestedPage.clients.isEmpty()) {
+        requestedPage.clear()
+        myRequestedPages.remove(requestedPage.url)
+        cleanupIfEmpty()
+      }
+    }
 
-    init {
-      myFiles.add(requestedPageFile)
+    inner class RequestedPage(val url: String) {
+      val clients: MutableCollection<RequestedPageClient> = ArrayList()
+      val associatedFiles:  MutableSet<VirtualFile> = HashSet()
+      var waitForClient: SingleAlarm = SingleAlarm(Runnable {
+        removeRequestedPageIfEmpty(this)
+      }, TimeUnit.SECONDS.toMillis(30).toInt(), )
+
+      fun clear() {
+        Disposer.dispose(waitForClient)
+      }
+
+      fun scheduleCleanup() {
+        waitForClient.cancelAndRequest()
+      }
+
+      fun clientConnected(client: WebSocketClient, reloadMode: ReloadMode) {
+        clients.add(RequestedPageClient(client, reloadMode))
+        waitForClient.cancel()
+      }
+
+      override fun toString(): String {
+        return "page (url=...${url.takeLast(10)}, ${clients.size} client(s)}"
+      }
+    }
+
+    class RequestedPageClient(val webSocket: WebSocketClient, val reloadMode: ReloadMode) {
+
     }
   }
 
@@ -467,7 +492,8 @@ class WebServerPageConnectionService {
     private const val RELOAD_WS_REQUEST = "reload"
     private const val UPDATE_LINK_WS_REQUEST_PREFIX = "update-css "
     private const val RELOAD_WS_URL_PREFIX = "jb-server-page"
-    private const val RELOAD_CLIENT_ID_URL_PARAMETER = "reloadServiceClientId"
+    private const val RELOAD_MODE_URL_PARAMETER = "reloadMode"
+    private const val REFERRER_URL_PARAMETER = "referrer"
     private const val UPDATE_LINKS_ID_URL_PARAMETER = "jbUpdateLinksId"
     val instance: WebServerPageConnectionService
       get() = ApplicationManager.getApplication().getService(WebServerPageConnectionService::class.java)

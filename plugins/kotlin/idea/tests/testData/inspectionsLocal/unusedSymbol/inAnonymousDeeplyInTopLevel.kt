@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 private val xs = listOf(1, 2, 3).flatMap { x ->
     listOf(3, 4, 5).map { y ->

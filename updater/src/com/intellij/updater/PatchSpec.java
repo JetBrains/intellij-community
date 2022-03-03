@@ -32,7 +32,6 @@ public class PatchSpec {
   private long myLargeFileCutoff = Long.MAX_VALUE;
   private List<String> myIgnoredFiles = Collections.emptyList();
   private List<String> myCriticalFiles = Collections.emptyList();
-
   // A conflict in an essential file makes a patch update impossible; the IDE must be reinstalled from scratch.
   private List<String> myStrictFiles = Collections.emptyList();
   private List<String> myOptionalFiles = Collections.emptyList();
@@ -40,6 +39,7 @@ public class PatchSpec {
   private Map<String, String> myWarnings = Collections.emptyMap();
   private List<String> myDeleteFiles = Collections.emptyList();
   private String myRoot = "";
+  private int myTimeout = 0;
 
   private static final long DEFAULT_LARGE_FILE_CUTOFF = 50000000L;
 
@@ -214,6 +214,14 @@ public class PatchSpec {
     return myRoot;
   }
 
+  public int getTimeout() {
+    return myTimeout;
+  }
+
+  public PatchSpec setTimeout(int timeout) {
+    myTimeout = timeout;
+    return this;
+  }
   public long getLargeFileCutoff() {
     return myLargeFileCutoff;
   }

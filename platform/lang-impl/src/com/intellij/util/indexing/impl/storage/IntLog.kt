@@ -182,6 +182,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       return
     }
     try {
+      Files.createDirectories(marker.parent)
       Files.createFile(marker)
     }
     catch (ignored: FileAlreadyExistsException) {

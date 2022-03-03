@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,17 +55,17 @@ public abstract class TestFrameworks {
 
   @Nullable
   public static TestFramework detectFramework(@NotNull final PsiClass psiClass) {
-    return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
-      .create(computeFramework(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
+    return ContainerUtil.getFirstItem(detectApplicableFrameworks(psiClass));
   }
 
   @NotNull
   public static Set<TestFramework> detectApplicableFrameworks(@NotNull final PsiClass psiClass) {
-    return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
-      .create(computeFrameworks(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
+    PsiModifierListOwner normalized = AnnotationCacheOwnerNormalizer.normalize(psiClass);
+    return CachedValuesManager.getCachedValue(normalized, () -> CachedValueProvider.Result
+      .create(computeFrameworks(normalized), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  private static Set<TestFramework> computeFrameworks(PsiClass psiClass) {
+  private static Set<TestFramework> computeFrameworks(PsiElement psiClass) {
     Set<TestFramework> frameworks = new LinkedHashSet<>();
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (framework.isTestClass(psiClass)) {
@@ -77,21 +80,5 @@ public abstract class TestFrameworks {
       }
     }
     return frameworks;
-  }
-
-  @Nullable
-  private static TestFramework computeFramework(PsiClass psiClass) {
-    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
-      if (framework.isTestClass(psiClass)) {
-        return framework;
-      }
-    }
-
-    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
-      if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
-        return framework;
-      }
-    }
-    return null;
   }
 }

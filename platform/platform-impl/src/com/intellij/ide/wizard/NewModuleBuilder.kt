@@ -12,6 +12,6 @@ class NewModuleBuilder : AbstractNewProjectWizardBuilder() {
   override fun getNodeIcon(): Icon = EmptyIcon.ICON_0
 
   override fun createStep(context: WizardContext) =
-    NewProjectWizardBaseStep(context)
-      .chain(::NewProjectWizardLanguageStep)
+    RootNewProjectWizardStep(context)
+      .chain(::NewProjectWizardBaseStep, ::NewProjectWizardLanguageStep)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable;
 
@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PositionTracker;
 import kotlin.collections.ArraysKt;
@@ -178,9 +179,9 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                                                                           JBUI.insets(0, 5), 0, 0));
             ++count;
         }
-        panel.add(Box.createVerticalBox(), new GridBagConstraints(0, count, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
-                                                                  GridBagConstraints.BOTH,
-                                                                  JBUI.emptyInsets(), 0, 0));
+      panel.add(Box.createVerticalBox(), new GridBagConstraints(0, count, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
+                                                                GridBagConstraints.BOTH,
+                                                                JBInsets.emptyInsets(), 0, 0));
     }
 
     @NotNull

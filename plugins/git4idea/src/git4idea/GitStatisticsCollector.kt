@@ -50,7 +50,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     addIfDiffers(set, settings, defaultSettings, { it.saveChangesPolicy }, SAVE_POLICY, SAVE_POLICY_VALUE)
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, PUSH_AUTO_UPDATE)
-    addBoolIfDiffers(set, settings, defaultSettings, { it.shouldUpdateAllRootsIfPushRejected() }, PUSH_UPDATE_ALL_ROOTS)
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, WARN_CRLF)
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutDetachedHead() }, WARN_DETACHED)
 
@@ -138,7 +137,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     private val SAVE_POLICY = GROUP.registerVarargEvent("save.policy", SAVE_POLICY_VALUE)
 
     private val PUSH_AUTO_UPDATE = GROUP.registerVarargEvent("push.autoupdate", EventFields.Enabled)
-    private val PUSH_UPDATE_ALL_ROOTS = GROUP.registerVarargEvent("push.update.all.roots", EventFields.Enabled)
     private val WARN_CRLF = GROUP.registerVarargEvent("warn.about.crlf", EventFields.Enabled)
     private val WARN_DETACHED = GROUP.registerVarargEvent("warn.about.detached", EventFields.Enabled)
     private val STAGING_AREA = GROUP.registerVarargEvent("staging.area.enabled", EventFields.Enabled)

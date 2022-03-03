@@ -1,5 +1,5 @@
 // "Create class 'Foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Unresolved reference: Foo
 
 open class B

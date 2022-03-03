@@ -1,5 +1,5 @@
 // "Replace with dot call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(a: String) {
     a<caret>?.toLowerCase()
 }

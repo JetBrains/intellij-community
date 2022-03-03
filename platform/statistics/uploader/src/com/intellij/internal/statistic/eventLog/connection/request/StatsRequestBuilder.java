@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
-import com.intellij.internal.statistic.StatisticsStringUtil;
+import com.intellij.internal.statistic.config.StatisticsStringUtil;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +36,7 @@ public class StatsRequestBuilder {
   private final String myUserAgent;
   private final StatsProxyInfo myProxyInfo;
   private final SSLContext mySSLContext;
+  private final Map<String, String> myExtraHeaders;
 
   private final String myUrl;
   private final String myMethod;
@@ -52,6 +53,7 @@ public class StatsRequestBuilder {
     myUserAgent = settings.getUserAgent();
     myProxyInfo = settings.selectProxy(myUrl);
     mySSLContext = settings.getSSLContext();
+    myExtraHeaders = settings.getExtraHeaders();
   }
 
   @NotNull
@@ -186,6 +188,9 @@ public class StatsRequestBuilder {
     } else {
       throw new IllegalHttpRequestTypeException();
     }
+
+    myExtraHeaders
+      .forEach((k, v) -> builder.setHeader(k,v));
 
     return builder.build();
   }

@@ -110,6 +110,10 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     return perform(() -> getOrCreateWrappee().search(mavenIndexId, pattern, maxResult, ourToken));
   }
 
+  /**
+   * @deprecated use {@link MavenEmbedderWrapper#getArchetypes()}
+   */
+  @Deprecated
   public Collection<MavenArchetype> getArchetypes() {
     return perform(() -> getOrCreateWrappee().getArchetypes(ourToken));
   }

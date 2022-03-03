@@ -5,7 +5,9 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +84,14 @@ public final class JavaVarTypeUtil {
       PsiClass aClass = result.getElement();
       if (aClass != null) {
         PsiManager manager = aClass.getManager();
+        if (aClass instanceof PsiTypeParameter) {
+          PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+          if (TypeConversionUtil.isFreshVariable(typeParameter)) {
+            PsiType upperBound = TypeConversionUtil.getInferredUpperBoundForSynthetic(typeParameter);
+            return ObjectUtils.notNull(PsiSubstitutor.EMPTY.put(typeParameter, PsiWildcardType.createUnbounded(manager)).substitute(upperBound), 
+                                       classType);
+          }
+        }
         PsiSubstitutor targetSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor substitutor = result.getSubstitutor();
         for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {

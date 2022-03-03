@@ -274,10 +274,9 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   private fun fireLinesUnchanged(startLine: Int, endLine: Int) {
-    if (!isClearLineModificationFlagOnRollback()) return
-    if (document.textLength == 0) return  // empty document has no lines
-    if (startLine == endLine) return
-    (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
+    if (isClearLineModificationFlagOnRollback()) {
+      DiffUtil.clearLineModificationFlags(document, startLine, endLine)
+    }
   }
 
 

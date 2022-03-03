@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
 import java.nio.file.Path
@@ -167,8 +167,9 @@ internal fun notifySlackChannel(message: String, context: Context, success: Bool
   val text = "*${context.devRepoName}* $reaction\n${message.replace("\"", "\\\"")}\n$build"
   val body = """{ "text": "$text" }"""
   val response = try {
-    post(CHANNEL_WEB_HOOK, body)
-  } catch (e: Exception) {
+    post(CHANNEL_WEB_HOOK, body, mediaType = null)
+  }
+  catch (e: Exception) {
     log("Post of '$body' has failed")
     throw e
   }

@@ -1,4 +1,0 @@
-version = "1.0.*"
-python2 = true
-requires = []
-obsolete_since = "2.0"

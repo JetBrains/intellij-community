@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf.isAltPressed
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.CurrentTheme.Link
 import com.intellij.util.ui.UIUtilities
@@ -14,6 +15,7 @@ import java.awt.*
 import java.beans.PropertyChangeEvent
 import java.io.StringReader
 import java.net.URL
+import java.util.function.Supplier
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.LookAndFeel.installProperty
@@ -31,11 +33,10 @@ import javax.swing.text.Element
 import javax.swing.text.Position.Bias
 import javax.swing.text.View
 import javax.swing.text.html.HTMLDocument
-import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.StyleSheet
 
-class DefaultLinkButtonUI : BasicButtonUI() {
+internal class DefaultLinkButtonUI : BasicButtonUI() {
   companion object {
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")
@@ -194,7 +195,7 @@ private fun getLinkColor(button: AbstractButton) = when {
   else -> Link.Foreground.ENABLED
 }
 
-private class DynamicColor(button: AbstractButton) : UIResource, JBColor({ getLinkColor(button) })
+private class DynamicColor(button: AbstractButton) : UIResource, JBColor(Supplier { getLinkColor(button) })
 
 // support underlined <html>
 
@@ -243,22 +244,14 @@ private val sharedUnderlineStyles by lazy {
 }
 
 private val sharedEditorKit by lazy {
-  object : HTMLEditorKit() {
-    override fun getViewFactory() = lazyViewFactory
-
-    private val lazyViewFactory by lazy {
-      object : HTMLFactory() {
-        override fun create(elem: Element): View {
-          val view = super.create(elem)
-          if (view is ImageView) {
-            // force images to be loaded synchronously
-            view.loadsSynchronously = true
-          }
-          return view
-        }
+  HTMLEditorKitBuilder().withViewFactoryExtensions(
+    { _, view ->
+      if (view is ImageView) {
+        // force images to be loaded synchronously
+        view.loadsSynchronously = true
       }
-    }
-  }
+      view
+    }).build()
 }
 
 private class UnderlinedView(private val button: AbstractButton, private val view: View) : View(null) {

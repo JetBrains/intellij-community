@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui
 
@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nls
 import kotlin.math.max
 import kotlin.properties.Delegates.observable
 
-private val FileStatus.attributes get() = SimpleTextAttributes(
-  SimpleTextAttributes.STYLE_PLAIN, JBColor { color ?: UIUtil.getLabelForeground() })
+private val FileStatus.attributes
+  get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.lazy { color ?: UIUtil.getLabelForeground() })
 
 private fun Int.formatInt(): String = "%,d".format(this) // NON-NLS
 

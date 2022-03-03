@@ -6,6 +6,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class FunctionUtil {
+  private static final NullableFunction<?, ?> NULL = new NullableFunction<Object, Object>() {
+    public Object fun(final Object o) {
+      return null;
+    }
+
+    @Override
+    public String toString() {
+      return "NullableFunction.NULL";
+    }
+  };
+
   private FunctionUtil() { }
 
   @NotNull
@@ -15,8 +26,8 @@ public final class FunctionUtil {
 
   @NotNull
   public static <A, B> NullableFunction<A, B> nullConstant() {
-    //noinspection unchecked,deprecation
-    return (NullableFunction<A, B>)NullableFunction.NULL;
+    //noinspection unchecked
+    return (NullableFunction<A, B>)NULL;
   }
 
   @NotNull

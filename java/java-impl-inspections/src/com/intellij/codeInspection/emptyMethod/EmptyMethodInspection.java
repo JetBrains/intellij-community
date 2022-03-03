@@ -212,6 +212,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
+              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
               context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
                 UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
                 if (uDerivedMethod == null) return true;

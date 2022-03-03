@@ -47,9 +47,10 @@ internal class ParameterNameExpression(
         // find the parameter list
         val project = context.project ?: return null
         val offset = context.startOffset
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
         val editor = context.editor ?: return null
-        val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as KtFile
+        val document = editor.document
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        val file = PsiDocumentManager.getInstance(project).getPsiFile(document) as KtFile
         val elementAt = file.findElementAt(offset)
         val declaration = PsiTreeUtil.getParentOfType(elementAt, KtFunction::class.java, KtClass::class.java) ?: return arrayOf()
         val parameterList = when (declaration) {
@@ -137,9 +138,11 @@ internal class TypeParameterListExpression(
         val project = context.project!!
         val offset = context.startOffset
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
         val editor = context.editor!!
-        val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as KtFile
+        val document = editor.document
+        val documentManager = PsiDocumentManager.getInstance(project)
+        documentManager.commitDocument(document)
+        val file = documentManager.getPsiFile(document) as KtFile
         val elementAt = file.findElementAt(offset)
         val declaration = elementAt?.getStrictParentOfType<KtNamedDeclaration>() ?: return TextResult("")
 

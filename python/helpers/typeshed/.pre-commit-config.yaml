@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 21.12b0  # must match requirements-tests.txt
+    hooks:
+      - id: black
+        language_version: python3.9
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1  # must match requirements-tests.txt
+    hooks:
+      - id: isort
+        name: isort (python)
+
+ci:
+    autofix_commit_msg: '[pre-commit.ci] auto fixes from pre-commit.com hooks'
+    autofix_prs: true
+    autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+    autoupdate_schedule: weekly
+    skip: []
+    submodules: false

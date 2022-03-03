@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
@@ -6,7 +6,7 @@ import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationGroup
@@ -53,7 +53,10 @@ import javax.swing.*
 fun createNamedSingleThreadExecutor(name: String): ExecutorService =
   Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())
 
-private val excludedLanguages: Map<String, Array<String>> = mapOf("AppCode" to arrayOf("JavaScript")) //IDE name to language id
+private val excludedLanguages: Map<String, Array<String>> = mapOf( //IDE name to language id
+  "AppCode" to arrayOf("JavaScript"),
+  "DataSpell" to arrayOf("Python"),
+)
 
 fun courseCanBeUsed(languageId: String): Boolean {
   val excludedCourses = excludedLanguages[ApplicationNamesInfo.getInstance().productName]
@@ -84,8 +87,7 @@ fun createBalloon(@Nls text: String, delay: Long): Balloon =
 internal const val trainerPluginConfigName: String = "ide-features-trainer.xml"
 
 internal val featureTrainerVersion: String by lazy {
-  val featureTrainerPluginId = PluginManagerCore.getPluginByClassName(CourseManager::class.java.name)
-  PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
+  PluginManager.getPluginByClass(CourseManager::class.java)?.version ?: "UNKNOWN"
 }
 
 val adaptToNotNativeLocalization: Boolean
@@ -262,6 +264,6 @@ internal fun filterUnseenLessons(newLessons: List<Lesson>): List<Lesson> {
   return unseenLessons
 }
 
-internal val iftNotificationGroup: NotificationGroup get() =
+val iftNotificationGroup: NotificationGroup get() =
   NotificationGroup.findRegisteredGroup("IDE Features Trainer")
   ?: error("Not found notificationGroup for IDE Features Trainer")

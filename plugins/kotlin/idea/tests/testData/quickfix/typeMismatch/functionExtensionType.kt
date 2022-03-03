@@ -1,5 +1,5 @@
 // "Change return type of enclosing function 'myFunction' to '(Int) -> Boolean'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     fun myFunction(s: String): (String, Int) -> Boolean = <caret>s::verifyData

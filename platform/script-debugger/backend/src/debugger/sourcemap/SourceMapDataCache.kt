@@ -7,7 +7,7 @@ import java.util.*
 object SourceMapDataCache {
 
   private val cache: MutableMap<SourceMapDataImpl, SourceMapDataEx> =
-    Collections.synchronizedMap(ContainerUtil.createSoftKeySoftValueMap<SourceMapDataImpl, SourceMapDataEx>())
+    ContainerUtil.createConcurrentSoftValueMap()
 
   fun getOrCreate(sourceMapData: String, mapDebugName: String? = null): SourceMapDataEx? {
     val data = parseMapSafely(sourceMapData, mapDebugName) ?: return null

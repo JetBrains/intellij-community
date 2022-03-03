@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -6,6 +6,7 @@ import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.find.ngrams.TrigramTextSearchService;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +46,6 @@ import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
-import com.intellij.usages.UsageLimitUtil;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
@@ -58,7 +58,6 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -122,8 +121,7 @@ final class FindInProjectTask {
     mySearchers = ContainerUtil.mapNotNull(FindInProjectSearchEngine.EP_NAME.getExtensions(), se -> se.createSearcher(findModel, project));
   }
 
-  void findUsages(@NotNull FindUsagesProcessPresentation processPresentation,
-                  @NotNull Processor<? super UsageInfo> usageProcessor) {
+  void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<? super UsageInfo> usageProcessor) {
     CoreProgressManager.assertUnderProgress(myProgress);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Searching for '" + myFindModel.getStringToFind() + "'");
@@ -273,16 +271,9 @@ final class FindInProjectTask {
       if (totalSize > FILES_SIZE_LIMIT) {
         TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(myProgress);
         if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-          UIUtil.invokeLaterIfNeeded(() -> {
-            String message = FindBundle.message("find.excessive.total.size.prompt",
-                                                UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
-                                                ApplicationNamesInfo.getInstance().getProductName());
-            UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
-            if (ret == UsageLimitUtil.Result.ABORT) {
-              myProgress.cancel();
-            }
-            tooManyUsagesStatus.userResponded();
-          });
+          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, myProgress, null, () -> FindBundle.message("find.excessive.total.size.prompt",
+                                                          UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
+                                                          ApplicationNamesInfo.getInstance().getProductName()), null);
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         myProgress.checkCanceled();
@@ -295,7 +286,7 @@ final class FindInProjectTask {
   // must return non-binary files
   private void processFilesInScope(@NotNull Set<? extends VirtualFile> alreadySearched,
                                    boolean checkCoveredBySearchers,
-                                   @NotNull Processor<VirtualFile> fileProcessor) {
+                                   @NotNull Processor<? super VirtualFile> fileProcessor) {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
     GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, myProject);
 
@@ -319,7 +310,7 @@ final class FindInProjectTask {
     else if (myModule != null) {
       WorkspaceEntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
       ModuleEntity moduleEntity = Objects.requireNonNull(storage.resolve(new ModuleId(myModule.getName())));
-      deque.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, myProject));
+      deque.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, myProject));
     }
     else {
       deque.addAll(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndexableFilesProviders(myProject));
@@ -401,7 +392,7 @@ final class FindInProjectTask {
   }
 
   private boolean canRelyOnSearchers() {
-    if (!Registry.is("find.use.indexing.searcher.extensions")) return false;
+    if (!TrigramTextSearchService.useIndexingSearchExtensions()) return false;
     return ContainerUtil.find(mySearchers, s -> s.isReliable()) != null;
   }
 
@@ -413,7 +404,7 @@ final class FindInProjectTask {
         resultFiles.add(file);
       }
     }
-    if (!Registry.is("find.use.indexing.searcher.extensions")) return resultFiles;
+    if (!TrigramTextSearchService.useIndexingSearchExtensions()) return resultFiles;
     for (FindInProjectSearchEngine.FindInProjectSearcher searcher : mySearchers) {
       Collection<VirtualFile> virtualFiles = searcher.searchForOccurrences();
       for (VirtualFile file : virtualFiles) {

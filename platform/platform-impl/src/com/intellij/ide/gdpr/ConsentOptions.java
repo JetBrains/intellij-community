@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
+import com.fasterxml.jackson.jr.ob.JSON;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.analytics.AndroidStudioAnalytics;
@@ -10,8 +11,8 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
@@ -109,6 +111,10 @@ public final class ConsentOptions {
 
   public static ConsentOptions getInstance() {
     return InstanceHolder.ourInstance;
+  }
+
+  public static boolean needToShowUsageStatsConsent() {
+    return getInstance().getConsents(condUsageStatsConsent()).getSecond();
   }
 
   // here we have some well-known consents
@@ -412,12 +418,12 @@ public final class ConsentOptions {
   @NotNull
   private Collection<ConsentAttributes> fromJson(@Nullable String json) {
     try {
-      ConsentAttributes[] data = StringUtilRt.isEmptyOrSpaces(json) ? null : new GsonBuilder().disableHtmlEscaping().create().fromJson(json, ConsentAttributes[].class);
+      List<ConsentAttributes> data = json == null || json.isEmpty() ? null : JSON.std.listOfFrom(ConsentAttributes.class, json);
       if (data != null) {
         for (ConsentAttributes attributes : data) {
           attributes.consentId = lookupConsentID(attributes.consentId);
         }
-        return Arrays.asList(data);
+        return data;
       }
     }
     catch (Throwable e) {

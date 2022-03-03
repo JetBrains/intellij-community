@@ -17,6 +17,7 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
@@ -27,16 +28,20 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import org.jdom.Element
 import java.io.File
 import java.net.SocketTimeoutException
 import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -57,13 +62,15 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   private val locationProperty: GraphProperty<String> = propertyGraph.graphProperty(::suggestLocationByName)
   private val groupIdProperty: GraphProperty<String> = propertyGraph.graphProperty { starterContext.group }
   private val artifactIdProperty: GraphProperty<String> = propertyGraph.graphProperty { entityName }
-  private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
+  protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
 
   private val projectTypeProperty: GraphProperty<StarterProjectType?> = propertyGraph.graphProperty { starterContext.projectType }
   private val languageProperty: GraphProperty<StarterLanguage> = propertyGraph.graphProperty { starterContext.language }
   private val testFrameworkProperty: GraphProperty<StarterTestRunner?> = propertyGraph.graphProperty { starterContext.testFramework }
   private val applicationTypeProperty: GraphProperty<StarterAppType?> = propertyGraph.graphProperty { starterContext.applicationType }
   private val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { starterContext.includeExamples }
+
+  private val gitProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { false }
 
   private var entityName: String by entityNameProperty.map { it.trim() }
   private var location: String by locationProperty
@@ -73,11 +80,20 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   private val contentPanel: DialogPanel by lazy { createComponent() }
 
   private val sdkModel: ProjectSdksModel = ProjectSdksModel()
+  protected lateinit var sdkComboBox: JdkComboBox
+
+  protected lateinit var languageRow: Row
+  protected lateinit var groupRow: Row
+  protected lateinit var artifactRow: Row
+
+  @Volatile
+  private var isDisposed: Boolean = false
 
   override fun getHelpId(): String? = moduleBuilder.getHelpId()
 
   init {
     Disposer.register(parentDisposable, Disposable {
+      isDisposed = true
       sdkModel.disposeUIResources()
     })
   }
@@ -89,9 +105,10 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
     starterContext.artifact = artifactId
     starterContext.testFramework = testFrameworkProperty.get()
     starterContext.includeExamples = exampleCodeProperty.get()
+    starterContext.gitIntegration = gitProperty.get()
 
     wizardContext.projectName = entityName
-    wizardContext.setProjectFileDirectory(location)
+    wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
     val sdk = sdkProperty.get()
     if (wizardContext.project == null) {
@@ -107,9 +124,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   }
 
   private fun createComponent(): DialogPanel {
-    entityNameProperty.dependsOn(locationProperty) { File(location).name }
     entityNameProperty.dependsOn(artifactIdProperty) { artifactId }
-    locationProperty.dependsOn(entityNameProperty, ::suggestLocationByName)
     artifactIdProperty.dependsOn(entityNameProperty) { entityName }
 
     // query dependencies from builder, called only once
@@ -122,7 +137,8 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
       row(JavaStartersBundle.message("title.project.name.label")) {
         textField(entityNameProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
+          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
+                                 createLocationWarningValidator(locationProperty))
           .focused()
 
         for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
@@ -133,10 +149,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
         }
       }.largeGapAfter()
 
-      row(JavaStartersBundle.message("title.project.location.label")) {
-        projectLocationField(locationProperty, wizardContext)
-          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR), CHECK_LOCATION_FOR_WARNING)
-      }.largeGapAfter()
+      addProjectLocationUi()
 
       addFieldsBefore(this)
 
@@ -151,38 +164,45 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
       if (starterSettings.languages.size > 1) {
         row(JavaStartersBundle.message("title.project.language.label")) {
-          buttonSelector(starterSettings.languages, languageProperty) { it.title }
+          languageRow = this
+
+          segmentedButton(starterSettings.languages, languageProperty) { it.title }
         }.largeGapAfter()
       }
 
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.build.system.label")) {
-          buttonSelector(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       if (starterSettings.testFrameworks.isNotEmpty()) {
         row(JavaStartersBundle.message("title.project.test.framework.label")) {
-          buttonSelector(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       row(JavaStartersBundle.message("title.project.group.label")) {
+        groupRow = this
+
         textField(groupIdProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_GROUP_FORMAT, CHECK_NO_RESERVED_WORDS)
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.artifact.label")) {
+        artifactRow = this
+
         textField(artifactIdProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_ARTIFACT_SIMPLE_FORMAT, CHECK_NO_RESERVED_WORDS)
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.sdk.label")) {
-        sdkComboBox(sdkModel, sdkProperty, wizardContext.project, moduleBuilder)
+        sdkComboBox = sdkComboBox(sdkModel, sdkProperty, wizardContext.project, moduleBuilder)
           .growPolicy(GrowPolicy.SHORT_TEXT)
+          .component
       }.largeGapAfter()
 
       if (starterSettings.isExampleCodeProvided) {
@@ -193,6 +213,22 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
       addFieldsAfter(this)
     }.withVisualPadding(topField = true)
+  }
+
+  private fun LayoutBuilder.addProjectLocationUi() {
+    val locationRow = row(JavaStartersBundle.message("title.project.location.label")) {
+      projectLocationField(locationProperty, wizardContext)
+        .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
+    }
+
+    if (wizardContext.isCreatingNewProject) {
+      // Git should not be enabled for single module
+      row(EMPTY_LABEL) {
+        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), gitProperty)
+      }.largeGapAfter()
+    } else {
+      locationRow.largeGapAfter()
+    }
   }
 
   protected open fun addFieldsBefore(layout: LayoutBuilder) {}
@@ -231,20 +267,16 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
       val externalUpdates = loadStarterDependencyUpdatesFromNetwork(starter.id) ?: return
       val (dependencyUpdates, resourcePath) = externalUpdates
 
-      if (isDisposed()) return
+      if (isDisposed) return
 
       val dependencyConfig = StarterUtils.parseDependencyConfig(dependencyUpdates, resourcePath)
 
-      if (isDisposed()) return
+      if (isDisposed) return
 
       saveStarterDependencyUpdatesToFile(starter.id, dependencyUpdates)
 
       setStarterDependencyUpdates(starter.id, dependencyConfig)
     }
-  }
-
-  private fun isDisposed(): Boolean {
-    return Disposer.isDisposed(parentDisposable)
   }
 
   private fun suggestName(): String {
@@ -257,7 +289,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   }
 
   private fun suggestLocationByName(): String {
-    return FileUtil.join(wizardContext.projectFileDirectory, entityName)
+    return wizardContext.projectFileDirectory // no project name included
   }
 
   @RequiresBackgroundThread
@@ -306,18 +338,18 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
   @RequiresBackgroundThread
   private fun saveStarterDependencyUpdatesToFile(starterId: String, dependencyConfigUpdate: Element) {
-    val configUpdateDir = File(PathManager.getTempPath(), getDependencyConfigUpdatesDirLocation(starterId))
+    val configUpdateDir = Path.of(PathManager.getTempPath(), getDependencyConfigUpdatesDirLocation(starterId))
     if (!configUpdateDir.exists()) {
-      Files.createDirectories(configUpdateDir.toPath())
+      Files.createDirectories(configUpdateDir)
     }
 
-    val configUpdateFile = File(configUpdateDir, getPatchFileName(starterId))
+    val configUpdateFile = configUpdateDir.resolve(getPatchFileName(starterId))
     JDOMUtil.write(dependencyConfigUpdate, configUpdateFile)
   }
 
   private fun setStarterDependencyUpdates(starterId: String, dependencyConfigUpdate: DependencyConfig) {
     invokeLaterIfNeeded {
-      if (isDisposed()) return@invokeLaterIfNeeded
+      if (isDisposed) return@invokeLaterIfNeeded
 
       starterContext.startersDependencyUpdates[starterId] = dependencyConfigUpdate
     }

@@ -6,6 +6,11 @@ import com.intellij.ui.scale.TestScaleHelper
 import org.intellij.plugins.markdown.editor.tables.TableTestUtils.runWithChangedSettings
 
 class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
+  override fun tearDown() {
+    TestScaleHelper.restoreRegistryProperties()
+    super.tearDown()
+  }
+
   fun `test single tab forward`() {
     // language=Markdown
     val before = """

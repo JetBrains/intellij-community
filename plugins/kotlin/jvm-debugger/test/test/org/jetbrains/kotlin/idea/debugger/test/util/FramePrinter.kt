@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.ui.impl.watch.*
 import com.intellij.debugger.ui.tree.*
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -22,7 +23,6 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import org.jetbrains.kotlin.idea.debugger.GetterDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
-import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.TimeUnit
@@ -159,7 +159,9 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
 
         val debugProcess = suspendContext.debugProcess
         return debugProcess.invokeInManagerThread { debuggerContext ->
-            SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debuggerContext)
+            runReadAction {
+                SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debuggerContext)
+            }
         }
     }
 

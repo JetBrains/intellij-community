@@ -26,7 +26,19 @@ class KotlinInlayParameterHintsProvider : InlayParameterHintsProvider {
         setOf(
             "*listOf", "*setOf", "*arrayOf", "*ListOf", "*SetOf", "*ArrayOf", "*assert*(*)", "*mapOf", "*MapOf",
             "kotlin.require*(*)", "kotlin.check*(*)", "*contains*(value)", "*containsKey(key)", "kotlin.lazyOf(value)",
-            "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)"
+            "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
+
+            /* Gradle DSL especially annoying hints */
+            "org.gradle.api.Project.hasProperty(propertyName)",
+            "org.gradle.api.Project.findProperty(propertyName)",
+            "org.gradle.api.Project.file(path)",
+            "org.gradle.api.Project.uri(path)",
+            "jvmArgs(arguments)",
+            "org.gradle.kotlin.dsl.DependencyHandlerScope.*(notation)",
+            "org.gradle.kotlin.dsl.*(dependencyNotation)",
+            "org.gradle.kotlin.dsl.kotlin(module)",
+            "org.gradle.kotlin.dsl.kotlin(module,version)",
+            "org.gradle.kotlin.dsl.project(path,configuration)"
         )
 
     override fun getSettingsPreview(): String {

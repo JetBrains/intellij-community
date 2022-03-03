@@ -132,7 +132,7 @@ public abstract class ChooseByNameFilter<T> {
     final int count = chooser.getElementCount();
     for (int i = 0; i < count; i++) {
       T type = chooser.getElementAt(i);
-      if (!DumbService.getInstance(myProject).isDumb() && !filterConfiguration.isFileTypeVisible(type)) {
+      if (!DumbService.getInstance(myProject).isDumb() && !filterConfiguration.isVisible(type)) {
         chooser.setElementMarked(type, false);
       }
     }

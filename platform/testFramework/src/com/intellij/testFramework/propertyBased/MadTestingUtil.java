@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -133,6 +134,7 @@ public final class MadTestingUtil {
         new RunAll(
           () -> PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(),
           () -> FileEditorManagerEx.getInstanceEx(project).closeAllFiles(),
+          () -> EditorHistoryManager.getInstance(project).removeAllFiles(),
           () -> FileDocumentManager.getInstance().saveAllDocuments(),
           () -> revertVfs(label, project),
           () -> documentManager.commitAllDocuments(),
@@ -178,6 +180,16 @@ public final class MadTestingUtil {
     for (String shortId : except) {
       disableInspection(project, profile, shortId);
     }
+    replaceProfile(project, profile);
+  }
+
+  public static void enableDefaultInspections(@NotNull Project project) {
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
+    InspectionProfileImpl profile = new InspectionProfileImpl("defaultInspections");
+    replaceProfile(project, profile);
+  }
+
+  private static void replaceProfile(@NotNull Project project, InspectionProfileImpl profile) {
     // instantiate all tools to avoid extension loading in inconvenient moment
     profile.getAllEnabledInspectionTools(project).forEach(state -> state.getTool().getTool());
 

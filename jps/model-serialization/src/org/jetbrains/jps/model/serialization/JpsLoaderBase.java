@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +13,6 @@ import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.model.JpsElement;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
@@ -73,7 +72,7 @@ public abstract class JpsLoaderBase {
     int i = 0;
     while (true) {
       try {
-        return JDOMUtil.load(Files.newInputStream(file));
+        return JDOMUtil.load(file);
       }
       catch (NoSuchFileException e) {
         return null;

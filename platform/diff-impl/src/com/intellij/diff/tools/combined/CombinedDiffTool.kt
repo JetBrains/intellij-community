@@ -5,15 +5,14 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.fragmented.UnifiedDiffTool
-import com.intellij.diff.tools.simple.SimpleDiffTool
+import com.intellij.openapi.diff.DiffBundle
 
 internal class CombinedSideBySideDiffTool : FrameDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = request is CombinedDiffRequest
 
   override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = CombinedDiffViewer(context, false)
 
-  override fun getName(): String = SimpleDiffTool.INSTANCE.name
+  override fun getName(): String = DiffBundle.message("combined.side.by.side.viewer")
 }
 
 internal class CombinedUnifiedDiffTool : FrameDiffTool {
@@ -21,5 +20,5 @@ internal class CombinedUnifiedDiffTool : FrameDiffTool {
 
   override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = CombinedDiffViewer(context, true)
 
-  override fun getName(): String = UnifiedDiffTool.INSTANCE.name
+  override fun getName(): String = DiffBundle.message("combined.unified.viewer")
 }

@@ -12,26 +12,14 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
-class GradleConfiguratorPlatformSpecificTest : KotlinGradleImportingTestCase() {
+class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() {
     @TargetVersions("4.7+")
     @Test
-    fun testEnableFeatureSupportMultiplatform() {
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            myTestFixture.project.executeWriteCommand("") {
-                KotlinWithGradleConfigurator.changeFeatureConfiguration(
-                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
-                )
-            }
-
-            checkFiles(files)
-        }
-    }
+    fun testEnableFeatureSupportMultiplatform() = doTestEnableFeatureSupportMultiplatform()
 
     @Test
     @TargetVersions("4.7+")
-    fun testEnableFeatureSupportMultiplatformWithXFlag() = testEnableFeatureSupportMultiplatform()
+    fun testEnableFeatureSupportMultiplatformWithXFlag() = doTestEnableFeatureSupportMultiplatform()
 
     @Test
     @TargetVersions("4.7+")
@@ -124,7 +112,19 @@ class GradleConfiguratorPlatformSpecificTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    override fun testDataDirName(): String {
-        return "configurator"
+    private fun doTestEnableFeatureSupportMultiplatform() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            myTestFixture.project.executeWriteCommand("") {
+                KotlinWithGradleConfigurator.changeFeatureConfiguration(
+                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
+                )
+            }
+
+            checkFiles(files)
+        }
     }
+
+    override fun testDataDirName(): String = "configurator"
 }

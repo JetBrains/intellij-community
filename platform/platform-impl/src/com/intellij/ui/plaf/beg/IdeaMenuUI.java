@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
@@ -22,7 +23,7 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public class IdeaMenuUI extends BasicMenuUI{
+public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
   private static final Rectangle ourTextRect = new Rectangle();
   private static final Rectangle ourArrowIconRect = new Rectangle();
@@ -54,7 +55,7 @@ public class IdeaMenuUI extends BasicMenuUI{
       myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
-    selectionBackground = UIUtil.getListSelectionBackground(true);
+    selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
   }
 
   private void checkEmptyIcon(JComponent comp) {

@@ -54,6 +54,12 @@
     <extensionPoint name="expectedTypesContributor" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor"/>
 
+    <extensionPoint name="inspectionDisabler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.codeInspection.FileTypeInspectionDisabler"/>
+    </extensionPoint>
+
+
+
     <extensionPoint name="positionManagerDelegate" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
     <extensionPoint name="scriptTypeDetector" dynamic="true" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector"/>
@@ -71,6 +77,9 @@
       <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator"/>
     </extensionPoint>
     <extensionPoint name="callTypeCalculator" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.typing.GrCallTypeCalculator"/>
+
+    <extensionPoint qualifiedName="com.intellij.newProjectWizard.groovy.buildSystem"
+                    interface="org.jetbrains.plugins.groovy.config.wizard.BuildSystemGroovyNewProjectWizard" dynamic="true"/>
 
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="classDescriptor" dynamic="true"
@@ -349,6 +358,8 @@
     <registryKey key="groovy.process.nested.dfa" defaultValue="true"
                  description="Allows to run nested DFA inside the outer one"/>
 
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizardUsageCollector"/>
+
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 
@@ -498,6 +509,8 @@
 
     <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyTypedHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyBackspaceHandler"/>
+
+    <codeInsight.template.postfixTemplateProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateProvider"/>
 
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Generic"/>
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Expression"/>
@@ -1284,7 +1297,8 @@
 
     <notificationGroup id="Groovy DSL errors" displayType="BALLOON"/>
     <notificationGroup id="Grape" displayType="BALLOON"/>
-    <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.GroovyNewProjectWizard"/>
+    <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
+    <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

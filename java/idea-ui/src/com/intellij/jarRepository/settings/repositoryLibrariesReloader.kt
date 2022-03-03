@@ -2,8 +2,8 @@
 package com.intellij.jarRepository.settings
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryLibrarySynchronizer
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
@@ -20,10 +20,10 @@ fun reloadAllRepositoryLibraries(project: Project) {
     .map { RepositoryUtils.reloadDependencies(project, it) }
     .collectResults()
     .onSuccess {
-      Notifications.Bus.notify(Notification("Repository",
-                                            JavaUiBundle.message("notification.title.repository.library.synchronization"),
-                                            JavaUiBundle.message("notification.content.libraries.reloaded", it.size),
-                                            NotificationType.INFORMATION), project)
+      Notifications.Bus.notify(JarRepositoryManager.GROUP.createNotification(
+        JavaUiBundle.message("notification.title.repository.library.synchronization"),
+        JavaUiBundle.message("notification.content.libraries.reloaded", it.size),
+        NotificationType.INFORMATION), project)
     }
 
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
@@ -94,7 +94,8 @@ public class TargetDebuggerConnectionUtil {
 
       if (java9plus) {
         // IDEA-225182 - hack: pass "host:port" to construct correct VM params, then adjust the connection
-        remoteAddressForVmParams = "*:" + remotePort;
+        // IDEA-265364 - enforce ipv4 here with explicit 0.0.0.0 address
+        remoteAddressForVmParams = "0.0.0.0:" + remotePort;
       }
       else {
         remoteAddressForVmParams = String.valueOf(remotePort);

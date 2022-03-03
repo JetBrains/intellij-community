@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -53,8 +53,9 @@ public class TestMethod extends TestObject {
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(final PsiElement element) {
     UElement uElement = UastContextKt.toUElement(element);
+    JUnitConfiguration configuration = getConfiguration();
     if (uElement instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)uElement;
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;

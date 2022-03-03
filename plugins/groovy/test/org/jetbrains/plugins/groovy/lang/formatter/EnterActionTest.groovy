@@ -535,5 +535,11 @@ print 2
 <caret>
  */''')
   }
+
+  void testIfCondition() {
+    doTest('if (<caret>true) {}', '''\
+if (
+    true) {}''')
+  }
 }
 

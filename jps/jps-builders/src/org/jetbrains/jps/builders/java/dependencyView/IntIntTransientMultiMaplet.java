@@ -1,16 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
-/**
- * @author: db
- */
-class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
-  private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<>();
+import java.util.function.ObjIntConsumer;
 
+final class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
+  private final Int2ObjectMap<IntSet> myMap = new Int2ObjectOpenHashMap<>();
 
   @Override
   public boolean containsKey(final int key) {
@@ -18,37 +17,28 @@ class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
   }
 
   @Override
-  public TIntHashSet get(final int key) {
+  public IntSet get(final int key) {
     return myMap.get(key);
   }
 
   @Override
   public void putAll(IntIntMultiMaplet m) {
-    m.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-      @Override
-      public boolean execute(int key, TIntHashSet values) {
-        put(key, values);
-        return true;
-      }
-    });
+    m.forEachEntry((integers, value) -> put(value, integers));
   }
 
   @Override
-  public void put(final int key, final TIntHashSet value) {
-    final TIntHashSet x = myMap.get(key);
+  public void put(final int key, final IntSet value) {
+    final IntSet x = myMap.get(key);
     if (x == null) {
       myMap.put(key, value);
     }
     else {
-      value.forEach(value1 -> {
-        x.add(value1);
-        return true;
-      });
+      x.addAll(value);
     }
   }
 
   @Override
-  public void replace(int key, TIntHashSet value) {
+  public void replace(int key, IntSet value) {
     if (value == null || value.isEmpty()) {
       myMap.remove(key);
     }
@@ -59,9 +49,9 @@ class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
 
   @Override
   public void put(final int key, final int value) {
-    final TIntHashSet collection = myMap.get(key);
+    final IntSet collection = myMap.get(key);
     if (collection == null) {
-      final TIntHashSet x = new TIntHashSet();
+      final IntSet x = new IntOpenHashSet();
       x.add(value);
       myMap.put(key, x);
     }
@@ -72,7 +62,7 @@ class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
 
   @Override
   public void removeFrom(final int key, final int value) {
-    final TIntHashSet collection = myMap.get(key);
+    final IntSet collection = myMap.get(key);
     if (collection != null) {
       if (collection.remove(value)) {
         if (collection.isEmpty()) {
@@ -83,13 +73,10 @@ class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
   }
 
   @Override
-  public void removeAll(int key, TIntHashSet values) {
-    final TIntHashSet collection = myMap.get(key);
+  public void removeAll(int key, IntSet values) {
+    final IntSet collection = myMap.get(key);
     if (collection != null) {
-      values.forEach(value -> {
-        collection.remove(value);
-        return true;
-      });
+      collection.removeAll(values);
       if (collection.isEmpty()) {
         myMap.remove(key);
       }
@@ -103,18 +90,14 @@ class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
 
   @Override
   public void replaceAll(IntIntMultiMaplet m) {
-    m.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-      @Override
-      public boolean execute(int key, TIntHashSet value) {
-        replace(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((integers, value) -> replace(value, integers));
   }
 
   @Override
-  public void forEachEntry(TIntObjectProcedure<TIntHashSet> procedure) {
-    myMap.forEachEntry(procedure);
+  void forEachEntry(ObjIntConsumer<? super IntSet> proc) {
+    myMap.forEach((integer, integers) -> {
+      proc.accept(integers, integer);
+    });
   }
 
   @Override

@@ -572,7 +572,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   /**
    * called on EDT
    */
-  protected static void collectSubPackages(List<String> options, PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
+  protected static void collectSubPackages(List<String> options, @NotNull PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
     if (aPackage.getClasses(globalSearchScope).length > 0) {
       options.add(aPackage.getQualifiedName());
     }

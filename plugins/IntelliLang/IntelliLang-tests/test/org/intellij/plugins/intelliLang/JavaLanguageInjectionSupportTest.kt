@@ -132,24 +132,7 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
 
 
   fun testConfigUnInjectionAndUndo() {
-
-    val customInjection = BaseInjection("java").apply {
-      injectedLanguageId = "JSON"
-      setInjectionPlaces(
-        InjectionPlace(compiler.createElementPattern(
-          """psiParameter().ofMethod(0, psiMethod().withName("println").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
-          "println JSOM"), true
-        ),
-        InjectionPlace(compiler.createElementPattern(
-          """psiParameter().ofMethod(0, psiMethod().withName("print").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
-          "print JSON"), true
-        )
-      )
-    }
-
-    Configuration.getInstance().replaceInjections(listOf(customInjection), listOf(), true)
-
-    try {
+    Configuration.getInstance().withInjections(listOf(jsonToPrintlnInjection())) {
       myFixture.configureByText("Foo.java", """
       class Foo {
           void bar() {
@@ -166,8 +149,23 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
       undo(topLevelEditor)
       assertInjectedLangAtCaret(null)
     }
-    finally {
-      Configuration.getInstance().replaceInjections(listOf(), listOf(customInjection), true)
+
+  }
+  
+  fun testPartialJson() {
+    Configuration.getInstance().withInjections(listOf(jsonToPrintlnInjection())) {
+      myFixture.configureByText("Foo.java", """
+      class Foo {
+          void bar() {
+              System.out.println(
+                        "{'id': '0'," +
+                                "'uri': 'http://localhost/'}"
+                                .replaceAll("'", "\""));
+              System.out.println("{ bad_json: 123 }".replaceAll("'", "\""));
+          }
+      }
+    """)
+      injectionTestFixture.assertInjectedContent("'", "{'id': '0',missingValue")
     }
   }
   
@@ -205,18 +203,18 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
   }
 
   private fun jsonToPrintlnInjection(): BaseInjection = BaseInjection("java").apply {
-    injectedLanguageId = "JSON"
-    setInjectionPlaces(
-      InjectionPlace(compiler.createElementPattern(
-        """psiParameter().ofMethod(0, psiMethod().withName("println").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
-        "println JSOM"), true
-      ),
-      InjectionPlace(compiler.createElementPattern(
-        """psiParameter().ofMethod(0, psiMethod().withName("print").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
-        "print JSON"), true
-      )
-    )
-  }
+     injectedLanguageId = "JSON"
+     setInjectionPlaces(
+       InjectionPlace(compiler.createElementPattern(
+         """psiParameter().ofMethod(0, psiMethod().withName("println").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
+         "println JSOM"), true
+       ),
+       InjectionPlace(compiler.createElementPattern(
+         """psiParameter().ofMethod(0, psiMethod().withName("print").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
+         "print JSON"), true
+       )
+     )
+   }
 
   private fun undo(editor: Editor) {
     UIUtil.invokeAndWaitIfNeeded(Runnable {

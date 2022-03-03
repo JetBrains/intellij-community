@@ -70,6 +70,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInheritedDocInThrows1() { doTestMethod(); }
   public void testEscapeValues() { doTestClass(); }
   public void testClassTypeParameter() { doTestClass(); }
+  public void testClassTypeParameter1() { doTestClass(); }
   public void testUnicodeEscapes() { doTestClass(); }
   public void testEnumValueOf() { doTestMethod(); }
   public void testMethodFormatting() { doTestMethod(); }
@@ -113,6 +114,14 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testTypeAnnotation() { useJava8(); doTestAtCaret(); }
   public void testTypeAnnotationArray() { useJava8(); doTestAtCaret(); }
   public void testTypeAnnotationClass() { useJava8(); doTestClass(); }
+  public void testInlineTagIndex() { useJava9(); doTestClass(); }
+  public void testInlineTagSummary() { useJava10(); doTestClass(); }
+  public void testLeadingSpacesInPre() { doTestClass(); }
+  public void testPreInDeprecated() { doTestClass(); }
+  public void testEscapeHtmlInCode() { doTestClass(); }
+  public void testEscapeAngleBracketsInCode() { doTestClass(); }
+  public void testInlineTagSnippet() { doTestClass(); }
+  public void testInlineTagSnippetWithoutBody() { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();
@@ -377,6 +386,16 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   private void useJava8() {
     myJdkVersion = 8;
+    setUpJdk();
+  }
+
+  private void useJava9() {
+    myJdkVersion = 9;
+    setUpJdk();
+  }
+
+  private void useJava10() {
+    myJdkVersion = 10;
     setUpJdk();
   }
 

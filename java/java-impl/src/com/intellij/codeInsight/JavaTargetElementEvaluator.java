@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -124,11 +124,12 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           ref = TargetElementUtil.findReference(editor, offset);
         }
         if (ref != null) {
-          PsiElement parent = ref.getElement().getParent();
+          PsiElement element = ref.getElement();
+          PsiElement parent = element.getParent();
           if (parent instanceof PsiAnonymousClass) {
             parent = parent.getParent();
           }
-          if (parent instanceof PsiNewExpression) {
+          if (parent instanceof PsiNewExpression && element != ((PsiNewExpression)parent).getQualifier()) {
             PsiMethod constructor = ((PsiNewExpression)parent).resolveConstructor();
             if (constructor != null) {
               refElement = constructor;

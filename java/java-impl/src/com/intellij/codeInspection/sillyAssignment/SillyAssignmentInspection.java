@@ -96,7 +96,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     };
   }
 
-  private void checkSillyAssignment(PsiAssignmentExpression assignment, ProblemsHolder holder) {
+  private void checkSillyAssignment(@NotNull PsiAssignmentExpression assignment, @NotNull ProblemsHolder holder) {
     if (assignment.getOperationTokenType() != JavaTokenType.EQ) return;
     PsiExpression lExpression = assignment.getLExpression();
     PsiExpression rExpression = assignment.getRExpression();

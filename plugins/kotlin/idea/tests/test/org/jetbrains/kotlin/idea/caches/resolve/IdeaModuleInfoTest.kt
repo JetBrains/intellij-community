@@ -46,7 +46,7 @@ import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
-class IdeaModuleInfoTest : JavaModuleTestCase() {
+class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
 
     fun testSimpleModuleDependency() {

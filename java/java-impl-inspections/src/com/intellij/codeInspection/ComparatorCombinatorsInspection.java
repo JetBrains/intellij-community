@@ -12,10 +12,8 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
@@ -345,7 +343,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     else {
       String parameterName = leftVar.getName();
       PsiTypeElement typeElement = leftVar.getTypeElement();
-      String typeText = typeElement == null ? leftVar.getType().getCanonicalText() : typeElement.getText();
+      if (typeElement != null && PsiUtilCore.hasErrorElementChild(typeElement)) return null;
+      String typeText = typeElement == null ? GenericsUtil.getVariableTypeByExpressionType(leftVar.getType()).getCanonicalText() :
+                        typeElement.getText();
       String parameterDeclaration = "(" + typeText + " " + parameterName + ")";
       text = "java.util.Comparator." + methodName + "(" +
              (parameterDeclaration + " -> " + left.getText()) + ")";

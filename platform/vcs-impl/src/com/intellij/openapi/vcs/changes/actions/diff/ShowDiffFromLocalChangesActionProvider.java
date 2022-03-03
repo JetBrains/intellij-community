@@ -43,7 +43,11 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   public static void updateAvailability(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
+    ChangesListView view = e.getData(ChangesListView.DATA_KEY);
+    if (view == null) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
     JBIterable<Change> changes = view.getSelectedChanges();
     JBIterable<FilePath> unversionedFiles = view.getSelectedUnversionedFiles();

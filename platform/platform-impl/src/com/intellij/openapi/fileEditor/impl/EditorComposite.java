@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.ide.IdeBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -152,13 +151,7 @@ public class EditorComposite implements Disposable {
             if (newEditor != null) {
               newEditor.selectNotify();
 
-              FUCounterUsageLogger.getInstance().logEvent(
-                project,
-                "file.editor",
-                "alternative.file.editor.selected",
-                new FeatureUsageData()
-                  .addData("fileEditor", newEditor.getClass().getName())
-                  .addAnonymizedPath(newFile.getPath()));
+              FileEditorCollector.logAlternativeFileEditorSelected(project, newFile, newEditor);
             }
             ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
             ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myFileEditorManager.getProject())).onSelectionChanged();

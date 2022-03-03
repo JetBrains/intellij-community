@@ -72,7 +72,7 @@ final class RefCountHolder {
 
   @NotNull
   GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file,
-                                         @Nullable final UnusedDeclarationInspectionBase deadCodeInspection,
+                                         @Nullable UnusedDeclarationInspectionBase deadCodeInspection,
                                          boolean isUnusedToolEnabled) {
     FileViewProvider viewProvider = file.getViewProvider();
     Project project = file.getProject();

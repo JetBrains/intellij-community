@@ -10,11 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.kpmsearch.PackageSearchEndpointConfig;
 import org.jetbrains.idea.kpmsearch.PackageSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.junit.*;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -33,13 +32,13 @@ public class PackageSearchServiceTest extends UsefulTestCase {
   private HttpServer myServer;
   private String myUrl;
 
-  private final String suggestEndPoint = "/suggest";
-  private final String fulltextEndPoint = "/fulltext";
+  private static final String suggestEndPoint = "/suggest";
+  private static final String fulltextEndPoint = "/fulltext";
 
-  private final String response =
+  private static final String response =
     "{\"requestId\":\"Root=1-5fa519a5-3df7e7a3525d29ad730ae091\",\"groupId\":\"org.apache.maven.plugins\",\"artifactId\":\"maven-co\",\"items\":[{\"groupId\":\"org.apache.maven.plugins\",\"artifactId\":\"maven-continuum-plugin\",\"versions\":[\"1.1\",\"1.1-beta-4\",\"1.1-beta-3\",\"1.1-beta-2\",\"1.1-beta-1\"]},{\"groupId\":\"org.apache.maven.plugins\",\"artifactId\":\"maven-core-it-plugin\",\"versions\":[\"1.0\"]},{\"groupId\":\"org.apache.maven.plugins\",\"artifactId\":\"maven-compiler-plugin\",\"versions\":[\"3.8.1\",\"3.8.0\",\"3.7.0\",\"3.6.2\",\"3.6.1\",\"3.6.0\",\"3.5.1\",\"3.5\",\"3.3\",\"3.2\",\"3.1\",\"3.0\",\"2.5.1\",\"2.5\",\"2.4\",\"2.3.2\",\"2.3.1\",\"2.3\",\"2.2\",\"2.1\",\"2.0.2\",\"2.0\",\"2.0-beta-1\",\"2.0.1\"]}]}";
 
-  private final String longResponse =
+  private static final String longResponse =
     "{\"requestId\":\"Root=1-asdasdasd\",\"groupId\":\"test\",\"artifactId\":\"test\",\"items\":[{\"groupId\":\"test1\",\"artifactId\":\"test1\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test2\",\"artifactId\":\"test2\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test3\",\"artifactId\":\"test3\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test4\",\"artifactId\":\"test4\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test5\",\"artifactId\":\"test5\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test6\",\"artifactId\":\"test6\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test7\",\"artifactId\":\"test7\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test8\",\"artifactId\":\"test8\",\"versions\":[\"1.1\",\"1.2\"]}," +
     "{\"groupId\":\"test9\",\"artifactId\":\"test9\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test10\",\"artifactId\":\"test10\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test11\",\"artifactId\":\"test11\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test12\",\"artifactId\":\"test12\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test13\",\"artifactId\":\"test13\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test14\",\"artifactId\":\"test14\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test15\",\"artifactId\":\"test15\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test16\",\"artifactId\":\"test16\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test17\",\"artifactId\":\"test17\",\"versions\":[\"1.1\",\"1.2\"]}," +
     "{\"groupId\":\"test18\",\"artifactId\":\"test18\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test19\",\"artifactId\":\"test19\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test20\",\"artifactId\":\"test20\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test21\",\"artifactId\":\"test21\",\"versions\":[\"1.1\",\"1.2\"]},{\"groupId\":\"test22\",\"artifactId\":\"test22\",\"versions\":[\"1.1\",\"1.2\"]}]}";

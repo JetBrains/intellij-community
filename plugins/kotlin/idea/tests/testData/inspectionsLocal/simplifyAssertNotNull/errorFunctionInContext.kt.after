@@ -1,5 +1,5 @@
 // FIX: "Replace with '?: error(...)'"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class C {
     fun error(message: String) { }

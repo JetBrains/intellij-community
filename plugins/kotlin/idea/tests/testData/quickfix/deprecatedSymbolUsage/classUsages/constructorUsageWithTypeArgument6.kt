@@ -1,5 +1,5 @@
 // "Replace with 'test.New'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 package test
 

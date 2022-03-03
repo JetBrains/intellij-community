@@ -148,7 +148,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     LOG.debug("Notification status update")
 
     val isDisabledAutoReload = isDisabledAutoReload()
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     for ((projectId, data) in projectDataMap) {
       when (isDisabledAutoReload || data.isUpToDate()) {
         true -> notificationAware.notificationExpire(projectId)
@@ -181,7 +181,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     val parentDisposable = Disposer.newDisposable(projectIdName)
     val settingsTracker = ProjectSettingsTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
     val projectData = ProjectData(projectStatus, activationProperty, projectAware, settingsTracker, parentDisposable)
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
 
     projectDataMap[projectId] = projectData
 
@@ -283,7 +283,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   }
 
   init {
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     projectReloadOperation.beforeOperation { LOG.debug("Project reload started") }
     projectReloadOperation.beforeOperation { notificationAware.notificationExpire() }
     projectReloadOperation.afterOperation { scheduleChangeProcessing() }

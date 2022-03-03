@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -188,11 +188,9 @@ public class TestPackage extends TestObject {
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
                                            Set<Location<?>> classes) throws CantRunException {
-    PsiPackage aPackage = getPackage(getConfiguration().getPersistentData());
-    if (aPackage != null) {
-      GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
-      collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
-    }
+    PsiPackage aPackage = getPackage();
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
+    collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
   }
 
   private static void collectClassesRecursively(PsiPackage aPackage,
@@ -241,7 +239,7 @@ public class TestPackage extends TestObject {
       SourceScope sourceScope = getSourceScope();
       if (sourceScope != null) {
         collectSubPackages(options,
-                           getPackage(getConfiguration().getPersistentData()),
+                           getPackage(),
                            sourceScope.getGlobalSearchScope());
       }
     }
@@ -264,11 +262,12 @@ public class TestPackage extends TestObject {
   }
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
-    return ReadAction.compute(() -> PackageScope.packageScope(getPackage(data), true));
+    return ReadAction.compute(() -> PackageScope.packageScope(getPackage(), true));
   }
 
-  protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
-    final String packageName = data.getPackageName();
+  @NotNull
+  protected PsiPackage getPackage() throws CantRunException {
+    final String packageName = getConfiguration().getPersistentData().getPackageName();
     final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
     if (aPackage == null) throw CantRunException.packageNotFound(packageName);
     return aPackage;
@@ -283,8 +282,8 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
-    return element instanceof PsiPackage ? RefactoringListeners.getListener((PsiPackage)element, configuration.myPackage) : null;
+  public RefactoringElementListener getListener(final PsiElement element) {
+    return element instanceof PsiPackage ? RefactoringListeners.getListener((PsiPackage)element, getConfiguration().myPackage) : null;
   }
 
   @Override

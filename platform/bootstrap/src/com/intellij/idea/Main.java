@@ -23,12 +23,9 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class Main {
   public static final int NO_GRAPHICS = 1;
@@ -107,43 +104,36 @@ public final class Main {
     }
 
     startupTimings.put("classloader init", System.nanoTime());
-    PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
+    PathClassLoader newClassLoader = BootstrapClassLoaderUtil
+      .initClassLoader(args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0])));
     Thread.currentThread().setContextClassLoader(newClassLoader);
-    if (args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
-      // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
-      // At the same time, we don't want to ship them with base (non-remote) IDE due to possible unwanted interference with plugins
-      // See also: com.jetbrains.codeWithMe.projector.PluginClassPathRuntimeCustomizer
-      Path remoteDevPluginLibs = Paths.get(PathManager.getPreInstalledPluginsPath(), "cwm-plugin-projector", "lib", "projector");
-      if (!Files.exists(remoteDevPluginLibs)) remoteDevPluginLibs = Paths.get(PathManager.getPluginsPath(), "cwm-plugin", "lib", "projector");
-
-      if (Files.exists(remoteDevPluginLibs)) {
-        try (Stream<Path> libs = Files.list(remoteDevPluginLibs)) {
-          // add all files in that dir except for plugin jar
-          newClassLoader.addFiles(libs.collect(Collectors.toList()));
-        }
-      }
-
-      // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
-      Class<ClassLoader> aClass = ClassLoader.class;
-      MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);
-    }
 
     startupTimings.put("MainRunner search", System.nanoTime());
-    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
+
+    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, "com/intellij/idea/StartupUtil.class",
+                                                            -635775336887217634L, true);
     if (mainClass == null) {
       throw new ClassNotFoundException(MAIN_RUNNER_CLASS_NAME);
     }
 
     WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
     MethodHandles.lookup()
-      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
-      .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
+      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class,
+                                                            boolean.class, boolean.class,
+                                                            String[].class, LinkedHashMap.class))
+      .invokeExact(Main.class.getName() + "Impl", isHeadless, newClassLoader != Main.class.getClassLoader(), args, startupTimings);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
   private static void installPluginUpdates() {
     try {
-      StartupActionScriptManager.executeActionScript();
+      // referencing StartupActionScriptManager.ACTION_SCRIPT_FILE is ok - string constant will be inlined
+      Path scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE);
+      if (Files.isRegularFile(scriptFile)) {
+        // load StartupActionScriptManager and all others related class (ObjectInputStream and so on loaded as part of class define)
+        // only if there is action script to execute
+        StartupActionScriptManager.executeActionScript();
+      }
     }
     catch (IOException e) {
       showMessage("Plugin Installation Error",
@@ -172,7 +162,7 @@ public final class Main {
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || !isCommandLine && isFileAfterOptions(args);
+    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
   }
 
   private static boolean isFileAfterOptions(String @NotNull [] args) {
@@ -200,7 +190,7 @@ public final class Main {
     isLightEdit = false;
   }
 
-  public static boolean isHeadless(String @NotNull [] args) {
+  private static boolean isHeadless(String[] args) {
     if (Boolean.getBoolean(AWT_HEADLESS)) {
       return true;
     }

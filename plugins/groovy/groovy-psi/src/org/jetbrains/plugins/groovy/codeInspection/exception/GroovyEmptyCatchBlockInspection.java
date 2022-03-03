@@ -48,7 +48,7 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
 
   @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(GroovyBundle.message("comments.count.as.content"), "myCountCommentsAsContent");
     panel.addCheckbox(GroovyBundle.message("ignore.when.catch.parameter.is.named.ignore.or.ignored"), "myIgnore");

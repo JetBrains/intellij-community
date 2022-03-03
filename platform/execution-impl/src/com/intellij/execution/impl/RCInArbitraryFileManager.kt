@@ -154,7 +154,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
         loadedRunConfigs.add(runConfig)
         loadedDigests.add(runConfig.writeScheme().digest())
       }
-      catch (e: Exception) {
+      catch (e: Throwable /* classloading problems are expected too */) {
         LOG.warn("Failed to read run configuration in $filePath", e)
       }
     }

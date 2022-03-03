@@ -1,5 +1,5 @@
 // "Add 'run' before the lambda expression" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     {}<caret>

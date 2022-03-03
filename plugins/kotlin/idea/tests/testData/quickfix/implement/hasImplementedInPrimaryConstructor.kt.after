@@ -1,5 +1,5 @@
 // "Implement members" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 abstract class B {
     abstract val p: String?
     abstract fun test()

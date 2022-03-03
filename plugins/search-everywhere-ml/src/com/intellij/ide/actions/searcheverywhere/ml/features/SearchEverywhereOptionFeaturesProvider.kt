@@ -17,10 +17,6 @@ internal class SearchEverywhereOptionFeaturesProvider : SearchEverywhereBaseActi
     private const val FROM_CONFIGURABLE = "fromConfigurable"
   }
 
-  override fun isElementSupported(element: Any): Boolean {
-    return element is GotoActionModel.MatchedValue && element.value is OptionDescription
-  }
-
   override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any> {
     val optionDescription = matchedValue.value as? OptionDescription
     data[IS_OPTION] = optionDescription != null

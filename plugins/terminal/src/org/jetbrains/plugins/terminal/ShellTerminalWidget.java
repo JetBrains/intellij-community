@@ -19,7 +19,6 @@ import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
@@ -175,18 +174,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return TerminalUtil.hasRunningCommands(processTtyConnector);
     }
     throw new IllegalStateException("Cannot determine if there are running processes for " + connector.getClass()); //NON-NLS
-  }
-
-  /**
-   * @deprecated use {@link TtyConnector#close()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public void terminateProcess() {
-    TtyConnector connector = getTtyConnector();
-    if (connector != null) {
-      connector.close();
-    }
   }
 
   @Override

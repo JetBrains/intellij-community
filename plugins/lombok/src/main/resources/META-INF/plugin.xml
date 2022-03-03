@@ -29,6 +29,7 @@
   <li><a href="https://projectlombok.org/features/experimental/Wither.html">@Wither</a></li>
   <li><a href="https://projectlombok.org/features/With.html">@With</a></li>
   <li><a href="https://projectlombok.org/features/SneakyThrows.html">@SneakyThrows</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/StandardException">@StandardException</a></li>
   <li><a href="https://projectlombok.org/features/val.html">@val</a></li>
   <li><a href="https://projectlombok.org/features/var.html">@var</a></li>
   <li><a href="https://projectlombok.org/features/experimental/var.html">experimental @var</a></li>
@@ -97,6 +98,8 @@
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor"/>
+
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.StandardExceptionProcessor"/>
 
     <applicationService
       serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsOldProcessor"/>
@@ -319,6 +322,7 @@
       <action id="delombokFieldNameCostants"
               class="de.plushnikov.intellij.plugin.action.delombok.DelombokFieldNameConstantsAction"/>
       <action id="delombokUtilityClass" class="de.plushnikov.intellij.plugin.action.delombok.DelombokUtilityClassAction"/>
+      <action id="delombokStandardException" class="de.plushnikov.intellij.plugin.action.delombok.DelombokStandardExceptionAction"/>
 
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>

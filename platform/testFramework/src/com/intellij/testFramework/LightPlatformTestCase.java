@@ -37,6 +37,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectExImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -237,7 +238,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       testAppManager.setDataProvider(this);
       LightProjectDescriptor descriptor = getProjectDescriptor();
-      doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable(), mySdkParentDisposable);
+      doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable(), mySdkParentDisposable, getTestName(false));
       InjectedLanguageManagerImpl.pushInjectors(getProject());
 
       myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(
@@ -259,7 +260,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static @NotNull Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
                                                                LocalInspectionTool @NotNull [] localInspectionTools,
-                                                               @NotNull Disposable parentDisposable, @NotNull Disposable sdkParentDisposable) {
+                                                               @NotNull Disposable parentDisposable,
+                                                               @NotNull Disposable sdkParentDisposable,
+                                                               @NotNull String name) {
     Application app = ApplicationManager.getApplication();
     Ref<Boolean> reusedProject = new Ref<>(true);
     app.invokeAndWait(() -> {
@@ -277,6 +280,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     });
 
     Project project = ourProject;
+    ((ProjectExImpl)project).setLightProjectName(name);
     try {
       PlatformTestUtil.openProject(project);
     }
@@ -626,6 +630,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       setProject(null);
       ourModule = null;
       ourPsiManager = null;
+      ourSourceRoot = null;
     }
   }
 

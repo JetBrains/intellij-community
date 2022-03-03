@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.openapi.Disposable;
@@ -9,16 +9,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.JsonSchemaTestProvider;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+
+import java.util.function.Predicate;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonSpellcheckerTest extends JsonTestCase {
-
   private void doTest() {
     myFixture.enableInspections(SpellCheckingInspection.class);
     myFixture.configureByFile(getTestName(false) + ".json");

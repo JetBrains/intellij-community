@@ -413,48 +413,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
         """fun f() { val a = f(<caret>) }"""
     )
 
-    fun testSplitStringByEnter() = doTypeTest(
-        '\n',
-        """val s = "foo<caret>bar"""",
-        "val s = \"foo\" +\n" +
-                "        \"bar\""
-    )
-
-    fun testSplitStringByEnterEmpty() = doTypeTest(
-        '\n',
-        """val s = "<caret>"""",
-        "val s = \"\" +\n" +
-                "        \"\""
-    )
-
-    fun testSplitStringByEnterBeforeEscapeSequence() = doTypeTest(
-        '\n',
-        """val s = "foo<caret>\nbar"""",
-        "val s = \"foo\" +\n" +
-                "        \"\\nbar\""
-    )
-
-    fun testSplitStringByEnterBeforeSubstitution() = doTypeTest(
-        '\n',
-        """val s = "foo<caret>${dollar}bar"""",
-        "val s = \"foo\" +\n" +
-                "        \"${dollar}bar\""
-    )
-
-    fun testSplitStringByEnterAddParentheses() = doTypeTest(
-        '\n',
-        """val l = "foo<caret>bar".length()""",
-        "val l = (\"foo\" +\n" +
-                "        \"bar\").length()"
-    )
-
-    fun testSplitStringByEnterExistingParentheses() = doTypeTest(
-        '\n',
-        """val l = ("asdf" + "foo<caret>bar").length()""",
-        "val l = (\"asdf\" + \"foo\" +\n" +
-                "        \"bar\").length()"
-    )
-
     fun testTypeLtInFunDeclaration() {
         doLtGtTest("fun <caret>")
     }
@@ -768,52 +726,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun testIndentBeforeElseWithBlock() {
-        doTypeTest(
-            '\n',
-            """
-                |fun test(b: Boolean) {
-                |    if (b) {
-                |    }<caret>
-                |    else if (!b) {
-                |    }
-                |}
-                """,
-            """
-                |fun test(b: Boolean) {
-                |    if (b) {
-                |    }
-                |    <caret>
-                |    else if (!b) {
-                |    }
-                |}
-                """
-        )
-    }
-
-    fun testIndentBeforeElseWithoutBlock() {
-        doTypeTest(
-            '\n',
-            """
-                |fun test(b: Boolean) {
-                |    if (b)
-                |        foo()<caret>
-                |    else {
-                |    }
-                |}
-                """,
-            """
-                |fun test(b: Boolean) {
-                |    if (b)
-                |        foo()
-                |    <caret>
-                |    else {
-                |    }
-                |}
-                """
-        )
-    }
-
     fun testIndentOnFinishedVariableEndAfterEquals() {
         doTypeTest(
             '\n',
@@ -831,25 +743,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
                 |}
                 """,
             enableKotlinObsoleteCodeStyle
-        )
-    }
-
-    fun testIndentOnFinishedVariableEndAfterEqualsWithOfficialCodeStyle() {
-        doTypeTest(
-            '\n',
-            """
-                |fun test() {
-                |    val a =<caret>
-                |    foo()
-                |}
-                """,
-            """
-                |fun test() {
-                |    val a =
-                |        <caret>
-                |    foo()
-                |}
-                """
         )
     }
 
@@ -871,97 +764,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun testIndentNotFinishedVariableEndAfterEqualsWithOfficialCodeStyle() {
-        doTypeTest(
-            '\n',
-            """
-                |fun test() {
-                |    val a =<caret>
-                |}
-                """,
-            """
-                |fun test() {
-                |    val a =
-                |        <caret>
-                |}
-                """
-        )
-    }
-
-    fun testSmartEnterWithTabsOnConstructorParameters() {
-        doTypeTest(
-            '\n',
-            """
-                |class A(
-                |		a: Int,<caret>
-                |)
-                """,
-            """
-                |class A(
-                |		a: Int,
-                |		<caret>
-                |)
-                """
-        ) {
-            enableSmartEnter(it)
-            enableTabs(it)
-        }
-    }
-
-    fun testSmartEnterWithTabsInMethodParameters() {
-        doTypeTest(
-            '\n',
-            """
-                |fun method(
-                |		arg1: String,<caret>
-                |) {}
-                """,
-            """
-                |fun method(
-                |		arg1: String,
-                |		<caret>
-                |) {}
-                """
-        ) {
-            enableSmartEnter(it)
-            enableTabs(it)
-        }
-    }
-
-    fun testEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() {
-        doTypeTest(
-            '\n',
-            """
-                |fun method(
-                |         arg1: String,<caret>) {}
-                """,
-            """
-                |fun method(
-                |         arg1: String,
-                |<caret>) {}
-                """,
-            enableSmartEnter
-        )
-    }
-
-    fun testSmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak() {
-        doTypeTest(
-            '\n',
-            """
-                |fun method(
-                |         arg1: String, <caret>
-                |) {}
-                """,
-            """
-                |fun method(
-                |         arg1: String, 
-                |         <caret>
-                |) {}
-                """,
-            enableSmartEnter
-        )
-    }
-
     fun testSmartEnterBetweenOpeningAndClosingBrackets() {
         doTypeTest(
             '\n',
@@ -977,21 +779,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
             enableKotlinObsoleteCodeStyle(it)
             enableSmartEnter(it)
         }
-    }
-
-    fun testSmartEnterBetweenOpeningAndClosingBracketsWithOfficialCodeStyle() {
-        doTypeTest(
-            '\n',
-            """
-                |fun method(<caret>) {}
-                """,
-            """
-                |fun method(
-                |    <caret>
-                |) {}
-                """,
-            enableSmartEnter
-        )
     }
 
     private val enableSettingsWithInvertedAlignWhenMultiline: (CodeStyleSettings) -> Unit
@@ -1023,27 +810,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    fun testSmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultilineWithOfficialCodeStyle() {
-        doTypeTest(
-            '\n',
-            """
-                |class A(
-                |	a: Int,<caret>
-                |)
-                """,
-            """
-                |class A(
-                |	a: Int,
-                |	<caret>
-                |)
-                """
-        ) {
-            enableSettingsWithInvertedAlignWhenMultiline(it)
-            enableSmartEnter(it)
-            enableTabs(it)
-        }
-    }
-
     fun testSmartEnterWithTabsInMethodParametersWithInvertedAlignWhenMultiline() {
         doTypeTest(
             '\n',
@@ -1066,40 +832,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    fun testEnterWithoutLineBreakBeforeClosingBracketInMethodParametersWithInvertedAlignWhenMultiline() {
-        doTypeTest(
-            '\n',
-            """
-                |fun method(
-                |         arg1: String,<caret>) {}
-                """,
-            """
-                |fun method(
-                |         arg1: String,
-                |<caret>) {}
-                """,
-            enableSettingsWithInvertedAlignWhenMultiline
-        )
-    }
-
-    fun testEnterWithTrailingCommaAndWhitespaceBeforeLineBreakWithInvertedAlignWhenMultiline() {
-        doTypeTest(
-            '\n',
-            """
-                |fun method(
-                |    arg1: String, <caret>
-                |) {}
-                """,
-            """
-                |fun method(
-                |    arg1: String, 
-                |    <caret>
-                |) {}
-                """,
-            enableSettingsWithInvertedAlignWhenMultiline
-        )
-    }
-
     fun testSmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline() {
         doTypeTest(
             '\n',
@@ -1116,44 +848,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
             enableSettingsWithInvertedAlignWhenMultiline(it)
             enableSmartEnter(it)
         }
-    }
-
-    fun testSmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultilineWithOfficialCodeStyle() {
-        doTypeTest(
-            '\n',
-            """
-                       |fun method(<caret>) {}
-                       """,
-            """
-                       |fun method(
-                       |    <caret>
-                       |) {}
-                       """
-        ) {
-            enableSettingsWithInvertedAlignWhenMultiline(it)
-            enableSmartEnter(it)
-        }
-    }
-
-    fun testAutoIndentInWhenClause() {
-        doTypeTest(
-            '\n',
-            """
-            |fun test() {
-            |    when (2) {
-            |        is Int -><caret>
-            |    }
-            |}
-            """,
-            """
-            |fun test() {
-            |    when (2) {
-            |        is Int ->
-            |            <caret>
-            |    }
-            |}
-            """
-        )
     }
 
     fun testValInserterOnClass() =
@@ -1218,55 +912,11 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testValInserterOnValInsertedWithSquare() =
         testValInserter(')', """data class xxx(val a: A, b: A<caret>)""", """data class xxx(val a: A, val b: A)<caret>""")
 
-
     fun testValInserterOnTypingMissedSquare() =
         testValInserter(')', """data class xxx(val a: A, b: A<caret>""", """data class xxx(val a: A, val b: A)<caret>""")
 
     fun testValInserterWithDisabledSetting() =
         testValInserter(',', """data class xxx(x: Int<caret>)""", """data class xxx(x: Int,<caret>)""", inserterEnabled = false)
-
-    fun testEnterInFunctionWithExpressionBody() {
-        doTypeTest(
-            '\n',
-            """
-            |fun test() =<caret>
-            """,
-            """
-            |fun test() =
-            |    <caret>
-            """
-        )
-    }
-
-    fun testEnterInMultiDeclaration() {
-        doTypeTest(
-            '\n',
-            """
-            |fun test() {
-            |    val (a, b) =<caret>
-            |}
-            """,
-            """
-            |fun test() {
-            |    val (a, b) =
-            |        <caret>
-            |}
-            """
-        )
-    }
-
-    fun testEnterInVariableDeclaration() {
-        doTypeTest(
-            '\n',
-            """
-            |val test =<caret>
-            """,
-            """
-            |val test =
-            |    <caret>
-            """
-        )
-    }
 
     fun testMoveThroughGT() {
         myFixture.configureByText("a.kt", "val a: List<Set<Int<caret>>>")

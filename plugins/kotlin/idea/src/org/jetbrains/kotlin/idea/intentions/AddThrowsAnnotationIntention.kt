@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.annotations.JVM_THROWS_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.annotations.KOTLIN_THROWS_ANNOTATION_FQ_NAME
@@ -68,7 +69,7 @@ class AddThrowsAnnotationIntention : SelfTargetingIntention<KtThrowExpression>(
         val annotationArgumentText = if (type.getAbbreviatedType() != null)
             "$type::class"
         else
-            type.constructor.declarationDescriptor?.fqNameSafe?.let { "$it::class" } ?: return
+            type.constructor.declarationDescriptor?.fqNameSafe?.render()?.let { "$it::class" } ?: return
 
         val context = element.analyze(BodyResolveMode.PARTIAL)
         val annotationEntry = containingDeclaration.findThrowsAnnotation(context)
@@ -137,15 +138,9 @@ private fun ValueArgument.hasType(type: KotlinType, context: BindingContext): Bo
     }.any { it.getType(context)?.arguments?.firstOrNull()?.type == type }
 
 private fun KtPsiFactory.createCollectionLiteral(expressions: List<KtExpression>, lastExpression: String): KtCollectionLiteralExpression =
-    buildExpression {
-        appendFixedText("[")
-        expressions.forEach {
-            appendExpression(it)
-            appendFixedText(", ")
-        }
-        appendFixedText(lastExpression)
-        appendFixedText("]")
-    } as KtCollectionLiteralExpression
+    createExpression(
+        (expressions.map { it.text } + lastExpression).joinToString(prefix = "[", postfix = "]")
+    ) as KtCollectionLiteralExpression
 
 private fun FqName.fqNameIsExists(module: Module): Boolean = KotlinFullClassNameIndex.getInstance()[
         asString(),

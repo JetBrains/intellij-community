@@ -1,6 +1,6 @@
 // "Create class 'BookKeeper'" "true"
 // ERROR: Type mismatch: inferred type is BookKeeper but Unit was expected
-// WITH_RUNTIME
+// WITH_STDLIB
 package pack
 
 import pack.Currrency.EUR

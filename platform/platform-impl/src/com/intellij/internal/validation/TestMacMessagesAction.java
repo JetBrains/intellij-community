@@ -55,6 +55,7 @@ public class TestMacMessagesAction extends AnAction {
   static int num = 1;
   static String TITLE = "Title";
   static String MESSAGE = "Message";
+  static String DONT_ASK_TEXT = "Do not ask me again";
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -97,12 +98,19 @@ public class TestMacMessagesAction extends AnAction {
         });
         messageLabel.setLabelFor(messageArea);
 
-        JPanel messagePanel = new BorderLayoutPanel(5, 5);
-        messagePanel.add(messageLabel, BorderLayout.WEST);
-        JBScrollPane scrollPane = new JBScrollPane(messageArea);
-        scrollPane.setBorder(new CompoundBorder(new LineBorder(UIUtil.getPanelBackground(), insets.top), scrollPane.getBorder()));
-        messagePanel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(messagePanel);
+        panel.add(createMessagePanel(insets, messageLabel, messageArea));
+
+        JLabel dontAskLabel = new JLabel("Don't ask text:");
+        JTextArea dontAskArea = new JTextArea(DONT_ASK_TEXT, 3, 30);
+        dontAskArea.getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
+          protected void textChanged(@NotNull DocumentEvent e) {
+            DONT_ASK_TEXT = dontAskArea.getText();
+          }
+        });
+        dontAskLabel.setLabelFor(dontAskArea);
+
+        panel.add(createMessagePanel(insets, dontAskLabel, dontAskArea));
 
         JButton yesNoCancel = new JButton("Show YesNoCancel Alert");
         yesNoCancel.addActionListener(event -> {
@@ -118,31 +126,8 @@ public class TestMacMessagesAction extends AnAction {
 
         JButton yesNo2 = new JButton("Show YesNo Alert with DoNotAsk");
         yesNo2.addActionListener(event -> {
-          Messages.showYesNoDialog(null, MESSAGE, TITLE, Messages.getQuestionIcon(), new DoNotAskOption() {
-            @Override
-            public boolean isToBeShown() {
-              return false;
-            }
-
-            @Override
-            public void setToBeShown(boolean toBeShown, int exitCode) {
-            }
-
-            @Override
-            public boolean canBeHidden() {
-              return true;
-            }
-
-            @Override
-            public boolean shouldSaveOptionsOnCancel() {
-              return false;
-            }
-
-            @Override
-            public @NotNull @NlsContexts.Checkbox String getDoNotShowMessage() {
-              return "Do not ask me again";
-            }
-          });
+          DoNotAskOption option = createDoNotAskOption(DONT_ASK_TEXT);
+          Messages.showYesNoDialog(null, MESSAGE, TITLE, Messages.getQuestionIcon(), option);
         });
         panel.add(yesNo2);
 
@@ -166,7 +151,7 @@ public class TestMacMessagesAction extends AnAction {
 
         JButton help = new JButton("Show Alert with help button");
         help.addActionListener(event -> {
-          MessageDialogBuilder.yesNoCancel(TITLE, MESSAGE).help("my.help.id").show(project);
+          MessageDialogBuilder.yesNoCancel(TITLE, MESSAGE).help("my.help.id").doNotAsk(createDoNotAskOption(DONT_ASK_TEXT)).show(project);
         });
         panel.add(help);
 
@@ -374,6 +359,45 @@ public class TestMacMessagesAction extends AnAction {
         return panel;
       }
     }.show();
+  }
+
+  private static @NotNull JPanel createMessagePanel(Insets insets, JLabel messageLabel, JTextArea messageArea) {
+    JPanel messagePanel = new BorderLayoutPanel(5, 5);
+    messagePanel.add(messageLabel, BorderLayout.WEST);
+
+    JBScrollPane scrollPane = new JBScrollPane(messageArea);
+    scrollPane.setBorder(new CompoundBorder(new LineBorder(UIUtil.getPanelBackground(), insets.top), scrollPane.getBorder()));
+    messagePanel.add(scrollPane, BorderLayout.CENTER);
+
+    return messagePanel;
+  }
+
+  private static @NotNull DialogWrapper.DoNotAskOption createDoNotAskOption(@NotNull String text) {
+    return new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return false;
+      }
+
+      @Override
+      public void setToBeShown(boolean toBeShown, int exitCode) {
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return true;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @Override
+      public @NotNull @NlsContexts.Checkbox String getDoNotShowMessage() {
+        return text;
+      }
+    };
   }
 
   private static void alertWithButtons(JPanel panel, String title, String[] buttons, int index) {

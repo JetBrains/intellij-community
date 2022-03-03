@@ -128,6 +128,10 @@ public final class ExecutionUtil {
       LOG.info(fullMessage, e);
     }
 
+    if (e instanceof ProcessNotCreatedException) {
+      LOG.debug("Attempting to run: " + ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString());
+    }
+
     if (listener == null) {
       listener = ExceptionUtil.findCause(e, HyperlinkListener.class);
     }

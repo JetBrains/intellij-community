@@ -335,7 +335,7 @@ public class CFGBuilder {
    * @param relation relation to use for comparison
    * @return this builder
    */
-  CFGBuilder compare(RelationType relation) {
+  public CFGBuilder compare(RelationType relation) {
     return add(new BooleanBinaryInstruction(relation, false, null));
   }
 

@@ -39,14 +39,14 @@ class LookupElementsCollector(
     private val resultSet = resultSet.withPrefixMatcher(prefixMatcher).withRelevanceSorter(sorter)
 
     private val postProcessors = ArrayList<(LookupElement) -> LookupElement>()
-    private val processedCallables = mutableSetOf<CallableDescriptor>()
+    private val processedCallables = HashSet<CallableDescriptor>()
 
     var isResultEmpty: Boolean = true
         private set
 
 
     fun flushToResultSet() {
-        if (!elements.isEmpty()) {
+        if (elements.isNotEmpty()) {
             onFlush()
 
             resultSet.addAllElements(elements)
@@ -92,7 +92,9 @@ class LookupElementsCollector(
     }
 
     fun addElement(element: LookupElement, notImported: Boolean = false) {
-        if (!prefixMatcher.prefixMatches(element)) return
+        if (!prefixMatcher.prefixMatches(element)) {
+            return
+        }
         if (!allowExpectDeclarations) {
             val descriptor = (element.`object` as? DeclarationLookupObject)?.descriptor
             if ((descriptor as? MemberDescriptor)?.isExpect == true) return
@@ -146,7 +148,7 @@ private class JustTypingLookupElementDecorator(element: LookupElement, private v
         return insertedText == element.getUserDataDeep(KotlinCompletionCharFilter.JUST_TYPING_PREFIX)
     }
 
-    override fun handleInsert(context: InsertionContext) {
+    override fun getDecoratorInsertHandler(): InsertHandler<LookupElementDecorator<LookupElement>> = InsertHandler { context, decorator ->
         delegate.handleInsert(context)
 
         if (context.shouldAddCompletionChar() && !isJustTyping(context, this)) {
@@ -162,13 +164,13 @@ private class JustTypingLookupElementDecorator(element: LookupElement, private v
             }
         }
 
-        val (typeArgs, exprOffset) = argList ?: return
-        val beforeCaret = context.file.findElementAt(exprOffset) ?: return
+        val (typeArgs, exprOffset) = argList ?: return@InsertHandler
+        val beforeCaret = context.file.findElementAt(exprOffset) ?: return@InsertHandler
         val callExpr = when (val beforeCaretExpr = beforeCaret.prevSibling) {
             is KtCallExpression -> beforeCaretExpr
             is KtDotQualifiedExpression -> beforeCaretExpr.collectDescendantsOfType<KtCallExpression>().lastOrNull()
             else -> null
-        } ?: return
+        } ?: return@InsertHandler
 
         InsertExplicitTypeArgumentsIntention.applyTo(callExpr, typeArgs, true)
     }

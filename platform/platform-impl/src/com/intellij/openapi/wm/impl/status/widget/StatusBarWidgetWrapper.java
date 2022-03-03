@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.ide.HelpTooltipManager;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
@@ -15,6 +14,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ public interface StatusBarWidgetWrapper {
       myPresentation = presentation;
       setVisible(StringUtil.isNotEmpty(myPresentation.getSelectedValue()));
       setTextAlignment(Component.CENTER_ALIGNMENT);
-      setBorder(StatusBarWidget.WidgetBorder.WIDE);
+      setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
       new ClickListener() {
         private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
@@ -67,7 +67,6 @@ public interface StatusBarWidgetWrapper {
           if (myPopupState.isRecentlyHidden()) return false; // do not show new popup
           final ListPopup popup = myPresentation.getPopupStep();
           if (popup == null) return false;
-          UIEventLogger.StatusBarPopupShown.log(myPresentation.getClass());
           final Dimension dimension = getSizeFor(popup);
           final Point at = new Point(0, -dimension.height);
           myPopupState.prepareToShow(popup);
@@ -107,7 +106,7 @@ public interface StatusBarWidgetWrapper {
       myPresentation = presentation;
       setTextAlignment(presentation.getAlignment());
       setVisible(!myPresentation.getText().isEmpty());
-      setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
+      setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
       Consumer<MouseEvent> clickConsumer = myPresentation.getClickConsumer();
       if (clickConsumer != null) {
         new StatusBarWidgetClickListener(clickConsumer).installOn(this, true);
@@ -137,7 +136,7 @@ public interface StatusBarWidgetWrapper {
       setTextAlignment(Component.CENTER_ALIGNMENT);
       setIcon(myPresentation.getIcon());
       setVisible(hasIcon());
-      setBorder(StatusBarWidget.WidgetBorder.ICON);
+      setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
       Consumer<MouseEvent> clickConsumer = myPresentation.getClickConsumer();
       if (clickConsumer != null) {
         new StatusBarWidgetClickListener(clickConsumer).installOn(this, true);
@@ -168,7 +167,6 @@ public interface StatusBarWidgetWrapper {
     @Override
     public boolean onClick(@NotNull MouseEvent e, int clickCount) {
       if (!e.isPopupTrigger() && MouseEvent.BUTTON1 == e.getButton()) {
-        UIEventLogger.StatusBarWidgetClicked.log(myClickConsumer.getClass());
         myClickConsumer.consume(e);
       }
       return true;

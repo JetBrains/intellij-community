@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import kotlin.collections.List as <info descr="null">~List1</info>
 
 fun main() {

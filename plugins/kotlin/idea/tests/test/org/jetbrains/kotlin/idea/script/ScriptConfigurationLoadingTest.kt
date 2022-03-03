@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
-class ScriptConfigurationLoadingTest : AbstractScriptConfigurationLoadingTest() {
+class ScriptConfigurationLoadingTest8 : AbstractScriptConfigurationLoadingTest() {
     fun testSimple() {
         assertAndLoadInitialConfiguration()
 

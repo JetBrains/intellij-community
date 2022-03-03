@@ -18,12 +18,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
 
 final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
@@ -97,24 +99,13 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       }
       Path path = Paths.get(pathName);
       if (myClasspathDirectory != null && myHostClasspathDirectory != null) {
-        Path targetPath = myHostClasspathDirectory.resolve(path.getFileName());
-        try {
-          if (!targetPath.toFile().exists()) {
-            if (!myReportedProgress && myProgressIndicator != null) {
-              myProgressIndicator.setText(JavaCompilerBundle.message("progress.preparing.wsl.build.environment"));
-              myReportedProgress = true;
-            }
-            FileUtil.copyFileOrDir(path.toFile(), targetPath.toFile());
-          }
-          builder.append(myDistribution.getWslPath(targetPath.toString()));
-          continue;
+        Path targetPath = copyPathToTargetIfRequired(path);
+        if (!myReportedProgress && !targetPath.equals(path) && myProgressIndicator != null) {
+          myProgressIndicator.setText(JavaCompilerBundle.message("progress.preparing.wsl.build.environment"));
+          myReportedProgress = true;
         }
-        catch (IOException e) {
-          // fallback to default case
-        }
+        builder.append(myDistribution.getWslPath(targetPath.toString()));
       }
-
-      builder.append(myDistribution.getWslPath(pathName));
     }
     for (String s : classpathInTarget) {
       if (builder.length() > 0) {
@@ -125,20 +116,26 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myCommandLine.addParameter(builder.toString());
   }
 
+  /**
+   * Copying files to WSL file-system is required because class-files processing works faster this way (Dmitry Jemerov)
+   */
   @Override
-  public void copyPathToTarget(Iterable<File> pathFiles) {
-    if (myClasspathDirectory != null && myHostClasspathDirectory != null) {
-      for (File file : pathFiles) {
-        File targetFile = myHostClasspathDirectory.resolve(file.getName()).toFile();
-        if (!targetFile.exists()) {
-          try {
-            FileUtil.copyFileOrDir(file, targetFile);
-          }
-          catch (IOException ignored) {
-          }
-        }
+  public @NotNull Path copyPathToTargetIfRequired(@NotNull Path path) {
+    if (myClasspathDirectory == null || myHostClasspathDirectory == null) {
+      return path;
+    }
+    Path targetFile = myHostClasspathDirectory.resolve(path.getFileName());
+    try {
+      FileTime originalFileTimestamp = Files.getLastModifiedTime(path);
+      FileTime targetFileTimestamp = Files.exists(targetFile) ? Files.getLastModifiedTime(targetFile) : null;
+      if (targetFileTimestamp == null || targetFileTimestamp.compareTo(originalFileTimestamp) < 0) {
+        FileUtil.copyFileOrDir(path.toFile(), targetFile.toFile());
       }
     }
+    catch (IOException ignored) {
+      return path;
+    }
+    return targetFile;
   }
 
   @Override
@@ -187,6 +184,11 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myDistribution.patchCommandLine(myCommandLine, myProject, options);
 
     return myCommandLine;
+  }
+
+  @Override
+  public void setUnixProcessPriority(int priority) {
+    LocalBuildCommandLineBuilder.setUnixProcessPriority(myCommandLine, priority);
   }
 
   @Nullable

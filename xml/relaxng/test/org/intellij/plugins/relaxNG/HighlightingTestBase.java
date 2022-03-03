@@ -85,7 +85,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder(getTestName(false));
     final IdeaProjectTestFixture fixture = builder.getFixture();
 
     return factory.createCodeInsightFixture(fixture);

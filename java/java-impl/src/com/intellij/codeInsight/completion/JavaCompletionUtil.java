@@ -11,17 +11,18 @@ import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -300,6 +301,7 @@ public final class JavaCompletionUtil {
     Set<PsiType> expectedTypes = ObjectUtils.coalesce(getExpectedTypes(parameters), Collections.emptySet());
 
     final Set<PsiMember> mentioned = new HashSet<>();
+    JavaLookupElementHighlighter highlighter = getHighlighterForPlace(element);
     for (CompletionElement completionElement : processor.getResults()) {
       for (LookupElement item : createLookupElements(completionElement, javaReference)) {
         item.putUserData(QUALIFIER_TYPE_ATTR, plainQualifier);
@@ -318,7 +320,7 @@ public final class JavaCompletionUtil {
         }
         PsiTypeLookupItem qualifierCast = findQualifierCast(item, castItems, plainQualifier, processor, expectedTypes);
         if (qualifierCast != null) item = castQualifier(item, qualifierCast);
-        set.add(highlightIfNeeded(qualifierCast != null ? qualifierCast.getType() : plainQualifier, item, o, element));
+        set.add(highlighter.highlightIfNeeded(qualifierCast != null ? qualifierCast.getType() : plainQualifier, item, o));
       }
     }
 
@@ -454,7 +456,9 @@ public final class JavaCompletionUtil {
 
   private static PsiTypeLookupItem findQualifierCast(@NotNull LookupElement item,
                                                      @NotNull List<PsiTypeLookupItem> castTypeItems,
-                                                     @Nullable PsiType plainQualifier, JavaCompletionProcessor processor, Set<? extends PsiType> expectedTypes) {
+                                                     @Nullable PsiType plainQualifier,
+                                                     JavaCompletionProcessor processor,
+                                                     Set<? extends PsiType> expectedTypes) {
     return ContainerUtil.find(castTypeItems, c -> shouldCast(item, c, plainQualifier, processor, expectedTypes));
   }
 
@@ -463,42 +467,65 @@ public final class JavaCompletionUtil {
     return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
   }
 
+  static class JavaLookupElementHighlighter {
+    private final @NotNull PsiElement myPlace;
+    private final @NotNull LanguageLevel myLanguageLevel;
+    private final @NotNull Set<PsiField> myConstantsUsedInSwitch;
+
+    JavaLookupElementHighlighter(@NotNull PsiElement place) {
+      myPlace = place;
+      myLanguageLevel = PsiUtil.getLanguageLevel(myPlace);
+      myConstantsUsedInSwitch = findConstantsUsedInSwitch(myPlace);
+    }
+
+    LookupElement highlightIfNeeded(@Nullable PsiType qualifierType, @NotNull LookupElement item, @NotNull Object object) {
+      if (shouldMarkRed(object)) {
+        return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
+          @Override
+          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+            element.getDelegate().renderElement(presentation);
+            presentation.setItemTextForeground(JBColor.RED);
+          }
+        }), -1);
+      }
+      if (containsMember(qualifierType, object, false) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
+          @Override
+          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+            element.getDelegate().renderElement(presentation);
+            presentation.setItemTextBold(true);
+          }
+        });
+        return object instanceof PsiField ? bold : PrioritizedLookupElement.withExplicitProximity(bold, 1);
+      }
+      return item;
+    }
+
+    private boolean shouldMarkRed(@NotNull Object object) {
+      if (!(object instanceof PsiMember)) return false;
+      if (LanguageLevelUtil.getLastIncompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
+        return true;
+      }
+
+      if (object instanceof PsiEnumConstant) {
+        return myConstantsUsedInSwitch.contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));
+      }
+      return object instanceof PsiClass && ReferenceListWeigher.INSTANCE.getApplicability((PsiClass)object, myPlace) == inapplicable;
+    }
+  }
+
+  static JavaLookupElementHighlighter getHighlighterForPlace(@NotNull PsiElement place) {
+    return new JavaLookupElementHighlighter(place);
+  }
+
   @NotNull
   public static LookupElement highlightIfNeeded(@Nullable PsiType qualifierType,
                                                 @NotNull LookupElement item,
                                                 @NotNull Object object,
                                                 @NotNull PsiElement place) {
-    if (shouldMarkRed(object, place)) {
-      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
-        @Override
-        public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-          element.getDelegate().renderElement(presentation);
-          presentation.setItemTextForeground(JBColor.RED);
-        }
-      }), -1);
-    }
-    if (containsMember(qualifierType, object, false) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-      LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
-        @Override
-        public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-          element.getDelegate().renderElement(presentation);
-          presentation.setItemTextBold(true);
-        }
-      });
-      return object instanceof PsiField ? bold : PrioritizedLookupElement.withExplicitProximity(bold, 1);
-    }
-    return item;
+    return getHighlighterForPlace(place).highlightIfNeeded(qualifierType, item, object);
   }
 
-  private static boolean shouldMarkRed(@NotNull Object object, @NotNull PsiElement place) {
-    if (!(object instanceof PsiMember)) return false;
-    if (Java15APIUsageInspection.getLastIncompatibleLanguageLevel((PsiMember)object, PsiUtil.getLanguageLevel(place)) != null) return true;
-
-    if (object instanceof PsiEnumConstant) {
-      return findConstantsUsedInSwitch(place).contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));
-    }
-    return object instanceof PsiClass && ReferenceListWeigher.INSTANCE.getApplicability((PsiClass)object, place) == inapplicable;
-  }
 
   @Contract("null, _, _ -> false")
   private static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object, boolean checkBases) {

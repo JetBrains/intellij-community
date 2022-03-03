@@ -11,7 +11,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.AddToPermitsList
 import org.jetbrains.plugins.groovy.annotator.intentions.GrChangeModifiersFix
 import org.jetbrains.plugins.groovy.annotator.intentions.GrReplaceReturnWithYield
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
@@ -59,9 +58,6 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
   }
 
   override fun visitRecordDefinition(recordDefinition: GrRecordDefinition) {
-    if (GroovyConfigUtils.compareSdkVersions(GroovyConfigUtils.getInstance().getSDKVersion(recordDefinition), GroovyConfigUtils.GROOVY4_0_BETA_2) < 0) {
-      forbidRecord(holder, recordDefinition)
-    }
     recordDefinition.modifierList?.let { checkRecordModifiers(it) }
     for (formalParameter in recordDefinition.parameters) {
       checkFormalRecordParameters(formalParameter, recordDefinition)

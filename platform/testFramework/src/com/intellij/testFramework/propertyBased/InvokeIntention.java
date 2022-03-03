@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -189,19 +190,20 @@ public class InvokeIntention extends ActionOnFile {
     IntentionAction unwrapped = IntentionActionDelegate.unwrap(intention);
     // Suppress actions are under submenu, no preview is generated for them anyway
     if (unwrapped instanceof SuppressIntentionAction) return;
-    String previewText;
+    IntentionPreviewInfo previewInfo;
     try {
       // Should not require EDT or write-action
-      previewText = ApplicationManager.getApplication().executeOnPooledThread(
+      previewInfo = ApplicationManager.getApplication().executeOnPooledThread(
         () -> ReadAction.compute(
-          () -> IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), intention, getFile(), editor))
+          () -> IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), intention, getFile(), editor))
       ).get();
     }
     catch (Exception e) {
       throw new RuntimeException(
         "Intention action " + MadTestingUtil.getIntentionDescription(intention) + " fails during preview", e);
     }
-    if (previewText == null) {
+    if (previewInfo == null || previewInfo == IntentionPreviewInfo.EMPTY ||
+        previewInfo == IntentionPreviewInfo.FALLBACK_DIFF) {
       throw new RuntimeException(
         "Intention action " + MadTestingUtil.getIntentionDescription(intention) + " is not preview-friendly");
     }

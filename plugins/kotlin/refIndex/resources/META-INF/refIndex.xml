@@ -1,9 +1,8 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
-    <postStartupActivity
-            implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$InitializationActivity"
-    />
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService"
+                    preload="notHeadless"/>
 
     <advancedSetting
             id="kotlin.compiler.ref.index"

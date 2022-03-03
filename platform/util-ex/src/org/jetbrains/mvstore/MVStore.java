@@ -8,8 +8,7 @@ package org.jetbrains.mvstore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.openapi.util.EmptyRunnable;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -33,10 +32,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
@@ -192,7 +188,7 @@ public final class MVStore implements AutoCloseable {
     /**
      * Single-threaded executor for serialization of the store snapshot into ByteBuffer
      */
-    private final BoundedTaskExecutor serializationExecutor;
+    private final ThreadPoolExecutor serializationExecutor;
 
     private volatile boolean reuseSpace = true;
 
@@ -254,7 +250,12 @@ public final class MVStore implements AutoCloseable {
     private final MVMap<?, ?>[] metaMaps;
     private final ConcurrentHashMap<Integer, MVMap<?, ?>> maps = new ConcurrentHashMap<>();
 
-    public static final class StoreHeader {
+  @Override
+  public String toString() {
+    return fileStore.toString();
+  }
+
+  public static final class StoreHeader {
         short format = FORMAT_WRITE;
         short formatRead = FORMAT_READ;
 
@@ -481,8 +482,16 @@ public final class MVStore implements AutoCloseable {
 
             autoCommitDelay = config.autoCommitDelay;
             if (!fileStore.isReadOnly() && autoCommitDelay > 0 && isOpen()) {
-                serializationExecutor =
-                  (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("MVStore Serialization", 1, false);
+              serializationExecutor = new ThreadPoolExecutor(1, 1,
+                                                             5L, TimeUnit.SECONDS,
+                                                             new LinkedBlockingQueue<>(), new ThreadFactory() {
+                @Override
+                public Thread newThread(@NotNull Runnable r) {
+                  Thread thread = new Thread(r, "MVStore Serialization");
+                  thread.setPriority(Thread.MIN_PRIORITY);
+                  return thread;
+                }
+              });
             } else {
                 serializationExecutor = null;
             }
@@ -1289,7 +1298,7 @@ public final class MVStore implements AutoCloseable {
     }
 
     private void closeStore(boolean normalShutdown, int allowedCompactionTime) {
-        // If any other thead have already initiated closure procedure,
+        // If any other thread have already initiated closure procedure,
         // isClosed() would wait until closure is done and then  we jump out of the loop.
         // This is a subtle difference between !isClosed() and isOpen().
         while (!isClosed()) {
@@ -1354,7 +1363,7 @@ public final class MVStore implements AutoCloseable {
         }
     }
 
-    private static void shutdownExecutor(@Nullable BoundedTaskExecutor executor) {
+    private static void shutdownExecutor(@Nullable ThreadPoolExecutor executor) {
         if (executor != null && !executor.isShutdown()) {
             executor.shutdown();
             try {
@@ -1362,7 +1371,7 @@ public final class MVStore implements AutoCloseable {
                     return;
                 }
             } catch (InterruptedException ignore) {/**/}
-            executor.clearAndCancelAll();
+            executor.purge();
         }
     }
 
@@ -1460,9 +1469,9 @@ public final class MVStore implements AutoCloseable {
         // because meta map is modified within storeNow() and that
         // causes beforeWrite() call with possibility of going back here
         if(!storeLock.isHeldByCurrentThread() || currentStoreVersion < 0) {
-            if (serializationExecutor != null) {
+            if (serializationExecutor != null && !serializationExecutor.isTerminated()) {
                 try {
-                    serializationExecutor.waitAllTasksExecuted(10, TimeUnit.MINUTES);
+                  serializationExecutor.submit(EmptyRunnable.INSTANCE).get(10, TimeUnit.MINUTES);
                 }
                 catch (Exception e) {
                     panic(new MVStoreException(MVStoreException.ERROR_INTERNAL, e));
@@ -2058,7 +2067,7 @@ public final class MVStore implements AutoCloseable {
             // it is guaranteed, that upon after waitAllTasksExecuted()
             // there are no pending / in-progress task here
             if (serializationExecutor != null) {
-                serializationExecutor.waitAllTasksExecuted(10, TimeUnit.MINUTES);
+              serializationExecutor.submit(EmptyRunnable.INSTANCE).get(10, TimeUnit.MINUTES);
             }
             serializationLock.lock();
             try {
@@ -2911,13 +2920,13 @@ public final class MVStore implements AutoCloseable {
             return;
         }
 
-        // serialization is already in progress - do not queue yet another
-        if (serializationExecutor != null && !serializationExecutor.isEmpty()) {
-            return;
-        }
-
         // check again, because it could have been written by now
         if (config.autoCommitBufferSize > 0 && needStore()) {
+            // serialization is already in progress - do not queue yet another
+            if (serializationExecutor != null && serializationExecutor.getActiveCount() > 0) {
+                return;
+            }
+
             saveNeeded = false;
 
             // if unsaved memory creation rate is to high,
@@ -3893,22 +3902,6 @@ public final class MVStore implements AutoCloseable {
          */
         public Builder compressionLevel(int level) {
             compress = level;
-            return this;
-        }
-
-        /**
-         * Compress data before writing using the LZ4HC algorithm. This will
-         * save more disk space, but will slow down read and write operations
-         * quite a bit.
-         * <p>
-         * This setting only affects writes; it is not necessary to enable
-         * compression when reading, even if compression was enabled when
-         * writing.
-         *
-         * @return this
-         */
-        public Builder compressHigh() {
-            compress = 2;
             return this;
         }
 

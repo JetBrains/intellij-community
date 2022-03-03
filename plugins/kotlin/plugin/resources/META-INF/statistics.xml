@@ -17,5 +17,7 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
+    <internal.statistic.libraryUsage.libraryUsageImportProcessor
+            implementation="org.jetbrains.kotlin.idea.statistics.KotlinLibraryUsageImportProcessor"/>
   </extensions>
 </idea-plugin>

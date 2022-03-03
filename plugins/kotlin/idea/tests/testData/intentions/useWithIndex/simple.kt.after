@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(list: List<String>): Int? {
     for ((index, s) in list.withIndex()) {
         val x = s.length * index

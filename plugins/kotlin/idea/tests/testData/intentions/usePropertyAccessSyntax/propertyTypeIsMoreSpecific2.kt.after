@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 abstract class KotlinClass : JavaInterface {
     override fun getSomething(): String = ""

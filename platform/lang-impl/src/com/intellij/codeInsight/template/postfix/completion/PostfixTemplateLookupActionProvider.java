@@ -16,10 +16,11 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 public class PostfixTemplateLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(LookupElement element, final Lookup lookup, Consumer<LookupElementAction> consumer) {
+  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer) {
     if (element instanceof PostfixTemplateLookupElement) {
       final PostfixTemplateLookupElement templateLookupElement = (PostfixTemplateLookupElement)element;
       final PostfixTemplate template = templateLookupElement.getPostfixTemplate();

@@ -4,8 +4,8 @@ package com.intellij.debugger.settings
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.buttonGroup
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
@@ -41,7 +41,7 @@ class JavaHotSwapConfigurableUi : ConfigurableUi<DebuggerSettings> {
           .bindSelected(settings::HOTSWAP_IN_BACKGROUND)
       }
 
-      buttonGroup(settings::RUN_HOTSWAP_AFTER_COMPILE) {
+      buttonsGroup {
         row(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.reload.classes")) {
           radioButton(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.always"),
             DebuggerSettings.RUN_HOTSWAP_ALWAYS)
@@ -50,7 +50,7 @@ class JavaHotSwapConfigurableUi : ConfigurableUi<DebuggerSettings> {
           radioButton(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.ask"),
             DebuggerSettings.RUN_HOTSWAP_ASK)
         }
-      }
+      }.bind(settings::RUN_HOTSWAP_AFTER_COMPILE)
     }
 
     return panel

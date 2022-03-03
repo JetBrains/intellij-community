@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.autoimport
 
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.RESOLVE_PROJECT
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -30,7 +30,17 @@ class ProjectAware(
   private val projectPath = projectId.externalProjectPath
 
   override val settingsFiles: Set<String>
-    get() = externalProjectFiles.map { FileUtil.toCanonicalPath(it.path) }.toSet()
+    get() {
+      val pathMacroManager = PathMacroManager.getInstance(project)
+      return externalProjectFiles.map {
+        val path = FileUtil.toCanonicalPath(it.path)
+        // The path string can be changed after serialization and deserialization inside persistent component state.
+        // To avoid that we resolve the path using IDE path macros configuration.
+        val collapsedPath = pathMacroManager.collapsePath(path)
+        val expandedPath = pathMacroManager.expandPath(collapsedPath)
+        expandedPath
+      }.toSet()
+    }
 
   private val externalProjectFiles: List<File>
     get() = autoImportAware.getAffectedExternalProjectFiles(projectPath, project)

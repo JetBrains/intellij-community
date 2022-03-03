@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
@@ -26,6 +26,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -36,7 +37,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
-import kotlin.Unit;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -440,6 +440,10 @@ public final class PushLog extends JPanel implements DataProvider {
         return new TextRevisionNumber(hash.asString(), hash.toShortString());
       });
     }
+    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(id)) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      return ContainerUtil.map2Array(commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject());
+    }
     return null;
   }
 
@@ -612,7 +616,7 @@ public final class PushLog extends JPanel implements DataProvider {
       // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
       // null border works as expected always.
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      renderer.setIpad(JBUI.emptyInsets());
+      renderer.setIpad(JBInsets.emptyInsets());
       if (value instanceof RepositoryNode) {
         //todo simplify, remove instance of
         RepositoryNode valueNode = (RepositoryNode)value;

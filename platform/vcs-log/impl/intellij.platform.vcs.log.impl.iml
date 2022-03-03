@@ -35,5 +35,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-guava" level="project" />
   </component>
 </module>

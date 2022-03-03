@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -148,7 +149,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   @TargetVersions("3.4+")
   public void testJdkName() throws Exception {
-    Sdk myJdk = createJdk("MyJDK");
+    Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
     importProject(
       "apply plugin: 'java'\n" +

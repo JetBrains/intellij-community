@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.application.invokeLater
@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -47,7 +48,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String, @NonNl
     vPanel.alignmentY = Component.TOP_ALIGNMENT
 
     val header = JLabel(LearnBundle.message("welcome.promo.header"))
-    header.font = UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(UIUtil.getLabelFont().size2D + JBUI.scale(4))
+    header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(4))
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
     val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName, languageName)}</html>").also {

@@ -24,7 +24,7 @@ import javax.swing.*;
 public class ClassCanBeRecordInspection extends BaseInspection {
   @NotNull
   public ConversionStrategy myConversionStrategy = ConversionStrategy.SHOW_AFFECTED_MEMBERS;
-  public boolean suggestAccessorsRenaming;
+  public boolean suggestAccessorsRenaming = true;
 
   public ClassCanBeRecordInspection() {
   }

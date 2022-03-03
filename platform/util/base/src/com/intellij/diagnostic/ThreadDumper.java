@@ -16,24 +16,13 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class ThreadDumper {
-  private static final Comparator<ThreadInfo> THREAD_INFO_COMPARATOR =
-    Comparator.comparing((ThreadInfo o1) -> isEDT(o1.getThreadName()))
-      .thenComparing(o -> o.getThreadState() == Thread.State.RUNNABLE)
-      .thenComparingInt(o -> o.getStackTrace().length)
-      .reversed();
-
   private ThreadDumper() {
   }
 
   @NotNull
   public static String dumpThreadsToString() {
-    return dumpThreadsToString(getThreadInfos());
-  }
-
-  @NotNull
-  public static String dumpThreadsToString(@NotNull ThreadInfo[] threadInfos) {
     StringWriter writer = new StringWriter();
-    dumpThreadInfos(threadInfos, writer);
+    dumpThreadInfos(getThreadInfos(), writer);
     return writer.toString();
   }
 
@@ -47,7 +36,7 @@ public final class ThreadDumper {
     return writer.toString();
   }
 
-  public static ThreadInfo @NotNull [] getThreadInfos() {
+  public static @NotNull ThreadInfo @NotNull [] getThreadInfos() {
     return getThreadInfos(ManagementFactory.getThreadMXBean(), true);
   }
 
@@ -94,8 +83,13 @@ public final class ThreadDumper {
     return edtStack;
   }
 
-  public static ThreadInfo @NotNull [] sort(ThreadInfo @NotNull [] threads) {
-    Arrays.sort(threads, THREAD_INFO_COMPARATOR);
+  public static ThreadInfo @NotNull [] sort(@NotNull ThreadInfo @NotNull [] threads) {
+    Arrays.sort(threads, Comparator
+      .comparing((ThreadInfo threadInfo) -> !isEDT(threadInfo.getThreadName())) // show EDT first
+      .thenComparing(threadInfo -> threadInfo.getThreadState() != Thread.State.RUNNABLE) // then all runnable
+      .thenComparingInt(threadInfo -> -threadInfo.getStackTrace().length) // show meaningful stacktraces first
+      .thenComparing(threadInfo -> threadInfo.getThreadName()) // sorted by name among same stacktraces
+    );
     return threads;
   }
 

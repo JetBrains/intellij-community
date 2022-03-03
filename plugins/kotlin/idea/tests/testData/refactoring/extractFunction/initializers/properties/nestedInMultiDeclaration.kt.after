@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // SIBLING:
 fun foo() {
     val (a, b) =

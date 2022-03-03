@@ -1,135 +1,152 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
+class MostSpecificResolutionTest extends LightJavaCodeInsightFixtureTestCase5 {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/mostSpecific";
 
+  @NotNull
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
+  protected String getRelativePath() {
+    return super.getRelativePath() + BASE_PATH;
   }
 
-  public void testVoidConflict() {
+  @BeforeEach
+  void setUp() {
+    getFixture().enableInspections(new UnusedDeclarationInspection());
+  }
+
+  @Test
+  void testVoidConflict() {
     doTest();
   }
 
-  public void testNestedLambdaSpecifics() {
+  @Test
+  void testNestedLambdaSpecifics() {
     doTest();
   }
 
-  public void testBothVarargs() {
+  @Test
+  void testBothVarargs() {
     doTest();
   }
 
-  public void testNestedVarargs() {
+  @Test
+  void testNestedVarargs() {
     doTest();
   }
 
-  public void testMostSpecificForSameFunctionalTypes() {
+  @Test
+  void testMostSpecificForSameFunctionalTypes() {
     doTest();
   }
 
-  public void testIDEA121884() {
+  @Test
+  void testIDEA121884() {
     doTest();
   }
 
-  public void testIDEA121999() {
+  @Test
+  void testIDEA121999() {
     doTest();
   }
 
-  public void testRelatedSAMErasures() {
+  @Test
+  void testRelatedSAMErasures() {
     doTest();
   }
 
-  public void testJDK8034223() {
+  @Test
+  void testJDK8034223() {
     doTest();
   }
 
-  public void testIDEA123352() {
+  @Test
+  void testIDEA123352() {
     doTest();
   }
 
-  public void testIncompleteMethodInInterface() {
+  @Test
+  void testIncompleteMethodInInterface() {
     doTest(false);
   }
 
-  public void testMostSpecificByReturnType() {
+  @Test
+  void testMostSpecificByReturnType() {
     doTest();
   }
 
-  public void testDifferentParamsLength() {
+  @Test
+  void testDifferentParamsLength() {
     doTest(false);
   }
 
-  public void testNoReturnTypeResolutionForThrownException() {
+  @Test
+  void testNoReturnTypeResolutionForThrownException() {
     doTest(false);
   }
 
-  public void testBoxingAndOverloadResolution() {
+  @Test
+  void testBoxingAndOverloadResolution() {
     doTest();
   }
 
-  public void testSuperMethodsInExactCheck() {
+  @Test
+  void testSuperMethodsInExactCheck() {
     doTest();
   }
 
-  public void testTargetTypeParameter() {
+  @Test
+  void testTargetTypeParameter() {
     doTest(false);
   }
 
-  public void testJDK8042508() {
+  @Test
+  void testJDK8042508() {
     if (Registry.is("JDK8042508.bug.fixed", false)) {
       doTest(false);
     }
   }
 
-  public void testIDEA125855() {
+  @Test
+  void testIDEA125855() {
     doTest();
   }
 
-  public void testIDEA127584() {
+  @Test
+  void testIDEA127584() {
     doTest();
   }
 
-  public void testVarargsSpecificsDuringMethodReferenceResolve() {
+  @Test
+  void testVarargsSpecificsDuringMethodReferenceResolve() {
     doTest();
   }
 
-  public void testFunctionalTypeComparisonWhenMethodsAreNotGeneric() {
+  @Test
+  void testFunctionalTypeComparisonWhenMethodsAreNotGeneric() {
     doTest(false);
   }
 
-  public void testInferSpecificForGenericMethodWhenCallProvidesExplicitTypeArguments() {
+  @Test
+  void testInferSpecificForGenericMethodWhenCallProvidesExplicitTypeArguments() {
     doTest(false);
   }
 
-  public void testIncompatibleSiteSubstitutionBounds() {
+  @Test
+  void testIncompatibleSiteSubstitutionBounds() {
     doTest(false);
   }
 
-  public void testEnsureArgTypesAreNotCalculatedDuringOverload() {
+  @Test
+  void testEnsureArgTypesAreNotCalculatedDuringOverload() {
     doTest();
   }
 
@@ -138,7 +155,6 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest(boolean warnings) {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    getFixture().testHighlighting(warnings, false, false, getTestName(false) + ".java");
   }
 }

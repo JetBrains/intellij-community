@@ -38,7 +38,7 @@ import java.util.List;
 public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   private static final TokenSet TYPES_OF_STATEMENTS_WITH_OPTIONAL_BRACES = TokenSet.create(
-    JavaElementType.IF_STATEMENT, JavaElementType.WHILE_STATEMENT, JavaElementType.FOR_STATEMENT
+    JavaElementType.IF_STATEMENT, JavaElementType.WHILE_STATEMENT, JavaElementType.FOR_STATEMENT, JavaElementType.SWITCH_LABELED_RULE
   );
 
   private static final int BEFORE_FIRST = 0;

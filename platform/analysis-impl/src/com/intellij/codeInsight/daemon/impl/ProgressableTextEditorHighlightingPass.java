@@ -37,6 +37,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private volatile long myProgressLimit;
   private final AtomicLong myProgressCount = new AtomicLong();
   private volatile long myNextChunkThreshold; // the value myProgressCount should exceed to generate next fireProgressAdvanced event
+  @NotNull
   private final @Nls String myPresentableName;
   protected final PsiFile myFile;
   @Nullable private final Editor myEditor;

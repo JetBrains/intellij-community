@@ -5,12 +5,9 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ArrayExprent extends Exprent {
   private Exprent array;
@@ -74,7 +71,7 @@ public class ArrayExprent extends Exprent {
     VarType arrType = array.getExprType();
     if (arrType.arrayDim == 0) {
       VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
-      res.enclose("((" + ExprProcessor.getCastTypeName(objArr) + ")", ")");
+      res.enclose("((" + ExprProcessor.getCastTypeName(objArr, Collections.emptyList()) + ")", ")");
     }
 
     tracer.addMapping(bytecode);
@@ -98,8 +95,8 @@ public class ArrayExprent extends Exprent {
     if (!(o instanceof ArrayExprent)) return false;
 
     ArrayExprent arr = (ArrayExprent)o;
-    return InterpreterUtil.equalObjects(array, arr.getArray()) &&
-           InterpreterUtil.equalObjects(index, arr.getIndex());
+    return Objects.equals(array, arr.getArray()) &&
+           Objects.equals(index, arr.getIndex());
   }
 
   public Exprent getArray() {

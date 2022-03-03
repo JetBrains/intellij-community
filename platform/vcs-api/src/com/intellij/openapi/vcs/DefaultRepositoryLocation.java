@@ -3,19 +3,22 @@
 package com.intellij.openapi.vcs;
 
 
+import org.jetbrains.annotations.NotNull;
+
 public class DefaultRepositoryLocation implements RepositoryLocation {
   private final String myURL;
   private final String myLocation;
 
-  public DefaultRepositoryLocation(final String URL) {
+  public DefaultRepositoryLocation(@NotNull String URL) {
     this(URL, URL);
   }
 
-  public DefaultRepositoryLocation(final String URL, final String location) {
+  public DefaultRepositoryLocation(@NotNull String URL, final String location) {
     myURL = URL;
     myLocation = location;
   }
 
+  @NotNull
   public String getURL() {
     return myURL;
   }
@@ -25,7 +28,7 @@ public class DefaultRepositoryLocation implements RepositoryLocation {
   }
 
   @Override
-  public String toPresentableString() {
+  public @NotNull String toPresentableString() {
     return myURL;
   }
 

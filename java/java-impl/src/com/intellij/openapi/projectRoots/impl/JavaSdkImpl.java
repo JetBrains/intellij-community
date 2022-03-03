@@ -340,11 +340,13 @@ public final class JavaSdkImpl extends JavaSdk {
   static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
     Path javaPluginClassesRootPath = PathManager.getJarForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
+    javaPluginClassesRootPath = javaPluginClassesRootPath.toAbsolutePath();
     VirtualFile root;
     VirtualFileManager vfm = VirtualFileManager.getInstance();
     LocalFileSystem lfs = LocalFileSystem.getInstance();
+    String pathInResources = "resources/jdkAnnotations.jar";
     if (Files.isRegularFile(javaPluginClassesRootPath)) {
-      Path annotationsJarPath = javaPluginClassesRootPath.resolveSibling("jdkAnnotations.jar").toAbsolutePath();
+      Path annotationsJarPath = javaPluginClassesRootPath.resolveSibling(pathInResources);
       String annotationsJarPathString = FileUtil.toSystemIndependentName(annotationsJarPath.toString());
       String url = "jar://" + annotationsJarPathString + "!/";
       root = refresh ? vfm.refreshAndFindFileByUrl(url) : vfm.findFileByUrl(url);
@@ -364,7 +366,7 @@ public final class JavaSdkImpl extends JavaSdk {
       }
     }
     if (root == null) {
-      String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
+      String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/" + pathInResources + "!/";
       root = refresh ? vfm.refreshAndFindFileByUrl(url) : vfm.findFileByUrl(url);
       pathsChecked.add(url);
     }

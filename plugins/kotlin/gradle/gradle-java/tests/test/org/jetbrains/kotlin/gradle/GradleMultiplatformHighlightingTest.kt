@@ -36,15 +36,11 @@ import java.io.File
 class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
     @Test
     @PluginTargetVersions(pluginVersion = "1.3.0+")
-    fun testFirst() {
-        doTest()
-    }
+    fun testFirst(): Unit = doTest()
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.3.0+")
-    fun testNoErrors() {
-        doTest()
-    }
+    fun testNoErrors(): Unit = doTest()
 
     private fun doTest() {
         val files = importProjectFromTestData()
@@ -62,9 +58,7 @@ class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImporting
         )
     }
 
-    override fun testDataDirName(): String {
-        return "newMultiplatformHighlighting"
-    }
+    override fun testDataDirName(): String = "newMultiplatformHighlighting"
 }
 
 abstract class GradleDaemonAnalyzerTestCase(
@@ -123,7 +117,7 @@ abstract class GradleDaemonAnalyzerTestCase(
         KotlinTestUtils.assertEqualsToFile(physicalFileWithExpectedTestData, actualTextWithTags, sanitizer)
     }
 
-    protected open fun performAdditionalChecksAfterHighlighting(editor: Editor) { }
+    protected open fun performAdditionalChecksAfterHighlighting(editor: Editor) {}
 
     protected open fun renderAdditionalAttributeForTag(tag: TagInfo<*>): String? = null
 
@@ -142,7 +136,7 @@ fun checkFiles(
     val editors = files.map { file ->
         atLeastOneFile = true
 
-        val originalText= VfsUtil.loadText(file)
+        val originalText = VfsUtil.loadText(file)
         val textWithoutTags = textWithoutTags(originalText)
 
         configureEditorByExistingFile(file, project, textWithoutTags)

@@ -32,6 +32,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import icons.MavenIcons;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunner;
@@ -415,7 +416,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     myStructure = new MavenProjectsStructure(myProject, MavenProjectsManager.getInstance(myProject), MavenTasksManager.getInstance(myProject), MavenShortcutsManager.getInstance(myProject), this, myTree);
   }
 
-  private void scheduleStructureUpdate() {
+  @ApiStatus.Internal
+  public void scheduleStructureUpdate() {
     scheduleStructureRequest(() -> myStructure.update());
   }
 

@@ -4,6 +4,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -111,13 +112,12 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public boolean applyFixForPreview(@NotNull Project project,
-                                    @NotNull ProblemDescriptor previewDescriptor) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     final PsiElement element = previewDescriptor.getPsiElement();
     if (!(element instanceof PsiMethod)) {
-      return false;
+      return IntentionPreviewInfo.EMPTY;
     }
     makeMethodVarargs((PsiMethod)element);
-    return true;
+    return IntentionPreviewInfo.DIFF;
   }
 }

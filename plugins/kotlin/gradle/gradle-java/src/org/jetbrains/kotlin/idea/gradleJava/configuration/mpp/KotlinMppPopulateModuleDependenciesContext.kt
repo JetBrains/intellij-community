@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleJava.configuration.klib.KotlinNativeLibrariesDependencySubstitutor
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinModule
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -64,7 +64,7 @@ fun createKotlinMppPopulateModuleDependenciesContext(
     )
 }
 
-fun KotlinMppPopulateModuleDependenciesContext.getDependencies(module: KotlinModule): List<KotlinDependency> {
+fun KotlinMppPopulateModuleDependenciesContext.getDependencies(module: KotlinComponent): List<KotlinDependency> {
     return dependenciesPreprocessor(module.dependencies.mapNotNull { id -> mppModel.dependencyMap[id] })
 }
 

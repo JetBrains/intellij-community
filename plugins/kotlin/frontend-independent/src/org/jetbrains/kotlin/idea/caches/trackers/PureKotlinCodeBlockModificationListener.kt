@@ -20,7 +20,6 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
@@ -111,6 +110,19 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
             if (KtPsiUtil.isLocal(blockDeclaration))
                 return null
 
+            val directParentClassOrObject = PsiTreeUtil.getParentOfType(blockDeclaration, KtClassOrObject::class.java)
+            val parentClassOrObject = directParentClassOrObject
+                ?.takeIf { !it.isTopLevel() && it.hasModifier(KtTokens.INNER_KEYWORD) }?.let {
+                var e: KtClassOrObject? = it
+                while (e != null) {
+                    e = PsiTreeUtil.getParentOfType(e, KtClassOrObject::class.java)
+                    if (e?.hasModifier(KtTokens.INNER_KEYWORD) == false) {
+                        break
+                    }
+                }
+                e
+            } ?: directParentClassOrObject
+
             when (blockDeclaration) {
                 is KtNamedFunction -> {
                     //                    if (blockDeclaration.visibilityModifierType()?.toVisibility() == Visibilities.PRIVATE) {
@@ -122,12 +134,24 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                         // case like `fun foo(): String {...<caret>...}`
                         return blockDeclaration.bodyExpression
                             ?.takeIf { it.isAncestor(element) }
-                            ?.let { BlockModificationScopeElement(blockDeclaration, it) }
+                            ?.let {
+                                if (parentClassOrObject == directParentClassOrObject) {
+                                    BlockModificationScopeElement(blockDeclaration, it)
+                                } else if (parentClassOrObject != null) {
+                                    BlockModificationScopeElement(parentClassOrObject, it)
+                                } else null
+                            }
                     } else if (blockDeclaration.hasDeclaredReturnType()) {
                         // case like `fun foo(): String = b<caret>labla`
                         return blockDeclaration.initializer
                             ?.takeIf { it.isAncestor(element) }
-                            ?.let { BlockModificationScopeElement(blockDeclaration, it) }
+                            ?.let {
+                                if (parentClassOrObject == directParentClassOrObject) {
+                                    BlockModificationScopeElement(blockDeclaration, it)
+                                } else if (parentClassOrObject != null) {
+                                    BlockModificationScopeElement(parentClassOrObject, it)
+                                } else null
+                            }
                     }
                 }
 
@@ -138,7 +162,11 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     //                        }
                     //                    }
 
-                    if (blockDeclaration.typeReference != null) {
+                    if (blockDeclaration.typeReference != null &&
+                        // TODO: it's a workaround for KTIJ-20240 :
+                        //  FE does not report CONSTANT_EXPECTED_TYPE_MISMATCH within a property within a class
+                        (parentClassOrObject == null || element !is KtConstantExpression)
+                    ) {
 
                         // adding annotations to accessor is the same as change contract of property
                         if (element !is KtAnnotated || element.annotationEntries.isEmpty()) {
@@ -155,7 +183,11 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                                     blockDeclaration.findTopmostParentOfType<KtClassOrObject>() as? KtElement
 
                                 if (declaration != null) {
-                                    return BlockModificationScopeElement(declaration, properExpression)
+                                    return if (parentClassOrObject == directParentClassOrObject) {
+                                        BlockModificationScopeElement(declaration, properExpression)
+                                    } else if (parentClassOrObject != null) {
+                                        BlockModificationScopeElement(parentClassOrObject, properExpression)
+                                    } else null
                                 }
                             }
                         }
@@ -175,8 +207,12 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     blockDeclaration
                         .takeIf { it.isAncestor(element) }
                         ?.let { ktClassInitializer ->
-                            (PsiTreeUtil.getParentOfType(blockDeclaration, KtClassOrObject::class.java))?.let {
-                                return BlockModificationScopeElement(it, ktClassInitializer)
+                            parentClassOrObject?.let {
+                                return if (parentClassOrObject == directParentClassOrObject) {
+                                    BlockModificationScopeElement(it, ktClassInitializer)
+                                } else {
+                                    BlockModificationScopeElement(parentClassOrObject, ktClassInitializer)
+                                }
                             }
                         }
                 }
@@ -185,8 +221,12 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     blockDeclaration.takeIf {
                         it.bodyExpression?.isAncestor(element) ?: false || it.getDelegationCallOrNull()?.isAncestor(element) ?: false
                     }?.let { ktConstructor ->
-                        PsiTreeUtil.getParentOfType(blockDeclaration, KtClassOrObject::class.java)?.let {
-                            return BlockModificationScopeElement(it, ktConstructor)
+                        parentClassOrObject?.let {
+                            return if (parentClassOrObject == directParentClassOrObject) {
+                                BlockModificationScopeElement(it, ktConstructor)
+                            } else {
+                                BlockModificationScopeElement(parentClassOrObject, ktConstructor)
+                            }
                         }
                     }
                 }

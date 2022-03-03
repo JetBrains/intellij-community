@@ -11,11 +11,12 @@ import com.intellij.psi.util.nextLeafs
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -25,7 +26,7 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
 ) {
 
     override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
-        return element.isConcatenation() && !element.parent.isConcatenation()
+        return element.isConcatenation() && !element.parent.isConcatenation() && !element.mustBeConstant()
     }
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
@@ -62,7 +63,7 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
     private fun PsiElement.isConcatenation(): Boolean {
         if (this !is KtBinaryExpression) return false
         if (operationToken != KtTokens.PLUS) return false
-        val type = getType(analyze(BodyResolveMode.PARTIAL)) ?: return false
+        val type = getType(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) ?: return false
         return KotlinBuiltIns.isString(type)
     }
 
@@ -102,3 +103,5 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
 
     private fun PsiElement.isWhiteSpaceWithLineBreak() = this is PsiWhiteSpace && this.textContains('\n')
 }
+
+internal fun KtExpression.mustBeConstant(): Boolean = this.parents.any { it is KtAnnotationEntry }

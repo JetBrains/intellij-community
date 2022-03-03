@@ -290,8 +290,7 @@ final class StreamConversion {
     StreamMethodInvocation(LookupElement e, Consumer<? super InsertionContext> beforeInsertion) {
       super(e);
       myBeforeInsertion = beforeInsertion;
-      // Prevent from merging with non-stream method in JavaMethodMergingContributor
-      putUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR, true);
+      JavaMethodMergingContributor.disallowMerge(this);
     }
 
     @Override

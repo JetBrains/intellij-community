@@ -443,6 +443,9 @@ public final class DfTypes {
     if (constraint == TypeConstraints.BOTTOM) {
       return nullability == Nullability.NOT_NULL ? DfType.BOTTOM : NULL;
     }
+    if (constraint.isSingleton() && nullability == Nullability.NOT_NULL) {
+      return new DfReferenceConstantType(constraint, constraint, false);
+    }
     return new DfGenericObjectType(Set.of(), constraint,
                                    DfaNullability.fromNullability(nullability), Mutability.UNKNOWN, null, DfType.BOTTOM, false);
   }

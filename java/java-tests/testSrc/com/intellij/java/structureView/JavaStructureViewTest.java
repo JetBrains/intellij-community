@@ -311,6 +311,21 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  public void testRecordComponents() {
+    doTest(
+      "// region Test\n" +
+      "package com.company;\n" +
+      "\n" +
+      "record R(String s, int i) {}",
+
+      "-Test.java\n" +
+      " -Test\n" +
+      "  -R\n" +
+      "   s: String\n" +
+      "   i: int"
+    );
+  }
+
   public void testRecursive() {
     myFixture.configureByText("I.java", "interface I {" +
                                         "  class Impl implements I {" +
@@ -623,7 +638,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
-  private void doTest(String classText, String expected) {
+  private void doTest(String classText, @Language("TEXT") String expected) {
     doTest(classText, expected, false, false);
   }
 

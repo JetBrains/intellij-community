@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Gregory.Shrago
  */
 public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLevel> {
-
   public static void pushLanguageLevel(@NotNull final Project project) {
     PushedFilePropertiesUpdater instance = PushedFilePropertiesUpdater.getInstance(project);
     for (FilePropertyPusher<?> pusher : EP_NAME.getExtensionList()) {
@@ -58,11 +57,6 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
   @Override
   public LanguageLevel getImmediateValue(@NotNull Module module) {
     return LanguageLevelUtil.getEffectiveLanguageLevel(module);
-  }
-
-  @Override
-  public boolean acceptsFile(@NotNull VirtualFile file) {
-    return false;
   }
 
   @Override

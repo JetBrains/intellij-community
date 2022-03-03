@@ -6,12 +6,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Describes an element's type in an artifact's output layout.
+ *
+ * @see Artifact
+ * @see PackagingElementFactory
+ * @param <E>
+ */
 public abstract class PackagingElementType<E extends PackagingElement<?>> {
   public static final ExtensionPointName<PackagingElementType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.elementType");
   private final String myId;

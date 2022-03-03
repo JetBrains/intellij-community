@@ -28,6 +28,7 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.createSdkForTarget
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkView
+import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.BorderLayout
 
@@ -75,7 +76,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     else {
       config?.pythonInterpreterPath?.let { introspectedPythonPath ->
         if (introspectedPythonPath.isNotBlank()) {
-          sdkComboBox.addSdkItem(PyDetectedSdk(introspectedPythonPath))
+          sdkComboBox.addSdkItem(createDetectedSdk(introspectedPythonPath, isLocal = false))
         }
       }
     }

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun basicMath(x: Int, y: Int) {
     if (x == 12 && y == 2) {
         if (<warning descr="Condition 'x + y == 14' is always true">x + y == 14</warning>) {}

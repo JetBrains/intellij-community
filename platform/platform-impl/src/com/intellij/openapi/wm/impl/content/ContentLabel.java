@@ -7,11 +7,13 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,6 +214,11 @@ public abstract class ContentLabel extends BaseLabel {
 
     setBorder(new EmptyBorder(0, left, 0, right));
     myIconWithInsetsWidth = rightIconWidth + right + left;
+
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets()));
+      myIconWithInsetsWidth = rightIconWidth;
+    }
 
     return new Dimension(rightIconWidth + size.width, size.height);
   }

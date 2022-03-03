@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.formatter;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings;
 import org.jetbrains.kotlin.test.SettingsConfigurator;
@@ -12,8 +13,10 @@ public class FormatSettingsUtil {
     }
 
     public static SettingsConfigurator createConfigurator(String fileText, CodeStyleSettings settings) {
+        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(KotlinLanguage.INSTANCE);
         return new SettingsConfigurator(fileText,
                                         settings.getCustomSettings(KotlinCodeStyleSettings.class),
-                                        settings.getCommonSettings(KotlinLanguage.INSTANCE));
+                                        commonSettings,
+                                        commonSettings.getIndentOptions());
     }
 }

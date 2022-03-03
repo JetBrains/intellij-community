@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo {
     fun forEach(predicate: (Int) -> Int, bar: Int): Int = predicate(bar)
 }

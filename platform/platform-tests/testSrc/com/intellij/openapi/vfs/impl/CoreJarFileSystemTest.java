@@ -1,31 +1,51 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.io.Compressor;
+import com.intellij.util.io.URLUtil;
+import org.assertj.core.api.Assertions;
+import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.jar.Manifest;
 
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CoreJarFileSystemTest {
+  @Rule public TempDirectory tempDir = new TempDirectory();
+
+  private final CoreJarFileSystem myJarFS = new CoreJarFileSystem();
+
+  @After
+  public void tearDown() {
+    myJarFS.clearHandlersCache();
+  }
+
   @Test
-  public void testSimple() {
-    String jarPath = PlatformTestUtil.getPlatformTestDataPath() + "vfs/corejar/rt.jar!/";
-    VirtualFile root = new CoreJarFileSystem().findFileByPath(jarPath);
-    assertNotNull(jarPath, root);
-    VirtualFile[] children = root.getChildren();
-    assertEquals(4, children.length);
+  public void basics() throws IOException {
+    File testJar = tempDir.newFile("test.jar");
+    try (Compressor.Jar jar = new Compressor.Jar(testJar)) {
+      jar.addManifest(new Manifest());
+      jar.addDirectory("com");
+      jar.addFile("java/util/ArrayList.class", new byte[]{(byte)0xCA, (byte)0xFE, (byte)0xBA, (byte)0xBE});
+    }
+
+    VirtualFile root = myJarFS.findFileByPath(testJar.getPath() + URLUtil.JAR_SEPARATOR);
+    assertThat(root).describedAs(testJar.getPath()).isNotNull();
+    assertThat(root.getChildren()).hasSize(3);
 
     VirtualFile com = root.findFileByRelativePath("com");
-    assertNotNull(com);
-    assertEquals(0, com.getChildren().length);
-    assertTrue(com.isDirectory());
+    Assertions.<VirtualFile>assertThat(com).isNotNull().matches(f -> f.isDirectory());
+    assertThat(com.getChildren()).isEmpty();
 
     VirtualFile arrayList = root.findFileByRelativePath("java/util/ArrayList.class");
-    assertNotNull(arrayList);
-    assertEquals(0, arrayList.getChildren().length);
-    assertFalse(arrayList.isDirectory());
+    Assertions.<VirtualFile>assertThat(arrayList).isNotNull().matches(f -> !f.isDirectory());
+    assertThat(arrayList.getChildren()).isEmpty();
   }
 }

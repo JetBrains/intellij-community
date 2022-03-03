@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -22,6 +22,7 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
  * @author Vladislav.Soroka
  */
 public final class ProjectDependenciesSerializationService implements SerializationService<ProjectDependencies> {
+  private static final ResolutionState[] RESOLUTION_STATES = ResolutionState.values();
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
 
@@ -262,7 +263,10 @@ public final class ProjectDependenciesSerializationService implements Serializat
   private static void writeDependencyCommonFields(IonWriter writer, DependencyNode node)
     throws IOException {
     writeLong(writer, "id", node.getId());
-    writeString(writer, "resolutionState", node.getResolutionState());
+    ResolutionState state = node.getResolutionState();
+    int ordinal = state == null ? -1 : state.ordinal();
+    writeLong(writer, "resolutionState", ordinal);
+    writeString(writer, "selectionReason", node.getSelectionReason());
   }
 
   private static void writeDependenciesField(IonWriter writer,
@@ -342,7 +346,9 @@ public final class ProjectDependenciesSerializationService implements Serializat
           public DependencyNode newInstance() {
             String type = readString(reader, "_type");
             long id = readLong(reader, "id");
-            String resolutionState = readString(reader, "resolutionState");
+            int resolutionStateOrdinal = readInt(reader, "resolutionState");
+            ResolutionState resolutionState = resolutionStateOrdinal == -1 ? null : RESOLUTION_STATES[resolutionStateOrdinal];
+            String selectionReason = readString(reader, "selectionReason");
             DependencyNode node;
             if (ProjectDependencyNode.class.getSimpleName().equals(type)) {
               String projectName = assertNotNull(readString(reader, "projectName"));
@@ -377,6 +383,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
             }
             if (node instanceof AbstractDependencyNode) {
               ((AbstractDependencyNode)node).setResolutionState(resolutionState);
+              ((AbstractDependencyNode)node).setSelectionReason(selectionReason);
             }
             return node;
           }

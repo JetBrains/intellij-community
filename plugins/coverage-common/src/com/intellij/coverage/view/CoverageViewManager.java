@@ -24,11 +24,11 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @State(name = "CoverageViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
@@ -64,12 +64,20 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
 
   @Override
   public StateBean getState() {
+    if (!myViews.isEmpty()) {
+      final CoverageView view = myViews.values().iterator().next();
+      view.saveSize();
+    }
     return myStateBean;
   }
 
   @Override
   public void loadState(@NotNull StateBean state) {
     myStateBean = state;
+  }
+
+  public StateBean getStateBean() {
+    return myStateBean;
   }
 
   public CoverageView getToolwindow(CoverageSuitesBundle suitesBundle) {
@@ -132,6 +140,6 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     public boolean myFlattenPackages = false;
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;
-    public int myElementSize = JBUIScale.scale(200);
+    public List<Integer> myColumnSize;
   }
 }

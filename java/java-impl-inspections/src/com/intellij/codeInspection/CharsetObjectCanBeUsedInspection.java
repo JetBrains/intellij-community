@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMultiCatchFix;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -187,7 +187,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       PsiMethod[] candidates = method.isConstructor() ? aClass.getConstructors() : aClass.findMethodsByName(method.getName(), false);
       PsiMethod charsetMethod = Arrays.stream(candidates)
         .filter(psiMethod -> checkMethod(psiMethod, "java.nio.charset.Charset"))
-        .filter(psiMethod -> Java15APIUsageInspection.getLastIncompatibleLanguageLevel(psiMethod, languageLevel) == null)
+        .filter(psiMethod -> LanguageLevelUtil.getLastIncompatibleLanguageLevel(psiMethod, languageLevel) == null)
         .findFirst().orElse(null);
       if (charsetMethod == null) return null;
       return new CharsetMatch(argument, method, charsetMethod);

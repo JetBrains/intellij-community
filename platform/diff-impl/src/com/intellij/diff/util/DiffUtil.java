@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.application.options.CodeStyle;
@@ -53,6 +53,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -426,7 +427,7 @@ public final class DiffUtil {
 
   @NotNull
   public static JPanel createMessagePanel(@NotNull JComponent label) {
-    Color commentFg = new JBColor(() -> {
+    Color commentFg = JBColor.lazy(() -> {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
       if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
@@ -440,7 +441,7 @@ public final class DiffUtil {
 
     JPanel panel = new JPanel(new SingleComponentCenteringLayout());
     panel.setBorder(JBUI.Borders.empty(5));
-    panel.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
+    panel.setBackground(JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
     panel.add(label);
     return panel;
   }
@@ -450,8 +451,17 @@ public final class DiffUtil {
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, @Nullable List<? extends AnAction> actions) {
+    addActionBlock(group, actions, true);
+  }
+
+  public static void addActionBlock(@NotNull DefaultActionGroup group,
+                                    @Nullable List<? extends AnAction> actions,
+                                    boolean prependSeparator) {
     if (actions == null || actions.isEmpty()) return;
-    group.addSeparator();
+
+    if (prependSeparator) {
+      group.addSeparator();
+    }
 
     AnAction[] children = group.getChildren(null);
     for (AnAction action : actions) {
@@ -528,9 +538,10 @@ public final class DiffUtil {
 
     List<JComponent> components = new ArrayList<>(titles.size());
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
+    boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(titles.get(i),
-                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
+      JComponent title = needCreateTitle ? createTitle(titles.get(i),
+                                                       diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null) : null;
       title = createTitleWithNotifications(viewer, title, contents.get(i));
       components.add(title);
     }
@@ -551,13 +562,14 @@ public final class DiffUtil {
     List<JComponent> result = new ArrayList<>(contents.size());
 
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
+    boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(titles.get(i),
-                                     contents.get(i),
-                                     equalCharsets,
-                                     equalSeparators,
-                                     editors.get(i),
-                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
+      JComponent title = needCreateTitle ? createTitle(titles.get(i),
+                                                       contents.get(i),
+                                                       equalCharsets,
+                                                       equalSeparators,
+                                                       editors.get(i),
+                                                       diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null) : null;
       title = createTitleWithNotifications(viewer, title, contents.get(i));
       result.add(title);
     }
@@ -1090,6 +1102,12 @@ public final class DiffUtil {
         isEmpty &= lineCount == 0;
       }
     }.execute();
+  }
+
+  public static void clearLineModificationFlags(@NotNull Document document, int startLine, int endLine) {
+    if (document.getTextLength() == 0) return;  // empty document has no lines
+    if (startLine == endLine) return;
+    ((DocumentImpl)document).clearLineModificationFlags(startLine, endLine);
   }
 
   @NotNull
@@ -1701,16 +1719,6 @@ public final class DiffUtil {
       if (data != null) return data;
     }
     return null;
-  }
-
-  /**
-   * @deprecated Use {@link #addNotification(DiffNotificationProvider, UserDataHolder)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static void addNotification(@Nullable JComponent component, @NotNull UserDataHolder holder) {
-    if (component == null) return;
-    addNotification(viewer -> component, holder);
   }
 
   public static void addNotification(@Nullable DiffNotificationProvider provider, @NotNull UserDataHolder holder) {

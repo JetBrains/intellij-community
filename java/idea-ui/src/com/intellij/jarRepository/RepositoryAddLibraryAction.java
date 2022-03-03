@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiFile;
@@ -50,18 +51,22 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
     addLibraryToModule(libraryDescription, module);
   }
 
-  public static Promise<Void> addLibraryToModule(RepositoryLibraryDescription libraryDescription, Module module) {
-    RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
-      RepositoryLibraryDescription.DefaultVersionId,
-      false,
-      false);
-    RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
-      module.getProject(),
-      model,
-      libraryDescription,
-      false, true);
-    if (!dialog.showAndGet()) {
-      return Promises.rejectedPromise();
+  public static Promise<Void> addLibraryToModule(@NotNull RepositoryLibraryDescription libraryDescription,
+                                                 @NotNull Module module,
+                                                 @NotNull String defaultVersion,
+                                                 @Nullable DependencyScope  scope,
+                                                 boolean downloadSources,
+                                                 boolean downloadJavaDocs) {
+    RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(defaultVersion, downloadSources, downloadJavaDocs);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
+        module.getProject(),
+        model,
+        libraryDescription,
+        false, true);
+      if (!dialog.showAndGet()) {
+        return Promises.rejectedPromise();
+      }
     }
     IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
     final ModifiableRootModel modifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
@@ -70,8 +75,13 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
     librarySupport.addSupport(
       module,
       modifiableModel,
-      modifiableModelsProvider);
+      modifiableModelsProvider,
+      scope);
     ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
     return Promises.resolvedPromise(null);
+  }
+
+  public static Promise<Void> addLibraryToModule(@NotNull RepositoryLibraryDescription libraryDescription, @NotNull Module module) {
+    return addLibraryToModule(libraryDescription, module, RepositoryLibraryDescription.DefaultVersionId, null, false, false);
   }
 }

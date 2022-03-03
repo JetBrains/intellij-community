@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
-import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -19,8 +19,7 @@ public abstract class JdkVersionDetector {
 
   public abstract @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService actionRunner);
 
-
-  /** Known OpenJDK builds */
+  @SuppressWarnings("SpellCheckingInspection")
   public enum Variant {
     AdoptOpenJdk_HS("adopt", "AdoptOpenJDK (HotSpot)"),
     AdoptOpenJdk_J9("adopt-j9", "AdoptOpenJDK (OpenJ9)"),
@@ -47,13 +46,13 @@ public abstract class JdkVersionDetector {
 
   public static final class JdkVersionInfo {
     public final JavaVersion version;
-    public final Bitness bitness;
     public final Variant variant;
+    public final CpuArch arch;
 
-    public JdkVersionInfo(@NotNull JavaVersion version, @NotNull Bitness bitness, @Nullable Variant variant) {
+    public JdkVersionInfo(@NotNull JavaVersion version, @Nullable Variant variant, @NotNull CpuArch arch) {
       this.version = version;
-      this.bitness = bitness;
       this.variant = variant != null ? variant : Variant.Unknown;
+      this.arch = arch;
     }
 
     public @NotNull String suggestedName() {
@@ -68,7 +67,7 @@ public abstract class JdkVersionDetector {
 
     @Override
     public String toString() {
-      return version + " " + bitness;
+      return version + " " + arch;
     }
   }
 

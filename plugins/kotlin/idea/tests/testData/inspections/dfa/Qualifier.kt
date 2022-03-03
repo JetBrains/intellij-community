@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class X {
     var p: Int = 0
 

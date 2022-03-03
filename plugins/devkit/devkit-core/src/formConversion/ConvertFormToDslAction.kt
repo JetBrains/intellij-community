@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.formConversion
 
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -29,8 +28,8 @@ import org.jetbrains.uast.toUElement
 import java.util.*
 
 
-class ConvertFormToDslAction : AnAction() {
-  override fun actionPerformed(e: AnActionEvent) {
+class ConvertFormToDslAction /* todo IDEA-282478 : AnAction() */ {
+  fun actionPerformed(e: AnActionEvent) {
     val editor = e.getRequiredData(CommonDataKeys.EDITOR)
     val psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE) as PsiJavaFile
     val project = psiFile.project
@@ -48,7 +47,7 @@ class ConvertFormToDslAction : AnAction() {
     convertFormToUiDsl(psiClass, formFile)
   }
 
-  override fun update(e: AnActionEvent) {
+  fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.getData(CommonDataKeys.PSI_FILE) is PsiJavaFile &&
                                e.getData(CommonDataKeys.EDITOR) != null
   }

@@ -106,9 +106,13 @@ public interface StatusBarWidget extends Disposable {
     }
   }
 
+  /**
+   * @deprecated Use {@link JBUI.CurrentTheme.StatusBar.Widget} border methods
+   */
+  @Deprecated
   abstract class WidgetBorder implements Border {
-    public static final Border ICON = JBUI.Borders.empty(0, 4);
-    public static final Border INSTANCE = JBUI.Borders.empty(0, 6);
-    public static final Border WIDE = JBUI.Borders.empty(0, 6);
+    public static final Border ICON = JBUI.CurrentTheme.StatusBar.Widget.iconBorder();
+    public static final Border INSTANCE = JBUI.CurrentTheme.StatusBar.Widget.border();
+    public static final Border WIDE = JBUI.CurrentTheme.StatusBar.Widget.border();
   }
 }

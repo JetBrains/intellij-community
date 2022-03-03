@@ -50,8 +50,6 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   @NotNull
   private final GradleVersion myCurrentGradleVersion;
   private MyModelBuilderContext myModelBuilderContext;
-  @Deprecated
-  public static final ThreadLocal<ModelBuilderContext> CURRENT_CONTEXT = new ThreadLocal<ModelBuilderContext>();
 
   public ExtraModelBuilder() {
     this(GradleVersion.current());
@@ -101,39 +99,33 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     }
     myModelBuilderContext.setParameter(parameter);
 
-    CURRENT_CONTEXT.set(myModelBuilderContext);
-    try {
-      for (ModelBuilderService service : modelBuilderServices) {
-        if (service.canBuild(modelName)) {
-          final long startTime = System.currentTimeMillis();
-          try {
-            if (service instanceof ModelBuilderService.Ex)
-              return ((ModelBuilderService.Ex)service).buildAll(modelName, project, myModelBuilderContext);
-            else {
-              return service.buildAll(modelName, project);
-            }
+    for (ModelBuilderService service : modelBuilderServices) {
+      if (service.canBuild(modelName)) {
+        final long startTime = System.currentTimeMillis();
+        try {
+          if (service instanceof ModelBuilderService.Ex)
+            return ((ModelBuilderService.Ex)service).buildAll(modelName, project, myModelBuilderContext);
+          else {
+            return service.buildAll(modelName, project);
           }
-          catch (Exception e) {
-            if (service instanceof ExternalProjectBuilderImpl) {
-              if (e instanceof RuntimeException) throw (RuntimeException)e;
-              throw new ExternalSystemException(e);
-            }
-            reportModelBuilderFailure(project, service, myModelBuilderContext, e);
-          }
-          finally {
-            if (Boolean.getBoolean("idea.gradle.custom.tooling.perf")) {
-              final long timeInMs = (System.currentTimeMillis() - startTime);
-              reportPerformanceStatistic(project, service, modelName, timeInMs);
-            }
-          }
-          return null;
         }
+        catch (Exception e) {
+          if (service instanceof ExternalProjectBuilderImpl) {
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            throw new ExternalSystemException(e);
+          }
+          reportModelBuilderFailure(project, service, myModelBuilderContext, e);
+        }
+        finally {
+          if (Boolean.getBoolean("idea.gradle.custom.tooling.perf")) {
+            final long timeInMs = (System.currentTimeMillis() - startTime);
+            reportPerformanceStatistic(project, service, modelName, timeInMs);
+          }
+        }
+        return null;
       }
-      throw new IllegalArgumentException("Unsupported model: " + modelName);
     }
-    finally {
-      CURRENT_CONTEXT.remove();
-    }
+    throw new IllegalArgumentException("Unsupported model: " + modelName);
   }
 
   private static void reportPerformanceStatistic(Project project, ModelBuilderService service, String modelName, long timeInMs) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
@@ -38,7 +38,9 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
 
   @Throws(InterruptedException::class)
   private fun runParallelTasks(tasks: Collection<ThrowableRunnable<*>>) {
-    if (tasks.isEmpty()) return
+    if (tasks.isEmpty()) {
+      return
+    }
     if (ourDoParallelIndicesInitialization) {
       val taskExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
         "Index Instantiation Pool",
@@ -69,10 +71,12 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
   private fun executeTask(callable: ThrowableRunnable<*>) {
     val app = ApplicationManager.getApplication()
     try {
-      // To correctly apply file removals in indices's shutdown hook we should process all initialization tasks
+      // To correctly apply file removals in indices shutdown hook we should process all initialization tasks
       // Todo: make processing removed files more robust because ignoring 'dispose in progress' delays application exit and
       // may cause memory leaks IDEA-183718, IDEA-169374,
-      if (app.isDisposed /*|| app.isDisposeInProgress()*/) return
+      if (app.isDisposed /*|| app.isDisposeInProgress()*/) {
+        return
+      }
       callable.run()
     }
     catch (t: Throwable) {
@@ -82,13 +86,11 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
 
   companion object {
     private val LOG = Logger.getInstance(IndexDataInitializer::class.java)
-    private val ourDoParallelIndicesInitialization = SystemProperties
-      .getBooleanProperty("idea.parallel.indices.initialization", true)
+    private val ourDoParallelIndicesInitialization = SystemProperties.getBooleanProperty("idea.parallel.indices.initialization", true)
 
     @JvmField
     val ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true)
-    private val ourGenesisExecutor = SequentialTaskExecutor
-      .createSequentialApplicationPoolExecutor("Index Data Initializer Pool")
+    private val ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Data Initializer Pool")
 
     @JvmStatic
     fun <T> submitGenesisTask(action: Callable<T>): Future<T> {

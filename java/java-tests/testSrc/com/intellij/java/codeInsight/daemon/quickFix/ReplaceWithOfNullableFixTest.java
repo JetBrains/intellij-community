@@ -1,48 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase5;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 
-public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DataFlowInspection()};
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceWithOfNullable";
-  }
-
-  @Override
-  protected void beforeActionStarted(String testName, String contents) {
-    if (testName.contains("Guava")) {
-      ReplaceFromOfNullableFixTest.addGuavaOptional(getProject());
+public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTestCase5 {
+  
+  @BeforeEach
+  void setupInspections() {
+    getFixture().enableInspections(DataFlowInspection.class);
+    if (getTestNameRule().getDisplayName().contains("Guava")) {
+      ReplaceFromOfNullableFixTest.addGuavaOptional(getFixture());
     }
-    super.beforeActionStarted(testName, contents);
   }
-
+ 
   @Override
-  protected void afterActionCompleted(String testName, String contents) {
-    ReplaceFromOfNullableFixTest.cleanupGuava(getProject());
-    super.afterActionCompleted(testName, contents);
+  protected @NotNull String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceWithOfNullable";
   }
 }

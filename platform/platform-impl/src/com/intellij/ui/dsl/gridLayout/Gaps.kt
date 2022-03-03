@@ -2,19 +2,19 @@
 package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.ui.JBEmptyBorder
 
-@ApiStatus.Experimental
 data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
   companion object {
+    @JvmField
     val EMPTY = Gaps(0)
   }
 
   init {
-    checkNonNegative(::top)
-    checkNonNegative(::left)
-    checkNonNegative(::bottom)
-    checkNonNegative(::right)
+    checkNonNegative("top", top)
+    checkNonNegative("left", left)
+    checkNonNegative("bottom", bottom)
+    checkNonNegative("right", right)
   }
 
   constructor(size: Int) : this(size, size, size, size)
@@ -24,4 +24,9 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
 
   val height: Int
     get() = top + bottom
+}
+
+
+fun Gaps.toJBEmptyBorder(): JBEmptyBorder {
+  return JBEmptyBorder(top, left, bottom, right)
 }

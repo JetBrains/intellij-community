@@ -117,7 +117,7 @@ public abstract class HackedSliceNullnessAnalyzerBase {
 
       ProgressManager.getInstance().run(new Task.Backgroundable(
               root.getProject(),
-              KotlinIdeaCompletionBundle.message("slice.nullness.progress.title.expanding.all.nodes.may.very.well.take.whole.day"), true) {
+              KotlinIdeaCompletionBundle.message("slice.nullness.progress.title.expanding.all.nodes"), true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);

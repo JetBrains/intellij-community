@@ -15,13 +15,6 @@ public interface ToolWindowId {
   String RUN = "Run";
 
   /**
-   * @deprecated Use {@link com.intellij.build.BuildContentManager#getOrCreateToolWindow()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  String BUILD = "Build";
-
-  /**
    * @deprecated Use {@link com.intellij.analysis.problemsView.toolWindow.ProblemsView}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")

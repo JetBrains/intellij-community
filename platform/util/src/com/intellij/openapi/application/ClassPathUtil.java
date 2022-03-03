@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.text.Strings;
@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.util.XmlDomReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.xxh3.Xx3UnencodedString;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -37,13 +38,14 @@ public final class ClassPathUtil {
   }
 
   public static @NotNull Class<?> @NotNull [] getUtilClasses() {
-    @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
+    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"}) Class<?>[] classes = {
       PathManager.class,                                  // module 'intellij.platform.util'
       Strings.class,                                      // module 'intellij.platform.util.base'
       XmlDomReader.class,                                 // module 'intellij.platform.util.xmlDom'
       MinusculeMatcher.class,                             // module 'intellij.platform.util.text.matching'
       com.intellij.openapi.util.SystemInfoRt.class,       // module 'intellij.platform.util.rt'
       com.intellij.util.lang.UrlClassLoader.class,        // module 'intellij.platform.util.classLoader'
+      Xx3UnencodedString.class,                           // intellij.platform.util.rt.java8 (required for classLoader)
       org.intellij.lang.annotations.Flow.class,           // jetbrains-annotations-java5
       org.jdom.Document.class,                            // jDOM
       org.apache.log4j.Appender.class,                    // Log4J

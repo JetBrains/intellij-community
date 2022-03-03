@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
@@ -302,7 +302,7 @@ public final class SheetController implements Disposable {
     };
 
     headerLabel.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-    headerLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    headerLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     headerLabel.setEditable(false);
 
     headerLabel.setContentType("text/html");

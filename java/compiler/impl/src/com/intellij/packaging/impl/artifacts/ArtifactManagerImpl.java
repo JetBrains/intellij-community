@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.server.BuildManager;
@@ -26,7 +26,6 @@ import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -354,7 +353,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
       final List<ArtifactImpl> allArtifacts = artifactModel.getOriginalArtifacts();
 
-      final Set<ArtifactImpl> removed = new THashSet<>(myModel.myArtifactsList);
+      final Set<ArtifactImpl> removed = new HashSet<>(myModel.myArtifactsList);
       final List<ArtifactImpl> added = new ArrayList<>();
       final List<Pair<ArtifactImpl, String>> changed = new ArrayList<>();
 

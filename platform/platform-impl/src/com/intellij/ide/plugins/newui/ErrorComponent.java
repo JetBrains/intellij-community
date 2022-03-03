@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
@@ -32,7 +31,7 @@ final class ErrorComponent extends JEditorPane {
     setCaret(EmptyCaret.INSTANCE);
 
     StyleSheet sheet = ((HTMLEditorKit)getEditorKit()).getStyleSheet();
-    sheet.addRule("span {color: " + ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR) + "}");
+    sheet.addRule("span {color: " + ColorUtil.toHtmlColor(UIUtil.getErrorForeground()) + "}");
     sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}");
 
     addHyperlinkListener(new HyperlinkAdapter() {

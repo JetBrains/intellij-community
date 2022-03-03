@@ -27,7 +27,7 @@ public class TouchbarTest {
     new Thread(()-> {
       int c = 1;
       while (--c >= 0) {
-        final TouchBar testTB = _createSimpleTestTouchbar();
+        final TBPanel testTB = _createSimpleTestTouchbar();
         testTB.selectVisibleItemsToShow();
         testTB.setTo(null);
 
@@ -45,16 +45,16 @@ public class TouchbarTest {
 
   }
 
-  private static TouchBar _createSimpleTestTouchbar() {
+  private static TBPanel _createSimpleTestTouchbar() {
     final int configPopoverWidth = 143;
-    final TouchBar testTB = new TouchBar("test_simple");
+    final TBPanel testTB = new TBPanel("test_simple");
     testTB.addButton().setText("butt").setAction(createPrintTextCallback("pressed button"), false);
     return testTB;
   }
 
-  private static TouchBar _createTestButtonsTouchbar() {
+  private static TBPanel _createTestButtonsTouchbar() {
     final int configPopoverWidth = 143;
-    final TouchBar testTB = new TouchBar("test");
+    final TBPanel testTB = new TBPanel("test");
     testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"), false);
     testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"), false);
     testTB.addButton().setText("test3 with suff").setAction(createPrintTextCallback("pressed test2 button"), false);
@@ -96,8 +96,8 @@ public class TouchbarTest {
 
   private static boolean ourVisible = true;
   private static boolean ourEnabled = true;
-  private static TouchBar _createTestScrubberTouchbar() {
-    final TouchBar testTB = new TouchBar("test");
+  private static TBPanel _createTestScrubberTouchbar() {
+    final TBPanel testTB = new TBPanel("test");
     testTB.addSpacing(true);
 
     final TBItemScrubber scrubber = testTB.addScrubber();
@@ -128,8 +128,8 @@ public class TouchbarTest {
     return testTB;
   }
 
-  private static TouchBar _createTestAllTouchbar() {
-    final TouchBar testTB = new TouchBar("test");
+  private static TBPanel _createTestAllTouchbar() {
+    final TBPanel testTB = new TBPanel("test");
     testTB.addSpacing(true);
     testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"), false);
     testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"), false);

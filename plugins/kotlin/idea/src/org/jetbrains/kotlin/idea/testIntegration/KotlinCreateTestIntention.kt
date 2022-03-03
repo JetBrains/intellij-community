@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.testIntegration
 
@@ -11,11 +11,13 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScopesCore
+import com.intellij.psi.util.PsiUtil
 import com.intellij.testIntegration.createTest.CreateTestAction
 import com.intellij.testIntegration.createTest.CreateTestUtils.computeTestRoots
 import com.intellij.testIntegration.createTest.TestGenerators
@@ -52,6 +54,10 @@ class KotlinCreateTestIntention : SelfTargetingRangeIntention<KtNamedDeclaration
             if (element is KtClass && (element.isAnnotation() || element.isInterface())) return null
 
             if (element.resolveToDescriptorIfAny() == null) return null
+
+            val virtualFile = PsiUtil.getVirtualFile(element)
+            if (virtualFile == null || 
+                ProjectRootManager.getInstance(element.project).fileIndex.isInTestSourceContent(virtualFile)) return null
 
             return TextRange(
                 element.startOffset,

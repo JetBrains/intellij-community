@@ -4,7 +4,6 @@ package git4idea.ift.lesson
 import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.notification.NotificationType
@@ -12,6 +11,7 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -116,7 +116,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      triggerByPartOfComponent(false, false) { ui: SelectChildTextFieldWithBrowseButton ->
+      triggerByPartOfComponent(false, false) { ui: TextFieldWithBrowseButton ->
         val rect = ui.visibleRect
         Rectangle(rect.x, rect.y, 59, rect.height)
       }

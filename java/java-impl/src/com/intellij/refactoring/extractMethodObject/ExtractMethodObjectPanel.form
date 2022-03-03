@@ -140,23 +140,14 @@
           </component>
         </children>
       </grid>
-      <scrollpane id="54db0" class="com.intellij.ui.components.JBScrollPane">
+      <component id="6c27c" class="com.intellij.refactoring.ui.MethodSignatureComponent" binding="mySignatureArea" custom-create="true">
         <constraints>
           <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <minimumSize width="19" height="40"/>
+          <minimumSize width="0" height="64"/>
         </properties>
-        <border type="none"/>
-        <children>
-          <component id="6c27c" class="com.intellij.refactoring.ui.MethodSignatureComponent" binding="mySignatureArea" custom-create="true">
-            <constraints/>
-            <properties>
-              <minimumSize width="0" height="64"/>
-            </properties>
-          </component>
-        </children>
-      </scrollpane>
+      </component>
       <grid id="70155" binding="myParametersTableContainer" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>

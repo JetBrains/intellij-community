@@ -17,17 +17,9 @@ import java.nio.file.Path
 abstract class AbstractConfigureKotlinTestBase : HeavyPlatformTestCase() {
     protected lateinit var projectRoot: File
 
-    protected val jvmConfigurator: KotlinJavaModuleConfigurator by lazy {
-        object : KotlinJavaModuleConfigurator() {
-            override fun getDefaultPathToJarFile(project: Project) = projectRoot.resolve("default_jvm_lib").path
-        }
-    }
+    protected val jvmConfigurator: KotlinJavaModuleConfigurator by lazy { KotlinJavaModuleConfigurator() }
 
-    protected val jsConfigurator: KotlinJsModuleConfigurator by lazy {
-        object : KotlinJsModuleConfigurator() {
-            override fun getDefaultPathToJarFile(project: Project) = projectRoot.resolve("default_js_lib").path
-        }
-    }
+    protected val jsConfigurator: KotlinJsModuleConfigurator by lazy { KotlinJsModuleConfigurator() }
 
     protected val modules: Array<Module>
         get() = ModuleManager.getInstance(myProject).modules
@@ -64,7 +56,7 @@ abstract class AbstractConfigureKotlinTestBase : HeavyPlatformTestCase() {
         myModule = modules.first()
     }
 
-    protected fun getOppositeConfigurator(configurator: KotlinWithLibraryConfigurator): KotlinWithLibraryConfigurator {
+    protected fun getOppositeConfigurator(configurator: KotlinWithLibraryConfigurator<*>): KotlinWithLibraryConfigurator<*> {
         if (configurator === jvmConfigurator) return jsConfigurator
         if (configurator === jsConfigurator) return jvmConfigurator
 

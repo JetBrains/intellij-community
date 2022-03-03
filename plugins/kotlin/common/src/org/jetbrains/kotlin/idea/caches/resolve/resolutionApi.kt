@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
-import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -22,8 +22,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-fun KtElement.getResolutionFacade(): ResolutionFacade =
-    KotlinCacheService.getInstance(project).getResolutionFacade(this)
+fun KtElement.getResolutionFacade(): ResolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(this)
 
 /**
  * For local declarations is equivalent to unsafeResolveToDescriptor(bodyResolveMode)
@@ -123,8 +122,7 @@ fun KtAnnotationEntry.resolveToDescriptorIfAny(
 @JvmOverloads
 fun KtElement.analyze(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
-): BindingContext =
-    analyze(getResolutionFacade(), bodyResolveMode)
+): BindingContext = analyze(getResolutionFacade(), bodyResolveMode)
 
 @JvmOverloads
 fun KtElement.safeAnalyze(
@@ -134,15 +132,12 @@ fun KtElement.safeAnalyze(
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
-fun KtElement.analyzeAndGetResult(): AnalysisResult {
-    return analyzeAndGetResult(getResolutionFacade())
-}
+fun KtElement.analyzeAndGetResult(): AnalysisResult = analyzeAndGetResult(getResolutionFacade())
 
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
-fun KtElement.analyzeWithContentAndGetResult(): AnalysisResult =
-    analyzeWithContentAndGetResult(getResolutionFacade())
+fun KtElement.analyzeWithContentAndGetResult(): AnalysisResult = analyzeWithContentAndGetResult(getResolutionFacade())
 
 fun KtElement.findModuleDescriptor(): ModuleDescriptor = getResolutionFacade().moduleDescriptor
 
@@ -151,8 +146,7 @@ fun KtElement.findModuleDescriptor(): ModuleDescriptor = getResolutionFacade().m
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
-fun KtDeclaration.analyzeWithContent(): BindingContext =
-    analyzeWithContent(getResolutionFacade())
+fun KtDeclaration.analyzeWithContent(): BindingContext = analyzeWithContent(getResolutionFacade())
 
 // This function is used to make full analysis of declaration container.
 // All its declarations, including their content (see above), are analyzed.
@@ -171,8 +165,7 @@ inline fun <reified T> T.analyzeWithContent(): BindingContext where T : KtDeclar
  * @ref [KotlinCacheService]
  * @ref [org.jetbrains.kotlin.idea.caches.resolve.PerFileAnalysisCache]
  */
-fun KtFile.analyzeWithAllCompilerChecks(vararg extraFiles: KtFile): AnalysisResult =
-    this.analyzeWithAllCompilerChecks(null, *extraFiles)
+fun KtFile.analyzeWithAllCompilerChecks(vararg extraFiles: KtFile): AnalysisResult = this.analyzeWithAllCompilerChecks(null, *extraFiles)
 
 fun KtFile.analyzeWithAllCompilerChecks(callback: ((Diagnostic) -> Unit)?, vararg extraFiles: KtFile): AnalysisResult {
     return if (extraFiles.isEmpty()) {

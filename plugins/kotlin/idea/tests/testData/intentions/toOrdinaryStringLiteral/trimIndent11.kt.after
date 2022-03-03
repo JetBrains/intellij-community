@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 's' is never used
 fun test(list: List<Int>) {
     val s = "\"\\foo\n${list.joinToString(",")}\n\"\\bar"

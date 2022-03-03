@@ -32,7 +32,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LanguageAnnotators;
@@ -2125,7 +2124,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     });
 
-    highlightErrors();
+    List<HighlightInfo> errors = highlightErrors();
+    assertNotEmpty(errors);
     UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     assertNotNull(lastHintBeforeDeletion);
@@ -3087,7 +3087,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       iDidIt();
     }
   }
-  public void testAnnotatorMustReceiveVisibleRangeThroughItsAnnotationSession() {
+  public void testAnnotatorMustReceiveCorrectVisibleRangeThroughItsAnnotationSession() {
     String text = "blah blah\n".repeat(1000) +
                   "<caret>" + wordToAnnotate +
                   "\n" +
@@ -3105,15 +3105,48 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
     myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = visibleRange;
-    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()->{
-      assertEmpty(doHighlighting());
-    });
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()-> assertEmpty(doHighlighting()));
     makeWholeEditorWindowVisible(editor);
     myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
-    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()->{
-      assertEmpty(doHighlighting());
-    });
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()-> assertEmpty(doHighlighting()));
+  }
+  private static class MyVisibleRangeInspection extends MyTrackingInspection {
+    @Override
+    public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {
+      TextRange priorityRange = session.getPriorityRange();
+      assertEquals(expectedVisibleRange, priorityRange);
+      expectedVisibleRange = null;
+    }
+  }
+
+  public void testLocalInspectionMustReceiveCorrectVisibleRangeThroughItsHighlightingSession() {
+    registerInspection(new MyVisibleRangeInspection());
+
+    String text = "blah blah\n".repeat(1000) +
+                  "<caret>" + wordToAnnotate +
+                  "\n" +
+                  "balh blah\n".repeat(1000);
+    configureByText(PlainTextFileType.INSTANCE, text);
+    EditorImpl editor = (EditorImpl)getEditor();
+    editor.getScrollPane().getViewport().setSize(1000, 1000);
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    Point2D caretVisualPoint = editor.offsetToPoint2D(editor.getCaretModel().getOffset());
+    editor.getScrollPane().getViewport().setViewPosition(new Point((int)caretVisualPoint.getX(), (int)caretVisualPoint.getY()));
+    editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight() - (int)caretVisualPoint.getY()));
+    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
+    myDaemonCodeAnalyzer.restart();
+    expectedVisibleRange = visibleRange;
+    doHighlighting();
+    assertNull(expectedVisibleRange); // check the inspection was run
+    makeWholeEditorWindowVisible(editor);
+    myDaemonCodeAnalyzer.restart();
+    expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
+    doHighlighting();
+    assertNull(expectedVisibleRange); // check the inspection was run
   }
 }
 

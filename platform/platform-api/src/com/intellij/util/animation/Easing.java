@@ -28,7 +28,11 @@ public interface Easing {
     return (x) -> calc(x * (end - start) + start);
   }
 
+  Easing EASE = bezier(.25, .1, .25, 1);//default
   Easing LINEAR = n -> n;
+  Easing EASE_IN = bezier(.42, 0, 1, 1);
+  Easing EASE_OUT = bezier(0, 0, .58, 1);
+  Easing EASE_IN_OUT = bezier(.42, 0, .58, 1);
 
   final class Stateful implements Easing {
 

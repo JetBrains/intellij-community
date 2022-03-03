@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
@@ -78,6 +80,14 @@ sealed class HintInfo {
     open fun getMethodName(): String {
       val start = fullyQualifiedName.lastIndexOf('.') + 1
       return fullyQualifiedName.substring(start)
+    }
+
+    /**
+     * Presentable text which will be shown in the inlay hints popup menu.
+     */
+    @NlsActions.ActionText
+    open fun getDisableHintText(): String {
+      return CodeInsightBundle.message("inlay.hints.show.settings", getMethodName())
     }
   }
 

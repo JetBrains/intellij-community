@@ -13,6 +13,11 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
+  // temporary fields, to investigate exception
+  short prevStartOffset;
+  short prevEndOffset;
+  byte modificationStamp;
+
   static @NotNull PersistentRangeHighlighterImpl create(@NotNull MarkupModelImpl model,
                                                         int offset,
                                                         int layer,
@@ -41,6 +46,9 @@ final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
 
   @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
+    prevStartOffset = (short)intervalStart();
+    prevEndOffset = (short)intervalEnd();
+    modificationStamp = (byte)e.getDocument().getModificationStamp();
     persistentHighlighterUpdate(e, getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE);
   }
 

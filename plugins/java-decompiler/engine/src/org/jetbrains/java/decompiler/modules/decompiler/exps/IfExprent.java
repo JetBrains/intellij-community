@@ -5,12 +5,12 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class IfExprent extends Exprent {
@@ -120,7 +120,7 @@ public class IfExprent extends Exprent {
     if (!(o instanceof IfExprent)) return false;
 
     IfExprent ie = (IfExprent)o;
-    return InterpreterUtil.equalObjects(condition, ie.getCondition());
+    return Objects.equals(condition, ie.getCondition());
   }
 
   public IfExprent negateIf() {

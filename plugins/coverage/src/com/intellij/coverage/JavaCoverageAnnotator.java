@@ -61,7 +61,12 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Override
   @Nullable
   public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
-    // N/A here we work with java classes
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+      final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(this, file);
+      if (info != null) {
+        return getCoverageInformationString(info, manager.isSubCoverageActive());
+      }
+    }
     return null;
   }
 
@@ -185,13 +190,12 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       return getCoverageInformationString(result, subCoverageActive);
     }
     else {
-      PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(psiPackage, flatten);
+      PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(psiPackage.getQualifiedName(), flatten);
       return getCoverageInformationString(info, subCoverageActive);
     }
   }
 
-  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(@NotNull PsiPackage psiPackage, boolean flattenPackages) {
-    final String qualifiedName = psiPackage.getQualifiedName();
+  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(@NotNull String qualifiedName, boolean flattenPackages) {
     return flattenPackages ? myFlattenPackageCoverageInfos.get(qualifiedName) : myPackageCoverageInfos.get(qualifiedName);
   }
 
@@ -244,6 +248,11 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Nullable
   public @Nls String getClassCoverageInformationString(String classFQName, CoverageDataManager coverageDataManager) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+    return getClassCoverageInformationString(info, coverageDataManager);
+  }
+
+  @Nullable
+  public static @Nls String getClassCoverageInformationString(PackageAnnotator.ClassCoverageInfo info, CoverageDataManager coverageDataManager) {
     if (info == null) return null;
     if (info.totalMethodCount == 0 || info.totalLineCount == 0) return null;
     if (coverageDataManager.isSubCoverageActive()){

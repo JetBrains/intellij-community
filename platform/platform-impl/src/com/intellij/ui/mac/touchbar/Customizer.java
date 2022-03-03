@@ -16,15 +16,15 @@ class Customizer {
   private final Map<AnAction, ActionGroupInfo> myAct2Parent = new HashMap<>();
   private final Map<AnAction, Object> myAct2Descriptor = new HashMap<>();
 
-  private final @Nullable TouchBar.CrossEscInfo myCrossEscInfo;
+  private final @Nullable TBPanel.CrossEscInfo myCrossEscInfo;
   private final String @Nullable[] myAutoCloseActionIds;
 
-  Customizer(@Nullable TouchBar.CrossEscInfo crossEscInfo, String[] autoCloseActionIds, @NotNull ItemCustomizer itemCustomizer) {
+  Customizer(@Nullable TBPanel.CrossEscInfo crossEscInfo, String[] autoCloseActionIds, @NotNull ItemCustomizer itemCustomizer) {
     this(crossEscInfo, autoCloseActionIds);
     addBaseCustomizations(itemCustomizer);
   }
 
-  Customizer(@Nullable TouchBar.CrossEscInfo crossEscInfo, String @Nullable[] autoCloseActionIds) {
+  Customizer(@Nullable TBPanel.CrossEscInfo crossEscInfo, String @Nullable[] autoCloseActionIds) {
     myCrossEscInfo = crossEscInfo;
     myAutoCloseActionIds = autoCloseActionIds;
   }
@@ -51,7 +51,7 @@ class Customizer {
     }
   }
 
-  @Nullable TouchBar.CrossEscInfo getCrossEscInfo() { return myCrossEscInfo; }
+  @Nullable TBPanel.CrossEscInfo getCrossEscInfo() { return myCrossEscInfo; }
 
   String @Nullable[] getAutoCloseActionIds() { return myAutoCloseActionIds; }
 

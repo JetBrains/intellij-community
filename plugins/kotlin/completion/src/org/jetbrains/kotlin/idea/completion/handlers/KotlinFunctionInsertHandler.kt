@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -335,7 +334,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                 super.handleInsert(context, item)
             }
 
-            psiDocumentManager.commitAllDocuments()
+            psiDocumentManager.commitDocument(document)
             psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
 
             val startOffset = context.startOffset
@@ -444,8 +443,12 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
 
             if (insertLambda && lambdaInfo!!.explicitParameters) {
                 val placeholderRange = TextRange(openingBracketOffset, closeBracketOffset!! + 1)
-                val explicitParameterTypes =
-                    LambdaSignatureTemplates.explicitParameterTypesRequired(context.file as KtFile, placeholderRange, lambdaInfo.lambdaType)
+                val explicitParameterTypes = LambdaSignatureTemplates.explicitParameterTypesRequired(
+                    context,
+                    placeholderRange,
+                    lambdaInfo.lambdaType,
+                )
+
                 LambdaSignatureTemplates.insertTemplate(
                     context,
                     placeholderRange,
@@ -501,7 +504,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
         super.handleInsert(context, item)
 
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-        psiDocumentManager.commitAllDocuments()
+        psiDocumentManager.commitDocument(context.document)
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
     }
 }

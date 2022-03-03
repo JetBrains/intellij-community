@@ -6,6 +6,9 @@ _SysExcInfoType = Union[Tuple[Type[BaseException], BaseException, TracebackType]
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
+STDOUT_LINE: str
+STDERR_LINE: str
+
 # undocumented
 def failfast(method: _F) -> _F: ...
 

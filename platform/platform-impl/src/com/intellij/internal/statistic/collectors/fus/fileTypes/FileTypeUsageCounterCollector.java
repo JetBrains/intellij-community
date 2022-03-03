@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.codeInsight.actions.ReaderModeSettings;
@@ -7,7 +7,10 @@ import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceStorage;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -38,20 +41,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
-
-public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
+public final class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
-    ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
+    new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 63);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 64);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
   private static final EventField<Boolean> IS_IN_READER_MODE = EventFields.Boolean("is_in_reader_mode");
+  private static final String FILE_EXTENSION = "file_extension";
+  private static final EventField<String> FILE_EXTENSION_FIELD = EventFields.StringValidatedByCustomRule(FILE_EXTENSION, FILE_EXTENSION);
 
   @Override
   public EventLogGroup getGroup() {
@@ -64,14 +67,14 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   }
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
-  private static final VarargEventId EDIT = registerFileTypeEvent("edit");
+  private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_EXTENSION_FIELD);
   private static final VarargEventId OPEN = registerFileTypeEvent(
-    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_IN_READER_MODE
+    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_IN_READER_MODE, FILE_EXTENSION_FIELD
   );
   private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE, IS_IN_READER_MODE);
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
-    log(EDIT, project, file, false);
+    logEdited(project, file);
   }
 
   public static void triggerSelect(@NotNull Project project, @Nullable VirtualFile file) {
@@ -99,6 +102,14 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     }
   }
 
+  private static void logEdited(@NotNull Project project,
+                                @NotNull VirtualFile file) {
+    List<@NotNull EventPair<?>> data = buildCommonEventPairs(project, file, false);
+    if (file.getExtension() != null)
+      data.add(FILE_EXTENSION_FIELD.with(file.getExtension()));
+    EDIT.log(data);
+  }
+
   private static void logOpened(@NotNull Project project,
                                 @NotNull VirtualFile file,
                                 @Nullable FileEditor fileEditor,
@@ -111,6 +122,9 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     if (durationMs != -1) {
       data.add(EventFields.DurationMs.with(durationMs));
     }
+    if (file.getExtension() != null)
+      data.add(FILE_EXTENSION_FIELD.with(file.getExtension()));
+
     OPEN.log(data);
   }
 
@@ -154,13 +168,13 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
       }
 
       if (instance.describes(project, file)) {
-        return getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party";
+        return PluginInfoDetectorKt.getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party";
       }
     }
     return null;
   }
 
-  public static final class FileTypeUsageSchemaDescriptorEP<T> extends BaseKeyedLazyInstance<T> implements KeyedLazyInstance<T> {
+  static final class FileTypeUsageSchemaDescriptorEP<T> extends BaseKeyedLazyInstance<T> implements KeyedLazyInstance<T> {
     // these must be public for scrambling compatibility
     @Attribute("schema")
     public String schema;
@@ -180,8 +194,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     }
   }
 
-  public static final class FileTypeSchemaValidator extends CustomValidationRule {
-
+  static final class FileTypeSchemaValidator extends CustomValidationRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "file_type_schema".equals(ruleId);
@@ -194,7 +207,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
 
       for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
         if (StringUtil.equals(ext.schema, data)) {
-          return getPluginInfo(ext.getInstance().getClass()).isSafeToReport() ?
+          return PluginInfoDetectorKt.getPluginInfo(ext.getInstance().getClass()).isSafeToReport() ?
                  ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
       }
@@ -202,7 +215,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     }
   }
 
-  public static class MyAnActionListener implements AnActionListener {
+  static class MyAnActionListener implements AnActionListener {
     private static final Key<Long> LAST_EDIT_USAGE = Key.create("LAST_EDIT_USAGE");
 
     @Override
@@ -230,6 +243,12 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     @Override
     public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
       onChange(dataContext);
+    }
+  }
+
+  public static class ExtensionLocalFileCustomValidationRule extends LocalFileCustomValidationRule {
+    protected ExtensionLocalFileCustomValidationRule() {
+      super(FILE_EXTENSION, new AllowedItemsResourceStorage(FileTypeUsageCounterCollector.class, "/fus_allowed_file_extension.txt"));
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -116,7 +116,7 @@ public final class CheckRegExpForm {
               highlightMatchGroup(highlightManager, getMatches(regExpFile), index);
             }
             else {
-              highlightMatchGroup(highlightManager , getMatches(regExpFile), 0);
+              highlightMatchGroup(highlightManager, getMatches(regExpFile), 0);
             }
           }
         }, disposable);
@@ -136,6 +136,15 @@ public final class CheckRegExpForm {
         editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        final Dimension size = super.getPreferredSize();
+        if (size.height > 250) {
+          size.height = 250;
+        }
+        return size;
       }
 
       @Override
@@ -193,6 +202,15 @@ public final class CheckRegExpForm {
         editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        final Dimension size = super.getPreferredSize();
+        if (size.height > 250) {
+          size.height = 250;
+        }
+        return size;
       }
 
       @Override
@@ -331,6 +349,7 @@ public final class CheckRegExpForm {
     for (RegExpMatch match : matches) {
       final int start = match.start(group);
       final int end = match.end(group);
+      if (start < 0 || end < 0) continue;
       if (group != 0 || start != 0 || end != mySampleText.getText().length()) {
         highlightManager.addRangeHighlight(editor, start, end, RegExpHighlighter.MATCHED_GROUPS, true, mySampleHighlights);
       }
@@ -499,11 +518,12 @@ public final class CheckRegExpForm {
         setMatches(regExpFile, collectMatches(matcher));
         return RegExpMatchResult.MATCHES;
       }
-      else if (matcher.find()) {
+      final boolean hitEnd = matcher.hitEnd();
+      if (matcher.find()) {
         setMatches(regExpFile, collectMatches(matcher));
         return RegExpMatchResult.FOUND;
       }
-      else if (matcher.hitEnd()) {
+      else if (hitEnd) {
         return RegExpMatchResult.INCOMPLETE;
       }
       else {

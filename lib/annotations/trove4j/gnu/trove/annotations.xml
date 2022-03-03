@@ -47,7 +47,10 @@
   <item name='gnu.trove.TFloatProcedure'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>
-  <item name='gnu.trove.THashMap THashMap(gnu.trove.TObjectHashingStrategy&lt;K&gt;) 0'>
+    <item name='gnu.trove.THashMap'>
+        <annotation name='java.lang.Deprecated'/>
+    </item>
+    <item name='gnu.trove.THashMap THashMap(gnu.trove.TObjectHashingStrategy&lt;K&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='gnu.trove.THashMap THashMap(int, float, gnu.trove.TObjectHashingStrategy&lt;K&gt;) 2'>
@@ -62,11 +65,20 @@
   <item name='gnu.trove.THashMap V put(K, V) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='gnu.trove.THashSet boolean add(E) 0'>
+    <item name='gnu.trove.THashSet'>
+        <annotation name='java.lang.Deprecated'/>
+    </item>
+    <item name='gnu.trove.THashSet boolean add(E) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='gnu.trove.TIntFunction'>
+    <item name='gnu.trove.TIntArrayList'>
+        <annotation name='java.lang.Deprecated'/>
+    </item>
+    <item name='gnu.trove.TIntFunction'>
     <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TIntHashSet'>
+    <annotation name='java.lang.Deprecated'/>
   </item>
   <item name='gnu.trove.TIntHashingStrategy'>
     <annotation name='java.lang.FunctionalInterface'/>

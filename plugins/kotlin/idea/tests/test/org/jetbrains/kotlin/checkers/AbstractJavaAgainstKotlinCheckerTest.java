@@ -99,7 +99,8 @@ public abstract class AbstractJavaAgainstKotlinCheckerTest extends KotlinDaemonA
             return module;
         }
 
-        if (InTextDirectivesUtils.isDirectiveDefined(configFileText, "// WITH_RUNTIME")) {
+        boolean withRuntime = InTextDirectivesUtils.isDirectiveDefined(configFileText, "// WITH_STDLIB");
+        if (withRuntime) {
             ConfigLibraryUtil.INSTANCE.configureKotlinRuntime(module);
         }
 

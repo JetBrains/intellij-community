@@ -44,7 +44,7 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
             if (!context.isAfterDot()) {
                 val project = context.project
                 val psiDocumentManager = PsiDocumentManager.getInstance(project)
-                psiDocumentManager.commitAllDocuments()
+                psiDocumentManager.commitDocument(context.document)
 
                 val startOffset = context.startOffset
                 val document = context.document
@@ -101,7 +101,7 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
                 }
                 document.replaceString(startOffset, context.tailOffset, tempPrefix + qualifierNameWithRootPrefix + tempSuffix)
 
-                psiDocumentManager.commitAllDocuments()
+                psiDocumentManager.commitDocument(document)
 
                 val classNameStart = startOffset + tempPrefix.length
                 val classNameEnd = classNameStart + qualifierNameWithRootPrefix.length

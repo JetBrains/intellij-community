@@ -1,5 +1,5 @@
 // "Import" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Expression 'topVal' of type 'SomeType' cannot be invoked as a function. The function 'invoke()' is not found
 
 package mig

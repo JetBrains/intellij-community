@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -23,6 +24,7 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
@@ -84,7 +86,7 @@ class KotlinPackageContentModificationListener : StartupActivity {
                         }
                         .filter {
                             val vFile = it.file!!
-                            vFile.isDirectory || vFile.fileType == KotlinFileType.INSTANCE
+                            vFile.isDirectory || FileTypeRegistry.getInstance().isFileOfType(vFile, KotlinFileType.INSTANCE)
                         }
                         .filter {
                             // It expected that content change events will be duplicated with more precise PSI events and processed
@@ -186,7 +188,7 @@ class ImplicitPackagePrefixCache(private val project: Project) {
 
     private fun analyzeImplicitPackagePrefixes(sourceRoot: VirtualFile): MutableMap<FqName, MutableList<VirtualFile>> {
         val result = mutableMapOf<FqName, MutableList<VirtualFile>>()
-        val ktFiles = sourceRoot.children.filter { it.fileType == KotlinFileType.INSTANCE }
+        val ktFiles = sourceRoot.children.filter { FileTypeRegistry.getInstance().isFileOfType(it, KotlinFileType.INSTANCE) }
         for (ktFile in ktFiles) {
             result.addFile(ktFile)
         }
@@ -379,10 +381,10 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         checkPendingChanges()
 
         val perSourceInfoCache = cache.getOrPut(module) {
-            ContainerUtil.createConcurrentSoftMap()
+          CollectionFactory.createConcurrentSoftMap()
         }
         val cacheForCurrentModuleInfo = perSourceInfoCache.getOrPut(moduleInfo) {
-            ContainerUtil.createConcurrentSoftMap()
+          CollectionFactory.createConcurrentSoftMap()
         }
 
         return cacheForCurrentModuleInfo.getOrPut(packageFqName) {

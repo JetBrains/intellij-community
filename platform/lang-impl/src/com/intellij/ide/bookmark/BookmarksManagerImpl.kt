@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.bookmark.BookmarkBundle.message
@@ -14,6 +14,7 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.DoNotAskOption
@@ -23,6 +24,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.Invoker
 import java.io.File
+
+private val LOG = Logger.getInstance(BookmarksManager::class.java)
 
 @State(name = "BookmarksManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentStateComponentWithModificationTracker<ManagerState> {
@@ -88,6 +91,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
     project.messageBus.connect().subscribe(BookmarksListener.TOPIC, listener)
     StartupManager.getInstance(project).runAfterOpened {
+      LOG.info("no state loaded for new bookmarks");
       com.intellij.ide.bookmarks.BookmarkManager.getInstance(project).allBookmarks.forEach { listener.bookmarkAdded(it) }
       invoker.invokeLater { noStateLoaded(FavoritesManager.getInstance(project)) }
     }
@@ -532,7 +536,12 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
      * Each bookmark is created separately that allows to wait for the end of indexing.
      */
     internal fun addLater(context: Any, type: BookmarkType, description: String?) {
-      invoker.invokeLater { createBookmark(context)?.let { add(it, type, description, -1) } }
+      invoker.invokeLater {
+        when (createBookmark(context)?.let { add(it, type, description, -1) }) {
+          null -> LOG.info("cannot create bookmark for $context")
+          false -> LOG.info("cannot add bookmark for $context")
+        }
+      }
     }
 
     override fun canRemove(bookmark: Bookmark) = synchronized(notifier) {
@@ -604,10 +613,6 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
   }
 
-
-  internal fun findLineHighlighter(bookmark: Bookmark) = synchronized(notifier) {
-    allBookmarks[bookmark]?.renderer?.highlighter
-  }
 
   internal fun refreshRenderers(file: VirtualFile) = synchronized(notifier) {
     allBookmarks.values.forEach { if (it.renderer?.bookmark?.file == file) it.refreshRenderer() }

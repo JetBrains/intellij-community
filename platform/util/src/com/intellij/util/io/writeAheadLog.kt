@@ -7,16 +7,16 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.CompressionUtil
 import com.intellij.util.ConcurrencyUtil
-import it.unimi.dsi.fastutil.Hash
+import com.intellij.util.indexing.impl.IndexStorageUtil
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.ExecutorService
+import java.util.function.Function
 import java.util.zip.CRC32
 import java.util.zip.CheckedInputStream
 import java.util.zip.CheckedOutputStream
@@ -299,28 +299,19 @@ private fun <K, V> tryCompact(walFile: Path,
     return null
   }
 
-  val keyToLastEvent = Object2ObjectOpenCustomHashMap<K, IntSet>(object : Hash.Strategy<K> {
-    override fun equals(a: K?, b: K?): Boolean {
-      if (a == b) return true
-      if (a == null) return false
-      if (b == null) return false
-      return keyDescriptor.isEqual(a, b)
-    }
-
-    override fun hashCode(o: K?): Int = keyDescriptor.getHashCode(o)
-  })
+  val keyToLastEvent = IndexStorageUtil.createKeyDescriptorHashedMap<K, IntSet>(keyDescriptor)
 
   val shouldCompact = PersistentMapWalPlayer(keyDescriptor, valueExternalizer, walFile).use {
     var eventCount = 0
 
     for (walEvent in it.readWal()) {
       when (walEvent) {
-        is WalEvent.AppendEvent -> keyToLastEvent.computeIfAbsent(walEvent.key) { IntLinkedOpenHashSet() }.add(eventCount)
+        is WalEvent.AppendEvent -> keyToLastEvent.computeIfAbsent(walEvent.key, Function { IntLinkedOpenHashSet() }).add(eventCount)
         is WalEvent.PutEvent -> keyToLastEvent.put(walEvent.key, IntLinkedOpenHashSet().also{ set -> set.add(eventCount) })
         is WalEvent.RemoveEvent -> keyToLastEvent.put(walEvent.key, IntLinkedOpenHashSet())
         is WalEvent.CorruptionEvent -> throw CorruptionException("wal has been corrupted")
       }
-      keyToLastEvent.computeIfAbsent(walEvent.key) { IntLinkedOpenHashSet() }.add(eventCount)
+      keyToLastEvent.computeIfAbsent(walEvent.key, Function { IntLinkedOpenHashSet() }).add(eventCount)
       eventCount++
     }
 

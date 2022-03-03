@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -16,11 +16,14 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
 
   private val toolbarComponents = DisposableWrapperList<Pair<Project, FloatingToolbarComponent>>()
 
-  fun updateToolbarComponents(project: Project, notificationAware: ProjectNotificationAware) {
-    forEachToolbarComponent(project) { updateToolbarComponent(it, notificationAware) }
+  private fun updateToolbarComponents(project: Project) {
+    forEachToolbarComponent(project) {
+      updateToolbarComponent(project, it)
+    }
   }
 
-  fun updateToolbarComponent(component: FloatingToolbarComponent, notificationAware: ProjectNotificationAware) {
+  private fun updateToolbarComponent(project: Project, component: FloatingToolbarComponent) {
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     when (notificationAware.isNotificationVisible()) {
       true -> component.scheduleShow()
       else -> component.scheduleHide()
@@ -30,8 +33,7 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
     val project = dataContext.getData(PROJECT) ?: return
     toolbarComponents.add(project to component, parentDisposable)
-    val notificationAware = ProjectNotificationAware.getInstance(project)
-    updateToolbarComponent(component, notificationAware)
+    updateToolbarComponent(project, component)
   }
 
   private fun forEachToolbarComponent(project: Project, consumer: (FloatingToolbarComponent) -> Unit) {
@@ -42,15 +44,14 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
     }
   }
 
+  class Listener : ExternalSystemProjectNotificationAware.Listener {
+    override fun onNotificationChanged(project: Project) {
+      FloatingToolbarProvider.getProvider<ProjectRefreshFloatingProvider>()
+        .updateToolbarComponents(project)
+    }
+  }
+
   companion object {
-    const val ACTION_GROUP = "ExternalSystem.ProjectRefreshActionGroup"
-
-    private fun getProvider(): ProjectRefreshFloatingProvider {
-      return FloatingToolbarProvider.getProvider()
-    }
-
-    fun updateToolbarComponents(project: Project, notificationAware: ProjectNotificationAware) {
-      getProvider().updateToolbarComponents(project, notificationAware)
-    }
+    private const val ACTION_GROUP = "ExternalSystem.ProjectRefreshActionGroup"
   }
 }

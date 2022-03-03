@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.diff.DiffContentFactory
@@ -6,28 +6,27 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.psi.util.PsiFormatUtil.*
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.EditorNotifications
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.LightColors
 import com.intellij.util.diff.Diff
-import java.util.*
+import java.util.function.Function
+import javax.swing.JComponent
 
-class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
+class LibrarySourceNotificationProvider : EditorNotificationProvider {
 
   private companion object {
-    private val LOG = Logger.getInstance(LibrarySourceNotificationProvider::class.java)
-    private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
+
+    private val LOG = logger<LibrarySourceNotificationProvider>()
     private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
 
     private const val FIELD = SHOW_NAME or SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
@@ -36,63 +35,41 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
     private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLEMENTS or SHOW_RAW_TYPE
   }
 
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  override fun collectNotificationData(
+    project: Project,
+    file: VirtualFile,
+  ): Function<in FileEditor, out JComponent?> {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {
-        // Android Studio: don't warn if file is inside the Android SDK
-        if (isInAndroidSdk(psiFile)) {
-          return null
-        }
-
         val offender = psiFile.classes.find { differs(it) }
         if (offender != null) {
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
-            val panel = EditorNotificationPanel(LightColors.RED)
-            panel.setText(JavaUiBundle.message("library.source.mismatch", offender.name))
-            panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
-              if (!project.isDisposed && clsFile.isValid) {
-                PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
+            return Function {
+              val panel = EditorNotificationPanel(LightColors.RED)
+              panel.text = JavaUiBundle.message("library.source.mismatch", offender.name)
+              panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
+                if (!project.isDisposed && clsFile.isValid) {
+                  PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
+                }
               }
-            }
-            panel.createActionLabel(JavaUiBundle.message("library.source.show.diff")) {
-              if (!project.isDisposed && clsFile.isValid) {
-                val cf = DiffContentFactory.getInstance()
-                val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
-                DiffManager.getInstance().showDiff(project, request)
+              panel.createActionLabel(JavaUiBundle.message("library.source.show.diff")) {
+                if (!project.isDisposed && clsFile.isValid) {
+                  val cf = DiffContentFactory.getInstance()
+                  val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
+                  DiffManager.getInstance().showDiff(project, request)
+                }
               }
+              logMembers(offender)
+              return@Function panel
             }
-            logMembers(offender)
-            return panel
           }
         }
       }
     }
 
-    return null
-  }
-
-  // This is a copy of AndroidFacet.isInAndroidSdk, but modified so we don't depend on the android plugin
-  // Instead we assume that anything inside a JDK that has "Android" in its name is inside the android sdk.
-  private fun isInAndroidSdk(file: PsiJavaFile): Boolean {
-    val virtualFile = file.virtualFile ?: return false
-
-    val projectFileIndex = ProjectRootManager.getInstance(file.project).fileIndex
-    val entries = projectFileIndex.getOrderEntriesForFile(virtualFile)
-
-    for (entry in entries) {
-      if (entry is JdkOrderEntry) {
-        val sdk = entry.jdk
-
-        if (sdk != null && sdk.sdkType.name.toLowerCase(Locale.US).contains("android")) {
-          return true
-        }
-      }
-    }
-    return false
+    return EditorNotificationProvider.CONST_NULL
   }
 
   private fun differs(src: PsiClass): Boolean {
