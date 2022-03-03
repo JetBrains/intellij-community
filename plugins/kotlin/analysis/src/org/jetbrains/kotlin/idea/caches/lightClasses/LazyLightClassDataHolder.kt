@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightFieldImpl
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.KtLightMethodImpl
+import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.psi.debugText.getDebugText
@@ -111,13 +112,17 @@ sealed class LazyLightClassDataHolder(
                 val fieldName = dummyField.name
                 KtLightFieldImpl.lazy(dummyField, fieldOrigin, containingClass) {
                     val findFieldByName = clsDelegate.findFieldByName(fieldName, false)
-                    findFieldByName.checkMatches(dummyField, containingClass) ?:
-                    // fallback in case of non-matched (like synthetic) fields
-                    //
-                    // it costs some performance and has to happen in rare and odd cases
-                    KtLightFieldImpl.create(
-                        KtLightFieldImpl.getOrigin(dummyField), dummyField, containingClass
-                    )
+
+                    if (findFieldByName != null && findFieldByName.checkMatches(dummyField, containingClass)) {
+                        findFieldByName
+                    } else {
+                        // fallback in case of non-matched (like synthetic) fields
+                        //
+                        // it costs some performance and has to happen in rare and odd cases
+                        KtLightFieldImpl.create(
+                            KtLightFieldImpl.getOrigin(dummyField), dummyField, containingClass
+                        )
+                    }
                 }
             }
         }
@@ -125,25 +130,30 @@ sealed class LazyLightClassDataHolder(
         override fun getOwnMethods(containingClass: KtLightClass): List<KtLightMethod> {
             if (dummyDelegate == null) return KtLightMethodImpl.fromClsMethods(clsDelegate, containingClass)
 
-            return dummyDelegate!!.methods.map { dummyMethod ->
+            return dummyDelegate!!.methods.mapNotNull { dummyMethod ->
+                if (isSyntheticValuesOrValueOfMethod(dummyMethod)) {
+                    return@mapNotNull null
+                }
+
                 val methodOrigin = KtLightMethodImpl.getOrigin(dummyMethod)
 
                 KtLightMethodImpl.lazy(dummyMethod, containingClass, methodOrigin) {
-                    val dummyIndex = dummyMethod.memberIndex!!
-
-                    val byMemberIndex: (PsiMethod) -> Boolean = { it.memberIndex == dummyIndex }
-
                     /* Searching all methods may be necessary in some cases where we failed to rollback optimization:
                        Overriding internal member that was final
 
                        Resulting light member is not consistent in this case, so this should happen only for erroneous code
                     */
-                    val findMethodsByName = clsDelegate.findMethodsByName(dummyMethod.name, false)
+                    val dummyIndex = dummyMethod.memberIndex
+                    if (dummyIndex != null) {
+                        val methodsWithSameName = clsDelegate.findMethodsByName(dummyMethod.name, false)
+                        val candidateMethod = methodsWithSameName.firstOrNull { it.memberIndex == dummyIndex }
+                            ?: clsDelegate.methods.firstOrNull { it.memberIndex == dummyIndex }
 
-                    val candidateDelegateMethod = findMethodsByName.firstOrNull(byMemberIndex)
-                        ?: clsDelegate.methods.firstOrNull(byMemberIndex)
+                        if (candidateMethod != null && candidateMethod.checkMatches(dummyMethod, containingClass)) {
+                            return@lazy candidateMethod
+                        }
+                    }
 
-                    candidateDelegateMethod.checkMatches(dummyMethod, containingClass) ?:
                     // fallback if unable to find method for a dummy method (e.g. synthetic methods marked explicit or implicit) are
                     // not visible as own methods.
                     //
@@ -154,20 +164,15 @@ sealed class LazyLightClassDataHolder(
         }
     }
 
-    private fun <T : PsiMember> T?.checkMatches(dummyMember: T, containingClass: KtLightClass): T? {
-        if (this == null) {
-            logMismatch("Couldn't match ${dummyMember.debugName}", containingClass)
-            return null
-        }
-
+    private fun <T : PsiMember> T.checkMatches(dummyMember: T, containingClass: KtLightClass): Boolean {
         val parameterCountMatches = ((this as? PsiMethod)?.parameterList?.parametersCount ?: 0) ==
                 ((dummyMember as? PsiMethod)?.parameterList?.parametersCount ?: 0)
         if (this.memberIndex != dummyMember.memberIndex || !parameterCountMatches) {
             logMismatch("Wrongly matched ${dummyMember.debugName} to ${this.debugName}", containingClass)
-            return null
+            return false
         }
 
-        return this
+        return true
     }
 
     companion object {
