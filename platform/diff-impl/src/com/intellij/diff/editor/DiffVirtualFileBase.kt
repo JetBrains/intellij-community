@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.docking.impl.DockManagerImpl
 
-abstract class DiffVirtualFile(name: String) :
+abstract class DiffVirtualFileBase(name: String) :
   LightVirtualFile(name, DiffFileType.INSTANCE, ""),
   DiffContentVirtualFile, VirtualFileWithoutContent, IdeDocumentHistoryImpl.SkipFromDocumentHistory {
 

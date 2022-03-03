@@ -21,12 +21,12 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @Suppress("LeakingThis")
-open class DiffRequestProcessorEditor(
-  private val file: DiffVirtualFile,
+open class DiffRequestProcessorEditorBase(
+  private val file: DiffVirtualFileBase,
   val processor: DiffRequestProcessor
 ) : FileEditorBase() {
   companion object {
-    private val LOG = logger<DiffRequestProcessorEditor>()
+    private val LOG = logger<DiffRequestProcessorEditorBase>()
   }
 
   private var disposed = false
