@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
-import com.apple.eawt.FullScreenListener
-import com.apple.eawt.FullScreenUtilities
-import com.apple.eawt.event.FullScreenEvent
 import com.intellij.application.options.RegistryManager
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.Disposable
@@ -44,7 +41,6 @@ import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
-import java.util.function.BooleanSupplier
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
@@ -106,31 +102,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      var fullScreen = false
-      val listener = object: FullScreenListener {
-        override fun windowEnteringFullScreen(e: FullScreenEvent?) {
-          fullScreen = true
-        }
-
-        override fun windowEnteredFullScreen(e: FullScreenEvent?) {
-          fullScreen = true
-        }
-
-        override fun windowExitingFullScreen(e: FullScreenEvent?) {
-          fullScreen = false
-        }
-
-        override fun windowExitedFullScreen(e: FullScreenEvent?) {
-          fullScreen = false
-        }
-      }
-      val handler = BooleanSupplier { !fullScreen }
-      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane, handler) { runnable ->
-        FullScreenUtilities.addFullScreenListenerTo(frame, listener)
-        Disposer.register(this, Disposable {
-          runnable.run()
-          FullScreenUtilities.removeFullScreenListenerFrom(frame, listener)
-        })
+      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane) { runnable ->
+        Disposer.register(this, Disposable { runnable.run() })
       }
     }
 
