@@ -1,4 +1,5 @@
 // "Replace with dot call" "true"
+// LANGUAGE_VERSION: 1.6
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 // Note: quick fix is available after the execution due to a separate warning (SAFE_CALL_WILL_CHANGE_NULLABILITY)
 class Foo(val bar: Bar)
