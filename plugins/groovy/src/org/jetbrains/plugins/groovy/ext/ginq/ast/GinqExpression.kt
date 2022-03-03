@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement
 
 /**
  *
@@ -87,9 +88,11 @@ class GinqHavingFragment(
 
 data class GinqGroupByFragment(
   val groupByKw: PsiElement,
-  val classifier: GrExpression,
-  val having: GinqHavingFragment,
+  val classifiers: List<AliasedExpression>,
+  val having: GinqHavingFragment?,
 ) : GinqQueryFragment
+
+data class AliasedExpression(val classifier: GrExpression, val alias: GrTypeElement?)
 
 data class GinqOrderByFragment(
   val orderByKw: PsiElement,

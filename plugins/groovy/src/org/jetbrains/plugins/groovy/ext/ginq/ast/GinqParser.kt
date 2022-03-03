@@ -11,10 +11,7 @@ import org.jetbrains.plugins.groovy.ext.ginq.joins
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
@@ -37,16 +34,18 @@ private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpres
   // otherwise it is a valid ginq expression
   val joins: MutableList<GinqJoinFragment> = mutableListOf()
   var where: GinqWhereFragment? = null
+  var groupBy: GinqGroupByFragment? = null
   var index = 1
   while (index < container.lastIndex) {
     val currentFragment = container[index]
     when (currentFragment) {
       is GinqJoinFragment -> joins.add(container[index] as GinqJoinFragment)
       is GinqWhereFragment -> where = currentFragment
+      is GinqGroupByFragment -> groupBy = currentFragment
     }
     index += 1
   }
-  return GinqExpression(from, joins, where, null, null, null, select)
+  return GinqExpression(from, joins, where, groupBy, null, null, select)
 }
 
 /**
@@ -90,7 +89,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         }
         container.add(expr)
       }
-      "on", "where" -> {
+      "on", "where", "having" -> {
         val argument = methodCall.getSingleArgument<GrExpression>()
         if (argument == null) {
           recordError(methodCall, "Expected a list of conditions")
@@ -109,10 +108,25 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         }
         else if (callName == "where") {
           container.add(GinqWhereFragment(callKw, argument))
+        } else if (callName == "having") {
+          val last = container.lastOrNull()
+          if (last is GinqGroupByFragment && last.having == null) {
+            val newGroupBy = last.copy(having = GinqHavingFragment(callKw, argument))
+            container.removeLast()
+            container.add(newGroupBy)
+          }
         }
       }
+      "groupby" -> {
+        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map { if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement) else AliasedExpression(it, null) }
+        if (arguments == null) {
+          recordError(methodCall, "Expected a classifier argument")
+          return
+        }
+        container.add(GinqGroupByFragment(callKw, arguments, null))
+      }
       "select" -> {
-        val arguments = methodCall.getExpressionArguments<GrExpression>()
+        val arguments = methodCall.collectExpressionArguments<GrExpression>()
         if (arguments == null) {
           recordError(methodCall, "Expected a list of projections")
           return
@@ -145,7 +159,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
 private inline fun <reified T : GrExpression> GrMethodCall.getSingleArgument(): T? =
   this.getArguments()?.singleOrNull()?.castSafelyTo<ExpressionArgument>()?.expression?.castSafelyTo<T>()
 
-private inline fun <reified T : GrExpression> GrMethodCall.getExpressionArguments(): List<T>? =
+private inline fun <reified T : GrExpression> GrMethodCall.collectExpressionArguments(): List<T>? =
   this.getArguments()?.filterIsInstance<ExpressionArgument>()?.map { it.expression }?.filterIsInstance<T>()?.takeIf { it.size == getArguments()?.size }
 
 private fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement
@@ -162,9 +176,9 @@ val rootGinq: Key<CachedValue<GinqExpression>> = Key.create("root ginq expressio
 
 fun PsiElement.ginqParents(): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
-    val rootGinq = parent.getUserData(rootGinq)
+    val rootGinq = parent.getUserData(rootGinq)?.valueProvider
     if (rootGinq != null) {
-      yield(rootGinq.value)
+      yield(rootGinq.compute()?.value!!)
       return@sequence
     }
     val ginq = parent.getUserData(injectedGinq) ?: continue

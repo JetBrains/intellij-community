@@ -12,6 +12,7 @@ import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -53,7 +54,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       select
     ) = getParsedGinqTree(macroCall) ?: return emptyList()
     val keywords = mutableListOf<PsiElement?>()
-    keywords.addAllIfNotNull(from.fromKw, where?.whereKw, groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw,
+    keywords.addAllIfNotNull(from.fromKw, where?.whereKw, groupBy?.groupByKw, groupBy?.having?.havingKw, orderBy?.orderByKw, limit?.limitKw,
                              select.selectKw)
     keywords.addAll(join.mapNotNull { it.onCondition?.onKw })
     keywords.addAll(join.map { it.joinKw })
@@ -61,7 +62,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       override fun visitElement(element: GroovyPsiElement) {
         val nestedGinq = element.getUserData(injectedGinq)
         if (nestedGinq != null) {
-          keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw, nestedGinq.select.selectKw)
+          keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw, nestedGinq.groupBy?.having?.havingKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw, nestedGinq.select.selectKw)
           keywords.addAll(nestedGinq.join.mapNotNull { it.onCondition?.onKw })
           keywords.addAll(nestedGinq.join.map { it.joinKw })
         } else {
@@ -85,13 +86,11 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {
-    if (element !is GrReferenceExpression) {
-      return null
-    }
+    val referenceName = element.castSafelyTo<GrReferenceElement<*>>()?.referenceName ?: return null
     val hierarchy = element.ginqParents()
     for (ginq in hierarchy) {
-      val bindings  = ginq.join.map { it.alias } + listOf(ginq.from.alias)
-      val binding = bindings.find { it.referenceName == element.referenceName }
+      val bindings  = ginq.join.map { it.alias } + listOf(ginq.from.alias) + (ginq.groupBy?.classifiers?.mapNotNull(AliasedExpression::alias) ?: emptyList())
+      val binding = bindings.find { it.text == referenceName }
       if (binding != null) {
         return ElementResolveResult(binding)
       }
