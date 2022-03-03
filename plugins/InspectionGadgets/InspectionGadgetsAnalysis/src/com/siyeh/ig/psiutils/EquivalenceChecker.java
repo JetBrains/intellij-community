@@ -810,12 +810,12 @@ public class EquivalenceChecker {
     PsiClass target2 = getQualifierTarget(referenceExpression2);
     if (target1 != null || target2 != null) {
       if (target1 == null || target2 == null) return EXACT_MISMATCH;
-      return equivalentDeclarations(target1, target2) ? EXACT_MATCH : EXACT_MISMATCH;
+      return Match.exact(equivalentDeclarations(target1, target2));
     }
     final PsiExpression qualifier1 = PsiUtil.skipParenthesizedExprDown(referenceExpression1.getQualifierExpression());
     final PsiExpression qualifier2 = PsiUtil.skipParenthesizedExprDown(referenceExpression2.getQualifierExpression());
     if (qualifier1 == null || qualifier2 == null) {
-      return qualifier1 == null && qualifier2 == null ? EXACT_MATCH : EXACT_MISMATCH;
+      return Match.exact(qualifier1 == qualifier2);
     }
     Match match = expressionsMatch(qualifier1, qualifier2);
     if (!match.isExactMatch() && PsiUtil.isArrayClass(((PsiMember)element1).getContainingClass()) &&
