@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CollectElementsProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.TypeParameterProcessor
+import org.jetbrains.plugins.groovy.transformations.macro.getMacroHandler
 
 // https://issues.apache.org/jira/browse/GROOVY-8358
 // https://issues.apache.org/jira/browse/GROOVY-8359
@@ -93,6 +94,15 @@ private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Coll
 
 private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolveResult> {
   val name = referenceName ?: return emptyList()
+
+  val macroData = getMacroHandler(this)
+  if (macroData != null) {
+    val reference = macroData.second.computeStaticReference(macroData.first, this)
+    if (reference != null) {
+      // todo: injections of non-macro code
+      return listOf(reference)
+    }
+  }
 
   if (canResolveToTypeParameter()) {
     val typeParameters = resolveToTypeParameter(this, name)
