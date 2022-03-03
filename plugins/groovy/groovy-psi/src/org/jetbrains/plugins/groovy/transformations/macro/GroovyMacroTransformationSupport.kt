@@ -8,6 +8,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 
@@ -21,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
  * **See:** [Groovy macros](https://groovy-lang.org/metaprogramming.html#_macros)
  */
 interface GroovyMacroTransformationSupport {
-
+  // todo: nearly all methods accept macroCall as their first part. Maybe it is possible to curry it somehow?
   /**
    * Determines if this class should handle [macroCall]
    *
@@ -33,9 +34,26 @@ interface GroovyMacroTransformationSupport {
    */
   fun isApplicable(macroCall: GrMethodCall): Boolean
 
+  /**
+   * Computes custom highlighting for the macro-expanded code.
+   *
+   * Since all semantic highlighting is disabled in macro-affected code,
+   * the clients can provide custom keywords and type-checking errors.
+   *
+   * It is OK to depend on [computeType] and [computeStaticReference] here.
+   */
   fun computeHighlighing(macroCall: GrCall) : List<HighlightInfo> = emptyList()
 
-  fun computeType(macroCall: GrCall) : PsiType = PsiType.NULL
+  /**
+   * Allows to tune type inference algorithms within the macro-expanded code.
+   *
+   * Macro expansion affects a correctly-parsed AST, and it means that the main Groovy type-checker can successfully run in the code.
+   * It is expected that macro-expansion source contains regular Groovy code that will not be transformed, but the type-checker will not
+   * return sane results for it. That is where this method can be used.
+   *
+   * **Note:** If this method returns `null`, then the main Groovy type-checker will handle the [expression].
+   */
+  fun computeType(macroCall: GrMethodCall, expression: GrExpression) : PsiType? = null
 
   fun computeCompletionVariants(macroCall: GrCall, offset: Int) : List<LookupElement> = emptyList()
 

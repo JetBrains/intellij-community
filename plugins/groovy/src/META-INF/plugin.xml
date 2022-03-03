@@ -211,7 +211,7 @@
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression"
-                    implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator"/>
+                    implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator" order="first"/>
 
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultNewExpressionTypeCalculator" order="last"/>

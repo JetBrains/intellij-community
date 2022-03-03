@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator
 class GroovyMacroTypeCalculator: GrTypeCalculator<GrMethodCallExpression> {
 
   override fun getType(expression: GrMethodCallExpression): PsiType? {
-    return getAvailableMacroSupport(expression)?.computeType(expression)
+    val (call, macro) = getMacroHandler(expression) ?: return null
+    return macro.computeType(call, expression)
   }
 }
