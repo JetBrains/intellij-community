@@ -36,6 +36,7 @@ private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpres
   var where: GinqWhereFragment? = null
   var groupBy: GinqGroupByFragment? = null
   var orderBy: GinqOrderByFragment? = null
+  var limit: GinqLimitFragment? = null
   var index = 1
   while (index < container.lastIndex) {
     val currentFragment = container[index]
@@ -44,10 +45,11 @@ private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpres
       is GinqWhereFragment -> where = currentFragment
       is GinqGroupByFragment -> groupBy = currentFragment
       is GinqOrderByFragment -> orderBy = currentFragment
+      is GinqLimitFragment -> limit = currentFragment
     }
     index += 1
   }
-  return GinqExpression(from, joins, where, groupBy, orderBy, null, select)
+  return GinqExpression(from, joins, where, groupBy, orderBy, limit, select)
 }
 
 /**
@@ -134,6 +136,14 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           return
         }
         container.add(GinqOrderByFragment(callKw, arguments))
+      }
+      "limit" -> {
+        val arguments = methodCall.collectExpressionArguments<GrExpression>()
+        if (arguments == null || arguments.isEmpty() || arguments.size > 2) {
+          recordError(methodCall, "Expected one or two arguments for 'limit'")
+          return
+        }
+        container.add(GinqLimitFragment(callKw, arguments[0], arguments.getOrNull(1)))
       }
       "select" -> {
         val arguments = methodCall.collectExpressionArguments<GrExpression>()

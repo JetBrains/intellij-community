@@ -126,7 +126,8 @@ sealed class Ordering private constructor(val orderKw: PsiElement?, val sorter: 
 
 data class GinqLimitFragment(
   val limitKw: PsiElement,
-  val offsetAndSize: GrExpression,
+  val offset: GrExpression,
+  val size: GrExpression?,
 ) : GinqQueryFragment
 
 data class GinqSelectFragment(
