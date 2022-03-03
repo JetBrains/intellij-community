@@ -5,8 +5,8 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.EMPTY
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nls
 import java.util.concurrent.atomic.AtomicBoolean
 
 
-class ReplaceQuickFix(val replacements: List<Pair<TextRange, String>>) : LocalQuickFix {
+class ReplaceQuickFix(val replacements: List<Pair<RangeMarker, String>>) : LocalQuickFix {
   override fun getFamilyName() = LangBundle.message("inspection.incorrect.formatting.fix.replace")
   override fun getFileModifierForPreview(target: PsiFile) = ReplaceQuickFix(replacements)
 
@@ -33,7 +33,9 @@ class ReplaceQuickFix(val replacements: List<Pair<TextRange, String>>) : LocalQu
         replacements
           .sortedByDescending { (range, _) -> range.startOffset }
           .forEach { (range, replacement) ->
-            doc.replaceString(range.startOffset, range.endOffset, replacement)
+            if (range.isValid) {
+              doc.replaceString(range.startOffset, range.endOffset, replacement)
+            }
           }
         PsiDocumentManager.getInstance(project).commitDocument(doc)
       }
