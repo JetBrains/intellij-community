@@ -12,10 +12,18 @@ class GitStashUsageCollector : CounterUsagesCollector() {
     private val GROUP: EventLogGroup = EventLogGroup("stash.interactions", 1)
 
     private val STASH_PUSH = GROUP.registerEvent("stash_push",
-                                            EventFields.DurationMs)
+                                                 EventFields.DurationMs)
 
     private val STASH_POP = GROUP.registerEvent("stash_pop",
-                                              EventFields.DurationMs)
+                                                EventFields.DurationMs)
+
+    private val STASH_PUSH_DIALOG = GROUP.registerEvent("stash_push_dialog",
+                                                        EventFields.Boolean("message_entered"),
+                                                        EventFields.Boolean("keep_index"))
+    private val STASH_POP_DIALOG = GROUP.registerEvent("stash_pop_dialog",
+                                                       EventFields.Boolean("create_branch"),
+                                                       EventFields.Boolean("reinstate_index"),
+                                                       EventFields.Boolean("pop_stash"))
 
     @JvmStatic
     fun logStashPush(startMs: Long) {
@@ -25,6 +33,16 @@ class GitStashUsageCollector : CounterUsagesCollector() {
     @JvmStatic
     fun logStashPop(startMs: Long) {
       STASH_POP.log(System.currentTimeMillis() - startMs)
+    }
+
+    @JvmStatic
+    fun logStashPushDialog(messageEntered: Boolean, keepIndex: Boolean) {
+      STASH_PUSH_DIALOG.log(messageEntered, keepIndex)
+    }
+
+    @JvmStatic
+    fun logStashPopDialog(createBranch: Boolean, reinstateIndex: Boolean, popStash: Boolean) {
+      STASH_POP_DIALOG.log(createBranch, reinstateIndex, popStash)
     }
   }
 }

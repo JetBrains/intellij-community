@@ -39,6 +39,7 @@ public class GitStash extends GitRepositoryAction {
     if (!d.showAndGet()) {
       return;
     }
+    d.logUsage();
 
     runStashInBackground(project, Collections.singleton(d.getGitRoot()), root -> d.handler());
   }
@@ -76,7 +77,9 @@ public class GitStash extends GitRepositoryAction {
           if (!failedRoots.isEmpty()) {
             String rootsList = StringUtil.join(failedRoots.keySet(), VirtualFile::getPresentableName, ",");
             String errorTitle = GitBundle.message("stash.error", StringUtil.shortenTextWithEllipsis(rootsList, 100, 0));
-            String errorMessage = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(failedRoots.values(), s -> HtmlChunk.raw(s))).toString();
+            String errorMessage = new HtmlBuilder()
+              .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(failedRoots.values(), s -> HtmlChunk.raw(s)))
+              .toString();
             VcsNotifier.getInstance(project).notifyError(STASH_FAILED, errorTitle, errorMessage, true);
           }
         }
