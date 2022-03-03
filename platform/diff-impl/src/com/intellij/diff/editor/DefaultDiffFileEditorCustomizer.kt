@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.editor
 
-import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.DiffContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
 
-  override fun customize(file: VirtualFile, editor: FileEditor, processor: DiffRequestProcessor) {
+  override fun customize(file: VirtualFile, editor: FileEditor, context: DiffContext) {
     var escapeHandler = file.getUserData(DiffVirtualFile.ESCAPE_HANDLER)
                         ?: DisposeDiffEditorEscapeAction(editor)
     if (escapeHandler !is DiffEditorEscapeAction) {

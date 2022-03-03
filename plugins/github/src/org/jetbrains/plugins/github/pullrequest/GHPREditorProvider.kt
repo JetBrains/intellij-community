@@ -31,7 +31,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
           is GHPRDiffVirtualFile -> {
             GHPRDiffFileEditor(project, dataProvider.diffRequestModel, file).also { editor ->
               editor.putUserData(EditorWindow.HIDE_TABS, true)
-              DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
+              DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor.context)
             }
           }
           is GHPRTimelineVirtualFile -> GHPRTimelineFileEditor(project, dataContext, dataProvider, file)
@@ -42,7 +42,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       }
       is GHNewPRDiffVirtualFile -> GHPRDiffFileEditor(project, dataContext.newPRDiffModel, file).also { editor ->
         editor.putUserData(EditorWindow.HIDE_TABS, true)
-        DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
+        DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor.context)
       }
       else -> error("Unsupported file type")
     }

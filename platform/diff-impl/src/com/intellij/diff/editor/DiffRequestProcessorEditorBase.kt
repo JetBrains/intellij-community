@@ -42,7 +42,7 @@ open class DiffRequestProcessorEditorBase(
 
     processor.addListener(MyProcessorListener(), this)
 
-    DiffRequestProcessorEditorCustomizer.customize(file, this, processor)
+    DiffRequestProcessorEditorCustomizer.customize(file, this, processor.context)
   }
 
   override fun getComponent(): JComponent = panel
