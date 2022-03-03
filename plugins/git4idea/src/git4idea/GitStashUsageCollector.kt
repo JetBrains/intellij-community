@@ -9,18 +9,18 @@ class GitStashUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("stash.interactions", 1)
+    private val GROUP: EventLogGroup = EventLogGroup("stash.interactions", 3)
 
-    private val STASH_PUSH = GROUP.registerEvent("stash_push",
+    private val STASH_PUSH = GROUP.registerEvent("stash.pushed",
                                                  EventFields.DurationMs)
 
-    private val STASH_POP = GROUP.registerEvent("stash_pop",
+    private val STASH_POP = GROUP.registerEvent("stash.popped",
                                                 EventFields.DurationMs)
 
-    private val STASH_PUSH_DIALOG = GROUP.registerEvent("stash_push_dialog",
+    private val STASH_PUSH_DIALOG = GROUP.registerEvent("stash.push.dialog",
                                                         EventFields.Boolean("message_entered"),
                                                         EventFields.Boolean("keep_index"))
-    private val STASH_POP_DIALOG = GROUP.registerEvent("stash_pop_dialog",
+    private val STASH_POP_DIALOG = GROUP.registerEvent("stash.pop.dialog",
                                                        EventFields.Boolean("create_branch"),
                                                        EventFields.Boolean("reinstate_index"),
                                                        EventFields.Boolean("pop_stash"))
