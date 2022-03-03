@@ -141,7 +141,8 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 JKForLoopVariable(
                     JKTypeElement(explicitType),
                     loopVar::name.detached(),
-                    JKStubExpression()
+                    JKStubExpression(),
+                    loopVar::annotationList.detached()
                 )
             return JKForInStatement(
                 loopVarDeclaration,
