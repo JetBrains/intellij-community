@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.ui.messages
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.messages
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
@@ -17,10 +17,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.mac.MacMessages
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -34,74 +34,20 @@ import javax.swing.text.View
 import kotlin.math.min
 
 /**
- * @author Alexander Lobas
+ * **Never use directly**, call [com.intellij.openapi.ui.MessageDialogBuilder] or [Messages] instead.
+ * Supersedes one unfortunate [com.intellij.ui.messages.NativeMacMessageManager].
  */
-
 @Service
-class AlertMessagesManager : MacMessages() {
+@ApiStatus.Internal
+internal class AlertMessagesManager {
   companion object {
     @JvmStatic
-    fun isEnabled(): Boolean {
-      val app = ApplicationManager.getApplication()
-      return app != null && !app.isUnitTestMode && !app.isHeadlessEnvironment && Registry.`is`("ide.message.dialogs.as.swing.alert", true)
-    }
+    fun isEnabled(): Boolean =
+      Registry.`is`("ide.message.dialogs.as.swing.alert", true)
 
     @JvmStatic
-    fun instance(): AlertMessagesManager = ApplicationManager.getApplication().getService(AlertMessagesManager::class.java)
-  }
-
-  override fun showYesNoCancelDialog(title: String,
-                                     message: String,
-                                     yesText: String,
-                                     noText: String,
-                                     cancelText: String,
-                                     window: Window?,
-                                     doNotAskOption: DoNotAskOption?,
-                                     icon: Icon?,
-                                     helpId: String?): Int {
-    val dialog = AlertDialog(null, window, message, title, arrayOf(yesText, cancelText, noText), 0, -1, getIcon(icon), doNotAskOption,
-                             helpId)
-    AppIcon.getInstance().requestAttention(null, true)
-    dialog.show()
-    val exitCode = when (dialog.exitCode) {
-      0 -> Messages.YES
-      2 -> Messages.NO
-      else -> Messages.CANCEL
-    }
-    doNotAskOption?.setToBeShown(dialog.toBeShown(), exitCode)
-    return exitCode
-  }
-
-  override fun showOkMessageDialog(title: String, message: String?, okText: String, window: Window?) {
-    showMessageDialog(null, window, message, title, arrayOf(okText), 0, -1, null, null, null)
-  }
-
-  override fun showYesNoDialog(title: String,
-                               message: String,
-                               yesText: String,
-                               noText: String,
-                               window: Window?,
-                               doNotAskDialogOption: DoNotAskOption?,
-                               icon: Icon?,
-                               helpId: String?): Boolean {
-    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText), 0, -1, icon, doNotAskDialogOption,
-                             null) == Messages.YES
-  }
-
-  override fun showErrorDialog(title: String, message: String?, okButton: String, window: Window?) {
-    showMessageDialog(null, window, message, title, arrayOf(okButton), 0, -1, Messages.getErrorIcon(), null, null)
-  }
-
-  override fun showMessageDialog(title: String,
-                                 message: String?,
-                                 buttons: Array<String>,
-                                 window: Window?,
-                                 defaultOptionIndex: Int,
-                                 focusedOptionIndex: Int,
-                                 doNotAskOption: DoNotAskOption?,
-                                 icon: Icon?,
-                                 helpId: String?): Int {
-    return showMessageDialog(null, window, message, title, buttons, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId)
+    fun instance(): AlertMessagesManager =
+      ApplicationManager.getApplication().getService(AlertMessagesManager::class.java)
   }
 
   fun showMessageDialog(project: Project?,
@@ -311,6 +257,7 @@ private class AlertDialog(project: Project?,
       myParent!!.add(component, 0)
     }
 
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun addLayoutComponent(name: String?, comp: Component) {
       if (myParent == null) {
         myParent = comp.parent
