@@ -42,6 +42,7 @@ public class MavenImportingSettingsForm {
   private JCheckBox myDownloadSourcesCheckBox;
   private JCheckBox myDownloadDocsCheckBox;
   private JCheckBox myDownloadAnnotationsCheckBox;
+  private JCheckBox myImportToTreeStructureCheckBox;
 
   private JPanel myAdditionalSettingsPanel;
   private JComboBox<MavenImportingSettings.GeneratedSourcesFolder> myGeneratedSourcesComboBox;
@@ -108,6 +109,7 @@ public class MavenImportingSettingsForm {
 
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
+    data.setImportToTreeStructure(myImportToTreeStructureCheckBox.isSelected());
 
     data.setKeepSourceFolders(myKeepSourceFoldersCheckBox.isSelected());
     data.setExcludeTargetFolder(myExcludeTargetFolderCheckBox.isSelected());
@@ -147,6 +149,7 @@ public class MavenImportingSettingsForm {
     }
     myExcludeTargetFolderCheckBox.setSelected(data.isExcludeTargetFolder());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
+    myImportToTreeStructureCheckBox.setSelected(data.isImportToTreeStructure());
 
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
     myGeneratedSourcesComboBox.setSelectedItem(data.getGeneratedSourcesFolder());
