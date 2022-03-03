@@ -2,12 +2,15 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IntIdsIterator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +27,7 @@ import java.util.function.IntPredicate;
 @ApiStatus.Internal
 public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
-  private static final Object myNullValue = new Object();
+  private static final Object myNullValue = ObjectUtils.sentinel("null");
 
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
@@ -32,9 +35,15 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   private Object myInputIdMapping;
   private Object myInputIdMappingValue;
 
+  private Int2ObjectMap<Object> myPresentInputIds = IndexDebugProperties.IS_UNIT_TEST_MODE
+                                                    ? new Int2ObjectOpenHashMap<>()
+                                                    : null;
+
   @Override
   public void addValue(int inputId, Value value) {
-    final Object fileSetObject = getFileSetObject(value);
+    Object fileSetObject = getFileSetObject(value);
+
+    ensureInputIdIsntAssociatedWithAnotherValue(inputId, value);
 
     if (fileSetObject == null) {
       attachFileSetForNewValue(value, inputId);
@@ -50,6 +59,26 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
     else {
       ((ChangeBufferingList)fileSetObject).add(inputId);
+    }
+  }
+
+  private void ensureInputIdIsntAssociatedWithAnotherValue(int inputId, Value value) {
+    if (myPresentInputIds != null) {
+      Object normalizedValue = value == null ? myNullValue : value;
+      Object previousValue = myPresentInputIds.put(inputId, normalizedValue);
+      if (previousValue != null && !previousValue.equals(normalizedValue)) {
+        LOG.error("Can't add value '" + normalizedValue + "'; input id " + inputId + " is already present in:\n" + this);
+      }
+    }
+  }
+
+  private void ensureInputIdAssociatedWithValue(int inputId, Value value) {
+    if (myPresentInputIds != null) {
+      Object normalizedValue = value == null ? myNullValue : value;
+      Object previousValue = myPresentInputIds.remove(inputId);
+      if (previousValue != null && !previousValue.equals(normalizedValue)) {
+        LOG.error("Can't remove value '" + normalizedValue + "'; input id " + inputId + " is not present for the specified value in:\n" + this);
+      }
     }
   }
 
@@ -88,6 +117,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   @Override
   public void removeAssociatedValue(int inputId) {
     if (myInputIdMapping == null) return;
+
     List<Object> fileSetObjects = null;
     List<Value> valueObjects = null;
     for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
@@ -99,7 +129,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
           valueObjects = new SmartList<>();
         }
         else if (IndexDebugProperties.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
+          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get() + ", ;\nValue container = \n" + this);
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);
@@ -113,11 +143,23 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
   }
 
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    forEach((id, value) -> {
+      sb.append(id).append(" <-> '").append(value).append("'\n");
+      return true;
+    });
+    return sb.toString();
+  }
+
   void removeValue(int inputId, Value value) {
     removeValue(inputId, getFileSetObject(value), value);
   }
 
   private void removeValue(int inputId, Object fileSet, Value value) {
+    ensureInputIdAssociatedWithValue(inputId, value);
+
     if (fileSet == null) {
       return;
     }
@@ -336,6 +378,9 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       else if (myInputIdMappingValue instanceof ChangeBufferingList) {
         clone.myInputIdMappingValue = ((ChangeBufferingList)myInputIdMappingValue).clone();
       }
+      clone.myPresentInputIds = myPresentInputIds != null
+                                ? new Int2ObjectOpenHashMap<>(myPresentInputIds)
+                                : null;
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -517,16 +562,26 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
 
               if (inputIds instanceof int[]) {
                 for (int inputId : (int[])inputIds) {
-                  if (changeBufferingList != null) changeBufferingList.add(inputId);
-                  else addValue(inputId, value);
+                  if (changeBufferingList != null) {
+                    changeBufferingList.add(inputId);
+                  }
+                  else {
+                    addValue(inputId, value);
+                  }
                   if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+                  ensureInputIdIsntAssociatedWithAnotherValue(inputId, value);
                 }
               }
               else {
                 int inputId = (int)inputIds;
-                if (changeBufferingList != null) changeBufferingList.add(inputId);
-                else addValue(inputId, value);
+                if (changeBufferingList != null) {
+                  changeBufferingList.add(inputId);
+                }
+                else {
+                  addValue(inputId, value);
+                }
                 if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+                ensureInputIdIsntAssociatedWithAnotherValue(inputId, value);
               }
 
               prev += id;
