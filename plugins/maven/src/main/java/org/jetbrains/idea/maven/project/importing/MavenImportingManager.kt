@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -23,7 +24,17 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 @ApiStatus.Experimental
 class MavenImportingManager(val project: Project) {
   var currentContext: MavenImportContext? = null
-    private set
+    private set(value) {
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        field = value
+      }
+      else {
+        ApplicationManager.getApplication().invokeAndWait {
+          field = value
+        }
+      }
+
+    }
 
   private val console by lazy {
     project.getService(MavenProjectsManager::class.java).syncConsole
@@ -34,7 +45,7 @@ class MavenImportingManager(val project: Project) {
   fun linkAndImportFile(pom: VirtualFile): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val manager = MavenProjectsManager.getInstance(project);
-    val importPath = if(pom.isDirectory) RootPath(pom) else FilesList(pom)
+    val importPath = if (pom.isDirectory) RootPath(pom) else FilesList(pom)
     return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings, MavenImportSpec.EXPLICIT_IMPORT);
   }
 
