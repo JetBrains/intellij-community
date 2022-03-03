@@ -5,7 +5,7 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.editor.DiffEditorEscapeAction
 import com.intellij.diff.editor.DiffEditorTabFilesManager
-import com.intellij.diff.editor.DiffVirtualFile
+import com.intellij.diff.editor.DiffVirtualFileBase
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
@@ -164,7 +164,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     }
 
     fun registerEscapeHandler(file: VirtualFile, handler: Runnable) {
-      file.putUserData(DiffVirtualFile.ESCAPE_HANDLER, EditorTabPreviewEscapeAction(handler))
+      file.putUserData(DiffVirtualFileBase.ESCAPE_HANDLER, EditorTabPreviewEscapeAction(handler))
     }
   }
 }

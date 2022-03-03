@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.diff.editor.DiffContentVirtualFile
-import com.intellij.diff.editor.DiffVirtualFile.Companion.useDiffWindowDimensionKey
+import com.intellij.diff.editor.DiffVirtualFileBase.Companion.useDiffWindowDimensionKey
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates

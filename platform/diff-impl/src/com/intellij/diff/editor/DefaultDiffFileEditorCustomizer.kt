@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
 
   override fun customize(file: VirtualFile, editor: FileEditor, context: DiffContext) {
-    var escapeHandler = file.getUserData(DiffVirtualFile.ESCAPE_HANDLER)
+    var escapeHandler = file.getUserData(DiffVirtualFileBase.ESCAPE_HANDLER)
                         ?: DisposeDiffEditorEscapeAction(editor)
     if (escapeHandler !is DiffEditorEscapeAction) {
       escapeHandler = DiffEditorEscapeDelegatingAction(escapeHandler)
