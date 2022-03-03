@@ -2,6 +2,7 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -59,9 +60,9 @@ public class GitStash extends GitRepositoryAction {
           Collection<VirtualFile> successfulRoots = new ArrayList<>();
           Map<VirtualFile, @Nls String> failedRoots = new LinkedHashMap<>();
           for (VirtualFile root : roots) {
-            long startTime = System.currentTimeMillis();
+            StructuredIdeActivity activity = GitStashUsageCollector.logStashPush(project);
             GitCommandResult result = Git.getInstance().runCommand(createHandler.apply(root));
-            GitStashUsageCollector.logStashPush(startTime);
+            activity.finished();
 
             if (result.success()) {
               successfulRoots.add(root);

@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.Change
 class VcsStatisticsCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("vcs", 11)
+    val GROUP = EventLogGroup("vcs", 12)
 
     @JvmField
     val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -42,11 +42,9 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
 
     private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
-
-    private val CLM_REFRESH = GROUP.registerEvent("clm.refreshed",
-                                                  EventFields.DurationMs,
-                                                  VCS_FIELD,
-                                                  EventFields.Boolean("is_full_refresh"))
+    private val IS_FULL_REFRESH_FIELD = EventFields.Boolean("is_full_refresh")
+    private val CLM_REFRESH = GROUP.registerIdeActivity(activityName = "clm.refresh",
+                                                        startEventAdditionalFields = arrayOf(VCS_FIELD, IS_FULL_REFRESH_FIELD))
 
     @JvmStatic
     fun logRefreshActionPerformed(project: Project,
@@ -65,8 +63,11 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logClmRefreshed(startMs: Long, vcs: AbstractVcs, everythingDirty: Boolean) {
-      CLM_REFRESH.log(System.currentTimeMillis() - startMs, vcs.name, everythingDirty)
+    fun logClmRefresh(project: Project, vcs: AbstractVcs, everythingDirty: Boolean): StructuredIdeActivity {
+      return CLM_REFRESH.started(project) {
+        listOf(VCS_FIELD.with(vcs.name),
+               IS_FULL_REFRESH_FIELD.with(everythingDirty))
+      }
     }
 
     private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {

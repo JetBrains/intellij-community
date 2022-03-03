@@ -1,21 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.project.Project
 
 class GitStashUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("stash.interactions", 3)
+    private val GROUP: EventLogGroup = EventLogGroup("stash.interactions", 4)
 
-    private val STASH_PUSH = GROUP.registerEvent("stash.pushed",
-                                                 EventFields.DurationMs)
+    private val STASH_PUSH = GROUP.registerIdeActivity("stash.push")
 
-    private val STASH_POP = GROUP.registerEvent("stash.popped",
-                                                EventFields.DurationMs)
+    private val STASH_POP = GROUP.registerIdeActivity("stash.pop")
 
     private val STASH_PUSH_DIALOG = GROUP.registerEvent("stash.push.dialog",
                                                         EventFields.Boolean("message_entered"),
@@ -26,13 +26,13 @@ class GitStashUsageCollector : CounterUsagesCollector() {
                                                        EventFields.Boolean("pop_stash"))
 
     @JvmStatic
-    fun logStashPush(startMs: Long) {
-      STASH_PUSH.log(System.currentTimeMillis() - startMs)
+    fun logStashPush(project: Project): StructuredIdeActivity {
+      return STASH_PUSH.started(project)
     }
 
     @JvmStatic
-    fun logStashPop(startMs: Long) {
-      STASH_POP.log(System.currentTimeMillis() - startMs)
+    fun logStashPop(project: Project): StructuredIdeActivity {
+      return STASH_POP.started(project)
     }
 
     @JvmStatic

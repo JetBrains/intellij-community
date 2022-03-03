@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -691,9 +692,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       if (changeProvider != null) {
         builder.setCurrent(scope);
 
-        long startTime = System.currentTimeMillis();
+        StructuredIdeActivity activity = VcsStatisticsCollector.logClmRefresh(myProject, vcs, scope.wasEveryThingDirty());
         changeProvider.getChanges(scope, builder, indicator, gate);
-        VcsStatisticsCollector.logClmRefreshed(startTime, vcs, scope.wasEveryThingDirty());
+        activity.finished();
       }
     }
     catch (VcsException e) {
