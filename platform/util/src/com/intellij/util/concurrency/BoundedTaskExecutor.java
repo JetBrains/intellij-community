@@ -252,6 +252,9 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     }
   }
 
+  /**
+   * Wait for this executor for all queued tasks to finish in their respective threads.
+   */
   public synchronized void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit)
     throws ExecutionException, InterruptedException, TimeoutException {
     CountDownLatch started = new CountDownLatch(myMaxThreads);
