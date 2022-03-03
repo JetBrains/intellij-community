@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffManager;
@@ -213,15 +213,8 @@ public final class ApplyPatchAction extends DumbAwareAction {
         String yesText = VcsBundle.message("patch.apply.abort.and.rollback.action");
         String noText = VcsBundle.message("patch.apply.skip.action");
         String cancelText = VcsBundle.message("patch.apply.continue.resolve.action");
-        int result1 = 0;
-
-        if (Messages.canShowMacSheetPanel()) {
-          result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), "", message, yesText, noText, cancelText, Messages.getQuestionIcon());
-        }
-        else {
-          result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), message, title, yesText, noText, cancelText, Messages.getQuestionIcon());
-        }
-
+        int result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), message, title, yesText, noText, cancelText,
+                                                     Messages.getQuestionIcon());
         if (result1 == Messages.YES) {
           applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
         }
