@@ -1,4 +1,4 @@
-@interface NonNls
+@interface NonNls {}
 
 @interface Foo {
     @NonNls String value();

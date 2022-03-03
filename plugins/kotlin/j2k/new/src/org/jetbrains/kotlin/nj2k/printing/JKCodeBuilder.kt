@@ -297,7 +297,6 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             renderModifiersList(parameter)
             printer.print(" ")
             parameter.annotationList.accept(this)
-            printer.print(" ")
             if (parameter.isVarArgs) {
                 printer.print("vararg ")
             }
@@ -328,10 +327,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitForLoopVariableRaw(forLoopVariable: JKForLoopVariable) {
-            if (forLoopVariable.annotationList.annotations.isNotEmpty()) {
-                forLoopVariable.annotationList.accept(this)
-                printer.print(" ")
-            }
+            forLoopVariable.annotationList.accept(this)
             forLoopVariable.name.accept(this)
             if (forLoopVariable.type.present() && forLoopVariable.type.type !is JKContextType) {
                 printer.print(": ")
@@ -340,10 +336,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitMethodRaw(method: JKMethod) {
-            if (method.annotationList.annotations.isNotEmpty()) {
-                method.annotationList.accept(this)
-                printer.print(" ")
-            }
+            method.annotationList.accept(this)
             renderModifiersList(method)
             printer.print(" fun ")
             method.typeParameterList.accept(this)
@@ -540,7 +533,6 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitLocalVariableRaw(localVariable: JKLocalVariable) {
             printer.print(" ")
             localVariable.annotationList.accept(this)
-            printer.print(" ")
             renderModifiersList(localVariable)
             printer.print(" ")
             localVariable.name.accept(this)
@@ -703,7 +695,6 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitKtPrimaryConstructorRaw(ktPrimaryConstructor: JKKtPrimaryConstructor) {
             ktPrimaryConstructor.annotationList.accept(this)
-            printer.print(" ")
             renderModifiersList(ktPrimaryConstructor)
             printer.print(" constructor ")
             if (ktPrimaryConstructor.parameters.isNotEmpty()) {
@@ -795,6 +786,9 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitAnnotationListRaw(annotationList: JKAnnotationList) {
             printer.renderList(annotationList.annotations, " ") {
                 it.accept(this)
+            }
+            if (annotationList.annotations.isNotEmpty()) {
+                printer.print(" ")
             }
         }
 
