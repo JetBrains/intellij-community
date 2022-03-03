@@ -16,7 +16,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.ExternalFormatProcessor
 import java.util.concurrent.atomic.AtomicBoolean
 
 

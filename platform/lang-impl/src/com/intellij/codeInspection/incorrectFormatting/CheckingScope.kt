@@ -9,7 +9,6 @@ import com.intellij.formatting.virtualFormattingListener
 import com.intellij.lang.LangBundle
 import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -146,7 +145,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
   fun createIndentProblemDescriptors(changes: ArrayList<ReplaceChange>) =
     sequence<ProblemDescriptor> {
-      val blockFix = ReplaceQuickFix(changes.map { it.range to it.replacement })
+      val blockFix = ReplaceQuickFix(changes.map { document.createRangeMarker(it.range) to it.replacement })
       changes.forEach {
         yield(
           createProblemDescriptor(
@@ -165,7 +164,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
         inLineChanges
           .groupBy { document.getLineNumber(it.range.startOffset) }
           .flatMap { (lineNumber, changes) ->
-            val commonFix = ReplaceQuickFix(changes.map { it.range to it.replacement })
+            val commonFix = ReplaceQuickFix(changes.map { document.createRangeMarker(it.range) to it.replacement })
             changes.map {
               createProblemDescriptor(
                 it.range,
