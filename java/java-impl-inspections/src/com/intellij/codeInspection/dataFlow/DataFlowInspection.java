@@ -170,7 +170,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   @NotNull
-  protected List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+  protected List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
+                                               PsiExpression expression,
+                                               boolean onTheFly,
+                                               boolean alwaysNull) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
 
     final List<LocalQuickFix> fixes = new SmartList<>();
@@ -182,7 +185,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix());
       }
-      else if (!ExpressionUtils.isNullLiteral(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
+      else if (!alwaysNull && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
         String suffix = " != null";
         if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4) && CodeBlockSurrounder.canSurround(expression)) {
           String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + suffix;
@@ -198,7 +201,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       }
 
-      if (!ExpressionUtils.isNullLiteral(qualifier) && PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
+      if (!alwaysNull && PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
         fixes.add(new SurroundWithRequireNonNullFix(qualifier));
       }
 
