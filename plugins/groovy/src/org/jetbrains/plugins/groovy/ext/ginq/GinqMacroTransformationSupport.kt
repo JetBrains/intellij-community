@@ -58,6 +58,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
                              select.selectKw)
     keywords.addAll(join.mapNotNull { it.onCondition?.onKw })
     keywords.addAll(join.map { it.joinKw })
+    val softKeywords = mutableListOf<PsiElement?>()
+    softKeywords.addAll(orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList())
     macroCall.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitElement(element: GroovyPsiElement) {
         val nestedGinq = element.getUserData(injectedGinq)
@@ -65,6 +67,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
           keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw, nestedGinq.groupBy?.having?.havingKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw, nestedGinq.select.selectKw)
           keywords.addAll(nestedGinq.join.mapNotNull { it.onCondition?.onKw })
           keywords.addAll(nestedGinq.join.map { it.joinKw })
+          softKeywords.addAll(nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList())
         } else {
           super.visitElement(element)
         }
@@ -72,6 +75,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     })
     return keywords.filterNotNull().mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.KEYWORD).create()
+    } + softKeywords.filterNotNull().mapNotNull {
+      HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.STATIC_FIELD).create()
     }
   }
 
@@ -86,8 +91,9 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {
+    val tree = getParsedGinqTree(macroCall) ?: return null
     val referenceName = element.castSafelyTo<GrReferenceElement<*>>()?.referenceName ?: return null
-    val hierarchy = element.ginqParents()
+    val hierarchy = element.ginqParents(macroCall, tree)
     for (ginq in hierarchy) {
       val bindings  = ginq.join.map { it.alias } + listOf(ginq.from.alias) + (ginq.groupBy?.classifiers?.mapNotNull(AliasedExpression::alias) ?: emptyList())
       val binding = bindings.find { it.text == referenceName }

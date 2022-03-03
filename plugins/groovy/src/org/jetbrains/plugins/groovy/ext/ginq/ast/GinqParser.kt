@@ -35,6 +35,7 @@ private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpres
   val joins: MutableList<GinqJoinFragment> = mutableListOf()
   var where: GinqWhereFragment? = null
   var groupBy: GinqGroupByFragment? = null
+  var orderBy: GinqOrderByFragment? = null
   var index = 1
   while (index < container.lastIndex) {
     val currentFragment = container[index]
@@ -42,10 +43,11 @@ private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpres
       is GinqJoinFragment -> joins.add(container[index] as GinqJoinFragment)
       is GinqWhereFragment -> where = currentFragment
       is GinqGroupByFragment -> groupBy = currentFragment
+      is GinqOrderByFragment -> orderBy = currentFragment
     }
     index += 1
   }
-  return GinqExpression(from, joins, where, groupBy, null, null, select)
+  return GinqExpression(from, joins, where, groupBy, orderBy, null, select)
 }
 
 /**
@@ -125,6 +127,14 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         }
         container.add(GinqGroupByFragment(callKw, arguments, null))
       }
+      "orderby" -> {
+        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map(Ordering.Companion::from)
+        if (arguments == null) {
+          recordError(methodCall, "Expected a list of order fields")
+          return
+        }
+        container.add(GinqOrderByFragment(callKw, arguments))
+      }
       "select" -> {
         val arguments = methodCall.collectExpressionArguments<GrExpression>()
         if (arguments == null) {
@@ -174,11 +184,10 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
 val injectedGinq : Key<GinqExpression> = Key.create("injected ginq expression")
 val rootGinq: Key<CachedValue<GinqExpression>> = Key.create("root ginq expression")
 
-fun PsiElement.ginqParents(): Sequence<GinqExpression> = sequence {
+fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
-    val rootGinq = parent.getUserData(rootGinq)?.valueProvider
-    if (rootGinq != null) {
-      yield(rootGinq.compute()?.value!!)
+    if (parent == top) {
+      yield(topExpr)
       return@sequence
     }
     val ginq = parent.getUserData(injectedGinq) ?: continue

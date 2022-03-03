@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
+import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -96,8 +98,31 @@ data class AliasedExpression(val classifier: GrExpression, val alias: GrTypeElem
 
 data class GinqOrderByFragment(
   val orderByKw: PsiElement,
-  val orders: GrExpression,
+  val sortingFields: List<Ordering>,
 ) : GinqQueryFragment
+
+sealed class Ordering private constructor(val orderKw: PsiElement?, val sorter: GrExpression) {
+
+  class Asc internal constructor(orderKw: PsiElement?, sorter: GrExpression) : Ordering(orderKw, sorter)
+
+  class Desc internal constructor(orderKw: PsiElement?, sorter: GrExpression) : Ordering(orderKw, sorter)
+
+  companion object {
+    fun from(expr: GrExpression): Ordering {
+      if (expr is GrBinaryExpression && expr.operationTokenType == GroovyElementTypes.KW_IN) {
+        val orderKw = expr.rightOperand?.castSafelyTo<GrReferenceExpression>()
+        return when (orderKw?.referenceName) {
+          "asc" -> Asc(orderKw, expr.leftOperand)
+          "desc" -> Desc(orderKw, expr.leftOperand)
+          else -> Asc(null, expr)
+        }
+      }
+      else {
+        return Asc(null, expr)
+      }
+    }
+  }
+}
 
 data class GinqLimitFragment(
   val limitKw: PsiElement,
