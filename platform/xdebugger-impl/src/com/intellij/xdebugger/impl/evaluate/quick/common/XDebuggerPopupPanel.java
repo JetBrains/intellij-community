@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.JBLabel;
@@ -68,6 +69,28 @@ public abstract class XDebuggerPopupPanel {
         myActionsUpdatedOnce = true;
       }
     }, disposable);
+  }
+
+  protected static void updatePopupBounds(@NotNull Window popupWindow, int newWidth, int newHeight) {
+    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(popupWindow);
+    final int screenWidth = screenRectangle.width;
+
+    // shift the x coordinate if there is not enough space on the right
+    Point location = popupWindow.getLocation();
+    int screenRightEdgeX = screenRectangle.x + screenWidth;
+    if (screenRightEdgeX - location.x < newWidth) {
+      int newX = Math.max(screenRectangle.x, screenRightEdgeX - newWidth);
+      location = new Point(newX, location.y);
+    }
+
+    final Rectangle targetBounds = new Rectangle(location.x, location.y, newWidth, newHeight);
+
+    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
+    if (targetBounds.height != popupWindow.getHeight() || targetBounds.width != popupWindow.getWidth()) {
+      popupWindow.setBounds(targetBounds);
+      popupWindow.validate();
+      popupWindow.repaint();
+    }
   }
 
   protected final void setContent(@NotNull JComponent content,
