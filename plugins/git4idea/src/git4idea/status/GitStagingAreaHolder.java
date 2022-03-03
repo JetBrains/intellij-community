@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.status;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -101,9 +102,10 @@ public class GitStagingAreaHolder {
     RecursiveFilePathSet dirtyScope = new RecursiveFilePathSet(true); // GitVcs#needsCaseSensitiveDirtyScope is true
     dirtyScope.addAll(dirtyPaths);
 
-    long startTime = System.currentTimeMillis();
+    boolean everythingDirty = dirtyScope.contains(VcsUtil.getFilePath(root));
+    StructuredIdeActivity activity = GitStatisticsCollector.logStatusRefresh(myProject, everythingDirty);
     List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
-    GitStatisticsCollector.logStatusRefreshed(startTime, dirtyScope.contains(VcsUtil.getFilePath(root)));
+    activity.finished();
 
     rootRecords.removeIf(record -> {
       boolean isUnderDirtyScope = isUnder(record, dirtyScope);

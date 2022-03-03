@@ -3,6 +3,7 @@ package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.beans.addIfDiffers
@@ -127,7 +128,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 8)
+    private val GROUP = EventLogGroup("git.configuration", 9)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -190,22 +191,24 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       return null
     }
 
-    private val STATUS_REFRESH = GROUP.registerEvent("status.refreshed",
-                                                     EventFields.DurationMs,
-                                                     EventFields.Boolean("is_full_refresh"))
-
-    private val UNTRACKED_REFRESH = GROUP.registerEvent("untracked.refreshed",
-                                                        EventFields.DurationMs,
-                                                        EventFields.Boolean("is_full_refresh"))
+    private val IS_FULL_REFRESH_FIELD = EventFields.Boolean("is_full_refresh")
+    private val STATUS_REFRESH = GROUP.registerIdeActivity(activityName = "status.refresh",
+                                                           startEventAdditionalFields = arrayOf(IS_FULL_REFRESH_FIELD))
+    private val UNTRACKED_REFRESH = GROUP.registerIdeActivity(activityName = "untracked.refresh",
+                                                              startEventAdditionalFields = arrayOf(IS_FULL_REFRESH_FIELD))
 
     @JvmStatic
-    fun logStatusRefreshed(startMs: Long, everythingDirty: Boolean) {
-      STATUS_REFRESH.log(System.currentTimeMillis() - startMs, everythingDirty)
+    fun logStatusRefresh(project: Project, everythingDirty: Boolean): StructuredIdeActivity {
+      return STATUS_REFRESH.started(project) {
+        listOf(IS_FULL_REFRESH_FIELD.with(everythingDirty))
+      }
     }
 
     @JvmStatic
-    fun logUntrackedRefreshed(startMs: Long, everythingDirty: Boolean) {
-      UNTRACKED_REFRESH.log(System.currentTimeMillis() - startMs, everythingDirty)
+    fun logUntrackedRefresh(project: Project, everythingDirty: Boolean): StructuredIdeActivity {
+      return UNTRACKED_REFRESH.started(project) {
+        listOf(IS_FULL_REFRESH_FIELD.with(everythingDirty))
+      }
     }
   }
 }
