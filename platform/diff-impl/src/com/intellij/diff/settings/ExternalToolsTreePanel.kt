@@ -202,7 +202,10 @@ internal class ExternalToolsTreePanel(
     }
   }
 
-  private inner class AddToolDialog(private val oldToolName: String? = null) : DialogWrapper(null) {
+  private inner class AddToolDialog(
+    private val oldToolName: String? = null,
+    private val isEditMode: Boolean = false,
+  ) : DialogWrapper(null) {
     private val groupField = ComboBox(
       arrayOf(ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL, ExternalDiffSettings.ExternalToolGroup.MERGE_TOOL)
     ).apply {
@@ -262,10 +265,12 @@ internal class ExternalToolsTreePanel(
       text = createDescription(ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL)
     }
 
-    constructor(externalTool: ExternalDiffSettings.ExternalTool) : this(externalTool.name) {
+    constructor(externalTool: ExternalDiffSettings.ExternalTool) : this(externalTool.name, true) {
       toolNameField.text = externalTool.name
       programPathField.text = externalTool.programPath
       argumentPatternField.text = externalTool.argumentPattern
+      isMergeTrustExitCode.isSelected = externalTool.isMergeTrustExitCode
+      groupField.selectedItem = externalTool.groupName
 
       groupField.isEnabled = false
     }
@@ -284,7 +289,7 @@ internal class ExternalToolsTreePanel(
     override fun createCenterPanel(): JComponent = panel {
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.group")) {
         cell(groupField).horizontalAlign(HorizontalAlign.FILL)
-      }
+      }.visible(!isEditMode)
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.program.path")) {
         cell(programPathField).horizontalAlign(HorizontalAlign.FILL)
       }
@@ -296,7 +301,7 @@ internal class ExternalToolsTreePanel(
       }
       row {
         cell(isMergeTrustExitCode).horizontalAlign(HorizontalAlign.FILL)
-          .enabledIf(object : ComponentPredicate() {
+          .visibleIf(object : ComponentPredicate() {
             override fun addListener(listener: (Boolean) -> Unit) {
               groupField.addItemListener {
                 val isMergeEnabled = invoke()
