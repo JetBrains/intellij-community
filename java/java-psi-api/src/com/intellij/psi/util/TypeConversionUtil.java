@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
@@ -396,6 +396,17 @@ public final class TypeConversionUtil {
         }
         if (psiClass.isInheritor(sealedClass, false)) {
           subClasses.add(psiClass);
+        }
+
+        if (psiClass.isEnum()) {
+          for (PsiField field : psiClass.getFields()) {
+            if (field instanceof PsiEnumConstant) {
+              PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)field).getInitializingClass();
+              if (initializingClass != null && initializingClass.isInheritor(sealedClass, false)) {
+                subClasses.add(initializingClass);
+              }
+            }
+          }
         }
       }
     });
