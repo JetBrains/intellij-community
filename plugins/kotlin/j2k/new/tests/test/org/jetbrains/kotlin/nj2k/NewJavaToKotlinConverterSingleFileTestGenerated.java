@@ -81,6 +81,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/annotations/annotationsOnAnnotationMethod.java");
         }
 
+        @TestMetadata("forLoopParameter.java")
+        public void testForLoopParameter() throws Exception {
+            runTest("testData/newJ2k/annotations/forLoopParameter.java");
+        }
+
         @TestMetadata("java9Deprecated.java")
         public void testJava9Deprecated() throws Exception {
             runTest("testData/newJ2k/annotations/java9Deprecated.java");
