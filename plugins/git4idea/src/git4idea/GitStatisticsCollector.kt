@@ -127,7 +127,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 7)
+    private val GROUP = EventLogGroup("git.configuration", 8)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -165,6 +165,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
                                                        REMOTES,
                                                        WORKING_COPY_SIZE,
                                                        IS_WORKTREE_USED,
+                                                       FS_MONITOR,
                                                        *remoteTypesEventIds.toTypedArray()
     )
 
@@ -189,11 +190,11 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       return null
     }
 
-    private val STATUS_REFRESH = GROUP.registerEvent("status_refresh",
+    private val STATUS_REFRESH = GROUP.registerEvent("status.refreshed",
                                                      EventFields.DurationMs,
                                                      EventFields.Boolean("is_full_refresh"))
 
-    private val UNTRACKED_REFRESH = GROUP.registerEvent("untracked_refresh",
+    private val UNTRACKED_REFRESH = GROUP.registerEvent("untracked.refreshed",
                                                         EventFields.DurationMs,
                                                         EventFields.Boolean("is_full_refresh"))
 
