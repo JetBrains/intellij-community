@@ -20,7 +20,7 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
@@ -28,7 +28,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.PathUtilRt
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -261,26 +260,23 @@ internal class ExternalToolsTreePanel(
       addActionListener { showTestMerge() }
     }
     private val argumentPatternDescription = DslLabel(DslLabelType.COMMENT).apply {
-      maxLineLength = MAX_LINE_LENGTH_WORD_WRAP
+      maxLineLength = DEFAULT_COMMENT_WIDTH
       text = createDescription(ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL)
     }
 
     constructor(externalTool: ExternalDiffSettings.ExternalTool) : this(externalTool.name, true) {
+      isAutocompleteToolName = false
+
       toolNameField.text = externalTool.name
       programPathField.text = externalTool.programPath
       argumentPatternField.text = externalTool.argumentPattern
       isMergeTrustExitCode.isSelected = externalTool.isMergeTrustExitCode
       groupField.selectedItem = externalTool.groupName
 
-      groupField.isEnabled = false
+      title = DiffBundle.message("settings.external.tool.tree.edit.dialog.title")
     }
 
     init {
-      JBUI.size(WINDOW_WIDTH, WINDOW_HEIGHT).let {
-        rootPane.minimumSize = it
-        rootPane.preferredSize = it
-      }
-
       title = DiffBundle.message("settings.external.tool.tree.add.dialog.title")
 
       init()
@@ -453,9 +449,6 @@ internal class ExternalToolsTreePanel(
   }
 
   companion object {
-    private const val WINDOW_WIDTH = 400
-    private const val WINDOW_HEIGHT = 400
-
     private const val DIFF_TOOL_DEFAULT_ARGUMENT_PATTERN = "%1 %2 %3"
     private const val MERGE_TOOL_DEFAULT_ARGUMENT_PATTERN = "%1 %2 %3 %4"
   }
