@@ -23,6 +23,8 @@ import com.intellij.util.Time
 abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: Class<out SearchEverywhereContributor<*>>)
   : SearchEverywhereElementFeaturesProvider(*supportedTab) {
   companion object {
+    internal const val IS_INVALID_DATA_KEY = "isInvalid"
+
     internal const val IS_SAME_MODULE_DATA_KEY = "isSameModule"
     internal const val PACKAGE_DISTANCE_DATA_KEY = "packageDistance"
     internal const val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = "packageDistanceNorm"
@@ -67,7 +69,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
 
     cache as Cache?
     val file = getContainingFile(item)
-    val project = ReadAction.compute<Project?, Nothing> { item.takeIf { it.isValid }?.project } ?: return emptyMap()
+    val project = ReadAction.compute<Project?, Nothing> { item.takeIf { it.isValid }?.project } ?: return mapOf(IS_INVALID_DATA_KEY to true)
 
     val data = HashMap<String, Any>()
     if (file != null && cache != null) {
