@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.actions.*;
@@ -88,14 +89,17 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
   }
 
   @Override
-  protected void processMouseEvent(final MouseEvent e){
-    if(e.getID() == MouseEvent.MOUSE_PRESSED){
+  protected void processMouseEvent(final MouseEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       requestFocusInWindow();
     }
     try {
       myEditor.myProcessor.processMouseEvent(e);
     }
-    catch(Exception ex) {
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
+    catch (Exception ex) {
       LOG.error(ex);
     }
   }
