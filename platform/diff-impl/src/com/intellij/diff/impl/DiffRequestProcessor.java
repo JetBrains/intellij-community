@@ -155,6 +155,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myProgressBar = new MyProgressBar();
 
     myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, myToolbarGroup, true);
+    putContextUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, myToolbar);
     if (myIsNewToolbar) {
       myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     }
