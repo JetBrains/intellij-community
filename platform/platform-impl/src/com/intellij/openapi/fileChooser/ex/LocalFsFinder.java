@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOError;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -80,6 +82,9 @@ public class LocalFsFinder implements Finder {
       if (myBaseDir != null) return myBaseDir.resolve(path).toAbsolutePath().toString();
     }
     catch (InvalidPathException ignored) { }
+    catch (IOError e) {
+      Logger.getInstance(LocalFsFinder.class).info("path=" + path + "; base=" + myBaseDir, e);
+    }
     return path;
   }
 
