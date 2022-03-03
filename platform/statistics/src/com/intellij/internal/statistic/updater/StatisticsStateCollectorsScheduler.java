@@ -29,6 +29,7 @@ final class StatisticsStateCollectorsScheduler implements ApplicationInitialized
   private static final int LOG_APPLICATION_STATE_SMART_MODE_DELAY_IN_SECONDS = 60;
   public static final int LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN = 5;
   public static final int LOG_PROJECTS_STATES_DELAY_IN_MIN = 12 * 60;
+  private static final String REDUCE_DELAY_FLAG_KEY = "fus.internal.reduce.initial.state.collectors.delay";
 
   private final Map<Project, Future<?>> persistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicBoolean allowExecution = new AtomicBoolean(true);
@@ -61,9 +62,11 @@ final class StatisticsStateCollectorsScheduler implements ApplicationInitialized
 
         //wait until initial indexation will be finished
         DumbService.getInstance(project).runWhenSmart(() -> {
+          boolean reduceInitialDelay = Boolean.parseBoolean(System.getProperty(REDUCE_DELAY_FLAG_KEY));
           ScheduledFuture<?> future = JobScheduler.getScheduler()
             .scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logProjectStates(project, new EmptyProgressIndicator()),
-                                    LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN, LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
+                                    reduceInitialDelay ? 0 : LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
+                                    LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
           persistStatisticsSessionsMap.put(project, future);
         });
 
