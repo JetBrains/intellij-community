@@ -1165,14 +1165,6 @@
         <action id="WrapLayoutTestAction" internal="true" class="com.intellij.internal.ui.WrapLayoutTestAction"/>
         <action id="UIFreeze" internal="true" class="com.intellij.internal.UIFreezeAction"/>
         <separator/>
-        <group id="Internal.focusAndModality" popup="true">
-          <action id="CheckMessagesButtonsOrderAction" internal="true"
-                  class="com.intellij.internal.validation.CheckMessagesButtonsOrderAction"/>
-          <action id="ShowDelayedMessageInternalAction" internal="true"
-                  class="com.intellij.notification.impl.actions.ShowDelayedMessageInternalAction"/>
-          <action id="ManualMacMessagesTest" internal="true" class="com.intellij.internal.validation.MacMessagesTest"/>
-          <action id="MacMessagesSequencesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesSequencesAction"/>
-        </group>
         <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction"/>
         <action id="FocusTracer" internal="true" class="com.intellij.internal.focus.FocusTracesAction"/>
         <reference ref="LogFocusRequests"/>
