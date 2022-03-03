@@ -3,7 +3,7 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.light.classes.symbol.caches.SymbolLightClassFacadeCache"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.asJava.KotlinAsJavaSupport"
-                    serviceImplementation="org.jetbrains.kotlin.light.classes.symbol.IDEKotlinAsJavaFirSupport"/>
+                    serviceImplementation="org.jetbrains.kotlin.light.classes.symbol.KotlinAsJavaFirSupport"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
