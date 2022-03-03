@@ -2,6 +2,7 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -241,10 +242,10 @@ public class GitUntrackedFilesHolder implements Disposable {
 
     BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStarted();
     try {
-      long startTime = System.currentTimeMillis();
+      boolean everythingDirty = dirtyFiles == null || dirtyFiles.contains(VcsUtil.getFilePath(myRoot));
+      StructuredIdeActivity activity = GitStatisticsCollector.logUntrackedRefresh(myProject, everythingDirty);
       RefreshResult result = refreshFiles(dirtyFiles);
-      GitStatisticsCollector.logUntrackedRefreshed(startTime, dirtyFiles == null ||
-                                                          dirtyFiles.contains(VcsUtil.getFilePath(myRoot)));
+      activity.finished();
 
       removePathsUnderOtherRoots(result.untracked, "unversioned");
       removePathsUnderOtherRoots(result.ignored, "ignored");
