@@ -39,7 +39,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void addEditorGutterListener(@NotNull EditorGutterListener listener, @NotNull Disposable parentDisposable);
 
-  public abstract @Nullable EditorGutterAction getAttachedEditorGutterAction(@NotNull TextAnnotationGutterProvider provider);
+  public abstract @Nullable EditorGutterAction getAction(@NotNull TextAnnotationGutterProvider provider);
 
   public abstract int getWhitespaceSeparatorOffset();
 

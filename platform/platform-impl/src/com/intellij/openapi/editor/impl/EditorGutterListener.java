@@ -8,7 +8,7 @@ import java.util.EventListener;
 
 public interface EditorGutterListener extends EventListener {
 
-  void onTextAnnotationAdded(@NotNull TextAnnotationGutterProvider provider);
+  void textAnnotationAdded(@NotNull TextAnnotationGutterProvider provider);
 
-  void onTextAnnotationRemoved(@NotNull TextAnnotationGutterProvider provider);
+  void textAnnotationRemoved(@NotNull TextAnnotationGutterProvider provider);
 }
