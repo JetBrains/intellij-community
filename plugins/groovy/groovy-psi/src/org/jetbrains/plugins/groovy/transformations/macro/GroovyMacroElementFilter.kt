@@ -11,6 +11,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil
 class GroovyMacroElementFilter : GroovyElementFilter {
   override fun isFake(element: GroovyPsiElement): Boolean {
     // todo: registry of all available macros to avoid resolving
-    return element.parentsOfType<GrMethodCall>().any { GdkMethodUtil.isMacro(it.castSafelyTo<GrMethodCall>()?.resolveMethod()) }
+    val macroCall = element.parentsOfType<GrMethodCall>().find { GdkMethodUtil.isMacro(it.castSafelyTo<GrMethodCall>()?.resolveMethod()) }
+    if (macroCall == null) return false
+    val support = getAvailableMacroSupport(macroCall) ?: return true
+    return !support.isUntransformed(macroCall, element)
   }
 }

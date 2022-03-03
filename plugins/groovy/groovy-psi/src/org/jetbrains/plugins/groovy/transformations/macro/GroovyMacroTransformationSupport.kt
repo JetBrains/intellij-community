@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -43,6 +44,12 @@ interface GroovyMacroTransformationSupport {
    * It is OK to depend on [computeType] and [computeStaticReference] here.
    */
   fun computeHighlighing(macroCall: GrCall) : List<HighlightInfo> = emptyList()
+
+  /**
+   * Allows to indicate that an [element] will not be transformed after macro expansion.
+   * Therefore, regular Groovy code insight rules will be applied to it.
+   */
+  fun isUntransformed(macroCall: GrMethodCall, element: GroovyPsiElement) : Boolean = false
 
   /**
    * Allows to tune type inference algorithms within the macro-expanded code.
