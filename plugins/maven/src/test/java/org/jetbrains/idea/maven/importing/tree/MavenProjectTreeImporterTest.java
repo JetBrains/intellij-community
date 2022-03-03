@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.importing.tree;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,13 +15,7 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Registry.get("maven.import.tree.structure").setValue(true);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    Registry.get("maven.import.tree.structure").setValue(false);
+    MavenProjectsManager.getInstance(myProject).getImportingSettings().setImportToTreeStructure(true);
   }
 
   @Test

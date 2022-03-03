@@ -43,7 +43,7 @@ class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
 
           }
         }
-        if (isImportToTreeStructureEnabled() && child is PsiDirectoryNode && parent is PsiDirectoryNode) {
+        if (isImportToTreeStructureEnabled(project) && child is PsiDirectoryNode && parent is PsiDirectoryNode) {
           childToAdd = getMavenModuleNode(project, child, settings) ?: child
         }
         modifiedChildren.add(childToAdd)
