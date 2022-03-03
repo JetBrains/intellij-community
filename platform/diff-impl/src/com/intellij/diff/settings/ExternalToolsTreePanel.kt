@@ -51,12 +51,13 @@ internal class ExternalToolsTreePanel(
     model = treeModel
     addMouseListener(object : MouseAdapter() {
       override fun mousePressed(mouseEvent: MouseEvent) {
-        if (mouseEvent.clickCount == 2 && SwingUtilities.isLeftMouseButton(mouseEvent) && selectionPath != null) {
+        val treePath = selectionPath ?: return
+        if (mouseEvent.clickCount == 2 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
           mouseEvent.consume()
-          when ((selectionPath.lastPathComponent as DefaultMutableTreeNode).userObject) {
+          when ((treePath.lastPathComponent as DefaultMutableTreeNode).userObject) {
             is ExternalDiffSettings.ExternalToolGroup -> {
-              if (isExpanded(selectionPath)) collapsePath(selectionPath)
-              else expandPath(selectionPath)
+              if (isExpanded(treePath)) collapsePath(treePath)
+              else expandPath(treePath)
             }
             is ExternalDiffSettings.ExternalTool -> editData()
             else -> {}
