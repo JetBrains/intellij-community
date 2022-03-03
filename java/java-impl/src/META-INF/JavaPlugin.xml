@@ -533,6 +533,8 @@
 
     <advancedSetting id="compiler.automake.allow.when.app.running" groupKey="advanced.settings.group.compiler" default="false"
                      bundle="messages.JavaBundle"/>
+    <advancedSetting id="compiler.lower.process.priority" groupKey="advanced.settings.group.compiler" default="true"
+                     bundle="messages.JavaBundle"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
