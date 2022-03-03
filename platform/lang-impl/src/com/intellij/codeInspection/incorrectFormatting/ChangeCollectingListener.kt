@@ -63,7 +63,8 @@ class ReplaceChange(file: PsiFile, range: TextRange, val replacement: String) : 
         return null
       }
     }
-    return arrayOf(ReplaceQuickFix(listOf(range to replacement)), ReformatQuickFix, HideDetailedReportIntention)
+    val doc = file.viewProvider.document
+    return arrayOf(ReplaceQuickFix(listOf(doc.createRangeMarker(range) to replacement)), ReformatQuickFix, HideDetailedReportIntention)
   }
 
 }
