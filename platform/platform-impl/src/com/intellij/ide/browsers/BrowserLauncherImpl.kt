@@ -32,16 +32,23 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   }
 
   override fun desktopBrowse(project: Project?, uri: URI): Boolean {
-    if (project != null && !project.isTrusted()) {
-      val ok = MessageDialogBuilder.yesNo(
-        IdeBundle.message("external.link.confirmation.title"),
-        IdeBundle.message("external.link.confirmation.message.0", uri),
-      ).asWarning().ask(project)
-      if (!ok) {
-        return true // don't do anything else
-      }
+    if (!canBrowse(project, uri)) {
+      return true // don't do anything else
     }
     return super.desktopBrowse(project, uri)
+  }
+
+  private fun canBrowse(project: Project?, uri: URI): Boolean {
+    if (project == null || project.isTrusted()) {
+      return true
+    }
+    return MessageDialogBuilder
+      .yesNo(
+        IdeBundle.message("external.link.confirmation.title"),
+        IdeBundle.message("external.link.confirmation.message.0", uri),
+      )
+      .asWarning()
+      .ask(project)
   }
 
   override fun signUrl(url: String): String {
