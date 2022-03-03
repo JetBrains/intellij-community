@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -1394,11 +1393,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private void fireTextAnnotationGutterProviderAdded(@NotNull TextAnnotationGutterProvider provider) {
-    myEditorGutterListeners.getMulticaster().onTextAnnotationAdded(provider);
+    myEditorGutterListeners.getMulticaster().textAnnotationAdded(provider);
   }
 
   private void fireTextAnnotationGutterProviderRemoved(@NotNull TextAnnotationGutterProvider provider) {
-    myEditorGutterListeners.getMulticaster().onTextAnnotationRemoved(provider);
+    myEditorGutterListeners.getMulticaster().textAnnotationRemoved(provider);
   }
 
   @Override
@@ -1425,7 +1424,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public @Nullable EditorGutterAction getAttachedEditorGutterAction(@NotNull TextAnnotationGutterProvider provider) {
+  public @Nullable EditorGutterAction getAction(@NotNull TextAnnotationGutterProvider provider) {
     return myProviderToListener.get(provider);
   }
 
