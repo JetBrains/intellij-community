@@ -2,8 +2,10 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -267,7 +269,7 @@ class MavenImportFlow {
   fun configureMavenProject(context: MavenImportedContext) {
     val projectsManager = MavenProjectsManager.getInstance(context.project)
     val projects = context.readContext.projectsTree.projects
-    val moduleMap = projects.map { it to projectsManager.findModule(it) }.toMap();
+    val moduleMap = ReadAction.compute<Map<MavenProject, Module?>, Throwable> { projects.map { it to projectsManager.findModule(it) }.toMap(); }
     MavenProjectImporterBase.configureMavenProjects(context.readContext.projectsTree.projects, moduleMap, context.project,
                                                     context.readContext.indicator)
 
