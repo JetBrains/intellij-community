@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -695,20 +694,26 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void initializeIfNecessary(RefElementImpl element) {
-    if (!element.isInitialized()) {
-      element.initialize();
-      element.setInitialized(true);
-      if (ProgressManager.getInstance().getProgressIndicator() != myIndicator) {
-        return;
-      }
-      final PsiElement psi = element.getPsiElement();
-      if (psi != null) {
-        for (RefManagerExtension<?> each : myExtensions.values()) {
-          each.onEntityInitialized(element, psi);
+    boolean notify = false;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (element) {
+      if (!element.isInitialized()) {
+        element.initialize();
+        element.setInitialized(true);
+        if (ProgressManager.getInstance().getProgressIndicator() != myIndicator) {
+          return;
         }
+        notify = true;
       }
-      fireNodeInitialized(element);
     }
+    if (!notify) return;
+    final PsiElement psi = element.getPsiElement();
+    if (psi != null) {
+      for (RefManagerExtension<?> each : myExtensions.values()) {
+        each.onEntityInitialized(element, psi);
+      }
+    }
+    fireNodeInitialized(element);
   }
 
   private RefManagerExtension<?> getExtension(final Language language) {
