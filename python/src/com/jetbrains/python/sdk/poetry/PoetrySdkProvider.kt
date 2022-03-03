@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
@@ -24,15 +25,11 @@ class PoetrySdkProvider : PySdkProvider {
                                                isPyCharm: Boolean,
                                                associatedModulePath: String?): PyInterpreterInspectionQuickFixData? {
     if (sdk.isPoetry) {
+      val projectUnit = if (isPyCharm) "project" else "module"
       val message = when {
-        associatedModulePath != null -> when {
-          isPyCharm -> "Poetry interpreter is associated with another project: $associatedModulePath"
-          else -> "Poetry interpreter is associated with another module: $associatedModulePath"
-        }
-        else -> when {
-          isPyCharm -> "Poetry interpreter is not associated with any project"
-          else -> "Poetry interpreter is not associated with any module"
-        }
+        associatedModulePath != null ->
+          PyBundle.message("python.sdk.inspection.message.poetry.interpreter.associated.with.another.project", projectUnit, associatedModulePath)
+        else -> PyBundle.message("python.sdk.inspection.message.poetry.interpreter.not.associated.with.any.project", projectUnit)
       }
       return PyInterpreterInspectionQuickFixData(UsePoetryQuickFix(sdk, module), message)
     }
