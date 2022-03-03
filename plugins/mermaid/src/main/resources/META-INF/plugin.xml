@@ -1,18 +1,21 @@
-<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.firsttimeinforever.mermaidlanguage</id>
-    <name>mermaid-language</name>
-    <vendor>firsttimeinforever</vendor>
+  <id>firsttimeinforever.mermaid</id>
+  <name>Mermaid</name>
+  <vendor>firsttimeinforever</vendor>
 
-    <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.platform</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.firsttimeinforever.mermaidlanguage.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.firsttimeinforever.mermaidlanguage.services.MyProjectService"/>
-    </extensions>
-
-    <applicationListeners>
-        <listener class="com.github.firsttimeinforever.mermaidlanguage.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="MyMermaid"
+              implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidFileType"
+              fieldName="INSTANCE"
+              language="MyMermaid"
+              extensions="mymermaid"/>
+    <lang.parserDefinition language="MyMermaid"
+                           implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidParserDefinition"/>
+    <lang.syntaxHighlighter language="MyMermaid"
+                            implementationClass="com.github.firsttimeinforever.mermaid.lang.highlighting.MermaidHighlighter"/>
+    <completion.contributor language="MyMermaid"
+                            implementationClass="com.github.firsttimeinforever.mermaid.editor.MermaidCompletionContributor"/>
+  </extensions>
 </idea-plugin>

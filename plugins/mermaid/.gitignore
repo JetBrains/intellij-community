@@ -1,4 +1,6 @@
 .gradle
 .idea
+!.idea/gradle.xml
 .qodana
 build
+src/generated
