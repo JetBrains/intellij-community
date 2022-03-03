@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.Change
 class VcsStatisticsCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("vcs", 10)
+    val GROUP = EventLogGroup("vcs", 11)
 
     @JvmField
     val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -41,11 +41,9 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     @JvmField
     val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
 
-    private val VCS_FIELD = object : StringEventField("vcs") {
-      override val validationRule: List<String> get() = listOf("{enum#vcs}")
-    }
+    private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
 
-    private val CLM_REFRESH = GROUP.registerEvent("clm_refresh",
+    private val CLM_REFRESH = GROUP.registerEvent("clm.refreshed",
                                                   EventFields.DurationMs,
                                                   VCS_FIELD,
                                                   EventFields.Boolean("is_full_refresh"))
