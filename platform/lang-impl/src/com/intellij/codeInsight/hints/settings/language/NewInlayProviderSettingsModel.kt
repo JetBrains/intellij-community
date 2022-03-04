@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
@@ -43,9 +44,19 @@ class NewInlayProviderSettingsModel<T : Any>(
   override fun collectData(editor: Editor, file: PsiFile) : Runnable {
     providerWithSettings.provider.preparePreview(editor, file, providerWithSettings.settings)
     val collectorWrapper = providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language) ?: return Runnable {}
-    val hintsBuffer: HintsBuffer = collectorWrapper.collectTraversing(editor, file, true)
-    return Runnable {
-      collectorWrapper.applyToEditor(file, editor, hintsBuffer)
+    val case = CASE_KEY.get(editor)
+    val enabled = case?.value ?: isEnabled
+    val backup = cases.map { it.value }
+    try {
+      cases.forEach { it.value = false }
+      case.let { it.value = true }
+      val hintsBuffer: HintsBuffer = collectorWrapper.collectTraversing(editor, file, enabled)
+      return Runnable {
+        collectorWrapper.applyToEditor(file, editor, hintsBuffer)
+      }
+    }
+    finally {
+      cases.forEachIndexed { index, c -> c.value = backup[index] }
     }
   }
 
