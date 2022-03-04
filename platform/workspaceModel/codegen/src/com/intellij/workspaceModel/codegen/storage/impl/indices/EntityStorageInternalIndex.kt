@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.storage.impl.indices
 
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongSetMap
+import com.sun.org.slf4j.internal.LoggerFactory
 import org.jetbrains.annotations.TestOnly
-import org.slf4j.LoggerFactory
 
 //typealias EntityStorageIndex = BidirectionalSetMap<EntityId, T>
 internal typealias EntityStorageIndex<T> = BidirectionalLongSetMap<T>

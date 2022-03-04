@@ -1,7 +1,7 @@
 package org.jetbrains.deft
 
-import kotlinx.io.core.Input
-import kotlinx.io.core.Output
+//import kotlinx.io.core.Input
+//import kotlinx.io.core.Output
 
 inline class ObjId<T>(val n: Int) {
     fun next() = ObjId<Any>(n + 1)
@@ -32,17 +32,17 @@ inline class ObjId<T>(val n: Int) {
     }
 }
 
-fun Output.writeId(id: ObjId<*>) {
-    writeId(id.n)
-}
-
-fun Output.writeId(id: Int) {
-    writeInt(id)
-}
-
-fun Input.readId(): ObjId<*> {
-    val id = readIdValue()
-    return ObjId<Any>(id)
-}
-
-fun Input.readIdValue(): Int = readInt()
+//fun Output.writeId(id: ObjId<*>) {
+//    writeId(id.n)
+//}
+//
+//fun Output.writeId(id: Int) {
+//    writeInt(id)
+//}
+//
+//fun Input.readId(): ObjId<*> {
+//    val id = readIdValue()
+//    return ObjId<Any>(id)
+//}
+//
+//fun Input.readIdValue(): Int = readInt()

@@ -5,7 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
-import org.slf4j.LoggerFactory
+import com.sun.org.slf4j.internal.LoggerFactory
 import java.util.*
 
 internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: BidirectionalMap<EntityId, T>)

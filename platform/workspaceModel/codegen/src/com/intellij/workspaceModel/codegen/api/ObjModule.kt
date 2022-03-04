@@ -2,7 +2,7 @@ package org.jetbrains.deft.impl
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.SemVer
+//import org.jetbrains.deft.SemVer
 import org.jetbrains.deft.bytes.useCodegenImpl
 import org.jetbrains.deft.impl.fields.ExtField
 import org.jetbrains.deft.impl.fields.ExtFieldId
@@ -11,7 +11,7 @@ import kotlin.reflect.KProperty
 
 abstract class ObjModule(
     val id: Id,
-    val version: SemVer = SemVer(0, 0)
+    //val version: SemVer = SemVer(0, 0)
 ) {
     val modules: ObjModules
         get() = ObjModule.modules
