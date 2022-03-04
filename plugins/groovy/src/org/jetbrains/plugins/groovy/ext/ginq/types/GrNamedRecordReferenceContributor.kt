@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
@@ -12,18 +13,22 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 class GrNamedRecordReferenceContributor : NonCodeMembersContributor() {
 
   override fun processDynamicElements(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
-    if (qualifierType !is GrNamedRecordType) {
+    val resolvedClass = qualifierType.resolve()
+    if (resolvedClass !is GrSyntheticNamedRecordClass) {
       return
     }
     val name = ResolveUtil.getNameHint(processor) ?: return
     if (!processor.shouldProcessProperties()) return
-    val ginqExpression = qualifierType.getGinqExpression()
-
+    val ginqExpression = resolvedClass.getGinqExpression()
     for (source in ginqExpression.getDataSourceFragments()) {
-      if (source.alias.referenceName == name) {
-        if (!processor.execute(source.alias, state)) {
-          return
-        }
+      if (source.alias.referenceName == name && !processor.execute(source.alias, state)) {
+        return
+      }
+    }
+    for (projection in ginqExpression.select.projections) {
+      val referenceElement = projection.alias?.referenceElement ?: projection.expression
+      if (name == referenceElement.text && !processor.execute(referenceElement, state)) {
+        return
       }
     }
   }

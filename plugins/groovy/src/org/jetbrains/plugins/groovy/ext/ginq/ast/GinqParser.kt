@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
@@ -79,7 +80,8 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         val alias = argument.leftOperand.castSafelyTo<GrReferenceExpression>()
         if (alias == null) {
           recordError(argument.leftOperand, "Expected alias name")
-        } else {
+        }
+        else {
           alias.putUserData(ginqBinding, Unit)
           markAsReferenceResolveTarget(alias)
         }
@@ -118,7 +120,8 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         }
         else if (callName == "where") {
           container.add(GinqWhereFragment(callKw, argument))
-        } else if (callName == "having") {
+        }
+        else if (callName == "having") {
           val last = container.lastOrNull()
           if (last is GinqGroupByFragment && last.having == null) {
             val newGroupBy = last.copy(having = GinqHavingFragment(callKw, argument))
@@ -128,7 +131,10 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         }
       }
       "groupby" -> {
-        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map { if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement) else AliasedExpression(it, null) }
+        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map {
+          if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement?.castSafelyTo<GrClassTypeElement>())
+          else AliasedExpression(it, null)
+        }
         if (arguments == null) {
           recordError(methodCall, "Expected a classifier argument")
           return
@@ -152,12 +158,19 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         container.add(GinqLimitFragment(callKw, arguments[0], arguments.getOrNull(1)))
       }
       "select" -> {
-        val arguments = methodCall.collectExpressionArguments<GrExpression>()
+        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map {
+          if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement?.castSafelyTo<GrClassTypeElement>())
+          else AliasedExpression(it, null)
+        }
         if (arguments == null) {
           recordError(methodCall, "Expected a list of projections")
           return
         }
-        arguments.forEach { it.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+        arguments.forEach {
+          it.expression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+          it.alias?.referenceElement?.let(::markAsReferenceResolveTarget)
+          it.alias?.referenceElement?.let { it.putUserData(ginqBinding, Unit) }
+        }
         container.add(GinqSelectFragment(callKw, arguments))
       }
       else -> recordError(methodCall, "Unrecognized query")
@@ -173,7 +186,8 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         }
       if (ginqExpression == null) {
         super.visitArgumentList(list)
-      } else {
+      }
+      else {
         list.putUserData(injectedGinq, ginqExpression)
       }
     }
@@ -198,8 +212,9 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
   return text.contains("from") && text.contains("select")
 }
 
-val injectedGinq : Key<GinqExpression> = Key.create("injected ginq expression")
+val injectedGinq: Key<GinqExpression> = Key.create("injected ginq expression")
 val rootGinq: Key<CachedValue<GinqExpression>> = Key.create("root ginq expression")
+
 @Deprecated("too internal, hide under functions")
 val ginqBinding: Key<Unit> = Key.create("Ginq binding")
 

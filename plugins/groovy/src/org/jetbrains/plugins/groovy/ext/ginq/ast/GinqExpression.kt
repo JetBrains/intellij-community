@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 
 /**
  *
@@ -48,66 +48,95 @@ data class GinqExpression(
   val limit: GinqLimitFragment?,
   val select: GinqSelectFragment,
 ) {
-  fun getDataSourceFragments() : Iterable<GinqDataSourceFragment> = listOf(from) + joins
+  fun getDataSourceFragments(): Iterable<GinqDataSourceFragment> = listOf(from) + joins
+
+  fun isValid() : Boolean {
+    return from.isValid() &&
+           joins.all { it.isValid() } &&
+           where?.isValid() ?: true &&
+           groupBy?.isValid() ?: true &&
+           orderBy?.isValid() ?: true &&
+           limit?.isValid() ?: true &&
+           select.isValid()
+  }
 }
 
-sealed interface GinqQueryFragment
+sealed interface GinqQueryFragment {
+  fun isValid() : Boolean
+}
 
-abstract class GinqDataSourceFragment(
-  val alias: GrReferenceExpression,
-  val dataSource: GrExpression,
-)
+interface GinqDataSourceFragment {
+  val alias: GrReferenceExpression
+  val dataSource: GrExpression
+}
 
-class GinqFromFragment(
+data class GinqFromFragment(
   val fromKw: PsiElement,
-  alias: GrReferenceExpression,
-  dataSource: GrExpression,
-) : GinqDataSourceFragment(alias, dataSource), GinqQueryFragment
-
-class GinqJoinFragment(
-  val joinKw: PsiElement,
-  aliasExpression: GrReferenceExpression,
-  dataSourceExpression: GrExpression,
-  val onCondition: GinqOnFragment?,
-) : GinqDataSourceFragment(aliasExpression, dataSourceExpression), GinqQueryFragment
-
-abstract class GinqFilterFragment(open val filter: GrExpression) : GinqQueryFragment
-
-class GinqOnFragment(
-  val onKw: PsiElement,
-  filterExpression: GrBinaryExpression,
-) : GinqFilterFragment(filterExpression), GinqQueryFragment {
-  override val filter: GrBinaryExpression = filterExpression
+  override val alias: GrReferenceExpression,
+  override val dataSource: GrExpression,
+) : GinqDataSourceFragment, GinqQueryFragment {
+  override fun isValid() : Boolean = fromKw.isValid && alias.isValid && dataSource.isValid
 }
 
-class GinqWhereFragment(
-  val whereKw: PsiElement,
-  filterExpression: GrExpression,
-) : GinqFilterFragment(filterExpression), GinqQueryFragment
+data class GinqJoinFragment(
+  val joinKw: PsiElement,
+  override val alias: GrReferenceExpression,
+  override val dataSource: GrExpression,
+  val onCondition: GinqOnFragment?,
+) : GinqDataSourceFragment, GinqQueryFragment {
+  override fun isValid() : Boolean = joinKw.isValid && alias.isValid && dataSource.isValid
+}
 
-class GinqHavingFragment(
+interface GinqFilterFragment : GinqQueryFragment {
+  val filter: GrExpression
+}
+
+data class GinqOnFragment(
+  val onKw: PsiElement,
+  override val filter: GrBinaryExpression,
+) : GinqFilterFragment, GinqQueryFragment {
+  override fun isValid() : Boolean = onKw.isValid && filter.isValid
+}
+
+data class GinqWhereFragment(
+  val whereKw: PsiElement,
+  override val filter: GrExpression,
+) : GinqFilterFragment, GinqQueryFragment {
+  override fun isValid() : Boolean = whereKw.isValid && filter.isValid
+}
+
+data class GinqHavingFragment(
   val havingKw: PsiElement,
-  filterExpression: GrExpression,
-) : GinqFilterFragment(filterExpression), GinqQueryFragment
+  override val filter: GrExpression,
+) : GinqFilterFragment, GinqQueryFragment {
+  override fun isValid() : Boolean = havingKw.isValid && filter.isValid
+}
 
 data class GinqGroupByFragment(
   val groupByKw: PsiElement,
   val classifiers: List<AliasedExpression>,
   val having: GinqHavingFragment?,
-) : GinqQueryFragment
+) : GinqQueryFragment {
+  override fun isValid() : Boolean =
+    groupByKw.isValid && classifiers.all { it.alias?.isValid ?: true && it.expression.isValid } && having?.isValid() ?: true
+}
 
-data class AliasedExpression(val classifier: GrExpression, val alias: GrTypeElement?)
+data class AliasedExpression(val expression: GrExpression, val alias: GrClassTypeElement?)
 
 data class GinqOrderByFragment(
   val orderByKw: PsiElement,
   val sortingFields: List<Ordering>,
-) : GinqQueryFragment
+) : GinqQueryFragment {
+  override fun isValid() : Boolean = orderByKw.isValid && sortingFields.all { it.orderKw?.isValid ?: true && it.sorter.isValid }
+}
 
-sealed class Ordering private constructor(val orderKw: PsiElement?, val sorter: GrExpression) {
+sealed interface Ordering {
+  val orderKw: PsiElement?
+  val sorter: GrExpression
 
-  class Asc internal constructor(orderKw: PsiElement?, sorter: GrExpression) : Ordering(orderKw, sorter)
+  class Asc internal constructor(override val orderKw: PsiElement?, override val sorter: GrExpression) : Ordering
 
-  class Desc internal constructor(orderKw: PsiElement?, sorter: GrExpression) : Ordering(orderKw, sorter)
+  class Desc internal constructor(override val orderKw: PsiElement?, override val sorter: GrExpression) : Ordering
 
   companion object {
     fun from(expr: GrExpression): Ordering {
@@ -130,9 +159,13 @@ data class GinqLimitFragment(
   val limitKw: PsiElement,
   val offset: GrExpression,
   val size: GrExpression?,
-) : GinqQueryFragment
+) : GinqQueryFragment {
+  override fun isValid() : Boolean = limitKw.isValid && offset.isValid && size?.isValid ?: true
+}
 
 data class GinqSelectFragment(
   val selectKw: PsiElement,
-  val projections: List<GrExpression>,
-) : GinqQueryFragment
+  val projections: List<AliasedExpression>,
+) : GinqQueryFragment {
+  override fun isValid() : Boolean = selectKw.isValid && projections.all { it.alias?.isValid ?: true && it.expression.isValid }
+}

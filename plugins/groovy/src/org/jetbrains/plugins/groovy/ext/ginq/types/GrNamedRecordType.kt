@@ -7,7 +7,6 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
-import org.jetbrains.plugins.groovy.ext.ginq.inferDataSourceComponentType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
 
 class GrNamedRecordType(private val expr: GinqExpression, languageLevel: LanguageLevel = LanguageLevel.JDK_1_5)
@@ -16,21 +15,12 @@ class GrNamedRecordType(private val expr: GinqExpression, languageLevel: Languag
     const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD = "org.apache.groovy.ginq.provider.collection.runtime.NamedRecord"
   }
 
-  private val typeMap : Lazy<Map<String, Lazy<PsiType>>> = lazyPub {
-    val map = mutableMapOf<String, Lazy<PsiType>>()
-    for (fragment in expr.getDataSourceFragments()) {
-      val name = fragment.alias.referenceName ?: continue
-      val type = lazyPub { fragment.dataSource.type?.let(::inferDataSourceComponentType) ?: NULL }
-      map[name] = type
-    }
-    map
+  private val mySyntheticClass: Lazy<GrSyntheticNamedRecordClass?> = lazyPub {
+    val clazz = myFacade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD, expr.from.fromKw.resolveScope)
+    clazz?.let { GrSyntheticNamedRecordClass(expr, it) }
   }
 
-  operator fun get(name: String) : PsiType? {
-    return typeMap.value[name]?.value
-  }
-
-  fun getGinqExpression() : GinqExpression = expr
+  fun getGinqExpression(): GinqExpression = expr
 
   override fun isValid(): Boolean {
     return expr.from.fromKw.isValid
@@ -45,8 +35,14 @@ class GrNamedRecordType(private val expr: GinqExpression, languageLevel: Languag
   }
 
   override fun resolveGenerics(): ClassResolveResult {
-    // a hack to avoid re-creation of NamedRecordType in PsiSubstitutorImpl#visitClassType. This re-creation will lead to the loss of field info
-    return ClassResolveResult.EMPTY
+    val superResult = super.resolveGenerics()
+    return object : ClassResolveResult by superResult {
+      override fun getElement(): GrSyntheticNamedRecordClass? = mySyntheticClass.value
+    }
+  }
+
+  override fun resolve(): GrSyntheticNamedRecordClass? {
+    return mySyntheticClass.value
   }
 
   override fun getJavaClassName(): String = ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD

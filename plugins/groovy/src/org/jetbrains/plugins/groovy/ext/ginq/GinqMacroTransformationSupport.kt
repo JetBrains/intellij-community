@@ -89,7 +89,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         val ginq = getParsedGinqTree(macroCall) ?: return null
         val namedRecord = GrNamedRecordType(ginq)
         val facade = JavaPsiFacade.getInstance(macroCall.project)
-        return facade.findClass(CommonClassNames.JAVA_UTIL_LIST, macroCall.resolveScope)?.let { facade.elementFactory.createType(it , namedRecord) }
+        return facade.findClass(CommonClassNames.JAVA_UTIL_LIST, macroCall.resolveScope)?.let { facade.elementFactory.createType(it, namedRecord) }
       }
     }
     if (expression is GrReferenceExpression) {
