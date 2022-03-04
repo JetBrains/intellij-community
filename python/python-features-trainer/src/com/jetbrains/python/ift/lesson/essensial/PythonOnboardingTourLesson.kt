@@ -210,6 +210,8 @@ class PythonOnboardingTourLesson :
   }
 
   private fun LessonContext.debugTasks() {
+    clearBreakpoints()
+
     var logicalPosition = LogicalPosition(0, 0)
     prepareRuntimeTask {
       logicalPosition = editor.offsetToLogicalPosition(sample.startOffset)
@@ -228,6 +230,9 @@ class PythonOnboardingTourLesson :
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(PythonLessonsBundle.message("python.onboarding.balloon.start.debugging"))
+      restoreState {
+        lineWithBreakpoints() != setOf(logicalPosition.line)
+      }
       restoreIfModified(sample)
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
