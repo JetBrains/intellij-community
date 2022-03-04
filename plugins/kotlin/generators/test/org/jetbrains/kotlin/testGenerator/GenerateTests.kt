@@ -1107,6 +1107,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("intentions/importMember", pattern = pattern)
             model("intentions/convertToBlockBody", pattern = pattern)
             model("intentions/addWhenRemainingBranches", pattern = pattern)
+            model("../../../fir/testData/intentions/useExpressionBody", pattern=pattern)
         }
 
         testClass<AbstractFirShortenRefsTest> {
