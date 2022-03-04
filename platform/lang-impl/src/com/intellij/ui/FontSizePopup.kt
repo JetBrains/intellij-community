@@ -84,6 +84,7 @@ interface FontSizeModel {
   var value: FontSize
 
   /**
+   * The returned flow immediately emits [value] when collected.
    * The returned flow never completes.
    */
   val updates: Flow<FontSize>
