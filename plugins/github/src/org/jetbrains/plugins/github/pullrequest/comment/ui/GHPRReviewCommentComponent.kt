@@ -19,11 +19,11 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeInfo
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -37,9 +37,9 @@ object GHPRReviewCommentComponent {
              thread: GHPRReviewThreadModel,
              comment: GHPRReviewCommentModel,
              reviewDataProvider: GHPRReviewDataProvider,
-             detailsDataProvider: GHPRDetailsDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider,
              repositoryDataService: GHPRRepositoryDataService,
+             suggestedChangeHelper: GHPRSuggestedChangeHelper,
              showResolvedMarker: Boolean = true): JComponent {
 
     val avatarLabel = ActionLink("") {
@@ -67,11 +67,10 @@ object GHPRReviewCommentComponent {
       isOpaque = false
     }
 
-    Controller(project,
-               thread, comment,
-               reviewDataProvider, detailsDataProvider,
-               repositoryDataService,
-               titlePane, pendingLabel, resolvedLabel, commentPanel, showResolvedMarker)
+    Controller(project, thread, comment,
+               repositoryDataService, suggestedChangeHelper,
+               titlePane, pendingLabel, resolvedLabel, commentPanel,
+               showResolvedMarker)
 
     val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentPanel, comment::body) {
       reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
@@ -108,9 +107,8 @@ object GHPRReviewCommentComponent {
   private class Controller(private val project: Project,
                            private val thread: GHPRReviewThreadModel,
                            private val comment: GHPRReviewCommentModel,
-                           private val reviewDataProvider: GHPRReviewDataProvider,
-                           private val detailsDataProvider: GHPRDetailsDataProvider,
                            private val repositoryDataService: GHPRRepositoryDataService,
+                           private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                            private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
@@ -128,9 +126,10 @@ object GHPRReviewCommentComponent {
       val commentComponent = if (GHSuggestedChangeInfo.containsSuggestedChange(comment.body)) {
         val suggestedChangeInfo = GHSuggestedChangeInfo.create(thread.diffHunk, thread.filePath,
                                                                thread.startLine ?: thread.line, thread.line)
-        commentComponentFactory.createCommentWithSuggestedChangeComponent(comment.body, thread.id, thread.isOutdated,
+        commentComponentFactory.createCommentWithSuggestedChangeComponent(comment.body,
+                                                                          thread,
                                                                           suggestedChangeInfo,
-                                                                          reviewDataProvider, detailsDataProvider,
+                                                                          suggestedChangeHelper,
                                                                           repositoryDataService)
       }
       else {
@@ -163,19 +162,19 @@ object GHPRReviewCommentComponent {
   fun factory(project: Project,
               thread: GHPRReviewThreadModel,
               reviewDataProvider: GHPRReviewDataProvider,
-              detailsDataProvider: GHPRDetailsDataProvider,
               avatarIconsProvider: GHAvatarIconsProvider,
               repositoryDataService: GHPRRepositoryDataService,
+              suggestedChangeHelper: GHPRSuggestedChangeHelper,
               showResolvedMarkerOnFirstComment: Boolean = true)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
       create(
         project,
         thread, comment,
-        reviewDataProvider, detailsDataProvider, avatarIconsProvider,
+        reviewDataProvider, avatarIconsProvider,
         repositoryDataService,
-        showResolvedMarkerOnFirstComment,
-      )
+        suggestedChangeHelper,
+        showResolvedMarkerOnFirstComment)
     }
   }
 }

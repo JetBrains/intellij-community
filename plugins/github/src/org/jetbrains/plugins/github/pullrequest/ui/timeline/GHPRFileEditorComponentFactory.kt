@@ -37,6 +37,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
@@ -105,6 +106,10 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData)
 
+    val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
+                                                           uiDisposable, editor.repositoryDataService.remoteCoordinates.repository,
+                                                           editor.reviewData,
+                                                           editor.detailsData)
     val timeline = GHPRTimelineComponent(detailsModel,
                                          timelineModel,
                                          createItemComponentFactory(
@@ -112,7 +117,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                            editor.detailsData, editor.commentsData, editor.reviewData,
                                            reviewThreadsModelsProvider, editor.avatarIconsProvider,
                                            editor.repositoryDataService,
-                                           editor.securityService.currentUser,
+                                           suggestedChangesHelper,
+                                           editor.securityService.currentUser
                                          )).apply {
       border = JBUI.Borders.empty(16, 0)
     }
@@ -207,6 +213,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
                                          repositoryDataService: GHPRRepositoryDataService,
+                                         suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
 
@@ -218,8 +225,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       detailsDataProvider, commentsDataProvider, reviewDataProvider, avatarIconsProvider, reviewThreadsModelsProvider,
       repositoryDataService,
       diffFactory, eventsFactory,
-      selectInToolWindowHelper,
-      currentUser,
+      selectInToolWindowHelper, suggestedChangeHelper,
+      currentUser
     )
   }
 }

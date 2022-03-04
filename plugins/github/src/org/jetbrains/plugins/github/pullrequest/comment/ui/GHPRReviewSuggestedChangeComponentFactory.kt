@@ -11,12 +11,10 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle
@@ -31,11 +29,9 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import git4idea.branch.GitBranchUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
@@ -46,12 +42,11 @@ import javax.swing.JComponent
 
 class GHPRReviewSuggestedChangeComponentFactory(
   private val project: Project,
-  private val threadId: String,
+  private val thread: GHPRReviewThreadModel,
   private val suggestionApplier: GHSuggestedChangeApplier,
-  private val reviewDataProvider: GHPRReviewDataProvider,
-  private val detailsDataProvider: GHPRDetailsDataProvider
+  private val suggestedChangeHelper: GHPRSuggestedChangeHelper
 ) {
-  fun create(content: String, isOutdated: Boolean): JComponent = RoundedPanel(BorderLayout(), 8).apply {
+  fun create(content: String): JComponent = RoundedPanel(BorderLayout(), 8).apply {
     isOpaque = false
     border = JBUI.Borders.compound(JBUI.Borders.empty(EMPTY_GAP, 0), border)
 
@@ -80,35 +75,29 @@ class GHPRReviewSuggestedChangeComponentFactory(
     add(topPanel, BorderLayout.NORTH)
     add(HtmlEditorPane(content), BorderLayout.CENTER)
 
-    if (isCurrentBranchDifferentWithPullRequest()) {
-      optionButton.disableActions()
-      optionButton.optionTooltipText = GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.different.branch")
+    suggestedChangeHelper.isCorrectBranch.addAndInvokeListener { updateUI(optionButton, it, thread.isOutdated) }
+  }
+
+  private fun updateUI(optionButton: JBOptionButton, isCorrectBranch: Boolean, isOutdated: Boolean) {
+    if (isCorrectBranch && !isOutdated) {
+      optionButton.enableActions()
+      return
     }
-    else if (isOutdated) {
+
+    if (isOutdated) {
       optionButton.disableActions()
       optionButton.optionTooltipText = GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.outdated")
     }
-  }
-
-  private fun isCurrentBranchDifferentWithPullRequest(): Boolean {
-    val currentRepository = GitBranchUtil.getCurrentRepository(project)
-    val currentBranchName = currentRepository?.let { GitBranchUtil.getBranchNameOrRev(it) } ?: return true
-
-    val pullRequestSourceBranchName = detailsDataProvider.loadedDetails?.headRefName
-
-    return currentBranchName != pullRequestSourceBranchName
+    else {
+      optionButton.disableActions()
+      optionButton.optionTooltipText = GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.different.branch")
+    }
   }
 
   private inner class ApplyLocallySuggestedChangeAction : AbstractAction(
     GithubBundle.message("pull.request.timeline.comment.suggested.changes.button")
   ) {
     override fun actionPerformed(event: ActionEvent) {
-      if (isCurrentBranchDifferentWithPullRequest()) {
-        Messages.showWarningDialog(GithubBundle.message("pull.request.timeline.comment.suggested.changes.error.branches.message"),
-                                   GithubBundle.message("pull.request.timeline.comment.suggested.changes.error.branches.title"))
-        return
-      }
-
       object : Task.Backgroundable(
         project,
         GithubBundle.message("pull.request.timeline.comment.suggested.changes.progress.bar.apply"),
@@ -122,7 +111,7 @@ class GHPRReviewSuggestedChangeComponentFactory(
 
         override fun onSuccess() {
           if (applyStatus == ApplyPatchStatus.SUCCESS) {
-            reviewDataProvider.resolveThread(EmptyProgressIndicator(), threadId)
+            suggestedChangeHelper.resolveThread(thread.id)
           }
         }
       }.queue()
@@ -138,7 +127,7 @@ class GHPRReviewSuggestedChangeComponentFactory(
         cancelRunnable?.invoke()
       }
 
-      val container = createPopupComponentContainer(reviewDataProvider.submitReviewCommentDocument, cancelActionListener)
+      val container = createPopupComponentContainer(suggestedChangeHelper.submitReviewCommentDocument, cancelActionListener)
       val popup = JBPopupFactory.getInstance()
         .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
         .setFocusable(true)
@@ -181,12 +170,6 @@ class GHPRReviewSuggestedChangeComponentFactory(
               return@addActionListener
             }
 
-            if (isCurrentBranchDifferentWithPullRequest()) {
-              Messages.showWarningDialog(GithubBundle.message("pull.request.timeline.comment.suggested.changes.error.branches.message"),
-                                         GithubBundle.message("pull.request.timeline.comment.suggested.changes.error.branches.title"))
-              return@addActionListener
-            }
-
             object : Task.Backgroundable(
               project,
               GithubBundle.message("pull.request.timeline.comment.suggested.changes.progress.bar.commit"),
@@ -201,7 +184,7 @@ class GHPRReviewSuggestedChangeComponentFactory(
               override fun onSuccess() {
                 cancelActionListener.actionPerformed(it)
                 if (commitStatus == ApplyPatchStatus.SUCCESS) {
-                  reviewDataProvider.resolveThread(EmptyProgressIndicator(), threadId)
+                  suggestedChangeHelper.resolveThread(thread.id)
                   runWriteAction { commentDocument.setText("") }
                 }
               }
@@ -235,6 +218,11 @@ class GHPRReviewSuggestedChangeComponentFactory(
         override fun dispose() {}
       }
     }
+  }
+
+  private fun JBOptionButton.enableActions() {
+    action.isEnabled = true
+    options?.forEach { it.isEnabled = true }
   }
 
   private fun JBOptionButton.disableActions() {
