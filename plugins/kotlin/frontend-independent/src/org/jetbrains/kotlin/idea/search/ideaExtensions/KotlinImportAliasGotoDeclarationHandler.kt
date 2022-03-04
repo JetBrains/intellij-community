@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -14,10 +14,9 @@ class KotlinImportAliasGotoDeclarationHandler : GotoDeclarationHandler {
     override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor?): Array<PsiElement>? {
         val importAlias = sourceElement?.parent as? KtImportAlias ?: return null
 
-        val result =
-            runReadAction {
-                importAlias.importDirective?.importedReference?.getQualifiedElementSelector()?.mainReference?.multiResolve(false)
-            } ?: return null
+        val result = runReadAction {
+            importAlias.importDirective?.importedReference?.getQualifiedElementSelector()?.mainReference?.multiResolve(false)
+        } ?: return null
 
         return result.mapNotNull { it.element }.toTypedArray()
     }
