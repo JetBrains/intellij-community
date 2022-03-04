@@ -21,9 +21,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.IntPredicate;
 
-/**
- * @author Eugene Zhuravlev
- */
 @ApiStatus.Internal
 public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
@@ -511,9 +508,10 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
         boolean doCompact = false;
         if (inputIds instanceof int[]) {
           for (int inputId : (int[])inputIds) {
-            if(mapping != null) {
+            if (mapping != null) {
               if (mapping.removeFileId(inputId)) doCompact = true;
-            } else {
+            }
+            else {
               removeAssociatedValue(inputId);
               doCompact = true;
             }
@@ -521,9 +519,10 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
         }
         else {
           int inputId = (int)inputIds;
-          if(mapping != null) {
+          if (mapping != null) {
             if (mapping.removeFileId(inputId)) doCompact = true;
-          } else {
+          }
+          else {
             removeAssociatedValue(inputId);
             doCompact = true;
           }
@@ -550,8 +549,8 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
               addValue(inputId, value);
               if (mapping != null) mapping.associateFileIdToValue(inputId, value);
             }
-
-          } else {
+          }
+          else {
             idCountOrSingleValue = -idCountOrSingleValue;
             ChangeBufferingList changeBufferingList = ensureFileSetCapacityForValue(value, idCountOrSingleValue);
             int prev = 0;
