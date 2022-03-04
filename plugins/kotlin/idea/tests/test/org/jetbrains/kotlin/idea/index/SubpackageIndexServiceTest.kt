@@ -42,9 +42,9 @@ class SubpackageIndexServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             assertFalse("fqName `${it.asString()}` shouldn't exist", subpackagesIndex.packageExists(it, scope))
         }
 
-        assertEquals(listOf(fqName1), subpackagesIndex.getSubpackages(FqName.ROOT, scope, MemberScope.ALL_NAME_FILTER))
-        assertEquals(listOf(fqName2), subpackagesIndex.getSubpackages(fqName1, scope, MemberScope.ALL_NAME_FILTER))
-        assertEquals(listOf(fqName31, fqName30), subpackagesIndex.getSubpackages(fqName2, scope, MemberScope.ALL_NAME_FILTER)
+        assertSameElements(listOf(fqName1), subpackagesIndex.getSubpackages(FqName.ROOT, scope, MemberScope.ALL_NAME_FILTER))
+        assertSameElements(listOf(fqName2), subpackagesIndex.getSubpackages(fqName1, scope, MemberScope.ALL_NAME_FILTER))
+        assertSameElements(listOf(fqName31, fqName30), subpackagesIndex.getSubpackages(fqName2, scope, MemberScope.ALL_NAME_FILTER)
             .sortedBy(FqName::asString))
 
         listOf(fqName31, fqName30, fqName31.child(Name.identifier("a")), fqName30.child(Name.identifier("a"))).forEach {
