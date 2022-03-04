@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.openapi.application.ApplicationBundle
@@ -21,7 +21,7 @@ import javax.swing.SwingConstants
 @ApiStatus.Internal
 object FontSizePopup {
   @JvmStatic
-  fun <T> show(
+  fun <T> showFontSizePopup(
     parentComponent: Component,
     initialFont: T,
     fontRange: List<T>,
