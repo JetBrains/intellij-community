@@ -6,6 +6,6 @@ public enum Style {
     @null UNKNOWN(null)
     public final fun getValue() : java.lang.String = UastEmptyExpression
     private fun Style(@org.jetbrains.annotations.Nullable value: java.lang.String) = UastEmptyExpression
-    public final fun values() : Style[] = UastEmptyExpression
-    public final fun valueOf(@org.jetbrains.annotations.NotNull value: java.lang.String) : Style = UastEmptyExpression
+    public static final fun values() : Style[] = UastEmptyExpression
+    public static final fun valueOf(@org.jetbrains.annotations.NotNull value: java.lang.String) : Style = UastEmptyExpression
 }
