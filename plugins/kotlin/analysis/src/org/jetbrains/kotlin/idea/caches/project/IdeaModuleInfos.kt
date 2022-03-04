@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.project
 
@@ -322,10 +322,9 @@ data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo
     override fun dependencies(): List<IdeaModuleInfo> = listOf(this)
 
     override val platform: TargetPlatform
-        get() = when {
-            sdk.sdkType is KotlinSdkType -> CommonPlatforms.defaultCommonPlatform
-            else -> JvmPlatforms.unspecifiedJvmPlatform // TODO(dsavvinov): provide proper target version
-        }
+        get() =
+            if (sdk.sdkType is KotlinSdkType) CommonPlatforms.defaultCommonPlatform
+            else JvmPlatforms.unspecifiedJvmPlatform // TODO(dsavvinov): provide proper target version
 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = JvmPlatformAnalyzerServices
@@ -349,7 +348,7 @@ object NotUnderContentRootModuleInfo : IdeaModuleInfo, NonSourceModuleInfoBase {
     override val project: Project?
         get() = null
 
-    override fun contentScope() = GlobalSearchScope.EMPTY_SCOPE
+    override fun contentScope(): GlobalSearchScope = GlobalSearchScope.EMPTY_SCOPE
 
     //TODO: (module refactoring) dependency on runtime can be of use here
     override fun dependencies(): List<IdeaModuleInfo> = listOf(this)
@@ -498,7 +497,7 @@ data class PlatformModuleInfo(
     override fun dependencies() = platformModule.dependencies()
         // This is needed for cases when we create PlatformModuleInfo in Kotlin Multiplatform Analysis Mode is set to COMPOSITE, see
         // KotlinCacheService.getResolutionFacadeWithForcedPlatform.
-        // For SEPARATE-mode, this filter will be executed in getSourceModuleDependencies.kt anyways, so it's essentially a no-op
+        // For SEPARATE-mode, this filter will be executed in getSourceModuleDependencies.kt anyway, so it's essentially a no-op
         .filter { NonHmppSourceModuleDependenciesFilter(platformModule.platform).isSupportedDependency(it) }
 
     override val expectedBy: List<ModuleInfo>
