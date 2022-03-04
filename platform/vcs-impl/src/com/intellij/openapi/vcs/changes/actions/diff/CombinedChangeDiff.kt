@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff
 
-import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.combined.*
 import com.intellij.openapi.ListSelection
@@ -16,7 +15,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 internal class CombinedChangeDiffVirtualFile(requestProducer: CombinedChangeDiffRequestProducer) :
   CombinedDiffVirtualFile<CombinedChangeDiffRequestProducer>(requestProducer) {
 
-  override fun createProcessor(project: Project): DiffRequestProcessor = CombinedChangeDiffRequestProcessor(project, requestProducer)
+  override fun createProcessor(project: Project) = CombinedChangeDiffRequestProcessor(project, requestProducer)
 }
 
 internal class CombinedChangeDiffRequestProducer(val producers: List<ChangeDiffRequestProducer>) : CombinedDiffRequestProducer {

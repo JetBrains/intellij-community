@@ -485,8 +485,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   @NotNull
-  protected static List<DiffTool> getToolOrderFromSettings(@NotNull DiffSettings diffSettings,
-                                                           @NotNull List<? extends DiffTool> availableTools) {
+  public static List<DiffTool> getToolOrderFromSettings(@NotNull DiffSettings diffSettings,
+                                                        @NotNull List<? extends DiffTool> availableTools) {
     List<DiffTool> result = new ArrayList<>();
     List<String> savedOrder = diffSettings.getDiffToolsOrder();
 
@@ -999,7 +999,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private void notifyMessage(@NotNull AnActionEvent e, boolean next) {
-    if (!myContentPanel.isShowing()) return;
+    notifyMessage(e, myContentPanel, next);
+  }
+
+  public static void notifyMessage(@NotNull AnActionEvent e, @NotNull JComponent contentPanel, boolean next) {
+    if (!contentPanel.isShowing()) return;
     Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
 
     // TODO: provide "change" word in chain UserData - for tests/etc
@@ -1009,15 +1013,15 @@ public abstract class DiffRequestProcessor implements Disposable {
                                                                         DiffUtil.getSettingsConfigurablePath()));
 
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-    Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
+    Point point = new Point(contentPanel.getWidth() / 2, next ? contentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
 
     if (editor == null) {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      final HintHint hintHint = createNotifyHint(myContentPanel, point, next);
-      hint.show(myContentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
+      final HintHint hintHint = createNotifyHint(contentPanel, point, next);
+      hint.show(contentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
     }
     else {
-      int x = SwingUtilities.convertPoint(myContentPanel, point, editor.getComponent()).x;
+      int x = SwingUtilities.convertPoint(contentPanel, point, editor.getComponent()).x;
 
       JComponent header = editor.getHeaderComponent();
       int shift = editor.getScrollingModel().getVerticalScrollOffset() - (header != null ? header.getHeight() : 0);

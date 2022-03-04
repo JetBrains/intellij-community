@@ -60,7 +60,7 @@ internal class SemanticInlayModel(private val combinedDiffViewerContext: UserDat
     viewer.addListener(SemanticEntriesListener())
   }
 
-  private fun getCombinedDiffViewer() = combinedDiffProcessor.activeViewer as? CombinedDiffViewer
+  private fun getCombinedDiffViewer() = combinedDiffProcessor.viewer
 
   private inner class SemanticEntriesListener : DiffViewerListener() {
     override fun onBeforeRediff() {
