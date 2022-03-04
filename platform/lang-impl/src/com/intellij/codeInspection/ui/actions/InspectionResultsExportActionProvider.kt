@@ -4,17 +4,22 @@ package com.intellij.codeInspection.ui.actions
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ui.InspectionResultsView
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -45,19 +50,29 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
     if (!dialog.showAndGet()) return
     val path = dialog.path
 
-    ApplicationManager.getApplication().runReadAction {
-      try {
-        writeResults(view, path)
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-        ApplicationManager.getApplication().invokeLater {
-          Messages.showErrorDialog(view, e.message)
+    ProgressManager.getInstance().run(object: Backgroundable(view.project, progressTitle) {
+      override fun run(indicator: ProgressIndicator) {
+        try {
+          runReadAction {
+            writeResults(view, path)
+          }
+        }
+        catch (p: ProcessCanceledException) {
+          throw p
+        }
+        catch (t: Throwable) {
+          LOG.error(t)
+          invokeLater {
+            Messages.showErrorDialog(view, t.message)
+          }
+          return
+        }
+
+        invokeLater {
+          onExportSuccessful()
         }
       }
-    }
-
-    onExportSuccessful()
+    })
   }
 
   /**
@@ -66,6 +81,7 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
   @RequiresBackgroundThread
   abstract fun writeResults(view: InspectionResultsView, outputPath: Path)
 
+  @RequiresEdt
   open fun onExportSuccessful() {}
 
   /**
