@@ -71,6 +71,8 @@ interface GroovyMacroTransformationSupport {
 
   /**
    * Used to mimic a synthetic "variable declaration"
+   *
+   * @see [org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.markAsReferenceResolveTarget]
    */
   fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? = null
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LoopToCallChain")
 package org.jetbrains.plugins.groovy.lang.resolve
 
@@ -11,10 +11,12 @@ import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
@@ -143,8 +145,8 @@ fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
   return possibleAnnotation is GrAnnotation
 }
 
-fun getName(state: ResolveState, element: PsiNamedElement): String? {
-  return state[importedNameKey] ?: element.name
+fun getName(state: ResolveState, element: PsiElement): String? {
+  return state[importedNameKey] ?: element.castSafelyTo<PsiNamedElement>()?.name ?: element.castSafelyTo<GrReferenceExpression>()?.referenceName
 }
 
 fun <T : GroovyResolveResult> valid(allCandidates: Collection<T>): List<T> = allCandidates.filter {
@@ -155,13 +157,14 @@ fun singleOrValid(allCandidates: List<GroovyResolveResult>): List<GroovyResolveR
   return if (allCandidates.size <= 1) allCandidates else valid(allCandidates)
 }
 
-fun getResolveKind(element: PsiNamedElement): GroovyResolveKind? {
+fun getResolveKind(element: PsiElement): GroovyResolveKind? {
   return when (element) {
     is PsiClass -> GroovyResolveKind.CLASS
     is PsiPackage -> GroovyResolveKind.PACKAGE
     is PsiMethod -> GroovyResolveKind.METHOD
     is PsiField -> GroovyResolveKind.FIELD
     is GrBindingVariable -> GroovyResolveKind.BINDING
+    is GrReferenceExpression -> GroovyResolveKind.PROPERTY
     is PsiVariable -> GroovyResolveKind.VARIABLE
     is GroovyProperty -> GroovyResolveKind.PROPERTY
     else -> null
@@ -181,3 +184,13 @@ fun GroovyResolveResult?.asJavaClassResult(): PsiClassType.ClassResolveResult {
     override fun isValidResult(): Boolean = true
   }
 }
+
+fun markAsReferenceResolveTarget(refExpr: GrReferenceExpression) {
+  refExpr.putUserData(REFERENCE_RESOLVE_TARGET, Unit)
+}
+
+internal fun isReferenceResolveTarget(refExpr: GrReferenceExpression) : Boolean {
+  return refExpr.getUserData(REFERENCE_RESOLVE_TARGET) != null
+}
+
+private val REFERENCE_RESOLVE_TARGET : Key<Unit> = Key.create("Reference resolve target")
