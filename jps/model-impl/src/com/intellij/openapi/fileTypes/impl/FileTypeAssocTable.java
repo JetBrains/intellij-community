@@ -308,4 +308,25 @@ public final class FileTypeAssocTable<T> {
     myExactFileNameMappings.clear();
     myExactFileNameAnyCaseMappings.clear();
   }
+
+  void removeAssociationsForFile(@NotNull CharSequence fileName, @NotNull T association) {
+    T t = myExactFileNameMappings.get(fileName);
+    if (association.equals(t)) {
+      myExactFileNameMappings.remove(fileName);
+    }
+
+    t = myExactFileNameAnyCaseMappings.get(fileName);
+    if (association.equals(t)) {
+      myExactFileNameAnyCaseMappings.remove(fileName);
+    }
+
+    myMatchingMappings.removeIf(pair -> association.equals(pair.second)
+                                        && pair.getFirst().acceptsCharSequence(fileName));
+
+    CharSequence extension = FileUtilRt.getExtension(fileName);
+    t = myExtensionMappings.get(extension);
+    if (association.equals(t)) {
+      myExtensionMappings.remove(extension);
+    }
+  }
 }
