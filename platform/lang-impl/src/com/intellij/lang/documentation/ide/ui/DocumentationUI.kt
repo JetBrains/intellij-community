@@ -51,19 +51,6 @@ internal class DocumentationUI(
   private val contentListeners: MutableList<() -> Unit> = SmartList()
 
   init {
-    cs.launch(Dispatchers.EDT + CoroutineName("DocumentationUI content update")) {
-      browser.pageFlow.collectLatest { page ->
-        handlePage(page)
-      }
-    }
-  }
-
-  override fun dispose() {
-    cs.cancel("DocumentationUI disposal")
-    clearImages()
-  }
-
-  init {
     scrollPane = DocumentationScrollPane()
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane), {
       imageResolver?.resolveImage(it)
@@ -89,6 +76,17 @@ internal class DocumentationUI(
     Disposer.register(this) { editorPane.removeMouseListener(contextMenu) }
 
     DataManager.registerDataProvider(editorPane, this)
+
+    cs.launch(Dispatchers.EDT + CoroutineName("DocumentationUI content update")) {
+      browser.pageFlow.collectLatest { page ->
+        handlePage(page)
+      }
+    }
+  }
+
+  override fun dispose() {
+    cs.cancel("DocumentationUI disposal")
+    clearImages()
   }
 
   override fun getData(dataId: String): Any? {
