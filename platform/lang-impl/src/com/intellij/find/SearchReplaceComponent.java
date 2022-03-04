@@ -625,11 +625,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     return true;
   }
 
+  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
+                                         IconManager.getInstance().getIcon("expui/general/close.svg", AllIcons.class) :
+                                         AllIcons.Actions.Close;
+
   private class CloseAction extends DumbAwareAction implements LightEditCompatible, RightAlignedToolbarAction {
     private final ShortcutSet shortcut = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
     private CloseAction() {
       getTemplatePresentation().setText(FindBundle.message("find.close.button.name"));
-      getTemplatePresentation().setIcon(AllIcons.Actions.Close);
+      getTemplatePresentation().setIcon(CLOSE_ICON);
     }
 
     @Override

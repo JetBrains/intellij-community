@@ -110,6 +110,9 @@ public final class ExperimentalUI {
     paths.put("actions/edit.svg", "/expui/general/edit.svg");
     paths.put("actions/editSource.svg", "/expui/general/edit.svg");
     paths.put("actions/groupBy.svg", "/expui/general/groups.svg");
+    paths.put("actions/cancel.svg", "/expui/general/close.svg");
+    paths.put("actions/close.svg", "/expui/general/closeSmall.svg");
+    paths.put("actions/closeHovered.svg", "/expui/general/closeSmallHovered.svg");
     paths.put("general/add.svg", "/expui/general/add.svg");
     paths.put("general/remove.svg", "/expui/general/remove.svg");
     paths.put("general/balloonError.svg", "/expui/status/error.svg");
@@ -183,7 +186,6 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowFind.svg", "/expui/toolwindow/find.svg");
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
     paths.put("actions/moreHorizontal.svg", "/expui/general/moreHorizontal.svg");
-    paths.put("actions/close.svg", "/expui/general/close.svg");
     paths.put("general/hideToolWindow.svg", "/expui/general/hide.svg");
     paths.put("actions/find.svg", "/expui/general/search.svg");
     paths.put("general/gearPlain.svg", "/expui/general/settings.svg");
