@@ -35,6 +35,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.onTermination
@@ -353,8 +354,13 @@ open class CodeVisionHost(val project: Project) {
           return@forEach
         }
         providerWhoWantToUpdate.add(it.id)
-        val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
-        results.addAll(result)
+        try {
+          val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
+          results.addAll(result)
+        }
+        catch (e: Exception) {
+          logger.error("Exception during computeForEditor for ${it.id}", e)
+        }
       }
 
       if (!everyProviderReadyToUpdate) {
