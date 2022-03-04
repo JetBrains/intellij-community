@@ -204,6 +204,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   }
 
   private fun LessonContext.debugTasks() {
+    clearBreakpoints()
+
     var logicalPosition = LogicalPosition(0, 0)
     prepareRuntimeTask {
       logicalPosition = editor.offsetToLogicalPosition(sample.startOffset)
@@ -222,6 +224,9 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.start.debugging"))
+      restoreState {
+        lineWithBreakpoints() != setOf(logicalPosition.line)
+      }
       restoreIfModified(sample)
       JavaLessonsBundle.message("java.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }

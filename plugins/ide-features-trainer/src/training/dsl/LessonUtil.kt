@@ -613,6 +613,7 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
 fun LessonContext.highlightButtonByIdTask(actionId: String) {
   val highlighted = highlightButtonById(actionId)
   task {
+    transparentRestore = true
     addStep(highlighted)
   }
 }
