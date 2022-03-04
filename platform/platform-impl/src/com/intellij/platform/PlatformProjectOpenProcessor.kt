@@ -41,16 +41,16 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   companion object {
     @JvmField
-    val PROJECT_OPENED_BY_PLATFORM_PROCESSOR = Key.create<Boolean>("PROJECT_OPENED_BY_PLATFORM_PROCESSOR")
+    val PROJECT_OPENED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_OPENED_BY_PLATFORM_PROCESSOR")
 
     @JvmField
-    val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR = Key.create<Boolean>("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
+    val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
 
     @JvmField
-    val PROJECT_NEWLY_OPENED = Key.create<Boolean>("PROJECT_NEWLY_OPENED")
+    val PROJECT_NEWLY_OPENED: Key<Boolean> = Key.create("PROJECT_NEWLY_OPENED")
 
     @JvmField
-    val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES = Key.create<Boolean>("PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES")
+    val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES: Key<Boolean> = Key.create("PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES")
 
     fun Project.isOpenedByPlatformProcessor(): Boolean = getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
 
