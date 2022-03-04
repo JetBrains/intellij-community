@@ -186,6 +186,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
         val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
         JBPopupFactory.getInstance()
           .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
+          .apply { setShowSubmenuOnHover(true) }
           .showUnderneathOf(button)
       }
     }
