@@ -503,7 +503,7 @@ public final class HighlightMethodUtil {
         toolTip = createOneArgMismatchTooltip(candidateInfo, mismatchedExpressions, expressions, parameters);
       }
       if (toolTip == null) {
-        toolTip = createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
+        toolTip = mismatchedExpressions.isEmpty() ? description : createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
       }
     }
     else {
