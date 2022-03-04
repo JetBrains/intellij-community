@@ -34,7 +34,6 @@ import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JScrollPane
-import kotlin.coroutines.EmptyCoroutineContext
 
 internal class DocumentationUI(
   project: Project,
@@ -47,7 +46,7 @@ internal class DocumentationUI(
   private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
-  private val cs = CoroutineScope(EmptyCoroutineContext)
+  private val cs = CoroutineScope(Dispatchers.EDT)
   private val contentListeners: MutableList<() -> Unit> = SmartList()
 
   init {
@@ -77,7 +76,7 @@ internal class DocumentationUI(
 
     DataManager.registerDataProvider(editorPane, this)
 
-    cs.launch(Dispatchers.EDT + CoroutineName("DocumentationUI content update")) {
+    cs.launch(CoroutineName("DocumentationUI content update")) {
       browser.pageFlow.collectLatest { page ->
         handlePage(page)
       }
