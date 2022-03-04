@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement
  */
 data class GinqExpression(
   val from: GinqFromFragment,
-  val join: List<GinqJoinFragment>,
+  val joins: List<GinqJoinFragment>,
   val where: GinqWhereFragment?,
   val groupBy: GinqGroupByFragment?,
   val orderBy: GinqOrderByFragment?,

@@ -7,6 +7,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.groovy.ext.ginq.GinqMacroTransformationSupport
 import org.jetbrains.plugins.groovy.ext.ginq.joins
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
@@ -85,6 +86,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         if (alias == null || dataSource == null) {
           return
         }
+        dataSource.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
         val expr = if (callName == "from") {
           GinqFromFragment(callKw, alias, dataSource)
         }
@@ -151,6 +153,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           recordError(methodCall, "Expected a list of projections")
           return
         }
+        arguments.forEach { it.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
         container.add(GinqSelectFragment(callKw, arguments))
       }
       else -> recordError(methodCall, "Unrecognized query")

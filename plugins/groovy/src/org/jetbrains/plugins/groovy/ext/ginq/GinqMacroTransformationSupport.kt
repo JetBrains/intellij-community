@@ -3,11 +3,14 @@ package org.jetbrains.plugins.groovy.ext.ginq
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
@@ -17,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
@@ -65,8 +69,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         val nestedGinq = element.getUserData(injectedGinq)
         if (nestedGinq != null) {
           keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw, nestedGinq.groupBy?.having?.havingKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw, nestedGinq.select.selectKw)
-          keywords.addAll(nestedGinq.join.mapNotNull { it.onCondition?.onKw })
-          keywords.addAll(nestedGinq.join.map { it.joinKw })
+          keywords.addAll(nestedGinq.joins.mapNotNull { it.onCondition?.onKw })
+          keywords.addAll(nestedGinq.joins.map { it.joinKw })
           softKeywords.addAll(nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList())
         } else {
           super.visitElement(element)
@@ -78,6 +82,24 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     } + softKeywords.filterNotNull().mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.STATIC_FIELD).create()
     }
+  }
+
+  override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {
+    if (expression is GrReferenceExpression) {
+      val tree = getParsedGinqTree(macroCall) ?: return null
+      val resolved = expression.staticReference.resolve()
+      val dataSourcesFragments = listOf(tree.from) + tree.joins
+      val dataSourceFragment = dataSourcesFragments.find { it.alias == resolved }
+      if (dataSourceFragment != null) {
+        return dataSourceFragment.dataSource.type?.let(::inferDataSourceComponentType)
+      }
+    }
+    return null
+  }
+
+  override fun isUntransformed(macroCall: GrMethodCall, element: GroovyPsiElement): Boolean {
+    getParsedGinqTree(macroCall) ?: return false
+    return element.parents(true).any { it.getUserData(UNTRANSFORMED_ELEMENT) != null }
   }
 
   override fun processResolve(scope: PsiElement, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
@@ -95,12 +117,17 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val referenceName = element.castSafelyTo<GrReferenceElement<*>>()?.referenceName ?: return null
     val hierarchy = element.ginqParents(macroCall, tree)
     for (ginq in hierarchy) {
-      val bindings  = ginq.join.map { it.alias } + listOf(ginq.from.alias) + (ginq.groupBy?.classifiers?.mapNotNull(AliasedExpression::alias) ?: emptyList())
+      val bindings  = ginq.joins.map { it.alias } + listOf(ginq.from.alias) + (ginq.groupBy?.classifiers?.mapNotNull(AliasedExpression::alias) ?: emptyList())
       val binding = bindings.find { it.text == referenceName }
       if (binding != null) {
         return ElementResolveResult(binding)
       }
     }
     return null
+  }
+
+  companion object {
+    @JvmStatic
+    val UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
   }
 }
