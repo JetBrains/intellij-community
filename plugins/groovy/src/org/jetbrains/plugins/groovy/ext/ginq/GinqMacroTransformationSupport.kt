@@ -4,9 +4,7 @@ package org.jetbrains.plugins.groovy.ext.ginq
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -14,6 +12,7 @@ import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
+import org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordType
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -85,11 +84,18 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {
+    if (expression == macroCall) {
+      if (macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "GQL") {
+        val ginq = getParsedGinqTree(macroCall) ?: return null
+        val namedRecord = GrNamedRecordType(ginq)
+        val facade = JavaPsiFacade.getInstance(macroCall.project)
+        return facade.findClass(CommonClassNames.JAVA_UTIL_LIST, macroCall.resolveScope)?.let { facade.elementFactory.createType(it , namedRecord) }
+      }
+    }
     if (expression is GrReferenceExpression) {
       val tree = getParsedGinqTree(macroCall) ?: return null
       val resolved = expression.staticReference.resolve()
-      val dataSourcesFragments = listOf(tree.from) + tree.joins
-      val dataSourceFragment = dataSourcesFragments.find { it.alias == resolved }
+      val dataSourceFragment = tree.getDataSourceFragments().find { it.alias == resolved }
       if (dataSourceFragment != null) {
         return dataSourceFragment.dataSource.type?.let(::inferDataSourceComponentType)
       }

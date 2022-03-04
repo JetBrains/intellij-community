@@ -134,6 +134,7 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderDelegateContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.dsl.GdslMemberContributor" order="last"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordReferenceContributor"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.SyntheticKeywordConstructorContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.PrePostParametersContributor"/>
@@ -194,6 +195,7 @@
 
     <mapContentProvider implementation="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperMapContentProvider"/>
     <referenceTypeEnhancer implementation="org.jetbrains.plugins.groovy.configSlurper.GroovyMapValueTypeEnhancer"/>
+    <referenceTypeEnhancer implementation="org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordTypeEnhancer"/>
 
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedReferenceFilterByFile"/>
 

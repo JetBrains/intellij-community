@@ -47,7 +47,9 @@ data class GinqExpression(
   val orderBy: GinqOrderByFragment?,
   val limit: GinqLimitFragment?,
   val select: GinqSelectFragment,
-)
+) {
+  fun getDataSourceFragments() : Iterable<GinqDataSourceFragment> = listOf(from) + joins
+}
 
 sealed interface GinqQueryFragment
 

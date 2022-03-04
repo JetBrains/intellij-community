@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
+import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
 fun parseGinq(statementsOwner: GrStatementOwner): GinqExpression? {
   val parser = GinqParser()
@@ -78,6 +79,9 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         val alias = argument.leftOperand.castSafelyTo<GrReferenceExpression>()
         if (alias == null) {
           recordError(argument.leftOperand, "Expected alias name")
+        } else {
+          alias.putUserData(ginqBinding, Unit)
+          markAsReferenceResolveTarget(alias)
         }
         val dataSource = argument.rightOperand
         if (dataSource == null) {
@@ -196,6 +200,8 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
 
 val injectedGinq : Key<GinqExpression> = Key.create("injected ginq expression")
 val rootGinq: Key<CachedValue<GinqExpression>> = Key.create("root ginq expression")
+@Deprecated("too internal, hide under functions")
+val ginqBinding: Key<Unit> = Key.create("Ginq binding")
 
 fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
