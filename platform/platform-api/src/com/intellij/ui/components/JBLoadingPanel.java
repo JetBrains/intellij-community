@@ -50,6 +50,10 @@ public class JBLoadingPanel extends JPanel {
     }
   }
 
+  public @Nls String getLoadingTest() {
+    return myDecorator.getLoadingText();
+  }
+
   public void setLoadingText(@Nls String text) {
     myDecorator.setLoadingText(text);
   }
