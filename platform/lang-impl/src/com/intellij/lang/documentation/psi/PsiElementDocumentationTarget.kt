@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
+@Suppress("DEPRECATION")
 @VisibleForTesting
 class PsiElementDocumentationTarget private constructor(
   val targetElement: PsiElement,

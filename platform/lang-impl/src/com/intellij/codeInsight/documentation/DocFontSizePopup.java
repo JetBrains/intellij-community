@@ -15,6 +15,10 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+/**
+ * @deprecated Unused in v2 implementation.
+ */
+@Deprecated
 @ApiStatus.Internal
 public final class DocFontSizePopup {
 
