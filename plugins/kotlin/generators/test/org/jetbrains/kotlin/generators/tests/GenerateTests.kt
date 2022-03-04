@@ -58,6 +58,7 @@ import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaToLib
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToDecompiledLibraryTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTestWithJS
+import org.jetbrains.kotlin.idea.decompiler.stubBuilder.AbstractClsStubBuilderTest
 import org.jetbrains.kotlin.idea.decompiler.stubBuilder.AbstractLoadJavaClsStubTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextFromJsMetadataTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextTest
@@ -71,6 +72,9 @@ import org.jetbrains.kotlin.idea.filters.AbstractKotlinExceptionFilterTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractKotlinIdeAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
+import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
+import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
+import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.handlers.AbstractHLGotoSuperActionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
@@ -1089,6 +1093,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("intentions/importMember", pattern = pattern)
             model("intentions/convertToBlockBody", pattern = pattern)
             model("intentions/addWhenRemainingBranches", pattern = pattern)
+            model("../../../fir/testData/intentions/useExpressionBody", pattern=pattern)
         }
 
         testClass<AbstractFirShortenRefsTest> {
