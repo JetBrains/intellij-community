@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.FontSizePopup;
+import com.intellij.ui.FontSizePopupData;
 import com.intellij.ui.components.JBSlider;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,7 +25,7 @@ public final class DocFontSizePopup {
   }
 
   public static void show(@NotNull Component parentComponent, @NotNull Consumer<? super @NotNull FontSize> changeCallback) {
-    FontSizePopup.FontSizePopupData popupData = FontSizePopup.showFontSizePopup(
+    FontSizePopupData popupData = FontSizePopup.showFontSizePopup(
       parentComponent,
       DocumentationComponent.getQuickDocFontSize(),
       Arrays.asList(FontSize.values()),
