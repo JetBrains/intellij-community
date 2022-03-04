@@ -636,6 +636,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return getFileTypeOrUnknown(ftd);
   }
 
+  public void removePlainTextAssociationsForFile(@NotNull CharSequence fileName) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myPendingInitializationLock.writeLock().lock();
+    try {
+      makeFileTypesChange("removePlainTextAssociationsForFile("+fileName+")", () ->
+        myPatternsTable.removeAssociationsForFile(fileName, FileTypeWithDescriptor.allFor(PlainTextFileType.INSTANCE)));
+    }
+    finally {
+      myPendingInitializationLock.writeLock().unlock();
+    }
+  }
+
   @Override
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
     FileType fileType = file.isDirectory() ? null : file.getFileType();

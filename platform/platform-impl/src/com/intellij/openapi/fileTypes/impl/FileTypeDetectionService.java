@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -322,7 +323,7 @@ final class FileTypeDetectionService implements Disposable {
     return !file.isDirectory()
            && file.isValid()
            && !file.is(VFileProperty.SPECIAL)
-           && file.getFileSystem() instanceof FileSystemInterface;
+           && (file.getFileSystem() instanceof FileSystemInterface || file instanceof LightVirtualFile);
   }
 
   // read auto-detection flags from the persistent FS file attributes. If file attributes are absent, return 0 for flags
