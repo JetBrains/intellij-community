@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.search.GlobalSearchScope
@@ -80,7 +81,7 @@ fun FileBasedIndexExtension<FqName, Void>.hasSomethingInPackage(fqName: FqName, 
     !FileBasedIndex.getInstance().processValues(name, fqName, null, { _, _ -> false }, scope)
 
 object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() {
-    private val LOG = Logger.getInstance(KotlinPartialPackageNamesIndex::class.java)
+    private val LOG = logger<KotlinPartialPackageNamesIndex>()
 
     private object NullableNameExternalizer: DataExternalizer<Name?> {
         override fun save(out: DataOutput, value: Name?) {
@@ -111,7 +112,7 @@ object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>()
             KotlinJavaScriptMetaFileType
         )
 
-    override fun getVersion() = 3
+    override fun getVersion() = 4
 
     override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 
