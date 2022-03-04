@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
@@ -46,7 +47,17 @@ class NewInlayProviderSettingsModel<T : Any>(
     providerWithSettings.provider.preparePreview(editor, file, providerWithSettings.settings)
     providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.let { collectorWrapperFor ->
       ReadAction.nonBlocking {
-        collectorWrapperFor.collectTraversingAndApplyOnEdt(editor, file, isEnabled)
+        val case = CASE_KEY.get(editor)
+        val enabled = case?.value ?: isEnabled
+        val backup = cases.map { it.value }
+        try {
+          cases.forEach { it.value = false }
+          case.let { it.value = true }
+          collectorWrapperFor.collectTraversingAndApplyOnEdt(editor, file, enabled)
+        }
+        finally {
+          cases.forEachIndexed { index, c -> c.value = backup[index] }
+        }
       }.inSmartMode(file.project)
         .submit(AppExecutorUtil.getAppExecutorService())
     }
