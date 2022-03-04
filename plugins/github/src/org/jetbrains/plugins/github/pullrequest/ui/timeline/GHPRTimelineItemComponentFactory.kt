@@ -44,6 +44,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -63,6 +64,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
                                        private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
+                                       private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                        private val currentUser: GHUser) : TimelineItemComponentFactory<GHPRTimelineItem> {
 
   override fun createComponent(item: GHPRTimelineItem): Item {
@@ -168,10 +170,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       if (panelHandle != null) add(panelHandle.panel)
       add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
         GHPRReviewThreadComponent.createWithDiff(project, it,
-                                                 reviewDataProvider, detailsDataProvider, avatarIconsProvider,
+                                                 reviewDataProvider, avatarIconsProvider,
                                                  repositoryDataService,
                                                  reviewDiffComponentFactory,
-                                                 selectInToolWindowHelper,
+                                                 selectInToolWindowHelper, suggestedChangeHelper,
                                                  currentUser)
       })
     }
