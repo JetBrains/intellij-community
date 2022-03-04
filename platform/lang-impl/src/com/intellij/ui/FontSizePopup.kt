@@ -5,21 +5,30 @@
 package com.intellij.ui
 
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.options.FontSize
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBSlider
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.FlowLayout
 import java.awt.MouseInfo
 import java.awt.Point
-import javax.swing.BorderFactory
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import javax.swing.*
 
 fun <T> showFontSizePopup(
   parentComponent: Component,
@@ -68,3 +77,73 @@ fun <T> showFontSizePopup(
 }
 
 data class FontSizePopupData(val slider: JBSlider)
+
+// Basically an observable value. Can be generified to work with any values.
+interface FontSizeModel {
+
+  var value: FontSize
+
+  /**
+   * The returned flow never completes.
+   */
+  val updates: Flow<FontSize>
+}
+
+/**
+ * Shows a popup with a slider.
+ *
+ * [model] is bound to the slider:
+ * - changing the slider value will emit a new value;
+ * - changing the value will update the slider presentation.
+ */
+@RequiresEdt
+fun showFontSizePopup(model: FontSizeModel, anchor: JComponent) {
+  EDT.assertIsEdt()
+  val popup = createFontSizePopup(model)
+  val location = MouseInfo.getPointerInfo().location
+  val content = popup.content
+  val point = RelativePoint(Point(
+    location.x - content.preferredSize.width / 2,
+    location.y - content.preferredSize.height / 2,
+  ))
+  popup.show(point.getPointOn(anchor))
+}
+
+// This function can be generified to work with any enums.
+private fun createFontSizePopup(model: FontSizeModel): JBPopup {
+  val values = FontSize.values()
+
+  val slider = JBSlider(0, values.size - 1).also {
+    it.orientation = SwingConstants.HORIZONTAL
+    it.isOpaque = true
+    it.minorTickSpacing = 1
+    it.paintTicks = true
+    it.paintTrack = true
+    it.snapToTicks = true
+    UIUtil.setSliderIsFilled(it, true)
+  }
+  slider.addChangeListener {
+    model.value = values[slider.value]
+  }
+  val updateSliderJob = CoroutineScope(Dispatchers.EDT).launch(start = CoroutineStart.UNDISPATCHED) {
+    // The size can be changed externally, e.g. by scrolling mouse wheel.
+    // This coroutine reflects the model changes in the UI.
+    model.updates.collect {
+      slider.value = it.ordinal
+    }
+  }
+
+  val panel = JPanel(FlowLayout(FlowLayout.RIGHT, 3, 0)).also {
+    it.border = BorderFactory.createLineBorder(JBColor.border(), 1)
+    it.isOpaque = true
+  }
+  panel.add(JLabel(ApplicationBundle.message("label.font.size")))
+  panel.add(slider)
+
+  return JBPopupFactory.getInstance().createComponentPopupBuilder(panel, slider).createPopup().also {
+    it.size = panel.preferredSize
+    Disposer.register(it) {
+      updateSliderJob.cancel()
+    }
+  }
+}
