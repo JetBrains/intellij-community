@@ -7,8 +7,8 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.util.containers.enumMapOf
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
 import org.jetbrains.plugins.groovy.lang.resolve.*
 
@@ -36,7 +36,7 @@ open class KindsResolverProcessor(
   private val candidates = enumMapOf<GroovyResolveKind, GroovyResolveResult>()
 
   private fun executeInner(element: PsiElement, state: ResolveState) {
-    if (element !is PsiNamedElement && !(element is GrReferenceExpression && isReferenceResolveTarget(element))) return
+    if (element !is PsiNamedElement && !(element is GrReferenceElement<*> && isReferenceResolveTarget(element))) return
     require(element.isValid) {
       "Invalid element. ${elementInfo(element)}"
     }

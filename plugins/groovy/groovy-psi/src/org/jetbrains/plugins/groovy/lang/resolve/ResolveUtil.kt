@@ -12,11 +12,11 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
@@ -146,7 +146,7 @@ fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
 }
 
 fun getName(state: ResolveState, element: PsiElement): String? {
-  return state[importedNameKey] ?: element.castSafelyTo<PsiNamedElement>()?.name ?: element.castSafelyTo<GrReferenceExpression>()?.referenceName
+  return state[importedNameKey] ?: element.castSafelyTo<PsiNamedElement>()?.name ?: element.castSafelyTo<GrReferenceElement<*>>()?.referenceName
 }
 
 fun <T : GroovyResolveResult> valid(allCandidates: Collection<T>): List<T> = allCandidates.filter {
@@ -164,9 +164,9 @@ fun getResolveKind(element: PsiElement): GroovyResolveKind? {
     is PsiMethod -> GroovyResolveKind.METHOD
     is PsiField -> GroovyResolveKind.FIELD
     is GrBindingVariable -> GroovyResolveKind.BINDING
-    is GrReferenceExpression -> GroovyResolveKind.PROPERTY
     is PsiVariable -> GroovyResolveKind.VARIABLE
     is GroovyProperty -> GroovyResolveKind.PROPERTY
+    is GrReferenceElement<*> -> GroovyResolveKind.PROPERTY
     else -> null
   }
 }
@@ -185,11 +185,11 @@ fun GroovyResolveResult?.asJavaClassResult(): PsiClassType.ClassResolveResult {
   }
 }
 
-fun markAsReferenceResolveTarget(refExpr: GrReferenceExpression) {
+fun markAsReferenceResolveTarget(refExpr: GrReferenceElement<*>) {
   refExpr.putUserData(REFERENCE_RESOLVE_TARGET, Unit)
 }
 
-internal fun isReferenceResolveTarget(refExpr: GrReferenceExpression) : Boolean {
+internal fun isReferenceResolveTarget(refExpr: GrReferenceElement<*>) : Boolean {
   return refExpr.getUserData(REFERENCE_RESOLVE_TARGET) != null
 }
 
