@@ -1,0 +1,101 @@
+package com.intellij.workspaceModel.storage.impl
+
+import com.intellij.workspace.model.testing.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
+import model.testing.FirstEntityWithPId
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import MySource
+
+class StorageIndexiesTest {
+    @Test
+    fun `check entity source index`() {
+        val entity = ParentSubEntity {
+            entitySource = MySource
+            parentData = "ParentData"
+            child = ChildSubEntity {
+                entitySource = MySource
+                child = ChildSubSubEntity {
+                    entitySource = MySource
+                    childData = "ChildData"
+                }
+            }
+        }
+
+        val builder = WorkspaceEntityStorageBuilder.create()
+        builder.addEntity(entity)
+        assertEquals(MySource, entity.entitySource)
+
+        val entityMap = builder.entitiesBySource { it == MySource }[MySource]
+        assertEquals(3, entityMap?.size)
+
+        val entities = entityMap?.get(ParentSubEntity::class.java)
+        assertNotNull(entities)
+        assertEquals(1, entities.size)
+        val indexedEntity = entities[0]
+        assertNotNull(indexedEntity)
+        assertTrue(indexedEntity is ParentSubEntity)
+        assertEquals(entity.parentData, indexedEntity.parentData)
+        assertEquals(entity.entitySource, indexedEntity.entitySource)
+    }
+
+    @Test
+    fun `check virtual file index`() {
+        val virtualFileUrlManager = VirtualFileUrlManagerImpl()
+        val sourceUrl = virtualFileUrlManager.fromPath("/source")
+        val directory = virtualFileUrlManager.fromPath("/tmp/example")
+        val firstRoot = virtualFileUrlManager.fromPath("/m2/root/one")
+        val secondRoot = virtualFileUrlManager.fromPath("/m2/root/second")
+
+        val entity = VFUEntity {
+            entitySource = VFUEntitySource(sourceUrl)
+            data = "VFUEntityData"
+            directoryPath = directory
+            notNullRoots = listOf(firstRoot, secondRoot)
+        }
+
+        val builder = WorkspaceEntityStorageBuilder.create()
+        builder.addEntity(entity)
+
+        compareEntityByProperty(builder, entity,"entitySource", sourceUrl) { it.entitySource.virtualFileUrl!! }
+        compareEntityByProperty(builder, entity,"directoryPath", directory) { it.directoryPath }
+        compareEntityByProperty(builder, entity,"notNullRoots", firstRoot) { it.notNullRoots[0] }
+        compareEntityByProperty(builder, entity,"notNullRoots", secondRoot) { it.notNullRoots[1] }
+    }
+
+    @Test
+    fun `check persistent id index`() {
+        val entity = FirstEntityWithPId {
+            entitySource = MySource
+            data = "FirstEntityData"
+        }
+
+        val builder = WorkspaceEntityStorageBuilder.create()
+        builder as WorkspaceEntityStorageBuilderImpl
+        builder.addEntity(entity)
+        val entityIds = builder.indexes.persistentIdIndex.getIdsByEntry(entity.persistentId)
+        assertNotNull(entityIds)
+    }
+
+    private fun compareEntityByProperty(builder: WorkspaceEntityStorageBuilder, originEntity: VFUEntity,
+                                        propertyName: String, virtualFileUrl: VirtualFileUrl,
+                                        propertyExtractor: (VFUEntity) -> VirtualFileUrl) {
+        val entities = builder.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).toList()
+        assertEquals(1, entities.size)
+        val entity = entities[0]
+        assertEquals(propertyName, entity.second)
+        val oldProperty = propertyExtractor.invoke(originEntity)
+        val newProperty = propertyExtractor.invoke(entity.first as VFUEntity)
+        assertEquals(oldProperty, newProperty)
+    }
+}
+
+internal class VFUEntitySource(private val vfu: VirtualFileUrl) : EntitySource{
+    override val virtualFileUrl: VirtualFileUrl
+        get() = vfu
+}
