@@ -24,6 +24,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchPopup
+import icons.DvcsImplIcons
 import java.awt.event.InputEvent
 import java.util.concurrent.Executor
 import javax.swing.Icon
@@ -49,8 +50,8 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
 
   private var repository: GitRepository? = null
 
-  private val INCOMING_CHANGES_ICON = AllIcons.Actions.CheckOut
-  private val OUTGOING_CHANGES_ICON = AllIcons.Vcs.Push
+  private val INCOMING_CHANGES_ICON = DvcsImplIcons.Incoming
+  private val OUTGOING_CHANGES_ICON = DvcsImplIcons.Outgoing
 
   init {
     repository = guessCurrentRepo(project)
