@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.options.FontSize;
@@ -24,7 +24,7 @@ public final class DocFontSizePopup {
   }
 
   public static void show(@NotNull Component parentComponent, @NotNull Consumer<? super @NotNull FontSize> changeCallback) {
-    FontSizePopup.FontSizePopupData popupData = FontSizePopup.show(
+    FontSizePopup.FontSizePopupData popupData = FontSizePopup.showFontSizePopup(
       parentComponent,
       DocumentationComponent.getQuickDocFontSize(),
       Arrays.asList(FontSize.values()),
