@@ -57,7 +57,7 @@ public final class ExperimentalUI {
 
   private static boolean isEnabled(@NonNls @NotNull String key) {
     Application app = ApplicationManager.getApplication();
-    return app != null && app.isEAP() && isNewUI() && EarlyAccessRegistryManager.INSTANCE.getBoolean(key);
+    return app != null && app.isEAP() && (isNewUI() || EarlyAccessRegistryManager.INSTANCE.getBoolean(key));
   }
 
   @SuppressWarnings("unused")
