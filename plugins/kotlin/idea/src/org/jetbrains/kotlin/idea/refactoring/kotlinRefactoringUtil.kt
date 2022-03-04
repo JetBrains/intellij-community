@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
+import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.*
@@ -664,6 +665,8 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, forcePlainClass: Boo
     }
 
     for (method in template.methods) {
+        if (isSyntheticValuesOrValueOfMethod(method)) continue
+
         val hasParams = method.parameterList.parametersCount > 0
         val needSuperCall = !template.isEnum &&
                 (template.superClass?.constructors ?: PsiMethod.EMPTY_ARRAY).all {
