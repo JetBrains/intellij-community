@@ -26,6 +26,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingMod
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import java.util.function.Function
@@ -74,10 +75,14 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     loadReviewThreads(viewer)
 
     val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
+    val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
+                                                           viewer, repositoryDataService.remoteCoordinates.repository,
+                                                           reviewDataProvider,
+                                                           detailsDataProvider)
     val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project,
-                                                                      reviewDataProvider, detailsDataProvider, avatarIconsProvider,
+                                                                      reviewDataProvider, avatarIconsProvider,
                                                                       repositoryDataService,
-                                                                      createCommentParametersHelper,
+                                                                      createCommentParametersHelper, suggestedChangesHelper,
                                                                       currentUser)
     val cumulative = diffData is GHPRChangeDiffData.Cumulative
     when (viewer) {
