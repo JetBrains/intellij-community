@@ -75,6 +75,13 @@ import java.util.List;
 
 import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 
+/**
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationUI
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
+ * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
+ */
+@Deprecated
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   static final DataProvider HELP_DATA_PROVIDER =

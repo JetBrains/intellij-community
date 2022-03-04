@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -20,6 +20,16 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
+ * <b>PSA</b>
+ * <p>
+ * The new code is expected to implement {@link com.intellij.lang.documentation.DocumentationTarget DocumentationTarget} instead.
+ * {@code DocumentationProvider} interface is not <b>yet</b> deprecated to avoid warnings in the existing code.
+ * Existing implementations are supported as is
+ * via {@link com.intellij.lang.documentation.psi.PsiElementDocumentationTarget PsiElementDocumentationTarget},
+ * you can take inspiration for migration there, but <b>do not use it</b>.
+ * Consider migrating to {@code DocumentationTarget} if you need to fix something in your implementation of this interface.
+ * </p>
+ * <br/>
  * Contributes content to the following IDE features:
  * <ul>
  *   <li>Quick Documentation (invoked via explicit action or shown on mouse hover)</li>

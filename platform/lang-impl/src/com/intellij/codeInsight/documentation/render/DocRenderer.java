@@ -406,6 +406,10 @@ final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
+  /**
+   * @deprecated Unused in v2 implementation.
+   */
+  @Deprecated
   private void showDocumentation(@NotNull Editor editor,
                                  @NotNull PsiElement context,
                                  @NotNull String linkUrl,
