@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -178,10 +178,8 @@ final class FilePartNodeRoot extends FilePartNode {
     VirtualFile currentFile = NEVER_TRIED_TO_FIND;
     for (int i = names.size() - 1; i >= 0; i--) {
       String name = names.get(i);
-      if (name.equals(JarFileSystem.JAR_SEPARATOR) && currentFS instanceof LocalFileSystem) {
-        // switch inside jar
-        currentFS = fs;
-      }
+      currentFS = getCurrentFSByName(fs, currentFS, name);
+
       int index = currentNode.binarySearchChildByName(name);
       if (index >= 0) {
         parentNode = currentNode;
@@ -190,21 +188,14 @@ final class FilePartNodeRoot extends FilePartNode {
         currentFile = currentFile == NEVER_TRIED_TO_FIND || currentFile == null ? currentFile : currentFile.findChild(name);
         continue;
       }
+
       // create and insert new node
       // first, have to check if the file root/names(end)/.../names[i] exists
       // if yes, create nameId-based FilePartNode (for faster search and memory efficiency),
       // if not, create temp UrlPartNode which will be replaced with FPPN when the real file is created
       //noinspection UseVirtualFileEquals
       if (currentFile == NEVER_TRIED_TO_FIND) {
-        if (fsRoot == null) {
-          String rootPath = ContainerUtil.getLastItem(names);
-          fsRoot = ManagingFS.getInstance().findRoot(rootPath, fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs);
-          if (fsRoot != null && !StringUtilRt.equal(fsRoot.getName(), rootPath, fsRoot.isCaseSensitive())) {
-            // ignore really weird root names, like "/" under windows
-            fsRoot = null;
-          }
-        }
-        currentFile = fsRoot == null ? null : findFileFromRoot(fsRoot, currentFS, names, i);
+        currentFile = findFileFromRootOrNull(fsRoot = updateFSRoot(fs, names, fsRoot), currentFS, names, i);
       }
       else {
         currentFile = currentFile == null ? null : findChildThroughJar(currentFile, name, currentFS);
@@ -223,15 +214,47 @@ final class FilePartNodeRoot extends FilePartNode {
         }
       }
 
-      FilePartNode child = currentFile == null ? new UrlPartNode(name, myUrl(currentNode.myFileOrUrl), currentFS)
-                                               : new FilePartNode(name.equals(JarFileSystem.JAR_SEPARATOR) ? JAR_SEPARATOR_NAME_ID : getNameId(
-                                                 currentFile), currentFile, currentFS);
+      FilePartNode child = getNotNullNode(currentFS, currentNode, currentFile, name);
 
       currentNode.children = ArrayUtil.insert(currentNode.children, -index - 1, child);
       parentNode = currentNode;
       currentNode = child;
     }
     return new NodeToUpdate(parentNode, currentNode);
+  }
+
+  @NotNull
+  private static FilePartNode getNotNullNode(NewVirtualFileSystem currentFS,
+                                      @NotNull FilePartNode currentNode,
+                                      VirtualFile currentFile,
+                                      String name) {
+    if (currentFile == null) {
+      return new UrlPartNode(name, myUrl(currentNode.myFileOrUrl), currentFS);
+    } else {
+      int nameId = name.equals(JarFileSystem.JAR_SEPARATOR) ? JAR_SEPARATOR_NAME_ID : getNameId(currentFile);
+      return new FilePartNode(nameId, currentFile, currentFS);
+    }
+  }
+
+  @Nullable
+  private static NewVirtualFile updateFSRoot(@NotNull NewVirtualFileSystem fs, @NotNull List<String> names, @Nullable NewVirtualFile fsRoot) {
+    if (fsRoot == null) {
+      String rootPath = ContainerUtil.getLastItem(names);
+      fsRoot = ManagingFS.getInstance().findRoot(rootPath, fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs);
+      if (fsRoot != null && !StringUtilRt.equal(fsRoot.getName(), rootPath, fsRoot.isCaseSensitive())) {
+        // ignore really weird root names, like "/" under windows
+        fsRoot = null;
+      }
+    }
+    return fsRoot;
+  }
+
+  private static NewVirtualFileSystem getCurrentFSByName(@NotNull NewVirtualFileSystem fs, @NotNull NewVirtualFileSystem currentFS, String name) {
+    if (name.equals(JarFileSystem.JAR_SEPARATOR) && currentFS instanceof LocalFileSystem) {
+      // switch inside jar
+      currentFS = fs;
+    }
+    return currentFS;
   }
 
   @NotNull
@@ -263,6 +286,13 @@ final class FilePartNodeRoot extends FilePartNode {
       end = startIndex;
     }
     return names;
+  }
+
+  private static VirtualFile findFileFromRootOrNull(@Nullable NewVirtualFile root,
+                                                    @NotNull NewVirtualFileSystem fs,
+                                                    @NotNull List<String> names,
+                                                    int startIndex) {
+    return root == null ? null : findFileFromRoot(root, fs, names, startIndex);
   }
 
   private static VirtualFile findFileFromRoot(@NotNull NewVirtualFile root,
