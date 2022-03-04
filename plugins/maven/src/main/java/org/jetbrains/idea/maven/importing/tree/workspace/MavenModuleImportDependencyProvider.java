@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree;
+package org.jetbrains.idea.maven.importing.tree.workspace;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
@@ -9,6 +9,7 @@ import org.jetbrains.idea.maven.importing.tree.dependency.BaseDependency;
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency;
 import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency;
 import org.jetbrains.idea.maven.importing.tree.dependency.SystemDependency;
+import org.jetbrains.idea.maven.importing.tree.workspace.MavenProjectImportContextProvider.MavenProjectImportData;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -23,11 +24,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.jetbrains.idea.maven.importing.MavenModuleImporter.*;
-import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.MavenProjectImportData;
-import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.SplittedMainAndTestModules;
+import static org.jetbrains.idea.maven.importing.tree.MavenModuleImportDependencyProvider.INITIAL_CAPACITY_TEST_DEPENDENCY_LIST;
 
 public class MavenModuleImportDependencyProvider {
-  public static final int INITIAL_CAPACITY_TEST_DEPENDENCY_LIST = 4;
 
   @NotNull private final Project project;
   @NotNull private final Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
@@ -42,7 +41,7 @@ public class MavenModuleImportDependencyProvider {
   }
 
   @NotNull
-  public MavenModuleImportDataWithDependencies getDependencies(MavenProjectImportData importData) {
+  public MavenModuleImportDataWithDependencies getDependencies(MavenProjectImportContextProvider.MavenProjectImportData importData) {
     MavenProject mavenProject = importData.mavenProject;
     List<MavenImportDependency<?>> mainDependencies = new ArrayList<>(mavenProject.getDependencies().size());
     List<MavenImportDependency<?>> testDependencies = new ArrayList<>(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST);
@@ -65,10 +64,8 @@ public class MavenModuleImportDependencyProvider {
                                                     MavenProject mavenProject,
                                                     List<MavenImportDependency<?>> testDependencies) {
     if (importData.splittedMainAndTestModules != null) {
-      testDependencies.add(
-        new ModuleDependency(null, mavenProject,
-                             importData.splittedMainAndTestModules.mainData.getModuleName(),
-                             DependencyScope.COMPILE, false)
+      testDependencies.add(new ModuleDependency(
+        null, mavenProject, importData.splittedMainAndTestModules.mainData.getModuleName(), DependencyScope.COMPILE, false)
       );
     }
   }
@@ -135,7 +132,7 @@ public class MavenModuleImportDependencyProvider {
   }
 
   private static String getModuleName(MavenProjectImportData data) {
-    SplittedMainAndTestModules modules = data.splittedMainAndTestModules;
+    MavenProjectImportContextProvider.SplittedMainAndTestModules modules = data.splittedMainAndTestModules;
     return modules == null ? data.moduleData.getModuleName() : modules.mainData.getModuleName();
   }
 }

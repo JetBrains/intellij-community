@@ -1,27 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree;
+package org.jetbrains.idea.maven.importing.tree.workspace;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
-import org.jetbrains.idea.maven.importing.ModuleModelProxy;
+import org.jetbrains.idea.maven.importing.tree.MavenJavaVersionHolder;
+import org.jetbrains.idea.maven.importing.tree.MavenModuleType;
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenImportingSettings;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static org.jetbrains.idea.maven.importing.MavenModelUtil.*;
@@ -33,20 +28,17 @@ public class MavenProjectImportContextProvider {
   private final MavenProjectsTree myProjectsTree;
   @NotNull
   private final Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
-  @NotNull
-  private final ModuleModelProxy myModuleModel;
+
   @NotNull
   private final MavenImportingSettings myImportingSettings;
 
   public MavenProjectImportContextProvider(@NotNull Project project,
                                            @NotNull MavenProjectsTree projectsTree,
                                            @NotNull Map<MavenProject, MavenProjectChanges> changes,
-                                           @NotNull ModuleModelProxy moduleModel,
                                            @NotNull MavenImportingSettings importingSettings) {
     myProject = project;
     myProjectsTree = projectsTree;
     myProjectsToImportWithChanges = changes;
-    myModuleModel = moduleModel;
     myImportingSettings = importingSettings;
   }
 
@@ -57,8 +49,6 @@ public class MavenProjectImportContextProvider {
     return new MavenModuleImportContext(
       importDataDependencyContext.changedModuleDataWithDependencies,
       importDataDependencyContext.allModuleDataWithDependencies,
-      importDataDependencyContext.createdModules,
-      importDataContext.obsoleteModules,
       importDataContext.moduleNameByProject,
       importDataContext.hasChanges
     );
@@ -68,14 +58,8 @@ public class MavenProjectImportContextProvider {
   private MavenProjectImportContextProvider.ModuleImportDataContext getModuleImportDataContext() {
     boolean hasChanges = false;
     List<MavenProjectImportData> allModules = new ArrayList<>();
-
     Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId = new TreeMap<>(Comparator.comparing(MavenId::getKey));
     Map<MavenProject, String> moduleNameByProject = new HashMap<>();
-
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    Map<String, Module> moduleByName = Arrays.stream(myModuleModel.getModules())
-      .filter(m -> projectsManager.isMavenizedModule(m))
-      .collect(Collectors.toMap(m -> m.getName(), Function.identity()));
 
     for (MavenProject project : myProjectsTree.getProjects()) {
       if (myProjectsTree.isIgnored(project)) continue;
@@ -87,7 +71,7 @@ public class MavenProjectImportContextProvider {
       }
 
       MavenProjectChanges changes = myProjectsToImportWithChanges.get(project);
-      MavenProjectImportData mavenProjectImportData = getModuleImportData(project, moduleName, moduleByName, changes);
+      MavenProjectImportData mavenProjectImportData = getModuleImportData(project, moduleName, changes);
 
       if (changes != null && changes.hasChanges()) {
         hasChanges = true;
@@ -96,14 +80,12 @@ public class MavenProjectImportContextProvider {
       allModules.add(mavenProjectImportData);
     }
 
-    return new ModuleImportDataContext(allModules, moduleNameByProject, moduleImportDataByMavenId,
-                                       new ArrayList<>(moduleByName.values()), hasChanges);
+    return new ModuleImportDataContext(allModules, moduleNameByProject, moduleImportDataByMavenId, hasChanges);
   }
 
   @NotNull
   private MavenProjectImportContextProvider.ModuleImportDataDependecyContext getFlattenModuleDataDependencyContext(
     ModuleImportDataContext context) {
-    List<Module> createdModules = new ArrayList<>();
     List<MavenModuleImportData> allModuleDataWithDependencies = new ArrayList<>();
     List<MavenModuleImportData> changedModuleDataWithDependencies = new ArrayList<>();
 
@@ -115,12 +97,11 @@ public class MavenProjectImportContextProvider {
       List<MavenModuleImportData> mavenModuleImportDataList = splitToModules(importDataWithDependencies);
       for (MavenModuleImportData moduleImportData : mavenModuleImportDataList) {
         if (moduleImportData.hasChanges()) changedModuleDataWithDependencies.add(moduleImportData);
-        if (moduleImportData.isNewModule()) createdModules.add(moduleImportData.getModuleData().getModule());
         allModuleDataWithDependencies.add(moduleImportData);
       }
     }
 
-    return new ModuleImportDataDependecyContext(allModuleDataWithDependencies, changedModuleDataWithDependencies, createdModules);
+    return new ModuleImportDataDependecyContext(allModuleDataWithDependencies, changedModuleDataWithDependencies);
   }
 
   @NotNull
@@ -150,29 +131,21 @@ public class MavenProjectImportContextProvider {
     ));
   }
 
-  private void deleteExistingFiles(String moduleName, String modulePath) {
-    // for some reason newModule opens the existing iml file, so we
-    // have to remove it beforehand.
-    deleteExistingImlFile(modulePath);
-    deleteExistingModuleByName(moduleName);
-  }
-
-  private MavenProjectImportData getModuleImportData(MavenProject project,
-                                                     String moduleName,
-                                                     Map<String, Module> moduleByName,
-                                                     MavenProjectChanges changes) {
+  private static MavenProjectImportData getModuleImportData(MavenProject project,
+                                                            String moduleName,
+                                                            MavenProjectChanges changes) {
     MavenJavaVersionHolder javaVersions = getMavenJavaVersions(project);
     MavenModuleType type = getModuleType(project, javaVersions);
 
-    ModuleData moduleData = getModuleData(project, moduleName, type, javaVersions, moduleByName);
+    ModuleData moduleData = getModuleData(project, moduleName, type, javaVersions);
     if (type != MavenModuleType.AGGREGATOR_MAIN_TEST) {
       return new MavenProjectImportData(project, moduleData, changes, null);
     }
     String moduleMainName = moduleName + MAIN_SUFFIX;
-    ModuleData mainData = getModuleData(project, moduleMainName, MavenModuleType.MAIN, javaVersions, moduleByName);
+    ModuleData mainData = getModuleData(project, moduleMainName, MavenModuleType.MAIN, javaVersions);
 
     String moduleTestName = moduleName + TEST_SUFFIX;
-    ModuleData testData = getModuleData(project, moduleTestName, MavenModuleType.TEST, javaVersions, moduleByName);
+    ModuleData testData = getModuleData(project, moduleTestName, MavenModuleType.TEST, javaVersions);
 
     SplittedMainAndTestModules mainAndTestModules = new SplittedMainAndTestModules(mainData, testData);
     return new MavenProjectImportData(project, moduleData, changes, mainAndTestModules);
@@ -194,23 +167,10 @@ public class MavenProjectImportContextProvider {
     return !project.isAggregator() && mavenJavaVersions.needSeparateTestModule() && isCompilerTestSupport(project);
   }
 
-  private ModuleData getModuleData(MavenProject project, String moduleName,
-                                   MavenModuleType type,
-                                   MavenJavaVersionHolder javaVersionHolder,
-                                   Map<String, Module> moduleByName) {
-    Module module = moduleByName.remove(moduleName);
-    if (module != null && !(ModuleType.get(module).equals(project.getModuleType()))) {
-      myModuleModel.disposeModule(module);
-      module = null;
-    }
-    boolean newModule = module == null;
-    if (newModule) {
-      String modulePath = MavenModuleNameMapper
-        .generateModulePath(getModuleDirPath(project, type), moduleName, myImportingSettings.getDedicatedModuleDir());
-      deleteExistingFiles(moduleName, modulePath);
-      module = myModuleModel.newModule(modulePath, project.getModuleType().getId());
-    }
-    return new ModuleData(module, type, javaVersionHolder, newModule);
+  private static ModuleData getModuleData(MavenProject project, String moduleName,
+                                          MavenModuleType type,
+                                          MavenJavaVersionHolder javaVersionHolder) {
+    return new ModuleData(moduleName, getModuleDirPath(project, type), type, javaVersionHolder);
   }
 
   private static String getModuleDirPath(MavenProject project, MavenModuleType type) {
@@ -223,44 +183,19 @@ public class MavenProjectImportContextProvider {
     return project.getDirectory();
   }
 
-  private void deleteExistingModuleByName(final String name) {
-    Module module = myModuleModel.findModuleByName(name);
-    if (module != null) {
-      myModuleModel.disposeModule(module);
-    }
-  }
-
-  private void deleteExistingImlFile(String path) {
-    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          if (file != null) file.delete(this);
-        }
-        catch (IOException e) {
-          MavenLog.LOG.warn("Cannot delete existing iml file: " + path, e);
-        }
-      }
-    });
-  }
-
   private static class ModuleImportDataContext {
     @NotNull final List<MavenProjectImportData> importData;
     @NotNull final Map<MavenProject, String> moduleNameByProject;
     @NotNull final Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
-    @NotNull final List<Module> obsoleteModules;
     final boolean hasChanges;
 
     private ModuleImportDataContext(@NotNull List<MavenProjectImportData> importData,
                                     @NotNull Map<MavenProject, String> moduleNameByProject,
                                     @NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId,
-                                    @NotNull List<Module> obsoleteModules,
                                     boolean hasChanges) {
       this.importData = importData;
       this.moduleNameByProject = moduleNameByProject;
       this.moduleImportDataByMavenId = moduleImportDataByMavenId;
-      this.obsoleteModules = obsoleteModules;
       this.hasChanges = hasChanges;
     }
   }
@@ -268,14 +203,11 @@ public class MavenProjectImportContextProvider {
   private static class ModuleImportDataDependecyContext {
     @NotNull final List<MavenModuleImportData> allModuleDataWithDependencies;
     @NotNull final List<MavenModuleImportData> changedModuleDataWithDependencies;
-    @NotNull final List<Module> createdModules;
 
     private ModuleImportDataDependecyContext(@NotNull List<MavenModuleImportData> allModuleDataWithDependencies,
-                                             @NotNull List<MavenModuleImportData> changedModuleDataWithDependencies,
-                                             @NotNull List<Module> createdModules) {
+                                             @NotNull List<MavenModuleImportData> changedModuleDataWithDependencies) {
       this.allModuleDataWithDependencies = allModuleDataWithDependencies;
       this.changedModuleDataWithDependencies = changedModuleDataWithDependencies;
-      this.createdModules = createdModules;
     }
   }
 

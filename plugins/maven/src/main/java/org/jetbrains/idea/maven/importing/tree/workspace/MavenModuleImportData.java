@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree;
+package org.jetbrains.idea.maven.importing.tree.workspace;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +35,6 @@ public class MavenModuleImportData {
 
   public @NotNull ModuleData getModuleData() {
     return moduleData;
-  }
-
-  public boolean isNewModule() {
-    return moduleData.isNewModule();
   }
 
   public @NotNull List<MavenImportDependency<?>> getDependencies() {

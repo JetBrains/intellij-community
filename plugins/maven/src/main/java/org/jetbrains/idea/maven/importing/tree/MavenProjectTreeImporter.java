@@ -55,15 +55,16 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
     super(projectsTree, importingSettings, projectsToImportWithChanges);
     myProject = p;
 
-    myModelsProvider = getModelProvider(modelsProvider);
+    myModelsProvider = getModelProvider(modelsProvider, p);
     myModuleModel = myModelsProvider.getModuleModelProxy();
     myContext = new MavenModuleImportContext();
     contextProvider = new MavenProjectImportContextProvider(p, projectsTree, projectsToImportWithChanges, myModuleModel, importingSettings);
   }
 
-  private ModifiableModelsProviderProxy getModelProvider(IdeModifiableModelsProvider modelsProvider) {
-    return (MavenUtil.newModelEnabled(myProject))
-           ? new ModifiableModelsProviderProxyImpl(myProject, ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder())
+  @NotNull
+  public static ModifiableModelsProviderProxy getModelProvider(IdeModifiableModelsProvider modelsProvider, Project project) {
+    return (MavenUtil.newModelEnabled(project))
+           ? new ModifiableModelsProviderProxyImpl(project, ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder())
            : new ModifiableModelsProviderProxyWrapper(modelsProvider);
   }
 
@@ -218,9 +219,9 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
     return importers;
   }
 
-  private static void configModule(@NotNull MavenModuleImportData importData,
-                                   @NotNull MavenModuleImporter moduleImporter,
-                                   @NotNull MavenRootModelAdapter rootModelAdapter) {
+  public static void configModule(@NotNull MavenModuleImportData importData,
+                                  @NotNull MavenModuleImporter moduleImporter,
+                                  @NotNull MavenRootModelAdapter rootModelAdapter) {
     MavenModuleType type = importData.getModuleData().getType();
     rootModelAdapter.init(importData.getModuleData().isNewModule());
     if (type == AGGREGATOR || type == MAIN_TEST) {

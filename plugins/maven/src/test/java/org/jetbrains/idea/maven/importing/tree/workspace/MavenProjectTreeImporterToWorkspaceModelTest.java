@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree;
+package org.jetbrains.idea.maven.importing.tree.workspace;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Assert;
@@ -10,11 +11,18 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
-public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTestCase {
+public class MavenProjectTreeImporterToWorkspaceModelTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    Registry.get("maven.import.to.workspace.model").setValue(true);
     MavenProjectsManager.getInstance(myProject).getImportingSettings().setImportToTreeStructure(true);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    super.tearDown();
+    Registry.get("maven.import.to.workspace.model").setValue(false);
   }
   @Test
   public void testSimpleImport() {
@@ -118,8 +126,8 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
 
     assertResources("project.m1.main", "resources");
     assertTestResources("project.m1.test", "resources");
-    assertResources("project.m2.main");
-    assertTestResources("project.m2.test");
+    assertResources("project.m2.main", "resources");
+    assertTestResources("project.m2.test", "resources");
 
     assertExcludes("project", "target");
     assertExcludes("project.m1", "target");
@@ -150,7 +158,7 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
 
     List<String> contentRoots = ContainerUtil.map(getContentRoots("project.main"), c -> c.getUrl());
     Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("src/main")));
-    Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("target/generated-sources/src1")));
+    Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("target/generated-sources")));
   }
   @Test
   public void testContentRootOutsideOfModuleDir() throws Exception {

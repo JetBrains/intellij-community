@@ -1,33 +1,36 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree;
+package org.jetbrains.idea.maven.importing.tree.workspace;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.tree.MavenJavaVersionHolder;
+import org.jetbrains.idea.maven.importing.tree.MavenModuleType;
 
 public class ModuleData {
-  @NotNull private final Module module;
+  @NotNull private final String moduleName;
+  @NotNull private final String modulePath;
   @NotNull private final MavenModuleType type;
   @NotNull private final MavenJavaVersionHolder javaVersionHolder;
-  private final boolean newModule;
 
-  public ModuleData(@NotNull Module module,
+  public ModuleData(@NotNull String moduleName,
+                    @NotNull String modulePath,
                     @NotNull MavenModuleType type,
-                    @NotNull MavenJavaVersionHolder javaVersionHolder,
-                    boolean newModule) {
-    this.module = module;
+                    @NotNull MavenJavaVersionHolder javaVersionHolder) {
+    this.moduleName = moduleName;
+    this.modulePath = modulePath;
     this.type = type;
     this.javaVersionHolder = javaVersionHolder;
-    this.newModule = newModule;
   }
 
-  public @NotNull String getModuleName() {
-    return module.getName();
+  @NotNull
+  public String getModuleName() {
+    return moduleName;
   }
 
-  public @NotNull Module getModule() {
-    return module;
+  @NotNull
+  public String getModulePath() {
+    return modulePath;
   }
 
   @Nullable
@@ -41,16 +44,17 @@ public class ModuleData {
   }
 
   @NotNull
+  public MavenJavaVersionHolder getJavaVersionHolder() {
+    return javaVersionHolder;
+  }
+
+  @NotNull
   public MavenModuleType getType() {
     return type;
   }
 
-  public boolean isNewModule() {
-    return newModule;
-  }
-
   @Override
   public String toString() {
-    return module.getName();
+    return moduleName;
   }
 }
