@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
 
 /**
  * Some usages of a PsiType involve re-creating it with some psi factory. The result is a PsiImmediateClassType.
- * It means that we cannot store information about types in an inheritor of PsiType.
+ * It means that we cannot store information about fields in an inheritor of PsiType.
  * Instead we use a "custom" PsiClass
  */
 class GrSyntheticNamedRecordClass(val expr: GinqExpression, private val namedRecord: PsiClass) : PsiClass by namedRecord, UserDataHolderBase() {
@@ -43,6 +43,10 @@ class GrSyntheticNamedRecordClass(val expr: GinqExpression, private val namedRec
 
   operator fun get(name: String): PsiType? {
     return typeMap.value[name]?.value
+  }
+
+  fun allKeys() : Set<String> {
+    return typeMap.value.keys
   }
 
   override fun getSourceElement(): PsiElement? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordCompletionProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -35,6 +36,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     MapArgumentCompletionProvider.register(this);
     GroovyConfigSlurperCompletionProvider.register(this);
     MapKeysCompletionProvider.register(this);
+    GrNamedRecordCompletionProvider.register(this);
     GroovyDocCompletionProvider.register(this);
     GrStatementStartCompletionProvider.register(this);
     GrMainCompletionProvider.register(this);
