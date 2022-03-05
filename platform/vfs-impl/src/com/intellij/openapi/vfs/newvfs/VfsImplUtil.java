@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -472,6 +473,7 @@ public final class VfsImplUtil {
     while (!queue.isEmpty()) {
       int recordId = queue.poll();
       if (result.add(recordId)) {
+        ProgressManager.checkCanceled();
         for (int childId : FSRecords.listIds(recordId)) {
           queue.add(childId);
         }
