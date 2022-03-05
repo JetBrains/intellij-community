@@ -1,18 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jpsBootstrap;
-
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.system.CpuArch;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions;
+package org.jetbrains.intellij.build.dependencies;
 
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Locale;
 
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.info;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.info;
 
 /**
  * Prepare JDK for compiling and running build scripts
@@ -24,25 +19,15 @@ public class JpsBootstrapJdk {
   // Corretto 11 is not available on macOS aarch64
   private static final URI ZULU_MACOS_AARCH64_URL = URI.create("https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/zulu11.50.19-ca-jdk11.0.12-macosx_aarch64.tar.gz");
 
-  public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot) throws Exception {
-    if (!JpsBootstrapUtil.underTeamCity) {
-      // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
-      return Path.of(System.getProperty("java.home"));
-    }
-
+  public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot) {
     OS os = OS.getCurrent();
-    CpuArch arch = CpuArch.CURRENT;
-
-    if (os == OS.MACOSX && CpuArch.isEmulated()) {
-      arch = CpuArch.ARM64;
-    }
-
+    Arch arch = Arch.getCurrent();
     return getJdkHome(communityRoot, os, arch);
   }
 
-  static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, OS os, CpuArch arch) throws Exception {
+  static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch) {
     URI jdkUrl;
-    if (os == OS.MACOSX && arch == CpuArch.ARM64) {
+    if (os == OS.MACOSX && arch == Arch.ARM64) {
       // Corretto 11 is not available on macOS aarch64
       jdkUrl = ZULU_MACOS_AARCH64_URL;
     }
@@ -52,7 +37,7 @@ public class JpsBootstrapJdk {
 
     Path jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl);
     Path jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, jdkArchive, BuildDependenciesExtractOptions.STRIP_ROOT);
-    info("Downloaded JDK is at " + jdkExtracted);
+    info("jps-bootstrap JDK is at " + jdkExtracted);
 
     if (jdkUrl == ZULU_MACOS_AARCH64_URL) {
       jdkExtracted = jdkExtracted.resolve("zulu-11.jdk");
@@ -83,7 +68,7 @@ public class JpsBootstrapJdk {
     throw new IllegalStateException("No java executables were found under " + jdkHome);
   }
 
-  private static URI getCorrettoUrl(OS os, CpuArch arch) {
+  private static URI getCorrettoUrl(OS os, Arch arch) {
     String archString;
     String osString;
     String ext = os == OS.WINDOWS ? ".zip" : ".tar.gz";
@@ -122,18 +107,31 @@ public class JpsBootstrapJdk {
     WINDOWS, MACOSX, LINUX;
 
     public static OS getCurrent() {
-      if (SystemInfo.isMac) {
+      String osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+
+      if (osName.startsWith("mac")) {
         return MACOSX;
       }
-      else if (SystemInfo.isLinux) {
+      else if (osName.startsWith("linux")) {
         return LINUX;
       }
-      else if (SystemInfo.isWindows) {
+      else if (osName.startsWith("windows")) {
         return WINDOWS;
       }
       else {
-        throw new IllegalStateException("Only Mac/Linux/Windows are supported now");
+        throw new IllegalStateException("Only Mac/Linux/Windows are supported now, current os: " + osName);
       }
+    }
+  }
+
+  enum Arch {
+    X86_64, ARM64;
+
+    public static Arch getCurrent() {
+      String arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
+      if ("x86_64".equals(arch) || "amd64".equals(arch)) return X86_64;
+      if ("aarch64".equals(arch) || "arm64".equals(arch)) return ARM64;
+      throw new IllegalStateException("Only X86_64 and ARM64 are supported, current arch: " + arch);
     }
   }
 }

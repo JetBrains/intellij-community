@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jpsBootstrap;
+package org.jetbrains.intellij.build.dependencies;
 
-import com.intellij.util.system.CpuArch;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +10,12 @@ import java.util.Arrays;
 
 public class JpsBootstrapJdkTest {
   @Test
-  public void allJdkVariantsCouldBeDownloaded() throws Exception {
+  public void allJdkVariantsCouldBeDownloaded() {
     BuildDependenciesCommunityRoot communityRoot = BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory();
 
     for (JpsBootstrapJdk.OS os : JpsBootstrapJdk.OS.values()) {
-      for (CpuArch arch : Arrays.asList(CpuArch.X86_64, CpuArch.ARM64)) {
-        if (os == JpsBootstrapJdk.OS.WINDOWS && arch == CpuArch.ARM64) {
+      for (JpsBootstrapJdk.Arch arch : Arrays.asList(JpsBootstrapJdk.Arch.X86_64, JpsBootstrapJdk.Arch.ARM64)) {
+        if (os == JpsBootstrapJdk.OS.WINDOWS && arch == JpsBootstrapJdk.Arch.ARM64) {
           // Not supported yet
           continue;
         }
