@@ -438,39 +438,47 @@ public class GradleExecutionHelper {
     @NotNull GradleExecutionSettings settings,
     @NotNull List<String> tasks
   ) {
-    List<String> arguments = new ArrayList<>();
+    var arguments = new ArrayList<String>();
     if (!settings.getArguments().isEmpty()) {
-      LOG.info("Passing command-line args to Gradle Tooling API: " +
-               StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " "));
-
       arguments.addAll(tasks);
-      arguments.addAll(ContainerUtil.filter(settings.getArguments(), it -> StringUtil.isNotEmpty(it)));
-      MultiMap<String, String> testTasksConfiguration = extractTestCommandOptions(arguments);
+      addSettingsArguments(arguments, settings);
+      var testTasksConfiguration = extractTestCommandOptions(arguments);
       if (operation instanceof TestLauncher) {
-        for (Map.Entry<String, Collection<String>> entry : testTasksConfiguration.entrySet()) {
+        for (var entry : testTasksConfiguration.entrySet()) {
           // TODO we need better point of call to pass this info
           ((TestLauncher)operation).withTaskAndTestClasses(entry.getKey(), entry.getValue());
         }
       }
     }
-    arguments.add("-Didea.active=true");
-    arguments.add("-Didea.version=" + getIdeaVersion());
-    operation.withArguments(ArrayUtilRt.toStringArray(arguments));
+    addIdeaParameters(arguments);
+    operation.withArguments(arguments);
   }
 
   private static void setupOperationArguments(
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionSettings settings
   ) {
-    var arguments = new ArrayList<>(ContainerUtil.filter(settings.getArguments(), it -> StringUtil.isNotEmpty(it)));
-    var testTaskPatterns = removeTestTaskPatterns(arguments);
+    var arguments = new ArrayList<String>();
+    addSettingsArguments(arguments, settings);
+    var testTaskPatterns = extractTestTaskPatterns(arguments);
     var path = renderInitScript(testTaskPatterns);
     if (path != null) {
       ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
     }
+    addIdeaParameters(arguments);
+    operation.withArguments(arguments);
+  }
+
+  private static void addSettingsArguments(@NotNull ArrayList<String> arguments, @NotNull GradleExecutionSettings settings) {
+    LOG.info("Passing command-line args to Gradle Tooling API: " +
+             StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " "));
+
+    arguments.addAll(ContainerUtil.filter(settings.getArguments(), it -> StringUtil.isNotEmpty(it)));
+  }
+
+  private static void addIdeaParameters(@NotNull ArrayList<String> arguments) {
     arguments.add("-Didea.active=true");
     arguments.add("-Didea.version=" + getIdeaVersion());
-    operation.withArguments(ArrayUtilRt.toStringArray(arguments));
   }
 
   private static void setupLogging(@NotNull GradleExecutionSettings settings,
@@ -790,7 +798,7 @@ public class GradleExecutionHelper {
   /**
    * @return test include patterns: classes, methods, etc.
    */
-  private static Set<String> removeTestTaskPatterns(@NotNull List<String> args) {
+  private static Set<String> extractTestTaskPatterns(@NotNull List<String> args) {
     var testIncludePatterns = new LinkedHashSet<String>();
     var it = args.iterator();
     while (it.hasNext()) {
