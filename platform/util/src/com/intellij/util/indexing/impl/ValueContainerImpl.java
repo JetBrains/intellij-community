@@ -35,12 +35,38 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   private Int2ObjectMap<Object> myPresentInputIds = IndexDebugProperties.IS_UNIT_TEST_MODE
                                                     ? new Int2ObjectOpenHashMap<>()
                                                     : null;
+  private List<UpdateOp> myUpdateOps = IndexDebugProperties.IS_UNIT_TEST_MODE
+                                       ? new SmartList<>()
+                                       : null;
+
+  private static class UpdateOp {
+    private UpdateOp(Type type, int id, Object value) {
+      myType = type;
+      myInputId = id;
+      myValue = value;
+    }
+
+    @Override
+    public String toString() {
+      return "(" + myType + ", " + myInputId + ", " + myValue + ")";
+    }
+
+    private enum Type {
+      ADD,
+      ADD_DIRECT,
+      REMOVE
+    }
+
+    private final Type myType;
+    private final int myInputId;
+    private final Object myValue;
+  }
 
   @Override
   public void addValue(int inputId, Value value) {
     Object fileSetObject = getFileSetObject(value);
 
-    ensureInputIdIsntAssociatedWithAnotherValue(inputId, value);
+    ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, false);
 
     if (fileSetObject == null) {
       attachFileSetForNewValue(value, inputId);
@@ -59,10 +85,11 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
   }
 
-  private void ensureInputIdIsntAssociatedWithAnotherValue(int inputId, Value value) {
+  private void ensureInputIdIsntAssociatedWithAnotherValue(int inputId, Value value, boolean isDirect) {
     if (myPresentInputIds != null) {
       Object normalizedValue = value == null ? myNullValue : value;
       Object previousValue = myPresentInputIds.put(inputId, normalizedValue);
+      myUpdateOps.add(new UpdateOp(isDirect ? UpdateOp.Type.ADD_DIRECT : UpdateOp.Type.ADD, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
         LOG.error("Can't add value '" + normalizedValue + "'; input id " + inputId + " is already present in:\n" + this);
       }
@@ -73,6 +100,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     if (myPresentInputIds != null) {
       Object normalizedValue = value == null ? myNullValue : value;
       Object previousValue = myPresentInputIds.remove(inputId);
+      myUpdateOps.add(new UpdateOp(UpdateOp.Type.REMOVE, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
         LOG.error("Can't remove value '" + normalizedValue + "'; input id " + inputId + " is not present for the specified value in:\n" + this);
       }
@@ -126,10 +154,10 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
           valueObjects = new SmartList<>();
         }
         else if (IndexDebugProperties.DEBUG) {
-          if (myPresentInputIds != null)
           LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get() +
                     ", ;\nActual value container = \n" + this +
-                    (myPresentInputIds == null ? "" : "\nExpected value container = " + myPresentInputIds));
+                    (myPresentInputIds == null ? "" : "\nExpected value container = " + myPresentInputIds) +
+                    (myUpdateOps == null ? "" : "\nUpdate operations = " + myUpdateOps));
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);
@@ -381,6 +409,9 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       clone.myPresentInputIds = myPresentInputIds != null
                                 ? new Int2ObjectOpenHashMap<>(myPresentInputIds)
                                 : null;
+      clone.myUpdateOps = IndexDebugProperties.IS_UNIT_TEST_MODE
+                          ? new SmartList<>(myUpdateOps)
+                          : null;
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -566,24 +597,24 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
                 for (int inputId : (int[])inputIds) {
                   if (changeBufferingList != null) {
                     changeBufferingList.add(inputId);
+                    ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, true);
                   }
                   else {
                     addValue(inputId, value);
                   }
                   if (mapping != null) mapping.associateFileIdToValue(inputId, value);
-                  ensureInputIdIsntAssociatedWithAnotherValue(inputId, value);
                 }
               }
               else {
                 int inputId = (int)inputIds;
                 if (changeBufferingList != null) {
                   changeBufferingList.add(inputId);
+                  ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, true);
                 }
                 else {
                   addValue(inputId, value);
                 }
                 if (mapping != null) mapping.associateFileIdToValue(inputId, value);
-                ensureInputIdIsntAssociatedWithAnotherValue(inputId, value);
               }
 
               prev += id;
