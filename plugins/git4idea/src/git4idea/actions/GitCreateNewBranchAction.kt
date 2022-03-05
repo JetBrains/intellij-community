@@ -3,6 +3,7 @@ package git4idea.actions
 
 import com.intellij.dvcs.DvcsUtil.guessVcsRoot
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value.SYNC
+import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,7 +27,8 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       is Data.WithCommit -> createOrCheckoutNewBranch(data.repository.project, listOf(data.repository), data.hash.toString(),
                                                       GitBundle.message("action.Git.New.Branch.dialog.title", data.hash.toShortString()),
                                                       data.name)
-      is Data.NoCommit -> createOrCheckoutNewBranch(data.project, data.repositories, HEAD)
+      is Data.NoCommit -> createOrCheckoutNewBranch(data.project, data.repositories, HEAD,
+                                                    initialName = data.repositories.getCommonCurrentBranch())
     }
   }
 
