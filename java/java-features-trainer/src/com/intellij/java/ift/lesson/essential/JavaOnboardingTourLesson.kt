@@ -220,7 +220,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       text(JavaLessonsBundle.message("java.onboarding.toggle.breakpoint.2"))
     }
 
-    highlightButtonByIdTask("Debug")
+    highlightButtonById("Debug")
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.start.debugging"))
@@ -243,7 +243,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       restoreIfModified(sample)
     }
 
-    highlightButtonByIdTask("Stop")
+    highlightButtonById("Stop")
     actionTask("Stop") {
       showBalloonOnHighlightingComponent(
         JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
