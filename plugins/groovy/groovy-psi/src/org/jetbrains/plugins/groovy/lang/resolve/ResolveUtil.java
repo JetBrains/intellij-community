@@ -195,7 +195,7 @@ public final class ResolveUtil {
     if (scope instanceof GrStatementOwner) {
       if (!GdkMethodUtil.processMixinToMetaclass((GrStatementOwner)scope, processor, state, lastParent, place)) return false;
       kotlin.Pair<GrMethodCall, GroovyMacroTransformationSupport> support = GroovyMacroUtilKt.getMacroHandler(scope);
-      if (support != null && !support.getSecond().processResolve(scope, processor, state, place)) return false;
+      if (support != null && !support.getSecond().processResolve(support.getFirst(), scope, processor, state, place)) return false;
     }
 
     return true;
