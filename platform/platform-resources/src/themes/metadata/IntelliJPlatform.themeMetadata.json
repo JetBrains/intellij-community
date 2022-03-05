@@ -1157,6 +1157,11 @@
       "since": "2019.2"
     },
     {
+      "key": "ToolTip.linkForeground",
+      "description": "Link text in foreground color in tooltips",
+      "since": "2022.2"
+    },
+    {
       "key": "ToolTip.shortcutForeground",
       "description": "Shortcut text foreground color in compound tooltips",
       "since": "2019.2"
