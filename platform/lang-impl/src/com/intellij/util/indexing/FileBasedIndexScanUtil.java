@@ -22,6 +22,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BooleanSupplier;
@@ -58,6 +56,12 @@ public final class FileBasedIndexScanUtil {
                                                         @NotNull VirtualFile file) {
     ensureUpToDate(indexId);
     return getIndexer(indexId, project, true).apply(file);
+  }
+
+  public static <V, K> @Nullable Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId, @NotNull K key, @NotNull GlobalSearchScope scope) {
+    CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<>(new HashSet<>());
+    Boolean result = processFilesContainingAnyKey(indexId, Set.of(key), scope, null, null, processor);
+    return result == null ? null : processor.getResults();
   }
 
   static <K> @Nullable Boolean processAllKeys(@NotNull ID<K, ?> indexId,
