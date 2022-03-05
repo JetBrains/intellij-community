@@ -226,7 +226,7 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.2"))
     }
 
-    highlightButtonByIdTask("Debug")
+    highlightButtonById("Debug")
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(PythonLessonsBundle.message("python.onboarding.balloon.start.debugging"))
@@ -249,7 +249,7 @@ class PythonOnboardingTourLesson :
       restoreIfModified(sample)
     }
 
-    highlightButtonByIdTask("Stop")
+    highlightButtonById("Stop")
     actionTask("Stop") {
       showBalloonOnHighlightingComponent(
         PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
