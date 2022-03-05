@@ -8,6 +8,7 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addAllIfNotNull
@@ -36,7 +37,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
 
   private fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {
     return CachedValuesManager.getCachedValue(macroCall, rootGinq, CachedValueProvider {
-      CachedValueProvider.Result(doGetParsedGinqTree(macroCall), macroCall)
+      CachedValueProvider.Result(doGetParsedGinqTree(macroCall), PsiModificationTracker.MODIFICATION_COUNT)
     })
   }
 

@@ -20,10 +20,8 @@ class GrNamedRecordType(private val expr: GinqExpression, languageLevel: Languag
     clazz?.let { GrSyntheticNamedRecordClass(expr, it) }
   }
 
-  fun getGinqExpression(): GinqExpression = expr
-
   override fun isValid(): Boolean {
-    return expr.from.fromKw.isValid
+    return resolve()?.isValid ?: false
   }
 
   override fun getParameters(): Array<PsiType> {

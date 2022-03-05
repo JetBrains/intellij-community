@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.types
 
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
@@ -14,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
  * It means that we cannot store information about types in an inheritor of PsiType.
  * Instead we use a "custom" PsiClass
  */
-class GrSyntheticNamedRecordClass(val expr: GinqExpression, private val namedRecord: PsiClass) : PsiClass by namedRecord {
+class GrSyntheticNamedRecordClass(val expr: GinqExpression, private val namedRecord: PsiClass) : PsiClass by namedRecord, UserDataHolderBase() {
 
   private val typeMap: Lazy<Map<String, Lazy<PsiType>>> = lazyPub {
     val map = mutableMapOf<String, Lazy<PsiType>>()
@@ -51,14 +53,20 @@ class GrSyntheticNamedRecordClass(val expr: GinqExpression, private val namedRec
     if (this === other) return true
     if (other !is GrSyntheticNamedRecordClass) return false
 
-    if (expr != other.expr) return false
+    if (expr != other.expr || namedRecord != other.namedRecord) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return expr.hashCode()
+    return expr.hashCode() + namedRecord.hashCode()
   }
 
+  override fun <T : Any?> getCopyableUserData(key: Key<T>): T? = namedRecord.getCopyableUserData(key)
 
+  override fun <T : Any?> getUserData(key: Key<T>): T? = namedRecord.getUserData(key)
+
+  override fun <T : Any?> putCopyableUserData(key: Key<T>, value: T?) : Unit = namedRecord.putCopyableUserData(key, value)
+
+  override fun <T : Any?> putUserData(key: Key<T>, value: T?) : Unit = namedRecord.putUserData(key, value)
 }
