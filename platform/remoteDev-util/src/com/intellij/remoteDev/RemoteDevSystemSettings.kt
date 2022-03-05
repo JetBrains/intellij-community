@@ -23,8 +23,8 @@ object RemoteDevSystemSettings {
   private const val clientDownloadLocationKey = "clientDownloadLocation"
   private const val jreDownloadLocationKey = "jreDownloadLocation"
   private fun defaultProductsUrl(productCode: String) = "https://data.services.jetbrains.com/products?code=$productCode"
-  private val defaultClientDownloadLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/"
-  private val defaultJreDownloadLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/"
+  private const val defaultClientDownloadLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/"
+  private const val defaultJreDownloadLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/"
 
   fun getProductsUrl(productCode: String): RemoteDevSystemSetting<String> {
     val systemValue = getFromOs(productsInfoUrlKey)
