@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
@@ -33,29 +32,21 @@ class GoogleAccountsListModel : AccountsListModelBase<GoogleAccount, GoogleCrede
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     AcquireUserInfoTask(parentComponent) { userCred, userInfo ->
-      if (isAccountUnique(userInfo.id)) updateAccountList(userInfo, userCred)
+      if (isAccountUnique(userInfo.id)) {
+        val account = GoogleAccountManager.createAccount(userInfo)
+        add(account, userCred)
+      }
     }.queue()
   }
 
   override fun editAccount(parentComponent: JComponent, account: GoogleAccount) {
     AcquireUserInfoTask(parentComponent) { userCred, userInfo ->
-      newCredentials[account] = userCred
       account.name = userInfo.email
-      notifyCredentialsChanged(account)
+      update(account, userCred)
     }.queue()
   }
 
   private fun isAccountUnique(accountId: String): Boolean = accountsListModel.items.none { it.id == accountId }
-
-  @RequiresEdt
-  private fun updateAccountList(userInfo: GoogleUserInfo, credentials: GoogleCredentials) {
-    val account = GoogleAccountManager.createAccount(userInfo)
-
-    accountsListModel.add(account)
-    newCredentials[account] = credentials
-
-    notifyCredentialsChanged(account)
-  }
 
   private fun showNetworkErrorMessage(parentComponent: JComponent) {
     MessageDialogBuilder.Message(
