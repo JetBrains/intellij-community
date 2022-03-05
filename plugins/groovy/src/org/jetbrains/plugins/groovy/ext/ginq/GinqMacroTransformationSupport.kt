@@ -23,8 +23,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport
 
 internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport {
@@ -109,12 +112,22 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return element.parents(true).any { it.getUserData(UNTRANSFORMED_ELEMENT) != null }
   }
 
-  override fun processResolve(scope: PsiElement, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+  override fun processResolve(macroCall: GrMethodCall, scope: PsiElement, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
     val name = ResolveUtil.getNameHint(processor) ?: return true
-    val tree = scope.parent?.parent?.castSafelyTo<GrCall>()?.let(this::getParsedGinqTree) ?: return true
-    val fromBinding = tree.from.alias
-    if (name == fromBinding.referenceName) {
-      return processor.execute(fromBinding, state)
+    val tree = getParsedGinqTree(macroCall) ?: return true
+    if (name == "distinct" && processor.shouldProcessMethods()) {
+      if (tree.select.projections.any { it.expression.castSafelyTo<GrMethodCall>()?.invokedExpression == place }) {
+        val call = GrLightMethodBuilder(macroCall.manager, "distinct")
+        val method = JavaPsiFacade.getInstance(macroCall.project).findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, macroCall.resolveScope)?.findMethodsByName("distinct", false)?.singleOrNull()
+        if (method != null) {
+          call.navigationElement = method
+        }
+        val typeParameter = call.addTypeParameter("T")
+        val typeParameterType = typeParameter.type()
+        call.addParameter("expr", typeParameterType)
+        call.returnType = typeParameterType
+        return processor.execute(call, state)
+      }
     }
     return true
   }

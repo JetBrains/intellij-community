@@ -55,5 +55,5 @@ private fun extractComponent(type : PsiType, className: String) : PsiType? {
   }
 }
 
-private val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE : String =
+const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE : String =
   "org.apache.groovy.ginq.provider.collection.runtime.Queryable"
