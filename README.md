@@ -54,7 +54,7 @@ To build IntelliJ IDEA Community Edition from source, choose **Build | Build Pro
 To build installation packages, run the `installers.cmd` command in `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
 
 Options to build installers are passed as system properties to `installers.cmd` command.
-You may find the list of available commands in [BuildOptions.groovy](platform/build-scripts/groovy/org/jetbrains/intellij/build/BuildOptions.groovy)
+You may find the list of available properties in [BuildOptions.groovy](platform/build-scripts/groovy/org/jetbrains/intellij/build/BuildOptions.groovy)
 
 Examples (`./` should be added only for Linux/macOS):
  * Build installers only for current operating system: `./installers.cmd -Dintellij.build.target.os=current`
@@ -75,3 +75,17 @@ To run tests on the build, apply these setting to the **Run | Edit Configuration
  
 You can find other helpful information at [https://www.jetbrains.com/opensource/idea](https://www.jetbrains.com/opensource/idea).
 The "Contribute Code" section of that site describes how you can contribute to IntelliJ IDEA.
+
+## Running IntelliJ IDEA on CI/CD environment
+
+To run tests outside of IntelliJ IDEA, run the `tests.cmd` command in `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
+
+Options to run tests are passed as system properties to `tests.cmd` command.
+You may find the list of available properties in [TestingOptions.groovy](platform/build-scripts/groovy/org/jetbrains/intellij/build/TestingOptions.groovy)
+
+Examples (`./` should be added only for Linux/macOS):
+* Build source code _incrementally_ (do not build what was already built before): `./tests.cmd -Dintellij.build.incremental.compilation=true`
+* Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest`
+
+`tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/scripts/CommunityRunTestsBuildTarget.kt) from the command line.
+You may call it directly from IDEA, see run configuration `tests in community` for an example.
