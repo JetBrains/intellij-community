@@ -13,9 +13,8 @@ import org.jetbrains.deft.obj.api.extensible.Extensible
 class Mutation(
   graph: ObjGraph
 ) : SnapshotView(graph),
-    ObjStorage.Mutation,
     Root.Builder {
-  override val rootBuilder: Root.Builder
+  val rootBuilder: Root.Builder
     get() = RootImpl.Builder(root)
 
   override val factory: ObjType<Root, *> get() = Root
@@ -35,11 +34,11 @@ class Mutation(
     changed.add(obj)
   }
 
-  suspend fun commit(): StoreResult {
-    if (!logUpdates) graph.disallowLoad = true
-    changed.forEach {
-      it.freeze()
-    }
-    return data.update(graph.version, changed.toList())
-  }
+  //suspend fun commit(): StoreResult {
+  //  if (!logUpdates) graph.disallowLoad = true
+  //  changed.forEach {
+  //    it.freeze()
+  //  }
+  //  return data.update(graph.version, changed.toList())
+  //}
 }

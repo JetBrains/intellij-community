@@ -5,7 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
-import com.sun.org.slf4j.internal.LoggerFactory
+import com.intellij.openapi.diagnostic.Logger
 
 internal object ReplaceBySourceAsGraph {
   /**
@@ -465,5 +465,5 @@ internal object ReplaceBySourceAsGraph {
   }
 
 
-  val LOG = LoggerFactory.getLogger(ReplaceBySourceAsGraph::class.java)
+  val LOG = Logger.getInstance(ReplaceBySourceAsGraph::class.java)
 }

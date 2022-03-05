@@ -1,8 +1,8 @@
 package org.jetbrains.deft.collections
 
+import com.intellij.workspaceModel.codegen.impl.ObjGraph
 import kotlinx.io.core.Output
 import org.jetbrains.deft.bytes.intBytesCount
-import org.jetbrains.deft.impl.ObjStorageImpl
 import org.jetbrains.deft.obj.api.collections.assign
 
 @Deprecated(message = "use set from api",
@@ -38,7 +38,7 @@ fun ListView<*, *>.updateRefIds() {
     }
 }
 
-fun Collection<*>.ensureInGraph(value: ObjStorageImpl.ObjGraph?) {
+fun Collection<*>.ensureInGraph(value: ObjGraph?) {
     forEach {
         if (it is WithRefs) it.ensureInGraph(value)
     }

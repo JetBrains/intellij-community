@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.sun.org.slf4j.internal.LoggerFactory
+import com.intellij.openapi.diagnostic.Logger
 
 internal typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
 
@@ -153,7 +153,7 @@ class WorkspaceBuilderChangeLog {
   }
 
   companion object {
-    val LOG = LoggerFactory.getLogger(WorkspaceBuilderChangeLog::class.java)
+    val LOG = Logger.getInstance(WorkspaceBuilderChangeLog::class.java)
   }
 }
 

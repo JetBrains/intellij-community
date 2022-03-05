@@ -1,9 +1,7 @@
 package org.jetbrains.deft.impl
 
 import org.jetbrains.deft.ObjId
-import org.jetbrains.deft.ObjNames
 import org.jetbrains.deft.collections.Ref
-import org.jetbrains.deft.rpc.ObjName
 
 @Suppress("UNCHECKED_CAST")
 class ObjNamesImpl(names: List<ObjName> = emptyList()) : ObjNames {
@@ -99,3 +97,11 @@ class ObjNamesImpl(names: List<ObjName> = emptyList()) : ObjNames {
         }
     }
 }
+
+interface ObjNames {
+  operator fun get(vararg path: String): Ref<*>?
+  operator fun get(context: Ref<*>, vararg path: String): Ref<*>?
+  fun getChildren(context: Ref<*>): Collection<Pair<String, Ref<*>>>?
+}
+
+class ObjName(val id: Int, val parentId: Int, val name: String)

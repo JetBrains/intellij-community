@@ -11,10 +11,9 @@ import org.jetbrains.deft.bytes.outputMaxBytes
 import org.jetbrains.deft.bytes.readString
 import org.jetbrains.deft.bytes.writeString
 import org.jetbrains.deft.collections.*
-import org.jetbrains.deft.impl.ObjStorageImpl.Mutation
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.obj.impl.ObjImplWrapper
-import org.jetbrains.deft.writeId
+//import org.jetbrains.deft.writeId
 
 @Suppress("PropertyName")
 abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
@@ -97,7 +96,7 @@ abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
             if (oldGraph != null) throw AlienObjectRefError(oldGraph, this, null, value)
             graph = value
             value._register(this)
-            (value.owner as? ObjStorageImpl.Mutation)?.markChanged(this)
+            (value.owner as? Mutation)?.markChanged(this)
             moveIntoGraph(value)
         }
     }
@@ -233,7 +232,7 @@ abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
 
     open fun storeTo(output: Output) {
         output.writeString(name ?: "")
-        output.writeId(_parentId)
+        //output.writeId(_parentId)
         extensionsStoreTo(output)
     }
 

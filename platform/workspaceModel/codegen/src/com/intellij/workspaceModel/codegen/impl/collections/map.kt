@@ -1,10 +1,10 @@
 package org.jetbrains.deft.collections
 
+import com.intellij.workspaceModel.codegen.impl.ObjGraph
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.bytes.intBytesCount
-import org.jetbrains.deft.impl.ObjStorageImpl
 
 fun <K, V> MutableMap<K, V>.set(other: Map<K, V>) {
     clear()
@@ -42,7 +42,7 @@ fun Map<*, *>.updateRefIds() {
     }
 }
 
-fun Map<*, *>.ensureInGraph(value: ObjStorageImpl.ObjGraph?) {
+fun Map<*, *>.ensureInGraph(value: ObjGraph?) {
     entries.forEach { (k, v) ->
         if (k is WithRefs) k.ensureInGraph(value)
         if (v is WithRefs) v.ensureInGraph(value)

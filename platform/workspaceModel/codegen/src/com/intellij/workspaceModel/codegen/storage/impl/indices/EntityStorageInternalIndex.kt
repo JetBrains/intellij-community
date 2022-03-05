@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.storage.impl.indices
 
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongSetMap
-import com.sun.org.slf4j.internal.LoggerFactory
+import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.TestOnly
 
 //typealias EntityStorageIndex = BidirectionalSetMap<EntityId, T>
@@ -76,7 +76,7 @@ open class EntityStorageInternalIndex<T> private constructor(
         return MutableEntityStorageInternalIndex(other.index, other.oneToOneAssociation)
       }
 
-      val LOG = LoggerFactory.getLogger(MutableEntityStorageInternalIndex::class.java)
+      val LOG = Logger.getInstance(MutableEntityStorageInternalIndex::class.java)
     }
   }
 }

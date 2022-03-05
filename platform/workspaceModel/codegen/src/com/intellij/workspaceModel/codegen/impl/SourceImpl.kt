@@ -1,7 +1,8 @@
 package org.jetbrains.deft.impl
 
-import org.jetbrains.deft.ObjStorage
-
-class SourceImpl(val name: String) : ObjStorage.Source {
+class SourceImpl(val name: String) : Source {
     override fun toString(): String = name
+}
+
+public interface Source {
 }

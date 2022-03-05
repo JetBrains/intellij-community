@@ -1,11 +1,11 @@
 package org.jetbrains.deft.collections
 
+import com.intellij.workspaceModel.codegen.impl.ObjGraph
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
 import org.jetbrains.deft.*
 import org.jetbrains.deft.bytes.intBytesCount
 import org.jetbrains.deft.impl.ObjImpl
-import org.jetbrains.deft.impl.ObjStorageImpl
 
 fun Refs(owner: ObjImpl, items: Collection<Obj>): Refs {
     val refs = Refs(owner, items.size)
@@ -19,37 +19,37 @@ val Refs?.outputMaxBytes: Int
         if (this == null) intBytesCount
         else outputMaxBytes
 
-fun Output.writeRefs(refs: Refs?) {
-    if (refs == null) {
-        writeInt(0)
-    } else {
-        writeInt(refs.size)
-        refs.forEachId {
-            writeId(it)
-        }
-    }
-}
+//fun Output.writeRefs(refs: Refs?) {
+//    if (refs == null) {
+//        writeInt(0)
+//    } else {
+//        writeInt(refs.size)
+//        refs.forEachId {
+//            writeId(it)
+//        }
+//    }
+//}
 
-fun Input.readRefs(owner: ObjImpl): Refs? {
-    val n = readInt()
-    if (n == 0) return null
-    val refs = Refs(owner, n)
-    repeat(n) {
-        refs.addId(readId())
-    }
-    return refs
-}
-
-fun Input.readChildren(owner: ObjImpl): Children? {
-    val n = readInt()
-    if (n == 0) return null
-
-    val children = Children(owner)
-    repeat(n) {
-        children.addId(readId())
-    }
-    return children
-}
+//fun Input.readRefs(owner: ObjImpl): Refs? {
+//    val n = readInt()
+//    if (n == 0) return null
+//    val refs = Refs(owner, n)
+//    repeat(n) {
+//        refs.addId(readId())
+//    }
+//    return refs
+//}
+//
+//fun Input.readChildren(owner: ObjImpl): Children? {
+//    val n = readInt()
+//    if (n == 0) return null
+//
+//    val children = Children(owner)
+//    repeat(n) {
+//        children.addId(readId())
+//    }
+//    return children
+//}
 
 open class Refs(val owner: ObjImpl, _initialCapacity: Int = initialCapacity) : AbstractMutableList<ObjImpl>(),
     ObjectsListBuilder<_Obj0, ObjImpl> {
@@ -155,7 +155,7 @@ open class Refs(val owner: ObjImpl, _initialCapacity: Int = initialCapacity) : A
         }
     }
 
-    fun ensureInGraph(graph: ObjStorageImpl.ObjGraph?) {
+    fun ensureInGraph(graph: ObjGraph?) {
         items.forEach {
             it?.ensureInGraph(graph)
         }

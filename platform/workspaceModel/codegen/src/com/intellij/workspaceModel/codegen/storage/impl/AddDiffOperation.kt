@@ -3,9 +3,8 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.workspaceModel.storage.*
-import com.sun.org.slf4j.internal.LoggerFactory
-import java.io.File
 
 internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
 
@@ -382,6 +381,6 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   }
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(AddDiffOperation::class.java)
+    private val LOG = Logger.getInstance(AddDiffOperation::class.java)
   }
 }

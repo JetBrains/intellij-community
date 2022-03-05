@@ -1,5 +1,6 @@
 package org.jetbrains.deft.impl
 
+import com.intellij.workspaceModel.codegen.impl.ObjGraph
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -40,7 +41,7 @@ abstract class ExtensibleImpl : Extensible {
         _forEachExtensionRaw { f, v -> item(f) { f.type.extGetValue(this, v) } }
     }
 
-    fun extensionsMoveIntoGraph(graph: ObjStorageImpl.ObjGraph?) {
+    fun extensionsMoveIntoGraph(graph: ObjGraph?) {
         _forEachExtensionRaw { field, value ->
             field.type.moveIntoGraph(graph, value)
         }

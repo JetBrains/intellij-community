@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.codegen.impl
 
 import org.jetbrains.deft.ObjId
 import org.jetbrains.deft.impl.ObjImpl
+import org.jetbrains.deft.impl.ObjName
 import org.jetbrains.deft.impl.ObjNamesImpl
 import org.jetbrains.deft.obj.impl.ObjImplWrapper
 
@@ -38,14 +39,15 @@ class ObjGraph(var version: Int, var dataViewId: Int, names: List<ObjName>) {
 
   private fun <T> load(id: ObjId<T>): T {
     check(!disallowLoad) { "Load of obj $id is disallowed" }
-    val owner = owner!!
-    when (val result = data.load(id, owner.viewId)) {
-      DataStorage.LoadResult.OutdatedSnapshot -> {
-        owner.close()
-        throw OutdatedSnapshot()
-      }
-      is DataStorage.LoadResult.Loaded -> return result.toObj(this) as T
-    }
+    //val owner = owner!!
+    //when (val result = data.load(id, owner.viewId)) {
+    //  DataStorage.LoadResult.OutdatedSnapshot -> {
+    //    owner.close()
+    //    throw OutdatedSnapshot()
+    //  }
+    //  is DataStorage.LoadResult.Loaded -> return result.toObj(this) as T
+    //}
+    throw Exception("")
   }
 
   override fun toString(): String = "v${version}@${dataViewId}"

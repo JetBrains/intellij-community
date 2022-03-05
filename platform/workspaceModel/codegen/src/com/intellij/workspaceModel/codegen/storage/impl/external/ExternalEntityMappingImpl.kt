@@ -5,7 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
-import com.sun.org.slf4j.internal.LoggerFactory
+import com.intellij.openapi.diagnostic.Logger
 import java.util.*
 
 internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: BidirectionalMap<EntityId, T>)
@@ -179,7 +179,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
       return Collections.unmodifiableMap(result)
     }
 
-    private val LOG = LoggerFactory.getLogger(MutableExternalEntityMappingImpl::class.java)
+    private val LOG = Logger.getInstance(MutableExternalEntityMappingImpl::class.java)
   }
 }
 

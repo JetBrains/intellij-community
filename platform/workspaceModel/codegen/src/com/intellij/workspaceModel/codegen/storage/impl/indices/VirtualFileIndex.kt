@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMult
 import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
-import com.sun.org.slf4j.internal.LoggerFactory
+import com.intellij.openapi.diagnostic.Logger
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
@@ -357,7 +357,7 @@ open class VirtualFileIndex internal constructor(
     }
 
     companion object {
-      private val LOG = LoggerFactory.getLogger(MutableVirtualFileIndex::class.java)
+      private val LOG = Logger.getInstance(MutableVirtualFileIndex::class.java)
       const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
       fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
         if (other is MutableVirtualFileIndex) other.freezed = true

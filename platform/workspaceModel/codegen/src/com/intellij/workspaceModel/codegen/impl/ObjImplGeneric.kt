@@ -1,5 +1,6 @@
 package org.jetbrains.deft.impl
 
+import com.intellij.workspaceModel.codegen.impl.ObjGraph
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
 import org.jetbrains.deft.Obj
@@ -48,7 +49,7 @@ class ObjImplGeneric<T : Obj, B : ObjBuilder<T>>(
         forEach { field, value -> field.type.updateRefIds(value) }
     }
 
-    override fun moveIntoGraph(graph: ObjStorageImpl.ObjGraph?) {
+    override fun moveIntoGraph(graph: ObjGraph?) {
         super.moveIntoGraph(graph)
         forEach { field, value -> field.type.moveIntoGraph(graph, value) }
     }

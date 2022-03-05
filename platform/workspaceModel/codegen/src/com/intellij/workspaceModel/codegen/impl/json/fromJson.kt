@@ -11,6 +11,7 @@ fun Obj.from(j: JsonReader) {
     value(j, factory.structure)
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 fun value(
     j: JsonReader,
     t: ValueType<*>

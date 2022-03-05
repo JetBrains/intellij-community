@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
-import com.sun.org.slf4j.internal.LoggerFactory
+import com.intellij.openapi.diagnostic.Logger
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -577,7 +577,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   companion object {
 
-    private val LOG = LoggerFactory.getLogger(WorkspaceEntityStorageBuilderImpl::class.java)
+    private val LOG = Logger.getInstance(WorkspaceEntityStorageBuilderImpl::class.java)
 
     fun create(): WorkspaceEntityStorageBuilderImpl {
       return from(WorkspaceEntityStorageImpl.EMPTY)
@@ -745,7 +745,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   companion object {
-    val LOG = LoggerFactory.getLogger(AbstractEntityStorage::class.java)
+    val LOG = Logger.getInstance(AbstractEntityStorage::class.java)
 
     private val consistencyChecker = Executors.newFixedThreadPool(1)
   }

@@ -43,7 +43,7 @@ class TestObj : ObjImpl() {
 
     override fun loadFrom(data: Input) {
         super.loadFrom(data)
-        _aId = data.readId()
+        //_aId = data.readId()
     }
 
     override fun updateRefIds() {
@@ -55,7 +55,7 @@ class TestObj : ObjImpl() {
 
     override fun storeTo(output: Output) {
         super.storeTo(output)
-        output.writeId(_aId)
+        //output.writeId(_aId)
     }
 
     class Builder : ObjBuilderImpl<TestObj>() {

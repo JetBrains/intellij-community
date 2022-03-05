@@ -1,5 +1,6 @@
 package org.jetbrains.deft.impl
 
+import com.intellij.workspaceModel.codegen.impl.ObjGraph
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
 import org.jetbrains.deft.*
@@ -122,7 +123,7 @@ fun <V> ValueType<V>.updateRefIds(v: Any?) {
     }
 }
 
-fun <V> ValueType<V>.moveIntoGraph(graph: ObjStorageImpl.ObjGraph?, v: Any?) {
+fun <V> ValueType<V>.moveIntoGraph(graph: ObjGraph?, v: Any?) {
     when (this) {
         is TOptional<*> -> if (v != null) type.moveIntoGraph(graph, v)
         is TRef<*> -> (v as Ref<*>?)?.ensureInGraph(graph)

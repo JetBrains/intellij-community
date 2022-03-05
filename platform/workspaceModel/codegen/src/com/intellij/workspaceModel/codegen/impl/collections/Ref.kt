@@ -1,16 +1,16 @@
 package org.jetbrains.deft.collections
 
+import com.intellij.workspaceModel.codegen.impl.ObjGraph
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
 import org.jetbrains.deft.*
 import org.jetbrains.deft.impl.ObjImpl
-import org.jetbrains.deft.impl.ObjStorageImpl
 import org.jetbrains.deft.impl._implObj
 import org.jetbrains.deft.obj.impl.ObjImplWrapper
 
 interface WithRefs {
     fun updateRefIds()
-    fun ensureInGraph(value: ObjStorageImpl.ObjGraph?)
+    fun ensureInGraph(value: ObjGraph?)
 }
 
 /**
@@ -39,11 +39,11 @@ open class Ref<T : Obj>(
         if (cached != null) id = cached.impl._id as ObjId<T>
     }
 
-    override fun ensureInGraph(value: ObjStorageImpl.ObjGraph?) {
+    override fun ensureInGraph(value: ObjGraph?) {
         cached?.impl?.ensureInGraph(value)
     }
 
-    fun get(graph: ObjStorageImpl.ObjGraph?): T? {
+    fun get(graph: ObjGraph?): T? {
         val cached = cached
         return when {
             id == ObjId.nothing -> null
