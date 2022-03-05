@@ -1028,6 +1028,14 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
+  @NotNull
+  @Override
+  public MavenArtifactResolveResult resolveArtifactTransitively(@NotNull List<MavenArtifactInfo> artifacts,
+                                                                @NotNull List<MavenRemoteRepository> remoteRepositories,
+                                                                MavenToken token) throws RemoteException {
+    return new MavenArtifactResolveResult(resolveTransitively(artifacts, remoteRepositories, token), null);
+  }
+
   @Override
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
                                                  @NotNull final List<MavenRemoteRepository> repositories,

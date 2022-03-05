@@ -227,12 +227,23 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return performCancelable(() -> getOrCreateWrappee().resolve(info, remoteRepositories, ourToken));
   }
 
+  /**
+   * @deprecated use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}
+   */
+  @Deprecated
   @NotNull
   public List<MavenArtifact> resolveTransitively(
     @NotNull final List<MavenArtifactInfo> artifacts,
     @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
 
     return performCancelable(() -> getOrCreateWrappee().resolveTransitively(artifacts, remoteRepositories, ourToken));
+  }
+
+  @NotNull
+  public MavenArtifactResolveResult resolveArtifactTransitively(
+    @NotNull final List<MavenArtifactInfo> artifacts,
+    @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
+    return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken));
   }
 
   @NotNull

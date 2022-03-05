@@ -406,6 +406,35 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
   }
 
   @NotNull
+  @Override
+  public MavenArtifactResolveResult resolveArtifactTransitively(@NotNull List<MavenArtifactInfo> artifacts,
+                                                                @NotNull List<MavenRemoteRepository> remoteRepositories,
+                                                                MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
+      for (MavenArtifactInfo each : artifacts) {
+        toResolve.add(createArtifact(each));
+      }
+
+      return new MavenArtifactResolveResult(
+        Maven2ModelConverter.convertArtifacts(myImpl.resolveTransitively(toResolve, convertRepositories(remoteRepositories)),
+                                                   new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile())
+        , null);
+    }
+    catch (ArtifactResolutionException e) {
+      Maven2ServerGlobals.getLogger().info(e);
+    }
+    catch (ArtifactNotFoundException e) {
+      Maven2ServerGlobals.getLogger().info(e);
+    }
+    catch (Exception e) {
+      throw rethrowException(e);
+    }
+    return new MavenArtifactResolveResult(Collections.<MavenArtifact>emptyList(), null);
+  }
+
+  @NotNull
   private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
     Artifact resolved = doResolve(createArtifact(info), convertRepositories(remoteRepositories));
     return Maven2ModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
