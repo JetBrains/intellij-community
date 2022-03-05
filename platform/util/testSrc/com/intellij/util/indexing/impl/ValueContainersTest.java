@@ -40,6 +40,20 @@ public class ValueContainersTest extends TestCase {
     runSimpleAddRemoveIteration(new Integer[] { 25, 33, 77}, new int[][]{{ 10, 20, 30}, { 11, 22 }, {44}});
   }
 
+  public void testMixedValueContainer() {
+    ValueContainerImpl<String> container = new ValueContainerImpl<>();
+
+    container.addValue(294005, "com");
+    container.addValue(294001, "com");
+    container.addValue(294010, null);
+    container.removeValue(294010, null);
+    container.addValue(294001, "com");
+    container.removeValue(294005, "com");
+    container.removeValue(294001, "com");
+
+    assertEquals("Actual container: " + container, 0, container.size());
+  }
+
   public void testTolerateHashcodeProblems() {
     class MutableValue {
       int id;
