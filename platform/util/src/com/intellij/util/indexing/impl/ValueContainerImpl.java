@@ -87,7 +87,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
 
   private void ensureInputIdIsntAssociatedWithAnotherValue(int inputId, Value value, boolean isDirect) {
     if (myPresentInputIds != null) {
-      Object normalizedValue = value == null ? myNullValue : value;
+      Object normalizedValue = normalizeValue(value);
       Object previousValue = myPresentInputIds.put(inputId, normalizedValue);
       myUpdateOps.add(new UpdateOp(isDirect ? UpdateOp.Type.ADD_DIRECT : UpdateOp.Type.ADD, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
@@ -96,9 +96,14 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
   }
 
+  @NotNull
+  private Value normalizeValue(Value value) {
+    return value == null ? nullValue() : value;
+  }
+
   private void ensureInputIdAssociatedWithValue(int inputId, Value value) {
     if (myPresentInputIds != null) {
-      Object normalizedValue = value == null ? myNullValue : value;
+      Object normalizedValue = normalizeValue(value);
       Object previousValue = myPresentInputIds.remove(inputId);
       myUpdateOps.add(new UpdateOp(UpdateOp.Type.REMOVE, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
@@ -124,7 +129,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   }
 
   private void resetFileSetForValue(Value value, @NotNull Object fileSet) {
-    if (value == null) value = nullValue();
+    value = normalizeValue(value);
     Map<Value, Object> map = asMapping();
     if (map == null) {
       myInputIdMappingValue = fileSet;
@@ -203,6 +208,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       }
     }
 
+    value = normalizeValue(value);
     Map<Value, Object> mapping = asMapping();
     if (mapping == null) {
       myInputIdMapping = null;
@@ -376,7 +382,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   private Object getFileSetObject(Value value) {
     if (myInputIdMapping == null) return null;
 
-    value = value != null ? value : nullValue();
+    value = normalizeValue(value);
 
     if (myInputIdMapping == value || // myNullValue is Object
         myInputIdMapping.equals(value)) {
@@ -472,7 +478,8 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   }
 
   private void attachFileSetForNewValue(Value value, Object fileSet) {
-    value = value != null ? value : nullValue();
+    value = normalizeValue(value);
+
     if (myInputIdMapping != null) {
       Map<Value, Object> mapping = asMapping();
       if (mapping == null) {
