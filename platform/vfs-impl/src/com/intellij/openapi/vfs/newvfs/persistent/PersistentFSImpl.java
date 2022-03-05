@@ -74,7 +74,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
                                                                 HashingStrategy.caseInsensitive());
 
-    ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
+    ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
     LowMemoryWatcher.register(this::clearIdCache, this);
 
     AsyncEventSupport.startListening();
@@ -96,7 +96,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     });
 
-    doConnect();
+    connect();
   }
 
   @ApiStatus.Internal
@@ -139,7 +139,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void dispose() {
-    performShutdown();
+    disconnect();
   }
 
   private void performShutdown() {
