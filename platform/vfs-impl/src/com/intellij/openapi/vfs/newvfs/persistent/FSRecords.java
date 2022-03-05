@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -63,15 +64,19 @@ public final class FSRecords {
   private static volatile PersistentFSRecordAccessor ourRecordAccessor;
   private static volatile int ourCurrentVersion;
 
+  private static final AtomicLong ourNamesIndexModCount = new AtomicLong();
+
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
     int mask = (prevMask << bits) | value;
     if (mask < 0) throw new IllegalStateException("Too many flags, int mask overflown");
     return mask;
   }
+
   private static int nextMask(boolean value, int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
+
   private static int calculateVersion() {
     return nextMask(59,  // acceptable range is [0..255]
                     8,
@@ -165,9 +170,13 @@ public final class FSRecords {
     return writeAndHandleErrors(() -> ourRecordAccessor.createRecord());
   }
 
+  public static long getNamesIndexModCount() {
+    return ourNamesIndexModCount.get();
+  }
+
   static void deleteRecordRecursively(int id) {
     writeAndHandleErrors(() -> {
-      InvertedNameIndex.incModCount();
+      ourNamesIndexModCount.incrementAndGet();
       incModCount(id);
       markAsDeletedRecursively(id);
     });
@@ -612,7 +621,7 @@ public final class FSRecords {
    */
   static int setName(int fileId, @NotNull String name) {
     return writeAndHandleErrors(() -> {
-      InvertedNameIndex.incModCount();
+      ourNamesIndexModCount.incrementAndGet();
       incModCount(fileId);
       int nameId = ourConnection.getNames().enumerate(name);
       ourConnection.getRecords().setNameId(fileId, nameId);
