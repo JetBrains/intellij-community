@@ -126,7 +126,10 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
           valueObjects = new SmartList<>();
         }
         else if (IndexDebugProperties.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get() + ", ;\nValue container = \n" + this);
+          if (myPresentInputIds != null)
+          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get() +
+                    ", ;\nActual value container = \n" + this +
+                    (myPresentInputIds == null ? "" : "\nExpected value container = " + myPresentInputIds));
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);
