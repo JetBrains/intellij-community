@@ -39,7 +39,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
-        if (element.typeReference == null) return false
+        val typeReference = element.typeReference
+        if (typeReference == null || typeReference.annotationEntries.isNotEmpty()) return false
         val needFieldTypes = settings?.specifyFieldTypeByDefault == true
         val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
 
@@ -284,9 +285,12 @@ class JavaObjectEqualsToEqOperatorProcessing : InspectionLikeProcessingForElemen
 
 class RemoveForExpressionLoopParameterTypeProcessing :
     InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
-    override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean =
-        element.loopParameter?.typeReference?.typeElement != null
-                && settings?.specifyLocalVariableTypeByDefault != true
+    override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean {
+        val typeReference = element.loopParameter?.typeReference ?: return false
+        return (typeReference.annotationEntries.isEmpty()
+                && typeReference.typeElement != null
+                && settings?.specifyLocalVariableTypeByDefault != true)
+    }
 
     override fun apply(element: KtForExpression) {
         element.loopParameter?.typeReference = null

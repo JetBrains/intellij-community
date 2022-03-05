@@ -209,13 +209,17 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitInheritanceInfoRaw(inheritanceInfo: JKInheritanceInfo) {
             val parentClass = inheritanceInfo.parentOfType<JKClass>()!!
             val isInInterface = parentClass.classKind == JKClass.ClassKind.INTERFACE
-            val extendTypes = inheritanceInfo.extends.map { it.type.updateNullability(Nullability.NotNull) }
-            val implementTypes = inheritanceInfo.implements.map { it.type.updateNullability(Nullability.NotNull) }
+            inheritanceInfo.extends.forEach { it.type = it.type.updateNullability(Nullability.NotNull) }
+            inheritanceInfo.implements.forEach { it.type = it.type.updateNullability(Nullability.NotNull) }
             if (isInInterface) {
-                printer.renderList(extendTypes) { printer.renderType(it, null) }
+                printer.renderList(inheritanceInfo.extends) {
+                    it.annotationList.accept(this)
+                    printer.renderType(it.type, null)
+                }
             } else {
-                extendTypes.singleOrNull()?.also { superType ->
-                    printer.renderType(superType, null)
+                inheritanceInfo.extends.singleOrNull()?.also { superTypeElement ->
+                    superTypeElement.annotationList.accept(this)
+                    printer.renderType(superTypeElement.type, null)
                     val primaryConstructor = parentClass.primaryConstructor()
                     val delegationCall =
                         primaryConstructor
@@ -223,18 +227,20 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                             ?.let { it as? JKDelegationConstructorCall }
                     if (delegationCall != null) {
                         printer.par { delegationCall.arguments.accept(this) }
-                    } else if (!superType.isInterface() && (primaryConstructor != null || parentClass.isObjectOrCompanionObject)) {
+                    } else if (!superTypeElement.type.isInterface() && (primaryConstructor != null || parentClass.isObjectOrCompanionObject)) {
                         printer.print("()")
                     }
                 }
             }
 
-            if (implementTypes.isNotEmpty() && extendTypes.size == 1) {
+            if (inheritanceInfo.implements.isNotEmpty() && inheritanceInfo.extends.size == 1) {
                 printer.print(", ")
             }
-            printer.renderList(implementTypes) { printer.renderType(it, null) }
+            printer.renderList(inheritanceInfo.implements) {
+                it.annotationList.accept(this)
+                printer.renderType(it.type, null)
+            }
         }
-
 
         private fun renderEnumConstants(enumConstants: List<JKEnumConstant>) {
             printer.renderList(enumConstants) {
@@ -405,6 +411,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitTypeParameterRaw(typeParameter: JKTypeParameter) {
+            typeParameter.annotationList.accept(this)
             typeParameter.name.accept(this)
             if (typeParameter.upperBounds.size == 1) {
                 printer.print(" : ")

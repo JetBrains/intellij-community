@@ -49,7 +49,7 @@ class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : Recursive
         val type = (method.returnType.type as? JKClassType)
             ?.takeIf { it.classReference.name == "String" }
             ?.updateNullability(Nullability.NotNull) ?: return false
-        method.returnType = JKTypeElement(type)
+        method.returnType = JKTypeElement(type, method.returnType::annotationList.detached())
         return true
     }
 
@@ -59,7 +59,7 @@ class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : Recursive
         val type = (method.returnType.type as? JKClassType)
             ?.takeIf { it.classReference.name == "Object" }
             ?.updateNullability(Nullability.NotNull) ?: return false
-        method.returnType = JKTypeElement(type)
+        method.returnType = JKTypeElement(type, method.returnType::annotationList.detached())
         return true
     }
 

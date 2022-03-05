@@ -155,7 +155,6 @@ class JavaToJKTreeBuilder constructor(
         }
     } ?: JKNameIdentifier("")
 
-
     private inner class ExpressionTreeMapper {
         fun PsiExpression?.toJK(): JKExpression = when (this) {
             null -> JKStubExpression()
@@ -226,10 +225,12 @@ class JavaToJKTreeBuilder constructor(
         }
 
         fun PsiInstanceOfExpression.toJK(): JKIsExpression =
-            JKIsExpression(operand.toJK(), JKTypeElement(checkType?.type?.toJK() ?: JKNoType))
-                .also {
-                    it.withFormattingFrom(this)
-                }
+            JKIsExpression(
+                operand.toJK(),
+                with(declarationMapper) { JKTypeElement(checkType?.type?.toJK() ?: JKNoType, checkType.annotationList()) }
+            ).also {
+                it.withFormattingFrom(this)
+            }
 
         fun PsiAssignmentExpression.toJK(): JKJavaAssignmentExpression {
             return JKJavaAssignmentExpression(
@@ -554,11 +555,11 @@ class JavaToJKTreeBuilder constructor(
         }
 
         fun PsiReferenceParameterList.toJK(): JKTypeArgumentList =
-            JKTypeArgumentList(typeArguments.map { JKTypeElement(it.toJK()) })
-                .also {
-                    it.withFormattingFrom(this)
-                }
-
+            JKTypeArgumentList(
+                typeParameterElements.map { JKTypeElement(it.type.toJK(), with(declarationMapper) { it.annotationList() }) }
+            ).also {
+                it.withFormattingFrom(this)
+            }
 
         fun PsiArrayAccessExpression.toJK(): JKExpression =
             arrayExpression.toJK()
@@ -573,7 +574,7 @@ class JavaToJKTreeBuilder constructor(
         fun PsiTypeCastExpression.toJK(): JKExpression {
             return JKTypeCastExpression(
                 operand?.toJK() ?: createErrorExpression(),
-                (castType?.type?.toJK() ?: JKNoType).asTypeElement()
+                (castType?.type?.toJK() ?: JKNoType).asTypeElement(with(declarationMapper) { castType.annotationList() })
             ).also {
                 it.withFormattingFrom(this)
             }
@@ -638,7 +639,8 @@ class JavaToJKTreeBuilder constructor(
         fun PsiTypeParameter.toJK(): JKTypeParameter =
             JKTypeParameter(
                 nameIdentifier.toJK(),
-                extendsListTypes.map { JKTypeElement(it.toJK()) }
+                extendsListTypes.map { type -> JKTypeElement(type.toJK(), JKAnnotationList(type.annotations.map { it.toJK() })) },
+                JKAnnotationList(annotations.mapNotNull { it?.toJK() })
             ).also {
                 symbolProvider.provideUniverseSymbol(this, it)
                 it.withFormattingFrom(this)
@@ -663,8 +665,12 @@ class JavaToJKTreeBuilder constructor(
 
 
         fun PsiClass.inheritanceInfo(): JKInheritanceInfo {
-            val implTypes = implementsList?.referencedTypes?.map { JKTypeElement(it.toJK()) }.orEmpty()
-            val extensionType = extendsList?.referencedTypes?.map { JKTypeElement(it.toJK()) }.orEmpty()
+            val implTypes = implementsList?.referencedTypes?.map { type ->
+                JKTypeElement(type.toJK(), JKAnnotationList(type.annotations.map { it.toJK() }))
+            }.orEmpty()
+            val extensionType = extendsList?.referencedTypes?.map { type ->
+                JKTypeElement(type.toJK(), JKAnnotationList(type.annotations.map { it.toJK() }))
+            }.orEmpty()
             return JKInheritanceInfo(extensionType, implTypes)
                 .also {
                     if (implementsList != null) {
@@ -839,7 +845,9 @@ class JavaToJKTreeBuilder constructor(
                 JKTypeElement(
                     returnType?.toJK()
                         ?: JKJavaVoidType.takeIf { isConstructor }
-                        ?: JKNoType),
+                        ?: JKNoType,
+                    returnTypeElement?.annotationList() ?: JKAnnotationList()
+                ),
                 nameIdentifier.toJK(),
                 defaultValue?.toJK() ?: JKStubExpression(),
                 annotationList(this),

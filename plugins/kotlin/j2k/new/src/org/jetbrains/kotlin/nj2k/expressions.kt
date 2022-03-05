@@ -250,7 +250,10 @@ fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKEx
                     element.literalType = JKClassLiteralExpression.ClassLiteralType.KOTLIN_CLASS
                 }
             is JKTypeElement ->
-                JKTypeElement(element.type.replaceJavaClassWithKotlinClassType(symbolProvider))
+                JKTypeElement(
+                    element.type.replaceJavaClassWithKotlinClassType(symbolProvider),
+                    element::annotationList.detached()
+                )
             else -> applyRecursive(element, ::handleAnnotationParameter)
         }
 
