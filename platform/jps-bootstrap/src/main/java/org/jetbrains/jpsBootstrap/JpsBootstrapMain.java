@@ -13,6 +13,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.JpsBootstrapJdk;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -131,7 +132,15 @@ public class JpsBootstrapMain {
   }
 
   private void main() throws Throwable {
-    Path jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+    Path jdkHome;
+    if (JpsBootstrapUtil.underTeamCity) {
+      jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+    }
+    else {
+      // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
+      jdkHome = Path.of(System.getProperty("java.home"));
+    }
+
     Path kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome);
 
     JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome);
