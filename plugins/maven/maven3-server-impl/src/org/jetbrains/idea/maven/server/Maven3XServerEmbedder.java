@@ -1321,6 +1321,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return doResolve(info, remoteRepositories);
   }
 
+  @Deprecated
   @NotNull
   @Override
   public List<MavenArtifact> resolveTransitively(@NotNull final List<MavenArtifactInfo> artifacts,
@@ -1347,6 +1348,46 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
+  @Override
+  public MavenArtifactResolveResult resolveArtifactTransitively(
+    @NotNull final List<MavenArtifactInfo> artifacts,
+    @NotNull final List<MavenRemoteRepository> remoteRepositories,
+    MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+
+    try {
+      final MavenExecutionRequest request = createRequest(null, null, null, null);
+
+      final List<MavenArtifact>[] mavenArtifacts = new List[]{null};
+      executeWithMavenSession(request, new Runnable() {
+        @Override
+        public void run() {
+          try {
+            mavenArtifacts[0] = Maven3XServerEmbedder.this.doResolveTransitivelyWithError(artifacts, remoteRepositories);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+      return new MavenArtifactResolveResult(mavenArtifacts[0], null);
+    }
+    catch (Exception e) {
+      Maven3ServerGlobals.getLogger().error(e);
+      Artifact transferArtifact = getProblemTransferArtifact(e);
+      String message = getRootMessage(e);
+      MavenProjectProblem problem;
+      if (transferArtifact != null) {
+        MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(transferArtifact, getLocalRepositoryFile());
+        problem = MavenProjectProblem.createRepositoryProblem("", message, true, mavenArtifact);
+      } else {
+        problem = MavenProjectProblem.createStructureProblem("", message);
+      }
+      return new MavenArtifactResolveResult(Collections.<MavenArtifact>emptyList(), problem);
+    }
+  }
+
+  @NotNull
   private List<MavenArtifact> doResolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                     @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
 
@@ -1368,6 +1409,24 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       Maven3ServerGlobals.getLogger().info(e);
       throw rethrowException(e);
     }
+  }
+
+  @NotNull
+  private List<MavenArtifact> doResolveTransitivelyWithError(@NotNull List<MavenArtifactInfo> artifacts,
+                                                             @NotNull List<MavenRemoteRepository> remoteRepositories)
+    throws RemoteException, ArtifactResolutionException, ArtifactNotFoundException {
+    Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
+    for (MavenArtifactInfo each : artifacts) {
+      toResolve.add(createArtifact(each));
+    }
+
+    Artifact project = getComponent(ArtifactFactory.class).createBuildArtifact("temp", "temp", "666", "pom");
+
+    Set<Artifact> res = getComponent(ArtifactResolver.class)
+      .resolveTransitively(toResolve, project, Collections.EMPTY_MAP, myLocalRepository, convertRepositories(remoteRepositories),
+                           getComponent(ArtifactMetadataSource.class)).getArtifacts();
+
+    return MavenModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
   }
 
   @Override
