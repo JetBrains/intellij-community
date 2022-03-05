@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -8,7 +9,6 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ final class PersistentFSTreeAccessor {
     myAttributeAccessor = attributeAccessor;
     myFSConnection = connection;
     myFsRootDataLoader = SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false)
-                       ? ContainerUtil.getFirstItem(FsRootDataLoader.getEP_NAME().getExtensionList())
+                       ? ApplicationManager.getApplication().getService(FsRootDataLoader.class)
                        : null;
   }
 
