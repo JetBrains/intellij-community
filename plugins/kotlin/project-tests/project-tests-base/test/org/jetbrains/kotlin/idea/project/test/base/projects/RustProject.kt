@@ -25,7 +25,7 @@ object RustProject {
         val basePath = "src/main/kotlin/org/rust"
 
         listOf(
-            HighlightFileAction("$basePath/lang/core/stubs/StubImplementations.kt"),
+            //HighlightFileAction("$basePath/lang/core/stubs/StubImplementations.kt"),
             HighlightFileAction("$basePath/lang/core/resolve/NameResolution.kt"),
             HighlightFileAction("$basePath/ide/annotator/RsErrorAnnotator.kt"),
             HighlightFileAction("$basePath/lang/core/types/infer/TypeInferenceWalker.kt"),
