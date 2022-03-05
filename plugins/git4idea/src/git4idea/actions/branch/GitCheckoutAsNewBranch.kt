@@ -24,6 +24,7 @@ class GitCheckoutAsNewBranch : GitSingleBranchAction(GitBundle.messagePointer("b
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     createOrCheckoutNewBranch(project, repositories, "${branch.name}^0",
-                              GitBundle.message("action.Git.New.Branch.dialog.title", branch.name))
+                              GitBundle.message("action.Git.New.Branch.dialog.title", branch.name),
+                              GitBranchActionsUtil.calculateNewBranchInitialName(branch))
   }
 }
