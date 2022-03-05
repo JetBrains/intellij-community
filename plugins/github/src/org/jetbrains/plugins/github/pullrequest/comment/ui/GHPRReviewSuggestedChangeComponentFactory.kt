@@ -212,10 +212,13 @@ class GHPRReviewSuggestedChangeComponentFactory(
           background = EditorColorsManager.getInstance().globalScheme.defaultBackground
           preferredSize = JBDimension(450, 165)
 
+          isFocusCycleRoot = true
+          focusTraversalPolicy = LayoutFocusTraversalPolicy()
+
           registerKeyboardAction(commitAction, KeyStroke.getKeyStroke("ctrl ENTER"), JPanel.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
         }
 
-        override fun getPreferredFocusableComponent(): JComponent = commitEditor
+        override fun getPreferredFocusableComponent(): JComponent = commitEditor.editorField
 
         override fun dispose() {}
       }
