@@ -99,7 +99,7 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
         val moduleDescriptor = findModuleDescriptor()
         val languageVersionSettings = languageVersionSettings
         val returnTypes = collectDescendantsOfType<KtReturnExpression> {
-            it.labelQualifier == null && it.getTargetFunctionDescriptor(context) == declarationDescriptor
+            it.getTargetFunctionDescriptor(context) == declarationDescriptor
         }.flatMap {
             it.returnedExpression.types(context, dataFlowValueFactory, moduleDescriptor, languageVersionSettings)
         }
