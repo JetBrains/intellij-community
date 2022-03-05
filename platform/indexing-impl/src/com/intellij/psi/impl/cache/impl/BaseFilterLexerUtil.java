@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.cache.impl.id.IdDataConsumer;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
@@ -19,25 +18,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class BaseFilterLexerUtil {
-  private static final Key<ScanContent> scanContentKey = Key.create("id.todo.scan.content");
   private static final ScanContent EMPTY = new ScanContent(Collections.emptyMap(), Collections.emptyMap());
 
-  public static ScanContent scanContent(FileContent content, IdAndToDoScannerBasedOnFilterLexer indexer) {
-    ScanContent data = content.getUserData(scanContentKey);
-    if (data != null) {
-      content.putUserData(scanContentKey, null);
-      return data;
-    }
+  public static @NotNull ScanContent scanContent(FileContent content, IdAndToDoScannerBasedOnFilterLexer indexer) {
+    return scanContent(content, false, indexer);
+  }
 
-    final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
-    IndexPattern[] todoPatterns = IndexPatternUtil.getIndexPatterns();
-    if (!needIdIndex && todoPatterns.length <= 0) return EMPTY;
-    final boolean needTodo = TodoIndexers.needsTodoIndex(content) || content.getFile() instanceof LightVirtualFile;
-
-    data = doScanContent(content, indexer, needIdIndex, needTodo, todoPatterns);
-
-    if (needIdIndex && needTodo) content.putUserData(scanContentKey, data);
-    return data;
+  public static @NotNull ScanContent scanContent(FileContent content, boolean withTodos, IdAndToDoScannerBasedOnFilterLexer indexer) {
+    boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
+    boolean needTodo = withTodos && (TodoIndexers.needsTodoIndex(content) || content.getFile() instanceof LightVirtualFile);
+    IndexPattern[] todoPatterns = needTodo ? IndexPatternUtil.getIndexPatterns() : IndexPattern.EMPTY_ARRAY;
+    if (!needIdIndex && !needTodo || !needIdIndex && todoPatterns.length <= 0) return EMPTY;
+    return doScanContent(content, indexer, needIdIndex, needTodo, todoPatterns);
   }
 
   public static @NotNull ScanContent doScanContent(@NotNull FileContent content,
