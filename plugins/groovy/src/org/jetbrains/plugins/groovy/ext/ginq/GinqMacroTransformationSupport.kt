@@ -14,6 +14,8 @@ import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordType
+import org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordType.Companion.ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD
+import org.jetbrains.plugins.groovy.ext.ginq.types.GrSyntheticNamedRecordClass
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -71,11 +73,14 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       override fun visitElement(element: GroovyPsiElement) {
         val nestedGinq = element.getUserData(injectedGinq)
         if (nestedGinq != null) {
-          keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw, nestedGinq.groupBy?.having?.havingKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw, nestedGinq.select.selectKw)
+          keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw,
+                                   nestedGinq.groupBy?.having?.havingKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw,
+                                   nestedGinq.select.selectKw)
           keywords.addAll(nestedGinq.joins.mapNotNull { it.onCondition?.onKw })
           keywords.addAll(nestedGinq.joins.map { it.joinKw })
           softKeywords.addAll(nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList())
-        } else {
+        }
+        else {
           super.visitElement(element)
         }
       }
@@ -93,7 +98,9 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         val ginq = getParsedGinqTree(macroCall) ?: return null
         val namedRecord = GrNamedRecordType(ginq)
         val facade = JavaPsiFacade.getInstance(macroCall.project)
-        return facade.findClass(CommonClassNames.JAVA_UTIL_LIST, macroCall.resolveScope)?.let { facade.elementFactory.createType(it, namedRecord) }
+        return facade.findClass(CommonClassNames.JAVA_UTIL_LIST, macroCall.resolveScope)?.let {
+          facade.elementFactory.createType(it, namedRecord)
+        }
       }
     }
     if (expression is GrReferenceExpression) {
@@ -112,22 +119,38 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return element.parents(true).any { it.getUserData(UNTRANSFORMED_ELEMENT) != null }
   }
 
-  override fun processResolve(macroCall: GrMethodCall, scope: PsiElement, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+  override fun processResolve(macroCall: GrMethodCall,
+                              scope: PsiElement,
+                              processor: PsiScopeProcessor,
+                              state: ResolveState,
+                              place: PsiElement): Boolean {
     val name = ResolveUtil.getNameHint(processor) ?: return true
     val tree = getParsedGinqTree(macroCall) ?: return true
-    if (name == "distinct" && processor.shouldProcessMethods()) {
-      if (tree.select.projections.any { it.expression.castSafelyTo<GrMethodCall>()?.invokedExpression == place }) {
-        val call = GrLightMethodBuilder(macroCall.manager, "distinct")
-        val method = JavaPsiFacade.getInstance(macroCall.project).findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, macroCall.resolveScope)?.findMethodsByName("distinct", false)?.singleOrNull()
-        if (method != null) {
-          call.navigationElement = method
-        }
-        val typeParameter = call.addTypeParameter("T")
+    if (name == "distinct" && processor.shouldProcessMethods() && tree.select.distinct == place) {
+      val distinct = tree.select.distinct
+      val call = GrLightMethodBuilder(macroCall.manager, "distinct")
+      val method = JavaPsiFacade.getInstance(macroCall.project)
+        .findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, macroCall.resolveScope)
+        ?.findMethodsByName("distinct",false)?.singleOrNull()
+      if (method != null) {
+        call.navigationElement = method
+      }
+      val resultTypeCollector = mutableMapOf<String, Lazy<PsiType>>()
+      val typeParameters = mutableListOf<PsiTypeParameter>()
+      for ((i, arg) in tree.select.projections.withIndex()) {
+        val typeParameter = call.addTypeParameter("T$i")
         val typeParameterType = typeParameter.type()
         call.addParameter("expr", typeParameterType)
-        call.returnType = typeParameterType
-        return processor.execute(call, state)
+        if (arg.alias != null) {
+          // todo: indexes
+          typeParameters.add(typeParameter)
+          resultTypeCollector[arg.alias.text] = lazy(LazyThreadSafetyMode.NONE) { typeParameterType }
+        }
       }
+      val clazz = JavaPsiFacade.getInstance(macroCall.project).findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD, macroCall.resolveScope)
+      call.returnType = clazz?.let { GrSyntheticNamedRecordClass(typeParameters, resultTypeCollector, it).type() }
+
+      return processor.execute(call, state)
     }
     return true
   }
@@ -137,7 +160,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val referenceName = element.castSafelyTo<GrReferenceElement<*>>()?.referenceName ?: return null
     val hierarchy = element.ginqParents(macroCall, tree)
     for (ginq in hierarchy) {
-      val bindings  = ginq.joins.map { it.alias } + listOf(ginq.from.alias) + (ginq.groupBy?.classifiers?.mapNotNull(AliasedExpression::alias) ?: emptyList())
+      val bindings = ginq.joins.map { it.alias } + listOf(ginq.from.alias) + (ginq.groupBy?.classifiers?.mapNotNull(
+        AliasedExpression::alias) ?: emptyList())
       val binding = bindings.find { it.text == referenceName }
       if (binding != null) {
         return ElementResolveResult(binding)

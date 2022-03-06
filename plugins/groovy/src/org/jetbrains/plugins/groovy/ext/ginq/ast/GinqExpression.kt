@@ -165,7 +165,21 @@ data class GinqLimitFragment(
 
 data class GinqSelectFragment(
   val selectKw: PsiElement,
-  val projections: List<AliasedExpression>,
+  val distinct: GrReferenceExpression?,
+  val projections: List<AggregatableAliasedExpression>,
 ) : GinqQueryFragment {
-  override fun isValid() : Boolean = selectKw.isValid && projections.all { it.alias?.isValid ?: true && it.expression.isValid }
+  override fun isValid() : Boolean = selectKw.isValid && projections.all { it.alias?.isValid ?: true && it.aggregatedExpression.isValid && it.aggregator?.isValid ?: true }
 }
+
+/**
+ * [aggregator]?'('[aggregatedExpression]')' ['as' [alias]]
+ */
+data class AggregatableAliasedExpression(
+  val aggregator: GrExpression?,
+  val aggregatedExpression: GrExpression,
+  val over: GinqOverFragment?,
+  val alias: GrClassTypeElement?,
+)
+
+data class GinqOverFragment(
+  val overKw: PsiElement)

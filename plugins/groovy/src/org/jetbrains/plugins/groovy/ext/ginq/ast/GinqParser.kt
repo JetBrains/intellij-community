@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -158,20 +159,19 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         container.add(GinqLimitFragment(callKw, arguments[0], arguments.getOrNull(1)))
       }
       "select" -> {
-        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map {
-          if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement?.castSafelyTo<GrClassTypeElement>())
-          else AliasedExpression(it, null)
+        val distinct = methodCall.getSingleArgument<GrMethodCallExpression>()
+          ?.takeIf { it.invokedExpression is GrReferenceExpression && (it.invokedExpression as GrReferenceExpression).referenceName == "distinct" }
+        val arguments = (if (distinct != null) distinct.collectExpressionArguments() else methodCall.collectExpressionArguments<GrExpression>()) ?: return
+        val parsedArguments = arguments.map {
+          val (aliased, alias) = if (it is GrSafeCastExpression) it.operand to it.castTypeElement?.castSafelyTo<GrClassTypeElement>() else it to null
+          AggregatableAliasedExpression(null, aliased, null, alias)
         }
-        if (arguments == null) {
-          recordError(methodCall, "Expected a list of projections")
-          return
-        }
-        arguments.forEach {
-          it.expression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+        parsedArguments.forEach {
+          it.aggregatedExpression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
           it.alias?.referenceElement?.let(::markAsReferenceResolveTarget)
-          it.alias?.referenceElement?.let { it.putUserData(ginqBinding, Unit) }
+          it.alias?.referenceElement?.putUserData(ginqBinding, Unit)
         }
-        container.add(GinqSelectFragment(callKw, arguments))
+        container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
       }
       else -> recordError(methodCall, "Unrecognized query")
     }

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
@@ -19,17 +20,11 @@ class GrNamedRecordReferenceContributor : NonCodeMembersContributor() {
     }
     val name = ResolveUtil.getNameHint(processor) ?: return
     if (!processor.shouldProcessProperties()) return
-    val ginqExpression = resolvedClass.getGinqExpression()
-    for (source in ginqExpression.getDataSourceFragments()) {
-      if (source.alias.referenceName == name && !processor.execute(source.alias, state)) {
-        return
-      }
+    val type = resolvedClass[name]
+    if (type != null) {
+      val prop = GrLightField(resolvedClass, name, type, resolvedClass)
+      processor.execute(prop, state)
     }
-    for (projection in ginqExpression.select.projections) {
-      val referenceElement = projection.alias?.referenceElement ?: projection.expression
-      if (name == referenceElement.text && !processor.execute(referenceElement, state)) {
-        return
-      }
-    }
+    // todo resolvings
   }
 }
