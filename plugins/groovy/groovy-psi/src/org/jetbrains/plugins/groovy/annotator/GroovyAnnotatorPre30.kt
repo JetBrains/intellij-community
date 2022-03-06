@@ -201,9 +201,9 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     }
   }
 
-  override fun visitMethodCall(call: GrMethodCall) {
-    super.visitMethodCall(call)
-    val invoked = call.invokedExpression
+  override fun visitApplicationStatement(applicationStatement: GrApplicationStatement) {
+    super.visitApplicationStatement(applicationStatement)
+    val invoked = applicationStatement.invokedExpression
     val badNewline = invoked.firstChild?.nextSibling?.takeIf { it.isNewLine() }
     if (badNewline != null) {
       holder.newAnnotation(HighlightSeverity.ERROR, message("newlines.here.are.available.since.groovy.3")).range(badNewline).create()
