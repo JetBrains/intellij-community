@@ -33,11 +33,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport
 
 internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport {
-  override fun isApplicable(macroCall: GrMethodCall): Boolean {
-    val actualCall = macroCall.invokedExpression
-    if (!(actualCall is GrReferenceExpression && actualCall.referenceName in ginqMethods)) return false
-    // todo: cache the following call
-    return isGinqAvailable(macroCall)
+
+  override fun isApplicable(macro: PsiMethod): Boolean {
+    return macro.name in ginqMethods && macro.containingClass?.name == "GinqGroovyMethods"
   }
 
   private fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {

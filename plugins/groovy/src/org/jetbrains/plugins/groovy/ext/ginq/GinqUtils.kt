@@ -3,9 +3,10 @@
 
 package org.jetbrains.plugins.groovy.ext.ginq
 
-import com.intellij.openapi.module.ModuleUtil
-import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 
@@ -15,14 +16,6 @@ val ginqMethods: Set<String> = setOf(
   "GQ",
   "GQL",
 )
-
-val qualifiedGinqMethods: Set<String> = ginqMethods.mapTo(HashSet()) { "org.apache.groovy.ginq.$it" }
-
-fun isGinqAvailable(context: PsiElement): Boolean {
-  val module = ModuleUtil.findModuleForPsiElement(context) ?: return false
-  return JavaPsiFacade.getInstance(context.project)
-    .findClass(GROOVY_GINQ_TRANSFORM_GQ, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null
-}
 
 val joins : Set<String> = setOf(
   "join",
