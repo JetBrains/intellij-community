@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.findUsages
 
 import com.intellij.openapi.application.QueryExecutorBase
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -17,18 +18,20 @@ import org.jetbrains.plugins.groovy.transformations.macro.getMacroHandler
 class GrMacroReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>() {
   override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val target = queryParameters.elementToSearch
-    val (call, handler) = getMacroHandler(target) ?: return
-    call.accept(object : GroovyRecursiveElementVisitor() {
-      override fun visitElement(element: GroovyPsiElement) {
-        val reference = handler.computeStaticReference(call, element) ?: return super.visitElement(element)
-        if (reference.element != target) {
-          return super.visitElement(element)
+    runReadAction {
+      val (call, handler) = getMacroHandler(target) ?: return@runReadAction
+      call.accept(object : GroovyRecursiveElementVisitor() {
+        override fun visitElement(element: GroovyPsiElement) {
+          val reference = handler.computeStaticReference(call, element) ?: return super.visitElement(element)
+          if (reference.element != target) {
+            return super.visitElement(element)
+          }
+          val ref = object : PsiReferenceBase<PsiElement>(element, TextRange(0, element.endOffset - element.startOffset), true) {
+            override fun resolve(): PsiElement = target
+          }
+          consumer.process(ref)
         }
-        val ref = object : PsiReferenceBase<PsiElement>(element, TextRange(0, element.endOffset - element.startOffset), true) {
-          override fun resolve(): PsiElement? = target
-        }
-        consumer.process(ref)
-      }
-    })
+      })
+    }
   }
 }

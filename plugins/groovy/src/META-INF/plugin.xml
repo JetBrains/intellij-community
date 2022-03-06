@@ -38,6 +38,11 @@
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
 
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroModuleListener"
+              topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
+
   <extensionPoints>
     <extensionPoint name="methodComparator" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="overloadResolver" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver"/>
@@ -738,6 +743,8 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleManagerImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsFacadeImpl"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistryService"
+                    serviceImplementation="org.jetbrains.plugins.groovy.dgm.GroovyMacroRegistryServiceImpl" />
 
     <problemFileHighlightFilter implementation="org.jetbrains.plugins.groovy.GroovyProblemFileHighlightFilter"/>
 

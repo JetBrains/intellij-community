@@ -77,9 +77,8 @@ public final class GdkMethodUtil {
   }
 
   /**
-   *
-   * @param place - context of processing
-   * @param processor - processor to use
+   * @param place         - context of processing
+   * @param processor     - processor to use
    * @param categoryClass - category class to process
    * @return
    */
@@ -345,7 +344,9 @@ public final class GdkMethodUtil {
     if (method instanceof GrGdkMethod) method = ((GrGdkMethod)method).getStaticMethod();
     PsiClass containingClass = method.getContainingClass();
     String name = method.getName();
-    return "mixin".equals(name) && containingClass != null && GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName());
+    return "mixin".equals(name) &&
+           containingClass != null &&
+           GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName());
   }
 
   private static boolean isMetaClassMethod(@NotNull PsiMethod method) {
@@ -394,7 +395,10 @@ public final class GdkMethodUtil {
     return Pair.create((PsiClassType)type, ref);
   }
 
-  public static boolean isCategoryMethod(@NotNull PsiMethod method, @Nullable PsiType qualifierType, @Nullable PsiElement place, @Nullable PsiSubstitutor substitutor) {
+  public static boolean isCategoryMethod(@NotNull PsiMethod method,
+                                         @Nullable PsiType qualifierType,
+                                         @Nullable PsiElement place,
+                                         @Nullable PsiSubstitutor substitutor) {
     if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
 
@@ -480,11 +484,13 @@ public final class GdkMethodUtil {
       if (actualParameter == null) {
         generatedParameterType = CommonClassNames.JAVA_LANG_OBJECT;
         name = "expression";
-      } else {
+      }
+      else {
         PsiType type = actualParameter.getType();
         if (!type.equals(PsiType.NULL)) {
-          generatedParameterType = AST_TO_EXPR_MAPPER.getOrDefault(type.getCanonicalText(), null);
-        } else {
+          generatedParameterType = AST_TO_EXPR_MAPPER.getOrDefault(type.getCanonicalText(), CommonClassNames.JAVA_LANG_OBJECT);
+        }
+        else {
           generatedParameterType = CommonClassNames.JAVA_LANG_OBJECT;
         }
         name = actualParameter.getName();
