@@ -217,7 +217,7 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureOwnerDelegateTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
-    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression"
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression"
                     implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator" order="first"/>
 
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression"
@@ -227,7 +227,7 @@
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultIndexAccessTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculator" order="last"/>
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculator" order="last" id="defaultMethodCall"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultBuiltinTypeClassTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression" order="last"

@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.groovy.transformations.macro
 
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator
 
-class GroovyMacroTypeCalculator: GrTypeCalculator<GrMethodCallExpression> {
+class GroovyMacroTypeCalculator: GrTypeCalculator<GrExpression> {
 
-  override fun getType(expression: GrMethodCallExpression): PsiType? {
+  override fun getType(expression: GrExpression): PsiType? {
     val (call, macro) = getMacroHandler(expression) ?: return null
     return macro.computeType(call, expression)
   }
