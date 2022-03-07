@@ -228,7 +228,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
-    val fileType = model.language.associatedFileType ?: PlainTextFileType.INSTANCE
+    val fileType = model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
     ReadAction.nonBlocking(Callable {
       model.createFile(project, fileType, editor.document)
     })
