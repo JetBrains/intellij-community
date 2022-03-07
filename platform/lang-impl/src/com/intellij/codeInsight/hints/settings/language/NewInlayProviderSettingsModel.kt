@@ -47,16 +47,23 @@ class NewInlayProviderSettingsModel<T : Any>(
     val case = CASE_KEY.get(editor)
     val enabled = case?.value ?: isEnabled
     val backup = cases.map { it.value }
+    val hintsBuffer: HintsBuffer
     try {
       cases.forEach { it.value = false }
-      case.let { it.value = true }
-      val hintsBuffer: HintsBuffer = collectorWrapper.collectTraversing(editor, file, enabled)
-      return Runnable {
-        collectorWrapper.applyToEditor(file, editor, hintsBuffer)
+      case?.let { it.value = true }
+      hintsBuffer = collectorWrapper.collectTraversing(editor, file, true)
+      if (!enabled) {
+        val builder = strikeOutBuilder(editor)
+        addStrikeout(hintsBuffer.inlineHints, builder) { root, constraints -> HorizontalConstrainedPresentation(root, constraints) }
+        addStrikeout(hintsBuffer.blockAboveHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
+        addStrikeout(hintsBuffer.blockBelowHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
       }
     }
     finally {
       cases.forEachIndexed { index, c -> c.value = backup[index] }
+    }
+    return Runnable {
+      collectorWrapper.applyToEditor(file, editor, hintsBuffer)
     }
   }
 
