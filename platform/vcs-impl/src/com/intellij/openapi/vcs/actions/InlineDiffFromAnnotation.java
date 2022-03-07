@@ -177,12 +177,14 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
       myHighlighters.addAll(
         new DiffDrawUtil.LineHighlighterBuilder(myEditor, editorLine, editorLine + 1, diffType)
           .withIgnored(false)
+          .withHideStripeMarkers(true)
           .done());
     }
     else {
       myHighlighters.addAll(
         new DiffDrawUtil.LineHighlighterBuilder(myEditor, editorLine, editorLine + 1, TextDiffType.MODIFIED)
           .withIgnored(true)
+          .withHideStripeMarkers(true)
           .done());
 
       List<InnerChange> currentChanges = adjustChangesToCurrent(currentContent, contentAfter, changes);
