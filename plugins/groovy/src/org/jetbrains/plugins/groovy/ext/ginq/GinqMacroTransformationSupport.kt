@@ -105,12 +105,14 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {
-    if (expression == macroCall) {
-      if (macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "GQL") {
-        val ginq = getParsedGinqTree(macroCall) ?: return null
+    val ginq = if (expression == macroCall) getParsedGinqTree(macroCall) else expression.getUserData(injectedGinq)
+    if (ginq != null) {
+      val invokedCall = macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
+      val container = if (invokedCall == "GQL") CommonClassNames.JAVA_UTIL_LIST else if (invokedCall == "GQ") ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE else null
+      if (container != null) {
         val namedRecord = GrNamedRecordType(ginq)
         val facade = JavaPsiFacade.getInstance(macroCall.project)
-        return facade.findClass(CommonClassNames.JAVA_UTIL_LIST, macroCall.resolveScope)?.let {
+        return facade.findClass(container, macroCall.resolveScope)?.let {
           facade.elementFactory.createType(it, namedRecord)
         }
       }
@@ -118,7 +120,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     if (expression is GrReferenceExpression) {
       val tree = getParsedGinqTree(macroCall) ?: return null
       val resolved = expression.staticReference.resolve()
-      val dataSourceFragment = tree.getDataSourceFragments().find { it.alias == resolved }
+      val dataSourceFragment = expression.ginqParents(macroCall, tree).firstNotNullOfOrNull { ginq ->  ginq.getDataSourceFragments().find { it.alias == resolved } }
       if (dataSourceFragment != null) {
         return dataSourceFragment.dataSource.type?.let(::inferDataSourceComponentType)
       }
@@ -147,7 +149,6 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val name = ResolveUtil.getNameHint(processor) ?: return true
     val tree = getParsedGinqTree(macroCall) ?: return true
     if (name == "distinct" && processor.shouldProcessMethods() && tree.select.distinct == place) {
-      val distinct = tree.select.distinct
       val call = GrLightMethodBuilder(macroCall.manager, "distinct")
       val method = JavaPsiFacade.getInstance(macroCall.project)
         .findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, macroCall.resolveScope)

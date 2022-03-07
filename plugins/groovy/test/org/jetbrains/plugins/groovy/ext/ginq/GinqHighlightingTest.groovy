@@ -48,4 +48,15 @@ class GinqHighlightingTest extends BaseGinqTest {
     select <warning>m</warning>
 }"""
   }
+
+  void testProjections() {
+    testHighlighting """
+GQ {
+    from v in (
+        from n in [1, 2, 3]
+        select n, Math.pow(n, 2) as powerOfN
+    )
+    select v.n, v.powerOfN
+}"""
+  }
 }

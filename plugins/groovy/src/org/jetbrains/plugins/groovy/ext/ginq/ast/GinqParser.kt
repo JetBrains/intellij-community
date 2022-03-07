@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
+import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
@@ -98,7 +99,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         if (isApproximatelyGinq(dataSource)) {
           val (innerErrors, expr) = parseGinqAsExpr(dataSource)
           errors.addAll(innerErrors)
-          dataSource.putUserData(injectedGinq, expr)
+          dataSource.skipParenthesesDown()?.putUserData(injectedGinq, expr)
         } else {
           dataSource.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
         }
