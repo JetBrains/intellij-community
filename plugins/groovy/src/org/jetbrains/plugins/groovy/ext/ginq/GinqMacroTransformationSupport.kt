@@ -128,7 +128,15 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
 
   override fun isUntransformed(macroCall: GrMethodCall, element: GroovyPsiElement): Boolean {
     getParsedGinqTree(macroCall) ?: return false
-    return element.parents(true).any { it.getUserData(UNTRANSFORMED_ELEMENT) != null }
+    for (parent in element.parents(true)) {
+      if (parent.getUserData(injectedGinq) != null || parent.getUserData(rootGinq) != null) {
+        return false
+      }
+      if (parent.getUserData(UNTRANSFORMED_ELEMENT) != null) {
+        return true
+      }
+    }
+    return false
   }
 
   override fun processResolve(macroCall: GrMethodCall,

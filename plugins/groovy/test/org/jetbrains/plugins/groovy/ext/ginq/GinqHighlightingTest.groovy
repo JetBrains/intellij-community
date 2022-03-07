@@ -2,9 +2,17 @@
 package org.jetbrains.plugins.groovy.ext.ginq
 
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 @CompileStatic
 class GinqHighlightingTest extends BaseGinqTest {
+
+  @Override
+  void setUp() throws Exception {
+    super.setUp()
+    myFixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
+  }
 
   void testKeywordHighlighting() {
     testHighlighting """
@@ -25,5 +33,19 @@ class GinqHighlightingTest extends BaseGinqTest {
 
   void testGinqFromOtherGinq() {
     testHighlighting """GQ { from n in (from m in [1, 2, 3] select m) select n }"""
+  }
+
+  void testDistinct() {
+    testHighlighting """GQ {
+    from n in [1, 2, 2, 3, 3, 3]
+    select distinct(n)
+}"""
+  }
+
+  void testUnresolvedBinding() {
+    testHighlighting """GQ {
+    from n in [1]
+    select <warning>m</warning>
+}"""
   }
 }

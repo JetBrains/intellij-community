@@ -11,7 +11,6 @@ import org.jetbrains.plugins.groovy.ext.ginq.GinqMacroTransformationSupport
 import org.jetbrains.plugins.groovy.ext.ginq.joins
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
@@ -21,15 +20,16 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
 fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
-  val parser = GinqParser()
+  val parser = GinqParser(statementsOwner.statements.firstOrNull()?.castSafelyTo<GrExpression>())
   statementsOwner.statements.forEach { it.accept(parser) }
   return gatherGinqExpression(parser.errors + parser.unrecognizedQueryErrors, parser.container)
 }
 
 fun parseGinqAsExpr(psiGinq: GrExpression): Pair<List<ParsingError>, GinqExpression?> =
-  GinqParser().also(psiGinq::accept).run { gatherGinqExpression(errors, container) }
+  GinqParser(psiGinq).also(psiGinq::accept).run { gatherGinqExpression(errors, container) }
 
-private fun gatherGinqExpression(errors: List<ParsingError>, container: List<GinqQueryFragment>): Pair<List<ParsingError>, GinqExpression?> {
+private fun gatherGinqExpression(errors: List<ParsingError>,
+                                 container: List<GinqQueryFragment>): Pair<List<ParsingError>, GinqExpression?> {
   if (container.size < 2) {
     return emptyList<ParsingError>() to null
   }
@@ -59,7 +59,7 @@ private fun gatherGinqExpression(errors: List<ParsingError>, container: List<Gin
 /**
  * **See:** org.apache.groovy.ginq.dsl.GinqAstBuilder
  */
-private class GinqParser : GroovyRecursiveElementVisitor() {
+private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveElementVisitor() {
   val container: MutableList<GinqQueryFragment> = mutableListOf()
   val errors: MutableList<ParsingError> = mutableListOf()
   val unrecognizedQueryErrors: MutableList<ParsingError> = mutableListOf()
@@ -163,7 +163,8 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       "select" -> {
         val distinct = methodCall.getSingleArgument<GrMethodCallExpression>()
           ?.takeIf { it.invokedExpression is GrReferenceExpression && (it.invokedExpression as GrReferenceExpression).referenceName == "distinct" }
-        val arguments = (if (distinct != null) distinct.collectExpressionArguments() else methodCall.collectExpressionArguments<GrExpression>()) ?: return
+        val arguments = (if (distinct != null) distinct.collectExpressionArguments() else methodCall.collectExpressionArguments<GrExpression>())
+                        ?: return
         val parsedArguments = arguments.map {
           val (aliased, alias) = if (it is GrSafeCastExpression) it.operand to it.castTypeElement?.castSafelyTo<GrClassTypeElement>() else it to null
           AggregatableAliasedExpression(null, aliased, null, alias)
@@ -179,20 +180,21 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
     }
   }
 
-  override fun visitArgumentList(list: GrArgumentList) {
-    for (argument in list.expressionArguments) {
-      val (parsingErrors, ginqExpression) =
-        if (!isApproximatelyGinq(argument)) emptyList<ParsingError>() to null
-        else {
-          parseGinqAsExpr(argument)
-        }
-      if (ginqExpression == null) {
-        super.visitArgumentList(list)
-      }
+  override fun visitExpression(expression: GrExpression) {
+    if (expression == rootExpression) {
+      return super.visitExpression(expression)
+    }
+    val (parsingErrors, ginqExpression) =
+      if (!isApproximatelyGinq(expression)) emptyList<ParsingError>() to null
       else {
-        list.putUserData(injectedGinq, ginqExpression)
-        errors.addAll(parsingErrors)
+        parseGinqAsExpr(expression)
       }
+    if (ginqExpression == null) {
+      super.visitExpression(expression)
+    }
+    else {
+      expression.putUserData(injectedGinq, ginqExpression)
+      errors.addAll(parsingErrors)
     }
   }
 
@@ -205,7 +207,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
   }
 
   private fun clearUnrecognizedQueries(call: GrMethodCall) {
-    call.argumentList.accept(object: GroovyRecursiveElementVisitor() {
+    call.argumentList.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitMethodCall(innerCall: GrMethodCall) {
         unrecognizedQueryErrors.removeIf { it.first == innerCall }
       }
