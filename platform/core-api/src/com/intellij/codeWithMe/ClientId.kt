@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeWithMe
 
 import com.intellij.openapi.Disposable
@@ -232,9 +232,11 @@ data class ClientId(val value: String) {
     @JvmStatic
     fun withClientId(clientIdValue: String): AccessToken {
       val service = getCachedService()
-      val oldClientIdValue: String?
-      oldClientIdValue = service?.clientIdValue
-      if (service == null || clientIdValue == oldClientIdValue) return AccessToken.EMPTY_ACCESS_TOKEN
+      val oldClientIdValue = service?.clientIdValue
+      if (service == null || clientIdValue == oldClientIdValue) {
+        return AccessToken.EMPTY_ACCESS_TOKEN
+      }
+
       val newClientIdValue = if (service.isValid(ClientId(clientIdValue))) clientIdValue
       else {
         LOG.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
@@ -331,7 +333,7 @@ private class ClientIdElement(private val clientId: ClientId) : ThreadContextEle
     return ClientId.withClientId(clientId)
   }
 
-  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken): Unit {
+  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken) {
     oldState.finish()
   }
 }
