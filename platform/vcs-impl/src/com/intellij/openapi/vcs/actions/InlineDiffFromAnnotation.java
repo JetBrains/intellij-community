@@ -176,6 +176,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
       TextDiffType diffType = getDiffType(onlyItem.type);
       myHighlighters.addAll(
         new DiffDrawUtil.LineHighlighterBuilder(myEditor, editorLine, editorLine + 1, diffType)
+          .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_MAX)
           .withIgnored(false)
           .withHideStripeMarkers(true)
           .done());
@@ -183,6 +184,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     else {
       myHighlighters.addAll(
         new DiffDrawUtil.LineHighlighterBuilder(myEditor, editorLine, editorLine + 1, TextDiffType.MODIFIED)
+          .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_MAX)
           .withIgnored(true)
           .withHideStripeMarkers(true)
           .done());
@@ -194,9 +196,9 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
         TextDiffType diffType = getDiffType(change.type);
         LOG.assertTrue(start <= end && end <= lineEndOffset, String.format("Range: [%s, %s), Line range: [%s, %s)",
                                                                            start, end, lineStartOffset, lineEndOffset));
-        myHighlighters.addAll(
-          new DiffDrawUtil.InlineHighlighterBuilder(myEditor, start, end, diffType)
-            .done());
+        myHighlighters.addAll(new DiffDrawUtil.InlineHighlighterBuilder(myEditor, start, end, diffType)
+                                .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_MAX)
+                                .done());
       }
     }
   }
