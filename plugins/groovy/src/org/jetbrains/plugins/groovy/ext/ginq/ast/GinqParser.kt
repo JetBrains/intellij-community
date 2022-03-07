@@ -64,8 +64,8 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
   val errors: MutableList<ParsingError> = mutableListOf()
   val unrecognizedQueryErrors: MutableList<ParsingError> = mutableListOf()
 
-  override fun visitMethodCall(methodCall: GrMethodCall) { // todo: i18n
-    super.visitMethodCall(methodCall)
+  override fun visitMethodCall(methodCall: GrMethodCall) {
+    methodCall.invokedExpression.accept(this)// todo: i18n
     clearUnrecognizedQueries(methodCall)
     val callName = methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
     if (callName == null) {
@@ -95,7 +95,13 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         if (alias == null || dataSource == null) {
           return
         }
-        dataSource.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+        if (isApproximatelyGinq(dataSource)) {
+          val (innerErrors, expr) = parseGinqAsExpr(dataSource)
+          errors.addAll(innerErrors)
+          dataSource.putUserData(injectedGinq, expr)
+        } else {
+          dataSource.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+        }
         val expr = if (callName == "from") {
           GinqFromFragment(callKw, alias, dataSource)
         }
@@ -177,24 +183,6 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
       }
       else -> recordUnrecognizedQuery(methodCall)
-    }
-  }
-
-  override fun visitExpression(expression: GrExpression) {
-    if (expression == rootExpression) {
-      return super.visitExpression(expression)
-    }
-    val (parsingErrors, ginqExpression) =
-      if (!isApproximatelyGinq(expression)) emptyList<ParsingError>() to null
-      else {
-        parseGinqAsExpr(expression)
-      }
-    if (ginqExpression == null) {
-      super.visitExpression(expression)
-    }
-    else {
-      expression.putUserData(injectedGinq, ginqExpression)
-      errors.addAll(parsingErrors)
     }
   }
 
