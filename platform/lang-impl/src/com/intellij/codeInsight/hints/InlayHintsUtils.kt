@@ -115,19 +115,6 @@ class CollectorWithSettings<T : Any>(
     invokeLater { applyToEditor(file, editor, hintsBuffer) }
   }
 
-  private fun <T: Any> addStrikeout(inlineHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, T>>>,
-                           builder: TextAttributesEffectsBuilder,
-                           factory: (RootInlayPresentation<*>, T?) -> ConstrainedPresentation<*, T>
-  ) {
-    inlineHints.forEach {
-      it.value.replaceAll { presentation ->
-        val transformer = AttributesTransformerPresentation(presentation.root) { builder.applyTo(it) }
-        val rootPresentation = RecursivelyUpdatingRootPresentation(transformer)
-        factory(rootPresentation, presentation.constraints)
-      }
-    }
-  }
-
   fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
     if (enabled) {
       val traverser = SyntaxTraverser.psiTraverser(file)
@@ -140,6 +127,19 @@ class CollectorWithSettings<T : Any>(
 
   fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
     InlayHintsPass.applyCollected(hintsBuffer, file, editor)
+  }
+}
+
+internal fun <T: Any> addStrikeout(inlineHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, T>>>,
+                          builder: TextAttributesEffectsBuilder,
+                          factory: (RootInlayPresentation<*>, T?) -> ConstrainedPresentation<*, T>
+) {
+  inlineHints.forEach {
+    it.value.replaceAll { presentation ->
+      val transformer = AttributesTransformerPresentation(presentation.root) { builder.applyTo(it) }
+      val rootPresentation = RecursivelyUpdatingRootPresentation(transformer)
+      factory(rootPresentation, presentation.constraints)
+    }
   }
 }
 
