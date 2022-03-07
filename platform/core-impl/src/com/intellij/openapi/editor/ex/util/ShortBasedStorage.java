@@ -39,13 +39,13 @@ public class ShortBasedStorage implements DataStorage {
   }
 
   @Override
-  public void replace(DataStorage storage, int startOffset, int len) {
+  public void replace(@NotNull DataStorage storage, int startOffset, int len) {
     assert storage instanceof ShortBasedStorage;
     System.arraycopy(((ShortBasedStorage)storage).myData, 0, myData, startOffset, len);
   }
 
   @Override
-  public void insert(DataStorage storageToInsert, int startIndex, int segmentCountToInsert, int segmentCount) {
+  public void insert(@NotNull DataStorage storageToInsert, int startIndex, int segmentCountToInsert, int segmentCount) {
     assert storageToInsert instanceof ShortBasedStorage;
     myData = insert(myData, ((ShortBasedStorage)storageToInsert).myData, startIndex, segmentCountToInsert, segmentCount);
   }
@@ -56,7 +56,7 @@ public class ShortBasedStorage implements DataStorage {
   }
 
   @Override
-  public int packData(IElementType tokenType, int state, boolean isRestartableState) {
+  public int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState) {
     final short idx = tokenType.getIndex();
     return isRestartableState ? idx : -idx;
   }
@@ -67,17 +67,17 @@ public class ShortBasedStorage implements DataStorage {
   }
 
   @Override
-  public IElementType unpackTokenFromData(int data) {
+  public @NotNull IElementType unpackTokenFromData(int data) {
     return IElementType.find((short)Math.abs(data));
   }
 
   @Override
-  public DataStorage copy() {
+  public @NotNull DataStorage copy() {
     return new ShortBasedStorage(myData);
   }
 
   @Override
-  public DataStorage createStorage() {
+  public @NotNull DataStorage createStorage() {
     return new ShortBasedStorage();
   }
 
