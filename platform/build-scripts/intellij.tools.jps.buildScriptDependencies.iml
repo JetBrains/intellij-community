@@ -49,5 +49,8 @@
     <orderEntry type="library" scope="RUNTIME" name="jackson" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson-jr-objects" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="SSHJ" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jsch-agent-proxy" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jsch-agent-proxy-sshj" level="project" />
   </component>
 </module>

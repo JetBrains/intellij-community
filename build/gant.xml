@@ -60,6 +60,9 @@
         <dependency coords="commons-cli:commons-cli:1.2"/>
         <dependency coords="org.apache.commons:commons-compress:1.21"/>
         <dependency coords="de.pdark:decentxml:1.4"/>
+        <dependency coords="org.jetbrains.intellij.deps:sshj:0.32.0-idea2"/>
+        <dependency coords="com.jcraft:jsch.agentproxy.connector-factory:0.0.9"/>
+        <dependency coords="com.jcraft:jsch.agentproxy.sshj:0.0.9"/>
       </resolver:dependencies>
       <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
     </resolver:resolve>
