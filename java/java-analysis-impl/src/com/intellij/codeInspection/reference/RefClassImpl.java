@@ -71,15 +71,26 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
       parent = UDeclarationKt.getContainingDeclaration(parent);
     }
-    RefElement refParent = parent != null ? getRefManager().getReference(KotlinPropertiesDetector.getPropertyElement(parent)) : null;
+    final RefManagerImpl manager = getRefManager();
+    final UClass[] innerClasses = uClass.getInnerClasses();
+    for (UClass innerClass : innerClasses) {
+      final PsiElement psi = innerClass.getSourcePsi();
+      if (psi != null) {
+        final RefElement refInnerClass = manager.getReference(psi);
+        if (refInnerClass !=  null) {
+          addChild(refInnerClass);
+        }
+      }
+    }
+    RefElement refParent = parent != null ? manager.getReference(KotlinPropertiesDetector.getPropertyElement(parent)) : null;
     if (refParent != null) {
-      ((RefElementImpl)refParent).add(this);
+      setOwner((WritableRefEntity)refParent);
     }
     else {
       PsiFile containingFile = getContainingFile();
       if (isSyntheticJSP()) {
         final PsiFile psiFile = PsiUtilCore.getTemplateLanguageFile(getPsiElement());
-        final RefFileImpl refFile = (RefFileImpl)getRefManager().getReference(psiFile);
+        final RefFileImpl refFile = (RefFileImpl)manager.getReference(psiFile);
         LOG.assertTrue(refFile != null);
         refFile.add(this);
       }
@@ -109,13 +120,13 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     boolean utilityClass = uMethods.length > 0 || uFields.length > 0;
 
     for (UField uField : uFields) {
-      final RefField field = ObjectUtils.tryCast(getRefManager().getReference(
+      final RefField field = ObjectUtils.tryCast(manager.getReference(
         KotlinPropertiesDetector.getPropertyElement(uField)), RefField.class);
       if (field != null) addChild(field);
     }
     RefMethod varargConstructor = null;
     for (UMethod uMethod : uMethods) {
-      RefMethod refMethod = ObjectUtils.tryCast(getRefManager().getReference(
+      RefMethod refMethod = ObjectUtils.tryCast(manager.getReference(
         KotlinPropertiesDetector.getPropertyElement(uMethod)), RefMethod.class);
       if (refMethod != null) {
         addChild(refMethod);
@@ -143,7 +154,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
     }
-    new KotlinPropertiesDetector(getRefManager(), uClass).setupProperties(getChildren());
+    new KotlinPropertiesDetector(manager, uClass).setupProperties(getChildren());
     if (!isInterface()) {
       for (int i = 0; i < uFields.length && utilityClass; i++) {
         if (!uFields[i].isStatic()) {
