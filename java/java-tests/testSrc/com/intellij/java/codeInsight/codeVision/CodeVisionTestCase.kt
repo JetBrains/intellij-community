@@ -5,8 +5,10 @@ import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import java.util.regex.Pattern
@@ -29,7 +31,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     myFixture.configureByText(fileName, sourceText)
 
     val editor = myFixture.editor
-    editor.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
+    project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     myFixture.doHighlighting()
 
     codeVisionHost.calculateCodeVisionSync(editor, testRootDisposable)

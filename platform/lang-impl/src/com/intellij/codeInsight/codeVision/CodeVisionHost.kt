@@ -67,7 +67,7 @@ open class CodeVisionHost(val project: Project) {
      */
     @JvmStatic
     fun isCodeLensTest(editor: Editor): Boolean {
-      return editor.getUserData(isCodeVisionTestKey) == true
+      return editor.project?.getUserData(isCodeVisionTestKey) == true
     }
   }
 
