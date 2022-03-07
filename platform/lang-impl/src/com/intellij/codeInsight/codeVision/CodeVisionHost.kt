@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.codeVision
 
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsLiveModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -152,8 +153,10 @@ open class CodeVisionHost(val project: Project) {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
+    val settings = CodeVisionSettings.instance()
     for (provider in providers) {
-      val placeholderCollector: CodeVisionPlaceholderCollector? = provider.getPlaceholderCollector(editor, psiFile) ?: continue
+      if (!settings.isProviderEnabled(provider.id)) continue
+      val placeholderCollector: CodeVisionPlaceholderCollector = provider.getPlaceholderCollector(editor, psiFile) ?: continue
       if (placeholderCollector is BypassBasedPlaceholderCollector) {
         bypassBasedCollectors.add(placeholderCollector to provider)
       } else if (placeholderCollector is GenericPlaceholderCollector) {
