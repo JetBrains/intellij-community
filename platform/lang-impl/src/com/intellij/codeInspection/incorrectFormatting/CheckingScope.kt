@@ -65,7 +65,14 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
     val result = arrayListOf<ProblemDescriptor>()
 
-    result += shiftIndentDescriptors(changes)
+
+    // CPP-28543: Disable inspection in case of ShiftIndentChanges
+    // They interfere with WhitespaceReplaces
+    //result += shiftIndentDescriptors(changes)
+    if (changes.any { it is ShiftIndentChange }) {
+      return null
+    }
+
 
     val (indentChanges, inLineChanges) = classifyReplaceChanges(changes)
     result += indentChangeDescriptors(indentChanges)
