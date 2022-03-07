@@ -11,17 +11,15 @@ import org.jetbrains.annotations.NotNull
 @CompileStatic
 class LibraryLightProjectDescriptor extends DefaultLightProjectDescriptor {
 
-  private final TestLibrary[] myLibraries
+  private final TestLibrary myLibrary
 
-  LibraryLightProjectDescriptor(TestLibrary... libraries) {
-    myLibraries = libraries
+  LibraryLightProjectDescriptor(TestLibrary library) {
+    myLibrary = library
   }
 
   @Override
   void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
     super.configureModule(module, model, contentEntry)
-    for (final def lib in myLibraries) {
-      lib.addTo(module, model)
-    }
+    myLibrary.addTo(module, model)
   }
 }

@@ -14,4 +14,16 @@ class GinqHighlightingTest extends BaseGinqTest {
 }
 """, false, true, false
   }
+
+  void testGinqFromStream() {
+    testHighlighting """GQ { from n in [1, 2, 3].stream() select n }"""
+  }
+
+  void testGinqFromArray() {
+    testHighlighting """GQ { from n in new int[] {1, 2, 3} select n }"""
+  }
+
+  void testGinqFromOtherGinq() {
+    testHighlighting """GQ { from n in (from m in [1, 2, 3] select m) select n }"""
+  }
 }

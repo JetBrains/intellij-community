@@ -5,6 +5,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -497,7 +498,7 @@ public final class GdkMethodUtil {
       }
       syntheticMacro.addParameter(
         new GrLightParameter(name,
-                             PsiType.getTypeByName(generatedParameterType, prototype.getProject(), prototype.getResolveScope()),
+                             PsiType.getTypeByName(generatedParameterType, prototype.getProject(), GlobalSearchScope.allScope(prototype.getProject())),
                              prototype));
     }
     syntheticMacro.setNavigationElement(prototype);

@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 
 public interface GroovyProjectDescriptors {
 
@@ -49,7 +50,7 @@ public interface GroovyProjectDescriptors {
     }
   };
 
-  LightProjectDescriptor GROOVY_4_0_REAL_JDK = new LibraryLightProjectDescriptor(LIB_GROOVY_4_0) {
+  DefaultLightProjectDescriptor GROOVY_4_0_REAL_JDK = new LibraryLightProjectDescriptor(LIB_GROOVY_4_0) {
     @Override
     public Sdk getSdk() {
       return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false);
