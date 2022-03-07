@@ -463,6 +463,9 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
       initValidation();
     });
+    myFileTypeChooser.setUserActionFileTypeInfoConsumer(info -> {
+      myExistingTemplatesComponent.selectFileType(info.getText());
+    });
 
     // Other actions
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
