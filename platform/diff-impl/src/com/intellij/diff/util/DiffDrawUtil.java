@@ -40,6 +40,8 @@ public final class DiffDrawUtil {
   public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 102;
   public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 101;
   public static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 100;
+  public static final int LAYER_PRIORITY_STEP = 5; // DEFAULT_LAYER..LINE_MARKER_LAYER
+  public static final int LAYER_PRIORITY_MAX = 3;
   public static final int LST_LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
 
   private static final double CTRL_PROXIMITY_X = 0.3;
@@ -475,6 +477,8 @@ public final class DiffDrawUtil {
     private boolean hideStripeMarkers = false;
     private boolean alignedSides = false;
 
+    private int layerPriority = 0; // higher number wins
+
     public LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
       this.editor = editor;
       this.type = type;
@@ -532,6 +536,12 @@ public final class DiffDrawUtil {
     }
 
     @NotNull
+    public LineHighlighterBuilder withLayerPriority(int layerPriority) {
+      this.layerPriority = layerPriority;
+      return this;
+    }
+
+    @NotNull
     public List<RangeHighlighter> done() {
       List<RangeHighlighter> highlighters = new ArrayList<>();
 
@@ -565,7 +575,8 @@ public final class DiffDrawUtil {
       boolean dottedLine = editorMode.border == BorderType.DOTTED;
 
       RangeHighlighter highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, HighlighterTargetArea.LINES_IN_RANGE);
+        .addRangeHighlighter(start, end, DEFAULT_LAYER + layerPriority * LAYER_PRIORITY_STEP,
+                             attributes, HighlighterTargetArea.LINES_IN_RANGE);
       highlighters.add(highlighter);
 
       highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, editorMode, gutterMode,
@@ -573,15 +584,15 @@ public final class DiffDrawUtil {
                                                                    alignedSides));
 
       if (isEmptyRange && !alignedSides) {
-        LineMarkerBuilder builder = isFirstLine ? new LineMarkerBuilder(editor, 0, SeparatorPlacement.TOP)
-                                                : new LineMarkerBuilder(editor, startLine - 1, SeparatorPlacement.BOTTOM);
+        LineMarkerBuilder builder = isFirstLine ? new LineMarkerBuilder(editor, 0, SeparatorPlacement.TOP, layerPriority)
+                                                : new LineMarkerBuilder(editor, startLine - 1, SeparatorPlacement.BOTTOM, layerPriority);
         builder.withDefaultRenderer(type, true, dottedLine, highlighter);
         highlighters.addAll(builder.done());
       }
       else if (editorMode.border != BorderType.NONE && !alignedSides) {
-        LineMarkerBuilder firstLineBuilder = new LineMarkerBuilder(editor, startLine, SeparatorPlacement.TOP)
+        LineMarkerBuilder firstLineBuilder = new LineMarkerBuilder(editor, startLine, SeparatorPlacement.TOP, layerPriority)
           .withDefaultRenderer(type, false, dottedLine, highlighter);
-        LineMarkerBuilder secondLineBuilder = new LineMarkerBuilder(editor, endLine - 1, SeparatorPlacement.BOTTOM)
+        LineMarkerBuilder secondLineBuilder = new LineMarkerBuilder(editor, endLine - 1, SeparatorPlacement.BOTTOM, layerPriority)
           .withDefaultRenderer(type, false, dottedLine, highlighter);
         highlighters.addAll(firstLineBuilder.done());
         highlighters.addAll(secondLineBuilder.done());
@@ -603,6 +614,8 @@ public final class DiffDrawUtil {
     private final int start;
     private final int end;
 
+    private int layerPriority = 0; // higher number wins
+
     public InlineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
       this.editor = editor;
       this.type = type;
@@ -611,11 +624,18 @@ public final class DiffDrawUtil {
     }
 
     @NotNull
+    public InlineHighlighterBuilder withLayerPriority(int layerPriority) {
+      this.layerPriority = layerPriority;
+      return this;
+    }
+
+    @NotNull
     public List<RangeHighlighter> done() {
       TextAttributes attributes = getTextAttributes(type, editor, BackgroundType.DEFAULT);
 
       RangeHighlighter highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(start, end, INLINE_LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);
+        .addRangeHighlighter(start, end, INLINE_LAYER + layerPriority * LAYER_PRIORITY_STEP,
+                             attributes, HighlighterTargetArea.EXACT_RANGE);
 
       if (start == end) installEmptyRangeRenderer(highlighter, type);
 
@@ -635,6 +655,10 @@ public final class DiffDrawUtil {
     @Nullable private TextAttributes stripeAttributes;
 
     private LineMarkerBuilder(@NotNull Editor editor, int line, @NotNull SeparatorPlacement placement) {
+      this(editor, line, placement, 0);
+    }
+
+    private LineMarkerBuilder(@NotNull Editor editor, int line, @NotNull SeparatorPlacement placement, int layerPriority) {
       this.editor = editor;
       this.placement = placement;
 
@@ -643,7 +667,8 @@ public final class DiffDrawUtil {
 
       offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
       highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(null, offset, offset, LINE_MARKER_LAYER, HighlighterTargetArea.LINES_IN_RANGE);
+        .addRangeHighlighter(null, offset, offset, LINE_MARKER_LAYER + layerPriority * LAYER_PRIORITY_STEP,
+                             HighlighterTargetArea.LINES_IN_RANGE);
     }
 
     @NotNull
