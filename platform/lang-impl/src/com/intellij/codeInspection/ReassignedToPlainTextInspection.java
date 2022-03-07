@@ -41,46 +41,49 @@ public class ReassignedToPlainTextInspection extends LocalInspectionTool {
     if (fileType != PlainTextFileType.INSTANCE) {
       return null;
     }
-
-    FileType assigned = FileTypeManager.getInstance().getFileTypeByFileName(virtualFile.getNameSequence());
-    if (assigned == PlainTextFileType.INSTANCE) {
-      LocalQuickFix removeFix = new LocalQuickFix() {
-        @Nls
-        @NotNull
-        @Override
-        public String getFamilyName() {
-          return InspectionsBundle.message("reassigned.to.plain.text.inspection.fix.remove.name");
-        }
-
-        @Override
-        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          ((FileTypeManagerImpl)FileTypeManager.getInstance()).removePlainTextAssociationsForFile(descriptor.getPsiElement().getContainingFile().getName());
-        }
-      };
-      LocalQuickFix editFix = new LocalQuickFix() {
-        @Nls
-        @NotNull
-        @Override
-        public String getFamilyName() {
-          return InspectionsBundle.message("reassigned.to.plain.text.inspection.fix.edit.name");
-        }
-
-        @Override
-        public boolean startInWriteAction() {
-          return false;
-        }
-
-        @Override
-        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          editFileType(project, PlainTextFileType.INSTANCE);
-        }
-      };
-      ProblemDescriptor descriptor = manager.createProblemDescriptor(file, InspectionsBundle.message("reassigned.to.plain.text.inspection.message"), new LocalQuickFix[]{removeFix, editFix},
-                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                     true, false);
-      return new ProblemDescriptor[]{descriptor};
+    if (PlainTextFileType.INSTANCE.getDefaultExtension().equals(virtualFile.getExtension())) {
+      return null;
     }
-    return null;
+    FileType assigned = FileTypeManager.getInstance().getFileTypeByFileName(virtualFile.getNameSequence());
+    if (assigned != PlainTextFileType.INSTANCE) {
+      return null;
+    }
+
+    LocalQuickFix removeFix = new LocalQuickFix() {
+      @Nls
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return InspectionsBundle.message("reassigned.to.plain.text.inspection.fix.remove.name");
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        ((FileTypeManagerImpl)FileTypeManager.getInstance()).removePlainTextAssociationsForFile(descriptor.getPsiElement().getContainingFile().getName());
+      }
+    };
+    LocalQuickFix editFix = new LocalQuickFix() {
+      @Nls
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return InspectionsBundle.message("reassigned.to.plain.text.inspection.fix.edit.name");
+      }
+
+      @Override
+      public boolean startInWriteAction() {
+        return false;
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        editFileType(project, PlainTextFileType.INSTANCE);
+      }
+    };
+    ProblemDescriptor descriptor = manager.createProblemDescriptor(file, InspectionsBundle.message("reassigned.to.plain.text.inspection.message"), new LocalQuickFix[]{removeFix, editFix},
+                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                   true, false);
+    return new ProblemDescriptor[]{descriptor};
   }
   private static void editFileType(@Nullable Project project, @NotNull FileType fileType) {
     ShowSettingsUtil.getInstance().showSettingsDialog(project,
