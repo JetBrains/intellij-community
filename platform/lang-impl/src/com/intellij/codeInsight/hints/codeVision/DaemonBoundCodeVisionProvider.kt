@@ -26,7 +26,15 @@ interface DaemonBoundCodeVisionProvider {
   /**
    * Computes code lens data in read action in background for a given editor.
    */
-  fun computeForEditor(editor: Editor): List<Pair<TextRange, CodeVisionEntry>>
+  @Deprecated("Use overload with file")
+  fun computeForEditor(editor: Editor): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
+
+  /**
+   * Computes code lens data in read action in background for a given editor.
+   */
+  @Suppress("DEPRECATION")
+  @JvmDefault
+  fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
   fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
     if (entry is CodeVisionPredefinedActionEntry) entry.onClick(editor)
