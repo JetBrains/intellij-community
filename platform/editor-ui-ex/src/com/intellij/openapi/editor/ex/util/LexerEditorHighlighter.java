@@ -609,6 +609,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     private int mySegmentIndex;
 
     HighlighterIteratorImpl(int startOffset) {
+      if (startOffset < 0 || startOffset > mySegments.getLastValidOffset()) {
+        throw new IllegalArgumentException("Invalid offset: " + startOffset + "; mySegments.getLastValidOffset()=" + mySegments.getLastValidOffset());
+      }
       try {
         mySegmentIndex = mySegments.findSegmentIndex(startOffset);
       }
