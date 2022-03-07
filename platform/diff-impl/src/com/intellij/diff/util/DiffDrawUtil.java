@@ -569,7 +569,8 @@ public final class DiffDrawUtil {
       highlighters.add(highlighter);
 
       highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, editorMode, gutterMode,
-                                                                   hideWithoutLineNumbers, isEmptyRange, isFirstLine, isLastLine, alignedSides));
+                                                                   hideWithoutLineNumbers, isEmptyRange, isFirstLine, isLastLine,
+                                                                   alignedSides));
 
       if (isEmptyRange && !alignedSides) {
         LineMarkerBuilder builder = isFirstLine ? new LineMarkerBuilder(editor, 0, SeparatorPlacement.TOP)
@@ -596,13 +597,13 @@ public final class DiffDrawUtil {
     }
   }
 
-  private static final class InlineHighlighterBuilder {
+  public static final class InlineHighlighterBuilder {
     @NotNull private final Editor editor;
     @NotNull private final TextDiffType type;
     private final int start;
     private final int end;
 
-    private InlineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
+    public InlineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
       this.editor = editor;
       this.type = type;
       this.start = start;
