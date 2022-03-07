@@ -42,6 +42,14 @@ class GinqHighlightingTest extends BaseGinqTest {
 }"""
   }
 
+  void testDistinct2() {
+    testHighlighting """
+GQ {
+    from n in [1, 2, 2, 3, 3, 3]
+    select distinct(n, n + 1)
+}"""
+  }
+
   void testUnresolvedBinding() {
     testHighlighting """GQ {
     from n in [1]
@@ -58,5 +66,15 @@ GQ {
     )
     select v.n, v.powerOfN
 }"""
+  }
+
+  void testTwoGinqExpressions() {
+    testHighlighting """
+GQ {
+  from n in [0]
+  where n in (from m in [1] select m) && n in (from m in [1] select m)
+  select count()
+}
+""", false, true, false
   }
 }

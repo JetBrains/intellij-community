@@ -96,13 +96,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         if (alias == null || dataSource == null) {
           return
         }
-        if (isApproximatelyGinq(dataSource)) {
-          val (innerErrors, expr) = parseGinqAsExpr(dataSource)
-          errors.addAll(innerErrors)
-          dataSource.skipParenthesesDown()?.putUserData(injectedGinq, expr)
-        } else {
-          dataSource.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
-        }
+        tryInjectGinq(dataSource)
         val expr = if (callName == "from") {
           GinqFromFragment(callKw, alias, dataSource)
         }
@@ -117,6 +111,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
           recordError(methodCall, "Expected a list of conditions")
           return
         }
+        tryInjectGinq(argument)
         if (callName == "on") {
           val last = container.lastOrNull()
           if (last is GinqJoinFragment && last.onCondition == null && argument is GrBinaryExpression) {
@@ -184,6 +179,17 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
       }
       else -> recordUnrecognizedQuery(methodCall)
+    }
+  }
+
+  private fun tryInjectGinq(expression: GrExpression) {
+    if (isApproximatelyGinq(expression)) {
+      val (innerErrors, expr) = parseGinqAsExpr(expression)
+      errors.addAll(innerErrors)
+      expression.skipParenthesesDown()?.putUserData(injectedGinq, expr)
+    }
+    else {
+      expression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
     }
   }
 
