@@ -164,14 +164,14 @@ public class MessageBusImpl implements MessageBus {
 
       Set<MessageBusImpl> busQueue = bus.rootBus.waitingBuses.get();
       if (!busQueue.isEmpty()) {
-        pumpMessages(busQueue);
+        pumpWaitingBuses(busQueue);
       }
 
       if (publish(method, args, bus.messageQueue.get())) {
-        busQueue.add(bus);
         // we must deliver messages now even if currently processing message queue, because if published as part of handler invocation,
         // handler code expects that message will be delivered immediately after publishing
-        pumpMessages(busQueue);
+        busQueue.add(bus);
+        pumpWaitingBuses(busQueue);
       }
       return NA;
     }
@@ -350,28 +350,11 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private static void pumpMessages(@NotNull Set<? extends MessageBusImpl> waitingBuses) {
-    List<MessageBusImpl> liveBuses = new ArrayList<>(waitingBuses.size());
-    for (Iterator<? extends MessageBusImpl> iterator = waitingBuses.iterator(); iterator.hasNext(); ) {
-      MessageBusImpl bus = iterator.next();
-      if (bus.isDisposed()) {
-        iterator.remove();
-        LOG.error("Accessing disposed message bus " + bus);
-        continue;
-      }
-
-      liveBuses.add(bus);
-    }
-
-    if (!liveBuses.isEmpty()) {
-      pumpWaitingBuses(liveBuses);
-    }
-  }
-
-  private static void pumpWaitingBuses(@NotNull List<? extends MessageBusImpl> buses) {
+  private static void pumpWaitingBuses(@NotNull Collection<? extends MessageBusImpl> buses) {
     List<Throwable> exceptions = null;
     for (MessageBusImpl bus : buses) {
       if (bus.isDisposed()) {
+        LOG.error("Accessing disposed message bus " + bus);
         continue;
       }
 
