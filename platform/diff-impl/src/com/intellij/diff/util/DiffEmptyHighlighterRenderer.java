@@ -2,9 +2,12 @@
 package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -18,6 +21,17 @@ public class DiffEmptyHighlighterRenderer implements CustomHighlighterRenderer {
 
   @Override
   public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
+    MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
+    CommonProcessors.FindProcessor<RangeHighlighterEx> processor = new CommonProcessors.FindProcessor<>() {
+      @Override
+      protected boolean accept(RangeHighlighterEx ex) {
+        return ex.getLayer() > highlighter.getLayer() &&
+               ex.getLineMarkerRenderer() instanceof DiffLineMarkerRenderer;
+      }
+    };
+    markupModel.processRangeHighlightersOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), processor);
+    if (processor.isFound()) return; // range with higher layerPriority found
+
     g.setColor(myDiffType.getColor(editor));
     Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
     g.fillRect(point.x - JBUIScale.scale(1), point.y, JBUIScale.scale(2), editor.getLineHeight());
