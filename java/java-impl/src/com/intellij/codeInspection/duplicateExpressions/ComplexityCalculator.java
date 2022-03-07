@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ class ComplexityCalculator {
     CallMatcher.staticCall("java.nio.file.Paths", "get")
   );
 
-  private final ObjectIntHashMap<PsiExpression> myCache = new ObjectIntHashMap<>();
+  private final ObjectIntMap<PsiExpression> myCache = new ObjectIntHashMap<>();
 
   int getComplexity(@Nullable PsiExpression expression) {
     if (expression == null) {

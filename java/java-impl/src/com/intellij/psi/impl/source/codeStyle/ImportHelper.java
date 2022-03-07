@@ -149,17 +149,15 @@ public final class ImportHelper{
   public static void collectOnDemandImports(@NotNull List<? extends Pair<String, Boolean>> resultList,
                                             @NotNull JavaCodeStyleSettings settings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
-    ObjectIntHashMap<String> packageToCountMap = new ObjectIntHashMap<>();
-    ObjectIntHashMap<String> classToCountMap = new ObjectIntHashMap<>();
+    ObjectIntMap<String> packageToCountMap = new ObjectIntHashMap<>();
+    ObjectIntMap<String> classToCountMap = new ObjectIntHashMap<>();
     for (Pair<String, Boolean> pair : resultList) {
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
       String packageOrClassName = getPackageOrClassName(name);
       if (packageOrClassName.isEmpty()) continue;
-      ObjectIntHashMap<String> map = isStatic ? classToCountMap : packageToCountMap;
-      if (!map.increment(packageOrClassName)) {
-        map.put(packageOrClassName, 1);
-      }
+      ObjectIntMap<String> map = isStatic ? classToCountMap : packageToCountMap;
+      map.put(packageOrClassName, map.getOrDefault(packageOrClassName, 0) + 1);
     }
 
     for (ObjectIntMap.Entry<String> entry : classToCountMap.entries()) {
