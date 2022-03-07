@@ -61,7 +61,7 @@ class ParameterInlayProviderSettingsModel(
     )
   }
 
-  override fun collectAndApply(editor: Editor, file: PsiFile) {
+  override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
@@ -74,7 +74,9 @@ class ParameterInlayProviderSettingsModel(
                                                  backup.apply()
                                                }
                                              }, DaemonProgressIndicator())
-    ApplicationManager.getApplication().invokeLater { pass.applyInformationToEditor() }
+    return Runnable {
+      pass.doApplyInformationToEditor()
+    }
   }
 
   override val description: String?

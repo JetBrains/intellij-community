@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -14,7 +13,6 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.ResourceUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.xmlb.SerializationFilter
 
 class NewInlayProviderSettingsModel<T : Any>(
@@ -42,13 +40,12 @@ class NewInlayProviderSettingsModel<T : Any>(
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }
 
-  override fun collectAndApply(editor: Editor, file: PsiFile) {
+  override fun collectData(editor: Editor, file: PsiFile) : Runnable {
     providerWithSettings.provider.preparePreview(editor, file, providerWithSettings.settings)
-    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.let { collectorWrapperFor ->
-      ReadAction.nonBlocking {
-        collectorWrapperFor.collectTraversingAndApplyOnEdt(editor, file, isEnabled)
-      }.inSmartMode(file.project)
-        .submit(AppExecutorUtil.getAppExecutorService())
+    val collectorWrapper = providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language) ?: return Runnable {}
+    val hintsBuffer: HintsBuffer = collectorWrapper.collectTraversing(editor, file, true)
+    return Runnable {
+      collectorWrapper.applyToEditor(file, editor, hintsBuffer)
     }
   }
 
