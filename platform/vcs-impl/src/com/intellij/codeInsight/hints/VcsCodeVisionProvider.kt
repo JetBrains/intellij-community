@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -169,7 +170,9 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
 
   editor.putUserData(VCS_CODE_AUTHOR_ANNOTATION, annotation)
   registerAnnotation(file, annotation)
-  EditorUtil.disposeWithEditor(editor, annotationDisposable)
+  ApplicationManager.getApplication().invokeLater {
+    EditorUtil.disposeWithEditor(editor, annotationDisposable)
+  }
 
   return annotation
 }
