@@ -120,7 +120,7 @@ object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>()
         when (this.fileType) {
             KotlinFileType.INSTANCE -> this.psiFile.safeAs<KtFile>()?.packageFqName
             JavaClassFileType.INSTANCE -> IDEKotlinBinaryClassCache.getInstance()
-                .getKotlinBinaryClassHeaderData(this.file, this.content)?.packageName?.let(::FqName)
+                .getKotlinBinaryClassHeaderData(this.file, this.content)?.packageNameWithFallback
             KotlinJavaScriptMetaFileType -> this.fqNameFromJsMetadata()
             else -> null
         }
