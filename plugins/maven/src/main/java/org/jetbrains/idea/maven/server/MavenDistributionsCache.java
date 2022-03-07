@@ -29,6 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class MavenDistributionsCache {
+  private final static ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(() -> getSourceMavenPath());
+
 
   private final ConcurrentMap<String, String> myWorkingDirToMultimoduleMap = ContainerUtil.createConcurrentWeakMap();
   private final ConcurrentMap<String, String> myVmSettingsMap = ContainerUtil.createConcurrentWeakMap();
@@ -90,7 +92,7 @@ public class MavenDistributionsCache {
 
   private @NotNull MavenDistribution getWrapperDistribution(@NotNull String multiModuleDir) {
     String distributionUrl = getWrapperDistributionUrl(multiModuleDir);
-    return  (distributionUrl == null) ? resolveEmbeddedMavenHome() : getMavenWrapper(distributionUrl);
+    return (distributionUrl == null) ? resolveEmbeddedMavenHome() : getMavenWrapper(distributionUrl);
   }
 
   public @Nullable MavenDistribution getWrapper(@NotNull String workingDirectory) {
@@ -110,8 +112,7 @@ public class MavenDistributionsCache {
   @NotNull
   public static LocalMavenDistribution resolveEmbeddedMavenHome() {
     if (PluginManagerCore.isRunningFromSources()) {
-      BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-      Path mavenPath = BundledMavenDownloader.downloadMavenDistribution(communityRoot);
+      Path mavenPath = mySourcePath.getValue();
       return new LocalMavenDistribution(mavenPath, MavenServerManager.BUNDLED_MAVEN_3);
     }
     else {
@@ -121,6 +122,11 @@ public class MavenDistributionsCache {
       // maven3 folder inside maven plugin layout
       return new LocalMavenDistribution(root.resolve("maven3"), MavenServerManager.BUNDLED_MAVEN_3);
     }
+  }
+
+  private static Path getSourceMavenPath() {
+    BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+    return BundledMavenDownloader.downloadMavenDistribution(communityRoot);
   }
 
   @Nullable
