@@ -44,7 +44,8 @@ public class ToggleCaseAction extends TextComponentEditorAction {
     public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final Ref<Boolean> toLowerCase = new Ref<>(Boolean.FALSE);
       runForCaret(editor, caret, c -> {
-        if (!c.hasSelection()) {
+        boolean hasSelection = c.hasSelection();
+        if (!hasSelection) {
           c.selectWordAtCaret(true);
         }
         int selectionStartOffset = c.getSelectionStart();
@@ -53,13 +54,28 @@ public class ToggleCaseAction extends TextComponentEditorAction {
         if (!originalText.equals(toCase(editor, selectionStartOffset, selectionEndOffset, true))) {
           toLowerCase.set(Boolean.TRUE);
         }
+        if (!hasSelection) {
+          c.removeSelection();
+        }
       });
       runForCaret(editor, caret, c -> {
+        boolean hasSelection = c.hasSelection();
+        if (!hasSelection) {
+          c.selectWordAtCaret(true);
+        }
         VisualPosition caretPosition = c.getVisualPosition();
         int selectionStartOffset = c.getSelectionStart();
         int selectionEndOffset = c.getSelectionEnd();
-        editor.getDocument().replaceString(selectionStartOffset, selectionEndOffset,
-                                           toCase(editor, selectionStartOffset, selectionEndOffset, toLowerCase.get()));
+        String originalText = editor.getDocument().getText(new TextRange(selectionStartOffset, selectionEndOffset));
+        String newText = toCase(editor, selectionStartOffset, selectionEndOffset, toLowerCase.get());
+        editor.getDocument().replaceString(selectionStartOffset, selectionEndOffset, newText);
+        if (hasSelection) {
+          int newSelectionEndOffset = selectionEndOffset - originalText.length() + newText.length();
+          c.setSelection(selectionStartOffset, newSelectionEndOffset);
+        }
+        else {
+          c.removeSelection();
+        }
         c.moveToVisualPosition(caretPosition);
       });
     }

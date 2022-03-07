@@ -269,10 +269,28 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText(" <caret>text with [multiline\nfold region]");
   }
 
+  public void testToggleCaseToLower() {
+    init("<selection>LOWER</selection>", PlainTextFileType.INSTANCE);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
+    checkResultByText("<selection><caret>lower</selection>");
+  }
+
+  public void testToggleCaseToUpper() {
+    init("<selection>upper</selection>", PlainTextFileType.INSTANCE);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
+    checkResultByText("<selection><caret>UPPER</selection>");
+  }
+
+  public void testToggleCaseWithoutSelection() {
+    init("CamelCase Camel<caret>Case CamelCase", PlainTextFileType.INSTANCE);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
+    checkResultByText("CamelCase camel<caret>case CamelCase");
+  }
+
   public void testToggleCaseForEszett() {
     init("<selection>\u00df</selection>", PlainTextFileType.INSTANCE);
     executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
-    checkResultByText("<selection>SS</selection>");
+    checkResultByText("<selection><caret>SS</selection>");
   }
 
   public void testJoinSeveralLinesAtDocumentEnd() {
