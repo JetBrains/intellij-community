@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.ext.ginq
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -39,19 +40,32 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   private fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {
+    return getParsedGinqInfo(macroCall).second
+  }
+
+  private fun getParsedGinqErrors(macroCall: GrCall): List<ParsingError> {
+    return getParsedGinqInfo(macroCall).first
+  }
+
+  private fun getParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
     return CachedValuesManager.getCachedValue(macroCall, rootGinq, CachedValueProvider {
       CachedValueProvider.Result(doGetParsedGinqTree(macroCall), PsiModificationTracker.MODIFICATION_COUNT)
     })
   }
 
-  private fun doGetParsedGinqTree(macroCall: GrCall): GinqExpression? {
+  private fun doGetParsedGinqTree(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
     val closure = macroCall.expressionArguments.filterIsInstance<GrClosableBlock>().singleOrNull()
                   ?: macroCall.closureArguments.singleOrNull()
-                  ?: return null
+                  ?: return emptyList<ParsingError>() to null
     return parseGinq(closure)
   }
 
   override fun computeHighlighing(macroCall: GrCall): List<HighlightInfo> {
+    val errors = getParsedGinqErrors(macroCall).mapNotNull {
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(it.first)
+        .descriptionAndTooltip(it.second)
+        .textAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).create() }
     val (from,
       join,
       where,
@@ -59,7 +73,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       orderBy,
       limit,
       select
-    ) = getParsedGinqTree(macroCall) ?: return emptyList()
+    ) = getParsedGinqTree(macroCall) ?: return errors
     val keywords = mutableListOf<PsiElement?>()
     keywords.addAllIfNotNull(from.fromKw, where?.whereKw, groupBy?.groupByKw, groupBy?.having?.havingKw, orderBy?.orderByKw, limit?.limitKw,
                              select.selectKw)
@@ -87,7 +101,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.KEYWORD).create()
     } + softKeywords.filterNotNull().mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.STATIC_FIELD).create()
-    }
+    } + errors
   }
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {

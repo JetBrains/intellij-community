@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.openapi.module.Module
@@ -11,15 +11,17 @@ import org.jetbrains.annotations.NotNull
 @CompileStatic
 class LibraryLightProjectDescriptor extends DefaultLightProjectDescriptor {
 
-  private final TestLibrary myLibrary
+  private final TestLibrary[] myLibraries
 
-  LibraryLightProjectDescriptor(TestLibrary library) {
-    myLibrary = library
+  LibraryLightProjectDescriptor(TestLibrary... libraries) {
+    myLibraries = libraries
   }
 
   @Override
   void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
     super.configureModule(module, model, contentEntry)
-    myLibrary.addTo(module, model)
+    for (final def lib in myLibraries) {
+      lib.addTo(module, model)
+    }
   }
 }

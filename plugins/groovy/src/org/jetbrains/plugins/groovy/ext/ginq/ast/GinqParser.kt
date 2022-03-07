@@ -20,21 +20,21 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
-fun parseGinq(statementsOwner: GrStatementOwner): GinqExpression? {
+fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
   val parser = GinqParser()
   statementsOwner.statements.forEach { it.accept(parser) }
-  return gatherGinqExpression(parser.container)
+  return gatherGinqExpression(parser.errors + parser.unrecognizedQueryErrors, parser.container)
 }
 
-fun parseGinqAsExpr(psiGinq: GrExpression): GinqExpression? =
-  GinqParser().also(psiGinq::accept).run { gatherGinqExpression(container) }
+fun parseGinqAsExpr(psiGinq: GrExpression): Pair<List<ParsingError>, GinqExpression?> =
+  GinqParser().also(psiGinq::accept).run { gatherGinqExpression(errors, container) }
 
-private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpression? {
+private fun gatherGinqExpression(errors: List<ParsingError>, container: List<GinqQueryFragment>): Pair<List<ParsingError>, GinqExpression?> {
   if (container.size < 2) {
-    return null
+    return emptyList<ParsingError>() to null
   }
-  val from = container.first() as? GinqFromFragment ?: return null
-  val select = container.last() as? GinqSelectFragment ?: return null
+  val from = container.first() as? GinqFromFragment ?: return emptyList<ParsingError>() to null
+  val select = container.last() as? GinqSelectFragment ?: return emptyList<ParsingError>() to null
   // otherwise it is a valid ginq expression
   val joins: MutableList<GinqJoinFragment> = mutableListOf()
   var where: GinqWhereFragment? = null
@@ -53,7 +53,7 @@ private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpres
     }
     index += 1
   }
-  return GinqExpression(from, joins, where, groupBy, orderBy, limit, select)
+  return errors to GinqExpression(from, joins, where, groupBy, orderBy, limit, select)
 }
 
 /**
@@ -61,10 +61,12 @@ private fun gatherGinqExpression(container: List<GinqQueryFragment>): GinqExpres
  */
 private class GinqParser : GroovyRecursiveElementVisitor() {
   val container: MutableList<GinqQueryFragment> = mutableListOf()
-  private val errors: MutableList<Pair<PsiElement, @Nls String>> = mutableListOf()
+  val errors: MutableList<ParsingError> = mutableListOf()
+  val unrecognizedQueryErrors: MutableList<ParsingError> = mutableListOf()
 
   override fun visitMethodCall(methodCall: GrMethodCall) { // todo: i18n
     super.visitMethodCall(methodCall)
+    clearUnrecognizedQueries(methodCall)
     val callName = methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
     if (callName == null) {
       recordError(methodCall.invokedExpression, "Expected method call")
@@ -75,7 +77,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       "from", in joins -> {
         val argument = methodCall.getSingleArgument<GrBinaryExpression>()?.takeIf { it.operationTokenType == KW_IN }
         if (argument == null) {
-          recordError(methodCall, "Expected ... in ...")
+          recordError(methodCall, "Expected '... in ...'")
           return
         }
         val alias = argument.leftOperand.castSafelyTo<GrReferenceExpression>()
@@ -111,7 +113,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         if (callName == "on") {
           val last = container.lastOrNull()
           if (last is GinqJoinFragment && last.onCondition == null && argument is GrBinaryExpression) {
-            val newJoin = GinqJoinFragment(last.joinKw, last.alias, last.dataSource, GinqOnFragment(callKw, argument))
+            val newJoin = last.copy(onCondition = GinqOnFragment(callKw, argument))
             container.removeLast()
             container.add(newJoin)
           }
@@ -122,7 +124,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         else if (callName == "where") {
           container.add(GinqWhereFragment(callKw, argument))
         }
-        else if (callName == "having") {
+        else {
           val last = container.lastOrNull()
           if (last is GinqGroupByFragment && last.having == null) {
             val newGroupBy = last.copy(having = GinqHavingFragment(callKw, argument))
@@ -173,14 +175,14 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         }
         container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
       }
-      else -> recordError(methodCall, "Unrecognized query")
+      else -> recordUnrecognizedQuery(methodCall)
     }
   }
 
   override fun visitArgumentList(list: GrArgumentList) {
     for (argument in list.expressionArguments) {
-      val ginqExpression =
-        if (!isApproximatelyGinq(argument)) null
+      val (parsingErrors, ginqExpression) =
+        if (!isApproximatelyGinq(argument)) emptyList<ParsingError>() to null
         else {
           parseGinqAsExpr(argument)
         }
@@ -189,11 +191,26 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       }
       else {
         list.putUserData(injectedGinq, ginqExpression)
+        errors.addAll(parsingErrors)
       }
     }
   }
 
-  private fun recordError(element: PsiElement, message: @Nls String) {}
+  private fun recordError(element: PsiElement, message: @Nls String) {
+    errors.add(element to message)
+  }
+
+  private fun recordUnrecognizedQuery(element: PsiElement) {
+    unrecognizedQueryErrors.add(element to "Unrecognized query")
+  }
+
+  private fun clearUnrecognizedQueries(call: GrMethodCall) {
+    call.argumentList.accept(object: GroovyRecursiveElementVisitor() {
+      override fun visitMethodCall(innerCall: GrMethodCall) {
+        unrecognizedQueryErrors.removeIf { it.first == innerCall }
+      }
+    })
+  }
 
 }
 
@@ -213,7 +230,7 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
 }
 
 val injectedGinq: Key<GinqExpression> = Key.create("injected ginq expression")
-val rootGinq: Key<CachedValue<GinqExpression>> = Key.create("root ginq expression")
+val rootGinq: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")
 
 @Deprecated("too internal, hide under functions")
 val ginqBinding: Key<Unit> = Key.create("Ginq binding")
@@ -228,3 +245,7 @@ fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<G
     yield(ginq)
   }
 }
+
+typealias ParsingError = Pair<PsiElement, @Nls String>
+
+val ginqKw = setOf("from", "where", "groupby", "having", "orderby", "limit", "on", "select") + joins
