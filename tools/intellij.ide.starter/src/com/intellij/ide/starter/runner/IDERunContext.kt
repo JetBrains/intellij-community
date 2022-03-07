@@ -48,7 +48,8 @@ data class IDERunContext(
   val closeHandlers: List<IDERunCloseContext.() -> Unit> = listOf(),
   val verboseOutput: Boolean = false,
   val launchName: String = "",
-  val expectedKill: Boolean = false
+  val expectedKill: Boolean = false,
+  val collectNativeThreads: Boolean = false
 ) {
   val contextName: String
     get() = if (launchName.isNotEmpty()) {
@@ -205,6 +206,12 @@ data class IDERunContext(
           onBeforeKilled = { process, pid ->
             if (!expectedKill) {
               val javaProcessId by lazy { getJavaProcessId(jdkHome, startConfig.workDir, pid, process) }
+              if (collectNativeThreads) {
+                val fileToStoreNativeThreads = logsDir.resolve("native-thread-dumps.txt")
+                startProfileNativeThreads(javaProcessId.toString())
+                Thread.sleep(Duration.seconds(15).inWholeMilliseconds)
+                stopProfileNativeThreads(javaProcessId.toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
+              }
               val dumpFile = logsDir.resolve("threadDump-before-kill-${System.currentTimeMillis()}" + ".txt")
               catchAll { collectJavaThreadDump(jdkHome, startConfig.workDir, javaProcessId, dumpFile) }
             }

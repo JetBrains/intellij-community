@@ -335,7 +335,8 @@ data class IDETestContext(
     runTimeout: Duration = Duration.minutes(10),
     useStartupScript: Boolean = true,
     launchName: String = "",
-    expectedKill: Boolean = false
+    expectedKill: Boolean = false,
+    collectNativeThreads: Boolean = false
   ): IDEStartResult {
     return runContext()
       .copy(
@@ -345,7 +346,8 @@ data class IDETestContext(
         runTimeout = runTimeout,
         useStartupScript = useStartupScript,
         launchName = launchName,
-        expectedKill = expectedKill
+        expectedKill = expectedKill,
+        collectNativeThreads = collectNativeThreads
       )
       .addVMOptionsPatch(patchVMOptions)
       .runIDE()
