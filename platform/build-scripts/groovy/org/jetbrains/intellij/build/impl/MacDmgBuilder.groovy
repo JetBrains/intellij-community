@@ -121,12 +121,13 @@ final class MacDmgBuilder {
   }
 
   @SuppressWarnings('SpellCheckingInspection')
-  private static void bundleRuntimeAndSignSitLocally(Path targetFile,
-                                                 Path tempDir,
-                                                 Path jreArchivePath,
-                                                 MacDistributionCustomizer customizer,
-                                                 @NotNull BuildContext context) {
-    Files.copy(targetFile, tempDir.resolve(targetFile.fileName))
+  private static void bundleRuntimeAndSignSitLocally(Path sourceFile,
+                                                     Path tempDir,
+                                                     Path jreArchivePath,
+                                                     MacDistributionCustomizer customizer,
+                                                     @NotNull BuildContext context) {
+    Path targetFile = tempDir.resolve(sourceFile.fileName)
+    Files.copy(sourceFile, targetFile)
     if (jreArchivePath != null) {
       Files.copy(jreArchivePath, tempDir.resolve(jreArchivePath.fileName))
     }
@@ -138,13 +139,15 @@ final class MacDmgBuilder {
       "./signapp.sh",
       targetFile.fileName.toString(),
       context.fullBuildNumber,
-      "",
-      "",
-      "",
-      (jreArchivePath == null ? "no-jdk" : '"' + jreArchivePath.fileName.toString() + '"'),
-      "no",
+      "", // username
+      "", // password
+      "", // codesign
+      (jreArchivePath == null ? "no-jdk" : jreArchivePath.fileName.toString()),
+      "no", // notarize
       customizer.bundleIdentifier,
-      ), tempDir)
+      "true", // compress-input
+    ), tempDir)
+    Files.move(targetFile, sourceFile, StandardCopyOption.REPLACE_EXISTING)
   }
 
   @SuppressWarnings("SpellCheckingInspection")
