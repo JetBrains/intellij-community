@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -67,12 +67,6 @@ public class MessageBusImpl implements MessageBus {
     this.owner = owner;
     this.parentBus = parentBus;
     rootBus = parentBus.rootBus;
-
-    MessageBusImpl p = this;
-    while ((p = p.parentBus) != null) {
-      p.subscriberCache.clear();
-    }
-
     parentBus.addChild(this);
   }
 
@@ -124,8 +118,8 @@ public class MessageBusImpl implements MessageBus {
 
     //noinspection unchecked
     return (L)publisherCache.computeIfAbsent(topic, topic1 -> {
-      Class<?> listenerClass = topic1.getListenerClass();
-      return Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createPublisher(topic1, topic1.getBroadcastDirection()));
+      Class<?> aClass = topic1.getListenerClass();
+      return Proxy.newProxyInstance(aClass.getClassLoader(), new Class[]{aClass}, createPublisher(topic1, topic1.getBroadcastDirection()));
     });
   }
 
@@ -183,7 +177,7 @@ public class MessageBusImpl implements MessageBus {
     }
 
     boolean publish(@NotNull Method method, Object[] args, @Nullable MessageQueue jobQueue) {
-      Object[] handlers = bus.subscriberCache.computeIfAbsent(topic, topic1 -> bus.computeSubscribers(topic1));
+      Object[] handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers);
       if (handlers.length == 0) {
         return false;
       }

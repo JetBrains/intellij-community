@@ -152,7 +152,6 @@ public class Topic<L> {
     /**
      * Use only for application level publishers. To avoid collection subscribers from modules.
      */
-    @ApiStatus.Experimental
     TO_DIRECT_CHILDREN,
 
     /**
