@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -31,8 +31,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.LazyInitializer;
-import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
@@ -391,18 +389,18 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       @Override
       public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
         sourceSet.getSources().forEach((key, sourceDirectorySet) -> {
-            ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(key);
-            for (File file : sourceDirectorySet.getSrcDirs()) {
-              String path = FileUtil.toCanonicalPath(file.getPath());
+          ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(key);
+          for (File file : sourceDirectorySet.getSrcDirs()) {
+            String path = FileUtil.toCanonicalPath(file.getPath());
             contentsRoots.add(path);
             ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, path);
-              if (FileUtil.isAncestor(path, buildDirPath, true)) {
-                ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, buildDirPath);
-              }
-              ideContentRoot.storePath(sourceType, path);
-              dataNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
+            if (FileUtil.isAncestor(path, buildDirPath, true)) {
+              ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, buildDirPath);
             }
-          });
+            ideContentRoot.storePath(sourceType, path);
+            dataNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
+          }
+        });
       }
     });
 
@@ -485,7 +483,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
           }
           final ModuleData moduleData = dataNode.getData();
           moduleData.useExternalCompilerOutput(resolverCtx.isDelegatedBuild());
-          for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
+          for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> directorySetEntry
+            : sourceSet.getSources().entrySet()) {
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
             File ideOutputDir = getIdeOutputDir(sourceDirectorySet);
