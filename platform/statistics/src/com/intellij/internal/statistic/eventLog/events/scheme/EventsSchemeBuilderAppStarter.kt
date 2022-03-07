@@ -59,7 +59,7 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     val text = buildString {
       for (descriptor in PluginManagerCore.getLoadedPlugins()) {
         if (descriptor.isEnabled) {
-          appendLine(descriptor.name)
+          appendLine(descriptor.pluginId.idString)
         }
       }
     }
