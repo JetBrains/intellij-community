@@ -9,6 +9,7 @@ import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
@@ -453,7 +454,9 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
   }
 
-  class Builder : GeneratorNewProjectWizardBuilderAdapter(MavenArchetypeNewProjectWizard())
+  class Builder : GeneratorNewProjectWizardBuilderAdapter(MavenArchetypeNewProjectWizard()) {
+    override fun getWeight(): Int = JVM_WEIGHT + 100
+  }
 
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
