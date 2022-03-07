@@ -43,4 +43,17 @@ public class ReassignedToPlainTextTest extends DaemonAnalyzerTestCase {
     assertEquals(FileTypes.UNKNOWN, fileTypeManager.getFileTypeByFileName(name));
     assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
   }
+
+  public void testMustNotReportTxt() throws Exception {
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    String name = "xx." + PlainTextFileType.INSTANCE.getDefaultExtension();
+    assertEquals(PlainTextFileType.INSTANCE, fileTypeManager.getFileTypeByFileName(name));
+
+    VirtualFile file = getVirtualFile(createTempFile(name, "xxx"));
+    configureByExistingFile(file);
+    assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
+
+    Collection<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
+  }
 }
