@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 @ApiStatus.NonExtendable
 public class Topic<L> {
   /**
-   * Indicates that messages the of annotated topic are published to a application level message bus.
+   * Indicates that messages the of annotated topic are published to an application level message bus.
    */
   @Retention(RetentionPolicy.SOURCE)
   @Target(ElementType.FIELD)
