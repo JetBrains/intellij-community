@@ -256,9 +256,9 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         MappedRange range = myRanges[i];
         if (range != null && range.range.isValid()) {
           Mapper mapper = range.mapper;
-          int currentMin = mins.containsKey(mapper) ? mins.get(mapper) : Integer.MAX_VALUE;
+          int currentMin = mins.getOrDefault(mapper, Integer.MAX_VALUE);
           mins.put(mapper, Math.min(currentMin, range.range.getStartOffset()));
-          int currentMax = maxs.containsKey(mapper) ? maxs.get(mapper) : 0;
+          int currentMax = maxs.getOrDefault(mapper, 0);
           maxs.put(mapper, Math.max(currentMax, range.range.getEndOffset()));
         }
 

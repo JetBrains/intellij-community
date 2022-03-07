@@ -27,6 +27,11 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   }
 
   @Override
+  public int getOrDefault(@NotNull K key, int defaultValue) {
+    return myMap.getOrDefault(key, defaultValue);
+  }
+
+  @Override
   public int put(@NotNull K key, int value) {
     return myMap.put(key, value);
   }
@@ -87,17 +92,10 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   }
 
   /**
-   * If the map contains {@code key} then increment its value and return true, otherwise do nothing and return false
+   * @deprecated use {@link #getOrDefault(Object, int)}
    */
-  public boolean increment(@NotNull K key) {
-    if (!myMap.containsKey(key)) {
-      return false;
-    }
-    myMap.mergeInt(key, 0, (oldValue, __) -> oldValue + 1);
-    return true;
-  }
-
+  @Deprecated
   public final int get(@NotNull K key, int defaultValue) {
-    return containsKey(key) ? get(key) : defaultValue;
+    return getOrDefault(key, defaultValue);
   }
 }
