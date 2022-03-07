@@ -32,6 +32,7 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
+import java.util.Enumeration;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -216,6 +217,20 @@ public final class ExistingTemplatesComponent {
     }
     patternTreeModel.removeNodeFromParent(node);
     ConfigurationManager.getInstance(project).removeConfiguration(configuration);
+  }
+
+  public void selectFileType(String name) {
+    final var root = (DefaultMutableTreeNode) patternTreeModel.getRoot();
+    final Enumeration<TreeNode> children = root.children();
+    while (children.hasMoreElements()) {
+      final var node = (DefaultMutableTreeNode) children.nextElement();
+      for (String lang : node.toString().split("/")) {
+        if (lang.equals(name)) {
+          TreeUtil.selectInTree(node, false, patternTree, true);
+          return;
+        }
+      }
+    }
   }
 
   @NotNull
