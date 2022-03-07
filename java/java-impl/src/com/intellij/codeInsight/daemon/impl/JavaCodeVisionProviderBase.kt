@@ -6,18 +6,13 @@ import com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 
 abstract class JavaCodeVisionProviderBase : DaemonBoundCodeVisionProvider {
+  override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
+    if (file.language != JavaLanguage.INSTANCE) return emptyList()
 
-  final override fun computeForEditor(editor: Editor): List<Pair<TextRange, CodeVisionEntry>> {
-    val project = editor.project ?: return emptyList()
-    val psiDocumentManager = PsiDocumentManager.getInstance(project)
-    val psiFile = psiDocumentManager.getPsiFile(editor.document) ?: return emptyList()
-    if (psiFile.language != JavaLanguage.INSTANCE) return emptyList()
-
-    return computeLenses(editor, psiFile)
+    return computeLenses(editor, file)
   }
 
   abstract fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>>
