@@ -92,6 +92,8 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         val dataSource = argument.rightOperand
         if (dataSource == null) {
           recordError(argument.operationToken, "Expected data source")
+        } else {
+          dataSource.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
         }
         if (alias == null || dataSource == null) {
           return
@@ -109,6 +111,8 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         if (argument == null) {
           recordError(methodCall, "Expected a list of conditions")
           return
+        } else {
+          argument.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
         }
         if (callName == "on") {
           val last = container.lastOrNull()
