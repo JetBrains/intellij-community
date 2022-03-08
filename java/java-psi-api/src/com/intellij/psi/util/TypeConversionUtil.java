@@ -385,10 +385,7 @@ public final class TypeConversionUtil {
     if (sealedClass.isEnum()) {
       for (PsiField field : sealedClass.getFields()) {
         if (field instanceof PsiEnumConstant) {
-          PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)field).getInitializingClass();
-          if (initializingClass != null && initializingClass.isInheritor(sealedClass, false)) {
-            subClasses.add(initializingClass);
-          }
+          ContainerUtil.addIfNotNull(subClasses, ((PsiEnumConstant)field).getInitializingClass());
         }
       }
       return subClasses;
