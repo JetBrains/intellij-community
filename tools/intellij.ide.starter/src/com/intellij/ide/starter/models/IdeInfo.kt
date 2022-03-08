@@ -46,6 +46,15 @@ data class IdeInfo(
       else -> error("Unknown product code: $productCode")
     }
 
+  internal val installerProductName
+    get() = when (productCode) {
+      "IU" -> "intellij"
+      "IC" -> "intellij.ce"
+      "RM" -> "rubymine"
+      "PY" -> "pycharm"
+      else -> installerFilePrefix
+    }
+
   internal val installerFileExt
     get() = when {
       SystemInfo.isWindows -> ".win.zip"
