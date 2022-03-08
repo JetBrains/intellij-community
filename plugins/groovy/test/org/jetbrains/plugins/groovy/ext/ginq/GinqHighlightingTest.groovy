@@ -19,6 +19,10 @@ class GinqHighlightingTest extends GrHighlightingTestBase {
     myFixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
+  private void testGinqHighlighting(String ginqContents) {
+    testHighlighting("GQ {\n $ginqContents \n}")
+  }
+
   void testKeywordHighlighting() {
     testHighlighting """
 <info descr="null">GQ</info> {
@@ -29,48 +33,46 @@ class GinqHighlightingTest extends GrHighlightingTestBase {
   }
 
   void testGinqFromStream() {
-    testHighlighting """GQ { from n in [1, 2, 3].stream() select n }"""
+    testGinqHighlighting "from n in [1, 2, 3].stream() select n"
   }
 
   void testGinqFromArray() {
-    testHighlighting """GQ { from n in new int[] {1, 2, 3} select n }"""
+    testGinqHighlighting "from n in new int[] {1, 2, 3} select n"
   }
 
   void testGinqFromOtherGinq() {
-    testHighlighting """GQ { from n in (from m in [1, 2, 3] select m) select n }"""
+    testGinqHighlighting "from n in (from m in [1, 2, 3] select m) select n"
   }
 
   void testDistinct() {
-    testHighlighting """GQ {
+    testGinqHighlighting """
     from n in [1, 2, 2, 3, 3, 3]
     select distinct(n)
-}"""
+"""
   }
 
   void testDistinct2() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
     from n in [1, 2, 2, 3, 3, 3]
     select distinct(n, n + 1)
-}"""
+"""
   }
 
   void testUnresolvedBinding() {
-    testHighlighting """GQ {
+    testGinqHighlighting """
     from n in [1]
     select <warning>m</warning>
-}"""
+"""
   }
 
   void testProjections() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
     from v in (
         from n in [1, 2, 3]
         select n, Math.pow(n, 2) as powerOfN
     )
     select v.n, v.powerOfN
-}"""
+"""
   }
 
   void testTwoGinqExpressions() {
@@ -84,94 +86,104 @@ GQ {
   }
 
   void testExists() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
     from n in [1, 2, 3]
     where (from m in [2, 3] where m == n select m).exists()
     select n
-}"""
+"""
   }
 
   void testJoin() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
     from n1 in [1, 2, 3]
     join n2 in [1, 3] on n1 == n2
     select n1, n2
-}
 """
   }
 
   void testInnerJoin() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   innerjoin n2 in [1, 3] on n1 == n2
   select n1, n2
-}"""
-    testHighlighting """
-GQ {
+"""
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   innerhashjoin n2 in [1, 3] on n1 == n2
   select n1, n2
-}"""
+"""
   }
 
   void testLeftJoin() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   leftjoin n2 in [2, 3, 4] on n1 == n2
   select n1, n2
-}
 """
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   lefthashjoin n2 in [2, 3, 4] on n1 == n2
   select n1, n2
-}"""
+"""
   }
 
   void testRightJoin() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   rightjoin n2 in [2, 3, 4] on n1 == n2
   select n1, n2
-}
 """
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   righthashjoin n2 in [2, 3, 4] on n1 == n2
   select n1, n2
-}"""
+"""
   }
 
   void testFullJoin() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   fulljoin n2 in [2, 3, 4] on n1 == n2
   select n1, n2
-}
 """
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   fullhashjoin n2 in [2, 3, 4] on n1 == n2
   select n1, n2
-}"""
+"""
   }
 
   void testCrossJoin() {
-    testHighlighting """
-GQ {
+    testGinqHighlighting """
   from n1 in [1, 2, 3]
   crossjoin n2 in [3, 4, 5]
   select n1, n2
-}
+"""
+  }
+
+  void testGroupby() {
+    testGinqHighlighting """
+from n in [1, 1, 3, 3, 6, 6, 6]
+groupby n
+select n, count(n)
+"""
+  }
+
+  void testGroupbyHaving() {
+    testGinqHighlighting """
+from n in [1, 1, 3, 3, 6, 6, 6]
+groupby n
+having n >= 3
+select n, count()
+"""
+  }
+
+  void testGroupbyAs() {
+    testGinqHighlighting """
+from s in ['ab', 'ac', 'bd', 'acd', 'bcd', 'bef']
+groupby s.size() as length, s[0] as firstChar
+having length == 3 && firstChar == 'b'
+select length, firstChar, max(s)
 """
   }
 }

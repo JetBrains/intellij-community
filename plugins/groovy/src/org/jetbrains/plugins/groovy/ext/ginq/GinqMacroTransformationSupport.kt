@@ -26,7 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -163,7 +165,32 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
 
       return processor.execute(call, state)
     }
+    if (processor.shouldProcessMethods()) {
+      val aggregate = resolveAsAggregateFunction(place, name)
+      if (aggregate != null) {
+        return processor.execute(aggregate, state)
+      }
+    }
     return true
+  }
+
+  private fun resolveAsAggregateFunction(place: PsiElement, name: String): PsiMethod? {
+    val functions = listOf("max", "count")
+    if (name !in functions) {
+      return null
+    }
+    val call = place.parent?.castSafelyTo<GrMethodCallExpression>() ?: return null
+    val args = call.argumentList.allArguments
+    val prototype = JavaPsiFacade.getInstance(place.project)
+                      .findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE,
+                                                                       place.resolveScope)
+      ?.findMethodsByName(name)?.find {it.parameters.size == args.size }?.castSafelyTo<PsiMethod>() ?: return null
+    val proxy = GrLightMethodBuilder(place.manager, name)
+    proxy.navigationElement = prototype
+    for (argIndex in args.indices) {
+      proxy.addParameter(GrLightParameter("arg$argIndex", PsiType.getJavaLangObject(place.manager, place.resolveScope), place))
+    }
+    return proxy
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {
