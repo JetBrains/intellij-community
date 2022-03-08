@@ -409,7 +409,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         @NonNls String parameterName = "anObject";
         PsiExpression initializer = myLocalVar != null && myExpr == null ? myLocalVar.getInitializer() : myExpr;
         new IntroduceParameterProcessor(myProject, method, methodToSearchFor, initializer, myExpr, myLocalVar, true, parameterName,
-                                        IntroduceVariableBase.JavaReplaceChoice.ALL, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal,
+                                        replaceChoice, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal,
                                         false, false, null,
                                         getParamsToRemove(method, occurrences)).run();
       }

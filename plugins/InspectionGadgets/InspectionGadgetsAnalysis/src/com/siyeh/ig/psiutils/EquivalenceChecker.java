@@ -1133,9 +1133,6 @@ public class EquivalenceChecker {
     final PsiExpression left2 = PsiUtil.skipParenthesizedExprDown(binaryExpression2.getLOperand());
     final PsiExpression right1 = PsiUtil.skipParenthesizedExprDown(binaryExpression1.getROperand());
     final PsiExpression right2 = PsiUtil.skipParenthesizedExprDown(binaryExpression2.getROperand());
-    if (right1 == null || right2 == null) {
-      return Match.exact(right1 == right2);
-    }
     if (!tokenType1.equals(tokenType2)) {
       // process matches like "a < b" and "b > a"
       final RelationType rel1 = DfaPsiUtil.getRelationByToken(tokenType1);
@@ -1252,6 +1249,6 @@ public class EquivalenceChecker {
   protected void markDeclarationsAsEquivalent(PsiElement element1, PsiElement element2) {}
 
   protected boolean equivalentDeclarations(PsiElement element1, PsiElement element2) {
-    return element1 == element2;
+    return element1 == element2 || EquivalentMethodUtil.areEquivalentMethods(element1, element2);
   }
 }
