@@ -242,4 +242,105 @@ groupby n
 select n, agg(_g.stream().map(r -> r.n.toBigDecimal()).reduce(BigDecimal.ZERO, BigDecimal::add))
 """
   }
+
+  void testStdev() {
+    testGinqHighlighting """
+from n in [1, 2, 3]
+select stdev(n)
+"""
+  }
+
+  void testStdevp() {
+    testGinqHighlighting """
+from n in [1, 2, 3]
+select stdevp(n)
+"""
+  }
+
+  void testVar() {
+    testGinqHighlighting """
+from n in [1, 2, 3]
+select var(n)
+"""
+  }
+
+  void testVarp() {
+    testGinqHighlighting """
+from n in [1, 2, 3]
+select varp(n)
+"""
+  }
+
+  void testOrderby() {
+    testGinqHighlighting """
+from n in [1, 5, 2, 6]
+orderby n
+select n
+"""
+  }
+
+  void testOrderbyInAsc() {
+    testGinqHighlighting """
+from n in [1, 5, 2, 6]
+orderby n in asc
+select n
+"""
+  }
+
+  void testOrderbyInDesc() {
+    testGinqHighlighting """
+from n in [1, 5, 2, 6]
+orderby n in desc
+select n
+"""
+  }
+
+  void testOrderbyDouble() {
+    testGinqHighlighting """
+from s in ['a', 'b', 'ef', 'cd']
+orderby s.length() in desc, s in asc
+select s
+"""
+  }
+
+  void testOrderbyMixed() {
+    testGinqHighlighting """
+from s in ['a', 'b', 'ef', 'cd']
+orderby s.length() in desc, s
+select s
+"""
+  }
+
+  void testOrderbyAscNullsLast() {
+    testGinqHighlighting """
+from n in [1, null, 5, null, 2, 6]
+orderby n in asc(nullslast)
+select n
+"""
+  }
+
+  void testOrderbyAscNullsFirst() {
+    testGinqHighlighting """
+from n in [1, null, 5, null, 2, 6]
+orderby n in asc(nullsfirst)
+select n
+"""
+  }
+
+  void testOrderbyDescNullsLast() {
+    testGinqHighlighting """
+from n in [1, null, 5, null, 2, 6]
+orderby n in desc(nullslast)
+select n
+"""
+  }
+
+  void testOrderbyDescNullsFirst() {
+    testGinqHighlighting """
+from n in [1, null, 5, null, 2, 6]
+orderby n in desc(nullsfirst)
+select n
+"""
+  }
+
 }

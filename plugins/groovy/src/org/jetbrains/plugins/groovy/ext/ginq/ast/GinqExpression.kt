@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
-import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 
@@ -132,24 +132,35 @@ data class GinqOrderByFragment(
 
 sealed interface Ordering {
   val orderKw: PsiElement?
+  val nullsKw: PsiElement?
   val sorter: GrExpression
 
-  class Asc internal constructor(override val orderKw: PsiElement?, override val sorter: GrExpression) : Ordering
+  class Asc internal constructor(override val orderKw: PsiElement?,
+                                 override val nullsKw: PsiElement?,
+                                 override val sorter: GrExpression) : Ordering
 
-  class Desc internal constructor(override val orderKw: PsiElement?, override val sorter: GrExpression) : Ordering
+  class Desc internal constructor(override val orderKw: PsiElement?,
+                                  override val nullsKw: PsiElement?,
+                                  override val sorter: GrExpression) : Ordering
 
   companion object {
     fun from(expr: GrExpression): Ordering {
       if (expr is GrBinaryExpression && expr.operationTokenType == GroovyElementTypes.KW_IN) {
-        val orderKw = expr.rightOperand?.castSafelyTo<GrReferenceExpression>()
+        val rightOperand = expr.rightOperand
+        val (orderKw, nullsKw) = if (rightOperand is GrReferenceExpression) {
+          rightOperand to null
+        } else if (rightOperand is GrMethodCall && rightOperand.invokedExpression is GrReferenceExpression) {
+          rightOperand.invokedExpression as GrReferenceExpression to
+            rightOperand.argumentList.expressionArguments.singleOrNull()?.takeIf { it.text == "nullsfirst" || it.text == "nullslast" }
+        } else null to null
         return when (orderKw?.referenceName) {
-          "asc" -> Asc(orderKw, expr.leftOperand)
-          "desc" -> Desc(orderKw, expr.leftOperand)
-          else -> Asc(null, expr)
+          "asc" -> Asc(orderKw, nullsKw, expr.leftOperand)
+          "desc" -> Desc(orderKw, nullsKw, expr.leftOperand)
+          else -> Asc(null, null, expr)
         }
       }
       else {
-        return Asc(null, expr)
+        return Asc(null, null, expr)
       }
     }
   }

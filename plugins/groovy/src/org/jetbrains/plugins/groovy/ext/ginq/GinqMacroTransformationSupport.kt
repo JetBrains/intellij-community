@@ -77,7 +77,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
                                    nestedGinq.select.selectKw)
           keywords.addAll(nestedGinq.joins.mapNotNull { it.onCondition?.onKw })
           keywords.addAll(nestedGinq.joins.map { it.joinKw })
-          softKeywords.addAll(nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList())
+          softKeywords.addAll((nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList()) + (nestedGinq.orderBy?.sortingFields?.mapNotNull { it.nullsKw } ?: emptyList()))
         }
         super.visitElement(element)
       }
@@ -85,7 +85,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return keywords.filterNotNull().mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.KEYWORD).create()
     } + softKeywords.filterNotNull().mapNotNull {
-      HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.STATIC_FIELD).create()
+      val key = if (it.parent is GrMethodCall) GroovySyntaxHighlighter.STATIC_METHOD_ACCESS else GroovySyntaxHighlighter.STATIC_FIELD
+      HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(key).create()
     } + errors
   }
 

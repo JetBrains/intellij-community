@@ -148,6 +148,9 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
           recordError(methodCall, "Expected a classifier argument")
           return
         }
+        arguments.forEach {
+          it.expression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+        }
         container.add(GinqGroupByFragment(callKw, arguments, null))
       }
       "orderby" -> {
@@ -155,6 +158,9 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         if (arguments == null) {
           recordError(methodCall, "Expected a list of order fields")
           return
+        }
+        arguments.forEach {
+          it.sorter.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
         }
         container.add(GinqOrderByFragment(callKw, arguments))
       }
