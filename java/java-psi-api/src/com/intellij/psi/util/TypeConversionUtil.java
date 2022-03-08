@@ -381,6 +381,19 @@ public final class TypeConversionUtil {
 
   private static @NotNull Set<PsiClass> findDirectSubClassesInFile(@NotNull PsiClass sealedClass) {
     Set<PsiClass> subClasses = new HashSet<>();
+
+    if (sealedClass.isEnum()) {
+      for (PsiField field : sealedClass.getFields()) {
+        if (field instanceof PsiEnumConstant) {
+          PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)field).getInitializingClass();
+          if (initializingClass != null && initializingClass.isInheritor(sealedClass, false)) {
+            subClasses.add(initializingClass);
+          }
+        }
+      }
+      return subClasses;
+    }
+
     sealedClass.getContainingFile().accept(new JavaElementVisitor() {
       @Override
       public void visitJavaFile(PsiJavaFile file) {
@@ -396,17 +409,6 @@ public final class TypeConversionUtil {
         }
         if (psiClass.isInheritor(sealedClass, false)) {
           subClasses.add(psiClass);
-        }
-
-        if (psiClass.isEnum()) {
-          for (PsiField field : psiClass.getFields()) {
-            if (field instanceof PsiEnumConstant) {
-              PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)field).getInitializingClass();
-              if (initializingClass != null && initializingClass.isInheritor(sealedClass, false)) {
-                subClasses.add(initializingClass);
-              }
-            }
-          }
         }
       }
     });
