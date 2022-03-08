@@ -10,9 +10,9 @@
     "Grey3": "#383A42",
     "Grey4": "#494B57",
     "Grey5": "#5A5D6B",
-    "Grey6": "#767A8A",
-    "Grey7": "#969AAB",
-    "Grey8": "#AEB3C2",
+    "Grey6": "#6C707E",
+    "Grey7": "#818594",
+    "Grey8": "#A8ADBD",
     "Grey9": "#C9CCD6",
     "Grey10": "#DFE1E5",
     "Grey11": "#EBECF0",
@@ -343,14 +343,14 @@
     "StatusBar": {
       "background": "Grey12",
       "Widget": {
-        "foreground": "Grey5",
+        "foreground": "Grey6",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "pressedBackground": "Grey10",
         "widgetInsets": "6,8,6,8"
       },
       "Breadcrumbs": {
-        "foreground": "Grey5",
+        "foreground": "Grey6",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "floatingBackground": "Grey13",
@@ -383,8 +383,8 @@
     "ToolTip":{
       "background": "Grey2",
       "foreground": "Grey13",
-      "infoForeground": "Grey7",
-      "shortcutForeground": "Grey7",
+      "infoForeground": "Grey8",
+      "shortcutForeground": "Grey8",
       "linkForeground": "Blue10"
     },
 
@@ -453,7 +453,7 @@
     "VersionControl": {
       "Log.Commit": {
         "currentBranchBackground": "#e8eefa",
-        "unmatchedForeground": "Grey6",
+        "unmatchedForeground": "Grey7",
         "hoveredBackground": "#000000F1"
       },
       "FileHistory.Commit.selectedBranchBackground": "Blue13"
