@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiModificationTracker
  *
  * Computes nothing, just shows results from cache, the main work happens in [CodeVisionPass].
  */
-class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvider) : CodeVisionProvider<Unit> {
+class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProvider) : CodeVisionProvider<Unit> {
   override fun precomputeOnUiThread(editor: Editor) {
     // nothing
   }
