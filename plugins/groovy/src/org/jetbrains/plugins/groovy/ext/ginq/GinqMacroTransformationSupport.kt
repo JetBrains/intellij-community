@@ -110,10 +110,15 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       val invokedCall = macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
       val container = if (invokedCall == "GQL") CommonClassNames.JAVA_UTIL_LIST else if (invokedCall == "GQ") ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE else null
       if (container != null) {
-        val namedRecord = GrNamedRecordType(ginq)
+        val singleProjection = ginq.select.projections.singleOrNull()?.takeIf { it.alias == null }
+        val componentType = if (singleProjection != null) {
+          singleProjection.aggregatedExpression.type ?: PsiType.NULL
+        } else {
+          GrNamedRecordType(ginq)
+        }
         val facade = JavaPsiFacade.getInstance(macroCall.project)
         return facade.findClass(container, macroCall.resolveScope)?.let {
-          facade.elementFactory.createType(it, namedRecord)
+          facade.elementFactory.createType(it, componentType)
         }
       }
     }

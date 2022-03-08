@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
 fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
-  val parser = GinqParser(statementsOwner.statements.firstOrNull()?.castSafelyTo<GrExpression>())
+  val parser = GinqParser(statementsOwner.statements.lastOrNull()?.castSafelyTo<GrExpression>())
   statementsOwner.statements.forEach { it.accept(parser) }
   return gatherGinqExpression(parser.errors + parser.unrecognizedQueryErrors, parser.container)
 }
@@ -66,7 +66,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
   val unrecognizedQueryErrors: MutableList<ParsingError> = mutableListOf()
 
   override fun visitMethodCall(methodCall: GrMethodCall) {
-    methodCall.invokedExpression.accept(this)// todo: i18n
+    super.visitMethodCall(methodCall)// todo: i18n
     clearUnrecognizedQueries(methodCall)
     val callName = methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
     if (callName == null) {
@@ -96,7 +96,6 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         if (alias == null || dataSource == null) {
           return
         }
-        tryInjectGinq(dataSource)
         val expr = if (callName == "from") {
           GinqFromFragment(callKw, alias, dataSource)
         }
@@ -111,7 +110,6 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
           recordError(methodCall, "Expected a list of conditions")
           return
         }
-        tryInjectGinq(argument)
         if (callName == "on") {
           val last = container.lastOrNull()
           if (last is GinqJoinFragment && last.onCondition == null && argument is GrBinaryExpression) {
@@ -182,17 +180,16 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
     }
   }
 
-  private fun tryInjectGinq(expression: GrExpression) {
-    if (isApproximatelyGinq(expression)) {
+  override fun visitExpression(expression: GrExpression) {
+    if (expression != rootExpression && isApproximatelyGinq(expression)) {
       val (innerErrors, expr) = parseGinqAsExpr(expression)
       errors.addAll(innerErrors)
       expression.skipParenthesesDown()?.putUserData(injectedGinq, expr)
     }
     else {
-      expression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+      super.visitExpression(expression)
     }
   }
-
   private fun recordError(element: PsiElement, message: @Nls String) {
     errors.add(element to message)
   }
@@ -222,8 +219,7 @@ private fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.cas
 
 // e is not ginq --> false
 private fun isApproximatelyGinq(e: PsiElement): Boolean {
-  val text = e.text
-  return text.contains("from") && text.contains("select")
+  return e is GrMethodCall && e.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "select"
 }
 
 val injectedGinq: Key<GinqExpression> = Key.create("injected ginq expression")

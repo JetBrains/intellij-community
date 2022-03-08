@@ -70,10 +70,10 @@ GQ {
 
   void testTwoGinqExpressions() {
     testHighlighting """
-GQ {
-  from n in [0]
-  where n in (from m in [1] select m) && n in (from m in [1] select m)
-  select count()
+<info descr="null">GQ</info> {
+  <info descr="null">from</info> n in [0]
+  <info descr="null">where</info> n in (<info descr="null">from</info> m in [1] <info descr="null">select</info> m) && n in (<info descr="null">from</info> m in [1] <info descr="null">select</info> m)
+  <info descr="null">select</info> n
 }
 """, false, true, false
   }
