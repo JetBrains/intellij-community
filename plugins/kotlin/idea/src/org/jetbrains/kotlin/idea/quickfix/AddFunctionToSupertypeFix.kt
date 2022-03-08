@@ -159,7 +159,8 @@ class AddFunctionToSupertypeFix private constructor(
         private fun DescriptorRenderer.withDefaultValueOption(project: Project): DescriptorRenderer {
             return withOptions {
                 this.defaultParameterValueRenderer = {
-                    OptionalParametersHelper.defaultParameterValueExpression(it, project)!!.text
+                    OptionalParametersHelper.defaultParameterValueExpression(it, project)?.text
+                        ?: error("value parameter renderer shouldn't be called when there is no value to render")
                 }
             }
         }
