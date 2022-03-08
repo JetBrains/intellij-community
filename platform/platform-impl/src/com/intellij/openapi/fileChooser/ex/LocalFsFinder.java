@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFilter;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
@@ -273,8 +274,9 @@ public class LocalFsFinder implements Finder {
     }
 
     @Override
-    public @Nullable Icon getIcon() {
-      return null;
+    public Icon getIcon() {
+      return Files.isDirectory(myFile) ? PlatformIcons.FOLDER_ICON
+                                       : FileTypeRegistry.getInstance().getFileTypeByFileName(myFile.toString()).getIcon();
     }
 
     @Override
