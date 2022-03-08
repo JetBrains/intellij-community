@@ -104,6 +104,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private volatile boolean myExitInProgress;
 
   private final Disposable myLastDisposable = Disposer.newDisposable();  // the last to be disposed
+  private boolean myFiringListeners; // accessed in EDT only
 
   // defer reading isUnitTest flag until it's initialized
   private static class Holder {
@@ -1194,12 +1195,17 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   private void startWrite(@NotNull Class<?> clazz) {
     assertIsWriteThread();
+    assertNotInsideListener();
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
     try {
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
 
+      // otherwise (when myLock is locked) there's a nesting write action:
+      // - allow it,
+      // - fire listeners for it (somebody can rely on having listeners fired for each write action)
+      // - but do not re-acquire any locks because it could be deadlock-level dangerous
       if (!myLock.isWriteLocked()) {
         int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
         Future<?> reportSlowWrite = delay <= 0 ? null :
@@ -1225,6 +1231,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     myWriteActionsStack.push(clazz);
     fireWriteActionStarted(clazz);
+  }
+
+  private void assertNotInsideListener() {
+    if (myFiringListeners) {
+      throw new IllegalStateException("Must not start write action from inside write action listener");
+    }
   }
 
   private void endWrite(@NotNull Class<?> clazz) {
@@ -1383,11 +1395,23 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void fireBeforeWriteActionStart(@NotNull Class<?> action) {
-    myDispatcher.getMulticaster().beforeWriteActionStart(action);
+    myFiringListeners = true;
+    try {
+      myDispatcher.getMulticaster().beforeWriteActionStart(action);
+    }
+    finally {
+      myFiringListeners = false;
+    }
   }
 
   private void fireWriteActionStarted(@NotNull Class<?> action) {
-    myDispatcher.getMulticaster().writeActionStarted(action);
+    myFiringListeners = true;
+    try {
+      myDispatcher.getMulticaster().writeActionStarted(action);
+    }
+    finally {
+      myFiringListeners = false;
+    }
   }
 
   private void fireWriteActionFinished(@NotNull Class<?> action) {
