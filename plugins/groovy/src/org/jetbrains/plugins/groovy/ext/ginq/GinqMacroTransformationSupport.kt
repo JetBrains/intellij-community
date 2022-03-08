@@ -163,12 +163,6 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
 
       return processor.execute(call, state)
     }
-    if (name == "exists" && processor.shouldProcessMethods()) {
-      val method = JavaPsiFacade.getInstance(macroCall.project)
-        .findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, macroCall.resolveScope)
-        ?.findMethodsByName("exists", false)?.singleOrNull() ?: return true
-      return processor.execute(method, state)
-    }
     return true
   }
 

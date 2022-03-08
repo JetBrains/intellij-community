@@ -91,4 +91,87 @@ GQ {
     select n
 }"""
   }
+
+  void testJoin() {
+    testHighlighting """
+GQ {
+    from n1 in [1, 2, 3]
+    join n2 in [1, 3] on n1 == n2
+    select n1, n2
+}
+"""
+  }
+
+  void testInnerJoin() {
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  innerjoin n2 in [1, 3] on n1 == n2
+  select n1, n2
+}"""
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  innerhashjoin n2 in [1, 3] on n1 == n2
+  select n1, n2
+}"""
+  }
+
+  void testLeftJoin() {
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  leftjoin n2 in [2, 3, 4] on n1 == n2
+  select n1, n2
+}
+"""
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  lefthashjoin n2 in [2, 3, 4] on n1 == n2
+  select n1, n2
+}"""
+  }
+
+  void testRightJoin() {
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  rightjoin n2 in [2, 3, 4] on n1 == n2
+  select n1, n2
+}
+"""
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  righthashjoin n2 in [2, 3, 4] on n1 == n2
+  select n1, n2
+}"""
+  }
+
+  void testFullJoin() {
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  fulljoin n2 in [2, 3, 4] on n1 == n2
+  select n1, n2
+}
+"""
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  fullhashjoin n2 in [2, 3, 4] on n1 == n2
+  select n1, n2
+}"""
+  }
+
+  void testCrossJoin() {
+    testHighlighting """
+GQ {
+  from n1 in [1, 2, 3]
+  crossjoin n2 in [3, 4, 5]
+  select n1, n2
+}
+"""
+  }
 }
